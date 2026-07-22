@@ -287,13 +287,13 @@ DB関連の記述は ec-cube-enterprise の実装を正とする。取込で書�
 
 ## 表示メッセージ
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
-| M03-26-MSG-001 | 管理画面上部フラッシュ | 要ソース確認 | POST後、CsvImportTypeフォームが不正なとき（未選択/File制約違反等）。可変文言 `$error->getMessage()`（CsvImportType.php:48-57 の NotBlank/File 制約由来）で単一の逐語文言を確定できない |
-| M03-26-MSG-002 | 管理画面上部フラッシュ | CSVのフォーマットが一致しません | フォームは有効だが import_file のデータが null のとき |
-| M03-26-MSG-003 | 管理画面上部フラッシュ | %maxRecord% 行を超えるCSVファイルは登録できません。 | CSV行数が ADMIN_CSV_IMPORT_MAX_ROWS 以上のとき |
-| M03-26-MSG-004 | 管理画面上部フラッシュ | 要ソース確認 | CsvImporter の取込結果 $result がエラーを持つとき。可変文言 `$error['message']`（CsvImporter/MessageStore で文言・引数が分岐）で単一の逐語文言を確定できない |
-| M03-26-MSG-005 | 管理画面上部フラッシュ | CSVファイルをアップロードしました | CsvImporter の取込結果 $result にエラーがないとき（成功） |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
+| M03-26-MSG-001 | 管理画面上部フラッシュ | 要ソース確認 | POST後、CsvImportTypeフォームが不正なとき（未選択/File制約違反等）。可変文言 `$error->getMessage()`（CsvImportType.php:48-57 の NotBlank/File 制約由来）で単一の逐語文言を確定できない | 要ソース確認 |
+| M03-26-MSG-002 | 管理画面上部フラッシュ | CSVのフォーマットが一致しません | フォームは有効だが import_file のデータが null のとき | 管理画面_商品管理_カード商品CSV登録画面に遷移する |
+| M03-26-MSG-003 | 管理画面上部フラッシュ | %maxRecord% 行を超えるCSVファイルは登録できません。 | CSV行数が ADMIN_CSV_IMPORT_MAX_ROWS 以上のとき | 管理画面_商品管理_カード商品CSV登録画面に遷移する |
+| M03-26-MSG-004 | 管理画面上部フラッシュ | 要ソース確認 | CsvImporter の取込結果 $result がエラーを持つとき。可変文言 `$error['message']`（CsvImporter/MessageStore で文言・引数が分岐）で単一の逐語文言を確定できない | 要ソース確認 |
+| M03-26-MSG-005 | 管理画面上部フラッシュ | CSVファイルをアップロードしました | CsvImporter の取込結果 $result にエラーがないとき（成功） | CSV取込履歴を登録し、管理画面_商品管理_カード商品CSV登録画面に遷移する |
 
 ---
 

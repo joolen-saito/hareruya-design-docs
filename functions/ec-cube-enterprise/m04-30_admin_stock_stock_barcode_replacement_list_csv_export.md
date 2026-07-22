@@ -142,13 +142,13 @@
 
 CSV出力（`csvExport`）でフォームが未submitまたは不正なとき、`$form->getErrors(true)` の各エラーメッセージを `addError(..., 'admin')` で管理画面上部のフラッシュに表示し、`admin_stock_barcode_replacement_list` へリダイレクトする（`BarcodeReplacementListController.php:70-75`）。表示される文言はフォーム制約由来で、以下が該当する。
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
-| M04-30-MSG-001 | 管理画面上部フラッシュ（エラー） | 入力されていません。 | 出力対象店舗・価格変更発生期間（開始日/終了日）が未入力など `NotBlank` 制約に違反したとき（`validators.ja.yaml:17`、制約 `BarcodeReplacementListType.php:54,64,73`） |
-| M04-30-MSG-002 | 管理画面上部フラッシュ（エラー） | 価格変更発生期間の終了日は開始日以降を指定してください。 | 価格変更発生期間の終了日が開始日より前のとき（POST_SUBMIT で `price_change_period_to` にエラー付与、`messages.ja.yaml:4843` / `BarcodeReplacementListType.php:91`） |
-| — | 管理画面上部フラッシュ（エラー） | 日付形式の検証エラー（Symfony `DateType` 既定 `invalid_message`） | 期間フィールドに不正な日付を入力したとき。日本語ロケール文言は本一覧のソース（EE locale）に未定義のため確定不可（要確認） |
-| — | 管理画面上部フラッシュ（エラー） | フォームCSRFトークン不正エラー（Symfony Form 既定 `csrf_message`） | フォームの `_token` が不正なとき（`csrf_protection: true`、`BarcodeReplacementListType.php:101`）。同じ `getErrors(true)`→`addError` 経路で表示される。日本語ロケール文言は本一覧のソース（EE locale）に未定義のため確定不可（要確認） |
-| M04-30-MSG-003 | 入力項目直下/フォーム上部 | 価格変更発生期間の終了日は開始日以降を指定してください。 | CSV出力POSTで開始日が終了日より後 |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
+| M04-30-MSG-001 | 管理画面上部フラッシュ（エラー） | 入力されていません。 | 出力対象店舗・価格変更発生期間（開始日/終了日）が未入力など `NotBlank` 制約に違反したとき（`validators.ja.yaml:17`、制約 `BarcodeReplacementListType.php:54,64,73`） | エラーを表示し、バーコード貼替リスト画面に遷移する |
+| M04-30-MSG-002 | 管理画面上部フラッシュ（エラー） | 価格変更発生期間の終了日は開始日以降を指定してください。 | 価格変更発生期間の終了日が開始日より前のとき（POST_SUBMIT で `price_change_period_to` にエラー付与、`messages.ja.yaml:4843` / `BarcodeReplacementListType.php:91`） | エラーを表示し、バーコード貼替リスト画面に遷移する |
+| — | 管理画面上部フラッシュ（エラー） | 日付形式の検証エラー（Symfony `DateType` 既定 `invalid_message`） | 期間フィールドに不正な日付を入力したとき。日本語ロケール文言は本一覧のソース（EE locale）に未定義のため確定不可（要確認） | — |
+| — | 管理画面上部フラッシュ（エラー） | フォームCSRFトークン不正エラー（Symfony Form 既定 `csrf_message`） | フォームの `_token` が不正なとき（`csrf_protection: true`、`BarcodeReplacementListType.php:101`）。同じ `getErrors(true)`→`addError` 経路で表示される。日本語ロケール文言は本一覧のソース（EE locale）に未定義のため確定不可（要確認） | — |
+| M04-30-MSG-003 | 入力項目直下/フォーム上部 | 価格変更発生期間の終了日は開始日以降を指定してください。 | CSV出力POSTで開始日が終了日より後 | エラーを表示し、バーコード貼替リスト画面に遷移する |
 
 > 上記フラッシュは `$error->getMessage()` の逐次表示であり、文言はフォーム制約・ロケール由来のもののみ。固定の成功メッセージは無く、正常時は `StreamedResponse` でCSVをダウンロードする（フラッシュ表示なし）。
 

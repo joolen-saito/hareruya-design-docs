@@ -239,10 +239,10 @@ DB関連の正典は ec-cube-enterprise とする。挙動は現行リポ pf-ecc
 
 ## 表示メッセージ
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
-| M03-23-MSG-001 | 管理画面上部フラッシュ | 検索条件を指定してからCSVをダウンロードしてください。 | CSVダウンロードリンク押下時、セッションの検索条件（eccube.admin.product.buy_sale_price_history.search）が無いとき（一覧初期URLへリダイレクト） |
-| M03-23-MSG-002 | 要ソース確認（本画面テンプレートは product.update_date_from/to を未レンダリングで form_errors/form_rest も無く、表示経路は要実機確認） | 終了日時は、開始日時より大きく設定してください | productサブフォーム（SearchProductType）のupdate_date_from・update_date_toがともに空でなく開始日が終了日より後のとき（画面再表示。本画面の操作での到達経路は要実機確認） |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
+| M03-23-MSG-001 | 管理画面上部フラッシュ | 検索条件を指定してからCSVをダウンロードしてください。 | CSVダウンロードリンク押下時、セッションの検索条件（eccube.admin.product.buy_sale_price_history.search）が無いとき（一覧初期URLへリダイレクト） | 買取/販売価格履歴画面に遷移する |
+| M03-23-MSG-002 | 要ソース確認（本画面テンプレートは product.update_date_from/to を未レンダリングで form_errors/form_rest も無く、表示経路は要実機確認） | 終了日時は、開始日時より大きく設定してください | productサブフォーム（SearchProductType）のupdate_date_from・update_date_toがともに空でなく開始日が終了日より後のとき（画面再表示。本画面の操作での到達経路は要実機確認） | 買取/販売価格履歴画面に留まる |
 
 ---
 

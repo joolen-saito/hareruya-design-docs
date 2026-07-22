@@ -102,11 +102,17 @@
 | 種別 | 表示文言 | 条件 |
 |------|----------|------|
 | 成功 | 保存完了メッセージ（ロケールキー`admin.customer.save.complete`） | 配送先の保存が完了したとき |
-| M08-09-MSG-001 | 管理画面上部 | 保存しました |
-| M08-09-MSG-002 | 管理画面上部 | 削除しました |
-| M08-09-MSG-003 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした |
 
 ---
+
+
+### メッセージID対応（自動棚卸）
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|---|---|---|---|---|
+| M08-09-MSG-001 | 管理画面上部 | 保存しました | admin_customer_delivery_new または admin_customer_delivery_edit へのPOSTでフォームが送信済みかつ妥当な場合(persist/flush成功後) | 配送先編集画面に遷移する |
+| M08-09-MSG-002 | 管理画面上部 | 削除しました | DELETE admin_customer_delivery_delete で対象お届け先が存在し会員が一致し、削除が成功した場合 | 会員情報編集画面に遷移する |
+| M08-09-MSG-003 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | DELETE admin_customer_delivery_delete の削除処理で ForeignKeyConstraintViolationException が発生した場合 | 会員情報編集画面に遷移する |
 
 ## 業務ルール・計算
 

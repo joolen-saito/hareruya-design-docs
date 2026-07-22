@@ -1975,6 +1975,91 @@ def chain_key(artifact_text: str, seed: dict[str, str]) -> str:
     return ""
 
 
+# HTML基本設計書由来のデータ連鎖情報。2種類に厳格に分ける（codexレビュー指摘: 直列遷移や
+# 下流バッチ消費を合成すると過剰主張＝捏造になる）。
+#   kind="consumer": HTMLが当該データの**下流処理を literal に明記** → 自由端を解消し
+#                    verdict を『連鎖あり（HTML設計書由来）』にする。
+#   kind="note":     HTMLはデータの保存先テーブル・ステータス値は記すが**消費先は明記しない** →
+#                    自由端は要確認のまま。HTMLの事実（テーブル/ステータス）を注記するだけ。
+# いずれもオラクル文はHTMLの literal 記述のみ。直列遷移・自動因果は主張しない。記載の無い
+# オブジェクト（売上/発送管理台帳/返金処理記録/各Excel作業ファイル）は登録しない。
+# 各要素 = (含む語, 対象業務(空=全業務), kind, 消費先/注記見出し, オラクル文, HTML出典)。
+HTML_CHAIN_RESOLUTIONS: tuple[tuple[tuple[str, ...], tuple[str, ...], str, str, str, str], ...] = (
+    # === consumer: HTMLが下流処理を明記 ===
+    (("棚卸計画",), (), "consumer",
+     "棚卸確定（dtb_inventory_plan→dtb_product_stock）",
+     "棚卸計画(dtb_inventory_plan)の確定・実数反映時にdtb_product_stockの在庫が更新されること（反映時点は実装依存）",
+     "0202_在庫管理"),
+    (("出金",), (), "consumer",
+     "店頭買取情報更新API→EC-CUBE連携",
+     "スマレジの出金取引ID/出金コードが店頭買取情報更新API(PUT /admin/otcBuyOrder/{id}/status.json)でEC-CUBEへ連携されること"
+     "（経理払い出し済で買取成立にする旨をHTMLに記載）",
+     "0601_MTGBuyer"),
+    # === note: 保存先/ステータスの記載はあるが消費先は明記なし（自由端は要確認のまま注記） ===
+    # 在庫移動指示: tracking_no反映先の記載はあるが、在庫移動実績CSV取込では在庫数・移動ステータスを
+    # 更新しないとHTMLが明記するため、consumerにはせず注記に留める（codecレビュー指摘）。
+    (("在庫移動指示",), (), "note",
+     "在庫移動・振替（dtb_stock_move_transfer / dtb_stock_move_instruction）",
+     "HTML設計書では在庫移動指示は在庫移動・振替のtracking_noに反映される旨が記載（在庫移動実績CSV取込では在庫数・移動ステータスは更新しないと明記）",
+     "0202_在庫管理"),
+    # 在庫変更CSV: 承認ワークフロー経由の在庫反映は実装依存とHTMLが留保するため、断定せず注記に留める。
+    (("在庫変更CSV",), (), "note",
+     "在庫変更CSV取込（dtb_csv_import_history→在庫編集承認情報/在庫変更履歴）",
+     "HTML設計書では在庫変更CSV取込がdtb_csv_import_historyを登録し在庫編集承認情報・在庫変更履歴を登録する旨が記載（承認後の在庫反映ワークフローは実装依存）",
+     "0202_在庫管理"),
+    (("受注", "出荷"), ("店頭受取受注管理", "通販受注管理"), "note",
+     "受注ステータス（dtb_order.order_status_id）",
+     "HTML設計書では受注ステータスはdtb_order.order_status_idで管理され、注文受領→ピック中でconfirm_dateを、"
+     "出荷完了でshipping_dateを登録しポイント付与・外部在庫連携を行う旨が個別に記載（消費先の明示はなし）",
+     "0203_受注管理"),
+    (("在庫",), ("在庫管理", "店頭買取"), "note",
+     "在庫（dtb_product_stock / dtb_stock_history）",
+     "HTML設計書では在庫増減はdtb_product_stock.stock/dtb_product_class.stockへ反映され、dtb_stock_historyに"
+     "登録元区分付きで記録される旨が記載（消費先の明示はなし）",
+     "0202_在庫管理"),
+    (("査定確認メール", "査定内容メール"), (), "note",
+     "メール履歴（dtb_mail_history）",
+     "HTML設計書では査定内容メール送信でdtb_mail_historyに記録し、ステータス『13 査定内容連絡済み』は管理画面で切り替える旨が記載",
+     "0206_ネット買取"),
+    (("ネット買取",), ("ネット買取",), "note",
+     "ネット買取ステータス（dtb_buy_order / dtb_buy_order_status_histry）",
+     "HTML設計書ではネット買取ステータス値(1注文〜7振込完了)が定義され、変更ごとにdtb_buy_order_status_histryへ履歴を追加する旨が記載",
+     "0206_ネット買取 / 0507_APIネット買取"),
+    (("買取",), ("店頭買取",), "note",
+     "店頭買取ステータス（dtb_otc_buy_order / _status_history）",
+     "HTML設計書では店頭買取はdtb_otc_buy_orderで管理され、ステータス変更はdtb_otc_buy_order_status_historyに記録する旨が記載",
+     "0205_店頭買取"),
+    (("支店インポート",), ("店頭買取",), "note",
+     "支店インポート用CSV（廃止→買取商品一覧CSVへ置換）",
+     "HTML設計書では支店インポート用のインポートCSVは廃止とし、買取商品一覧CSVへ置換する旨が記載（取込先システムの明示はなし）",
+     "0205_店頭買取"),
+)
+
+
+# ブロードな単語（オブジェクト総称）。これらだけで一致した場合、作業ファイル名/別データ
+# （用/表/シート/ファイル/リスト/依頼/計画書/データ/CSV）を持つアーティファクトには適用しない。
+# 「在庫変更依頼用」「出荷データ*4」等はHTML設計書が扱う対象と別物で、オラクルを付けると捏造になる。
+HTML_GENERIC_TOKENS = frozenset({"受注", "在庫", "買取", "ネット買取", "出荷"})
+WORKFILE_MARKERS = ("用", "表", "シート", "ファイル", "リスト", "依頼", "計画書", "データ", "CSV")
+
+
+def html_chain_resolution(artifact_text: str, business: str) -> tuple[str, str, str, str] | None:
+    """アーティファクトに対応するHTML設計書由来の (kind, 消費先/注記見出し, オラクル文, 出典) を返す。
+
+    HTMLに literal に記述がある場合のみ。記載の無いオブジェクトは None。ブロード語（オブジェクト
+    総称）の作業ファイル/別データへの誤適用は WORKFILE_MARKERS でガードする。
+    """
+    is_workfile = any(m in artifact_text for m in WORKFILE_MARKERS)
+    for tokens, businesses, kind, consumer, oracle, source in HTML_CHAIN_RESOLUTIONS:
+        matched = [t for t in tokens if t in artifact_text]
+        if not matched or (businesses and business not in businesses):
+            continue
+        if is_workfile and all(t in HTML_GENERIC_TOKENS for t in matched):
+            continue
+        return kind, consumer, oracle, source
+    return None
+
+
 def data_chain_rows(s: Scenario, seed: "dict[str, str] | None" = None) -> str:
     """原典のデータ遷移線から「産出工程 → データ/帳票 → 消費工程」を表にする。
 
@@ -2032,24 +2117,33 @@ def data_chain_rows(s: Scenario, seed: "dict[str, str] | None" = None) -> str:
                 # 周辺工程語を混ぜると、返金メール連鎖に受注番号を付ける等の誤りが出る（codex指摘）。
                 derived = chain_key(link.artifact_text, seed)
                 key_cell = derived if derived else "原典上の照合キー未定義（要業務確認）"
+                html = html_chain_resolution(link.artifact_text, s.business_title)
+                html_note = f" {html[2]}（出典: {html[3]}）。" if html else ""
                 if link.producer_no and link.consumer_no:
                     producer = f"#{link.producer_no} {link.producer_text}"
                     consumer = f"#{link.consumer_no} {link.consumer_text}"
                     tail = f"（照合キー {derived} で同一）" if derived else "（照合キーは要業務確認）"
                     expected = (
                         f"「{link.producer_text}」で産出/更新された「{link.artifact_text}」を、"
-                        f"後続工程「{link.consumer_text}」が同一対象として参照できること{tail}。"
+                        f"後続工程「{link.consumer_text}」が同一対象として参照できること{tail}。" + html_note
                     )
                     verdict = "連鎖あり"
                 elif link.producer_no:
                     producer = f"#{link.producer_no} {link.producer_text}"
-                    consumer = "(自由端＝原典で接続先未定義)"
-                    expected = f"「{link.producer_text}」で産出/更新された「{link.artifact_text}」が確認できること。"
-                    verdict = "要確認（消費先が原典未定義）"
+                    if html and html[0] == "consumer":
+                        # 業務フロー図は消費先を描かない(自由端)が、HTML設計書が下流処理を明記している。
+                        consumer = f"{html[1]}（HTML設計書由来）"
+                        expected = f"「{link.producer_text}」で産出/更新された「{link.artifact_text}」について、{html[2]}（出典: {html[3]}）。"
+                        verdict = "連鎖あり（HTML設計書由来）"
+                    else:
+                        # HTMLは保存先/ステータスのみ記す(note)か記載なし。消費先は原典未定義のまま。
+                        consumer = "(自由端＝原典で接続先未定義)"
+                        expected = f"「{link.producer_text}」で産出/更新された「{link.artifact_text}」が確認できること。" + html_note
+                        verdict = "要確認（消費先が原典未定義）"
                 else:
                     producer = "(産出元が原典未定義)"
                     consumer = f"#{link.consumer_no} {link.consumer_text}"
-                    expected = f"「{link.artifact_text}」を、工程「{link.consumer_text}」が参照できること。"
+                    expected = f"「{link.artifact_text}」を、工程「{link.consumer_text}」が参照できること。" + html_note
                     verdict = "要確認（産出元が原典未定義）"
                 lines.append(
                     f"| DL-{len(lines) + 1:02d} | {producer} | {artifact} | {consumer} | {expected} | "
@@ -2609,8 +2703,13 @@ def edge_cases_for(business_title: str, pattern: Pattern) -> list[EdgeCase]:
     # 業務フロー本文由来の分岐 → パターン固有 → 業務単位 → 共通、の優先順で採用する。
     selected: list[EdgeCase] = edge_cases_from_branch_rows(pattern)
     selected.extend(pattern_specific_edge_cases(pattern))
+    # BUSINESS_EDGE_CASES も、業務フロー本文がその条件を含む場合だけ採用する。
+    # 以前は `or len(selected) < 2` で件数合わせに無条件注入していたが、これは業務フロー原典に
+    # 無い異常分岐（例: 既存商品編集の「組み合わせ不整合で保留」）を丸ごと異常ルートとして
+    # 捏造していた（codecレビュー指摘）。件数を埋めるためだけの採用はしない。分岐0件が正しい
+    # 経路は正常系のみで良い（SKILL: 業務分岐が無い経路は分岐0件が正しい姿）。
     for case in BUSINESS_EDGE_CASES.get(business_title, []):
-        if edge_case_matches(case, text, systems) or len(selected) < 2:
+        if edge_case_matches(case, text, systems):
             selected.append(case)
     # COMMON は件数合わせで注入しない。件数を埋めるためだけの採用は、結合テスト層の複製を
     # 全シナリオへ配布し、エッジケース数を水増しするだけで業務観点を増やさない。
@@ -2775,13 +2874,11 @@ def route_final_state_from_case(case: EdgeCase) -> str:
 
 
 def is_route_level_edge_case(case: EdgeCase) -> bool:
-    common_conditions = {c.condition for c in COMMON_EDGE_CASES}
-    if case.source_row:
-        return True
-    if case.condition in common_conditions:
-        return False
-    text = case.condition + " " + case.expected + " " + case.observation
-    return any(word in text for word in ROUTE_HIGH_RISK_KEYWORDS)
+    # 丸ごとの異常/代替ルート（独立シナリオ）は、業務フロー原典の分岐（source_row有り）だけから
+    # 作る。固定辞書由来（BUSINESS/PATTERN/COMMON, source_row無し）はルート化しない。以前は
+    # ROUTE_HIGH_RISK_KEYWORDS を含む辞書ケースもルート化しており、原典に無い異常シナリオ
+    # （例: 既存商品編集「組み合わせ不整合で保留」）を丸ごと捏造していた（codecレビュー指摘）。
+    return bool(case.source_row)
 
 
 def supporting_edge_cases(all_cases: list[EdgeCase], route_case: EdgeCase | None = None) -> tuple[EdgeCase, ...]:

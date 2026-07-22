@@ -226,30 +226,30 @@ DB関連の記述は ec-cube-enterprise を正とする。検索パターンの�
 
 文言はすべて `ec-cube-enterprise` 実ソース由来（`messages.ja.yaml` / 生文字列 / 例外文言）。可変部は `{…}` で示す。詳細は `message_inventory/slices/M05-01.resolved.tsv`。
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
-| M05-01-MSG-001 | 管理画面上部フラッシュ | 削除に失敗しました | 受注一覧の行削除で対象受注が存在しないとき（`admin.common.delete_error` / OrderController.php:311） |
-| M05-01-MSG-002 | 管理画面上部フラッシュ | 削除に失敗しました | 受注の論理削除で `ForeignKeyConstraintViolationException` が発生したとき（OrderController.php:324） |
-| M05-01-MSG-003 | 管理画面上部フラッシュ | 削除しました | 受注の論理削除が正常完了したとき（`admin.common.delete_complete` / OrderController.php:350） |
-| M05-01-MSG-004 | 管理画面上部フラッシュ | 削除しました | 一括削除で選択受注を削除し `flush` 完了したとき（OrderController.php:377）。要確認: bulkDeleteModal/btn_bulk_delete は index.twig:1330-1346 に実在するが、モーダルを開くトリガーも削除ボタンのJSハンドラも実ソースに無く、`admin_order_bulk_delete` へのUI配線を確認できない（デッドコードの可能性） |
-| M05-01-MSG-013 | 管理画面上部フラッシュ | 検索パターン名を入力して下さい | 検索条件保存でパターン名が空のとき（`admin.order.save_pattern.error.name_empty` / SearchOrderController.php:148） |
-| M05-01-MSG-014 | 管理画面上部フラッシュ | 検索条件を保存しました | 検索パターン保存が完了したとき（`admin.order.save_pattern.success` / SearchOrderController.php:164） |
-| M05-01-MSG-015 | 管理画面上部フラッシュ | 検索条件を削除できませんでした | 指定 pattern_id の検索パターンが存在しないとき（`admin.order.delete_pattern.error` / SearchOrderController.php:179） |
-| M05-01-MSG-016 | 管理画面上部フラッシュ | 検索条件を削除しました | 検索パターン削除が完了したとき（`admin.order.delete_pattern.success` / SearchOrderController.php:186） |
-| M05-01-MSG-017 | 画面中央ダイアログ（JS alert） | チェックボックスが選択されていません | 受注一覧のチェックボックス未選択で一括操作ボタン（スタック用紙印刷・送り状CSV出力・納品書印刷(日/英)・メール一括通知など）を押下したとき（index.twig:80-89 `preventIfNoCheckedBulkTarget`）。操作は中止される |
-| M05-01-MSG-018 | 画面中央ダイアログ（JS alert） | Update failed. | 受注一覧行の送り状番号インライン更新で `admin_shipping_update_tracking_number` のJSON応答statusがOK以外のとき（index.twig:181-193、alert後 `return true` で遷移処理の記述なし）。英語リテラル。要検証: 機能帰属は m05-13 候補（実装は m05-01 テンプレ内） |
-| M05-01-MSG-023 | 入力項目直下 | カタカナで入力してください。 | POST検索時、入力値が正規表現 /^[ァ-ヶｦ-ﾟー]+$/u に一致しない場合 |
-| M05-01-MSG-024 | 入力項目直下 | カタカナで入力してください。 | POST検索時、入力値が正規表現 /^[ァ-ヶｦ-ﾟー]+$/u に一致しない場合 |
-| M05-01-MSG-025 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 注文日時の開始・終了がともに空でなく、開始が終了より後の場合 |
-| M05-01-MSG-026 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 入金日時の開始・終了がともに空でなく、開始が終了より後の場合 |
-| M05-01-MSG-027 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 更新日時の開始・終了がともに空でなく、開始が終了より後の場合 |
-| M05-01-MSG-028 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POSTデータ内のお届け日時の開始・終了がともに空でなく、開始が終了より後の場合 |
-| M05-01-MSG-029 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | ピック日時の開始・終了がともに空でなく、開始が終了より後の場合 |
-| M05-01-MSG-030 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 出荷指示日時の開始・終了がともに空でなく、開始が終了より後の場合 |
-| M05-01-MSG-031 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 出荷日時の開始・終了がともに空でなく、開始が終了より後の場合 |
-| M05-01-MSG-032 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | キャンセル日時の開始・終了がともに空でなく、開始が終了より後の場合 |
-| M05-01-MSG-033 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 売上確定日時の開始・終了がともに空でなく、開始が終了より後の場合 |
-| M05-01-MSG-034 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 店頭予約日時の開始・終了がともに空でなく、開始が終了より後の場合 |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
+| M05-01-MSG-001 | 管理画面上部フラッシュ | 削除に失敗しました | 受注一覧の行削除で対象受注が存在しないとき（`admin.common.delete_error` / OrderController.php:311） | 受注情報検索・一覧画面に遷移する |
+| M05-01-MSG-002 | 管理画面上部フラッシュ | 削除に失敗しました | 受注の論理削除で `ForeignKeyConstraintViolationException` が発生したとき（OrderController.php:324） | 受注情報検索・一覧画面に遷移する |
+| M05-01-MSG-003 | 管理画面上部フラッシュ | 削除しました | 受注の論理削除が正常完了したとき（`admin.common.delete_complete` / OrderController.php:350） | 受注情報検索・一覧画面に遷移する |
+| M05-01-MSG-004 | 管理画面上部フラッシュ | 削除しました | 一括削除で選択受注を削除し `flush` 完了したとき（OrderController.php:377）。要確認: bulkDeleteModal/btn_bulk_delete は index.twig:1330-1346 に実在するが、モーダルを開くトリガーも削除ボタンのJSハンドラも実ソースに無く、`admin_order_bulk_delete` へのUI配線を確認できない（デッドコードの可能性） | 受注情報検索・一覧画面に遷移する |
+| M05-01-MSG-013 | 管理画面上部フラッシュ | 検索パターン名を入力して下さい | 検索条件保存でパターン名が空のとき（`admin.order.save_pattern.error.name_empty` / SearchOrderController.php:148） | 受注情報検索・一覧画面に遷移する |
+| M05-01-MSG-014 | 管理画面上部フラッシュ | 検索条件を保存しました | 検索パターン保存が完了したとき（`admin.order.save_pattern.success` / SearchOrderController.php:164） | 受注情報検索・一覧画面に遷移する |
+| M05-01-MSG-015 | 管理画面上部フラッシュ | 検索条件を削除できませんでした | 指定 pattern_id の検索パターンが存在しないとき（`admin.order.delete_pattern.error` / SearchOrderController.php:179） | 受注情報検索・一覧画面に遷移する |
+| M05-01-MSG-016 | 管理画面上部フラッシュ | 検索条件を削除しました | 検索パターン削除が完了したとき（`admin.order.delete_pattern.success` / SearchOrderController.php:186） | 受注情報検索・一覧画面に遷移する |
+| M05-01-MSG-017 | 画面中央ダイアログ（JS alert） | チェックボックスが選択されていません | 受注一覧のチェックボックス未選択で一括操作ボタン（スタック用紙印刷・送り状CSV出力・納品書印刷(日/英)・メール一括通知など）を押下したとき（index.twig:80-89 `preventIfNoCheckedBulkTarget`）。操作は中止される | 送信せず受注情報検索・一覧画面に留まる |
+| M05-01-MSG-018 | 画面中央ダイアログ（JS alert） | Update failed. | 受注一覧行の送り状番号インライン更新で `admin_shipping_update_tracking_number` のJSON応答statusがOK以外のとき（index.twig:181-193、alert後 `return true` で遷移処理の記述なし）。英語リテラル。要検証: 機能帰属は m05-13 候補（実装は m05-01 テンプレ内） | エラーを表示し、受注情報検索・一覧画面に留まる |
+| M05-01-MSG-023 | 入力項目直下 | カタカナで入力してください。 | POST検索時、入力値が正規表現 /^[ァ-ヶｦ-ﾟー]+$/u に一致しない場合 | 受注情報検索・一覧画面に留まる |
+| M05-01-MSG-024 | 入力項目直下 | カタカナで入力してください。 | POST検索時、入力値が正規表現 /^[ァ-ヶｦ-ﾟー]+$/u に一致しない場合 | 受注情報検索・一覧画面に留まる |
+| M05-01-MSG-025 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 注文日時の開始・終了がともに空でなく、開始が終了より後の場合 | 要ソース確認 |
+| M05-01-MSG-026 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 入金日時の開始・終了がともに空でなく、開始が終了より後の場合 | 要ソース確認 |
+| M05-01-MSG-027 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 更新日時の開始・終了がともに空でなく、開始が終了より後の場合 | 要ソース確認 |
+| M05-01-MSG-028 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POSTデータ内のお届け日時の開始・終了がともに空でなく、開始が終了より後の場合 | 要ソース確認 |
+| M05-01-MSG-029 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | ピック日時の開始・終了がともに空でなく、開始が終了より後の場合 | 要ソース確認 |
+| M05-01-MSG-030 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 出荷指示日時の開始・終了がともに空でなく、開始が終了より後の場合 | 要ソース確認 |
+| M05-01-MSG-031 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 出荷日時の開始・終了がともに空でなく、開始が終了より後の場合 | 要ソース確認 |
+| M05-01-MSG-032 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | キャンセル日時の開始・終了がともに空でなく、開始が終了より後の場合 | 要ソース確認 |
+| M05-01-MSG-033 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 売上確定日時の開始・終了がともに空でなく、開始が終了より後の場合 | 要ソース確認 |
+| M05-01-MSG-034 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | 店頭予約日時の開始・終了がともに空でなく、開始が終了より後の場合 | 要ソース確認 |
 
 ---
 

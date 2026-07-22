@@ -142,13 +142,13 @@
 
 ec-cube-enterprise は英語ロケール資源（`messages.en.yaml`／`validators.en.yaml`）を持ち、言語切替で英語表示へ到達できる。利用者向けの文言を日本語と英語で対応づける。
 
-| メッセージID | 表示文言（日本語） | 表示文言（英語） | 表示条件（利用者視点） | 表示位置 | 備考 |
-| --- | -------------------- | ------------------ | ------------------------ | ---------- | ------ |
-| M10-12-MSG-001 | 保存しました | Saved | 新規登録フォームが検証と永続化に成功した後（`admin_homepage` へリダイレクト） | 管理者ホームの成功フラッシュ領域 | ロケールキー `admin.common.save_complete`（`CalendarController.php:71`）。 |
-| M10-12-MSG-002 | 保存しました | Saved | インライン編集（`mode=edit_inline`）で `calendar_id` 一致行の更新が検証と永続化に成功した後（`admin_homepage` へリダイレクト） | 管理者ホームの成功フラッシュ領域 | ロケールキー `admin.common.save_complete`（`CalendarController.php:105`）。 |
-| M10-12-MSG-003 | 削除しました | Deleted | 削除リンク（CSRF付きDELETE）が `isTokenValid()` を通り削除に成功した後 | 要ソース確認（ハンドラは `{'success': true}` を返すのみで redirect/render が無く、`function.js` の該当リンク処理も応答を解釈せずフォーム送信で遷移するため、フラッシュの表示経路は実ソースから確認できない） | ロケールキー `admin.common.delete_complete`（`CalendarController.php:137`）。 |
-| — | 同日の定休日が既に存在しているため、設定できません。 | Date is already existed. | 同一店舗・同一日付の別行が既に存在する状態で送信した | 日付入力欄下のエラー表示 | ロケールキー `admin.setting.shop.calendar.holiday.available_error`。 |
-| M10-12-MSG-004 | 入力項目直下/フォーム上部 | 同日の定休日が既に存在しているため、設定できません。 | 新規登録またはインライン編集のPOST_SUBMIT時、同一holiday・同一BaseInfoの別Calendarが存在するとき | holiday項目へFormErrorを追加し、フォームを無効として定休日カレンダー設定画面を再表示する |  |
+| メッセージID | 表示文言（日本語） | 表示文言（英語） | 表示条件（利用者視点） | 表示位置 | 備考 | 後続処理 |
+| --- | -------------------- | ------------------ | ------------------------ | ---------- | ------ |----------|
+| M10-12-MSG-001 | 保存しました | Saved | 新規登録フォームが検証と永続化に成功した後（`admin_homepage` へリダイレクト） | 管理者ホームの成功フラッシュ領域 | ロケールキー `admin.common.save_complete`（`CalendarController.php:71`）。 | 管理画面ホームに遷移する |
+| M10-12-MSG-002 | 保存しました | Saved | インライン編集（`mode=edit_inline`）で `calendar_id` 一致行の更新が検証と永続化に成功した後（`admin_homepage` へリダイレクト） | 管理者ホームの成功フラッシュ領域 | ロケールキー `admin.common.save_complete`（`CalendarController.php:105`）。 | 管理画面ホームに遷移する |
+| M10-12-MSG-003 | 削除しました | Deleted | 削除リンク（CSRF付きDELETE）が `isTokenValid()` を通り削除に成功した後 | 要ソース確認（ハンドラは `{'success': true}` を返すのみで redirect/render が無く、`function.js` の該当リンク処理も応答を解釈せずフォーム送信で遷移するため、フラッシュの表示経路は実ソースから確認できない） | ロケールキー `admin.common.delete_complete`（`CalendarController.php:137`）。 | 要ソース確認 |
+| — | 同日の定休日が既に存在しているため、設定できません。 | Date is already existed. | 同一店舗・同一日付の別行が既に存在する状態で送信した | 日付入力欄下のエラー表示 | ロケールキー `admin.setting.shop.calendar.holiday.available_error`。 | — |
+| M10-12-MSG-004 | 入力項目直下/フォーム上部 | 同日の定休日が既に存在しているため、設定できません。 | 新規登録またはインライン編集のPOST_SUBMIT時、同一holiday・同一BaseInfoの別Calendarが存在するとき | holiday項目へFormErrorを追加し、フォームを無効として定休日カレンダー設定画面を再表示する |  | 定休日カレンダー設定画面に留まる |
 
 ---
 

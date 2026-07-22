@@ -171,10 +171,10 @@ HTTP 200。
 
 ## 表示メッセージ
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
-| A02-05-MSG-002 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | CSV行のclass_name_del_flgが1で、規格削除時にForeignKeyConstraintViolationExceptionが発生したとき |
-| A02-05-MSG-003 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | CSV行のclass_category_del_flgが1で、規格分類削除時にForeignKeyConstraintViolationExceptionが発生したとき |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
+| A02-05-MSG-002 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | CSV行のclass_name_del_flgが1で、規格削除時にForeignKeyConstraintViolationExceptionが発生したとき | 規格CSV登録画面に留まる |
+| A02-05-MSG-003 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | CSV行のclass_category_del_flgが1で、規格分類削除時にForeignKeyConstraintViolationExceptionが発生したとき | 規格分類CSV登録画面に留まる |
 
 ## 業務ルール・計算
 

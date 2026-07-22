@@ -164,17 +164,17 @@
 
 ## 表示メッセージ
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
-| M03-11-MSG-001 | 管理画面上部フラッシュ | 保存しました | カテゴリ作成/更新フォームが送信・妥当で保存処理が正常完了したとき（成功後、親があれば親配下、なければ一覧へリダイレクト） |
-| M03-11-MSG-002 | 管理画面上部フラッシュ | 削除しました | 対象カテゴリが存在し `DELETE …/category/{id}/delete` の削除処理が正常終了したとき（成功後、親があれば親配下、なければ一覧へリダイレクト） |
-| M03-11-MSG-003 | 管理画面上部フラッシュ | 関連するデータがあるため「%name%」を削除できませんでした | カテゴリ削除処理の try 節で例外（`\Exception`）を捕捉したとき（`CategoryController.php:700` `admin.common.delete_error_foreign_key`）。`%name%` は対象カテゴリ名で実行時置換 |
-| M03-11-MSG-004 | 管理画面上部フラッシュ | 既に削除されています | DELETE 時に対象カテゴリが DB 上に存在しないとき（`CategoryController.php:669-674` `deleteMessage()` → `admin.common.delete_error_already_deleted`）。警告フラッシュ。親判定なしでカテゴリ一覧へリダイレクト（fable5レビュー追加） |
-| M03-11-MSG-007 | 入力項目直下（form_errors） | JPEG / PNG / GIF の画像ファイルのみアップロードできます。 | バナー／アイコン画像がフォーム経由で MIME 不一致のとき（`CategoryType.php:81` `form_error.category_image_invalid_mime`）。通常操作は FilePond の Ajax 経由のためフォーム経由での発火経路は要ソース確認（fable5レビュー追加） |
-| M03-11-MSG-008 | 入力項目直下（form_errors） | 画像ファイルのサイズが大きすぎます（最大 {{ limit }} {{ suffix }}）。 | バナー／アイコン画像がフォーム経由で 10M 超過のとき（`CategoryType.php:82` `form_error.category_image_too_large`）。`{{ limit }} {{ suffix }}` は実行時置換。発火経路は要ソース確認（fable5レビュー追加） |
-| M03-11-MSG-009 | 入力項目直下（form_errors） | 画像として読み取れない、または破損したファイルです。 | バナー／アイコン画像がフォーム経由で破損検出されたとき（`CategoryType.php:84` `form_error.category_image_corrupted`）。発火経路は要ソース確認（fable5レビュー追加） |
-| M03-11-MSG-010 | 入力項目直下（form_errors） | 入力されていません。 | カテゴリ名（日）未入力で送信したとき（`CategoryType.php:49` NotBlank、`validators.ja.yaml:17` デフォルト文言）（fable5レビュー追加） |
-| M03-11-MSG-011 | 入力項目直下（form_errors） | 長すぎます。この値は{{ limit }}文字以下で入力してください。 | カテゴリ名（日）／（英）＝`eccube_stext_len`、検索パラメーター＝`eccube_ltext_len` の Length 超過時（`CategoryType.php:50-52,58-62,154-158`、Symfony デフォルト訳 `validators.ja.xlf:79`）。`{{ limit }}` は実行時置換（fable5レビュー追加） |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
+| M03-11-MSG-001 | 管理画面上部フラッシュ | 保存しました | カテゴリ作成/更新フォームが送信・妥当で保存処理が正常完了したとき（成功後、親があれば親配下、なければ一覧へリダイレクト） | 管理画面_商品管理_カテゴリ一覧画面に遷移する |
+| M03-11-MSG-002 | 管理画面上部フラッシュ | 削除しました | 対象カテゴリが存在し `DELETE …/category/{id}/delete` の削除処理が正常終了したとき（成功後、親があれば親配下、なければ一覧へリダイレクト） | 管理画面_商品管理_カテゴリ一覧画面に遷移する |
+| M03-11-MSG-003 | 管理画面上部フラッシュ | 関連するデータがあるため「%name%」を削除できませんでした | カテゴリ削除処理の try 節で例外（`\Exception`）を捕捉したとき（`CategoryController.php:700` `admin.common.delete_error_foreign_key`）。`%name%` は対象カテゴリ名で実行時置換 | 管理画面_商品管理_カテゴリ一覧画面に遷移する |
+| M03-11-MSG-004 | 管理画面上部フラッシュ | 既に削除されています | DELETE 時に対象カテゴリが DB 上に存在しないとき（`CategoryController.php:669-674` `deleteMessage()` → `admin.common.delete_error_already_deleted`）。警告フラッシュ。親判定なしでカテゴリ一覧へリダイレクト（fable5レビュー追加） | 管理画面_商品管理_カテゴリ一覧画面に遷移する |
+| M03-11-MSG-007 | 入力項目直下（form_errors） | JPEG / PNG / GIF の画像ファイルのみアップロードできます。 | バナー／アイコン画像がフォーム経由で MIME 不一致のとき（`CategoryType.php:81` `form_error.category_image_invalid_mime`）。通常操作は FilePond の Ajax 経由のためフォーム経由での発火経路は要ソース確認（fable5レビュー追加） | 要ソース確認 |
+| M03-11-MSG-008 | 入力項目直下（form_errors） | 画像ファイルのサイズが大きすぎます（最大 {{ limit }} {{ suffix }}）。 | バナー／アイコン画像がフォーム経由で 10M 超過のとき（`CategoryType.php:82` `form_error.category_image_too_large`）。`{{ limit }} {{ suffix }}` は実行時置換。発火経路は要ソース確認（fable5レビュー追加） | 要ソース確認 |
+| M03-11-MSG-009 | 入力項目直下（form_errors） | 画像として読み取れない、または破損したファイルです。 | バナー／アイコン画像がフォーム経由で破損検出されたとき（`CategoryType.php:84` `form_error.category_image_corrupted`）。発火経路は要ソース確認（fable5レビュー追加） | 要ソース確認 |
+| M03-11-MSG-010 | 入力項目直下（form_errors） | 入力されていません。 | カテゴリ名（日）未入力で送信したとき（`CategoryType.php:49` NotBlank、`validators.ja.yaml:17` デフォルト文言）（fable5レビュー追加） | 管理画面_商品管理_カテゴリ登録・編集画面に留まる |
+| M03-11-MSG-011 | 入力項目直下（form_errors） | 長すぎます。この値は{{ limit }}文字以下で入力してください。 | カテゴリ名（日）／（英）＝`eccube_stext_len`、検索パラメーター＝`eccube_ltext_len` の Length 超過時（`CategoryType.php:50-52,58-62,154-158`、Symfony デフォルト訳 `validators.ja.xlf:79`）。`{{ limit }}` は実行時置換（fable5レビュー追加） | 管理画面_商品管理_カテゴリ登録・編集画面に留まる |
 
 ---
 

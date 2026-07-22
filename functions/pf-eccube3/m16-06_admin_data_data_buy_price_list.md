@@ -150,8 +150,8 @@ HareruyaEc プラグインが管理画面「データ管理」配下に提供す
 
 ## 表示メッセージ
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
 
 > 根拠: `src/Eccube/Controller/Admin/Data/BuyPriceListController.php:113`（`addSuccess('admin.register.complete', 'admin')`）/ `src/Eccube/Resource/locale/messages.ja.yaml:1966`。
 

@@ -229,13 +229,13 @@ DB関連の記述は ec-cube-enterprise の実装を正とする。商品タグ�
 
 ## 表示メッセージ
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
-| M03-28-MSG-002 | 画面上部フラッシュ | CSVのフォーマットが一致しません | 有効なフォーム送信後、アップロードファイルが未取得（null）のとき（`admin.common.csv_invalid_format`） |
-| M03-28-MSG-003 | 画面上部フラッシュ | %maxRecord% 行を超えるCSVファイルは登録できません。 | CSV 行数が上限（`%maxRecord%`=`ADMIN_CSV_IMPORT_MAX_ROWS`）以上のとき（`admin.csv.error.upload.maxrecord`） |
-| M03-28-MSG-005 | 画面上部フラッシュ | 登録が完了しました。 | CsvImporter の取込結果にエラーがないとき（`admin.register.complete`） |
-| M03-28-MSG-001 | 画面上部フラッシュ | 要ソース確認 | アップロードフォームが不正（`$form->isValid()`=false）のとき。各検証エラーメッセージ（`$error->getMessage()`・可変値）をそのままフラッシュ |
-| M03-28-MSG-004 | 画面上部フラッシュ | 要ソース確認 | CsvImporter の取込結果にエラーがあるとき。各行のエラーメッセージ（`$error['message']`・可変値）を全件フラッシュ |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
+| M03-28-MSG-002 | 画面上部フラッシュ | CSVのフォーマットが一致しません | 有効なフォーム送信後、アップロードファイルが未取得（null）のとき（`admin.common.csv_invalid_format`） | 商品タグ更新CSV登録画面に遷移する |
+| M03-28-MSG-003 | 画面上部フラッシュ | %maxRecord% 行を超えるCSVファイルは登録できません。 | CSV 行数が上限（`%maxRecord%`=`ADMIN_CSV_IMPORT_MAX_ROWS`）以上のとき（`admin.csv.error.upload.maxrecord`） | 商品タグ更新CSV登録画面に遷移する |
+| M03-28-MSG-005 | 画面上部フラッシュ | 登録が完了しました。 | CsvImporter の取込結果にエラーがないとき（`admin.register.complete`） | 商品タグ更新CSV登録画面に遷移する |
+| M03-28-MSG-001 | 画面上部フラッシュ | 要ソース確認 | アップロードフォームが不正（`$form->isValid()`=false）のとき。各検証エラーメッセージ（`$error->getMessage()`・可変値）をそのままフラッシュ | 要ソース確認 |
+| M03-28-MSG-004 | 画面上部フラッシュ | 要ソース確認 | CsvImporter の取込結果にエラーがあるとき。各行のエラーメッセージ（`$error['message']`・可変値）を全件フラッシュ | 要ソース確認 |
 
 ---
 

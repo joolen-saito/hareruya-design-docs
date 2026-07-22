@@ -45,6 +45,7 @@
 | DP-B001 | 正常系 境界 | 正常系#7 | 本人確認の代表差分を確認する。 | 簡易書留確認済みと再確認待ちの申込を用意する。 | 商品コード=ST-CARD-ONLINE-KAITORI-001-R06-IDOK / 本人確認状態=確認済み / 商品コード=ST-CARD-ONLINE-KAITORI-001-R06-IDRETRY / 本人確認状態=再確認待ち | 本人確認状態、後続処理可否、通知結果 |
 | DP-B002 | 正常系 境界 | 正常系#7 | 到着カード件数の最小/複数境界を確認する。 | 到着カード1件と複数件の申込を用意する。 | 商品コード=ST-CARD-ONLINE-KAITORI-001-R06-ONE / 到着カード=1件 / 商品コード=ST-CARD-ONLINE-KAITORI-001-R06-MULTI / 到着カード=30件 | 査定明細件数、買取ステータス、振込対象金額 |
 | DP-E001 | 異常系 | 分岐E1 | 本人確認失敗メール受領として、本人確認失敗メールを受領 | 外部連携または取込処理が失敗を返すテストデータを用意する。 | 商品コード=ST-CARD-ONLINE-KAITORI-001-R06-E1 / 外部連携結果=ERROR / リトライ可能=YES | 本人確認状態、後続処理ボタンの活性/非活性、通知結果 |
+| DP-E002 | 異常系 | 分岐E2 | 本人確認書類に不備がある | 分岐条件を満たす対象データを、正常代表データとは別IDで用意する。 | 必須項目欠落・形式不正の入力データ / 商品コード=ST-CARD-ONLINE-KAITORI-001-R06-E2 / 基準=商品コード=ST-CARD-ONLINE-KAITORI-001-R06 | 本人確認状態、買取ステータス、通知結果 |
 
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
@@ -72,11 +73,13 @@
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
 |---|---|---|---|---|
 | E1 | 1 | 本人確認失敗メール受領として、本人確認失敗メールを受領 | エラー内容を表示し、対象データを中途半端に更新しない | 本人確認状態、後続処理ボタンの活性/非活性、通知結果 |
+| E2 | 1 | 本人確認書類に不備がある | 振込または成立処理へ進めず、再確認状態にする | 本人確認状態、買取ステータス、通知結果 |
 
 ## 実行手順（代替系・異常系）
 | # | 分岐ID | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|---|
 | 1 | E1 | 通販チーム | M08-10（オンライン本人確認）で 条件「本人確認失敗メール受領として、本人確認失敗メールを受領」となるデータ/操作を実行する | 外部連携/処理が失敗する条件の対象データ（基準: 商品コード=ST-CARD-ONLINE-KAITORI-001-R06） | エラー内容を表示し、対象データを中途半端に更新しないこと。 | 本人確認状態、後続処理ボタンの活性/非活性、通知結果 |
+| 2 | E2 | 通販チーム | 条件「本人確認書類に不備がある」となるデータ/操作を実行する（実施画面は要確認。機能Noを特定できていない） | 必須項目欠落・形式不正の入力データ（基準: 商品コード=ST-CARD-ONLINE-KAITORI-001-R06） | 振込または成立処理へ進めず、再確認状態にすること。 | 本人確認状態、買取ステータス、通知結果 |
 
 ## データ連鎖（業務フロー原典のデータ遷移線）
 本層は機能テストではなく、**データのつながりで業務が完遂できるか**を見る。下表は業務フロー図の
@@ -105,7 +108,7 @@
 ## エッジケース要約
 | 件数 | 主なエッジケース | 確認対象 |
 |---|---|---|
-| 1 | 本人確認失敗メール受領として、本人確認失敗メールを受領 | 本人確認状態、後続処理ボタンの活性/非活性、通知結果 |
+| 2 | 本人確認失敗メール受領として、本人確認失敗メールを受領<br>本人確認書類に不備がある | 本人確認状態、後続処理ボタンの活性/非活性、通知結果<br>本人確認状態、買取ステータス、通知結果 |
 
 ## 他層委譲（結合テスト）
 権限・必須/形式・重複実行・0件検索は機構的な確認であり、結合テスト層（`integration-test-viewpoints.md`）が
@@ -114,10 +117,10 @@
 
 | 機構的観点 | 委譲先IT観点 | 結合テストケースID | 状態 |
 |---|---|---|---|
-| 担当者に必要な権限がない | IT-15 | `IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-001`<br>`IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-002`<br>`IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-003`<br>ほか 27 件 | 委譲済 |
+| 担当者に必要な権限がない | IT-15 | `IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-001`<br>`IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-002`<br>`IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-003`<br>ほか 20 件 | 委譲済 |
 | 入力値の必須項目不足または形式不正がある | IT-22 | `IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-010`<br>`IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-011`<br>`IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-012`<br>ほか 37 件 | 委譲済 |
-| 同一対象に対して同じ処理を重複実行する | IT-08 | - | 未整備（結合テスト側に該当ケースなし） |
-| 検索条件に一致する対象データが存在しない | IT-23 / IT-14 | `IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-031`<br>`IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-031`<br>`IT-M07-01-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-SEARCH-LIST-020`<br>ほか 36 件 | 委譲済 |
+| 同一対象に対して同じ処理を重複実行する | IT-08 | `IT-M07-03-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-BUY-ORDER-EDIT-092`<br>`IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-032` | 委譲済 |
+| 検索条件に一致する対象データが存在しない | IT-23 / IT-14 | `IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-031`<br>`IT-M08-10-ADMIN-CUSTOMER-CUSTOMER-ONLINE-IDENTIFICATION-030`<br>`IT-M07-01-ADMIN-ONLINE-PURCHASE-PURCHASE-ONLINE-SEARCH-LIST-018`<br>ほか 37 件 | 委譲済 |
 
 ## トレーサビリティ
 - **カバーする業務フロー番号**: ネット買取 / パターン1 / 経路6

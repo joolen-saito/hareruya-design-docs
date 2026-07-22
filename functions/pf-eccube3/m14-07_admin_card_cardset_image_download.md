@@ -108,10 +108,10 @@ ZIP 構成・ファイル名規則・デッドリンク更新の挙動は現行�
 
 ## 表示メッセージ
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|---|---|---|---|
-| M14-07-MSG-001 | 管理画面上部 | 要ソース確認 | POST先admin_cardset_downloadのZIP生成処理(download)で例外が発生したとき |
-| M14-07-MSG-002 | 管理画面上部 | 要ソース確認 | POST先admin_cardset_download_each_langのZIP生成処理(downloadEachLang)で例外が発生したとき |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|---|---|---|---|----------|
+| M14-07-MSG-001 | 管理画面上部 | 要ソース確認 | POST先admin_cardset_downloadのZIP生成処理(download)で例外が発生したとき | 要ソース確認 |
+| M14-07-MSG-002 | 管理画面上部 | 要ソース確認 | POST先admin_cardset_download_each_langのZIP生成処理(downloadEachLang)で例外が発生したとき | 要ソース確認 |
 
 ## 業務ルール・計算
 

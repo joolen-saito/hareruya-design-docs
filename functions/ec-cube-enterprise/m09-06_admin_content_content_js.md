@@ -146,13 +146,19 @@ JavaScript管理は、管理者がフロント共通テンプレートから読�
 |-------------------|------------------|----------------------|----------|------|
 | 保存しました | Saved | 登録押下で編集対象ファイルへの書き込みに成功したとき | 画面上部のメッセージ領域 | ロケールキー `admin.common.save_complete`。リダイレクト後の同一画面で表示する。 |
 | 保存に失敗しました | Failed to save | 登録押下で編集対象ファイルへの書き込みが入出力例外で失敗したとき | 画面上部のメッセージ領域 | ロケールキー `admin.common.save_error`。リダイレクトせず同一画面で表示する。 |
-| M09-06-MSG-001 | 管理画面上部 | この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。 | admin_content_js（GET/POST）の処理冒頭で addInfoOnce が呼ばれ、eccube.admin.info フラッシュバッグにメッセージが1件も未積載のとき（addFlashOnce の hasMessage 判定。フラッシュは描画時に消費されるため、この抑止はリクエスト内の重複積載防止であり、通常は画面表示のたびに表示される） | 情報フラッシュを積むのみ。画面はそのまま描画され、alert.twig の eccube.admin.info ループで画面上部に表示する（画面遷移なし） |
-| M09-06-MSG-002 | 管理画面上部 | 保存しました | POST /%eccube_admin_route%/content/js でフォームが送信済みかつ妥当（isSubmitted && isValid）であり、customize.js への dumpFile が成功したとき | 成功フラッシュを積み、続けてファイルアダプタで /html/user_data/assets/js/ へ customize.js を配置したうえで admin_content_js へリダイレクトする（リダイレクト先で画面上部に表示） |
-| M09-06-MSG-003 | 管理画面上部 | 保存に失敗しました | POST /%eccube_admin_route%/content/js の保存処理（customize.js への dumpFile またはファイルアダプタ upload）で IOException が発生したとき | エラーフラッシュを積み、同文言と [対象パス, 例外] を log_error へ出力する。リダイレクトせず同一画面のテンプレートを描画する |
 
 本機能のフラッシュ・トーストは上記の保存完了と保存失敗の2種のみである。他画面由来のメッセージは本機能の出力ではない。
 
 ---
+
+
+### メッセージID対応（自動棚卸）
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|---|---|---|---|---|
+| M09-06-MSG-001 | 管理画面上部 | この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。 | admin_content_js（GET/POST）の処理冒頭で addInfoOnce が呼ばれ、eccube.admin.info フラッシュバッグにメッセージが1件も未積載のとき（addFlashOnce の hasMessage 判定。フラッシュは描画時に消費されるため、この抑止はリクエスト内の重複積載防止であり、通常は画面表示のたびに表示される） | JavaScript管理画面に留まる |
+| M09-06-MSG-002 | 管理画面上部 | 保存しました | POST /%eccube_admin_route%/content/js でフォームが送信済みかつ妥当（isSubmitted && isValid）であり、customize.js への dumpFile が成功したとき | JavaScript管理画面に遷移する |
+| M09-06-MSG-003 | 管理画面上部 | 保存に失敗しました | POST /%eccube_admin_route%/content/js の保存処理（customize.js への dumpFile またはファイルアダプタ upload）で IOException が発生したとき | JavaScript管理画面に留まる |
 
 ## 業務ルール・計算
 

@@ -233,13 +233,19 @@
 | 事象 | 画面でのメッセージ |
 |------|-------------------|
 | 申込が存在しない | なし（404） |
-| M13-10-MSG-001 | 管理画面上部 |
-| M13-10-MSG-002 | 管理画面上部 |
-| M13-10-MSG-003 | 管理画面上部 |
 
 参加者重複時のメッセージは申込重複用の文言を表示する。文言の正は表示メッセージ節、処理方針はエラー処理節とする。
 
 ---
+
+
+### メッセージID対応（自動棚卸）
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|---|---|---|---|---|
+| M13-10-MSG-001 | 管理画面上部 | 保存しました | 既存イベント申込の編集フォーム(EventEntryDetailType)をPOST(admin_event_entry_edit)し、isSubmitted かつ isValid で EntryUpdateAction->handle() が例外なく完了したとき | イベント申込詳細・編集画面に遷移する |
+| M13-10-MSG-002 | 管理画面上部 | 要ソース確認（variable: $e->getMessage()） | 既存イベント申込の編集フォームをPOST(admin_event_entry_edit)し、EntryUpdateAction->handle() が \InvalidArgumentException を送出したとき（例外メッセージをそのままフラッシュに積む） | 要ソース確認 |
+| M13-10-MSG-003 | 管理画面上部 | 保存に失敗しました | 既存イベント申込の編集フォームをPOST(admin_event_entry_edit)し、EntryUpdateAction->handle() が \InvalidArgumentException 以外の \Exception を送出したとき | イベント申込詳細・編集画面に留まる |
 
 ## 画面遷移
 

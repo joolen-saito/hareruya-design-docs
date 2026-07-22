@@ -227,13 +227,13 @@
 
 ## 表示メッセージ
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
-| M03-38-MSG-001 | 管理画面上部フラッシュ | 要ソース確認 | POST後にフォームが無効で、親フォームの `getErrors()`（deep=false）から取得できるエラー（CSRFトークン不正等の親直下エラー）があるとき。文言は可変（`$error->getMessage()`）で単一確定不可＝`import_file` 子フォームのNotBlank/File制約違反は浅い `getErrors(deep=false)` には現れない。`admin_product_status_csv_upload` へリダイレクト |
-| M03-38-MSG-002 | 管理画面上部フラッシュ | CSVのフォーマットが一致しません | フォーム有効後に `import_file` が null のとき。`admin_product_status_csv_upload` へリダイレクト |
-| M03-38-MSG-003 | 管理画面上部フラッシュ | %maxRecord% 行を超えるCSVファイルは登録できません。 | `countCsvRows(import_file)` が `ADMIN_CSV_IMPORT_MAX_ROWS` 以上のとき。`%maxRecord%` は原文プレースホルダを保持。`admin_product_status_csv_upload` へリダイレクト |
-| M03-38-MSG-004 | 管理画面上部フラッシュ | 要ソース確認 | `CsvImporter::import()` の結果で `hasError()` が true のとき。文言は可変（`$error['message']`／`MessageStore` 結果由来でCSV内容・行番号・列名で生成）で単一確定不可。`admin_product_status_csv_upload` へリダイレクト |
-| M03-38-MSG-005 | 管理画面上部フラッシュ | 登録が完了しました。 | `CsvImporter::import()` の結果で `hasError()` が false のとき。CSV取込履歴を登録後、`admin_product_status_csv_upload` へリダイレクト |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
+| M03-38-MSG-001 | 管理画面上部フラッシュ | 要ソース確認 | POST後にフォームが無効で、親フォームの `getErrors()`（deep=false）から取得できるエラー（CSRFトークン不正等の親直下エラー）があるとき。文言は可変（`$error->getMessage()`）で単一確定不可＝`import_file` 子フォームのNotBlank/File制約違反は浅い `getErrors(deep=false)` には現れない。`admin_product_status_csv_upload` へリダイレクト | 要ソース確認 |
+| M03-38-MSG-002 | 管理画面上部フラッシュ | CSVのフォーマットが一致しません | フォーム有効後に `import_file` が null のとき。`admin_product_status_csv_upload` へリダイレクト | 商品公開CSV登録画面に遷移する |
+| M03-38-MSG-003 | 管理画面上部フラッシュ | %maxRecord% 行を超えるCSVファイルは登録できません。 | `countCsvRows(import_file)` が `ADMIN_CSV_IMPORT_MAX_ROWS` 以上のとき。`%maxRecord%` は原文プレースホルダを保持。`admin_product_status_csv_upload` へリダイレクト | 商品公開CSV登録画面に遷移する |
+| M03-38-MSG-004 | 管理画面上部フラッシュ | 要ソース確認 | `CsvImporter::import()` の結果で `hasError()` が true のとき。文言は可変（`$error['message']`／`MessageStore` 結果由来でCSV内容・行番号・列名で生成）で単一確定不可。`admin_product_status_csv_upload` へリダイレクト | 要ソース確認 |
+| M03-38-MSG-005 | 管理画面上部フラッシュ | 登録が完了しました。 | `CsvImporter::import()` の結果で `hasError()` が false のとき。CSV取込履歴を登録後、`admin_product_status_csv_upload` へリダイレクト | 商品公開CSV登録画面に遷移する |
 
 ---
 

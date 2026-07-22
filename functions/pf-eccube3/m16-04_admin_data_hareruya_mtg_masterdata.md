@@ -86,10 +86,10 @@ HareruyaEc プラグインが管理画面の「データ管理」配下から到
 
 ## 表示メッセージ
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|---|---|---|---|
-| M16-04-MSG-001 | 管理画面上部 | 保存しました | POSTでeditFormが送信済みかつ有効で、postedEntityKeyの設定が存在し storeAction->handle が正常終了したとき |
-| M16-04-MSG-002 | 管理画面上部 | 要ソース確認 | POSTでeditFormが送信済みかつ有効で、storeAction->handle 中に \RuntimeException を捕捉したとき（catch節） |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|---|---|---|---|----------|
+| M16-04-MSG-001 | 管理画面上部 | 保存しました | POSTでeditFormが送信済みかつ有効で、postedEntityKeyの設定が存在し storeAction->handle が正常終了したとき | 保存後、MTGマスターデータ編集画面に遷移する |
+| M16-04-MSG-002 | 管理画面上部 | 要ソース確認 | POSTでeditFormが送信済みかつ有効で、storeAction->handle 中に \RuntimeException を捕捉したとき（catch節） | 要ソース確認 |
 
 ## 業務ルール・計算
 

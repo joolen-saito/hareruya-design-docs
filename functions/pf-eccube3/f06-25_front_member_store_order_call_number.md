@@ -115,9 +115,9 @@ Wi-Fiパスワード表示はモニター用JSが時刻に基づき定期更新�
 
 ### メッセージID対応（自動棚卸）
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|---|---|---|---|
-| F06-25-MSG-001 | 画面中央(ダイアログ) | waiting number get failed. | get_waiting_number（GET /waiting_api/get_waiting_number/{base_info_id}）へのAJAX取得がerrorになったとき（ただしalert行はコメントアウトのため実際には表示されない） |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|---|---|---|---|----------|
+| F06-25-MSG-001 | 画面中央(ダイアログ) | waiting number get failed. | get_waiting_number（GET /waiting_api/get_waiting_number/{base_info_id}）へのAJAX取得がerrorになったとき（ただしalert行はコメントアウトのため実際には表示されない） | 店頭モニター画面に留まる |
 
 ## 業務ルール・計算
 

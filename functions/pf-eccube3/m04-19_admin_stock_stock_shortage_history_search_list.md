@@ -262,10 +262,16 @@ DB関連は ec-cube-enterprise を正とする。現行（pf-eccube3 の Hareruy
 | 表示文言（日本語） | 表示条件（利用者視点） | 表示位置 | 備考 |
 |-------------------|----------------------|----------|------|
 | （並び順エラー文言） | 並び順が不正なとき | 画面上部 | 設定キー `admin.error.sort`。文言はロケール定義を正とする。 |
-| M04-19-MSG-001 | 管理画面上部 | 保存に失敗しました | POST admin_stock_history_update で updateDisposalReason が Exception を送出したとき |
-| M04-19-MSG-002 | 管理画面上部 | 保存しました | 欠品理由を正常に更新したとき（admin_stock_history_update） |
 
 ---
+
+
+### メッセージID対応（自動棚卸）
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|---|---|---|---|---|
+| M04-19-MSG-001 | 管理画面上部 | 保存に失敗しました | POST admin_stock_history_update で updateDisposalReason が Exception を送出したとき | M04-19（欠品履歴検索/一覧）画面に遷移する |
+| M04-19-MSG-002 | 管理画面上部 | 保存しました | 欠品理由を正常に更新したとき（admin_stock_history_update） | M04-19（欠品履歴検索/一覧）画面に遷移する |
 
 ## ログ・監査
 

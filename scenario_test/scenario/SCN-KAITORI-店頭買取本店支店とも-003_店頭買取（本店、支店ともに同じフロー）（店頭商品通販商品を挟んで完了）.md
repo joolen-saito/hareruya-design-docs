@@ -108,12 +108,12 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| DL-01 | #42 買取一覧 | #44 支店インポート用 | (自由端＝原典で接続先未定義) | 「買取一覧」で産出/更新された「支店インポート用」が確認できること。 | 原典上の照合キー未定義（要業務確認） | 要確認（消費先が原典未定義） |
+| DL-01 | #42 買取一覧 | #44 支店インポート用 | (自由端＝原典で接続先未定義) | 「買取一覧」で産出/更新された「支店インポート用」が確認できること。 HTML設計書では支店インポート用のインポートCSVは廃止とし、買取商品一覧CSVへ置換する旨が記載（取込先システムの明示はなし）（出典: 0205_店頭買取）。 | 原典上の照合キー未定義（要業務確認） | 要確認（消費先が原典未定義） |
 | DL-02 | #5 MTGバイヤー査定表印刷 | #6 査定表 | (自由端＝原典で接続先未定義) | 「MTGバイヤー査定表印刷」で産出/更新された「査定表」が確認できること。 | 買取受付番号=ST-BUY-KAITORI-001-R03 | 要確認（消費先が原典未定義） |
-| DL-03 | #16 出金 | #15 出金 | (自由端＝原典で接続先未定義) | 「出金」で産出/更新された「出金」が確認できること。 | 原典上の照合キー未定義（要業務確認） | 要確認（消費先が原典未定義） |
-| DL-04 | #21 出金 | #23 出金 | (自由端＝原典で接続先未定義) | 「出金」で産出/更新された「出金」が確認できること。 | 原典上の照合キー未定義（要業務確認） | 要確認（消費先が原典未定義） |
-| DL-05 | #24 MTGバイヤー買取成立 | #25 買取*1 | (自由端＝原典で接続先未定義) | 「MTGバイヤー買取成立」で産出/更新された「買取*1」が確認できること。 | 買取受付番号=ST-BUY-KAITORI-001-R03 | 要確認（消費先が原典未定義） |
-| DL-06 | #45 在庫登録 | #46 在庫 | (自由端＝原典で接続先未定義) | 「在庫登録」で産出/更新された「在庫」が確認できること。 | 商品コード=ST-CARD-KAITORI-001-R03 | 要確認（消費先が原典未定義） |
+| DL-03 | #16 出金 | #15 出金 | 店頭買取情報更新API→EC-CUBE連携（HTML設計書由来） | 「出金」で産出/更新された「出金」について、スマレジの出金取引ID/出金コードが店頭買取情報更新API(PUT /admin/otcBuyOrder/{id}/status.json)でEC-CUBEへ連携されること（経理払い出し済で買取成立にする旨をHTMLに記載）（出典: 0601_MTGBuyer）。 | 原典上の照合キー未定義（要業務確認） | 連鎖あり（HTML設計書由来） |
+| DL-04 | #21 出金 | #23 出金 | 店頭買取情報更新API→EC-CUBE連携（HTML設計書由来） | 「出金」で産出/更新された「出金」について、スマレジの出金取引ID/出金コードが店頭買取情報更新API(PUT /admin/otcBuyOrder/{id}/status.json)でEC-CUBEへ連携されること（経理払い出し済で買取成立にする旨をHTMLに記載）（出典: 0601_MTGBuyer）。 | 原典上の照合キー未定義（要業務確認） | 連鎖あり（HTML設計書由来） |
+| DL-05 | #24 MTGバイヤー買取成立 | #25 買取*1 | (自由端＝原典で接続先未定義) | 「MTGバイヤー買取成立」で産出/更新された「買取*1」が確認できること。 HTML設計書では店頭買取はdtb_otc_buy_orderで管理され、ステータス変更はdtb_otc_buy_order_status_historyに記録する旨が記載（出典: 0205_店頭買取）。 | 買取受付番号=ST-BUY-KAITORI-001-R03 | 要確認（消費先が原典未定義） |
+| DL-06 | #45 在庫登録 | #46 在庫 | (自由端＝原典で接続先未定義) | 「在庫登録」で産出/更新された「在庫」が確認できること。 HTML設計書では在庫増減はdtb_product_stock.stock/dtb_product_class.stockへ反映され、dtb_stock_historyに登録元区分付きで記録される旨が記載（消費先の明示はなし）（出典: 0202_在庫管理）。 | 商品コード=ST-CARD-KAITORI-001-R03 | 要確認（消費先が原典未定義） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 店頭商品通販商品の条件対応後、店頭買取（本店、支店ともに同じフロー）の対象データが完了状態として追跡できる。
@@ -142,10 +142,10 @@
 
 | 機構的観点 | 委譲先IT観点 | 結合テストケースID | 状態 |
 |---|---|---|---|
-| 担当者に必要な権限がない | IT-15 | `IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-001`<br>`IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-002`<br>`IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-003`<br>ほか 27 件 | 委譲済 |
-| 入力値の必須項目不足または形式不正がある | IT-22 | `IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-010`<br>`IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-011`<br>`IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-012`<br>ほか 57 件 | 委譲済 |
+| 担当者に必要な権限がない | IT-15 | `IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-001`<br>`IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-002`<br>`IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-005`<br>ほか 19 件 | 委譲済 |
+| 入力値の必須項目不足または形式不正がある | IT-22 | `IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-009`<br>`IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-010`<br>`IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-011`<br>ほか 57 件 | 委譲済 |
 | 同一対象に対して同じ処理を重複実行する | IT-08 | - | 未整備（結合テスト側に該当ケースなし） |
-| 検索条件に一致する対象データが存在しない | IT-23 / IT-14 | `IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-031`<br>`IT-F08-02-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-INPUT-031`<br>`IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-031`<br>ほか 55 件 | 委譲済 |
+| 検索条件に一致する対象データが存在しない | IT-23 / IT-14 | `IT-F08-01-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-LOGIN-030`<br>`IT-F08-02-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-INPUT-030`<br>`IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-031`<br>ほか 55 件 | 委譲済 |
 
 ## トレーサビリティ
 - **カバーする業務フロー番号**: 店頭買取 / パターン1 / 経路3

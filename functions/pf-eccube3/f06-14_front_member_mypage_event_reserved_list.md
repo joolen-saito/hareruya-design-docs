@@ -120,14 +120,20 @@
 | ステータス（終了） | イベント終了 | Event Finished | 決済中以外でイベントが終了済みのとき |
 | ステータス（その他） | （申込状態の名称） | （申込状況マスタの英語名称 `name_en`） | 決済中以外でイベントが未終了のとき |
 | 決済案内（ヘルプ） | 決済が中断されました。お手数ですが、約30分後に再度お申込みいただけますようお願いいたします。 | Your payment procedure has been interrupted or suspended. Please try your registration 30 minutes after. | 決済中のヘルプアイコンのツールチップ |
-| F06-14-MSG-002 | 管理画面上部 | 要ソース確認 | フォーム送信済みかつ有効で、登録処理が InvalidArgumentException を送出したとき |
-| F06-14-MSG-003 | 管理画面上部 | 保存に失敗しました | フォーム送信済みかつ有効で、登録処理が InvalidArgumentException 以外の Exception を送出したとき |
 
 英語文言は`Mypage/event_history.en.twig`の確認値とする。利用者は言語切替（`/en/...`）で英語表示へ到達する。
 
 本機能はフォーム送信に伴うフラッシュ・インラインエラーを生成しない。
 
 ---
+
+
+### メッセージID対応（自動棚卸）
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|---|---|---|---|---|
+| F06-14-MSG-002 | 管理画面上部 | 要ソース確認 | フォーム送信済みかつ有効で、登録処理が InvalidArgumentException を送出したとき | 要ソース確認 |
+| F06-14-MSG-003 | 管理画面上部 | 保存に失敗しました | フォーム送信済みかつ有効で、登録処理が InvalidArgumentException 以外の Exception を送出したとき | イベント申込新規画面に留まる |
 
 ## 業務ルール・計算
 

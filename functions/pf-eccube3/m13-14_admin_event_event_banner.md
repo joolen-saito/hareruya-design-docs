@@ -96,10 +96,10 @@
 
 ## 表示メッセージ
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
-| M13-14-MSG-001 | 管理画面上部 | 保存しました | イベントバナー設定フォーム(event_banner)をPOST(admin_event_banner_settings / admin_event_banner_settings_narrow)し、isSubmitted かつ isValid で EventBannerStoreAction->handle() が完了したとき |
-| M13-14-MSG-002 | 入力項目直下 | 「admin.hareruyamtg.com」は指定できません。 | POST送信時、画像URLが admin.hareruyamtg.com を含み Regex 制約に違反した場合 |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
+| M13-14-MSG-001 | 管理画面上部 | 保存しました | イベントバナー設定フォーム(event_banner)をPOST(admin_event_banner_settings / admin_event_banner_settings_narrow)し、isSubmitted かつ isValid で EventBannerStoreAction->handle() が完了したとき | イベント管理 — バナー設定画面に遷移する |
+| M13-14-MSG-002 | 入力項目直下 | 「admin.hareruyamtg.com」は指定できません。 | POST送信時、画像URLが admin.hareruyamtg.com を含み Regex 制約に違反した場合 | 保存せずイベント管理 — バナー設定画面に留まる |
 
 ## 業務ルール・計算
 

@@ -124,13 +124,13 @@
 
 本表は `message_inventory/slices/M04-12.resolved.tsv` を正とし、文言は ec-cube-enterprise 実ソース（`StockJoinController.php` / `StockSplitJoinController.php` と `messages.ja.yaml`）由来。可変部は代入元の性質を記す。
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
-| M04-12-MSG-062 | 管理画面上部フラッシュメッセージ | 指定の在庫が見つかりません。 | productStockIdが1未満 |
-| M04-12-MSG-063 | 管理画面上部フラッシュメッセージ | 指定の在庫が見つかりません。 | productStockIdに対応する在庫なし |
-| M04-12-MSG-064 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POST_SUBMIT時、登録日開始日が登録日終了日より後 |
-| M04-12-MSG-065 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POST_SUBMIT時、承認・却下日開始日が承認・却下日終了日より後 |
-| M04-12-MSG-066 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POST_SUBMIT時、更新日開始日が更新日終了日より後 |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
+| M04-12-MSG-062 | 管理画面上部フラッシュメッセージ | 指定の在庫が見つかりません。 | productStockIdが1未満 | 在庫分割結合検索/一覧画面に遷移する |
+| M04-12-MSG-063 | 管理画面上部フラッシュメッセージ | 指定の在庫が見つかりません。 | productStockIdに対応する在庫なし | 在庫分割結合検索/一覧画面に遷移する |
+| M04-12-MSG-064 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POST_SUBMIT時、登録日開始日が登録日終了日より後 | 要ソース確認 |
+| M04-12-MSG-065 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POST_SUBMIT時、承認・却下日開始日が承認・却下日終了日より後 | 要ソース確認 |
+| M04-12-MSG-066 | 入力項目直下/フォーム上部 | 要ソース確認（key_unknown: admin.product.date_range_error） | POST_SUBMIT時、更新日開始日が更新日終了日より後 | 要ソース確認 |
 
 ## リニューアル移行時の扱い
 

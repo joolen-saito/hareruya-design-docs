@@ -248,14 +248,14 @@
 
 ## 表示メッセージ
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
-| M03-33-MSG-001 | 画面上部フラッシュ（エラー） | 要ソース確認 | POST 後にフォームが妥当でないとき（`import_file` の NotBlank / File(maxSize) 制約違反）。`$error->getMessage()` を渡し逐語literal無し。制約はカスタム message 無しのため既定文言候補: NotBlank「入力されていません。」（validators.ja.yaml:17）/ File maxSize「ファイルのサイズが大きすぎます（{{ size }} {{ suffix }}）。{{ limit }} {{ suffix }}以下にしてください。」（Symfony 既定訳）。`admin.csv.error.upload.require`/`maxsize` は本フォームに未配線のため候補から撤回。`$form->getErrors()` はルートフォーム直属エラーのみ返すため実行経路の断定不能 |
-| M03-33-MSG-002 | 画面上部フラッシュ（エラー） | CSVのフォーマットが一致しません | フォーム処理後に `import_file` が取得できない（null）とき |
-| M03-33-MSG-003 | 画面上部フラッシュ（エラー） | %maxRecord% 行を超えるCSVファイルは登録できません。 | 改行カウントが上限定数 `ADMIN_CSV_IMPORT_MAX_ROWS` 以上のとき（`%maxRecord%` は同定数で置換。キー `admin.csv.error.upload.maxrecord`） |
-| M03-33-MSG-004 | 画面上部フラッシュ（警告） | 要ソース確認 | 取込結果に info があるとき（行ごとに通知、`$info['message']`）。発生元は `SaleHighPriceImportHandler` の2分岐（`$currentSaleFlg && !$csvSaleFlg && $csvSellPrice` のとき / いずれの条件にも該当しない else 分岐のとき）。逐語literal候補2件: `admin.product.sale_high_price_csv.alert_off_sale_buy_only`「%d行目: セール外のため、買取価格および販売価格はデータベースにある基準価格で更新してます。」/ `admin.product.sale_high_price_csv.alert_end_sale_sell_from_standard`「%d行目: 通常商品のため、買取価格はCSVの値で更新しました。」。1行に2文言が併存するため単一literalへ断定不能 |
-| M03-33-MSG-005 | 画面上部フラッシュ（エラー） | 要ソース確認 | 取込結果にエラーがあるとき（`$error['message']`）。MessageStore が sprintf 置換するため単一literalへ断定不能。静的追跡で本機能から到達を確認できたキーのみ列挙: `admin.csv.error.format.header`「CSVのフォーマットが一致しません。」（ヘッダ行なし）/ `admin.csv.error.data.empty`「CSVデータが存在しません。」（データ行なし）/ `admin.csv.error.format.body`「CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。」（列数不正）/ `admin.csv.error.product.not_exists`「%d 行目の %s ではデータを取得できません。」（列欠落・商品コード不存在）/ `admin.csv.error.product.product_code_duplicated`「%d 行目の商品コードの値 %s は重複して登録されてるため更新できません。」（商品コード重複）。`admin.csv.error.data.require` は `SaleHighPriceImportHandler::getRowValidators()` が空配列を返し `addRequireError` の呼出が本経路に存在しないため候補から撤回 |
-| M03-33-MSG-006 | 画面上部フラッシュ（成功） | 登録が完了しました。 | 取込がエラーなく完了したとき（キー `admin.register.complete`） |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
+| M03-33-MSG-001 | 画面上部フラッシュ（エラー） | 要ソース確認 | POST 後にフォームが妥当でないとき（`import_file` の NotBlank / File(maxSize) 制約違反）。`$error->getMessage()` を渡し逐語literal無し。制約はカスタム message 無しのため既定文言候補: NotBlank「入力されていません。」（validators.ja.yaml:17）/ File maxSize「ファイルのサイズが大きすぎます（{{ size }} {{ suffix }}）。{{ limit }} {{ suffix }}以下にしてください。」（Symfony 既定訳）。`admin.csv.error.upload.require`/`maxsize` は本フォームに未配線のため候補から撤回。`$form->getErrors()` はルートフォーム直属エラーのみ返すため実行経路の断定不能 | 要ソース確認 |
+| M03-33-MSG-002 | 画面上部フラッシュ（エラー） | CSVのフォーマットが一致しません | フォーム処理後に `import_file` が取得できない（null）とき | 管理画面_商品管理_セール用高額商品価格変更CSV登録画面に遷移する |
+| M03-33-MSG-003 | 画面上部フラッシュ（エラー） | %maxRecord% 行を超えるCSVファイルは登録できません。 | 改行カウントが上限定数 `ADMIN_CSV_IMPORT_MAX_ROWS` 以上のとき（`%maxRecord%` は同定数で置換。キー `admin.csv.error.upload.maxrecord`） | 管理画面_商品管理_セール用高額商品価格変更CSV登録画面に遷移する |
+| M03-33-MSG-004 | 画面上部フラッシュ（警告） | 要ソース確認 | 取込結果に info があるとき（行ごとに通知、`$info['message']`）。発生元は `SaleHighPriceImportHandler` の2分岐（`$currentSaleFlg && !$csvSaleFlg && $csvSellPrice` のとき / いずれの条件にも該当しない else 分岐のとき）。逐語literal候補2件: `admin.product.sale_high_price_csv.alert_off_sale_buy_only`「%d行目: セール外のため、買取価格および販売価格はデータベースにある基準価格で更新してます。」/ `admin.product.sale_high_price_csv.alert_end_sale_sell_from_standard`「%d行目: 通常商品のため、買取価格はCSVの値で更新しました。」。1行に2文言が併存するため単一literalへ断定不能 | 要ソース確認 |
+| M03-33-MSG-005 | 画面上部フラッシュ（エラー） | 要ソース確認 | 取込結果にエラーがあるとき（`$error['message']`）。MessageStore が sprintf 置換するため単一literalへ断定不能。静的追跡で本機能から到達を確認できたキーのみ列挙: `admin.csv.error.format.header`「CSVのフォーマットが一致しません。」（ヘッダ行なし）/ `admin.csv.error.data.empty`「CSVデータが存在しません。」（データ行なし）/ `admin.csv.error.format.body`「CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。」（列数不正）/ `admin.csv.error.product.not_exists`「%d 行目の %s ではデータを取得できません。」（列欠落・商品コード不存在）/ `admin.csv.error.product.product_code_duplicated`「%d 行目の商品コードの値 %s は重複して登録されてるため更新できません。」（商品コード重複）。`admin.csv.error.data.require` は `SaleHighPriceImportHandler::getRowValidators()` が空配列を返し `addRequireError` の呼出が本経路に存在しないため候補から撤回 | 要ソース確認 |
+| M03-33-MSG-006 | 画面上部フラッシュ（成功） | 登録が完了しました。 | 取込がエラーなく完了したとき（キー `admin.register.complete`） | 管理画面_商品管理_セール用高額商品価格変更CSV登録画面に遷移する |
 
 ---
 

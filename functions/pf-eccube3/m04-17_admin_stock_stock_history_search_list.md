@@ -275,9 +275,15 @@
 | 表示文言（日本語） | 表示条件（利用者視点） | 表示位置 | 備考 |
 |-------------------|----------------------|----------|------|
 | （並び順エラー文言） | 並び順が不正なとき | 画面上部 | 設定キー `admin.error.sort`。文言はロケール定義を正とする。 |
-| M04-17-MSG-001 | 一覧カード上部（#stockHistoryList .card-body 先頭に prepend） | 保存に失敗しました | 非同期更新 admin_stock_approval_history_reason_update が success=false 応答または通信エラーのとき |
 
 ---
+
+
+### メッセージID対応（自動棚卸）
+
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|---|---|---|---|---|
+| M04-17-MSG-001 | 一覧カード上部（#stockHistoryList .card-body 先頭に prepend） | 保存に失敗しました | 非同期更新 admin_stock_approval_history_reason_update が success=false 応答または通信エラーのとき | エラーを表示して在庫履歴検索/一覧画面に留まる |
 
 ## ログ・監査
 

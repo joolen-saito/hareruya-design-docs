@@ -202,8 +202,8 @@ CSV出力リクエスト自体に対するフォーム検証はない。列定�
 
 注: 以下はメッセージ一覧(m05-02スライス)が本機能へ紐付けたフラッシュメッセージ。実ソース上は `OrderCsvController` の `exportForInput`（出荷実績インポート用CSVエクスポート, route `admin_order_export_for_input`）および `shippingResultImport`（出荷実績CSVアップロード, route `admin_shipping_result_csv_upload`）由来であり、本doc主機能の受注CSV出力ハンドラ `admin_order_export_order`(OrderController.php:385)とは別ハンドラのため機能由来は要検証。
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
 
 ---
 

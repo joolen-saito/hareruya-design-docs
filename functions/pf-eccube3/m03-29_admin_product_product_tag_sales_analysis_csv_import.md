@@ -115,13 +115,13 @@ DB関連の記述は ec-cube-enterprise の実装を正とする。売上分析�
 
 ## 表示メッセージ
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 |
-|--------------|----------|--------------|----------|
-| M03-29-MSG-001 | 管理画面上部 | 要ソース確認（variable: $error->getMessage()） | POSTフォームが不正（CsvImportTypeのNotBlankまたはFile制約エラー） |
-| M03-29-MSG-002 | 管理画面上部 | CSVのフォーマットが一致しません | 妥当なフォーム処理後にimport_fileがnull |
-| M03-29-MSG-003 | 管理画面上部 | 要ソース確認（variable: $this->getCsvImportMaxRowsExceededMessage()） | CSV行数がADMIN_CSV_IMPORT_MAX_ROWS（5010）以上 |
-| M03-29-MSG-004 | 管理画面上部 | 要ソース確認（variable: $error['message']） | CsvImporterの取込結果に1件以上のエラーがある |
-| M03-29-MSG-005 | 管理画面上部 | 登録が完了しました。 | CsvImporterの取込結果にエラーがない |
+| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
+|--------------|----------|--------------|----------|----------|
+| M03-29-MSG-001 | 管理画面上部 | 要ソース確認（variable: $error->getMessage()） | POSTフォームが不正（CsvImportTypeのNotBlankまたはFile制約エラー） | 要ソース確認 |
+| M03-29-MSG-002 | 管理画面上部 | CSVのフォーマットが一致しません | 妥当なフォーム処理後にimport_fileがnull | エラーを表示し、管理画面_商品管理_売上分析タグ更新CSV登録画面に遷移する |
+| M03-29-MSG-003 | 管理画面上部 | 要ソース確認（variable: $this->getCsvImportMaxRowsExceededMessage()） | CSV行数がADMIN_CSV_IMPORT_MAX_ROWS（5010）以上 | 要ソース確認 |
+| M03-29-MSG-004 | 管理画面上部 | 要ソース確認（variable: $error['message']） | CsvImporterの取込結果に1件以上のエラーがある | 要ソース確認 |
+| M03-29-MSG-005 | 管理画面上部 | 登録が完了しました。 | CsvImporterの取込結果にエラーがない | 完了メッセージを表示し、管理画面_商品管理_売上分析タグ更新CSV登録画面に遷移する |
 
 ## 業務ルール・計算
 
