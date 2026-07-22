@@ -10,7 +10,7 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
 | IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
@@ -20,8 +20,7 @@
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-07 | 排他制御 |
-| IT-11 | 実行結果 |
-| IT-28 | ヘッダ、件名、実行結果、本文 |
+| IT-28 | 件名、実行結果、本文 |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -178,99 +177,93 @@ F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-
 F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-046	IT-12	内部情報	P1	内部情報の結合確認	確認画面の表示要素を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で確認画面の表示要素の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	入力時間タイマー、Language、国、お名前、お名前カナ、郵便番号、住所、生年月日、電話番号、職業、返却希望サプライ（隠し）、電話連絡、大会参加状況、適格請求書発行事業者の設問（はい時は登録番号）、会員登録時はメール…であること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-047	IT-15	機密情報	P1	機密情報の結合確認	確認画面のボタンを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で確認画面のボタンの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	会員登録ありは「会員登録して申込み」、なしは「査定申込み」ボタンであること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-048	IT-07	排他制御	P1	排他制御の結合確認	完了画面の表示要素を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で完了画面の表示要素の確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-047	IT-07	排他制御	P1	排他制御の結合確認	確認画面のボタンを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で確認画面のボタンの確認に必要な条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	申込完了文言、申込者氏名、査定番号、買取カウンターでの案内、身分証明書の用意案内、未成年の場合の保護者同意書案内、会員仮登録完了時の案内、「査定申込みへ戻る」ボタン、自動遷移の秒数案内であること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-049	IT-11	実行結果	P2	実行結果の結合確認	自動遷移を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で自動遷移の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	会員登録ありは「会員登録して申込み」、なしは「査定申込み」ボタンであること。
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-048	IT-28	実行結果	P2	実行結果の結合確認	自動遷移を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で自動遷移の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 自動遷移を確認する
 3. 画面表示と後続状態を確認する"	完了画面はメタ更新で一定秒数後に完了画面のURLへ再遷移すること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-050	IT-28	実行結果	P2	実行結果の結合確認	モーダル・ポップアップを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-049	IT-28	実行結果	P2	実行結果の結合確認	モーダル・ポップアップを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	確認画面はF08-02から引き継ぐモーダルを持ち得るであること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-051	IT-28	ヘッダ	P2	ヘッダの結合確認	申込者を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で申込者の確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-050	IT-28	件名	P2	件名の結合確認	申込者を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. 申込者を確認する
-3. 画面表示と後続状態を確認する"	完了画面の表示時であること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-052	IT-28	件名	P2	件名の結合確認	査定番号を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 査定番号を確認する
 3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-053	IT-28	件名	P2	件名の結合確認	買取カウンター案内を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 買取カウンター案内を確認する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-051	IT-28	件名	P2	件名の結合確認	査定番号を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 査定番号を確認する
 3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-054	IT-28	件名	P2	件名の結合確認	身分証明書案内を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で身分証明書案内の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 身分証明書案内を確認する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-052	IT-28	件名	P2	件名の結合確認	買取カウンター案内を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で買取カウンター案内の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 買取カウンター案内を確認する
 3. 画面表示と後続状態を確認する"	完了画面の表示時であること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-055	IT-28	本文	P2	本文の結合確認	自動遷移案内を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 自動遷移案内を確認する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-053	IT-28	本文	P2	本文の結合確認	身分証明書案内を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 身分証明書案内を確認する
 3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-056	IT-28	本文	P2	本文の結合確認	確認ボタンを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 確認ボタンを確認する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-054	IT-28	本文	P2	本文の結合確認	自動遷移案内を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 自動遷移案内を確認する
 3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-057	IT-28	本文	P2	本文の結合確認	ご入力いただいた内容では会員登録ができませんでしたを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でご入力いただいた内容では会員登録ができませんでしたの確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-055	IT-28	本文	P2	本文の結合確認	確認ボタンを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で確認ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 確認ボタンを確認する
+3. 画面表示と後続状態を確認する"	確認画面の表示時（会員登録の有無で切替）であること。
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-056	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ご入力いただいた内容では会員登録ができませんでしたを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でご入力いただいた内容では会員登録ができませんでしたの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ご入力いただいた内容では会員登録ができませんでした
 3. 画面表示と後続状態を確認する"	クエリ register が失敗値のときであること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	現在、仮登録の状態となっておりますを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で現在、仮登録の状態となっておりますの確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-057	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	現在、仮登録の状態となっておりますを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で現在、仮登録の状態となっておりますの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 現在、仮登録の状態となっておりますを確認する
 3. 画面表示と後続状態を確認する"	確認メールの案内であること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-059	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	既に利用されているメールアドレスですを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で既に利用されているメールアドレスですの確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-058	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	既に利用されているメールアドレスですを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で既に利用されているメールアドレスですの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 既に利用されているメールアドレスですを確認する
 3. 画面表示と後続状態を確認する"	会員登録フォーム画面を再表示すること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	メールアドレスとパスワードは異なる文字列を使用してくださいを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でメールアドレスとパスワードは異なる文字列を使用してくださいの確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-059	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	メールアドレスとパスワードは異なる文字列を使用してくださいを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でメールアドレスとパスワードは異なる文字列を使用してくださいの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メールアドレスとパスワードは異なる文字列を使用してくださいを確認する
 3. 画面表示と後続状態を確認する"	会員登録フォーム画面を再表示すること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-061	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	登録番号を入力してくださいを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で登録番号を入力してくださいの確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-060	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録番号を入力してくださいを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で登録番号を入力してくださいの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録番号を入力してください
 3. 画面表示と後続状態を確認する"	キー front.otcbuy.error.not_qualified_invoice_issuer_code_inputであること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録番号に全角を含むことは出来ませんを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で登録番号に全角を含むことは出来ませんの確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-061	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録番号に全角を含むことは出来ませんを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で登録番号に全角を含むことは出来ませんの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録番号に全角を含むことは出来ませんを確認する
 3. 画面表示と後続状態を確認する"	キー front.otcbuy.error.not_fullwidth_qualified_invoice_issuer_code_inputであること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	F08-03-MSG-001を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でF08-03-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	F08-03-MSG-001を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でF08-03-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. F08-03-MSG-001を確認する
 3. 画面表示と後続状態を確認する"	confirm() がフォーム不正として OtcBuy/index.twig を再表示すること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-064	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	入力データのマージを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で入力データのマージの確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-063	IT-25	一覧	P2	一覧の結合確認	入力データのマージを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で入力データのマージの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力データのマージ
 3. 画面表示と後続状態を確認する"	セッションの入力データとリクエストの入力データをマージして確認・登録に用いること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-065	IT-25	一覧	P2	一覧の結合確認	メール重複を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でメール重複の確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-064	IT-12	画面表示データ	P2	画面表示データの結合確認	メール重複を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でメール重複の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メール重複を確認する
-3. 画面表示と後続状態を確認する"	入力メールが既登録なら会員仮登録できないものとして会員登録フォームへ差し戻すであること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-066	IT-12	画面表示データ	P2	画面表示データの結合確認	メールとパスワード同一を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でメールとパスワード同一の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-065	IT-25	画面表示データ	P2	画面表示データの結合確認	メールとパスワード同一を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でメールとパスワード同一の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メールとパスワード同一を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-067	IT-25	画面表示データ	P2	画面表示データの結合確認	適格請求書発行事業者を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で適格請求書発行事業者の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	同一なら会員登録フォームへ差し戻すであること。
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-066	IT-12	画面表示データ	P2	画面表示データの結合確認	適格請求書発行事業者を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で適格請求書発行事業者の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 適格請求書発行事業者を確認する
-3. 画面表示と後続状態を確認する"	登録番号があれば申込みへ紐づけ、自由記述に所定コメントを付加すること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-068	IT-12	画面表示データ	P2	画面表示データの結合確認	状態を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で状態の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 状態を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-069	IT-25	画面表示データ	P2	画面表示データの結合確認	会員仮登録を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で会員仮登録の確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-067	IT-25	画面表示データ	P2	画面表示データの結合確認	状態を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で状態の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 状態を確認する
+3. 画面表示と後続状態を確認する"	登録時に完了前の状態を付け、状態履歴に記録すること。
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-068	IT-25	フォーム送信	P1	フォーム送信の結合確認	会員仮登録を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で会員仮登録の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 会員仮登録を確認する
 3. 画面表示と後続状態を確認する"	会員登録モードのときに実行すること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-070	IT-25	フォーム送信	P1	フォーム送信の結合確認	メール既登録／メールとパスワード同一を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でメール既登録／メールとパスワード同一の確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-069	IT-16	ファイル選択	P2	ファイル選択の結合確認	メール既登録／メールとパスワード同一を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でメール既登録／メールとパスワード同一の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メール既登録／メールとパスワード同一を確認する
 3. 画面表示と後続状態を確認する"	会員登録フォームへ差し戻すであること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-071	IT-16	ファイル選択	P2	ファイル選択の結合確認	ブラックリスト該当を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でブラックリスト該当の確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-070	IT-12	非同期更新	P1	非同期更新の結合確認	ブラックリスト該当を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でブラックリスト該当の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ブラックリスト該当を確認する
 3. 画面表示と後続状態を確認する"	会員登録は行わず、申込みは登録すること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-072	IT-12	非同期更新	P1	非同期更新の結合確認	完了画面に査定IDが無いを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で完了画面に査定IDが無いの確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-071	IT-12	エラー継続	P3	エラー継続の結合確認	完了画面に査定IDが無いを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で完了画面に査定IDが無いの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 完了画面に査定IDが無いを確認する
 3. 画面表示と後続状態を確認する"	エントリーへ戻すであること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-073	IT-12	エラー継続	P3	エラー継続の結合確認	入力とセッションを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で入力とセッションの確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-072	IT-25	件数上限	P2	件数上限の結合確認	入力とセッションを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で入力とセッションの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力とセッション
 3. 画面表示と後続状態を確認する"	確認・登録は、F08-02でセッションへ保存した入力データとリクエストをマージして用いること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-074	IT-25	件数上限	P2	件数上限の結合確認	査定IDの一回性を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で査定IDの一回性の確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-073	IT-25	欠損値	P2	欠損値の結合確認	査定IDの一回性を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で査定IDの一回性の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 査定IDの一回性を確認する
 3. 画面表示と後続状態を確認する"	登録時に査定IDをセッションへ保存し、完了画面で取得後に除去すること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-075	IT-25	欠損値	P2	欠損値の結合確認	状態履歴を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で状態履歴の確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-074	IT-25	データなし	P2	データなしの結合確認	状態履歴を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で状態履歴の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 状態履歴を確認する
 3. 画面表示と後続状態を確認する"	申込登録と同時に完了前の状態を履歴へ記録すること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-076	IT-25	データなし	P2	データなしの結合確認	会員登録と連携を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で会員登録と連携の確認に必要な条件を指定する	"1. 対象画面を表示する
+F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-075	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	会員登録と連携を試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）で会員登録と連携の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 会員登録と連携を確認する
 3. 画面表示と後続状態を確認する"	会員仮登録が成功した場合、関連情報の登録と支店システムへの連携、確認メール送信を行う（詳細は別機能）であること。
-F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-PURCHASE-OTC-BUY-ENTRY-COMPLETE-077	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	APIを試験できる状態である	F08-03（店頭買取査定申込登録確認〜完了）（f08_03_front_store_purchase_otc_buy_entry_complete）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. APIを確認する
-3. 画面表示と後続状態を確認する"	会員仮登録成功時に支店システムへ会員更新を連携すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -372,4 +365,4 @@ F08-03（店頭買取査定申込登録確認〜完了）	IT-F08-03-FRONT-STORE-
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.92, No.109, No.111, No.219, No.255。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.92, No.109, No.111, No.215, No.228, No.261, No.510。上限緩和または個別ケース化で収載可能。

@@ -10,11 +10,11 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | 実行結果、検索条件 |
+| IT-23 | データ正当性、実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
@@ -61,81 +61,81 @@ M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTO
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	一覧の商品名リンクを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で一覧の商品名リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一覧の商品名リンクを確認する
 3. 画面表示と後続状態を確認する"	規格編集画面へ遷移すること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-009	IT-25	URL	P2	URLの操作結果確認	一覧の受注番号リンクを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で一覧の受注番号リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	一覧の受注番号リンクを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 一覧の受注番号リンクを確認する
-3. 画面表示と後続状態を確認する"	受注編集画面へ遷移すること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	表示要素を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	JS 挙動を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. JS 挙動を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	JS 挙動を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でJS 挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS 挙動を確認する
+3. 画面表示と後続状態を確認する"	日付入力に日時ピッカー（YYYY-MM-DD）を適用すること。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	本機能ではモーダル・トーストを表示しないこと。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	一覧の件数を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 一覧の件数を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	日付帯（開始）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	日付帯（開始）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 日付帯（開始）を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	状態表示を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	状態表示を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 状態表示を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	本機能の計算を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 本機能の計算を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	日付（開始）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 日付（開始）を確認する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	本機能の計算を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 本機能の計算を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	日付（終了）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 日付（終了）を確認する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	日付（開始）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 日付（開始）を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-019	IT-22	部分入力	P2	部分入力の入力検証	初回表示（検索前）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で初回表示（検索前）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 初回表示（検索前）
-3. 画面表示と後続状態を確認する"	セッションを消去し、一覧を空で表示すること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-020	IT-23	検索条件	P2	検索時の検索条件確認	日付未指定で検索を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-018	IT-22	部分入力	P2	部分入力の入力検証	日付（終了）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で日付（終了）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 日付（終了）を確認する
+3. 画面表示と後続状態を確認する"	登録日上限であること。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-019	IT-23	検索条件	P2	検索時の検索条件確認	初回表示（検索前）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-021	IT-23	検索条件	P2	検索時の検索条件確認	並び順が想定外の値を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-020	IT-23	検索条件	P2	検索時の検索条件確認	日付未指定で検索を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	検索結果0件を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-021	IT-23	検索条件	P2	検索時の検索条件確認	並び順が想定外の値を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	表示時点を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	検索結果0件を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	リンク先との整合を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	表示時点を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	入力を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	リンク先との整合を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-026	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	入力を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-027	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-026	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-027	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で失敗時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-028	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で副作用の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-029	IT-23	検索条件	P2	検索時の検索条件確認	dtb_stockout_historyを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でdtb_stockout_historyの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-030	IT-23	検索条件	P2	検索時の検索条件確認	dtb_productを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でdtb_productの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-031	IT-23	検索条件	P2	検索時の検索条件確認	dtb_product_sub_class（現行のみを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でdtb_product_sub_class（現行のみの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-032	IT-23	検索条件	P2	検索時の検索条件確認	mtb_card_conditionを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でmtb_card_conditionの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-033	IT-23	検索条件	P2	検索時の検索条件確認	検索を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-033	IT-23	実行結果	P2	検索時の実行結果確認	検索を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-034	IT-23	実行結果	P2	検索時の実行結果確認	並び順を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で並び順の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
@@ -145,118 +145,118 @@ M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTO
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	未ログインまたは拒否された主体を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で未ログインまたは拒否された主体の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-037	IT-23	実行結果	P2	検索時の実行結果確認	欠品履歴一覧を開くを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で欠品履歴一覧を開くの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-037	IT-26	登録内容	P1	登録時の登録内容確認	欠品履歴一覧を開くを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で欠品履歴一覧を開くの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-038	IT-26	登録内容	P1	登録時の登録内容確認	検索するを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索するの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-039	IT-26	登録内容	P1	登録時の登録内容確認	表示件数変更を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で表示件数変更の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-040	IT-26	登録内容	P1	登録時の登録内容確認	ページ送り・件数変更を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でページ送り・件数変更の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一条件・指定ページで一覧を再表示すること。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-041	IT-26	登録内容	P1	登録時の登録内容確認	状態列のメモを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で状態列のメモの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	商品サブ規格テーブルが存在しない（ec-cube-enterprise 実装で要確認）であること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-042	IT-26	登録内容	P1	登録時の登録内容確認	欠品理由を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で欠品理由の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-042	IT-26	登録内容	P1	登録時の登録内容確認	欠品理由を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-043	IT-26	登録内容	P1	登録時の登録内容確認	検索条件セッションを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-044	IT-26	登録内容	P1	登録時の登録内容確認	欠品履歴一覧を開くを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-043	IT-26	登録内容	P1	登録時の登録内容確認	検索条件セッションを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-045	IT-26	登録内容	P1	登録時の登録内容確認	「検索する」で送信を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-044	IT-26	登録内容	P1	登録時の登録内容確認	欠品履歴一覧を開くを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-046	IT-26	登録内容	P1	登録時の登録内容確認	ページネーションでNページへを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-045	IT-26	登録内容	P1	登録時の登録内容確認	「検索する」で送信を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-047	IT-26	登録内容	P1	登録時の登録内容確認	表示件数プルダウン変更を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で表示件数プルダウン変更の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-046	IT-26	登録内容	P1	登録時の登録内容確認	ページネーションでNページへを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でページネーションでNページへの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-048	IT-26	実行結果	P1	登録時の実行結果確認	一覧の商品名リンクを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で一覧の商品名リンクの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-047	IT-26	実行結果	P1	登録時の実行結果確認	表示件数プルダウン変更を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で表示件数プルダウン変更の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-049	IT-23	実行結果	P1	登録時の実行結果確認	一覧の受注番号リンクを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で一覧の受注番号リンクの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-048	IT-23	実行結果	P1	登録時の実行結果確認	一覧の商品名リンクを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で一覧の商品名リンクの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注編集画面へ遷移すること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	規格編集画面へ遷移すること。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-049	IT-26	更新内容	P1	更新時の更新内容確認	一覧の受注番号リンクを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で一覧の受注番号リンクの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-050	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で表示要素の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-051	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でJS 挙動の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-052	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本機能ではモーダル・トーストを表示しないこと。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-053	IT-26	更新内容	P1	更新時の更新内容確認	一覧の件数を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で一覧の件数の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	欠品履歴に検索条件を適用した件数であること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-054	IT-26	更新内容	P1	更新時の更新内容確認	日付帯（開始）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で日付帯（開始）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-054	IT-26	更新内容	P1	更新時の更新内容確認	日付帯（開始）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-055	IT-26	更新内容	P1	更新時の更新内容確認	状態表示を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-056	IT-26	更新内容	P1	更新時の更新内容確認	本機能の計算を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-055	IT-26	更新内容	P1	更新時の更新内容確認	状態表示を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-057	IT-26	更新内容	P1	更新時の更新内容確認	日付（開始）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-056	IT-26	更新内容	P1	更新時の更新内容確認	本機能の計算を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-058	IT-26	更新内容	P1	更新時の更新内容確認	日付（終了）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-057	IT-26	更新内容	P1	更新時の更新内容確認	日付（開始）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-059	IT-26	更新内容	P1	更新時の更新内容確認	初回表示（検索前）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で初回表示（検索前）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-058	IT-26	更新内容	P1	更新時の更新内容確認	日付（終了）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で日付（終了）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-060	IT-05	実行結果	P1	更新時の実行結果確認	日付未指定で検索を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で日付未指定で検索の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-059	IT-05	実行結果	P1	更新時の実行結果確認	初回表示（検索前）を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で初回表示（検索前）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-061	IT-05	実行結果	P1	更新時の実行結果確認	並び順が想定外の値を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で並び順が想定外の値の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-060	IT-05	実行結果	P1	更新時の実行結果確認	日付未指定で検索を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で日付未指定で検索の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	並び順エラーを表示し初期表示へ戻すであること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-062	IT-02	初期行数	P2	初期行数の結合確認	検索結果0件を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索結果0件の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	日付帯の絞り込みを付けず、検索条件に一致する欠品履歴を表示すること。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-061	IT-02	初期行数	P2	初期行数の結合確認	並び順が想定外の値を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で並び順が想定外の値の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 並び順が想定外の値を確認する
+3. 画面表示と後続状態を確認する"	並び順エラーを表示し初期表示へ戻すであること。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-062	IT-02	表示順	P2	表示順の結合確認	検索結果0件を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索結果0件の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索結果0件
 3. 画面表示と後続状態を確認する"	「検索条件に該当するデータがありませんでしたであること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-063	IT-02	表示順	P2	表示順の結合確認	表示時点を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で表示時点の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示時点を確認する
-3. 画面表示と後続状態を確認する"	一覧は表示時点で欠品履歴テーブルを読んだ結果であること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-064	IT-25	更新抑止	P1	更新抑止の結合確認	リンク先との整合を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でリンク先との整合の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-063	IT-25	更新抑止	P1	更新抑止の結合確認	表示時点を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で表示時点の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	一覧は表示時点で欠品履歴テーブルを読んだ結果であること。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-064	IT-12	内部情報	P1	内部情報の結合確認	リンク先との整合を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でリンク先との整合の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	規格編集・受注編集のリンク先で値が変わっても、一覧は再読込まで履歴時点の表示を保つであること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-065	IT-12	内部情報	P1	内部情報の結合確認	入力を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で入力の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	検索フォーム（日付帯）、ページ番号、表示件数、セッションの検索状態であること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-066	IT-15	機密情報	P1	機密情報の結合確認	成功時出力を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で成功時出力の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	HTMLであること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-065	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	入力を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力
+3. 画面表示と後続状態を確認する"	検索フォーム（日付帯）、ページ番号、表示件数、セッションの検索状態であること。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-066	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	HTMLであること。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-067	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	並び順エラー時はエラー表示で初期表示へ戻すであること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	検索条件セッション・ページ番号・表示件数・ソート条件の保存であること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_stockout_historyを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でdtb_stockout_historyの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-069	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_stockout_historyを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でdtb_stockout_historyの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_stockout_historyを確認する
 3. 画面表示と後続状態を確認する"	欠品履歴の表示・絞り込みであること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_productを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でdtb_productの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_productを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でdtb_productの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_productを確認する
 3. 画面表示と後続状態を確認する"	商品名表示・規格編集リンクであること。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_product_sub_class（現行のみを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でdtb_product_sub_class（現行のみの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_product_sub_class（現行のみを確認する
 3. 画面表示と後続状態を確認する"	状態列のメモであること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	mtb_card_conditionを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でmtb_card_conditionの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-072	IT-25	一覧	P2	一覧の結合確認	mtb_card_conditionを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でmtb_card_conditionの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. mtb_card_conditionを確認する
 3. 画面表示と後続状態を確認する"	状態列の表示であること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検索を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-073	IT-12	画面表示データ	P2	画面表示データの結合確認	検索を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索
-3. 画面表示と後続状態を確認する"	検索条件に合致する欠品履歴を抽出し、一覧表示すること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-074	IT-25	一覧	P2	一覧の結合確認	並び順を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で並び順の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-074	IT-25	画面表示データ	P2	画面表示データの結合確認	並び順を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で並び順の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 並び順を確認する
 3. 画面表示と後続状態を確認する"	ASC・DESC（大文字小文字）以外はエラーとし初期表示へ戻すであること。
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-075	IT-12	画面表示データ	P2	画面表示データの結合確認	管理画面にログインし当該ルートへ到達できる運用者を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で管理画面にログインし当該ルートへ到達できる運用者の確認に必要な条件を指定する	"1. 対象画面を表示する
@@ -265,36 +265,24 @@ M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTO
 M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-076	IT-25	画面表示データ	P2	画面表示データの結合確認	未ログインまたは拒否された主体を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で未ログインまたは拒否された主体の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 未ログインまたは拒否された主体を確認する
 3. 画面表示と後続状態を確認する"	管理画面共通の挙動により利用できないこと。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-077	IT-12	画面表示データ	P2	画面表示データの結合確認	欠品履歴一覧を開くを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で欠品履歴一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-077	IT-25	フォーム送信	P1	フォーム送信の結合確認	欠品履歴一覧を開くを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で欠品履歴一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 欠品履歴一覧を開く
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-078	IT-25	画面表示データ	P2	画面表示データの結合確認	検索するを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索するの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	同一画面（検索前の初期表示）であること。
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-078	IT-16	ファイル選択	P2	ファイル選択の結合確認	検索するを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索する
 3. 画面表示と後続状態を確認する"	同一画面（一覧を表示）であること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-079	IT-25	フォーム送信	P1	フォーム送信の結合確認	表示件数変更を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で表示件数変更の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-079	IT-12	非同期更新	P1	非同期更新の結合確認	表示件数変更を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で表示件数変更の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示件数変更を確認する
 3. 画面表示と後続状態を確認する"	同一画面（保存件数で再分割）であること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-080	IT-16	ファイル選択	P2	ファイル選択の結合確認	ページ送り・件数変更を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でページ送り・件数変更の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-080	IT-12	エラー継続	P3	エラー継続の結合確認	ページ送り・件数変更を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でページ送り・件数変更の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ページ送り・件数変更を確認する
 3. 画面表示と後続状態を確認する"	同一条件・指定ページで一覧を再表示すること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-081	IT-12	非同期更新	P1	非同期更新の結合確認	状態列のメモを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で状態列のメモの確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-081	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	状態列のメモを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で状態列のメモの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 状態列のメモを確認する
 3. 画面表示と後続状態を確認する"	商品サブ規格テーブルが存在しない（ec-cube-enterprise 実装で要確認）であること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-082	IT-12	エラー継続	P3	エラー継続の結合確認	欠品理由を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で欠品理由の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-082	IT-23	データ正当性	P3	データ正当性の結合確認	欠品理由を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で欠品理由の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 欠品理由を確認する
 3. 画面表示と後続状態を確認する"	基本設計（M04-19シート）は欠品理由列の追加を求めるであること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-083	IT-25	件数上限	P2	件数上限の結合確認	検索条件セッションを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で検索条件セッションの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検索条件セッション
-3. 画面表示と後続状態を確認する"	検索フォーム値・表示件数・ページ番号・ソート条件を保持するセッション領域であること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-084	IT-25	欠損値	P2	欠損値の結合確認	欠品履歴一覧を開くを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で欠品履歴一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 欠品履歴一覧を開く
-3. 画面表示と後続状態を確認する"	検索フォームを初期表示し、検索条件セッションを消去して一覧は空で表示すること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-085	IT-25	データなし	P2	データなしの結合確認	「検索する」で送信を試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）で「検索する」で送信の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 「検索する」で送信
-3. 画面表示と後続状態を確認する"	日付帯を検証・保持し、欠品履歴一覧を1ページ目で組み立てて表示すること。
-M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTORY-SEARCH-LIST-086	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	ページネーションでNページへを試験できる状態である	M04-19（欠品履歴検索/一覧）（m04_19_admin_stock_stock_shortage_history_search_list）でページネーションでNページへの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ページネーションでNページへを確認する
-3. 画面表示と後続状態を確認する"	セッションの検索条件で一覧のNページ目を表示すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -394,6 +382,6 @@ M04-19（欠品履歴検索/一覧）	IT-M04-19-ADMIN-STOCK-STOCK-SHORTAGE-HISTO
 | データベースアクセス / 金額計算 / 税・端数（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
-| その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.109, No.110, No.111, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

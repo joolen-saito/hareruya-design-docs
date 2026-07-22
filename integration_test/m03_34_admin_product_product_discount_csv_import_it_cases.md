@@ -11,9 +11,9 @@
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
@@ -68,121 +68,120 @@ m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-009	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	価格再計算を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でHTTPステータスの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 価格再計算を確認する
 3. 画面表示と後続状態を確認する"	本ハンドラは価格列を更新しないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-010	IT-25	URL	P2	URLの操作結果確認	CSVファイル選択を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でURLの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	CSVファイル選択を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. CSVファイル選択
-3. 画面表示と後続状態を確認する"	サーバ一時ディレクトリに保存したうえで読み捨て解析であること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	ヘッダ列名の順序が違うを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. ヘッダ列名の順序が違うを確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-012	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	商品はあるがサブ行が無いを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 商品はあるがサブ行が無いを確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-013	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	取込エラーと成功フラッシュを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	商品はあるがサブ行が無いを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 商品はあるがサブ行が無いを確認する
+3. 画面表示と後続状態を確認する"	更新処理が既存サブ行に依存するため、実行時例外になりうるであること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	取込エラーと成功フラッシュを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 取込エラーと成功フラッシュを確認する
-3. 画面表示と後続状態を確認する"	取込エラー時は成功用フラッシュを積まず、errors で画面表示すること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	支店を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 支店を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	画面再表示を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	画面再表示を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 画面再表示を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	成功時出力を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	成功時出力を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-017	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	失敗時出力を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	副作用を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 副作用を確認する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	失敗時出力を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-019	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	dtb_product（現行 dtb_product_sub）を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. dtb_product（現行 dtb_product_sub）を確認する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	副作用を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-020	IT-22	部分入力	P2	部分入力の入力検証	登録/更新を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-019	IT-22	部分入力	P2	部分入力の入力検証	dtb_product（現行 dtb_product_sub）を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. dtb_product（現行 dtb_product_sub）を確認する
+3. 画面表示と後続状態を確認する"	現行 UPDATE では既存サブ行から読んだ値をそのまま書き戻すであること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-020	IT-26	登録内容	P1	登録時の登録内容確認	登録/更新を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-021	IT-26	登録内容	P1	登録時の登録内容確認	商品本体を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-022	IT-26	登録内容	P1	登録時の登録内容確認	メニューから「割引率変更CSV登録」を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-023	IT-26	登録内容	P1	登録時の登録内容確認	アップロード送信成功を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	URL は変わらず POST 応答で HTML を再描画（PRG パターンではない）であること。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-024	IT-26	登録内容	P1	登録時の登録内容確認	雛形ダウンロードを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ファイルダウンロード応答であること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-025	IT-26	登録内容	P1	登録時の登録内容確認	POST 取込を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-025	IT-26	登録内容	P1	登録時の登録内容確認	POST 取込を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-026	IT-26	登録内容	P1	登録時の登録内容確認	フォーム不正を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-027	IT-26	登録内容	P1	登録時の登録内容確認	CSV 形式・ヘッダ・列・マスタ・商品不存在を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-026	IT-26	登録内容	P1	登録時の登録内容確認	フォーム不正を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-028	IT-26	登録内容	P1	登録時の登録内容確認	予期せぬ例外を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-027	IT-26	登録内容	P1	登録時の登録内容確認	CSV 形式・ヘッダ・列・マスタ・商品不存在を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-029	IT-26	登録内容	P1	登録時の登録内容確認	取込開始を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-028	IT-26	登録内容	P1	登録時の登録内容確認	予期せぬ例外を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-030	IT-26	登録内容	P1	登録時の登録内容確認	取込失敗を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-029	IT-26	登録内容	P1	登録時の登録内容確認	取込開始を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-031	IT-26	実行結果	P1	登録時の実行結果確認	取込成功を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-030	IT-26	実行結果	P1	登録時の実行結果確認	取込失敗を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-032	IT-23	実行結果	P1	登録時の実行結果確認	商品管理メニューから「CSVダウンロード・アップロード」系の配下にある「割引率…を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-031	IT-23	実行結果	P1	登録時の実行結果確認	取込成功を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	アップロードフォーム、雛形リンク、列説明、当該種別のインポート履歴が表示されるであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	情報ログ「割引率変更CSV登録完了」と件数であること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-032	IT-26	更新内容	P1	更新時の更新内容確認	商品管理メニューから「CSVダウンロード・アップロード」系の配下にある「割引率…を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-033	IT-26	更新内容	P1	更新時の更新内容確認	同一画面でファイルを選び「CSVファイルのアップロード」を押下を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-034	IT-26	更新内容	P1	更新時の更新内容確認	フォーマット欄の「雛形ファイルダウンロード」を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-035	IT-26	更新内容	P1	更新時の更新内容確認	type が discount のとき、割引率変更用のヘッダのみを持つ UTF…を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	type が discount のとき、割引率変更用のヘッダのみを持つ UTF-8（BOM 付き）の雛形 CSV をダウンロード応答として返すこと。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-036	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ベーステンプレートは Product/base_csv_upload.twig 相当であること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-037	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-037	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-038	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-039	IT-26	更新内容	P1	更新時の更新内容確認	更新単位を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-038	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-040	IT-26	更新内容	P1	更新時の更新内容確認	価格再計算を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-039	IT-26	更新内容	P1	更新時の更新内容確認	更新単位を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-041	IT-26	更新内容	P1	更新時の更新内容確認	CSVファイル選択を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-040	IT-26	更新内容	P1	更新時の更新内容確認	価格再計算を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-042	IT-26	更新内容	P1	更新時の更新内容確認	ヘッダ列名の順序が違うを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-041	IT-26	更新内容	P1	更新時の更新内容確認	CSVファイル選択を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-043	IT-05	実行結果	P1	更新時の実行結果確認	商品はあるがサブ行が無いを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-042	IT-05	実行結果	P1	更新時の実行結果確認	ヘッダ列名の順序が違うを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-044	IT-05	実行結果	P1	更新時の実行結果確認	取込エラーと成功フラッシュを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-043	IT-05	実行結果	P1	更新時の実行結果確認	商品はあるがサブ行が無いを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	取込エラー時は成功用フラッシュを積まず、errors で画面表示すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-045	IT-16	実行結果	P2	実行結果の結合確認	支店を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新処理が既存サブ行に依存するため、実行時例外になりうるであること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-044	IT-16	実行結果	P2	実行結果の結合確認	取込エラーと成功フラッシュを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-046	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	画面再表示を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-045	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	支店を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-047	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	成功時出力を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-046	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	画面再表示を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-047	IT-27	実行結果	P2	実行結果の結合確認	成功時出力を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-048	IT-27	実行結果	P2	実行結果の結合確認	失敗時出力を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-049	IT-27	実行結果	P2	実行結果の結合確認	副作用を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-049	IT-24	出力内容	P2	出力内容の結合確認	副作用を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-050	IT-24	出力内容	P2	出力内容の結合確認	dtb_product（現行 dtb_product_sub）を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-051	IT-24	出力内容	P2	出力内容の結合確認	登録/更新を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
@@ -190,70 +189,72 @@ m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-052	IT-24	出力内容	P2	出力内容の結合確認	商品本体を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-053	IT-24	出力内容	P2	出力内容の結合確認	メニューから「割引率変更CSV登録」を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-054	IT-24	出力内容	P2	出力内容の結合確認	アップロード送信成功を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-055	IT-27	削除	P1	削除の結合確認	雛形ダウンロードを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-054	IT-27	削除	P1	削除の結合確認	アップロード送信成功を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-056	IT-27	移動・リネーム	P2	移動・リネームの結合確認	POST 取込を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-055	IT-27	移動・リネーム	P2	移動・リネームの結合確認	雛形ダウンロードを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-057	IT-27	コピー	P1	コピーの結合確認	フォーム不正を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-056	IT-27	コピー	P1	コピーの結合確認	POST 取込を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-058	IT-33	ファイル登録	P1	ファイル登録の結合確認	CSV 形式・ヘッダ・列・マスタ・商品不存在を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-057	IT-33	ファイル登録	P1	ファイル登録の結合確認	フォーム不正を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-059	IT-33	ファイル出力	P1	ファイル出力の結合確認	予期せぬ例外を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-058	IT-33	ファイル出力	P1	ファイル出力の結合確認	CSV 形式・ヘッダ・列・マスタ・商品不存在を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-060	IT-27	JSON	P1	JSONの結合確認	取込開始を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-059	IT-27	JSON	P1	JSONの結合確認	予期せぬ例外を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-061	IT-27	同名ファイル	P1	同名ファイルの結合確認	取込失敗を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-060	IT-27	同名ファイル	P1	同名ファイルの結合確認	取込開始を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-062	IT-27	入力JSON	P1	入力JSONの結合確認	取込成功を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-061	IT-27	入力JSON	P1	入力JSONの結合確認	取込失敗を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-063	IT-27	配置先	P1	配置先の結合確認	商品管理メニューから「CSVダウンロード・アップロード」系の配下にある「割引率…を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-062	IT-27	配置先	P1	配置先の結合確認	取込成功を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-064	IT-27	スキーマ	P1	スキーマの結合確認	同一画面でファイルを選び「CSVファイルのアップロード」を押下を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-063	IT-27	スキーマ	P1	スキーマの結合確認	商品管理メニューから「CSVダウンロード・アップロード」系の配下にある「割引率…を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-065	IT-02	初期行数	P2	初期行数の結合確認	フォーマット欄の「雛形ファイルダウンロード」を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-064	IT-02	初期行数	P2	初期行数の結合確認	同一画面でファイルを選び「CSVファイルのアップロード」を押下を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 同一画面でファイルを選び「CSVファイルのアップロード」を押下
+3. 画面表示と後続状態を確認する"	CSRF を含むマルチパート送信後、検証と取込が走り、成功時は成功フラッシュと履歴追記、失敗時はエラー内容がフォーム付近に表示されるであること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-065	IT-02	表示順	P2	表示順の結合確認	フォーマット欄の「雛形ファイルダウンロード」を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. フォーマット欄の「雛形ファイルダウンロード」
 3. 画面表示と後続状態を確認する"	列名のみの CSV ファイル（BOM 付き UTF-8）が保存ダイアログで受け取れるであること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-066	IT-02	表示順	P2	表示順の結合確認	type が discount のとき、割引率変更用のヘッダのみを持つ UTF…を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. type が discount のとき、割引率変更用のヘッダのみを持つ UTF…を確認する
-3. 画面表示と後続状態を確認する"	type が discount のとき、割引率変更用のヘッダのみを持つ UTF-8（BOM 付き）の雛形 CSV をダウンロード応答として返すこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-067	IT-25	更新抑止	P1	更新抑止の結合確認	表示要素を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-066	IT-25	更新抑止	P1	更新抑止の結合確認	type が discount のとき、割引率変更用のヘッダのみを持つ UTF…を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-068	IT-12	内部情報	P1	内部情報の結合確認	JS 挙動を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-067	IT-12	内部情報	P1	内部情報の結合確認	表示要素を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	admin/assets/js/card-csvimport.js と spin.min.js を読み込むであること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-069	IT-15	機密情報	P1	機密情報の結合確認	モーダル・ポップアップを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-070	IT-07	排他制御	P1	排他制御の結合確認	更新単位を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ベーステンプレートは Product/base_csv_upload.twig 相当であること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-068	IT-07	排他制御	P1	排他制御の結合確認	JS 挙動を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で排他制御の対象ファイルと処理条件を指定する	"1. 排他制御の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	CSV の 1 データ行が 1 商品 ID に対応であること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-071	IT-06	ロールバック	P3	ロールバックの結合確認	価格再計算を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	admin/assets/js/card-csvimport.js と spin.min.js を読み込むであること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-069	IT-06	ロールバック	P3	ロールバックの結合確認	モーダル・ポップアップを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本ハンドラは価格列を更新しないこと。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-072	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSVファイル選択を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	取込前の確認ダイアログはないこと。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	更新単位を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 更新単位を確認する
+3. 画面表示と後続状態を確認する"	CSV の 1 データ行が 1 商品 ID に対応であること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-071	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	価格再計算を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 価格再計算を確認する
+3. 画面表示と後続状態を確認する"	本ハンドラは価格列を更新しないこと。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	CSVファイル選択を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSVファイル選択
 3. 画面表示と後続状態を確認する"	サーバ一時ディレクトリに保存したうえで読み捨て解析であること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-073	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ヘッダ列名の順序が違うを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-073	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ヘッダ列名の順序が違うを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ヘッダ列名の順序が違うを確認する
 3. 画面表示と後続状態を確認する"	行の連想配列はヘッダ名で解決するため、列順の厳密一致は不要だが、必須列名「商品ID」「割引率(ID)」が欠けると列存在エラーとなること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-074	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	商品はあるがサブ行が無いを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	商品はあるがサブ行が無いを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 商品はあるがサブ行が無いを確認する
 3. 画面表示と後続状態を確認する"	更新処理が既存サブ行に依存するため、実行時例外になりうるであること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-075	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	取込エラーと成功フラッシュを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	取込エラーと成功フラッシュを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 取込エラーと成功フラッシュを確認する
 3. 画面表示と後続状態を確認する"	取込エラー時は成功用フラッシュを積まず、errors で画面表示すること。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-076	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	支店を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 支店を確認する
 3. 画面表示と後続状態を確認する"	成功時に商品 ID 集合で通知すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-077	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	画面再表示を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-077	IT-25	一覧	P2	一覧の結合確認	画面再表示を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 画面再表示を確認する
 3. 画面表示と後続状態を確認する"	POST 後も同じ URL で履歴を読み直すため、成功直後の一覧は最新の履歴を含みうるであること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	成功時出力を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-078	IT-12	画面表示データ	P2	画面表示データの結合確認	成功時出力を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	HTML（同一画面）であること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-079	IT-25	一覧	P2	一覧の結合確認	失敗時出力を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-079	IT-25	画面表示データ	P2	画面表示データの結合確認	失敗時出力を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	HTML（同一画面）であること。
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-080	IT-12	画面表示データ	P2	画面表示データの結合確認	副作用を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
@@ -262,35 +263,20 @@ m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割
 m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-081	IT-25	画面表示データ	P2	画面表示データの結合確認	dtb_product（現行 dtb_product_sub）を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. dtb_product（現行 dtb_product_sub）を確認する
 3. 画面表示と後続状態を確認する"	現行 UPDATE では既存サブ行から読んだ値をそのまま書き戻すであること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-082	IT-12	画面表示データ	P2	画面表示データの結合確認	登録/更新を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-082	IT-25	フォーム送信	P1	フォーム送信の結合確認	登録/更新を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-083	IT-25	画面表示データ	P2	画面表示データの結合確認	商品本体を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 商品本体を確認する
-3. 画面表示と後続状態を確認する"	未削除行が存在すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-084	IT-25	フォーム送信	P1	フォーム送信の結合確認	メニューから「割引率変更CSV登録」を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-083	IT-16	ファイル選択	P2	ファイル選択の結合確認	商品本体を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-084	IT-12	非同期更新	P1	非同期更新の結合確認	メニューから「割引率変更CSV登録」を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. メニューから「割引率変更CSV登録」を確認する
 3. 画面表示と後続状態を確認する"	同一リソースの GET 応答（HTML）であること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-085	IT-16	ファイル選択	P2	ファイル選択の結合確認	アップロード送信成功を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-086	IT-12	非同期更新	P1	非同期更新の結合確認	雛形ダウンロードを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-085	IT-12	エラー継続	P3	エラー継続の結合確認	アップロード送信成功を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. アップロード送信成功
+3. 画面表示と後続状態を確認する"	URL は変わらず POST 応答で HTML を再描画（PRG パターンではない）であること。
+m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-086	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	雛形ダウンロードを試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 雛形ダウンロード
 3. 画面表示と後続状態を確認する"	ファイルダウンロード応答であること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-087	IT-12	エラー継続	P3	エラー継続の結合確認	POST 取込を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. POST 取込を確認する
-3. 画面表示と後続状態を確認する"	フォームは再表示であること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-088	IT-25	件数上限	P2	件数上限の結合確認	フォーム不正を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. フォーム不正を確認する
-3. 画面表示と後続状態を確認する"	エラーメッセージをフラッシュし、画面再描画であること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-089	IT-25	欠損値	P2	欠損値の結合確認	CSV 形式・ヘッダ・列・マスタ・商品不存在を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. CSV 形式・ヘッダ・列・マスタ・商品不存在を確認する
-3. 画面表示と後続状態を確認する"	メッセージ配列をテンプレートへ渡し表示であること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-090	IT-25	データなし	P2	データなしの結合確認	予期せぬ例外を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 予期せぬ例外を確認する
-3. 画面表示と後続状態を確認する"	CsvImporter 内でロールバック試行のうえ例外再送出しうる（実装を確認値とする）であること。
-m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）	IT-M03-34-ADMIN-PRODUCT-PRODUCT-DISCOUNT-CSV-IMPORT-091	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	取込開始を試験できる状態である	m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割引率変更CSV登録）（m03_34_admin_product_product_discount_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 取込開始を確認する
-3. 画面表示と後続状態を確認する"	情報ログ「割引率変更CSV登録開始」であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -383,4 +369,4 @@ m03-34_admin_product_product_discount_csv_import（管理画面_商品管理_割
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 1件 — No.109。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.109, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

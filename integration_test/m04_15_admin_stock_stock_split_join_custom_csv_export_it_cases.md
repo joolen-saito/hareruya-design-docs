@@ -11,9 +11,9 @@
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | 対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
@@ -39,142 +39,128 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
 M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-001	IT-27	出力失敗	P1	出力失敗の結合確認	機能名を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で出力失敗の対象ファイルと処理条件を指定する	"1. 対象画面で出力失敗のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力失敗のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-002	IT-15	CSRF	P1	CSRFの結合確認	実装確認を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でCSRFの対象ファイルと処理条件を指定する	"1. 対象画面でCSRFのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	CSRFのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-003	IT-15	未認証	P1	未認証の結合確認	2026-06-12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で未認証の対象ファイルと処理条件を指定する	"1. 未認証の認証・Cookie・セッション・試行制限など前提条件を設定する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-002	IT-15	未認証	P1	未認証の結合確認	実装確認を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で未認証の対象ファイルと処理条件を指定する	"1. 未認証の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	../ec-cube-enterprise（StockSplitJoinController（custom-csvルートなし） / StockSplitJoinCsvExportService（固定列） / Maste…であること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-003	IT-15	対象データ	P1	対象データの結合確認	2026-06-12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で対象データの対象ファイルと処理条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ec-cube-enterprise 実装を読み込み、在庫分割結合のカスタムCSV専用実装が未提供である点を確認・明記であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-004	IT-15	対象データ	P1	対象データの結合確認	在庫分割結合カスタムCSV出力を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で対象データの対象ファイルと処理条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-004	IT-20	出力抑止	P1	出力抑止の結合確認	在庫分割結合カスタムCSV出力を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で出力抑止の対象ファイルと処理条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	フォーマットID（csvExtensionId 相当）を指定し、CSV_TYPE_STOCK_SPLIT のカスタム設定に従って出力項目・並びを変更して出力する想定であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-005	IT-20	出力抑止	P1	出力抑止の結合確認	1〜12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で出力抑止の対象ファイルと処理条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-005	IT-20	識別子	P1	識別子の結合確認	1〜12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で識別子の対象ファイルと処理条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ID／タイプ／店舗／在庫区分／分割元・結合先商品名／分割元・結合先点数／分割元・結合先基準価格合計／分割先・結合元点数／分割先・結合元基準価格合計／ステータス／登録日時／登録者であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-006	IT-20	識別子	P1	識別子の結合確認	主データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で識別子の対象ファイルと処理条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-006	IT-15	状態変化	P1	状態変化の結合確認	主データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で状態変化の対象ファイルと処理条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	**参照のみ**であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-007	IT-15	状態変化	P1	状態変化の結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で状態変化の対象ファイルと処理条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	出力列の選択・並びはカスタムCSV共通設定（dtb_csv、CSV種別 CSV_TYPE_STOCK_SPLIT=12）に従うであること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-008	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	出力対象データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で確認ダイアログの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で確認ダイアログの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. カスタムCSV設定を確認する
+3. 画面表示と後続状態を確認する"	出力列の選択・並びはカスタムCSV共通設定（dtb_csv、CSV種別 CSV_TYPE_STOCK_SPLIT=12）に従うであること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	出力対象データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でHTTPステータスの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 出力対象データを確認する
 3. 画面表示と後続状態を確認する"	dtb_stock_split_join と dtb_stock_split_join_detail を結合した在庫分割結合情報であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-009	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でHTTPステータスの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. カスタムCSV設定を確認する
-3. 画面表示と後続状態を確認する"	出力列の選択・並びはカスタムCSV共通設定（dtb_csv、CSV_TYPE_STOCK_SPLIT=12）に従う想定であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-010	IT-25	URL	P2	URLの操作結果確認	出力サービスを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でURLの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力サービスを確認する
-3. 画面表示と後続状態を確認する"	現状は固定列の StockSplitJoinCsvExportService のみであること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-011	IT-16	実行結果	P2	実行結果の結合確認	機能名を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-009	IT-16	実行結果	P2	実行結果の結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-012	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	実装確認を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-010	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	出力サービスを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-013	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	2026-06-12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-011	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	機能名を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-014	IT-27	実行結果	P2	実行結果の結合確認	在庫分割結合カスタムCSV出力を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-012	IT-27	実行結果	P2	実行結果の結合確認	実装確認を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-015	IT-27	実行結果	P2	実行結果の結合確認	1〜12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-013	IT-27	実行結果	P2	実行結果の結合確認	2026-06-12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-014	IT-24	出力内容	P2	出力内容の結合確認	在庫分割結合カスタムCSV出力を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-015	IT-24	出力内容	P2	出力内容の結合確認	1〜12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-016	IT-24	出力内容	P2	出力内容の結合確認	主データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-017	IT-24	出力内容	P2	出力内容の結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-018	IT-24	出力内容	P2	出力内容の結合確認	出力対象データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-019	IT-24	出力内容	P2	出力内容の結合確認	出力サービスを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-020	IT-27	削除	P1	削除の結合確認	機能名を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-019	IT-27	削除	P1	削除の結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-021	IT-27	移動・リネーム	P2	移動・リネームの結合確認	実装確認を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-020	IT-27	移動・リネーム	P2	移動・リネームの結合確認	出力サービスを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-022	IT-27	コピー	P1	コピーの結合確認	2026-06-12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-021	IT-27	コピー	P1	コピーの結合確認	機能名を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-023	IT-33	ファイル登録	P1	ファイル登録の結合確認	在庫分割結合カスタムCSV出力を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-022	IT-33	ファイル登録	P1	ファイル登録の結合確認	実装確認を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-024	IT-33	ファイル出力	P1	ファイル出力の結合確認	1〜12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-023	IT-33	ファイル出力	P1	ファイル出力の結合確認	2026-06-12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-025	IT-27	JSON	P1	JSONの結合確認	主データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-024	IT-27	JSON	P1	JSONの結合確認	在庫分割結合カスタムCSV出力を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-026	IT-27	同名ファイル	P1	同名ファイルの結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-025	IT-27	同名ファイル	P1	同名ファイルの結合確認	1〜12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-027	IT-27	入力JSON	P1	入力JSONの結合確認	出力対象データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-026	IT-27	入力JSON	P1	入力JSONの結合確認	主データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-028	IT-27	配置先	P1	配置先の結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-027	IT-27	配置先	P1	配置先の結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-029	IT-27	スキーマ	P1	スキーマの結合確認	出力サービスを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-028	IT-27	スキーマ	P1	スキーマの結合確認	出力対象データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-030	IT-02	初期行数	P2	初期行数の結合確認	機能名を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 機能名を確認する
-3. 画面表示と後続状態を確認する"	在庫分割結合情報カスタムCSV出力であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-031	IT-02	表示順	P2	表示順の結合確認	実装確認を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 実装確認を確認する
-3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockSplitJoinController（custom-csvルートなし） / StockSplitJoinCsvExportService（固定列） / Maste…であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-032	IT-25	更新抑止	P1	更新抑止の結合確認	2026-06-12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-033	IT-12	内部情報	P1	内部情報の結合確認	在庫分割結合カスタムCSV出力を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	フォーマットID（csvExtensionId 相当）を指定し、CSV_TYPE_STOCK_SPLIT のカスタム設定に従って出力項目・並びを変更して出力する想定であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-034	IT-15	機密情報	P1	機密情報の結合確認	1〜12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-035	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	主データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 主データを確認する
-3. 画面表示と後続状態を確認する"	**参照のみ**であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-036	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. カスタムCSV設定を確認する
-3. 画面表示と後続状態を確認する"	出力列の選択・並びはカスタムCSV共通設定（dtb_csv、CSV種別 CSV_TYPE_STOCK_SPLIT=12）に従うであること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-037	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	出力対象データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力対象データを確認する
-3. 画面表示と後続状態を確認する"	dtb_stock_split_join と dtb_stock_split_join_detail を結合した在庫分割結合情報であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-038	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-029	IT-02	初期行数	P2	初期行数の結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. カスタムCSV設定を確認する
 3. 画面表示と後続状態を確認する"	出力列の選択・並びはカスタムCSV共通設定（dtb_csv、CSV_TYPE_STOCK_SPLIT=12）に従う想定であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-039	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出力サービスを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-030	IT-02	表示順	P2	表示順の結合確認	出力サービスを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 出力サービスを確認する
 3. 画面表示と後続状態を確認する"	現状は固定列の StockSplitJoinCsvExportService のみであること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-040	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	機能名を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 機能名を確認する
-3. 画面表示と後続状態を確認する"	在庫分割結合情報カスタムCSV出力であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-041	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	実装確認を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 実装確認を確認する
-3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockSplitJoinController（custom-csvルートなし） / StockSplitJoinCsvExportService（固定列） / Maste…であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-042	IT-25	一覧	P2	一覧の結合確認	2026-06-12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-031	IT-25	更新抑止	P1	更新抑止の結合確認	機能名を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-032	IT-12	内部情報	P1	内部情報の結合確認	実装確認を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	../ec-cube-enterprise（StockSplitJoinController（custom-csvルートなし） / StockSplitJoinCsvExportService（固定列） / Maste…であること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-033	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	2026-06-12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 2026-06-12を確認する
 3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装を読み込み、在庫分割結合のカスタムCSV専用実装が未提供である点を確認・明記であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-043	IT-12	画面表示データ	P2	画面表示データの結合確認	在庫分割結合カスタムCSV出力を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 在庫分割結合カスタムCSV出力を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-044	IT-25	画面表示データ	P2	画面表示データの結合確認	1〜12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 1〜12を確認する
-3. 画面表示と後続状態を確認する"	ID／タイプ／店舗／在庫区分／分割元・結合先商品名／分割元・結合先点数／分割元・結合先基準価格合計／分割先・結合元点数／分割先・結合元基準価格合計／ステータス／登録日時／登録者であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-045	IT-12	画面表示データ	P2	画面表示データの結合確認	主データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 主データを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-046	IT-25	画面表示データ	P2	画面表示データの結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. カスタムCSV設定を確認する
-3. 画面表示と後続状態を確認する"	出力列の選択・並びはカスタムCSV共通設定（dtb_csv、CSV種別 CSV_TYPE_STOCK_SPLIT=12）に従うであること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-047	IT-25	フォーム送信	P1	フォーム送信の結合確認	出力対象データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力対象データを確認する
-3. 画面表示と後続状態を確認する"	dtb_stock_split_join と dtb_stock_split_join_detail を結合した在庫分割結合情報であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-048	IT-16	ファイル選択	P2	ファイル選択の結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-049	IT-12	非同期更新	P1	非同期更新の結合確認	出力サービスを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力サービスを確認する
-3. 画面表示と後続状態を確認する"	現状は固定列の StockSplitJoinCsvExportService のみであること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-050	IT-12	エラー継続	P3	エラー継続の結合確認	機能名を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 機能名を確認する
-3. 画面表示と後続状態を確認する"	在庫分割結合情報カスタムCSV出力であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-051	IT-25	件数上限	P2	件数上限の結合確認	実装確認を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 実装確認を確認する
-3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockSplitJoinController（custom-csvルートなし） / StockSplitJoinCsvExportService（固定列） / Maste…であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-052	IT-25	欠損値	P2	欠損値の結合確認	2026-06-12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 2026-06-12を確認する
-3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装を読み込み、在庫分割結合のカスタムCSV専用実装が未提供である点を確認・明記であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-053	IT-25	データなし	P2	データなしの結合確認	在庫分割結合カスタムCSV出力を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-034	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	在庫分割結合カスタムCSV出力を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 在庫分割結合カスタムCSV出力を確認する
 3. 画面表示と後続状態を確認する"	フォーマットID（csvExtensionId 相当）を指定し、CSV_TYPE_STOCK_SPLIT のカスタム設定に従って出力項目・並びを変更して出力する想定であること。
-M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-054	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	1〜12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-035	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	1〜12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 1〜12を確認する
 3. 画面表示と後続状態を確認する"	ID／タイプ／店舗／在庫区分／分割元・結合先商品名／分割元・結合先点数／分割元・結合先基準価格合計／分割先・結合元点数／分割先・結合元基準価格合計／ステータス／登録日時／登録者であること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-036	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	主データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 主データを確認する
+3. 画面表示と後続状態を確認する"	**参照のみ**であること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-037	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. カスタムCSV設定を確認する
+3. 画面表示と後続状態を確認する"	出力列の選択・並びはカスタムCSV共通設定（dtb_csv、CSV種別 CSV_TYPE_STOCK_SPLIT=12）に従うであること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-038	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出力対象データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力対象データを確認する
+3. 画面表示と後続状態を確認する"	dtb_stock_split_join と dtb_stock_split_join_detail を結合した在庫分割結合情報であること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-039	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. カスタムCSV設定を確認する
+3. 画面表示と後続状態を確認する"	出力列の選択・並びはカスタムCSV共通設定（dtb_csv、CSV_TYPE_STOCK_SPLIT=12）に従う想定であること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-040	IT-25	一覧	P2	一覧の結合確認	出力サービスを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力サービスを確認する
+3. 画面表示と後続状態を確認する"	現状は固定列の StockSplitJoinCsvExportService のみであること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-041	IT-12	画面表示データ	P2	画面表示データの結合確認	機能名を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 機能名を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-042	IT-25	画面表示データ	P2	画面表示データの結合確認	実装確認を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 実装確認を確認する
+3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockSplitJoinController（custom-csvルートなし） / StockSplitJoinCsvExportService（固定列） / Maste…であること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-043	IT-12	画面表示データ	P2	画面表示データの結合確認	2026-06-12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 2026-06-12を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-044	IT-25	画面表示データ	P2	画面表示データの結合確認	在庫分割結合カスタムCSV出力を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 在庫分割結合カスタムCSV出力を確認する
+3. 画面表示と後続状態を確認する"	フォーマットID（csvExtensionId 相当）を指定し、CSV_TYPE_STOCK_SPLIT のカスタム設定に従って出力項目・並びを変更して出力する想定であること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-045	IT-25	フォーム送信	P1	フォーム送信の結合確認	1〜12を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 1〜12を確認する
+3. 画面表示と後続状態を確認する"	ID／タイプ／店舗／在庫区分／分割元・結合先商品名／分割元・結合先点数／分割元・結合先基準価格合計／分割先・結合元点数／分割先・結合元基準価格合計／ステータス／登録日時／登録者であること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-046	IT-16	ファイル選択	P2	ファイル選択の結合確認	主データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-047	IT-12	非同期更新	P1	非同期更新の結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. カスタムCSV設定を確認する
+3. 画面表示と後続状態を確認する"	出力列の選択・並びはカスタムCSV共通設定（dtb_csv、CSV種別 CSV_TYPE_STOCK_SPLIT=12）に従うであること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-048	IT-12	エラー継続	P3	エラー継続の結合確認	出力対象データを試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力対象データを確認する
+3. 画面表示と後続状態を確認する"	dtb_stock_split_join と dtb_stock_split_join_detail を結合した在庫分割結合情報であること。
+M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-STOCK-SPLIT-JOIN-CUSTOM-CSV-EXPORT-049	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	カスタムCSV設定を試験できる状態である	M04-15（在庫分割結合情報カスタムCSV出力）（m04_15_admin_stock_stock_split_join_custom_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. カスタムCSV設定を確認する
+3. 画面表示と後続状態を確認する"	出力列の選択・並びはカスタムCSV共通設定（dtb_csv、CSV_TYPE_STOCK_SPLIT=12）に従う想定であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -274,4 +260,4 @@ M04-15（在庫分割結合情報カスタムCSV出力）	IT-M04-15-ADMIN-STOCK-
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 1件 — No.189。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.412, No.413, No.414, No.415, No.422, No.510。上限緩和または個別ケース化で収載可能。

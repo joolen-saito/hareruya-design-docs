@@ -10,14 +10,14 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
 | IT-05 | 削除条件、実行結果 |
-| IT-02 | 初期行数、表示順 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-11 | 実行結果 |
 | IT-28 | ヘッダ、件名、実行結果、本文 |
@@ -63,205 +63,205 @@ m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メ�
 m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	出荷編集画面を開く（お届け先を編集）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷編集画面を開く（お届け先を編集）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 出荷編集画面を開く（お届け先を編集）
 3. 画面表示と後続状態を確認する"	受注に紐づく各出荷のブロックに出荷用メモ欄が出荷ごとに表示され、保存済みのメモが初期表示されるであること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-009	IT-25	URL	P2	URLの操作結果確認	出荷編集画面で登録するを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷編集画面で登録するの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	出荷編集画面で登録するを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 出荷編集画面で登録するを確認する
-3. 画面表示と後続状態を確認する"	検証に成功すれば各出荷の出荷用メモを含む出荷情報が保存されるであること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	未ログインまたは権限・IP制限で拒否される利用者を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 未ログインまたは権限・IP制限で拒否される利用者を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	表示要素（受注編集）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 表示要素（受注編集）を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	表示要素（出荷編集）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で表示要素（出荷編集）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	表示要素（受注編集）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で表示要素（受注編集）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素（受注編集）を確認する
+3. 画面表示と後続状態を確認する"	出荷情報ブロック（見出し「出荷情報」）の中に、ラベル「出荷用メモ欄」と複数行入力欄を表示すること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示要素（出荷編集）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 表示要素（出荷編集）を確認する
-3. 画面表示と後続状態を確認する"	各出荷ブロックの中に、ラベル「出荷用メモ欄」と複数行入力欄（行数8）を表示すること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS挙動を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	CSS・レイアウトを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	CSS・レイアウトを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. CSS・レイアウトを確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	保存単位を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 保存単位
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	受注編集画面での入力範囲を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 受注編集画面での入力範囲
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	保存単位を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 保存単位
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	保存経路を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 保存経路
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	受注編集画面での入力範囲を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 受注編集画面での入力範囲
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-019	IT-22	部分入力	P2	部分入力の入力検証	未入力時の扱いを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で未入力時の扱いの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 未入力時の扱い
-3. 画面表示と後続状態を確認する"	出荷用メモ欄は任意項目であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-020	IT-26	登録内容	P1	登録時の登録内容確認	CSV出力での参照を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でCSV出力での参照の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-021	IT-26	登録内容	P1	登録時の登録内容確認	出荷用メモ欄を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷用メモ欄の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-022	IT-26	登録内容	P1	登録時の登録内容確認	出荷用メモを空のまま保存を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷用メモを空のまま保存の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-023	IT-26	登録内容	P1	登録時の登録内容確認	出荷用メモが3000文字を超えるを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷用メモが3000文字を超えるの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フォームのLength検証で違反となり、保存しないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-024	IT-26	登録内容	P1	登録時の登録内容確認	複数お届け先の受注を受注編集画面で開くを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で複数お届け先の受注を受注編集画面で開くの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-025	IT-26	登録内容	P1	登録時の登録内容確認	出荷編集画面でお届け先を追加を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-026	IT-26	登録内容	P1	登録時の登録内容確認	出荷編集画面でお届け先を削除を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-027	IT-26	登録内容	P1	登録時の登録内容確認	画面と保存値を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-028	IT-26	登録内容	P1	登録時の登録内容確認	受注編集と出荷編集の整合を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-029	IT-26	登録内容	P1	登録時の登録内容確認	CSVとの整合を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でCSVとの整合の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-030	IT-26	実行結果	P1	登録時の実行結果確認	同時更新を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で同時更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-031	IT-23	実行結果	P1	登録時の実行結果確認	入力を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で入力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注編集画面もしくは出荷編集画面のフォーム送信に含まれる出荷用メモ欄の文字列であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-032	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-033	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で失敗時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-034	IT-26	更新内容	P1	更新時の更新内容確認	副作用を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で副作用の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-035	IT-26	更新内容	P1	更新時の更新内容確認	dtb_shippingを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でdtb_shippingの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出荷用メモ欄の保存先であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-036	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で登録/更新の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-037	IT-26	更新内容	P1	更新時の更新内容確認	出荷用メモ欄を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-038	IT-26	更新内容	P1	更新時の更新内容確認	ログイン済み管理者（受注管理を許可）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-039	IT-26	更新内容	P1	更新時の更新内容確認	ログイン済みだが権限マスタで当該パスが拒否を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-040	IT-26	更新内容	P1	更新時の更新内容確認	受注編集画面で登録に成功を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-041	IT-26	更新内容	P1	更新時の更新内容確認	出荷用メモ欄を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷用メモ欄の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-042	IT-05	実行結果	P1	更新時の実行結果確認	配達用メモを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で配達用メモの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-043	IT-05	実行結果	P1	更新時の実行結果確認	受注編集画面を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注編集画面の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	単一のお届け先を持つ受注を編集する画面であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-044	IT-05	削除条件	P1	削除時の削除条件確認	出荷編集画面を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	お届け先（出荷）を編集する画面であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-045	IT-05	削除条件	P1	削除時の削除条件確認	受注編集画面を開く（既存受注）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出荷が1件の受注では、出荷情報ブロックに出荷用メモ欄が表示され、保存済みのメモが初期表示されるであること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-046	IT-05	削除条件	P1	削除時の削除条件確認	受注新規登録画面を開くを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出荷情報ブロックに空の出荷用メモ欄が表示されるであること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-047	IT-05	削除条件	P1	削除時の削除条件確認	受注編集画面で登録するを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検証に成功すれば出荷用メモを含む出荷情報が受注の保存に同梱されて保存されるであること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-048	IT-05	削除条件	P1	削除時の削除条件確認	出荷編集画面を開く（お届け先を編集）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷編集画面を開く（お届け先を編集）の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-049	IT-05	実行結果	P1	削除時の実行結果確認	出荷編集画面で登録するを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷編集画面で登録するの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-050	IT-05	実行結果	P1	削除時の実行結果確認	未ログインまたは権限・IP制限で拒否される利用者を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で未ログインまたは権限・IP制限で拒否される利用者の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	管理画面の共通ルールに従いアクセスできないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-051	IT-05	実行結果	P1	削除時の実行結果確認	表示要素（受注編集）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で表示要素（受注編集）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-052	IT-05	実行結果	P1	削除時の実行結果確認	表示要素（出荷編集）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で表示要素（出荷編集）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	各出荷ブロックの中に、ラベル「出荷用メモ欄」と複数行入力欄（行数8）を表示すること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-053	IT-02	初期行数	P2	初期行数の結合確認	JS挙動を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	出荷用メモ欄に固有のJavaScriptイベント、非同期取得、表示切替、入力補助は持たないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-054	IT-02	表示順	P2	表示順の結合確認	CSS・レイアウトを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. CSS・レイアウトを確認する
-3. 画面表示と後続状態を確認する"	管理画面標準のフォームレイアウトに従い、ラベルと入力欄を1行に並べるであること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-055	IT-25	更新抑止	P1	更新抑止の結合確認	モーダル・ポップアップを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	出荷用メモ欄はモーダル、ポップアップ、トースト、確認ダイアログを表示しないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-056	IT-12	内部情報	P1	内部情報の結合確認	保存単位を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で保存単位の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	出荷用メモは出荷ごとに1つ持つこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-057	IT-15	機密情報	P1	機密情報の結合確認	受注編集画面での入力範囲を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注編集画面での入力範囲の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	受注が複数お届け先でない場合のみ、受注編集画面で先頭の出荷の出荷用メモを編集できること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-058	IT-11	実行結果	P2	実行結果の結合確認	保存経路を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で保存経路の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-018	IT-22	部分入力	P2	部分入力の入力検証	保存経路を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で保存経路の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 保存経路
 3. 画面表示と後続状態を確認する"	受注編集画面では受注の保存に同梱して保存すること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-059	IT-28	実行結果	P2	実行結果の結合確認	CSV出力での参照を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でCSV出力での参照の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-019	IT-26	登録内容	P1	登録時の登録内容確認	未入力時の扱いを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で未入力時の扱いの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-020	IT-26	登録内容	P1	登録時の登録内容確認	CSV出力での参照を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でCSV出力での参照の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-021	IT-26	登録内容	P1	登録時の登録内容確認	出荷用メモ欄を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷用メモ欄の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-022	IT-26	登録内容	P1	登録時の登録内容確認	出荷用メモを空のまま保存を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷用メモを空のまま保存の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	保存先列はNULL相当となること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-023	IT-26	登録内容	P1	登録時の登録内容確認	出荷用メモが3000文字を超えるを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷用メモが3000文字を超えるの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-024	IT-26	登録内容	P1	登録時の登録内容確認	複数お届け先の受注を受注編集画面で開くを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-025	IT-26	登録内容	P1	登録時の登録内容確認	出荷編集画面でお届け先を追加を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-026	IT-26	登録内容	P1	登録時の登録内容確認	出荷編集画面でお届け先を削除を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-027	IT-26	登録内容	P1	登録時の登録内容確認	画面と保存値を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-028	IT-26	登録内容	P1	登録時の登録内容確認	受注編集と出荷編集の整合を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注編集と出荷編集の整合の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-029	IT-26	実行結果	P1	登録時の実行結果確認	CSVとの整合を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でCSVとの整合の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-030	IT-23	実行結果	P1	登録時の実行結果確認	同時更新を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で同時更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一出荷を複数の管理者が同時に編集した場合、最後に保存された内容が残るであること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-031	IT-26	更新内容	P1	更新時の更新内容確認	入力を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で入力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-032	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-033	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で失敗時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-034	IT-26	更新内容	P1	更新時の更新内容確認	副作用を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で副作用の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_shipping.noteの更新であること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-035	IT-26	更新内容	P1	更新時の更新内容確認	dtb_shippingを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でdtb_shippingの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-036	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-037	IT-26	更新内容	P1	更新時の更新内容確認	出荷用メモ欄を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-038	IT-26	更新内容	P1	更新時の更新内容確認	ログイン済み管理者（受注管理を許可）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-039	IT-26	更新内容	P1	更新時の更新内容確認	ログイン済みだが権限マスタで当該パスが拒否を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-040	IT-26	更新内容	P1	更新時の更新内容確認	受注編集画面で登録に成功を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注編集画面で登録に成功の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-041	IT-05	実行結果	P1	更新時の実行結果確認	出荷用メモ欄を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷用メモ欄の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-042	IT-05	実行結果	P1	更新時の実行結果確認	配達用メモを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で配達用メモの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出荷用メモを保存する列に対するCSV項目の表示名であること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-043	IT-05	削除条件	P1	削除時の削除条件確認	受注編集画面を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	単一のお届け先を持つ受注を編集する画面であること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-044	IT-05	削除条件	P1	削除時の削除条件確認	出荷編集画面を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	お届け先（出荷）を編集する画面であること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-045	IT-05	削除条件	P1	削除時の削除条件確認	受注編集画面を開く（既存受注）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出荷が1件の受注では、出荷情報ブロックに出荷用メモ欄が表示され、保存済みのメモが初期表示されるであること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-046	IT-05	削除条件	P1	削除時の削除条件確認	受注新規登録画面を開くを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出荷情報ブロックに空の出荷用メモ欄が表示されるであること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-047	IT-05	削除条件	P1	削除時の削除条件確認	受注編集画面で登録するを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注編集画面で登録するの確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-048	IT-05	実行結果	P1	削除時の実行結果確認	出荷編集画面を開く（お届け先を編集）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷編集画面を開く（お届け先を編集）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-049	IT-05	実行結果	P1	削除時の実行結果確認	出荷編集画面で登録するを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷編集画面で登録するの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検証に成功すれば各出荷の出荷用メモを含む出荷情報が保存されるであること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-050	IT-05	実行結果	P1	削除時の実行結果確認	未ログインまたは権限・IP制限で拒否される利用者を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で未ログインまたは権限・IP制限で拒否される利用者の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-051	IT-05	実行結果	P1	削除時の実行結果確認	表示要素（受注編集）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で表示要素（受注編集）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出荷情報ブロック（見出し「出荷情報」）の中に、ラベル「出荷用メモ欄」と複数行入力欄を表示すること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-052	IT-02	初期行数	P2	初期行数の結合確認	表示要素（出荷編集）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で表示要素（出荷編集）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素（出荷編集）を確認する
+3. 画面表示と後続状態を確認する"	各出荷ブロックの中に、ラベル「出荷用メモ欄」と複数行入力欄（行数8）を表示すること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-053	IT-02	表示順	P2	表示順の結合確認	JS挙動を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	出荷用メモ欄に固有のJavaScriptイベント、非同期取得、表示切替、入力補助は持たないこと。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-054	IT-25	更新抑止	P1	更新抑止の結合確認	CSS・レイアウトを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でCSS・レイアウトの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	管理画面標準のフォームレイアウトに従い、ラベルと入力欄を1行に並べるであること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-055	IT-12	内部情報	P1	内部情報の結合確認	モーダル・ポップアップを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	出荷用メモ欄はモーダル、ポップアップ、トースト、確認ダイアログを表示しないこと。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-056	IT-11	実行結果	P2	実行結果の結合確認	保存単位を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で保存単位の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 保存単位
+3. 画面表示と後続状態を確認する"	出荷用メモは出荷ごとに1つ持つこと。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-057	IT-28	実行結果	P2	実行結果の結合確認	受注編集画面での入力範囲を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注編集画面での入力範囲の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 受注編集画面での入力範囲
+3. 画面表示と後続状態を確認する"	受注が複数お届け先でない場合のみ、受注編集画面で先頭の出荷の出荷用メモを編集できること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-058	IT-28	ヘッダ	P2	ヘッダの結合確認	未入力時の扱いを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で未入力時の扱いの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 未入力時の扱い
+3. 画面表示と後続状態を確認する"	出荷用メモ欄は任意項目であること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-059	IT-28	件名	P2	件名の結合確認	CSV出力での参照を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. CSV出力での参照を確認する
-3. 画面表示と後続状態を確認する"	保存した出荷用メモは出荷用CSV・受注用CSVの項目「配達用メモ」として出力で参照できること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-060	IT-28	ヘッダ	P2	ヘッダの結合確認	出荷用メモ欄を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷用メモ欄の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 出荷用メモ欄を確認する
-3. 画面表示と後続状態を確認する"	dtb_shipping.note（フォームキー note、複数行入力textarea）であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-061	IT-28	件名	P2	件名の結合確認	出荷用メモを空のまま保存を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 出荷用メモを空のまま保存
 3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-062	IT-28	件名	P2	件名の結合確認	出荷用メモが3000文字を超えるを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 出荷用メモが3000文字を超えるを確認する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-060	IT-28	件名	P2	件名の結合確認	出荷用メモ欄を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 出荷用メモ欄を確認する
 3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-063	IT-28	件名	P2	件名の結合確認	複数お届け先の受注を受注編集画面で開くを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で複数お届け先の受注を受注編集画面で開くの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 複数お届け先の受注を受注編集画面で開く
-3. 画面表示と後続状態を確認する"	受注編集画面に出荷用メモ欄を表示せず、当画面からは出荷用メモを編集しないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-064	IT-28	本文	P2	本文の結合確認	出荷編集画面でお届け先を追加を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 出荷編集画面でお届け先を追加を確認する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-061	IT-28	件名	P2	件名の結合確認	出荷用メモを空のまま保存を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷用メモを空のまま保存の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 出荷用メモを空のまま保存
+3. 画面表示と後続状態を確認する"	保存先列はNULL相当となること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-062	IT-28	本文	P2	本文の結合確認	出荷用メモが3000文字を超えるを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 出荷用メモが3000文字を超えるを確認する
 3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-065	IT-28	本文	P2	本文の結合確認	出荷編集画面でお届け先を削除を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 出荷編集画面でお届け先を削除
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-063	IT-28	本文	P2	本文の結合確認	複数お届け先の受注を受注編集画面で開くを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 複数お届け先の受注を受注編集画面で開く
 3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-066	IT-28	本文	P2	本文の結合確認	画面と保存値を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で画面と保存値の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-064	IT-28	本文	P2	本文の結合確認	出荷編集画面でお届け先を追加を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷編集画面でお届け先を追加の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 出荷編集画面でお届け先を追加を確認する
+3. 画面表示と後続状態を確認する"	追加された出荷の出荷用メモ欄は空で表示され、登録時に当該出荷へ保存されるであること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-065	IT-28	本文	P2	本文の結合確認	出荷編集画面でお届け先を削除を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷編集画面でお届け先を削除の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 出荷編集画面でお届け先を削除
+3. 画面表示と後続状態を確認する"	削除対象の出荷は明細とともに削除され、その出荷の出荷用メモも保持されないこと。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-066	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	画面と保存値を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で画面と保存値の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 画面と保存値
 3. 画面表示と後続状態を確認する"	出荷用メモ欄の表示値は、画面を開いた時点で出荷に保存済みのメモであること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-067	IT-28	本文	P2	本文の結合確認	受注編集と出荷編集の整合を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注編集と出荷編集の整合の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	受注編集と出荷編集の整合を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注編集と出荷編集の整合の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注編集と出荷編集の整合を確認する
 3. 画面表示と後続状態を確認する"	同一出荷の出荷用メモは、受注編集画面（出荷1件時）と出荷編集画面のどちらから編集しても同じ保存先列を更新すること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSVとの整合を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でCSVとの整合の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	CSVとの整合を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でCSVとの整合の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSVとの整合を確認する
 3. 画面表示と後続状態を確認する"	出荷用CSVの「配達用メモ」列は、出力時点で出荷に保存済みのメモを出力すること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-069	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	同時更新を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	同時更新を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同時更新を確認する
 3. 画面表示と後続状態を確認する"	同一出荷を複数の管理者が同時に編集した場合、最後に保存された内容が残るであること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	入力を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	入力を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力
 3. 画面表示と後続状態を確認する"	受注編集画面もしくは出荷編集画面のフォーム送信に含まれる出荷用メモ欄の文字列であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-071	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	成功時出力を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	検証成功時、出荷用メモを含む出荷情報を保存し、保存完了のフラッシュメッセージを伴って画面を再表示もしくはリダイレクトすること。
 m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	失敗時出力を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	検証失敗時は同一画面を再描画し、入力値とエラーを表示すること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	副作用を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-073	IT-25	一覧	P2	一覧の結合確認	副作用を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	dtb_shipping.noteの更新であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_shippingを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でdtb_shippingの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-074	IT-12	画面表示データ	P2	画面表示データの結合確認	dtb_shippingを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でdtb_shippingの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_shippingを確認する
-3. 画面表示と後続状態を確認する"	出荷用メモ欄の保存先であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-075	IT-25	一覧	P2	一覧の結合確認	登録/更新を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-075	IT-25	画面表示データ	P2	画面表示データの結合確認	登録/更新を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
 m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-076	IT-12	画面表示データ	P2	画面表示データの結合確認	出荷用メモ欄を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷用メモ欄の確認に必要な条件を指定する	"1. 対象画面を表示する
@@ -270,30 +270,21 @@ m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メ�
 m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-077	IT-25	画面表示データ	P2	画面表示データの結合確認	ログイン済み管理者（受注管理を許可）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でログイン済み管理者（受注管理を許可）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ログイン済み管理者（受注管理を許可）を確認する
 3. 画面表示と後続状態を確認する"	出荷ごとに表示・編集・保存できること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-078	IT-12	画面表示データ	P2	画面表示データの結合確認	ログイン済みだが権限マスタで当該パスが拒否を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でログイン済みだが権限マスタで当該パスが拒否の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-078	IT-25	フォーム送信	P1	フォーム送信の結合確認	ログイン済みだが権限マスタで当該パスが拒否を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）でログイン済みだが権限マスタで当該パスが拒否の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ログイン済みだが権限マスタで当該パスが拒否を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-079	IT-25	画面表示データ	P2	画面表示データの結合確認	受注編集画面で登録に成功を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注編集画面で登録に成功の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	出荷編集画面に到達できず利用不可であること。
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-079	IT-16	ファイル選択	P2	ファイル選択の結合確認	受注編集画面で登録に成功を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注編集画面で登録に成功の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注編集画面で登録に成功を確認する
 3. 画面表示と後続状態を確認する"	受注編集画面（同一受注）であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-080	IT-25	フォーム送信	P1	フォーム送信の結合確認	出荷用メモ欄を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷用メモ欄の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-080	IT-12	非同期更新	P1	非同期更新の結合確認	出荷用メモ欄を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷用メモ欄の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 出荷用メモ欄を確認する
 3. 画面表示と後続状態を確認する"	出荷情報ブロックに置かれる入力欄であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-081	IT-16	ファイル選択	P2	ファイル選択の結合確認	配達用メモを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で配達用メモの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-081	IT-12	エラー継続	P3	エラー継続の結合確認	配達用メモを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で配達用メモの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 配達用メモを確認する
 3. 画面表示と後続状態を確認する"	出荷用メモを保存する列に対するCSV項目の表示名であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-082	IT-12	非同期更新	P1	非同期更新の結合確認	受注編集画面を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注編集画面の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-082	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	受注編集画面を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注編集画面の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注編集画面を確認する
 3. 画面表示と後続状態を確認する"	単一のお届け先を持つ受注を編集する画面であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-083	IT-12	エラー継続	P3	エラー継続の結合確認	出荷編集画面を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で出荷編集画面の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 出荷編集画面を確認する
-3. 画面表示と後続状態を確認する"	お届け先（出荷）を編集する画面であること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-084	IT-25	件数上限	P2	件数上限の結合確認	受注編集画面を開く（既存受注）を試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注編集画面を開く（既存受注）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 受注編集画面を開く（既存受注）
-3. 画面表示と後続状態を確認する"	出荷が1件の受注では、出荷情報ブロックに出荷用メモ欄が表示され、保存済みのメモが初期表示されるであること。
-m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）	IT-M05-17-ADMIN-ORDER-ORDER-SHIPPING-MEMO-085	IT-25	欠損値	P2	欠損値の結合確認	受注新規登録画面を開くを試験できる状態である	m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メモ登録）（m05_17_admin_order_order_shipping_memo）で受注新規登録画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 受注新規登録画面を開く
-3. 画面表示と後続状態を確認する"	出荷情報ブロックに空の出荷用メモ欄が表示されるであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -395,4 +386,4 @@ m05-17_admin_order_order_shipping_memo（管理画面_受注管理_配達用メ�
 | ウェブアプリケーション / 販売価格 / 価格改定（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 2 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.109, No.110, No.111, No.218, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 9件 — No.109, No.110, No.111, No.219, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

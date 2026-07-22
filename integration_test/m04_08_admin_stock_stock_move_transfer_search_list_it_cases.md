@@ -10,11 +10,11 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | 実行結果、検索条件 |
+| IT-23 | データ正当性、実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
@@ -61,81 +61,81 @@ M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	在庫移動CSV登録を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫移動CSV登録の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 在庫移動CSV登録を確認する
 3. 画面表示と後続状態を確認する"	モーダルからの在庫移動CSV取込（M04-22）であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-009	IT-25	URL	P2	URLの操作結果確認	在庫振替CSV登録を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫振替CSV登録の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	在庫振替CSV登録を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 在庫振替CSV登録を確認する
-3. 画面表示と後続状態を確認する"	モーダルからの在庫振替CSV取込（M04-22）であること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	在庫移動CSV雛形を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 在庫移動CSV雛形を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	在庫振替CSV雛形を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 在庫振替CSV雛形を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	表示順を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で表示順の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	在庫振替CSV雛形を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫振替CSV雛形の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 在庫振替CSV雛形を確認する
+3. 画面表示と後続状態を確認する"	stock_transfer.csv（ヘッダ: 振替元商品コード／振替先商品コード／振替点数）を出力であること。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示順を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 表示順を確認する
-3. 画面表示と後続状態を確認する"	実装は登録日（create_date）降順 → 在庫移動振替ID（id）降順（getQueryBuilderBySearchData）であること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	集計表示を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 集計表示を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示件数を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示件数を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 表示件数を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル/付帯データを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル/付帯データを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. モーダル/付帯データを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	登録日 create_date_start〜create_date_endを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 登録日 create_date_start〜create_date_endを確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	登録者 所属 registered_department／氏名 registe…を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 登録者 所属 registered_department／氏名 registe…を確認する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	登録日 create_date_start〜create_date_endを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 登録日 create_date_start〜create_date_endを確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	在庫移動CSV登録／在庫振替CSV登録を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 在庫移動CSV登録／在庫振替CSV登録を確認する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	登録者 所属 registered_department／氏名 registe…を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 登録者 所属 registered_department／氏名 registe…を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-019	IT-22	部分入力	P2	部分入力の入力検証	在庫移動振替CSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫移動振替CSV出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 在庫移動振替CSV出力を確認する
-3. 画面表示と後続状態を確認する"	セッションの検索条件で全件出力であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-020	IT-23	検索条件	P2	検索時の検索条件確認	戻しリストCSV出力／PDF出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-018	IT-22	部分入力	P2	部分入力の入力検証	在庫移動CSV登録／在庫振替CSV登録を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫移動CSV登録／在庫振替CSV登録の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 在庫移動CSV登録／在庫振替CSV登録を確認する
+3. 画面表示と後続状態を確認する"	一覧上のモーダルから上記取込ルートへPOSTであること。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-019	IT-23	検索条件	P2	検索時の検索条件確認	在庫移動振替CSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-021	IT-23	検索条件	P2	検索時の検索条件確認	バーコード貼替リストCSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-020	IT-23	検索条件	P2	検索時の検索条件確認	戻しリストCSV出力／PDF出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	在庫移動指示作成を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-021	IT-23	検索条件	P2	検索時の検索条件確認	バーコード貼替リストCSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	主データを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-022	IT-23	検索条件	P2	検索時の検索条件確認	在庫移動指示作成を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-001を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-023	IT-23	検索条件	P2	検索時の検索条件確認	主データを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-002を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-024	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-001を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-026	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-005を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-025	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-002を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-027	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-007を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-026	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-005を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-027	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-007を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-007の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-028	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-008を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-008の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-029	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-011を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-011の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-030	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-013を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-013の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-031	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-014を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-014の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-032	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-015を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-015の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-033	IT-23	検索条件	P2	検索時の検索条件確認	M04-08-MSG-016を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-016の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-033	IT-23	実行結果	P2	検索時の実行結果確認	M04-08-MSG-016を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-016の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-034	IT-23	実行結果	P2	検索時の実行結果確認	M04-08-MSG-020を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-020の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
@@ -145,118 +145,118 @@ M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-036	IT-23	実行結果	P2	検索時の実行結果確認	M04-08-MSG-024を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-024の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-037	IT-23	実行結果	P2	検索時の実行結果確認	M04-08-MSG-025を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-025の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-037	IT-26	登録内容	P1	登録時の登録内容確認	M04-08-MSG-025を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-025の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-038	IT-26	登録内容	P1	登録時の登録内容確認	M04-08-MSG-026を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-026の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-039	IT-26	登録内容	P1	登録時の登録内容確認	M04-08-MSG-027を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-027の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-040	IT-26	登録内容	P1	登録時の登録内容確認	M04-08-MSG-029を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-029の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	Ajax POST(admin_stock_move_transfer_return_list_pdf_export) が通信エラー等で失敗し .fail コールバックに入ったときであること。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-041	IT-26	登録内容	P1	登録時の登録内容確認	実装確認を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で実装確認の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	../ec-cube-enterprise（StockMoveTransferController::index / SearchStockMoveTransferType / DtbStockMoveTransfer…であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-042	IT-26	登録内容	P1	登録時の登録内容確認	2026-06-12を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で2026-06-12の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-042	IT-26	登録内容	P1	登録時の登録内容確認	2026-06-12を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-043	IT-26	登録内容	P1	登録時の登録内容確認	一覧トップ／検索を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-044	IT-26	登録内容	P1	登録時の登録内容確認	ページ送りを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-043	IT-26	登録内容	P1	登録時の登録内容確認	一覧トップ／検索を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-045	IT-26	登録内容	P1	登録時の登録内容確認	在庫移動振替CSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-044	IT-26	登録内容	P1	登録時の登録内容確認	ページ送りを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-046	IT-26	登録内容	P1	登録時の登録内容確認	戻しリストCSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-045	IT-26	登録内容	P1	登録時の登録内容確認	在庫移動振替CSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-047	IT-26	登録内容	P1	登録時の登録内容確認	戻しリストPDF出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で戻しリストPDF出力の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-046	IT-26	登録内容	P1	登録時の登録内容確認	戻しリストCSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で戻しリストCSV出力の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-048	IT-26	実行結果	P1	登録時の実行結果確認	在庫移動CSV登録を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫移動CSV登録の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-047	IT-26	実行結果	P1	登録時の実行結果確認	戻しリストPDF出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で戻しリストPDF出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-049	IT-23	実行結果	P1	登録時の実行結果確認	在庫振替CSV登録を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫振替CSV登録の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-048	IT-23	実行結果	P1	登録時の実行結果確認	在庫移動CSV登録を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫移動CSV登録の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	モーダルからの在庫振替CSV取込（M04-22）であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	モーダルからの在庫移動CSV取込（M04-22）であること。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-049	IT-26	更新内容	P1	更新時の更新内容確認	在庫振替CSV登録を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫振替CSV登録の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-050	IT-26	更新内容	P1	更新時の更新内容確認	在庫移動CSV雛形を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫移動CSV雛形の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-051	IT-26	更新内容	P1	更新時の更新内容確認	在庫振替CSV雛形を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫振替CSV雛形の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-052	IT-26	更新内容	P1	更新時の更新内容確認	表示順を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で表示順の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実装は登録日（create_date）降順 → 在庫移動振替ID（id）降順（getQueryBuilderBySearchData）であること。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-053	IT-26	更新内容	P1	更新時の更新内容確認	集計表示を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で集計表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	各在庫移動振替IDの移動点数合計・基準価格合計を DtbStockMoveTransferDetailRepository::getAggregatesByStockMoveTransferIds() で取得し、一覧へ…であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-054	IT-26	更新内容	P1	更新時の更新内容確認	表示件数を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で表示件数の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-054	IT-26	更新内容	P1	更新時の更新内容確認	表示件数を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-055	IT-26	更新内容	P1	更新時の更新内容確認	モーダル/付帯データを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-056	IT-26	更新内容	P1	更新時の更新内容確認	登録日 create_date_start〜create_date_endを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-055	IT-26	更新内容	P1	更新時の更新内容確認	モーダル/付帯データを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-057	IT-26	更新内容	P1	更新時の更新内容確認	登録者 所属 registered_department／氏名 registe…を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-056	IT-26	更新内容	P1	更新時の更新内容確認	登録日 create_date_start〜create_date_endを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-058	IT-26	更新内容	P1	更新時の更新内容確認	在庫移動CSV登録／在庫振替CSV登録を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-057	IT-26	更新内容	P1	更新時の更新内容確認	登録者 所属 registered_department／氏名 registe…を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-059	IT-26	更新内容	P1	更新時の更新内容確認	在庫移動振替CSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫移動振替CSV出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-058	IT-26	更新内容	P1	更新時の更新内容確認	在庫移動CSV登録／在庫振替CSV登録を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫移動CSV登録／在庫振替CSV登録の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-060	IT-05	実行結果	P1	更新時の実行結果確認	戻しリストCSV出力／PDF出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で戻しリストCSV出力／PDF出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-059	IT-05	実行結果	P1	更新時の実行結果確認	在庫移動振替CSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫移動振替CSV出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-061	IT-05	実行結果	P1	更新時の実行結果確認	バーコード貼替リストCSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でバーコード貼替リストCSV出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-060	IT-05	実行結果	P1	更新時の実行結果確認	戻しリストCSV出力／PDF出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で戻しリストCSV出力／PDF出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	移動かつ入庫先がスマレジ在庫の場合のみ（出力ルートは別機能側であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-062	IT-02	初期行数	P2	初期行数の結合確認	在庫移動指示作成を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫移動指示作成の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	選択した在庫移動振替IDを ids[] でPOSTであること。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-061	IT-02	初期行数	P2	初期行数の結合確認	バーコード貼替リストCSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でバーコード貼替リストCSV出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. バーコード貼替リストCSV出力を確認する
+3. 画面表示と後続状態を確認する"	移動かつ入庫先がスマレジ在庫の場合のみ（出力ルートは別機能側であること。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-062	IT-02	表示順	P2	表示順の結合確認	在庫移動指示作成を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫移動指示作成の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 在庫移動指示作成を確認する
 3. 画面表示と後続状態を確認する"	移動タイプ＝移動・同一出庫元/入庫先店舗・ステータス出庫承認済み・移動指示ID未登録の条件を満たす移動をまとめて作成（作成処理ルートは別コントローラであること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-063	IT-02	表示順	P2	表示順の結合確認	主データを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で主データの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 主データを確認する
-3. 画面表示と後続状態を確認する"	一覧・検索は**参照のみ**で業務データを更新しないこと。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-064	IT-25	更新抑止	P1	更新抑止の結合確認	M04-08-MSG-001を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-001の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-063	IT-25	更新抑止	P1	更新抑止の結合確認	主データを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で主データの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	一覧・検索は**参照のみ**で業務データを更新しないこと。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-064	IT-12	内部情報	P1	内部情報の結合確認	M04-08-MSG-001を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-001の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	在庫移動CSV登録でフォーム未送信もしくはバリデーション不正（$error->getMessage()／StockMoveCsvImportType 制約由来・複数制約で単一逐語不可）であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-065	IT-12	内部情報	P1	内部情報の結合確認	M04-08-MSG-002を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-002の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	在庫移動CSV登録でアップロードファイル未指定であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-066	IT-15	機密情報	P1	機密情報の結合確認	M04-08-MSG-005を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-005の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	在庫移動CSV取込で行単位エラーが発生（$error['message']／StockMoveCsvImporter 由来）であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-08-MSG-007を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-007の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-065	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-08-MSG-002を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-08-MSG-002を確認する
+3. 画面表示と後続状態を確認する"	在庫移動CSV登録でアップロードファイル未指定であること。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-066	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-08-MSG-005を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M04-08-MSG-005を確認する
+3. 画面表示と後続状態を確認する"	在庫移動CSV取込で行単位エラーが発生（$error['message']／StockMoveCsvImporter 由来）であること。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-067	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-08-MSG-007を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-007の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-08-MSG-007を確認する
 3. 画面表示と後続状態を確認する"	在庫振替CSV登録でフォーム未送信もしくはバリデーション不正（$error->getMessage()／StockTransferCsvImportType 制約由来・複数制約で単一逐語不可）であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M04-08-MSG-008を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-008の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-08-MSG-008を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-008の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-08-MSG-008を確認する
 3. 画面表示と後続状態を確認する"	在庫振替CSV登録でアップロードファイル未指定であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-08-MSG-011を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-011の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-069	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-08-MSG-011を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-011の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-08-MSG-011を確認する
 3. 画面表示と後続状態を確認する"	在庫振替CSV取込で行単位エラーが発生（$error['message']／StockTransferCsvImporter 由来）であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M04-08-MSG-013を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-013の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-08-MSG-013を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-013の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-08-MSG-013を確認する
 3. 画面表示と後続状態を確認する"	戻しリストCSV/PDF出力で対象未選択であること。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-08-MSG-014を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-014の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-08-MSG-014を確認する
 3. 画面表示と後続状態を確認する"	戻しリスト出力対象の検証でエラー（$error／StockMoveTransferReturnListCsvExportService::validateReturnListExportIds 由来・複数文言/spri…であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-08-MSG-015を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-015の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-072	IT-25	一覧	P2	一覧の結合確認	M04-08-MSG-015を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-015の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-08-MSG-015を確認する
 3. 画面表示と後続状態を確認する"	バーコード印刷用CSV出力で対象未選択であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M04-08-MSG-016を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-016の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-073	IT-12	画面表示データ	P2	画面表示データの結合確認	M04-08-MSG-016を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-016の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-08-MSG-016を確認する
-3. 画面表示と後続状態を確認する"	バーコードCSV出力対象の検証でエラー（$error／StockMoveTransferBarcodeCsvExportService::validateBarcodeCsvExportIds 由来・複数文言/%mov…であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-074	IT-25	一覧	P2	一覧の結合確認	M04-08-MSG-020を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-020の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-074	IT-25	画面表示データ	P2	画面表示データの結合確認	M04-08-MSG-020を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-020の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-08-MSG-020を確認する
 3. 画面表示と後続状態を確認する"	移動指示作成で取得件数が選択件数と不一致であること。
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-075	IT-12	画面表示データ	P2	画面表示データの結合確認	M04-08-MSG-023を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-023の確認に必要な条件を指定する	"1. 対象画面を表示する
@@ -265,36 +265,24 @@ M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-
 M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-076	IT-25	画面表示データ	P2	画面表示データの結合確認	M04-08-MSG-024を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-024の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-08-MSG-024を確認する
 3. 画面表示と後続状態を確認する"	一覧の行チェックボックス(.js-move-transfer-row-check)が1件も選択されていない状態でボタンを押下したときであること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-077	IT-12	画面表示データ	P2	画面表示データの結合確認	M04-08-MSG-025を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-025の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-077	IT-25	フォーム送信	P1	フォーム送信の結合確認	M04-08-MSG-025を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-025の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-08-MSG-025を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-078	IT-25	画面表示データ	P2	画面表示データの結合確認	M04-08-MSG-026を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-026の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	一覧の行チェックボックス(.js-move-transfer-row-check)が1件も選択されていない状態でボタンを押下したときであること。
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-078	IT-16	ファイル選択	P2	ファイル選択の結合確認	M04-08-MSG-026を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-026の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-08-MSG-026を確認する
 3. 画面表示と後続状態を確認する"	一覧の行チェックボックス(.js-move-transfer-row-check)が1件も選択されていない状態でボタンを押下したときであること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-079	IT-25	フォーム送信	P1	フォーム送信の結合確認	M04-08-MSG-027を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-027の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-079	IT-12	非同期更新	P1	非同期更新の結合確認	M04-08-MSG-027を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-027の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-08-MSG-027を確認する
 3. 画面表示と後続状態を確認する"	対象選択済みで押下し window.open による別ウィンドウ生成が失敗（ポップアップブロック）して popupWindow が偽値のときであること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-080	IT-16	ファイル選択	P2	ファイル選択の結合確認	M04-08-MSG-029を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-029の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-080	IT-12	エラー継続	P3	エラー継続の結合確認	M04-08-MSG-029を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でM04-08-MSG-029の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M04-08-MSG-029を確認する
 3. 画面表示と後続状態を確認する"	Ajax POST(admin_stock_move_transfer_return_list_pdf_export) が通信エラー等で失敗し .fail コールバックに入ったときであること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-081	IT-12	非同期更新	P1	非同期更新の結合確認	実装確認を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で実装確認の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-081	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	実装確認を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で実装確認の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 実装確認を確認する
 3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockMoveTransferController::index / SearchStockMoveTransferType / DtbStockMoveTransfer…であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-082	IT-12	エラー継続	P3	エラー継続の結合確認	2026-06-12を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で2026-06-12の確認に必要な条件を指定する	"1. 対象画面を表示する
+M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-082	IT-23	データ正当性	P3	データ正当性の結合確認	2026-06-12を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で2026-06-12の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 2026-06-12を確認する
 3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-083	IT-25	件数上限	P2	件数上限の結合確認	一覧トップ／検索を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で一覧トップ／検索の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧トップ／検索
-3. 画面表示と後続状態を確認する"	GETは初期表示、POSTは検索実行であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-084	IT-25	欠損値	P2	欠損値の結合確認	ページ送りを試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）でページ送りの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ページ送りを確認する
-3. 画面表示と後続状態を確認する"	セッションの検索条件を復元し、指定ページを表示すること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-085	IT-25	データなし	P2	データなしの結合確認	在庫移動振替CSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で在庫移動振替CSV出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 在庫移動振替CSV出力を確認する
-3. 画面表示と後続状態を確認する"	セッションの検索条件で全件CSVを出力する（M04-10）であること。
-M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-TRANSFER-SEARCH-LIST-086	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	戻しリストCSV出力を試験できる状態である	M04-08（在庫移動・振替検索/一覧）（m04_08_admin_stock_stock_move_transfer_search_list）で戻しリストCSV出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 戻しリストCSV出力を確認する
-3. 画面表示と後続状態を確認する"	選択した移動IDを対象に戻しリストCSVを出力する（M04-33）であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -394,6 +382,6 @@ M04-08（在庫移動・振替検索/一覧）	IT-M04-08-ADMIN-STOCK-STOCK-MOVE-
 | データベースアクセス / 金額計算 / 税・端数（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
-| その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.109, No.110, No.111, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

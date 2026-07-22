@@ -10,7 +10,7 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | 対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
 | IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
@@ -35,105 +35,105 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 
 ```tsv
 機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-001	IT-15	CSRF	P1	CSRFの結合確認	注文を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で注文の確認に必要な条件を指定する	"1. CSRFの認証・Cookie・セッション・試行制限など前提条件を設定する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-001	IT-15	未認証	P1	未認証の結合確認	注文を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で注文の確認に必要な条件を指定する	"1. 未認証の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	表示対象の購入1件であること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-002	IT-15	未認証	P1	未認証の結合確認	購入履歴一覧の注文番号リンクを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で購入履歴一覧の注文番号リンクの確認に必要な条件を指定する	"1. 未認証の認証・Cookie・セッション・試行制限など前提条件を設定する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-002	IT-15	対象データ	P1	対象データの結合確認	購入履歴一覧の注文番号リンクを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で購入履歴一覧の注文番号リンクの確認に必要な条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	会員ログインを要し、当該会員の注文であれば詳細を表示すること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-003	IT-15	対象データ	P1	対象データの結合確認	「この注文商品をもう一度購入する」を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で「この注文商品をもう一度購入する」の確認に必要な条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-003	IT-20	出力抑止	P1	出力抑止の結合確認	「この注文商品をもう一度購入する」を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で「この注文商品をもう一度購入する」の確認に必要な条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	当該注文の商品をカートへ再投入する内容を返す（購入履歴一覧機能と共通の入口）であること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-004	IT-20	出力抑止	P1	出力抑止の結合確認	領収書発行を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で領収書発行の確認に必要な条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-004	IT-20	識別子	P1	識別子の結合確認	領収書発行を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で領収書発行の確認に必要な条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	領収書発行画面を表示すること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-005	IT-20	識別子	P1	識別子の結合確認	表示要素を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で表示要素の確認に必要な条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-005	IT-15	状態変化	P1	状態変化の結合確認	表示要素を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で表示要素の確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	見出し「購入履歴詳細」、注文番号、領収書発行リンク、注文日、出荷日、金額内訳（商品金額合計、送料、手数料、ポイント使用（値引き）、注文金額合計（税込み）、ポイント発生）、送り主、支払方法、配送方法、支払方法に応じた決済…であること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-006	IT-15	状態変化	P1	状態変化の結合確認	JS挙動を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でJS挙動の確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	再購入は非同期で当該注文の商品・数量をカート投入用に取得すること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	CSS・レイアウトを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-006	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	JS挙動を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	再購入は非同期で当該注文の商品・数量をカート投入用に取得すること。
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-007	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	CSS・レイアウトを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSS・レイアウトを確認する
 3. 画面表示と後続状態を確認する"	金額内訳・決済情報・お届け先を区分して表示すること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	見出しを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で見出しの確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-008	IT-25	URL	P2	URLの操作結果確認	見出しを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で見出しの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 見出しを確認する
 3. 画面表示と後続状態を確認する"	詳細画面の表示時であること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-009	IT-25	URL	P2	URLの操作結果確認	ポイント注記を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でポイント注記の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	ポイント注記を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. ポイント注記を確認する
-3. 画面表示と後続状態を確認する"	詳細画面の表示時であること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	表示対象を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 表示対象を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	金額内訳を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 金額内訳を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	税額を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で税額の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	金額内訳を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で金額内訳の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 金額内訳を確認する
+3. 画面表示と後続状態を確認する"	商品金額合計・送料・手数料・ポイント使用（値引き）・注文金額合計（税込み）・発生ポイントを表示すること。
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	税額を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 税額を確認する
-3. 画面表示と後続状態を確認する"	商品金額合計・送料・手数料の合計から割引を引いた額に対し税計算を行い表示すること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	決済情報を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 決済情報を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	言語別表示を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	言語別表示を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 言語別表示を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	業務計算を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	業務計算を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 業務計算を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	注文が取得できないを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 注文が取得できないを確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	使用ポイント・発生ポイントが0を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 使用ポイント・発生ポイントが0を確認する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	注文が取得できないを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 注文が取得できないを確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	所有者一致を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 所有者一致を確認する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	使用ポイント・発生ポイントが0を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 使用ポイント・発生ポイントが0を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-019	IT-22	部分入力	P2	部分入力の入力検証	一覧と詳細を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で一覧と詳細の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧と詳細を確認する
-3. 画面表示と後続状態を確認する"	一覧の注文番号リンクから遷移する詳細は同一注文を表示すること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-020	IT-23	検索条件	P2	検索時の検索条件確認	金額表示を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-018	IT-22	部分入力	P2	部分入力の入力検証	所有者一致を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で所有者一致の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 所有者一致を確認する
+3. 画面表示と後続状態を確認する"	表示は注文の会員がログイン会員と一致する場合に限るであること。
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-019	IT-23	検索条件	P2	検索時の検索条件確認	一覧と詳細を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-021	IT-23	検索条件	P2	検索時の検索条件確認	決済情報を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-020	IT-23	検索条件	P2	検索時の検索条件確認	金額表示を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-022	IT-23	検索条件	P2	検索時の検索条件確認	APIを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-021	IT-23	検索条件	P2	検索時の検索条件確認	決済情報を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-023	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-022	IT-23	検索条件	P2	検索時の検索条件確認	APIを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-024	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-023	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-025	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-024	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-026	IT-23	検索条件	P2	検索時の検索条件確認	dtb_order（現行は補助表 dtb_order_sub）を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-025	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-027	IT-23	検索条件	P2	検索時の検索条件確認	dtb_shippingを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-026	IT-23	検索条件	P2	検索時の検索条件確認	dtb_order（現行は補助表 dtb_order_sub）を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-027	IT-23	検索条件	P2	検索時の検索条件確認	dtb_shippingを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でdtb_shippingの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-028	IT-23	検索条件	P2	検索時の検索条件確認	ログイン状態を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でログイン状態の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-029	IT-23	検索条件	P2	検索時の検索条件確認	注文IDを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で注文IDの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-030	IT-23	検索条件	P2	検索時の検索条件確認	「この注文商品をもう一度購入する」を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で「この注文商品をもう一度購入する」の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-031	IT-23	検索条件	P2	検索時の検索条件確認	注文IDなし・取得不可・所有者不一致を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で注文IDなし・取得不可・所有者不一致の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-032	IT-23	検索条件	P2	検索時の検索条件確認	注文取得不可・所有者不一致を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で注文取得不可・所有者不一致の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-033	IT-23	検索条件	P2	検索時の検索条件確認	注文を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で注文の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-033	IT-23	実行結果	P2	検索時の実行結果確認	注文を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で注文の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-034	IT-23	実行結果	P2	検索時の実行結果確認	購入履歴一覧の注文番号リンクを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で購入履歴一覧の注文番号リンクの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
@@ -143,28 +143,28 @@ F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAI
 F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-036	IT-23	実行結果	P2	検索時の実行結果確認	領収書発行を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で領収書発行の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-037	IT-23	実行結果	P2	検索時の実行結果確認	表示要素を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で表示要素の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-038	IT-02	初期行数	P2	初期行数の結合確認	JS挙動を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	再購入は非同期で当該注文の商品・数量をカート投入用に取得すること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-039	IT-25	更新抑止	P1	更新抑止の結合確認	見出しを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で見出しの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-037	IT-02	初期行数	P2	初期行数の結合確認	表示要素を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	見出し「購入履歴詳細」、注文番号、領収書発行リンク、注文日、出荷日、金額内訳（商品金額合計、送料、手数料、ポイント使用（値引き）、注文金額合計（税込み）、ポイント発生）、送り主、支払方法、配送方法、支払方法に応じた決済…であること。
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-038	IT-25	更新抑止	P1	更新抑止の結合確認	CSS・レイアウトを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でCSS・レイアウトの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	金額内訳・決済情報・お届け先を区分して表示すること。
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-039	IT-12	内部情報	P1	内部情報の結合確認	見出しを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で見出しの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	詳細画面の表示時であること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-040	IT-12	内部情報	P1	内部情報の結合確認	ポイント注記を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でポイント注記の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-040	IT-15	機密情報	P1	機密情報の結合確認	ポイント注記を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でポイント注記の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	詳細画面の表示時であること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-041	IT-15	機密情報	P1	機密情報の結合確認	表示対象を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で表示対象の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ログイン会員自身の注文のみを表示すること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-042	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	金額内訳を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で金額内訳の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 金額内訳を確認する
-3. 画面表示と後続状態を確認する"	商品金額合計・送料・手数料・ポイント使用（値引き）・注文金額合計（税込み）・発生ポイントを表示すること。
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-041	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	表示対象を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で表示対象の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示対象を確認する
+3. 画面表示と後続状態を確認する"	ログイン会員自身の注文のみを表示すること。
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-042	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	税額を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で税額の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 税額を確認する
+3. 画面表示と後続状態を確認する"	商品金額合計・送料・手数料の合計から割引を引いた額に対し税計算を行い表示すること。
 F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-043	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	決済情報を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で決済情報の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 決済情報を確認する
 3. 画面表示と後続状態を確認する"	支払方法に応じてコンビニ番号・オンライン決済番号等を表示すること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-044	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	言語別表示を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で言語別表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-044	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	言語別表示を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で言語別表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 言語別表示を確認する
 3. 画面表示と後続状態を確認する"	言語が英語の場合はコンビニ一覧を英語表記で表示すること。
 F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-045	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	業務計算を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で業務計算の確認に必要な条件を指定する	"1. 対象画面を表示する
@@ -173,48 +173,45 @@ F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAI
 F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-046	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	注文が取得できないを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で注文が取得できないの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 注文が取得できないを確認する
 3. 画面表示と後続状態を確認する"	見つからない（HTTP404）であること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-047	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	使用ポイント・発生ポイントが0を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で使用ポイント・発生ポイントが0の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-047	IT-25	一覧	P2	一覧の結合確認	使用ポイント・発生ポイントが0を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で使用ポイント・発生ポイントが0の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 使用ポイント・発生ポイントが0を確認する
 3. 画面表示と後続状態を確認する"	0ポイントとして表示すること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-048	IT-25	一覧	P2	一覧の結合確認	所有者一致を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で所有者一致の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-048	IT-12	画面表示データ	P2	画面表示データの結合確認	所有者一致を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で所有者一致の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 所有者一致を確認する
-3. 画面表示と後続状態を確認する"	表示は注文の会員がログイン会員と一致する場合に限るであること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-049	IT-12	画面表示データ	P2	画面表示データの結合確認	一覧と詳細を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で一覧と詳細の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-049	IT-25	画面表示データ	P2	画面表示データの結合確認	一覧と詳細を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で一覧と詳細の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一覧と詳細を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-050	IT-25	画面表示データ	P2	画面表示データの結合確認	金額表示を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で金額表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	一覧の注文番号リンクから遷移する詳細は同一注文を表示すること。
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-050	IT-12	画面表示データ	P2	画面表示データの結合確認	金額表示を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で金額表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 金額表示を確認する
-3. 画面表示と後続状態を確認する"	金額内訳は注文・注文サブの保持値を参照すること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-051	IT-12	画面表示データ	P2	画面表示データの結合確認	決済情報を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で決済情報の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 決済情報を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-052	IT-25	画面表示データ	P2	画面表示データの結合確認	APIを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-051	IT-25	画面表示データ	P2	画面表示データの結合確認	決済情報を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で決済情報の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 決済情報を確認する
+3. 画面表示と後続状態を確認する"	支払方法に応じた決済情報を表示時点のデータから表示すること。
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-052	IT-25	フォーム送信	P1	フォーム送信の結合確認	APIを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. APIを確認する
 3. 画面表示と後続状態を確認する"	再購入は非同期で注文明細からカート投入内容をJSONで返す（購入履歴一覧機能と共通）であること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-053	IT-25	フォーム送信	P1	フォーム送信の結合確認	成功時出力を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-053	IT-16	ファイル選択	P2	ファイル選択の結合確認	成功時出力を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	購入履歴詳細のHTML表示であること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-054	IT-16	ファイル選択	P2	ファイル選択の結合確認	失敗時出力を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-054	IT-12	非同期更新	P1	非同期更新の結合確認	失敗時出力を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	未ログイン時の会員ログインへの誘導、もしくは見つからない（HTTP404）であること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-055	IT-12	非同期更新	P1	非同期更新の結合確認	副作用を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-055	IT-12	エラー継続	P3	エラー継続の結合確認	副作用を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	詳細表示は更新を伴わないこと。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-056	IT-12	エラー継続	P3	エラー継続の結合確認	dtb_order（現行は補助表 dtb_order_sub）を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でdtb_order（現行は補助表 dtb_order_sub）の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-056	IT-25	件数上限	P2	件数上限の結合確認	dtb_order（現行は補助表 dtb_order_sub）を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でdtb_order（現行は補助表 dtb_order_sub）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_order（現行は補助表 dtb_order_sub）を確認する
 3. 画面表示と後続状態を確認する"	使用ポイント・発生ポイントの表示であること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-057	IT-25	件数上限	P2	件数上限の結合確認	dtb_shippingを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でdtb_shippingの確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-057	IT-25	欠損値	P2	欠損値の結合確認	dtb_shippingを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でdtb_shippingの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_shippingを確認する
 3. 画面表示と後続状態を確認する"	配送方法・お届け先の表示であること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-058	IT-25	欠損値	P2	欠損値の結合確認	ログイン状態を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でログイン状態の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-058	IT-25	データなし	P2	データなしの結合確認	ログイン状態を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）でログイン状態の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ログイン状態を確認する
 3. 画面表示と後続状態を確認する"	詳細表示は会員ログインを要すること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-059	IT-25	データなし	P2	データなしの結合確認	注文IDを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で注文IDの確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-059	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	注文IDを試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で注文IDの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 注文IDを確認する
 3. 画面表示と後続状態を確認する"	必須であること。
-F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAIL-060	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	「この注文商品をもう一度購入する」を試験できる状態である	F06-07（購入履歴詳細）（f06_07_front_member_mypage_order_history_detail）で「この注文商品をもう一度購入する」の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 「この注文商品をもう一度購入する」を確認する
-3. 画面表示と後続状態を確認する"	画面遷移せず非同期でカート投入内容を返すこと。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -316,4 +313,4 @@ F06-07（購入履歴詳細）	IT-F06-07-FRONT-MEMBER-MYPAGE-ORDER-HISTORY-DETAI
 | ウェブアプリケーション / 状態遷移 / 遷移可否（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 8 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.330, No.421。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.330, No.421, No.422。上限緩和または個別ケース化で収載可能。

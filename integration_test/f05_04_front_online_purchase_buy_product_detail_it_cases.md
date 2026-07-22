@@ -10,14 +10,14 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、一覧、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、登録内容 |
 | IT-02 | 表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ |
+| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -192,16 +192,16 @@ F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PROD
 F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-052	IT-12	内部情報	P1	内部情報の結合確認	失敗時出力を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で失敗時出力の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	商品が無い場合はHTTP404、旧コード対応無しはトップへリダイレクトであること。
-F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-053	IT-15	機密情報	P1	機密情報の結合確認	dtb_product_class（現行は商品サブクラス dtb_produc…を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）でdtb_product_class（現行は商品サブクラス dtb_produc…の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	言語・状態ごとの買取価格表示・カート追加可否判定であること。
+F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-053	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_product_class（現行は商品サブクラス dtb_produc…を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）でdtb_product_class（現行は商品サブクラス dtb_produc…の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_product_class（現行は商品サブクラス dtb_produc…を確認する
+3. 画面表示と後続状態を確認する"	言語・状態ごとの買取価格表示・カート追加可否判定であること。
 F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-054	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	カートに追加ボタン押下を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）でカートに追加ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. カートに追加ボタン押下
 3. 画面表示と後続状態を確認する"	画面遷移せず非同期で買取カートへ追加（F05-05）であること。
-F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-055	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	旧コードアクセス（対応なし）／商品取得不可を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で旧コードアクセス（対応なし）／商品取得不可の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-055	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	旧コードアクセス（対応なし）／商品取得不可を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で旧コードアクセス（対応なし）／商品取得不可の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 旧コードアクセス（対応なし）／商品取得不可を確認する
 3. 画面表示と後続状態を確認する"	トップページへリダイレクトであること。
-F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-056	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	同名カードを試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で同名カードの確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-056	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	同名カードを試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で同名カードの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同名カードを確認する
 3. 画面表示と後続状態を確認する"	同じカードに紐づく別バージョンの商品であること。
 F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-057	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	買取商品詳細の表示を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で買取商品詳細の表示の確認に必要な条件を指定する	"1. 対象画面を表示する
@@ -210,33 +210,30 @@ F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PROD
 F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-058	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示要素を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	商品名・画像、言語タブ、状態と買取価格の表、数量選択（条件付き）、カートに追加ボタン、同名カードの買取価格一覧、使用デッキ一覧、商品情報であること。
-F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-059	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	JS挙動を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-059	IT-25	一覧	P2	一覧の結合確認	JS挙動を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	言語タブの切替で対応する価格表を表示すること。
-F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-060	IT-25	一覧	P2	一覧の結合確認	モーダル・ポップアップを試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-060	IT-12	画面表示データ	P2	画面表示データの結合確認	モーダル・ポップアップを試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	カート追加時に追加完了・追加失敗・上限超過のダイアログを表示する（F05-05を正とする）であること。
-F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-061	IT-12	画面表示データ	P2	画面表示データの結合確認	同名カードの買取価格一覧を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で同名カードの買取価格一覧の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-061	IT-25	画面表示データ	P2	画面表示データの結合確認	同名カードの買取価格一覧を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で同名カードの買取価格一覧の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同名カードの買取価格一覧を確認する
+3. 画面表示と後続状態を確認する"	カードIDで買取検索（買取フラグ付き、状態NM・高額除外）を価格昇順で取得すること。
+F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-062	IT-12	画面表示データ	P2	画面表示データの結合確認	使用デッキを試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で使用デッキの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 使用デッキを確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-062	IT-12	画面表示データ	P2	画面表示データの結合確認	見出し（表ラベル）を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で見出し（表ラベル）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 見出し（表ラベル）を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-063	IT-25	フォーム送信	P1	フォーム送信の結合確認	同名カードの抽出を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で同名カードの抽出の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-063	IT-16	ファイル選択	P2	ファイル選択の結合確認	同名カードの抽出を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で同名カードの抽出の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同名カードの抽出を確認する
 3. 画面表示と後続状態を確認する"	カードIDをキーに価格昇順で同名カードを取得すること。
-F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-064	IT-16	ファイル選択	P2	ファイル選択の結合確認	買取価格表示を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で買取価格表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-064	IT-12	非同期更新	P1	非同期更新の結合確認	買取価格表示を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で買取価格表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 買取価格表示を確認する
 3. 画面表示と後続状態を確認する"	商品サブクラスの登録済み買取価格を表示すること。
-F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-065	IT-25	件数上限	P2	件数上限の結合確認	成功時出力を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-065	IT-25	欠損値	P2	欠損値の結合確認	成功時出力を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	買取商品詳細のHTML、もしくは転送先詳細へのリダイレクトであること。
-F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-066	IT-25	欠損値	P2	欠損値の結合確認	失敗時出力を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-066	IT-25	データなし	P2	データなしの結合確認	失敗時出力を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	商品が無い場合はHTTP404、旧コード対応無しはトップへリダイレクトであること。
-F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PRODUCT-DETAIL-067	IT-25	データなし	P2	データなしの結合確認	dtb_product_class（現行は商品サブクラス dtb_produc…を試験できる状態である	F05-04（ネット買取商品詳細）（f05_04_front_online_purchase_buy_product_detail）でdtb_product_class（現行は商品サブクラス dtb_produc…の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_product_class（現行は商品サブクラス dtb_produc…を確認する
-3. 画面表示と後続状態を確認する"	言語・状態ごとの買取価格表示・カート追加可否判定であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -338,4 +335,4 @@ F05-04（ネット買取商品詳細）	IT-F05-04-FRONT-ONLINE-PURCHASE-BUY-PROD
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 10件 — No.109, No.110, No.111, No.332, No.357, No.359, No.385, No.387, No.416, No.420。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 11件 — No.109, No.110, No.111, No.333, No.359, No.381, No.387, No.412, No.416, No.420, No.510。上限緩和または個別ケース化で収載可能。

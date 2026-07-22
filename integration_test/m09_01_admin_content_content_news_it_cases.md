@@ -10,15 +10,15 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、一覧、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | データ正当性、実行結果、検索条件 |
+| IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 削除条件、実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
 
 ## テストケースTSV
 
@@ -60,81 +60,81 @@ m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	一覧からタイトルまたは編集アイコンを押すを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧からタイトルまたは編集アイコンを押すの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一覧からタイトルまたは編集アイコンを押すを確認する
 3. 画面表示と後続状態を確認する"	既存の新着情報が読み込まれ、各入力項目に現行値が表示されるであること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-009	IT-25	URL	P2	URLの操作結果確認	「登録」を押す（編集画面）を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で「登録」を押す（編集画面）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	「登録」を押す（編集画面）を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 「登録」を押す（編集画面）を確認する
-3. 画面表示と後続状態を確認する"	検証に成功すれば保存され、成功メッセージが積まれたうえで当該新着情報の編集画面へ遷移すること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	削除確認モーダルで削除を実行するを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 削除確認モーダルで削除を実行する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	未ログインまたは認可で拒否される利用者を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 未ログインまたは認可で拒否される利用者を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	表示要素（一覧）を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で表示要素（一覧）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	未ログインまたは認可で拒否される利用者を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で未ログインまたは認可で拒否される利用者の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 未ログインまたは認可で拒否される利用者を確認する
+3. 画面表示と後続状態を確認する"	管理画面の共通ルールに従いアクセスできない（詳細は管理画面認証・認可の実装を正とする）であること。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示要素（一覧）を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 表示要素（一覧）を確認する
-3. 画面表示と後続状態を確認する"	見出し行に「公開日時」「公開状態」「タイトル」を表示すること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示要素（編集）を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 表示要素（編集）を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS挙動を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS挙動を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	削除アイコン押下を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 削除アイコン押下
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	公開日時入力を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 公開日時入力
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	削除アイコン押下を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 削除アイコン押下
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	一覧の並び替えUI操作を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 一覧の並び替えUI操作を確認する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	公開日時入力を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 公開日時入力
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-019	IT-22	部分入力	P2	部分入力の入力検証	一覧の対象を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧の対象の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧の対象を確認する
-3. 画面表示と後続状態を確認する"	公開・非公開を問わず登録済みの全新着情報であること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-020	IT-23	検索条件	P2	検索時の検索条件確認	ページング単位を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-018	IT-22	部分入力	P2	部分入力の入力検証	一覧の並び替えUI操作を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧の並び替えUI操作の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧の並び替えUI操作を確認する
+3. 画面表示と後続状態を確認する"	本機能には並び替え保存入口がないため、サーバ側の保存は行わないこと。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-019	IT-23	検索条件	P2	検索時の検索条件確認	一覧の対象を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-021	IT-23	検索条件	P2	検索時の検索条件確認	新規の公開日時初期値を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-020	IT-23	検索条件	P2	検索時の検索条件確認	ページング単位を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-022	IT-23	検索条件	P2	検索時の検索条件確認	公開状態を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-021	IT-23	検索条件	P2	検索時の検索条件確認	新規の公開日時初期値を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-023	IT-23	検索条件	P2	検索時の検索条件確認	別ウィンドウで開くの整合を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-022	IT-23	検索条件	P2	検索時の検索条件確認	公開状態を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-024	IT-23	検索条件	P2	検索時の検索条件確認	本文のHTMLを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-023	IT-23	検索条件	P2	検索時の検索条件確認	別ウィンドウで開くの整合を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-025	IT-23	検索条件	P2	検索時の検索条件確認	タイトルを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-024	IT-23	検索条件	P2	検索時の検索条件確認	本文のHTMLを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-026	IT-23	検索条件	P2	検索時の検索条件確認	URLを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-025	IT-23	検索条件	P2	検索時の検索条件確認	タイトルを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-027	IT-23	検索条件	P2	検索時の検索条件確認	別ウィンドウで開くを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-026	IT-23	検索条件	P2	検索時の検索条件確認	URLを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-027	IT-23	検索条件	P2	検索時の検索条件確認	別ウィンドウで開くを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で別ウィンドウで開くの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-028	IT-23	検索条件	P2	検索時の検索条件確認	本文を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で本文の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-029	IT-23	検索条件	P2	検索時の検索条件確認	公開状態を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で公開状態の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-030	IT-23	検索条件	P2	検索時の検索条件確認	削除対象の識別子が存在しないを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除対象の識別子が存在しないの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-031	IT-23	検索条件	P2	検索時の検索条件確認	削除時に関連データがある等で例外発生を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除時に関連データがある等で例外発生の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-032	IT-23	検索条件	P2	検索時の検索条件確認	URL未入力で別ウィンドウチェックありを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でURL未入力で別ウィンドウチェックありの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-033	IT-23	検索条件	P2	検索時の検索条件確認	公開日時が下限より前を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で公開日時が下限より前の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-033	IT-23	実行結果	P2	検索時の実行結果確認	公開日時が下限より前を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で公開日時が下限より前の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-034	IT-23	実行結果	P2	検索時の実行結果確認	一覧が0件を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧が0件の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
@@ -144,145 +144,145 @@ m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-036	IT-23	実行結果	P2	検索時の実行結果確認	フロント表示との整合を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でフロント表示との整合の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-037	IT-23	実行結果	P2	検索時の実行結果確認	二次キャッシュを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で二次キャッシュの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-037	IT-26	登録内容	P1	登録時の登録内容確認	二次キャッシュを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で二次キャッシュの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-038	IT-26	登録内容	P1	登録時の登録内容確認	作成日時・更新日時・作成者を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で作成日時・更新日時・作成者の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-039	IT-26	登録内容	P1	登録時の登録内容確認	同時更新を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で同時更新の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-040	IT-26	登録内容	P1	登録時の登録内容確認	入力を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で入力の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ブラウザからのGET（一覧・ページング・編集）、POST（登録）、DELETE相当のリクエスト（削除モーダル経由）であること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-041	IT-26	登録内容	P1	登録時の登録内容確認	新着情報を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で新着情報の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フロントTOPページ等に表示する告知1件であること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-042	IT-26	登録内容	P1	登録時の登録内容確認	公開日時を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で公開日時の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-042	IT-26	登録内容	P1	登録時の登録内容確認	公開日時を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-043	IT-26	登録内容	P1	登録時の登録内容確認	公開状態を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-044	IT-26	登録内容	P1	登録時の登録内容確認	別ウィンドウで開くを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-043	IT-26	登録内容	P1	登録時の登録内容確認	公開状態を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-045	IT-26	登録内容	P1	登録時の登録内容確認	ナビから新着情報一覧を開くを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-044	IT-26	登録内容	P1	登録時の登録内容確認	別ウィンドウで開くを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-046	IT-26	登録内容	P1	登録時の登録内容確認	一覧の2ページ目以降を開くを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-045	IT-26	登録内容	P1	登録時の登録内容確認	ナビから新着情報一覧を開くを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-047	IT-26	登録内容	P1	登録時の登録内容確認	「新規作成」ボタンを押すを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で「新規作成」ボタンを押すの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-046	IT-26	登録内容	P1	登録時の登録内容確認	一覧の2ページ目以降を開くを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧の2ページ目以降を開くの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-048	IT-26	実行結果	P1	登録時の実行結果確認	一覧からタイトルまたは編集アイコンを押すを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧からタイトルまたは編集アイコンを押すの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-047	IT-26	実行結果	P1	登録時の実行結果確認	「新規作成」ボタンを押すを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で「新規作成」ボタンを押すの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-049	IT-23	実行結果	P1	登録時の実行結果確認	「登録」を押す（編集画面）を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で「登録」を押す（編集画面）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-048	IT-23	実行結果	P1	登録時の実行結果確認	一覧からタイトルまたは編集アイコンを押すを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧からタイトルまたは編集アイコンを押すの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検証に成功すれば保存され、成功メッセージが積まれたうえで当該新着情報の編集画面へ遷移すること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	既存の新着情報が読み込まれ、各入力項目に現行値が表示されるであること。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-049	IT-26	更新内容	P1	更新時の更新内容確認	「登録」を押す（編集画面）を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で「登録」を押す（編集画面）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-050	IT-26	更新内容	P1	更新時の更新内容確認	削除確認モーダルで削除を実行するを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除確認モーダルで削除を実行するの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-051	IT-26	更新内容	P1	更新時の更新内容確認	未ログインまたは認可で拒否される利用者を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で未ログインまたは認可で拒否される利用者の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-052	IT-26	更新内容	P1	更新時の更新内容確認	表示要素（一覧）を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で表示要素（一覧）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	見出し行に「公開日時」「公開状態」「タイトル」を表示すること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-053	IT-26	更新内容	P1	更新時の更新内容確認	表示要素（編集）を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で表示要素（編集）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	カード見出し「新着情報登録」であること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-054	IT-26	更新内容	P1	更新時の更新内容確認	JS挙動を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でJS挙動の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-054	IT-26	更新内容	P1	更新時の更新内容確認	JS挙動を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-055	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-056	IT-26	更新内容	P1	更新時の更新内容確認	削除アイコン押下を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-055	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-057	IT-26	更新内容	P1	更新時の更新内容確認	公開日時入力を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-056	IT-26	更新内容	P1	更新時の更新内容確認	削除アイコン押下を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-058	IT-26	更新内容	P1	更新時の更新内容確認	一覧の並び替えUI操作を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-057	IT-26	更新内容	P1	更新時の更新内容確認	公開日時入力を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-059	IT-26	更新内容	P1	更新時の更新内容確認	一覧の対象を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧の対象の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-058	IT-26	更新内容	P1	更新時の更新内容確認	一覧の並び替えUI操作を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧の並び替えUI操作の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-060	IT-05	実行結果	P1	更新時の実行結果確認	ページング単位を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でページング単位の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-059	IT-05	実行結果	P1	更新時の実行結果確認	一覧の対象を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧の対象の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-061	IT-05	実行結果	P1	更新時の実行結果確認	新規の公開日時初期値を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で新規の公開日時初期値の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-060	IT-05	実行結果	P1	更新時の実行結果確認	ページング単位を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でページング単位の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	1ページ10件（既定ページ件数の確認値）であること。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-061	IT-05	削除条件	P1	削除時の削除条件確認	新規の公開日時初期値を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	新規登録画面表示時の現在日時であること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-062	IT-05	削除条件	P1	削除時の削除条件確認	公開状態を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-062	IT-05	削除条件	P1	削除時の削除条件確認	公開状態を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	公開（保存値は真）／非公開（保存値は偽）の2択であること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-063	IT-05	削除条件	P1	削除時の削除条件確認	別ウィンドウで開くの整合を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-063	IT-05	削除条件	P1	削除時の削除条件確認	別ウィンドウで開くの整合を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	リンクURLが空の場合、保存直前に「別ウィンドウで開く」を無効（偽）へ揃えるであること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-064	IT-05	削除条件	P1	削除時の削除条件確認	本文のHTMLを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-064	IT-05	削除条件	P1	削除時の削除条件確認	本文のHTMLを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本文は保存時にHTML浄化（purify）を通すであること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-065	IT-05	削除条件	P1	削除時の削除条件確認	タイトルを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_news.titleであること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-066	IT-05	削除条件	P1	削除時の削除条件確認	URLを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でURLの確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-065	IT-05	削除条件	P1	削除時の削除条件確認	タイトルを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でタイトルの確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-066	IT-05	実行結果	P1	削除時の実行結果確認	URLを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でURLの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-067	IT-05	実行結果	P1	削除時の実行結果確認	別ウィンドウで開くを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で別ウィンドウで開くの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_news.link_methodであること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-068	IT-05	実行結果	P1	削除時の実行結果確認	本文を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で本文の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_news.descriptionであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-069	IT-05	実行結果	P1	削除時の実行結果確認	公開状態を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で公開状態の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-070	IT-05	実行結果	P1	削除時の実行結果確認	削除対象の識別子が存在しないを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除対象の識別子が存在しないの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	見つからない扱い（HTTP404）となること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-071	IT-02	初期行数	P2	初期行数の結合確認	削除時に関連データがある等で例外発生を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除時に関連データがある等で例外発生の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_news.visibleであること。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-070	IT-02	初期行数	P2	初期行数の結合確認	削除対象の識別子が存在しないを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除対象の識別子が存在しないの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 削除対象の識別子が存在しない
+3. 画面表示と後続状態を確認する"	見つからない扱い（HTTP404）となること。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-071	IT-02	表示順	P2	表示順の結合確認	削除時に関連データがある等で例外発生を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除時に関連データがある等で例外発生の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 削除時に関連データがある等で例外発生
 3. 画面表示と後続状態を確認する"	関連データ存在エラーのメッセージを積み、一覧へリダイレクトすること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-072	IT-02	表示順	P2	表示順の結合確認	URL未入力で別ウィンドウチェックありを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でURL未入力で別ウィンドウチェックありの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. URL未入力で別ウィンドウチェックあり
-3. 画面表示と後続状態を確認する"	保存直前に別ウィンドウ設定を偽へ揃えるであること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-073	IT-25	更新抑止	P1	更新抑止の結合確認	公開日時が下限より前を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で公開日時が下限より前の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-072	IT-25	更新抑止	P1	更新抑止の結合確認	URL未入力で別ウィンドウチェックありを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でURL未入力で別ウィンドウチェックありの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	保存直前に別ウィンドウ設定を偽へ揃えるであること。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-073	IT-12	内部情報	P1	内部情報の結合確認	公開日時が下限より前を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で公開日時が下限より前の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	不正日付として検証エラーになり保存しないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-074	IT-12	内部情報	P1	内部情報の結合確認	一覧が0件を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧が0件の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	見出し行のみ表示し、明細行を出さないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-075	IT-15	機密情報	P1	機密情報の結合確認	一覧と編集を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧と編集の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	一覧は全件（公開・非公開とも）を公開日時降順で表示すること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	フロント表示との整合を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でフロント表示との整合の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	一覧が0件を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧が0件の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧が0件を確認する
+3. 画面表示と後続状態を確認する"	見出し行のみ表示し、明細行を出さないこと。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-075	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	一覧と編集を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧と編集の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧と編集を確認する
+3. 画面表示と後続状態を確認する"	一覧は全件（公開・非公開とも）を公開日時降順で表示すること。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	フロント表示との整合を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でフロント表示との整合の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. フロント表示との整合を確認する
 3. 画面表示と後続状態を確認する"	管理側の一覧は公開日時による絞り込みをしないこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	二次キャッシュを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で二次キャッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-077	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	二次キャッシュを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で二次キャッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 二次キャッシュを確認する
 3. 画面表示と後続状態を確認する"	保存・削除の成功時にDoctrineの二次キャッシュを削除すること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	作成日時・更新日時・作成者を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で作成日時・更新日時・作成者の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	作成日時・更新日時・作成者を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で作成日時・更新日時・作成者の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 作成日時・更新日時・作成者を確認する
 3. 画面表示と後続状態を確認する"	永続化直前のDoctrineイベントで、新規時は作成日時・更新日時、更新時は更新日時が設定されるであること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	同時更新を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	同時更新を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同時更新を確認する
 3. 画面表示と後続状態を確認する"	楽観ロックによる版管理は持たないこと。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	入力を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力
 3. 画面表示と後続状態を確認する"	ブラウザからのGET（一覧・ページング・編集）、POST（登録）、DELETE相当のリクエスト（削除モーダル経由）であること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	新着情報を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で新着情報の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-081	IT-25	一覧	P2	一覧の結合確認	新着情報を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で新着情報の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 新着情報を確認する
 3. 画面表示と後続状態を確認する"	フロントTOPページ等に表示する告知1件であること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	公開日時を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で公開日時の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-082	IT-12	画面表示データ	P2	画面表示データの結合確認	公開日時を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で公開日時の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 公開日時を確認する
-3. 画面表示と後続状態を確認する"	新着情報を公開扱いとする日時であること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-083	IT-25	一覧	P2	一覧の結合確認	公開状態を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で公開状態の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-083	IT-25	画面表示データ	P2	画面表示データの結合確認	公開状態を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で公開状態の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 公開状態を確認する
 3. 画面表示と後続状態を確認する"	当該新着情報をフロントへ表示するか否かの区分であること。
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-084	IT-12	画面表示データ	P2	画面表示データの結合確認	別ウィンドウで開くを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で別ウィンドウで開くの確認に必要な条件を指定する	"1. 対象画面を表示する
@@ -291,27 +291,15 @@ m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01
 m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-085	IT-25	画面表示データ	P2	画面表示データの結合確認	ナビから新着情報一覧を開くを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でナビから新着情報一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ナビから新着情報一覧を開く
 3. 画面表示と後続状態を確認する"	登録済みの新着情報が公開日時の新しい順に並ぶこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-086	IT-12	画面表示データ	P2	画面表示データの結合確認	一覧の2ページ目以降を開くを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧の2ページ目以降を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-086	IT-25	フォーム送信	P1	フォーム送信の結合確認	一覧の2ページ目以降を開くを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で一覧の2ページ目以降を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一覧の2ページ目以降を開く
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-087	IT-12	非同期更新	P1	非同期更新の結合確認	削除確認モーダルで削除を実行するを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除確認モーダルで削除を実行するの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	指定ページの新着情報を1ページ10件単位で表示すること。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-087	IT-12	エラー継続	P3	エラー継続の結合確認	「登録」を押す（編集画面）を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で「登録」を押す（編集画面）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 「登録」を押す（編集画面）を確認する
+3. 画面表示と後続状態を確認する"	検証に成功すれば保存され、成功メッセージが積まれたうえで当該新着情報の編集画面へ遷移すること。
+m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-088	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	削除確認モーダルで削除を実行するを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除確認モーダルで削除を実行するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 削除確認モーダルで削除を実行する
 3. 画面表示と後続状態を確認する"	なりすまし対策トークンを伴う削除リクエストが送信されるであること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-088	IT-12	エラー継続	P3	エラー継続の結合確認	未ログインまたは認可で拒否される利用者を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で未ログインまたは認可で拒否される利用者の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 未ログインまたは認可で拒否される利用者を確認する
-3. 画面表示と後続状態を確認する"	管理画面の共通ルールに従いアクセスできない（詳細は管理画面認証・認可の実装を正とする）であること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-089	IT-25	欠損値	P2	欠損値の結合確認	表示要素（編集）を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で表示要素（編集）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示要素（編集）を確認する
-3. 画面表示と後続状態を確認する"	カード見出し「新着情報登録」であること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-090	IT-25	データなし	P2	データなしの結合確認	JS挙動を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	削除アイコン押下でBootstrapのモーダルを開くこと。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-091	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	モーダル・ポップアップを試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	一覧の削除アイコン押下で確認モーダルを表示し、本文に対象タイトルを差し込むであること。
-m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01-ADMIN-CONTENT-CONTENT-NEWS-092	IT-23	データ正当性	P3	データ正当性の結合確認	削除アイコン押下を試験できる状態である	m09-01_admin_content_content_news（管理画面_新着情報管理）（m09_01_admin_content_content_news）で削除アイコン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 削除アイコン押下
-3. 画面表示と後続状態を確認する"	削除対象IDの存在、権限、トークン、削除可否はサーバ側で判定すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -411,6 +399,6 @@ m09-01_admin_content_content_news（管理画面_新着情報管理）	IT-M09-01
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| その他 | 同種の対象外観点 2 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.109, No.110, No.111, No.359, No.381, No.382, No.412。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 10件 — No.109, No.110, No.111, No.382, No.385, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

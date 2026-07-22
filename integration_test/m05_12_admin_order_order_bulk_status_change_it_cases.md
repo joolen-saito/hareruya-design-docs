@@ -10,16 +10,16 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、確認ダイアログ |
+| IT-25 | HTTPステータス、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-33 | 不正遷移 |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
+| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-11 | 実行結果 |
 | IT-28 | ヘッダ、件名、実行結果、本文 |
 | IT-16 | ファイル選択 |
@@ -64,84 +64,84 @@ m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応�
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	対応状況プルダウンで変更先を選び決定ボタンを押すを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で対応状況プルダウンで変更先を選び決定ボタンを押すの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 対応状況プルダウンで変更先を選び決定ボタンを押すを確認する
 3. 画面表示と後続状態を確認する"	変更先が未選択なら警告を出して中断すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-009	IT-25	URL	P2	URLの操作結果確認	一括変更の各出荷の更新（画面側からの順次呼び出し）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で一括変更の各出荷の更新（画面側からの順次呼び出し）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-009	IT-33	不正遷移	P1	不正遷移の操作結果確認	一括変更の各出荷の更新（画面側からの順次呼び出し）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で一括変更の各出荷の更新（画面側からの順次呼び出し）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一括変更の各出荷の更新（画面側からの順次呼び出し）を確認する
 3. 画面表示と後続状態を確認する"	出荷IDごとに、変更先の対応状況IDを送信すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-010	IT-33	不正遷移	P1	不正遷移の操作結果確認	変更完了後に閉じるボタンを押すを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で変更完了後に閉じるボタンを押すの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	変更完了後に閉じるボタンを押すを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 変更完了後に閉じるボタンを押すを確認する
-3. 画面表示と後続状態を確認する"	受注一覧へ戻り、検索条件をセッションから復旧して再表示すること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	非管理者・未認証を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 非管理者・未認証を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-012	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	表示要素を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-013	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	JS 挙動（選択）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でJS 挙動（選択）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	表示要素を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	一覧の各出荷行の左端にチェックボックスを表示すること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS 挙動（選択）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. JS 挙動（選択）
-3. 画面表示と後続状態を確認する"	チェックボックスが1件以上選択されたとき一括操作領域を表示し、0件のとき隠すであること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS 挙動（決定）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. JS 挙動（決定）を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS 挙動（順次送信）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS 挙動（順次送信）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. JS 挙動（順次送信）
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS 挙動（完了）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS 挙動（完了）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. JS 挙動（完了）を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-017	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	メール送信欄を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. メール送信欄
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	CSS・レイアウトを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. CSS・レイアウトを確認する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	メール送信欄を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. メール送信欄
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-019	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	CSS・レイアウトを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. CSS・レイアウトを確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-020	IT-22	部分入力	P2	部分入力の入力検証	入力項目を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 入力項目
-3. 画面表示と後続状態を確認する"	フォーム送信値としての文字入力は持たないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-021	IT-23	検索条件	P2	検索時の検索条件確認	一括操作見出しを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-019	IT-22	部分入力	P2	部分入力の入力検証	モーダル・ポップアップを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. モーダル・ポップアップを確認する
+3. 画面表示と後続状態を確認する"	確認モーダルを表示すること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-020	IT-23	検索条件	P2	検索時の検索条件確認	入力項目を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-022	IT-23	検索条件	P2	検索時の検索条件確認	プルダウン初期行を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-021	IT-23	検索条件	P2	検索時の検索条件確認	一括操作見出しを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-023	IT-23	検索条件	P2	検索時の検索条件確認	決定ボタンを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-022	IT-23	検索条件	P2	検索時の検索条件確認	プルダウン初期行を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-024	IT-23	検索条件	P2	検索時の検索条件確認	モーダル処理中を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-023	IT-23	検索条件	P2	検索時の検索条件確認	決定ボタンを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-025	IT-23	検索条件	P2	検索時の検索条件確認	モーダル完了を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-024	IT-23	検索条件	P2	検索時の検索条件確認	モーダル処理中を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-026	IT-23	検索条件	P2	検索時の検索条件確認	閉じるボタンを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-025	IT-23	検索条件	P2	検索時の検索条件確認	モーダル完了を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-027	IT-23	検索条件	P2	検索時の検索条件確認	対応状況を選択してくださいを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-026	IT-23	検索条件	P2	検索時の検索条件確認	閉じるボタンを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-028	IT-23	検索条件	P2	検索時の検索条件確認	システムエラーが発生しましたを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-027	IT-23	検索条件	P2	検索時の検索条件確認	対応状況を選択してくださいを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-028	IT-23	検索条件	P2	検索時の検索条件確認	システムエラーが発生しましたを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でシステムエラーが発生しましたの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-029	IT-23	検索条件	P2	検索時の検索条件確認	一部の出荷だけがスキップ・遷移不可だったを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で一部の出荷だけがスキップ・遷移不可だったの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-030	IT-23	検索条件	P2	検索時の検索条件確認	遷移可否を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で遷移可否の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-031	IT-23	検索条件	P2	検索時の検索条件確認	在庫・ポイントの調整を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で在庫・ポイントの調整の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-032	IT-23	検索条件	P2	検索時の検索条件確認	会員集計の更新を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で会員集計の更新の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-033	IT-23	検索条件	P2	検索時の検索条件確認	メール送信を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でメール送信の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-034	IT-23	検索条件	P2	検索時の検索条件確認	計算の有無を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で計算の有無の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-034	IT-23	実行結果	P2	検索時の実行結果確認	計算の有無を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で計算の有無の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-035	IT-23	実行結果	P2	検索時の実行結果確認	チェックを1件も入れずに決定ボタンを押すを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でチェックを1件も入れずに決定ボタンを押すの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
@@ -151,180 +151,165 @@ m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応�
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-037	IT-23	実行結果	P2	検索時の実行結果確認	変更先が現在の対応状況と同一を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で変更先が現在の対応状況と同一の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-038	IT-23	実行結果	P2	検索時の実行結果確認	遷移できない組み合わせを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で遷移できない組み合わせの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-038	IT-26	登録内容	P1	登録時の登録内容確認	遷移できない組み合わせを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で遷移できない組み合わせの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-039	IT-26	登録内容	P1	登録時の登録内容確認	変更先の対応状況IDが存在しないを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で変更先の対応状況IDが存在しないの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-040	IT-26	登録内容	P1	登録時の登録内容確認	XHR以外のリクエスト、またはトークン不正を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でXHR以外のリクエスト、またはトークン不正の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-041	IT-26	登録内容	P1	登録時の登録内容確認	対応状況を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で対応状況の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注の進行状態を表す区分であること。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-042	IT-26	登録内容	P1	登録時の登録内容確認	出荷を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で出荷の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注配下の発送単位であること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-043	IT-26	登録内容	P1	登録時の登録内容確認	対応状況プルダウンを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で対応状況プルダウンの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-043	IT-26	登録内容	P1	登録時の登録内容確認	対応状況プルダウンを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-044	IT-26	登録内容	P1	登録時の登録内容確認	状態遷移ルールを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-045	IT-26	登録内容	P1	登録時の登録内容確認	確認モーダルを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-044	IT-26	登録内容	P1	登録時の登録内容確認	状態遷移ルールを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-046	IT-26	登録内容	P1	登録時の登録内容確認	一括対象を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-045	IT-26	登録内容	P1	登録時の登録内容確認	確認モーダルを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-047	IT-26	登録内容	P1	登録時の登録内容確認	受注一覧画面を開くを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-046	IT-26	登録内容	P1	登録時の登録内容確認	一括対象を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-048	IT-26	登録内容	P1	登録時の登録内容確認	対応状況プルダウンで変更先を選び決定ボタンを押すを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で対応状況プルダウンで変更先を選び決定ボタンを押すの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-047	IT-26	登録内容	P1	登録時の登録内容確認	受注一覧画面を開くを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で受注一覧画面を開くの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-049	IT-26	実行結果	P1	登録時の実行結果確認	一括変更の各出荷の更新（画面側からの順次呼び出し）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で一括変更の各出荷の更新（画面側からの順次呼び出し）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-048	IT-26	実行結果	P1	登録時の実行結果確認	対応状況プルダウンで変更先を選び決定ボタンを押すを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で対応状況プルダウンで変更先を選び決定ボタンを押すの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-050	IT-23	実行結果	P1	登録時の実行結果確認	変更完了後に閉じるボタンを押すを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で変更完了後に閉じるボタンを押すの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-049	IT-23	実行結果	P1	登録時の実行結果確認	一括変更の各出荷の更新（画面側からの順次呼び出し）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で一括変更の各出荷の更新（画面側からの順次呼び出し）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注一覧へ戻り、検索条件をセッションから復旧して再表示すること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出荷IDごとに、変更先の対応状況IDを送信すること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-050	IT-26	更新内容	P1	更新時の更新内容確認	変更完了後に閉じるボタンを押すを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で変更完了後に閉じるボタンを押すの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-051	IT-26	更新内容	P1	更新時の更新内容確認	非管理者・未認証を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で非管理者・未認証の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-052	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で表示要素の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-053	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動（選択）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でJS 挙動（選択）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	チェックボックスが1件以上選択されたとき一括操作領域を表示し、0件のとき隠すであること。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-054	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動（決定）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でJS 挙動（決定）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	決定ボタン押下時、対応状況プルダウンが未選択なら「対応状況を選択してください」の警告を出して中断すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-055	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動（順次送信）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でJS 挙動（順次送信）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-055	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動（順次送信）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-056	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動（完了）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-057	IT-26	更新内容	P1	更新時の更新内容確認	メール送信欄を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-056	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動（完了）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-058	IT-26	更新内容	P1	更新時の更新内容確認	CSS・レイアウトを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-057	IT-26	更新内容	P1	更新時の更新内容確認	メール送信欄を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-059	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-058	IT-26	更新内容	P1	更新時の更新内容確認	CSS・レイアウトを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-060	IT-26	更新内容	P1	更新時の更新内容確認	入力項目を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で入力項目の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-059	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-061	IT-05	実行結果	P1	更新時の実行結果確認	一括操作見出しを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で一括操作見出しの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-060	IT-05	実行結果	P1	更新時の実行結果確認	入力項目を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で入力項目の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-062	IT-05	実行結果	P1	更新時の実行結果確認	プルダウン初期行を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でプルダウン初期行の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-061	IT-05	実行結果	P1	更新時の実行結果確認	一括操作見出しを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で一括操作見出しの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	変更先未選択時にプルダウンへ表示すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-063	IT-02	初期行数	P2	初期行数の結合確認	決定ボタンを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で決定ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	1件以上チェックしたとき一括操作領域に表示すること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-062	IT-02	初期行数	P2	初期行数の結合確認	プルダウン初期行を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でプルダウン初期行の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. プルダウン初期行を確認する
+3. 画面表示と後続状態を確認する"	変更先未選択時にプルダウンへ表示すること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-063	IT-02	表示順	P2	表示順の結合確認	決定ボタンを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で決定ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 決定ボタンを確認する
 3. 画面表示と後続状態を確認する"	一括操作領域に常時表示すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-064	IT-02	表示順	P2	表示順の結合確認	モーダル処理中を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でモーダル処理中の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. モーダル処理中を確認する
-3. 画面表示と後続状態を確認する"	一括変更の送信中にモーダル本文へ表示すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-065	IT-25	更新抑止	P1	更新抑止の結合確認	モーダル完了を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でモーダル完了の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-064	IT-25	更新抑止	P1	更新抑止の結合確認	モーダル処理中を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でモーダル処理中の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	一括変更の送信中にモーダル本文へ表示すること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-065	IT-12	内部情報	P1	内部情報の結合確認	モーダル完了を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でモーダル完了の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	全件の送信が終わったときモーダル本文へ表示すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-066	IT-12	内部情報	P1	内部情報の結合確認	閉じるボタンを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で閉じるボタンの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	完了後に表示すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-067	IT-15	機密情報	P1	機密情報の結合確認	対応状況を選択してくださいを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で対応状況を選択してくださいの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	サーバへ送信せず中断すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-068	IT-11	実行結果	P2	実行結果の結合確認	システムエラーが発生しましたを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でシステムエラーが発生しましたの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-066	IT-11	実行結果	P2	実行結果の結合確認	閉じるボタンを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で閉じるボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 閉じるボタンを確認する
+3. 画面表示と後続状態を確認する"	完了後に表示すること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-067	IT-28	実行結果	P2	実行結果の結合確認	対応状況を選択してくださいを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で対応状況を選択してくださいの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 対応状況を選択してください
+3. 画面表示と後続状態を確認する"	サーバへ送信せず中断すること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-068	IT-28	実行結果	P2	実行結果の結合確認	システムエラーが発生しましたを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でシステムエラーが発生しましたの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. システムエラーが発生しましたを確認する
 3. 画面表示と後続状態を確認する"	ロケールキーadmin.common.system_errorであること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-069	IT-28	実行結果	P2	実行結果の結合確認	一部の出荷だけがスキップ・遷移不可だったを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で一部の出荷だけがスキップ・遷移不可だったの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-069	IT-28	ヘッダ	P2	ヘッダの結合確認	一部の出荷だけがスキップ・遷移不可だったを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で一部の出荷だけがスキップ・遷移不可だったの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一部の出荷だけがスキップ・遷移不可だったを確認する
 3. 画面表示と後続状態を確認する"	当該出荷について注意行を結果一覧へ追記すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-070	IT-28	実行結果	P2	実行結果の結合確認	遷移可否を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で遷移可否の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-070	IT-28	件名	P2	件名の結合確認	遷移可否を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. 遷移可否を確認する
-3. 画面表示と後続状態を確認する"	状態遷移ルールで許可された組み合わせのみ変更すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-071	IT-28	ヘッダ	P2	ヘッダの結合確認	在庫・ポイントの調整を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で在庫・ポイントの調整の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 在庫・ポイントの調整を確認する
-3. 画面表示と後続状態を確認する"	状態遷移に伴い在庫の戻し・引き当て、ポイントの調整がワークフローの遷移処理で行われるであること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-072	IT-28	件名	P2	件名の結合確認	会員集計の更新を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 会員集計の更新を確認する
 3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-073	IT-28	件名	P2	件名の結合確認	メール送信を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. メール送信
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-071	IT-28	件名	P2	件名の結合確認	在庫・ポイントの調整を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 在庫・ポイントの調整を確認する
 3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-074	IT-28	件名	P2	件名の結合確認	計算の有無を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で計算の有無の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 計算の有無を確認する
-3. 画面表示と後続状態を確認する"	件数・金額の集計表示は本機能では行わないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-075	IT-28	本文	P2	本文の結合確認	チェックを1件も入れずに決定ボタンを押すを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. チェックを1件も入れずに決定ボタンを押すを確認する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-072	IT-28	件名	P2	件名の結合確認	会員集計の更新を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で会員集計の更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 会員集計の更新を確認する
+3. 画面表示と後続状態を確認する"	受注に会員がひもづくとき、変更後に会員の購入回数・購入金額などの集計を更新すること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-073	IT-28	本文	P2	本文の結合確認	メール送信を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. メール送信
 3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-076	IT-28	本文	P2	本文の結合確認	変更先プルダウンが未選択を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 変更先プルダウンが未選択
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-074	IT-28	本文	P2	本文の結合確認	計算の有無を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 計算の有無を確認する
 3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-077	IT-28	本文	P2	本文の結合確認	変更先が現在の対応状況と同一を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で変更先が現在の対応状況と同一の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-075	IT-28	本文	P2	本文の結合確認	チェックを1件も入れずに決定ボタンを押すを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でチェックを1件も入れずに決定ボタンを押すの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. チェックを1件も入れずに決定ボタンを押すを確認する
+3. 画面表示と後続状態を確認する"	一括操作領域はチェック0件のとき隠れるであること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-076	IT-28	本文	P2	本文の結合確認	変更先プルダウンが未選択を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で変更先プルダウンが未選択の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 変更先プルダウンが未選択
+3. 画面表示と後続状態を確認する"	警告を出し、サーバへ送信せず中断すること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	変更先が現在の対応状況と同一を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で変更先が現在の対応状況と同一の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 変更先が現在の対応状況と同一を確認する
 3. 画面表示と後続状態を確認する"	当該出荷をスキップし、注意メッセージを結果一覧へ表示すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-078	IT-28	本文	P2	本文の結合確認	遷移できない組み合わせを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で遷移できない組み合わせの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-078	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	遷移できない組み合わせを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で遷移できない組み合わせの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 遷移できない組み合わせを確認する
 3. 画面表示と後続状態を確認する"	当該出荷を変更せず、変更できない旨のメッセージを結果一覧へ表示すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	変更先の対応状況IDが存在しないを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で変更先の対応状況IDが存在しないの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	変更先の対応状況IDが存在しないを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で変更先の対応状況IDが存在しないの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 変更先の対応状況IDが存在しないを確認する
 3. 画面表示と後続状態を確認する"	当該出荷の更新は異常応答（HTTP400）となり、結果一覧へシステムエラーを表示すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-080	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	XHR以外のリクエスト、またはトークン不正を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でXHR以外のリクエスト、またはトークン不正の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-080	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	XHR以外のリクエスト、またはトークン不正を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でXHR以外のリクエスト、またはトークン不正の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. XHR以外のリクエスト、またはトークン不正を確認する
 3. 画面表示と後続状態を確認する"	当該出荷の更新は異常応答（HTTP400）となること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	対応状況を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で対応状況の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	対応状況を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で対応状況の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 対応状況を確認する
 3. 画面表示と後続状態を確認する"	受注の進行状態を表す区分であること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-082	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	出荷を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で出荷の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出荷を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で出荷の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 出荷を確認する
 3. 画面表示と後続状態を確認する"	受注配下の発送単位であること。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	対応状況プルダウンを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で対応状況プルダウンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 対応状況プルダウンを確認する
 3. 画面表示と後続状態を確認する"	一覧上部の変更先選択セレクトであること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	状態遷移ルールを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で状態遷移ルールの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-084	IT-25	一覧	P2	一覧の結合確認	状態遷移ルールを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で状態遷移ルールの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 状態遷移ルールを確認する
 3. 画面表示と後続状態を確認する"	ある対応状況から別の対応状況へ変更できる組み合わせの定義であること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-085	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	確認モーダルを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で確認モーダルの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-085	IT-12	画面表示データ	P2	画面表示データの結合確認	確認モーダルを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で確認モーダルの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 確認モーダルを確認する
-3. 画面表示と後続状態を確認する"	決定ボタン押下後に表示され、進捗バーと結果一覧を出すダイアログであること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-086	IT-25	一覧	P2	一覧の結合確認	一括対象を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で一括対象の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-086	IT-25	画面表示データ	P2	画面表示データの結合確認	一括対象を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で一括対象の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一括対象を確認する
 3. 画面表示と後続状態を確認する"	チェックを入れた出荷行の集合であること。
 m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-087	IT-12	画面表示データ	P2	画面表示データの結合確認	受注一覧画面を開くを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で受注一覧画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注一覧画面を開く
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-088	IT-12	画面表示データ	P2	画面表示データの結合確認	一括変更の各出荷の更新（画面側からの順次呼び出し）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で一括変更の各出荷の更新（画面側からの順次呼び出し）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一括変更の各出荷の更新（画面側からの順次呼び出し）を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-089	IT-25	フォーム送信	P1	フォーム送信の結合確認	非管理者・未認証を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で非管理者・未認証の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-088	IT-16	ファイル選択	P2	ファイル選択の結合確認	変更完了後に閉じるボタンを押すを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で変更完了後に閉じるボタンを押すの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 変更完了後に閉じるボタンを押すを確認する
+3. 画面表示と後続状態を確認する"	受注一覧へ戻り、検索条件をセッションから復旧して再表示すること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-089	IT-12	非同期更新	P1	非同期更新の結合確認	非管理者・未認証を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で非管理者・未認証の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 非管理者・未認証を確認する
 3. 画面表示と後続状態を確認する"	受注一覧画面へ到達できないため、本操作も利用できないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-090	IT-16	ファイル選択	P2	ファイル選択の結合確認	表示要素を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	一覧の各出荷行の左端にチェックボックスを表示すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-091	IT-12	エラー継続	P3	エラー継続の結合確認	JS 挙動（決定）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でJS 挙動（決定）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. JS 挙動（決定）を確認する
-3. 画面表示と後続状態を確認する"	決定ボタン押下時、対応状況プルダウンが未選択なら「対応状況を選択してください」の警告を出して中断すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-092	IT-25	件数上限	P2	件数上限の結合確認	JS 挙動（順次送信）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でJS 挙動（順次送信）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. JS 挙動（順次送信）
-3. 画面表示と後続状態を確認する"	チェックした出荷を対象に、出荷ごとの更新エンドポイントへPUTを1件ずつ送るであること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-093	IT-25	欠損値	P2	欠損値の結合確認	JS 挙動（完了）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でJS 挙動（完了）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. JS 挙動（完了）を確認する
-3. 画面表示と後続状態を確認する"	全件の送信が終わると進捗バーを隠し、本文を完了表示にして閉じるボタンを表示すること。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-094	IT-25	データなし	P2	データなしの結合確認	メール送信欄を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でメール送信欄の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. メール送信欄
-3. 画面表示と後続状態を確認する"	一括の対応状況変更ではメール送信のチェックは表示せず、送信もしないこと。
-m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-095	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	CSS・レイアウトを試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. CSS・レイアウトを確認する
-3. 画面表示と後続状態を確認する"	一括操作領域は選択件数に応じて表示・非表示を切り替える共通クラスで制御すること。
+m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）	IT-M05-12-ADMIN-ORDER-ORDER-BULK-STATUS-CHANGE-090	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	JS 挙動（選択）を試験できる状態である	m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応状況一括変更）（m05_12_admin_order_order_bulk_status_change）でJS 挙動（選択）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS 挙動（選択）
+3. 画面表示と後続状態を確認する"	チェックボックスが1件以上選択されたとき一括操作領域を表示し、0件のとき隠すであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -426,4 +411,4 @@ m05-12_admin_order_order_bulk_status_change（管理画面_受注管理_対応�
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 1 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.109, No.110, No.111, No.357, No.359, No.385。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 11件 — No.109, No.110, No.111, No.359, No.381, No.387, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

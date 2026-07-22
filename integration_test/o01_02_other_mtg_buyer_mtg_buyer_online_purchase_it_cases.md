@@ -10,10 +10,10 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-16 | ファイル選択 |
 
@@ -63,19 +63,19 @@ o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネ
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-010	IT-12	内部情報	P1	内部情報の結合確認	メインカードを登録するを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）でメインカードを登録するの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	査定明細となるメインカード（商品規格・状態等）を登録すること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-011	IT-15	機密情報	P1	機密情報の結合確認	買取用商品情報を検索・取得するを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で買取用商品情報を検索・取得するの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	査定入力に使う商品・カード・部門・固定価格部門などの情報を取得すること。
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-011	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	買取用商品情報を検索・取得するを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で買取用商品情報を検索・取得するの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 買取用商品情報を検索・取得する
+3. 画面表示と後続状態を確認する"	査定入力に使う商品・カード・部門・固定価格部門などの情報を取得すること。
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-012	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	表示要素を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	MTGバイヤー本体の表示要素はリポジトリ外のため本書では仕様確定しないこと。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-013	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	モーダル・ポップアップを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-013	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	モーダル・ポップアップを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	MTGバイヤー本体のモーダルは扱わないこと。
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-014	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	買取合計金額を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で買取合計金額の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 買取合計金額を確認する
 3. 画面表示と後続状態を確認する"	明細（メインカード）・個別入力商品の単価×数量等から、査定確定時にサーバ側で再計算して受注へ保存すること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-015	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	受注と明細を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で受注と明細の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-015	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	受注と明細を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で受注と明細の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注と明細を確認する
 3. 画面表示と後続状態を確認する"	査定確定（PUT buyOrder）は明細・個別入力商品を全置換するため、同じ受注に再送すると送信内容で上書きされるであること。
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-016	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	合計金額を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で合計金額の確認に必要な条件を指定する	"1. 対象画面を表示する
@@ -84,57 +84,42 @@ o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネ
 o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-017	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ステータス履歴を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）でステータス履歴の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ステータス履歴を確認する
 3. 画面表示と後続状態を確認する"	ステータス更新時に履歴を1件追加すること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-018	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	APIを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-018	IT-25	一覧	P2	一覧の結合確認	APIを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. APIを確認する
 3. 画面表示と後続状態を確認する"	MTGバイヤーはpf-apiのネット買取系API（ログイン、受注一覧取得、査定確定、ステータス更新、コメント更新、個別入力商品・メインカード登録）を利用すること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-019	IT-25	一覧	P2	一覧の結合確認	成功結果を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で成功結果の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-019	IT-12	画面表示データ	P2	画面表示データの結合確認	成功結果を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で成功結果の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功結果を確認する
-3. 画面表示と後続状態を確認する"	参照APIはJSONで対象データを返すこと。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-020	IT-12	画面表示データ	P2	画面表示データの結合確認	失敗結果を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で失敗結果の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-020	IT-25	画面表示データ	P2	画面表示データの結合確認	失敗結果を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で失敗結果の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗結果を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-021	IT-25	画面表示データ	P2	画面表示データの結合確認	再実行時を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で再実行時の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	認証不可・対象なし・入力不正・保存例外は各API設計のHTTPステータスと本文形式に従うであること。
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-021	IT-12	画面表示データ	P2	画面表示データの結合確認	再実行時を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で再実行時の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 再実行時
-3. 画面表示と後続状態を確認する"	参照APIは最新データを返すこと。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-022	IT-12	画面表示データ	P2	画面表示データの結合確認	入庫を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で入庫の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 入庫を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-023	IT-25	画面表示データ	P2	画面表示データの結合確認	成功時出力を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-022	IT-25	画面表示データ	P2	画面表示データの結合確認	入庫を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で入庫の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入庫を確認する
+3. 画面表示と後続状態を確認する"	ネット買取成立後の在庫登録（入庫）は本機能では行わないこと。
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-023	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	成功時出力を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	JSON応答、ネット買取受注の更新、明細・個別入力商品の作成、ステータス変更履歴の作成であること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-024	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	失敗時出力を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-024	IT-25	フォーム送信	P1	フォーム送信の結合確認	失敗時出力を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	認証拒否・該当なし・入力不正・処理失敗のJSON応答であること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-025	IT-25	フォーム送信	P1	フォーム送信の結合確認	副作用を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-025	IT-16	ファイル選択	P2	ファイル選択の結合確認	副作用を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	DB更新、ステータス変更履歴、管理画面・CSV・集計（M07系）への反映であること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-026	IT-16	ファイル選択	P2	ファイル選択の結合確認	dtb_buy_orderを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）でdtb_buy_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-026	IT-12	非同期更新	P1	非同期更新の結合確認	dtb_buy_orderを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）でdtb_buy_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_buy_orderを確認する
 3. 画面表示と後続状態を確認する"	MTGバイヤーの対象受注・ステータス更新・査定確定の中心データであること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-027	IT-12	非同期更新	P1	非同期更新の結合確認	mtb_buy_order_statusを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）でmtb_buy_order_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-027	IT-12	エラー継続	P3	エラー継続の結合確認	mtb_buy_order_statusを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）でmtb_buy_order_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. mtb_buy_order_statusを確認する
 3. 画面表示と後続状態を確認する"	ステータス存在確認・表示に使うこと。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-028	IT-12	エラー継続	P3	エラー継続の結合確認	登録/更新を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-028	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	登録/更新を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-029	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	認証トークンを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で認証トークンの確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-029	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	認証トークンを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で認証トークンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 認証トークンを確認する
 3. 画面表示と後続状態を確認する"	各APIで検証すること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-030	IT-25	件数上限	P2	件数上限の結合確認	査定明細・個別入力商品を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で査定明細・個別入力商品の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 査定明細・個別入力商品
-3. 画面表示と後続状態を確認する"	数量・価格などの形式・必須は各API設計の検証に従うであること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-031	IT-25	欠損値	P2	欠損値の結合確認	認証トークン無効を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で認証トークン無効の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 認証トークン無効を確認する
-3. 画面表示と後続状態を確認する"	各APIは認証エラーを返すこと。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-032	IT-25	データなし	P2	データなしの結合確認	認証済み管理者を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で認証済み管理者の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 認証済み管理者を確認する
-3. 画面表示と後続状態を確認する"	ネット買取受注の取得・査定確定・ステータス更新等を実行できること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-033	IT-25	URL	P2	URLの操作結果確認	認証失敗を試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で認証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 認証失敗を確認する
-3. 画面表示と後続状態を確認する"	認証エラーのJSON応答であること。
-o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）	IT-O01-02-OTHER-MTG-BUYER-MTG-BUYER-ONLINE-PURCHASE-034	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	入力検証エラーを試験できる状態である	o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネット買取）（o01_02_other_mtg_buyer_mtg_buyer_online_purchase）で入力検証エラーの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 入力検証エラー
-3. 画面表示と後続状態を確認する"	エラー応答であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -235,3 +220,5 @@ o01-02_other_mtg_buyer_mtg_buyer_online_purchase（その他_MTGバイヤー_ネ
 | ウェブサービス / 外部連携 / Webhook・外部通知（IT-10, IT-32） | 本機能は対象の外部I/Fを扱わないため |
 | ウェブサービス / 外部連携 / 下流転送（IT-10） | 本機能は対象の外部I/Fを扱わないため |
 | その他 | 同種の対象外観点 12 件は上記分類と同じ理由で対象外 |
+
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

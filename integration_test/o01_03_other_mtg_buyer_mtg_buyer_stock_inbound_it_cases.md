@@ -10,13 +10,12 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
 | IT-02 | 初期行数、表示順 |
-| IT-25 | HTTPステータス、一覧、更新抑止、画面レイアウト、画面表示データ |
+| IT-25 | HTTPステータス、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-06 | ロールバック |
-| IT-16 | ファイル選択 |
 | IT-33 | 販売可能数 |
 
 ## テストケースTSV
@@ -65,22 +64,22 @@ o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入�
 o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-010	IT-12	内部情報	P1	内部情報の結合確認	成功結果を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で成功結果の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	商品在庫の更新、買取在庫・在庫履歴の作成、ステータスの入庫済みへの更新であること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-011	IT-15	機密情報	P1	機密情報の結合確認	入力を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で入力の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	買取受注ID（入庫待ち）、ステータス更新、もしくは一括入庫の起動であること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-012	IT-06	ロールバック	P3	ロールバックの結合確認	成功時出力を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で成功時出力の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-011	IT-06	ロールバック	P3	ロールバックの結合確認	入力を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で入力の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	商品在庫の増加、買取在庫・在庫履歴の作成、ステータス入庫済みであること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	買取受注ID（入庫待ち）、ステータス更新、もしくは一括入庫の起動であること。
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-012	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	商品在庫の増加、買取在庫・在庫履歴の作成、ステータス入庫済みであること。
 o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-013	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	入庫未実行（入庫待ちのまま）であること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-014	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-014	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	商品在庫（ProductStock）の更新、在庫履歴の作成、ステータス変更であること。
 o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-015	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_buy_orderを試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）でdtb_buy_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_buy_orderを確認する
 3. 画面表示と後続状態を確認する"	入庫対象の買取受注であること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-016	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	mtb_buy_order_statusを試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）でmtb_buy_order_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-016	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	mtb_buy_order_statusを試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）でmtb_buy_order_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. mtb_buy_order_statusを確認する
 3. 画面表示と後続状態を確認する"	入庫待ち・入庫済み・未登録在庫あり等であること。
 o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-017	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録/更新を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
@@ -89,39 +88,36 @@ o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入�
 o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-018	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	認証済み管理者を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で認証済み管理者の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 認証済み管理者を確認する
 3. 画面表示と後続状態を確認する"	ステータス更新・入庫確定を実行できること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-019	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	入庫を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で入庫の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-019	IT-25	一覧	P2	一覧の結合確認	入庫を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で入庫の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入庫を確認する
 3. 画面表示と後続状態を確認する"	買取で取得した商品を在庫（ProductStock）へ登録すること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-020	IT-25	一覧	P2	一覧の結合確認	MTGバイヤー入庫モードでステータスを進めるを試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）でMTGバイヤー入庫モードでステータスを進めるの確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-020	IT-12	画面表示データ	P2	画面表示データの結合確認	MTGバイヤー入庫モードでステータスを進めるを試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）でMTGバイヤー入庫モードでステータスを進めるの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. MTGバイヤー入庫モードでステータスを進めるを確認する
-3. 画面表示と後続状態を確認する"	買取受注のステータスを入庫待ち・入庫済みへ更新すること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-021	IT-12	画面表示データ	P2	画面表示データの結合確認	管理画面で入庫を確定するを試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で管理画面で入庫を確定するの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-021	IT-25	画面表示データ	P2	画面表示データの結合確認	管理画面で入庫を確定するを試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で管理画面で入庫を確定するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 管理画面で入庫を確定するを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-022	IT-25	画面表示データ	P2	画面表示データの結合確認	一括入庫（バッチ）を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で一括入庫（バッチ）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	ステータスを入庫済みへ遷移させると、買取在庫を商品在庫へ反映し在庫履歴を作成する（内部サービス）であること。
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-022	IT-12	画面表示データ	P2	画面表示データの結合確認	一括入庫（バッチ）を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で一括入庫（バッチ）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 一括入庫（バッチ）を確認する
-3. 画面表示と後続状態を確認する"	入庫待ちの全受注を入庫済みへ遷移させ、入庫処理を実行すること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-023	IT-12	画面表示データ	P2	画面表示データの結合確認	入庫対象を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で入庫対象の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 入庫対象を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-024	IT-25	画面表示データ	P2	画面表示データの結合確認	買取在庫と商品在庫を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で買取在庫と商品在庫の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-023	IT-25	画面表示データ	P2	画面表示データの結合確認	入庫対象を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で入庫対象の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入庫対象を確認する
+3. 画面表示と後続状態を確認する"	ステータスが入庫待ちの買取受注を対象とすること。
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-024	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	買取在庫と商品在庫を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で買取在庫と商品在庫の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 買取在庫と商品在庫を確認する
 3. 画面表示と後続状態を確認する"	入庫により買取在庫の数量が商品在庫へ反映されるであること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-025	IT-16	ファイル選択	P2	ファイル選択の結合確認	バッチを試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）でバッチの確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-025	IT-12	非同期更新	P1	非同期更新の結合確認	バッチを試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）でバッチの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. バッチを確認する
 3. 画面表示と後続状態を確認する"	入庫待ちの受注を対象とする自動入庫バッチが ec-cube-enterprise に存在すること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-026	IT-12	非同期更新	P1	非同期更新の結合確認	成功結果を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で成功結果の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-026	IT-12	エラー継続	P3	エラー継続の結合確認	成功結果を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で成功結果の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功結果を確認する
 3. 画面表示と後続状態を確認する"	商品在庫の更新、買取在庫・在庫履歴の作成、ステータスの入庫済みへの更新であること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-027	IT-12	エラー継続	P3	エラー継続の結合確認	入力を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-027	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	入力を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力
 3. 画面表示と後続状態を確認する"	買取受注ID（入庫待ち）、ステータス更新、もしくは一括入庫の起動であること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-028	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	成功時出力を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	商品在庫の増加、買取在庫・在庫履歴の作成、ステータス入庫済みであること。
-o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-029	IT-33	販売可能数	P1	販売可能数の操作結果確認	認証済み管理者を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で認証済み管理者の確認に必要な条件を指定する	"1. 販売可能数の対象レコードと前提状態を用意する
+o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）	IT-O01-03-OTHER-MTG-BUYER-MTG-BUYER-STOCK-INBOUND-028	IT-33	販売可能数	P1	販売可能数の操作結果確認	失敗時出力を試験できる状態である	o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入庫モード）（o01_03_other_mtg_buyer_mtg_buyer_stock_inbound）で失敗時出力の確認に必要な条件を指定する	"1. 販売可能数の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ステータス更新・入庫確定を実行できること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	入庫未実行（入庫待ちのまま）であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -223,4 +219,4 @@ o01-03_other_mtg_buyer_mtg_buyer_stock_inbound（その他_MTGバイヤー_入�
 | ウェブアプリケーション / 在庫引当 / 競合（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 10 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.380, No.381, No.412, No.413, No.414, No.415, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.381, No.382, No.412, No.413, No.414, No.415, No.416, No.510。上限緩和または個別ケース化で収載可能。

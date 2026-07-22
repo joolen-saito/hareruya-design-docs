@@ -11,9 +11,9 @@
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-16 | ファイル選択、実行結果 |
 | IT-17 | フォーマット定義 |
 | IT-24 | 出力内容 |
@@ -62,19 +62,18 @@ M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-008	IT-
 M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-009	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	主データを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でHTTPステータスの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 主データを確認する
 3. 画面表示と後続状態を確認する"	**参照のみ**であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-010	IT-25	URL	P2	URLの操作結果確認	在庫の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でURLの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 在庫の取得元を確認する
-3. 画面表示と後続状態を確認する"	店舗・在庫区分別の在庫は規格在庫 dtb_product_stock（base_info_id・stock_location_id 単位）の stockであること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-011	IT-16	実行結果	P2	実行結果の結合確認	販売数の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-010	IT-16	実行結果	P2	実行結果の結合確認	在庫の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-012	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	ログを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-011	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	販売数の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-013	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	機能名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-012	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	ログを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-013	IT-27	実行結果	P2	実行結果の結合確認	機能名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
 M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-014	IT-27	実行結果	P2	実行結果の結合確認	実装確認を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-015	IT-27	実行結果	P2	実行結果の結合確認	2026-06-12を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-015	IT-24	出力内容	P2	出力内容の結合確認	2026-06-12を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-016	IT-24	出力内容	P2	出力内容の結合確認	在庫情報CSV出力を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-017	IT-24	出力内容	P2	出力内容の結合確認	出力列数を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
@@ -82,64 +81,66 @@ M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-017	IT-
 M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-018	IT-24	出力内容	P2	出力内容の結合確認	文字コードを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-019	IT-24	出力内容	P2	出力内容の結合確認	ファイル名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-020	IT-24	出力内容	P2	出力内容の結合確認	MIME / 形式を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-021	IT-27	削除	P1	削除の結合確認	主データを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-020	IT-27	削除	P1	削除の結合確認	MIME / 形式を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-022	IT-27	移動・リネーム	P2	移動・リネームの結合確認	在庫の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-021	IT-27	移動・リネーム	P2	移動・リネームの結合確認	主データを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-023	IT-27	コピー	P1	コピーの結合確認	販売数の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-022	IT-27	コピー	P1	コピーの結合確認	在庫の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-024	IT-33	ファイル登録	P1	ファイル登録の結合確認	ログを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-023	IT-33	ファイル登録	P1	ファイル登録の結合確認	販売数の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-025	IT-33	ファイル出力	P1	ファイル出力の結合確認	機能名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-024	IT-33	ファイル出力	P1	ファイル出力の結合確認	ログを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-026	IT-27	JSON	P1	JSONの結合確認	実装確認を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-025	IT-27	JSON	P1	JSONの結合確認	機能名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-027	IT-27	同名ファイル	P1	同名ファイルの結合確認	2026-06-12を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-026	IT-27	同名ファイル	P1	同名ファイルの結合確認	実装確認を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-028	IT-27	入力JSON	P1	入力JSONの結合確認	在庫情報CSV出力を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-027	IT-27	入力JSON	P1	入力JSONの結合確認	2026-06-12を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-029	IT-27	配置先	P1	配置先の結合確認	出力列数を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-028	IT-27	配置先	P1	配置先の結合確認	在庫情報CSV出力を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-030	IT-27	スキーマ	P1	スキーマの結合確認	文字コードを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-029	IT-27	スキーマ	P1	スキーマの結合確認	出力列数を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-031	IT-02	初期行数	P2	初期行数の結合確認	ファイル名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-030	IT-02	初期行数	P2	初期行数の結合確認	文字コードを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 文字コードを確認する
+3. 画面表示と後続状態を確認する"	CsvExportService 経由で eccube_csv_export_encoding（既定 SJIS-win）に変換して出力であること。
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-031	IT-02	表示順	P2	表示順の結合確認	ファイル名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ファイル名を確認する
 3. 画面表示と後続状態を確認する"	stock_list_<YmdHis>.csv（出力時刻）であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-032	IT-02	表示順	P2	表示順の結合確認	MIME / 形式を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. MIME / 形式を確認する
-3. 画面表示と後続状態を確認する"	Content-Type: application/octet-stream、Content-Disposition: attachment、StreamedResponse でストリーム出力であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-033	IT-25	更新抑止	P1	更新抑止の結合確認	主データを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-032	IT-25	更新抑止	P1	更新抑止の結合確認	MIME / 形式を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-034	IT-12	内部情報	P1	内部情報の結合確認	在庫の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-033	IT-12	内部情報	P1	内部情報の結合確認	主データを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	店舗・在庫区分別の在庫は規格在庫 dtb_product_stock（base_info_id・stock_location_id 単位）の stockであること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-035	IT-15	機密情報	P1	機密情報の結合確認	販売数の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-036	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ログを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	**参照のみ**であること。
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-034	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	在庫の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 在庫の取得元を確認する
+3. 画面表示と後続状態を確認する"	店舗・在庫区分別の在庫は規格在庫 dtb_product_stock（base_info_id・stock_location_id 単位）の stockであること。
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-035	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	販売数の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 販売数の取得元を確認する
+3. 画面表示と後続状態を確認する"	dtb_sales_quantity（ProductClass・BaseInfo 単位の sales_quantity_01〜06）であること。
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-036	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ログを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ログを確認する
 3. 画面表示と後続状態を確認する"	アプリケーションログに出力完了（log_info）／セッション不整合（log_error）を記録であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-037	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	機能名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-037	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	機能名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 機能名を確認する
 3. 画面表示と後続状態を確認する"	在庫情報CSV出力であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-038	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	実装確認を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-038	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	実装確認を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 実装確認を確認する
 3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockListController::exportCsv / StockListCsvExportService / StockListSearchAction / St…であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-039	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	2026-06-12を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-039	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	2026-06-12を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 2026-06-12を確認する
 3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化であること。
 M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-040	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	在庫情報CSV出力を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 在庫情報CSV出力を確認する
 3. 画面表示と後続状態を確認する"	セッション admin.stock.list.search の検索条件を SearchStockListType で復元し、一致する在庫を全件CSV出力（StreamedResponse）すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-041	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出力列数を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-041	IT-25	一覧	P2	一覧の結合確認	出力列数を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 出力列数を確認する
 3. 画面表示と後続状態を確認する"	19列（ヘッダ行 + データ行）であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-042	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	文字コードを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-042	IT-12	画面表示データ	P2	画面表示データの結合確認	文字コードを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 文字コードを確認する
-3. 画面表示と後続状態を確認する"	CsvExportService 経由で eccube_csv_export_encoding（既定 SJIS-win）に変換して出力であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-043	IT-25	一覧	P2	一覧の結合確認	ファイル名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-043	IT-25	画面表示データ	P2	画面表示データの結合確認	ファイル名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ファイル名を確認する
 3. 画面表示と後続状態を確認する"	stock_list_<YmdHis>.csv（出力時刻）であること。
 M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-044	IT-12	画面表示データ	P2	画面表示データの結合確認	MIME / 形式を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
@@ -148,35 +149,20 @@ M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-044	IT-
 M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-045	IT-25	画面表示データ	P2	画面表示データの結合確認	主データを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 主データを確認する
 3. 画面表示と後続状態を確認する"	**参照のみ**であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-046	IT-12	画面表示データ	P2	画面表示データの結合確認	在庫の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-046	IT-25	フォーム送信	P1	フォーム送信の結合確認	在庫の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 在庫の取得元を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-047	IT-25	画面表示データ	P2	画面表示データの結合確認	販売数の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 販売数の取得元を確認する
-3. 画面表示と後続状態を確認する"	dtb_sales_quantity（ProductClass・BaseInfo 単位の sales_quantity_01〜06）であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-048	IT-25	フォーム送信	P1	フォーム送信の結合確認	ログを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	店舗・在庫区分別の在庫は規格在庫 dtb_product_stock（base_info_id・stock_location_id 単位）の stockであること。
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-047	IT-16	ファイル選択	P2	ファイル選択の結合確認	販売数の取得元を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-048	IT-12	非同期更新	P1	非同期更新の結合確認	ログを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ログを確認する
 3. 画面表示と後続状態を確認する"	アプリケーションログに出力完了（log_info）／セッション不整合（log_error）を記録であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-049	IT-16	ファイル選択	P2	ファイル選択の結合確認	機能名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-050	IT-12	非同期更新	P1	非同期更新の結合確認	実装確認を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-049	IT-12	エラー継続	P3	エラー継続の結合確認	機能名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 機能名を確認する
+3. 画面表示と後続状態を確認する"	在庫情報CSV出力であること。
+M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-050	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	実装確認を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 実装確認を確認する
 3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockListController::exportCsv / StockListCsvExportService / StockListSearchAction / St…であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-051	IT-12	エラー継続	P3	エラー継続の結合確認	2026-06-12を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 2026-06-12を確認する
-3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、実装確認値で具体化であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-052	IT-25	件数上限	P2	件数上限の結合確認	在庫情報CSV出力を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 在庫情報CSV出力を確認する
-3. 画面表示と後続状態を確認する"	セッション admin.stock.list.search の検索条件を SearchStockListType で復元し、一致する在庫を全件CSV出力（StreamedResponse）すること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-053	IT-25	欠損値	P2	欠損値の結合確認	出力列数を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力列数を確認する
-3. 画面表示と後続状態を確認する"	19列（ヘッダ行 + データ行）であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-054	IT-25	データなし	P2	データなしの結合確認	文字コードを試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 文字コードを確認する
-3. 画面表示と後続状態を確認する"	CsvExportService 経由で eccube_csv_export_encoding（既定 SJIS-win）に変換して出力であること。
-M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-055	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	ファイル名を試験できる状態である	M04-04（在庫情報CSV出力）（m04_04_admin_stock_stock_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ファイル名を確認する
-3. 画面表示と後続状態を確認する"	stock_list_<YmdHis>.csv（出力時刻）であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -275,3 +261,5 @@ M04-04（在庫情報CSV出力）	IT-M04-04-ADMIN-STOCK-STOCK-CSV-EXPORT-055	IT-
 | ウェブアプリケーション / 販売価格 / 価格改定（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
+
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

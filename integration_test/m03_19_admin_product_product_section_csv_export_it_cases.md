@@ -11,9 +11,9 @@
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
@@ -66,172 +66,171 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-009	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	MTGBuyer 表示フラグを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でHTTPステータスの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. MTGBuyer 表示フラグを確認する
 3. 画面表示と後続状態を確認する"	真偽を 1／0 の整数で出力すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-010	IT-25	URL	P2	URLの操作結果確認	一覧画面との対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でURLの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	一覧画面との対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 一覧画面との対応を確認する
-3. 画面表示と後続状態を確認する"	同一マスタを参照する行順は一覧テーブルの表示順と一致しない場合があること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	免税区分の見え方を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 免税区分の見え方を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-012	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	部門 CSV 登録とのヘッダ対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 部門 CSV 登録とのヘッダ対応を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-013	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	成功時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	部門 CSV 登録とのヘッダ対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 部門 CSV 登録とのヘッダ対応を確認する
+3. 画面表示と後続状態を確認する"	「部門 CSV 登録」の雛形は別コントローラで別メッセージの列名を使うこと。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	成功時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	ストリーム本文が CSVであること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	失敗時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	副作用を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	副作用を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. mtb_sectionを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-017	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. mtb_sectionを確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	検索を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 検索
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. mtb_sectionを確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-019	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	「CSV 出力」クリックを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 「CSV 出力」クリックを確認する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	検索を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 検索
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-020	IT-22	部分入力	P2	部分入力の入力検証	ストリーム中の例外を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ストリーム中の例外を確認する
-3. 画面表示と後続状態を確認する"	利用者向けの専用メッセージ分岐はエクスポート内に無いであること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-021	IT-23	検索条件	P2	検索時の検索条件確認	出力元の部門マスタ列を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-019	IT-22	部分入力	P2	部分入力の入力検証	「CSV 出力」クリックを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 「CSV 出力」クリックを確認する
+3. 画面表示と後続状態を確認する"	同一タブで GET エクスポートであること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-020	IT-23	検索条件	P2	検索時の検索条件確認	ストリーム中の例外を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-022	IT-23	検索条件	P2	検索時の検索条件確認	出力列セットを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-021	IT-23	検索条件	P2	検索時の検索条件確認	出力元の部門マスタ列を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-023	IT-23	検索条件	P2	検索時の検索条件確認	ナビ「商品管理」→「部門管理」で部門一覧を開き、画面上部の「CSV 出力」（a…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-022	IT-23	検索条件	P2	検索時の検索条件確認	出力列セットを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-024	IT-23	検索条件	P2	検索時の検索条件確認	部門の編集画面（一覧から ID を辿った GET）でも同一テンプレート上部に同…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-023	IT-23	検索条件	P2	検索時の検索条件確認	ナビ「商品管理」→「部門管理」で部門一覧を開き、画面上部の「CSV 出力」（a…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-025	IT-23	検索条件	P2	検索時の検索条件確認	表示要素を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-024	IT-23	検索条件	P2	検索時の検索条件確認	部門の編集画面（一覧から ID を辿った GET）でも同一テンプレート上部に同…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-026	IT-23	検索条件	P2	検索時の検索条件確認	JS 挙動を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-025	IT-23	検索条件	P2	検索時の検索条件確認	表示要素を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-027	IT-23	検索条件	P2	検索時の検索条件確認	モーダル・ポップアップを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-026	IT-23	検索条件	P2	検索時の検索条件確認	JS 挙動を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-028	IT-23	検索条件	P2	検索時の検索条件確認	免税区分を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-027	IT-23	検索条件	P2	検索時の検索条件確認	モーダル・ポップアップを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-028	IT-23	検索条件	P2	検索時の検索条件確認	免税区分を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-029	IT-23	検索条件	P2	検索時の検索条件確認	MTGBuyer 表示フラグを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-030	IT-23	検索条件	P2	検索時の検索条件確認	一覧画面との対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-031	IT-23	検索条件	P2	検索時の検索条件確認	免税区分の見え方を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-032	IT-23	検索条件	P2	検索時の検索条件確認	部門 CSV 登録とのヘッダ対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-033	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-034	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-034	IT-23	実行結果	P2	検索時の実行結果確認	失敗時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-035	IT-23	実行結果	P2	検索時の実行結果確認	副作用を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-036	IT-23	実行結果	P2	検索時の実行結果確認	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-037	IT-23	実行結果	P2	検索時の実行結果確認	検索を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-037	IT-26	登録内容	P1	登録時の登録内容確認	検索を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-038	IT-26	登録内容	P1	登録時の登録内容確認	「CSV 出力」クリックを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-039	IT-26	登録内容	P1	登録時の登録内容確認	ストリーム中の例外を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-040	IT-26	登録内容	P1	登録時の登録内容確認	出力元の部門マスタ列を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	mtb_section に免税区分（tax_free_division）とスマレジ部門ID（smaregi_category_id）が加わるであること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-041	IT-26	登録内容	P1	登録時の登録内容確認	出力列セットを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本書の 5 列固定（ID・部門名・部門コード・免税区分・表示フラグ）は移行先の mtb_section の列を正とし、免税区分列は移行先で確定すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-042	IT-26	登録内容	P1	登録時の登録内容確認	ナビ「商品管理」→「部門管理」で部門一覧を開き、画面上部の「CSV 出力」（a…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-042	IT-26	登録内容	P1	登録時の登録内容確認	ナビ「商品管理」→「部門管理」で部門一覧を開き、画面上部の「CSV 出力」（a…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-043	IT-26	登録内容	P1	登録時の登録内容確認	部門の編集画面（一覧から ID を辿った GET）でも同一テンプレート上部に同…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-044	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-043	IT-26	登録内容	P1	登録時の登録内容確認	部門の編集画面（一覧から ID を辿った GET）でも同一テンプレート上部に同…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-045	IT-26	登録内容	P1	登録時の登録内容確認	JS 挙動を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-044	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-046	IT-26	登録内容	P1	登録時の登録内容確認	モーダル・ポップアップを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-045	IT-26	登録内容	P1	登録時の登録内容確認	JS 挙動を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-047	IT-26	登録内容	P1	登録時の登録内容確認	免税区分を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-046	IT-26	登録内容	P1	登録時の登録内容確認	モーダル・ポップアップを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-048	IT-26	実行結果	P1	登録時の実行結果確認	MTGBuyer 表示フラグを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-047	IT-26	実行結果	P1	登録時の実行結果確認	免税区分を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-049	IT-23	実行結果	P1	登録時の実行結果確認	一覧画面との対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-048	IT-23	実行結果	P1	登録時の実行結果確認	MTGBuyer 表示フラグを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一マスタを参照する行順は一覧テーブルの表示順と一致しない場合があること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	真偽を 1／0 の整数で出力すること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-049	IT-26	更新内容	P1	更新時の更新内容確認	一覧画面との対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-050	IT-26	更新内容	P1	更新時の更新内容確認	免税区分の見え方を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-051	IT-26	更新内容	P1	更新時の更新内容確認	部門 CSV 登録とのヘッダ対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-052	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ストリーム本文が CSVであること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-053	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本処理パスにフラッシュメッセージやリダイレクト分岐は実装されていないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-054	IT-26	更新内容	P1	更新時の更新内容確認	副作用を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-054	IT-26	更新内容	P1	更新時の更新内容確認	副作用を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-055	IT-26	更新内容	P1	更新時の更新内容確認	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-056	IT-26	更新内容	P1	更新時の更新内容確認	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-055	IT-26	更新内容	P1	更新時の更新内容確認	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-057	IT-26	更新内容	P1	更新時の更新内容確認	検索を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-056	IT-26	更新内容	P1	更新時の更新内容確認	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-058	IT-26	更新内容	P1	更新時の更新内容確認	「CSV 出力」クリックを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-057	IT-26	更新内容	P1	更新時の更新内容確認	検索を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-059	IT-26	更新内容	P1	更新時の更新内容確認	ストリーム中の例外を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-058	IT-26	更新内容	P1	更新時の更新内容確認	「CSV 出力」クリックを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-060	IT-05	実行結果	P1	更新時の実行結果確認	出力元の部門マスタ列を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-059	IT-05	実行結果	P1	更新時の実行結果確認	ストリーム中の例外を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-061	IT-05	実行結果	P1	更新時の実行結果確認	出力列セットを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-060	IT-05	実行結果	P1	更新時の実行結果確認	出力元の部門マスタ列を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本書の 5 列固定（ID・部門名・部門コード・免税区分・表示フラグ）は移行先の mtb_section の列を正とし、免税区分列は移行先で確定すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-062	IT-16	実行結果	P2	実行結果の結合確認	ナビ「商品管理」→「部門管理」で部門一覧を開き、画面上部の「CSV 出力」（a…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	mtb_section に免税区分（tax_free_division）とスマレジ部門ID（smaregi_category_id）が加わるであること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-061	IT-16	実行結果	P2	実行結果の結合確認	出力列セットを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-063	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	部門の編集画面（一覧から ID を辿った GET）でも同一テンプレート上部に同…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-062	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	ナビ「商品管理」→「部門管理」で部門一覧を開き、画面上部の「CSV 出力」（a…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-064	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	表示要素を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-063	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	部門の編集画面（一覧から ID を辿った GET）でも同一テンプレート上部に同…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-064	IT-27	実行結果	P2	実行結果の結合確認	表示要素を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-065	IT-27	実行結果	P2	実行結果の結合確認	JS 挙動を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-066	IT-27	実行結果	P2	実行結果の結合確認	モーダル・ポップアップを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-066	IT-24	出力内容	P2	出力内容の結合確認	モーダル・ポップアップを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-067	IT-24	出力内容	P2	出力内容の結合確認	免税区分を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-068	IT-24	出力内容	P2	出力内容の結合確認	MTGBuyer 表示フラグを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
@@ -239,64 +238,66 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-069	IT-24	出力内容	P2	出力内容の結合確認	一覧画面との対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-070	IT-24	出力内容	P2	出力内容の結合確認	免税区分の見え方を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-071	IT-24	出力内容	P2	出力内容の結合確認	部門 CSV 登録とのヘッダ対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-072	IT-27	削除	P1	削除の結合確認	成功時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-071	IT-27	削除	P1	削除の結合確認	部門 CSV 登録とのヘッダ対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-073	IT-27	移動・リネーム	P2	移動・リネームの結合確認	失敗時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-072	IT-27	移動・リネーム	P2	移動・リネームの結合確認	成功時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-074	IT-27	コピー	P1	コピーの結合確認	副作用を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-073	IT-27	コピー	P1	コピーの結合確認	失敗時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-075	IT-33	ファイル登録	P1	ファイル登録の結合確認	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-074	IT-33	ファイル登録	P1	ファイル登録の結合確認	副作用を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-076	IT-33	ファイル出力	P1	ファイル出力の結合確認	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-075	IT-33	ファイル出力	P1	ファイル出力の結合確認	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-077	IT-27	JSON	P1	JSONの結合確認	検索を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-076	IT-27	JSON	P1	JSONの結合確認	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-078	IT-27	同名ファイル	P1	同名ファイルの結合確認	「CSV 出力」クリックを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-077	IT-27	同名ファイル	P1	同名ファイルの結合確認	検索を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-079	IT-27	入力JSON	P1	入力JSONの結合確認	ストリーム中の例外を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-078	IT-27	入力JSON	P1	入力JSONの結合確認	「CSV 出力」クリックを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-080	IT-27	配置先	P1	配置先の結合確認	出力元の部門マスタ列を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-079	IT-27	配置先	P1	配置先の結合確認	ストリーム中の例外を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-081	IT-27	スキーマ	P1	スキーマの結合確認	出力列セットを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-080	IT-27	スキーマ	P1	スキーマの結合確認	出力元の部門マスタ列を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-082	IT-02	初期行数	P2	初期行数の結合確認	ナビ「商品管理」→「部門管理」で部門一覧を開き、画面上部の「CSV 出力」（a…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-081	IT-02	初期行数	P2	初期行数の結合確認	出力列セットを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力列セットを確認する
+3. 画面表示と後続状態を確認する"	本書の 5 列固定（ID・部門名・部門コード・免税区分・表示フラグ）は移行先の mtb_section の列を正とし、免税区分列は移行先で確定すること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-082	IT-02	表示順	P2	表示順の結合確認	ナビ「商品管理」→「部門管理」で部門一覧を開き、画面上部の「CSV 出力」（a…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ナビ「商品管理」→「部門管理」で部門一覧を開き、画面上部の「CSV 出力」（a…を確認する
 3. 画面表示と後続状態を確認する"	ブラウザが section_日時.csv をダウンロードすること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-083	IT-02	表示順	P2	表示順の結合確認	部門の編集画面（一覧から ID を辿った GET）でも同一テンプレート上部に同…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 部門の編集画面（一覧から ID を辿った GET）でも同一テンプレート上部に同…を確認する
-3. 画面表示と後続状態を確認する"	一覧時と同じ CSV が返る（一覧と編集でフィルタや列が変わる処理は無い）であること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-084	IT-25	更新抑止	P1	更新抑止の結合確認	表示要素を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-083	IT-25	更新抑止	P1	更新抑止の結合確認	部門の編集画面（一覧から ID を辿った GET）でも同一テンプレート上部に同…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-085	IT-12	内部情報	P1	内部情報の結合確認	JS 挙動を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-084	IT-12	内部情報	P1	内部情報の結合確認	表示要素を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	CSV 出力専用のクライアント制御は無いであること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-086	IT-15	機密情報	P1	機密情報の結合確認	モーダル・ポップアップを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-087	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	免税区分を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	section.twig のヘッダ付近に path('m03-18_admin_product_product_section_export') への a.btn.btn-primary.btn-csvであること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-085	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	JS 挙動を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS 挙動を確認する
+3. 画面表示と後続状態を確認する"	CSV 出力専用のクライアント制御は無いであること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-086	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	モーダル・ポップアップを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. モーダル・ポップアップを確認する
+3. 画面表示と後続状態を確認する"	出力前の確認ダイアログは無いであること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-087	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	免税区分を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 免税区分を確認する
 3. 画面表示と後続状態を確認する"	DB の整数値をそのまま CSV に書くであること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-088	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	MTGBuyer 表示フラグを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-088	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	MTGBuyer 表示フラグを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. MTGBuyer 表示フラグを確認する
 3. 画面表示と後続状態を確認する"	真偽を 1／0 の整数で出力すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-089	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	一覧画面との対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-089	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	一覧画面との対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 一覧画面との対応を確認する
 3. 画面表示と後続状態を確認する"	同一マスタを参照する行順は一覧テーブルの表示順と一致しない場合があること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-090	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	免税区分の見え方を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-090	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	免税区分の見え方を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 免税区分の見え方を確認する
 3. 画面表示と後続状態を確認する"	一覧はメッセージ翻訳、CSV は数値コードであること。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-091	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	部門 CSV 登録とのヘッダ対応を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 部門 CSV 登録とのヘッダ対応を確認する
 3. 画面表示と後続状態を確認する"	「部門 CSV 登録」の雛形は別コントローラで別メッセージの列名を使うこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-092	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	成功時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-092	IT-25	一覧	P2	一覧の結合確認	成功時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	ストリーム本文が CSVであること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-093	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	失敗時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-093	IT-12	画面表示データ	P2	画面表示データの結合確認	失敗時出力を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	本処理パスにフラッシュメッセージやリダイレクト分岐は実装されていないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-094	IT-25	一覧	P2	一覧の結合確認	副作用を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-094	IT-25	画面表示データ	P2	画面表示データの結合確認	副作用を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	DB 更新は行わないこと。
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-095	IT-12	画面表示データ	P2	画面表示データの結合確認	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
@@ -305,35 +306,20 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-096	IT-25	画面表示データ	P2	画面表示データの結合確認	mtb_sectionを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. mtb_sectionを確認する
 3. 画面表示と後続状態を確認する"	本エクスポートでは出力しないこと。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-097	IT-12	画面表示データ	P2	画面表示データの結合確認	検索を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-097	IT-25	フォーム送信	P1	フォーム送信の結合確認	検索を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 検索
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-098	IT-25	画面表示データ	P2	画面表示データの結合確認	「CSV 出力」クリックを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 「CSV 出力」クリックを確認する
-3. 画面表示と後続状態を確認する"	同一タブで GET エクスポートであること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-099	IT-25	フォーム送信	P1	フォーム送信の結合確認	ストリーム中の例外を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	検索条件に合致するレコードを抽出すること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-098	IT-16	ファイル選択	P2	ファイル選択の結合確認	「CSV 出力」クリックを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-099	IT-12	非同期更新	P1	非同期更新の結合確認	ストリーム中の例外を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ストリーム中の例外を確認する
 3. 画面表示と後続状態を確認する"	利用者向けの専用メッセージ分岐はエクスポート内に無いであること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-100	IT-16	ファイル選択	P2	ファイル選択の結合確認	出力元の部門マスタ列を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-101	IT-12	非同期更新	P1	非同期更新の結合確認	出力列セットを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-100	IT-12	エラー継続	P3	エラー継続の結合確認	出力元の部門マスタ列を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力元の部門マスタ列を確認する
+3. 画面表示と後続状態を確認する"	mtb_section に免税区分（tax_free_division）とスマレジ部門ID（smaregi_category_id）が加わるであること。
+商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-101	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	出力列セットを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 出力列セットを確認する
 3. 画面表示と後続状態を確認する"	本書の 5 列固定（ID・部門名・部門コード・免税区分・表示フラグ）は移行先の mtb_section の列を正とし、免税区分列は移行先で確定すること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-102	IT-12	エラー継続	P3	エラー継続の結合確認	ナビ「商品管理」→「部門管理」で部門一覧を開き、画面上部の「CSV 出力」（a…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ナビ「商品管理」→「部門管理」で部門一覧を開き、画面上部の「CSV 出力」（a…を確認する
-3. 画面表示と後続状態を確認する"	ブラウザが section_日時.csv をダウンロードすること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-103	IT-25	件数上限	P2	件数上限の結合確認	部門の編集画面（一覧から ID を辿った GET）でも同一テンプレート上部に同…を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 部門の編集画面（一覧から ID を辿った GET）でも同一テンプレート上部に同…を確認する
-3. 画面表示と後続状態を確認する"	一覧時と同じ CSV が返る（一覧と編集でフィルタや列が変わる処理は無い）であること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-104	IT-25	欠損値	P2	欠損値の結合確認	表示要素を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	section.twig のヘッダ付近に path('m03-18_admin_product_product_section_export') への a.btn.btn-primary.btn-csvであること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-105	IT-25	データなし	P2	データなしの結合確認	JS 挙動を試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. JS 挙動を確認する
-3. 画面表示と後続状態を確認する"	CSV 出力専用のクライアント制御は無いであること。
-商品管理 — 部門 CSV 出力	IT-M03-19-ADMIN-PRODUCT-PRODUCT-SECTION-CSV-EXPORT-106	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	モーダル・ポップアップを試験できる状態である	商品管理 — 部門 CSV 出力（m03_19_admin_product_product_section_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	出力前の確認ダイアログは無いであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -425,4 +411,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 4件 — No.55, No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 9件 — No.56, No.109, No.110, No.111, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

@@ -10,12 +10,12 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
+| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -33,132 +33,114 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 
 ```tsv
 機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-001	IT-15	CSRF	P1	CSRFの結合確認	最適カード画像を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で最適カード画像の確認に必要な条件を指定する	"1. CSRFの認証・Cookie・セッション・試行制限など前提条件を設定する
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-001	IT-20	出力抑止	P1	出力抑止の結合確認	最適カード画像を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で最適カード画像の確認に必要な条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	商品IDに対して表示用に選ばれるカード画像であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-002	IT-15	未認証	P1	未認証の結合確認	遅延読み込みを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で遅延読み込みの確認に必要な条件を指定する	"1. 未認証の認証・Cookie・セッション・試行制限など前提条件を設定する
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-002	IT-20	識別子	P1	識別子の結合確認	遅延読み込みを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で遅延読み込みの確認に必要な条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	画像を後追いで読み込む表示方式であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-003	IT-15	対象データ	P1	対象データの結合確認	最近見た商品ブロックの読み込みを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で最近見た商品ブロックの読み込みの確認に必要な条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	履歴Cookieの商品IDからカード画像を取得し、サムネイルの一覧として描画すること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-004	IT-20	出力抑止	P1	出力抑止の結合確認	表示要素を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で表示要素の確認に必要な条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	見出し（最近見た商品）と、履歴の商品サムネイルの横並び一覧であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-005	IT-20	識別子	P1	識別子の結合確認	JS挙動を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でJS挙動の確認に必要な条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	サムネイル画像は遅延読み込みで取得すること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-006	IT-15	状態変化	P1	状態変化の結合確認	表示対象を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で表示対象の確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	履歴Cookieに含まれる商品IDのうち、最適カード画像が取得できた商品であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	除外を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で除外の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 除外を確認する
-3. 画面表示と後続状態を確認する"	画像が取得できない商品IDは一覧から除外すること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	履歴の並びを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で履歴の並びの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 履歴の並びを確認する
-3. 画面表示と後続状態を確認する"	履歴Cookieの並び順をそのまま表示順とすること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-009	IT-25	URL	P2	URLの操作結果確認	履歴無しを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で履歴無しの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 履歴無しを確認する
-3. 画面表示と後続状態を確認する"	履歴Cookieが無い場合は履歴無しの表示とすること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	履歴Cookieが無いを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 履歴Cookieが無いを確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	履歴の商品IDで画像が取得できないを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 履歴の商品IDで画像が取得できないを確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	画像が取得できる商品が結果的に0件を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で画像が取得できる商品が結果的に0件の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 画像が取得できる商品が結果的に0件を確認する
-3. 画面表示と後続状態を確認する"	一覧は空となること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	参照時点を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 参照時点を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	APIを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. APIを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	成功時出力を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	失敗時出力を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	副作用を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	dtb_productを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. dtb_productを確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-019	IT-22	部分入力	P2	部分入力の入力検証	カード画像を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でカード画像の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. カード画像を確認する
-3. 画面表示と後続状態を確認する"	商品IDに対する最適カード画像の取得に用いること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-020	IT-02	初期行数	P2	初期行数の結合確認	未ログインを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で未ログインの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 未ログインを確認する
-3. 画面表示と後続状態を確認する"	表示可能であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-021	IT-02	表示順	P2	表示順の結合確認	ログイン済み会員を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でログイン済み会員の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ログイン済み会員を確認する
-3. 画面表示と後続状態を確認する"	表示可能であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-022	IT-25	更新抑止	P1	更新抑止の結合確認	サムネイルのリンク押下を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でサムネイルのリンク押下の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	当該商品の商品詳細（F03-02）であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-023	IT-12	内部情報	P1	内部情報の結合確認	履歴Cookieが無いを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で履歴Cookieが無いの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	履歴無しの表示を描画すること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-024	IT-15	機密情報	P1	機密情報の結合確認	画像が取得できない商品を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で画像が取得できない商品の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	当該商品を一覧から除外すること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-025	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	Cookie名を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でCookie名の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. Cookie名を確認する
-3. 画面表示と後続状態を確認する"	history（確認値）であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-026	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	本ブロックの扱いを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で本ブロックの扱いの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 本ブロックの扱いを確認する
-3. 画面表示と後続状態を確認する"	読み取り専用であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-027	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	最適カード画像を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で最適カード画像の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 最適カード画像を確認する
-3. 画面表示と後続状態を確認する"	商品IDに対して表示用に選ばれるカード画像であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-028	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	遅延読み込みを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で遅延読み込みの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 遅延読み込みを確認する
-3. 画面表示と後続状態を確認する"	画像を後追いで読み込む表示方式であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-029	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	最近見た商品ブロックの読み込みを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で最近見た商品ブロックの読み込みの確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-003	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	最近見た商品ブロックの読み込みを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で最近見た商品ブロックの読み込みの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 最近見た商品ブロックの読み込みを確認する
 3. 画面表示と後続状態を確認する"	履歴Cookieの商品IDからカード画像を取得し、サムネイルの一覧として描画すること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-030	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示要素を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-004	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	表示要素を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	見出し（最近見た商品）と、履歴の商品サムネイルの横並び一覧であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-031	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	JS挙動を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-005	IT-25	URL	P2	URLの操作結果確認	JS挙動を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	サムネイル画像は遅延読み込みで取得すること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-032	IT-25	一覧	P2	一覧の結合確認	表示対象を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で表示対象の確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-006	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	表示対象を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 表示対象を確認する
-3. 画面表示と後続状態を確認する"	履歴Cookieに含まれる商品IDのうち、最適カード画像が取得できた商品であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-033	IT-12	画面表示データ	P2	画面表示データの結合確認	除外を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で除外の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-007	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	除外を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 除外を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-034	IT-12	画面表示データ	P2	画面表示データの結合確認	履歴無しを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で履歴無しの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-008	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	履歴の並びを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で履歴の並びの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 履歴の並びを確認する
+3. 画面表示と後続状態を確認する"	履歴Cookieの並び順をそのまま表示順とすること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-009	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	履歴無しを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 履歴無しを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-035	IT-25	画面表示データ	P2	画面表示データの結合確認	履歴Cookieが無いを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で履歴Cookieが無いの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-010	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	履歴Cookieが無いを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 履歴Cookieが無いを確認する
-3. 画面表示と後続状態を確認する"	履歴無しの表示のみを描画すること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-036	IT-25	フォーム送信	P1	フォーム送信の結合確認	履歴の商品IDで画像が取得できないを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で履歴の商品IDで画像が取得できないの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-011	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	履歴の商品IDで画像が取得できないを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 履歴の商品IDで画像が取得できないを確認する
-3. 画面表示と後続状態を確認する"	当該商品を一覧から除外すること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-037	IT-12	非同期更新	P1	非同期更新の結合確認	参照時点を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	画像が取得できる商品が結果的に0件を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 画像が取得できる商品が結果的に0件を確認する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-013	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	参照時点を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 参照時点を確認する
-3. 画面表示と後続状態を確認する"	サムネイル画像は表示時点に商品IDから取得すること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-038	IT-12	エラー継続	P3	エラー継続の結合確認	APIを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-014	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	APIを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. APIを確認する
-3. 画面表示と後続状態を確認する"	本ブロックは履歴Cookieの商品IDから画像を取得して描画すること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-039	IT-25	件数上限	P2	件数上限の結合確認	成功時出力を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-015	IT-22	部分入力	P2	部分入力の入力検証	成功時出力を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	履歴の商品サムネイル一覧のHTML、もしくは履歴無しの表示であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-040	IT-25	欠損値	P2	欠損値の結合確認	失敗時出力を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-016	IT-02	初期行数	P2	初期行数の結合確認	失敗時出力を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	履歴Cookieが無い場合は履歴無しの表示であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-041	IT-25	データなし	P2	データなしの結合確認	副作用を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-017	IT-02	表示順	P2	表示順の結合確認	副作用を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	無し（読み取りと表示のみ）であること。
-F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-042	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	dtb_productを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でdtb_productの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_productを確認する
-3. 画面表示と後続状態を確認する"	サムネイル表示と装飾の判定に用いること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-018	IT-25	更新抑止	P1	更新抑止の結合確認	dtb_productを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でdtb_productの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	サムネイル表示と装飾の判定に用いること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-019	IT-12	内部情報	P1	内部情報の結合確認	カード画像を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でカード画像の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	商品IDに対する最適カード画像の取得に用いること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-020	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	未ログインを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で未ログインの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 未ログインを確認する
+3. 画面表示と後続状態を確認する"	表示可能であること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-021	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ログイン済み会員を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でログイン済み会員の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ログイン済み会員を確認する
+3. 画面表示と後続状態を確認する"	表示可能であること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-022	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	サムネイルのリンク押下を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でサムネイルのリンク押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. サムネイルのリンク押下
+3. 画面表示と後続状態を確認する"	当該商品の商品詳細（F03-02）であること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-023	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	履歴Cookieが無いを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で履歴Cookieが無いの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 履歴Cookieが無いを確認する
+3. 画面表示と後続状態を確認する"	履歴無しの表示を描画すること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-024	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	画像が取得できない商品を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で画像が取得できない商品の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 画像が取得できない商品を確認する
+3. 画面表示と後続状態を確認する"	当該商品を一覧から除外すること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-025	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	Cookie名を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）でCookie名の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. Cookie名を確認する
+3. 画面表示と後続状態を確認する"	history（確認値）であること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-026	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	本ブロックの扱いを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で本ブロックの扱いの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 本ブロックの扱いを確認する
+3. 画面表示と後続状態を確認する"	読み取り専用であること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-027	IT-25	一覧	P2	一覧の結合確認	最適カード画像を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で最適カード画像の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 最適カード画像を確認する
+3. 画面表示と後続状態を確認する"	商品IDに対して表示用に選ばれるカード画像であること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-028	IT-12	画面表示データ	P2	画面表示データの結合確認	遅延読み込みを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で遅延読み込みの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 遅延読み込みを確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-029	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-030	IT-25	フォーム送信	P1	フォーム送信の結合確認	表示対象を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で表示対象の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示対象を確認する
+3. 画面表示と後続状態を確認する"	履歴Cookieに含まれる商品IDのうち、最適カード画像が取得できた商品であること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-031	IT-16	ファイル選択	P2	ファイル選択の結合確認	除外を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で除外の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 除外を確認する
+3. 画面表示と後続状態を確認する"	画像が取得できない商品IDは一覧から除外すること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-032	IT-12	エラー継続	P3	エラー継続の結合確認	履歴無しを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で履歴無しの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 履歴無しを確認する
+3. 画面表示と後続状態を確認する"	履歴Cookieが無い場合は履歴無しの表示とすること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-033	IT-25	件数上限	P2	件数上限の結合確認	履歴Cookieが無いを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で履歴Cookieが無いの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 履歴Cookieが無いを確認する
+3. 画面表示と後続状態を確認する"	履歴無しの表示のみを描画すること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-034	IT-25	欠損値	P2	欠損値の結合確認	履歴の商品IDで画像が取得できないを試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で履歴の商品IDで画像が取得できないの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 履歴の商品IDで画像が取得できないを確認する
+3. 画面表示と後続状態を確認する"	当該商品を一覧から除外すること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-035	IT-25	データなし	P2	データなしの結合確認	画像が取得できる商品が結果的に0件を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で画像が取得できる商品が結果的に0件の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 画像が取得できる商品が結果的に0件を確認する
+3. 画面表示と後続状態を確認する"	一覧は空となること。
+F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-036	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	参照時点を試験できる状態である	F03-06（最近見た商品）（f03_06_front_product_product_recently_viewed）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 参照時点を確認する
+3. 画面表示と後続状態を確認する"	サムネイル画像は表示時点に商品IDから取得すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -260,4 +242,4 @@ F03-06（最近見た商品）	IT-F03-06-FRONT-PRODUCT-PRODUCT-RECENTLY-VIEWED-0
 | ウェブアプリケーション / 注文・決済・在庫 / 原子性（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 9 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.357, No.382。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.357, No.359, No.385, No.422, No.500, No.501, No.506, No.510。上限緩和または個別ケース化で収載可能。

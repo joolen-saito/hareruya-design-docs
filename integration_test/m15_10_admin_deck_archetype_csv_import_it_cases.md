@@ -11,9 +11,9 @@
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
@@ -67,81 +67,81 @@ m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ�
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-009	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	説明文などを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でHTTPステータスの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 説明文などを確認する
 3. 画面表示と後続状態を確認する"	CSV 経路では comment_jp、comment_en、デッキタグ、記事紐付けは更新しないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-010	IT-25	URL	P2	URLの操作結果確認	CSV, TSVファイル選択を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でURLの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	CSV, TSVファイル選択を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. CSV, TSVファイル選択
-3. 画面表示と後続状態を確認する"	一時パスへ移動されたうえで CsvImportService に渡され、処理後の render で一時ファイルは削除試行されるであること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	ヘッダ行は正しいが列の順のみ入れ替わっているを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. ヘッダ行は正しいが列の順のみ入れ替わっているを確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-012	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	プラグイン無効やルート未登録で admin_route 配下に到達しないを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. プラグイン無効やルート未登録で admin_route 配下に到達しないを確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-013	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	一覧との一致を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	プラグイン無効やルート未登録で admin_route 配下に到達しないを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. プラグイン無効やルート未登録で admin_route 配下に到達しないを確認する
+3. 画面表示と後続状態を確認する"	HTTP 側のふるまいは共通セキュリティ設定に依存し、本書では確定しないこと。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	一覧との一致を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 一覧との一致を確認する
-3. 画面表示と後続状態を確認する"	UPSERT と同一トランザクションで一覧 API が読むときは一覧・詳細側と一致すること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	削除済みとの関係を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 削除済みとの関係
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	CSV と画面編集との混在を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	CSV と画面編集との混在を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. CSV と画面編集との混在を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	成功時出力を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	成功時出力を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-017	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	失敗時出力を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	副作用を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 副作用を確認する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	失敗時出力を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-019	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. dtb_archetypeを確認する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	副作用を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-020	IT-22	部分入力	P2	部分入力の入力検証	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-019	IT-22	部分入力	P2	部分入力の入力検証	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. dtb_archetypeを確認する
-3. 画面表示と後続状態を確認する"	代表カード名が与えられるときのみ更新し得るであること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-021	IT-23	検索条件	P2	検索時の検索条件確認	dtb_archetype_colorを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+3. 画面表示と後続状態を確認する"	値は常に CSV 側から表示状態へ張り替えであること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-020	IT-23	検索条件	P2	検索時の検索条件確認	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-022	IT-23	検索条件	P2	検索時の検索条件確認	登録/更新を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-021	IT-23	検索条件	P2	検索時の検索条件確認	dtb_archetype_colorを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-023	IT-23	検索条件	P2	検索時の検索条件確認	フォーム入力・CSRF・アップロード制約に違反を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-022	IT-23	検索条件	P2	検索時の検索条件確認	登録/更新を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-024	IT-23	検索条件	P2	検索時の検索条件確認	フォーマット名や色がマスタに無いを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-023	IT-23	検索条件	P2	検索時の検索条件確認	フォーム入力・CSRF・アップロード制約に違反を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-025	IT-23	検索条件	P2	検索時の検索条件確認	送信取込処理の開始時を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-024	IT-23	検索条件	P2	検索時の検索条件確認	フォーマット名や色がマスタに無いを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-026	IT-23	検索条件	P2	検索時の検索条件確認	すべて成功終了後を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-025	IT-23	検索条件	P2	検索時の検索条件確認	送信取込処理の開始時を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-027	IT-23	検索条件	P2	検索時の検索条件確認	サイドバー「デッキ管理」「アーキタイプ一覧」で一覧を開き、画面上部の CSV …を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-026	IT-23	検索条件	P2	検索時の検索条件確認	すべて成功終了後を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-028	IT-23	検索条件	P2	検索時の検索条件確認	一覧画面をブックマークせず、GET /.../csvimport を直接開くを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-027	IT-23	検索条件	P2	検索時の検索条件確認	サイドバー「デッキ管理」「アーキタイプ一覧」で一覧を開き、画面上部の CSV …を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-028	IT-23	検索条件	P2	検索時の検索条件確認	一覧画面をブックマークせず、GET /.../csvimport を直接開くを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-029	IT-23	検索条件	P2	検索時の検索条件確認	ソース上バインドのみ存在するを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-030	IT-23	検索条件	P2	検索時の検索条件確認	表示要素を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-031	IT-23	検索条件	P2	検索時の検索条件確認	JS 挙動を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-032	IT-23	検索条件	P2	検索時の検索条件確認	モーダル・ポップアップを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-033	IT-23	検索条件	P2	検索時の検索条件確認	UPSERT のキーを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-034	IT-23	検索条件	P2	検索時の検索条件確認	表示区分を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-034	IT-23	実行結果	P2	検索時の実行結果確認	表示区分を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-035	IT-23	実行結果	P2	検索時の実行結果確認	説明文などを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
@@ -151,118 +151,117 @@ m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ�
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-037	IT-23	実行結果	P2	検索時の実行結果確認	ヘッダ行は正しいが列の順のみ入れ替わっているを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-038	IT-23	実行結果	P2	検索時の実行結果確認	プラグイン無効やルート未登録で admin_route 配下に到達しないを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-038	IT-26	登録内容	P1	登録時の登録内容確認	プラグイン無効やルート未登録で admin_route 配下に到達しないを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-039	IT-26	登録内容	P1	登録時の登録内容確認	一覧との一致を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-040	IT-26	登録内容	P1	登録時の登録内容確認	削除済みとの関係を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-041	IT-26	登録内容	P1	登録時の登録内容確認	CSV と画面編集との混在を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一レコードについて画面で変更した項目（説明など）も CSV は触れないので保持される一方、表示区分は CSV が毎回上書きすること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-042	IT-26	登録内容	P1	登録時の登録内容確認	成功時出力を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	HTTP 302 で GET /{admin_route}/archetype/csvimport へのリダイレクトと、共通成功フラッシュであること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-043	IT-26	登録内容	P1	登録時の登録内容確認	失敗時出力を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-043	IT-26	登録内容	P1	登録時の登録内容確認	失敗時出力を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-044	IT-26	登録内容	P1	登録時の登録内容確認	副作用を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-045	IT-26	登録内容	P1	登録時の登録内容確認	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-044	IT-26	登録内容	P1	登録時の登録内容確認	副作用を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-046	IT-26	登録内容	P1	登録時の登録内容確認	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-045	IT-26	登録内容	P1	登録時の登録内容確認	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-047	IT-26	登録内容	P1	登録時の登録内容確認	dtb_archetype_colorを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-046	IT-26	登録内容	P1	登録時の登録内容確認	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-048	IT-26	登録内容	P1	登録時の登録内容確認	登録/更新を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-047	IT-26	登録内容	P1	登録時の登録内容確認	dtb_archetype_colorを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-049	IT-26	実行結果	P1	登録時の実行結果確認	フォーム入力・CSRF・アップロード制約に違反を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-048	IT-26	実行結果	P1	登録時の実行結果確認	登録/更新を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-050	IT-23	実行結果	P1	登録時の実行結果確認	フォーマット名や色がマスタに無いを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-049	IT-23	実行結果	P1	登録時の実行結果確認	フォーム入力・CSRF・アップロード制約に違反を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	翻訳付き実行時例外（行番号入りパターン）でロールバックしフラッシュ表示であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フラッシュエラー複数および赤枠、render 後の一覧相当画面ではなく取込画面へ戻すであること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-050	IT-26	更新内容	P1	更新時の更新内容確認	フォーマット名や色がマスタに無いを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-051	IT-26	更新内容	P1	更新時の更新内容確認	送信取込処理の開始時を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-052	IT-26	更新内容	P1	更新時の更新内容確認	すべて成功終了後を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-053	IT-26	更新内容	P1	更新時の更新内容確認	サイドバー「デッキ管理」「アーキタイプ一覧」で一覧を開き、画面上部の CSV …を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ファイル選択・アップロードボタンと、取込ヘッダ定義テーブルが表示されるであること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-054	IT-26	更新内容	P1	更新時の更新内容確認	一覧画面をブックマークせず、GET /.../csvimport を直接開くを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一覧の検索条件は引き継がれないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-055	IT-26	更新内容	P1	更新時の更新内容確認	ソース上バインドのみ存在するを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-055	IT-26	更新内容	P1	更新時の更新内容確認	ソース上バインドのみ存在するを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-056	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-057	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-056	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-058	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-057	IT-26	更新内容	P1	更新時の更新内容確認	JS 挙動を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-059	IT-26	更新内容	P1	更新時の更新内容確認	UPSERT のキーを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-058	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-060	IT-26	更新内容	P1	更新時の更新内容確認	表示区分を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-059	IT-26	更新内容	P1	更新時の更新内容確認	UPSERT のキーを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-061	IT-05	実行結果	P1	更新時の実行結果確認	説明文などを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-060	IT-05	実行結果	P1	更新時の実行結果確認	表示区分を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-062	IT-05	実行結果	P1	更新時の実行結果確認	CSV, TSVファイル選択を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-061	IT-05	実行結果	P1	更新時の実行結果確認	説明文などを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	CSV 経路では comment_jp、comment_en、デッキタグ、記事紐付けは更新しないこと。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-062	IT-05	削除条件	P1	削除時の削除条件確認	CSV, TSVファイル選択を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一時パスへ移動されたうえで CsvImportService に渡され、処理後の render で一時ファイルは削除試行されるであること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-063	IT-05	削除条件	P1	削除時の削除条件確認	ヘッダ行は正しいが列の順のみ入れ替わっているを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-063	IT-05	削除条件	P1	削除時の削除条件確認	ヘッダ行は正しいが列の順のみ入れ替わっているを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	文字列完全一致のためヘッダ形式エラーとなること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-064	IT-05	削除条件	P1	削除時の削除条件確認	プラグイン無効やルート未登録で admin_route 配下に到達しないを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-064	IT-05	削除条件	P1	削除時の削除条件確認	プラグイン無効やルート未登録で admin_route 配下に到達しないを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	HTTP 側のふるまいは共通セキュリティ設定に依存し、本書では確定しないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-065	IT-05	削除条件	P1	削除時の削除条件確認	一覧との一致を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-065	IT-05	削除条件	P1	削除時の削除条件確認	一覧との一致を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	UPSERT と同一トランザクションで一覧 API が読むときは一覧・詳細側と一致すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-066	IT-05	削除条件	P1	削除時の削除条件確認	削除済みとの関係を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	論理削除済み行との名前重複検出はしないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-067	IT-05	削除条件	P1	削除時の削除条件確認	CSV と画面編集との混在を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で削除条件の対象ファイルと処理条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-066	IT-05	削除条件	P1	削除時の削除条件確認	削除済みとの関係を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で削除条件の対象ファイルと処理条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-067	IT-05	実行結果	P1	削除時の実行結果確認	CSV と画面編集との混在を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-068	IT-05	実行結果	P1	削除時の実行結果確認	成功時出力を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	HTTP 302 で GET /{admin_route}/archetype/csvimport へのリダイレクトと、共通成功フラッシュであること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-069	IT-05	実行結果	P1	削除時の実行結果確認	失敗時出力を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同上のリダイレクトに対しフラッシュ種別エラーの短文列であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-070	IT-05	実行結果	P1	削除時の実行結果確認	副作用を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-071	IT-05	実行結果	P1	削除時の実行結果確認	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	値は常に CSV 側から表示状態へ張り替えであること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-072	IT-16	実行結果	P2	実行結果の結合確認	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_archetype と色情報関連、および代表画像参照、disp と旧アーキタイプ ID が更新もしくは新規挿入されるであること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-071	IT-16	実行結果	P2	実行結果の結合確認	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-073	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	dtb_archetype_colorを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-072	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-074	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	登録/更新を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-073	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	dtb_archetype_colorを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-074	IT-27	実行結果	P2	実行結果の結合確認	登録/更新を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-075	IT-27	実行結果	P2	実行結果の結合確認	フォーム入力・CSRF・アップロード制約に違反を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-076	IT-27	実行結果	P2	実行結果の結合確認	フォーマット名や色がマスタに無いを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-076	IT-24	出力内容	P2	出力内容の結合確認	フォーマット名や色がマスタに無いを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-077	IT-24	出力内容	P2	出力内容の結合確認	送信取込処理の開始時を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-078	IT-24	出力内容	P2	出力内容の結合確認	すべて成功終了後を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
@@ -270,67 +269,69 @@ m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ�
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-079	IT-24	出力内容	P2	出力内容の結合確認	サイドバー「デッキ管理」「アーキタイプ一覧」で一覧を開き、画面上部の CSV …を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-080	IT-24	出力内容	P2	出力内容の結合確認	一覧画面をブックマークせず、GET /.../csvimport を直接開くを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-081	IT-24	出力内容	P2	出力内容の結合確認	ソース上バインドのみ存在するを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-082	IT-27	削除	P1	削除の結合確認	表示要素を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-081	IT-27	削除	P1	削除の結合確認	ソース上バインドのみ存在するを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-083	IT-27	移動・リネーム	P2	移動・リネームの結合確認	JS 挙動を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-082	IT-27	移動・リネーム	P2	移動・リネームの結合確認	表示要素を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-084	IT-27	コピー	P1	コピーの結合確認	モーダル・ポップアップを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-083	IT-27	コピー	P1	コピーの結合確認	JS 挙動を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-085	IT-33	ファイル登録	P1	ファイル登録の結合確認	UPSERT のキーを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-084	IT-33	ファイル登録	P1	ファイル登録の結合確認	モーダル・ポップアップを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-086	IT-33	ファイル出力	P1	ファイル出力の結合確認	表示区分を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-085	IT-33	ファイル出力	P1	ファイル出力の結合確認	UPSERT のキーを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-087	IT-27	JSON	P1	JSONの結合確認	説明文などを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-086	IT-27	JSON	P1	JSONの結合確認	表示区分を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-088	IT-27	同名ファイル	P1	同名ファイルの結合確認	CSV, TSVファイル選択を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-087	IT-27	同名ファイル	P1	同名ファイルの結合確認	説明文などを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-089	IT-27	入力JSON	P1	入力JSONの結合確認	ヘッダ行は正しいが列の順のみ入れ替わっているを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-088	IT-27	入力JSON	P1	入力JSONの結合確認	CSV, TSVファイル選択を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-090	IT-27	配置先	P1	配置先の結合確認	プラグイン無効やルート未登録で admin_route 配下に到達しないを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-089	IT-27	配置先	P1	配置先の結合確認	ヘッダ行は正しいが列の順のみ入れ替わっているを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-091	IT-27	スキーマ	P1	スキーマの結合確認	一覧との一致を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-090	IT-27	スキーマ	P1	スキーマの結合確認	プラグイン無効やルート未登録で admin_route 配下に到達しないを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-092	IT-02	初期行数	P2	初期行数の結合確認	削除済みとの関係を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-091	IT-02	初期行数	P2	初期行数の結合確認	一覧との一致を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 一覧との一致を確認する
+3. 画面表示と後続状態を確認する"	UPSERT と同一トランザクションで一覧 API が読むときは一覧・詳細側と一致すること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-092	IT-02	表示順	P2	表示順の結合確認	削除済みとの関係を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 削除済みとの関係
 3. 画面表示と後続状態を確認する"	論理削除済み行との名前重複検出はしないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-093	IT-02	表示順	P2	表示順の結合確認	CSV と画面編集との混在を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. CSV と画面編集との混在を確認する
-3. 画面表示と後続状態を確認する"	同一レコードについて画面で変更した項目（説明など）も CSV は触れないので保持される一方、表示区分は CSV が毎回上書きすること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-094	IT-25	更新抑止	P1	更新抑止の結合確認	成功時出力を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-093	IT-25	更新抑止	P1	更新抑止の結合確認	CSV と画面編集との混在を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-095	IT-12	内部情報	P1	内部情報の結合確認	失敗時出力を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-094	IT-12	内部情報	P1	内部情報の結合確認	成功時出力を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	同上のリダイレクトに対しフラッシュ種別エラーの短文列であること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-096	IT-15	機密情報	P1	機密情報の結合確認	副作用を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-097	IT-06	ロールバック	P3	ロールバックの結合確認	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	HTTP 302 で GET /{admin_route}/archetype/csvimport へのリダイレクトと、共通成功フラッシュであること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-095	IT-06	ロールバック	P3	ロールバックの結合確認	失敗時出力を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	値は常に CSV 側から表示状態へ張り替えであること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-098	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同上のリダイレクトに対しフラッシュ種別エラーの短文列であること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-096	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
+3. 画面表示と後続状態を確認する"	dtb_archetype と色情報関連、および代表画像参照、disp と旧アーキタイプ ID が更新もしくは新規挿入されるであること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-097	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. dtb_archetypeを確認する
+3. 画面表示と後続状態を確認する"	値は常に CSV 側から表示状態へ張り替えであること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-098	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_archetypeを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. dtb_archetypeを確認する
 3. 画面表示と後続状態を確認する"	代表カード名が与えられるときのみ更新し得るであること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-099	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_archetype_colorを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-099	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_archetype_colorを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. dtb_archetype_colorを確認する
 3. 画面表示と後続状態を確認する"	アーキタイプと色の多対多であること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-100	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-100	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録/更新を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-101	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	フォーム入力・CSRF・アップロード制約に違反を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-101	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	フォーム入力・CSRF・アップロード制約に違反を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. フォーム入力・CSRF・アップロード制約に違反
 3. 画面表示と後続状態を確認する"	フラッシュエラー複数および赤枠、render 後の一覧相当画面ではなく取込画面へ戻すであること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-102	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	フォーマット名や色がマスタに無いを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. フォーマット名や色がマスタに無いを確認する
 3. 画面表示と後続状態を確認する"	翻訳付き実行時例外（行番号入りパターン）でロールバックしフラッシュ表示であること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-103	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	送信取込処理の開始時を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-103	IT-25	一覧	P2	一覧の結合確認	送信取込処理の開始時を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 送信取込処理の開始時
 3. 画面表示と後続状態を確認する"	log_info('アーキタイプCSV登録開始')であること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-104	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	すべて成功終了後を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-104	IT-12	画面表示データ	P2	画面表示データの結合確認	すべて成功終了後を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. すべて成功終了後を確認する
-3. 画面表示と後続状態を確認する"	log_info('アーキタイプCSV登録完了')であること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-105	IT-25	一覧	P2	一覧の結合確認	サイドバー「デッキ管理」「アーキタイプ一覧」で一覧を開き、画面上部の CSV …を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-105	IT-25	画面表示データ	P2	画面表示データの結合確認	サイドバー「デッキ管理」「アーキタイプ一覧」で一覧を開き、画面上部の CSV …を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. サイドバー「デッキ管理」「アーキタイプ一覧」で一覧を開き、画面上部の CSV …を確認する
 3. 画面表示と後続状態を確認する"	ファイル選択・アップロードボタンと、取込ヘッダ定義テーブルが表示されるであること。
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-106	IT-12	画面表示データ	P2	画面表示データの結合確認	一覧画面をブックマークせず、GET /.../csvimport を直接開くを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
@@ -339,35 +340,20 @@ m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ�
 m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-107	IT-25	画面表示データ	P2	画面表示データの結合確認	ソース上バインドのみ存在するを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ソース上バインドのみ存在するを確認する
 3. 画面表示と後続状態を確認する"	ソース上バインドのみ存在すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-108	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-108	IT-25	フォーム送信	P1	フォーム送信の結合確認	表示要素を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-109	IT-25	画面表示データ	P2	画面表示データの結合確認	JS 挙動を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. JS 挙動を確認する
-3. 画面表示と後続状態を確認する"	card-csvimport.js がフォーム送信時に送信ボタンを無効化し、#spinner にスピナーを表示すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-110	IT-25	フォーム送信	P1	フォーム送信の結合確認	モーダル・ポップアップを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面上部に単一のアップロードフォーム、その下に「アーキタイプ登録 CSV, TSVファイルフォーマット」としてヘッダ 6 列のサンプル行を表示すること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-109	IT-16	ファイル選択	P2	ファイル選択の結合確認	JS 挙動を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-110	IT-12	非同期更新	P1	非同期更新の結合確認	モーダル・ポップアップを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	取込前の確認モーダルはないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-111	IT-16	ファイル選択	P2	ファイル選択の結合確認	UPSERT のキーを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-112	IT-12	非同期更新	P1	非同期更新の結合確認	表示区分を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-111	IT-12	エラー継続	P3	エラー継続の結合確認	UPSERT のキーを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. UPSERT のキーを確認する
+3. 画面表示と後続状態を確認する"	日本語名・英語名・フォーマット・論理削除でないことを条件に検索した 1 行を更新単位とすること。
+m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-112	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	表示区分を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 表示区分を確認する
 3. 画面表示と後続状態を確認する"	CSV 処理のたびに「表示」を表す値（dtb_archetype の disp、コア側表示区分マスタにおける整数定数 DISPLAY_SHOW と一致する参照へ）へ上書きすること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-113	IT-12	エラー継続	P3	エラー継続の結合確認	説明文などを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 説明文などを確認する
-3. 画面表示と後続状態を確認する"	CSV 経路では comment_jp、comment_en、デッキタグ、記事紐付けは更新しないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-114	IT-25	件数上限	P2	件数上限の結合確認	CSV, TSVファイル選択を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. CSV, TSVファイル選択
-3. 画面表示と後続状態を確認する"	一時パスへ移動されたうえで CsvImportService に渡され、処理後の render で一時ファイルは削除試行されるであること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-115	IT-25	欠損値	P2	欠損値の結合確認	ヘッダ行は正しいが列の順のみ入れ替わっているを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ヘッダ行は正しいが列の順のみ入れ替わっているを確認する
-3. 画面表示と後続状態を確認する"	文字列完全一致のためヘッダ形式エラーとなること。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-116	IT-25	データなし	P2	データなしの結合確認	プラグイン無効やルート未登録で admin_route 配下に到達しないを試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. プラグイン無効やルート未登録で admin_route 配下に到達しないを確認する
-3. 画面表示と後続状態を確認する"	HTTP 側のふるまいは共通セキュリティ設定に依存し、本書では確定しないこと。
-m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）	IT-M15-10-ADMIN-DECK-ARCHETYPE-CSV-IMPORT-117	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	一覧との一致を試験できる状態である	m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ登録 CSV / TSV 取込）（m15_10_admin_deck_archetype_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 一覧との一致を確認する
-3. 画面表示と後続状態を確認する"	UPSERT と同一トランザクションで一覧 API が読むときは一覧・詳細側と一致すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -458,4 +444,4 @@ m15-10_admin_deck_archetype_csv_import（デッキ管理 — アーキタイプ�
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.109, No.110。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.109, No.110, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

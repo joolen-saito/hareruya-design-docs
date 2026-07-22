@@ -11,9 +11,9 @@
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
@@ -67,121 +67,120 @@ M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRAN
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-009	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でHTTPステータスの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ステータス履歴を確認する
 3. 画面表示と後続状態を確認する"	取込時は親に初期ステータスを設定するのみで、dtb_stock_move_transfer_status_history への明示的な履歴行追加は本取込処理内に見当たらない（ステータス遷移は承認系機能側）であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-010	IT-25	URL	P2	URLの操作結果確認	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でURLの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 移動・振替の親データを確認する
-3. 画面表示と後続状態を確認する"	dtb_stock_move_transfer（移動振替区分・初期ステータス・出庫元/入庫先の店舗ID・在庫区分・送り状No・登録者・更新者）であること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 機能名を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-012	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 実装確認を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-013	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	2026-06-12を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 実装確認を確認する
+3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockMoveTransferController::importStockMoveCsv / importStockTransferCsv / StockMoveCsv…であること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	2026-06-12を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 2026-06-12を確認する
-3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、フォーム項目・取込手順・バリデーション・履歴更新を実装確認値で具体化であること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	在庫移動CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 在庫移動CSV登録を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 在庫振替CSV登録を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 在庫移動CSV雛形を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-017	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 在庫振替CSV雛形を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 親データを確認する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 在庫振替CSV雛形を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-019	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. ステータス履歴を確認する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 親データを確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-020	IT-22	部分入力	P2	部分入力の入力検証	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 移動・振替の親データを確認する
-3. 画面表示と後続状態を確認する"	dtb_stock_move_transfer（移動振替区分・初期ステータス・出庫元/入庫先の店舗ID・在庫区分・送り状No・登録者・更新者）であること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-019	IT-22	部分入力	P2	部分入力の入力検証	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ステータス履歴を確認する
+3. 画面表示と後続状態を確認する"	取込時は親に初期ステータスを設定するのみで、dtb_stock_move_transfer_status_history への明示的な履歴行追加は本取込処理内に見当たらない（ステータス遷移は承認系機能側）であること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-020	IT-26	登録内容	P1	登録時の登録内容確認	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-021	IT-26	登録内容	P1	登録時の登録内容確認	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-022	IT-26	登録内容	P1	登録時の登録内容確認	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-023	IT-26	登録内容	P1	登録時の登録内容確認	2026-06-12を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、フォーム項目・取込手順・バリデーション・履歴更新を実装確認値で具体化であること。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-024	IT-26	登録内容	P1	登録時の登録内容確認	在庫移動CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫移動CSVを取込であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-025	IT-26	登録内容	P1	登録時の登録内容確認	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-025	IT-26	登録内容	P1	登録時の登録内容確認	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-026	IT-26	登録内容	P1	登録時の登録内容確認	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-027	IT-26	登録内容	P1	登録時の登録内容確認	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-026	IT-26	登録内容	P1	登録時の登録内容確認	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-028	IT-26	登録内容	P1	登録時の登録内容確認	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-027	IT-26	登録内容	P1	登録時の登録内容確認	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-029	IT-26	登録内容	P1	登録時の登録内容確認	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-028	IT-26	登録内容	P1	登録時の登録内容確認	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-030	IT-26	登録内容	P1	登録時の登録内容確認	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-029	IT-26	登録内容	P1	登録時の登録内容確認	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-031	IT-26	実行結果	P1	登録時の実行結果確認	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-030	IT-26	実行結果	P1	登録時の実行結果確認	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-032	IT-23	実行結果	P1	登録時の実行結果確認	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-031	IT-23	実行結果	P1	登録時の実行結果確認	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	../ec-cube-enterprise（StockMoveTransferController::importStockMoveCsv / importStockTransferCsv / StockMoveCsv…であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫移動・振替CSV登録であること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-032	IT-26	更新内容	P1	更新時の更新内容確認	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-033	IT-26	更新内容	P1	更新時の更新内容確認	2026-06-12を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-034	IT-26	更新内容	P1	更新時の更新内容確認	在庫移動CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-035	IT-26	更新内容	P1	更新時の更新内容確認	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫振替CSVを取込であること。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-036	IT-26	更新内容	P1	更新時の更新内容確認	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	stock_move.csv（ヘッダ: 商品コード／移動点数）を出力であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-037	IT-26	更新内容	P1	更新時の更新内容確認	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-037	IT-26	更新内容	P1	更新時の更新内容確認	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-038	IT-26	更新内容	P1	更新時の更新内容確認	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-039	IT-26	更新内容	P1	更新時の更新内容確認	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-038	IT-26	更新内容	P1	更新時の更新内容確認	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-040	IT-26	更新内容	P1	更新時の更新内容確認	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-039	IT-26	更新内容	P1	更新時の更新内容確認	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-041	IT-26	更新内容	P1	更新時の更新内容確認	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-040	IT-26	更新内容	P1	更新時の更新内容確認	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-042	IT-26	更新内容	P1	更新時の更新内容確認	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-041	IT-26	更新内容	P1	更新時の更新内容確認	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-043	IT-05	実行結果	P1	更新時の実行結果確認	2026-06-12を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-042	IT-05	実行結果	P1	更新時の実行結果確認	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-044	IT-05	実行結果	P1	更新時の実行結果確認	在庫移動CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-043	IT-05	実行結果	P1	更新時の実行結果確認	2026-06-12を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫移動CSVを取込であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-045	IT-16	実行結果	P2	実行結果の結合確認	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、フォーム項目・取込手順・バリデーション・履歴更新を実装確認値で具体化であること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-044	IT-16	実行結果	P2	実行結果の結合確認	在庫移動CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-046	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-045	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-047	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-046	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-047	IT-27	実行結果	P2	実行結果の結合確認	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-048	IT-27	実行結果	P2	実行結果の結合確認	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-049	IT-27	実行結果	P2	実行結果の結合確認	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-049	IT-24	出力内容	P2	出力内容の結合確認	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-050	IT-24	出力内容	P2	出力内容の結合確認	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-051	IT-24	出力内容	P2	出力内容の結合確認	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
@@ -189,67 +188,69 @@ M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRAN
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-052	IT-24	出力内容	P2	出力内容の結合確認	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-053	IT-24	出力内容	P2	出力内容の結合確認	2026-06-12を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-054	IT-24	出力内容	P2	出力内容の結合確認	在庫移動CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-055	IT-27	削除	P1	削除の結合確認	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-054	IT-27	削除	P1	削除の結合確認	在庫移動CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-056	IT-27	移動・リネーム	P2	移動・リネームの結合確認	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-055	IT-27	移動・リネーム	P2	移動・リネームの結合確認	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-057	IT-27	コピー	P1	コピーの結合確認	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-056	IT-27	コピー	P1	コピーの結合確認	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-058	IT-33	ファイル登録	P1	ファイル登録の結合確認	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-057	IT-33	ファイル登録	P1	ファイル登録の結合確認	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-059	IT-33	ファイル出力	P1	ファイル出力の結合確認	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-058	IT-33	ファイル出力	P1	ファイル出力の結合確認	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-060	IT-27	JSON	P1	JSONの結合確認	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-059	IT-27	JSON	P1	JSONの結合確認	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-061	IT-27	同名ファイル	P1	同名ファイルの結合確認	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-060	IT-27	同名ファイル	P1	同名ファイルの結合確認	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-062	IT-27	入力JSON	P1	入力JSONの結合確認	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-061	IT-27	入力JSON	P1	入力JSONの結合確認	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-063	IT-27	配置先	P1	配置先の結合確認	2026-06-12を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-062	IT-27	配置先	P1	配置先の結合確認	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-064	IT-27	スキーマ	P1	スキーマの結合確認	在庫移動CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-063	IT-27	スキーマ	P1	スキーマの結合確認	2026-06-12を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-065	IT-02	初期行数	P2	初期行数の結合確認	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-064	IT-02	初期行数	P2	初期行数の結合確認	在庫移動CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 在庫移動CSV登録を確認する
+3. 画面表示と後続状態を確認する"	在庫移動CSVを取込であること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-065	IT-02	表示順	P2	表示順の結合確認	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 在庫振替CSV登録を確認する
 3. 画面表示と後続状態を確認する"	在庫振替CSVを取込であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-066	IT-02	表示順	P2	表示順の結合確認	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 在庫移動CSV雛形を確認する
-3. 画面表示と後続状態を確認する"	stock_move.csv（ヘッダ: 商品コード／移動点数）を出力であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-067	IT-25	更新抑止	P1	更新抑止の結合確認	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-066	IT-25	更新抑止	P1	更新抑止の結合確認	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-068	IT-12	内部情報	P1	内部情報の結合確認	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-067	IT-12	内部情報	P1	内部情報の結合確認	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	在庫移動振替 dtb_stock_move_transfer（移動タイプ・初期ステータス・出庫元/入庫先の店舗ID・在庫区分・登録者 registered_member_id・更新者 updated_member_id）であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-069	IT-15	機密情報	P1	機密情報の結合確認	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-070	IT-06	ロールバック	P3	ロールバックの結合確認	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	stock_transfer.csv（ヘッダ: 振替元商品コード／振替先商品コード／振替点数）を出力であること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-068	IT-06	ロールバック	P3	ロールバックの結合確認	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でロールバックの対象ファイルと処理条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_stock_move_transfer（移動振替区分・初期ステータス・出庫元/入庫先の店舗ID・在庫区分・送り状No・登録者・更新者）であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-071	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫移動振替 dtb_stock_move_transfer（移動タイプ・初期ステータス・出庫元/入庫先の店舗ID・在庫区分・登録者 registered_member_id・更新者 updated_member_id）であること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-069	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. ステータス履歴を確認する
+3. 画面表示と後続状態を確認する"	取込時は親に初期ステータスを設定するのみで、dtb_stock_move_transfer_status_history への明示的な履歴行追加は本取込処理内に見当たらない（ステータス遷移は承認系機能側）であること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-070	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 移動・振替の親データを確認する
+3. 画面表示と後続状態を確認する"	dtb_stock_move_transfer（移動振替区分・初期ステータス・出庫元/入庫先の店舗ID・在庫区分・送り状No・登録者・更新者）であること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-071	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 機能名を確認する
 3. 画面表示と後続状態を確認する"	在庫移動・振替CSV登録であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-072	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-072	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 実装確認を確認する
 3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockMoveTransferController::importStockMoveCsv / importStockTransferCsv / StockMoveCsv…であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-073	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	2026-06-12を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	2026-06-12を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 2026-06-12を確認する
 3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、フォーム項目・取込手順・バリデーション・履歴更新を実装確認値で具体化であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-074	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	在庫移動CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-074	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	在庫移動CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 在庫移動CSV登録を確認する
 3. 画面表示と後続状態を確認する"	在庫移動CSVを取込であること。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-075	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 在庫振替CSV登録を確認する
 3. 画面表示と後続状態を確認する"	在庫振替CSVを取込であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-076	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-076	IT-25	一覧	P2	一覧の結合確認	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 在庫移動CSV雛形を確認する
 3. 画面表示と後続状態を確認する"	stock_move.csv（ヘッダ: 商品コード／移動点数）を出力であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-077	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-077	IT-12	画面表示データ	P2	画面表示データの結合確認	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 在庫振替CSV雛形を確認する
-3. 画面表示と後続状態を確認する"	stock_transfer.csv（ヘッダ: 振替元商品コード／振替先商品コード／振替点数）を出力であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-078	IT-25	一覧	P2	一覧の結合確認	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-078	IT-25	画面表示データ	P2	画面表示データの結合確認	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 親データを確認する
 3. 画面表示と後続状態を確認する"	在庫移動振替 dtb_stock_move_transfer（移動タイプ・初期ステータス・出庫元/入庫先の店舗ID・在庫区分・登録者 registered_member_id・更新者 updated_member_id）であること。
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-079	IT-12	画面表示データ	P2	画面表示データの結合確認	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
@@ -258,38 +259,23 @@ M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRAN
 M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-080	IT-25	画面表示データ	P2	画面表示データの結合確認	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 移動・振替の親データを確認する
 3. 画面表示と後続状態を確認する"	dtb_stock_move_transfer（移動振替区分・初期ステータス・出庫元/入庫先の店舗ID・在庫区分・送り状No・登録者・更新者）であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-081	IT-12	画面表示データ	P2	画面表示データの結合確認	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-081	IT-25	フォーム送信	P1	フォーム送信の結合確認	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 機能名を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-082	IT-25	画面表示データ	P2	画面表示データの結合確認	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 実装確認を確認する
-3. 画面表示と後続状態を確認する"	../ec-cube-enterprise（StockMoveTransferController::importStockMoveCsv / importStockTransferCsv / StockMoveCsv…であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-083	IT-25	フォーム送信	P1	フォーム送信の結合確認	2026-06-12を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	在庫移動・振替CSV登録であること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-082	IT-16	ファイル選択	P2	ファイル選択の結合確認	実装確認を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-083	IT-12	非同期更新	P1	非同期更新の結合確認	2026-06-12を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 2026-06-12を確認する
 3. 画面表示と後続状態を確認する"	ec-cube-enterprise 実装（Controller/Service/Form/Entity）と既存テストを読み込み、フォーム項目・取込手順・バリデーション・履歴更新を実装確認値で具体化であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-084	IT-16	ファイル選択	P2	ファイル選択の結合確認	在庫移動CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-085	IT-12	非同期更新	P1	非同期更新の結合確認	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-084	IT-12	エラー継続	P3	エラー継続の結合確認	在庫移動CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 在庫移動CSV登録を確認する
+3. 画面表示と後続状態を確認する"	在庫移動CSVを取込であること。
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-085	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	在庫振替CSV登録を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 在庫振替CSV登録を確認する
 3. 画面表示と後続状態を確認する"	在庫振替CSVを取込であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-086	IT-12	エラー継続	P3	エラー継続の結合確認	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 在庫移動CSV雛形を確認する
-3. 画面表示と後続状態を確認する"	stock_move.csv（ヘッダ: 商品コード／移動点数）を出力であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-087	IT-25	件数上限	P2	件数上限の結合確認	在庫振替CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 在庫振替CSV雛形を確認する
-3. 画面表示と後続状態を確認する"	stock_transfer.csv（ヘッダ: 振替元商品コード／振替先商品コード／振替点数）を出力であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-088	IT-25	欠損値	P2	欠損値の結合確認	親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 親データを確認する
-3. 画面表示と後続状態を確認する"	在庫移動振替 dtb_stock_move_transfer（移動タイプ・初期ステータス・出庫元/入庫先の店舗ID・在庫区分・登録者 registered_member_id・更新者 updated_member_id）であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-089	IT-25	データなし	P2	データなしの結合確認	ステータス履歴を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. ステータス履歴を確認する
-3. 画面表示と後続状態を確認する"	取込時は親に初期ステータスを設定するのみで、dtb_stock_move_transfer_status_history への明示的な履歴行追加は本取込処理内に見当たらない（ステータス遷移は承認系機能側）であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-090	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	移動・振替の親データを試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 移動・振替の親データを確認する
-3. 画面表示と後続状態を確認する"	dtb_stock_move_transfer（移動振替区分・初期ステータス・出庫元/入庫先の店舗ID・在庫区分・送り状No・登録者・更新者）であること。
-M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-091	IT-33	販売可能数	P1	販売可能数の操作結果確認	機能名を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で販売可能数の対象ファイルと処理条件を指定する	"1. 販売可能数の対象レコードと前提状態を用意する
+M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRANSFER-CSV-IMPORT-086	IT-33	販売可能数	P1	販売可能数の操作結果確認	在庫移動CSV雛形を試験できる状態である	M04-22（在庫移動・振替CSV登録）（m04_22_admin_stock_stock_move_transfer_csv_import）で販売可能数の対象ファイルと処理条件を指定する	"1. 販売可能数の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	在庫移動・振替CSV登録であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	stock_move.csv（ヘッダ: 商品コード／移動点数）を出力であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -381,4 +367,4 @@ M04-22（在庫移動・振替CSV登録）	IT-M04-22-ADMIN-STOCK-STOCK-MOVE-TRAN
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 2件 — No.109, No.110。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.109, No.110, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

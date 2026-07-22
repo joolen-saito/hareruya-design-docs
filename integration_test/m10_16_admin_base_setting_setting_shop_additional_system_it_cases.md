@@ -10,16 +10,16 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-28 | 件名、実行結果、本文 |
+| IT-28 | ヘッダ、件名、実行結果、本文 |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -62,172 +62,172 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	CSS・レイアウトを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSS・レイアウトを確認する
 3. 画面表示と後続状態を確認する"	Form/config_layout.html.twig が bootstrap_3_horizontal_layout を継承すること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-009	IT-25	URL	P2	URLの操作結果確認	モーダル・ポップアップを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	本機能ではモーダルや確認ダイアログは用いないこと。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	送信を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 送信
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	買取査定申込み完了画面の自動遷移秒数を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 買取査定申込み完了画面の自動遷移秒数を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	スマレジへの送信URLを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でスマレジへの送信URLの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. スマレジへの送信URL
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	買取査定申込み完了画面の自動遷移秒数を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で買取査定申込み完了画面の自動遷移秒数の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 買取査定申込み完了画面の自動遷移秒数を確認する
 3. 画面表示と後続状態を確認する"	mtb_option.option_valueであること。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	スマレジへの送信URLを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. スマレジへの送信URL
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	スマレジ通信エラー送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. スマレジ通信エラー送信メールアドレス
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入荷通知メールの許可を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入荷通知メールの許可を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 入荷通知メールの許可を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	固定価格商品部門IDを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	固定価格商品部門IDを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 固定価格商品部門IDを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	買取部門集計送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 買取部門集計送信メールアドレス
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	必須項目が空欄である会員送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 必須項目が空欄である会員送信メールアドレス
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	買取部門集計送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 買取部門集計送信メールアドレス
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	ポイント利用が反映されない決済の送信先メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. ポイント利用が反映されない決済の送信先メールアドレス
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	必須項目が空欄である会員送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 必須項目が空欄である会員送信メールアドレス
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-019	IT-22	部分入力	P2	部分入力の入力検証	ポイント差分発生通知メールを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でポイント差分発生通知メールの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ポイント差分発生通知メールを確認する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-018	IT-22	部分入力	P2	部分入力の入力検証	ポイント利用が反映されない決済の送信先メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でポイント利用が反映されない決済の送信先メールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ポイント利用が反映されない決済の送信先メールアドレス
 3. 画面表示と後続状態を確認する"	mtb_option.option_valueであること。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-019	IT-26	登録内容	P1	登録時の登録内容確認	ポイント差分発生通知メールを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でポイント差分発生通知メールの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-020	IT-26	登録内容	P1	登録時の登録内容確認	支店システム連携エラー通知先メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で支店システム連携エラー通知先メールアドレスの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-021	IT-26	登録内容	P1	登録時の登録内容確認	購入処理エラー通知先メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で購入処理エラー通知先メールアドレスの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-022	IT-26	登録内容	P1	登録時の登録内容確認	イベント決済確認エラー通知メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でイベント決済確認エラー通知メールアドレスの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	mtb_option.option_valueであること。
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-023	IT-26	登録内容	P1	登録時の登録内容確認	身分証の有効期限切れ会員送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で身分証の有効期限切れ会員送信メールアドレスの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	mtb_option.option_valueであること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-024	IT-26	登録内容	P1	登録時の登録内容確認	フォームに存在するキーが findAll() の結果に無いを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でフォームに存在するキーが findAll() の結果に無いの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-024	IT-26	登録内容	P1	登録時の登録内容確認	フォームに存在するキーが findAll() の結果に無いを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-025	IT-26	登録内容	P1	登録時の登録内容確認	送信値と現行値が文字列として同一を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-026	IT-26	登録内容	P1	登録時の登録内容確認	複数管理者が短時間に順に保存を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-025	IT-26	登録内容	P1	登録時の登録内容確認	送信値と現行値が文字列として同一を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-027	IT-26	登録内容	P1	登録時の登録内容確認	update_date 列を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-026	IT-26	登録内容	P1	登録時の登録内容確認	複数管理者が短時間に順に保存を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-028	IT-26	登録内容	P1	登録時の登録内容確認	参照側との一致を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-027	IT-26	登録内容	P1	登録時の登録内容確認	update_date 列を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-029	IT-26	登録内容	P1	登録時の登録内容確認	文字列としての比較を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で文字列としての比較の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-028	IT-26	登録内容	P1	登録時の登録内容確認	参照側との一致を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で参照側との一致の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-030	IT-26	実行結果	P1	登録時の実行結果確認	成功時出力を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-029	IT-26	実行結果	P1	登録時の実行結果確認	文字列としての比較を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で文字列としての比較の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-031	IT-23	実行結果	P1	登録時の実行結果確認	失敗時出力を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-030	IT-23	実行結果	P1	登録時の実行結果確認	成功時出力を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一レスポンスでフィールドエラー表示であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	フラッシュ成功メッセージ（翻訳キー admin.register.complete）であること。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-031	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で失敗時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-032	IT-26	更新内容	P1	更新時の更新内容確認	副作用を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で副作用の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-033	IT-26	更新内容	P1	更新時の更新内容確認	mtb_optionを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でmtb_optionの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-034	IT-26	更新内容	P1	更新時の更新内容確認	mtb_optionを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でmtb_optionの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	日時であること。
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-035	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で登録/更新の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-036	IT-26	更新内容	P1	更新時の更新内容確認	CSRFを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でCSRFの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-036	IT-26	更新内容	P1	更新時の更新内容確認	CSRFを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-037	IT-26	更新内容	P1	更新時の更新内容確認	管理画面に入れた管理者を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-038	IT-26	更新内容	P1	更新時の更新内容確認	保存成功を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-037	IT-26	更新内容	P1	更新時の更新内容確認	管理画面に入れた管理者を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-039	IT-26	更新内容	P1	更新時の更新内容確認	保存失敗を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-038	IT-26	更新内容	P1	更新時の更新内容確認	保存成功を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-040	IT-26	更新内容	P1	更新時の更新内容確認	保存成功→リダイレクトを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-039	IT-26	更新内容	P1	更新時の更新内容確認	保存失敗を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-041	IT-26	更新内容	P1	更新時の更新内容確認	追加システム設定を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で追加システム設定の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-040	IT-26	更新内容	P1	更新時の更新内容確認	保存成功→リダイレクトを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で保存成功→リダイレクトの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-042	IT-05	実行結果	P1	更新時の実行結果確認	利用者を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で利用者の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-041	IT-05	実行結果	P1	更新時の実行結果確認	追加システム設定を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で追加システム設定の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-043	IT-05	実行結果	P1	更新時の実行結果確認	管理画面ナビから当機能を開くを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で管理画面ナビから当機能を開くの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-042	IT-05	実行結果	P1	更新時の実行結果確認	利用者を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で利用者の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	mtb_option を全件読み込み、論理キーから連想配列を組み立てたうえでフォームに現在値が表示されるであること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-044	IT-02	初期行数	P2	初期行数の結合確認	値を入力して「設定」を押す（検証成功）を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で値を入力して「設定」を押す（検証成功）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本機能では管理者アカウント（dtb_member 由来のログイン主体）を指すであること。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-043	IT-02	初期行数	P2	初期行数の結合確認	管理画面ナビから当機能を開くを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で管理画面ナビから当機能を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 管理画面ナビから当機能を開く
+3. 画面表示と後続状態を確認する"	mtb_option を全件読み込み、論理キーから連想配列を組み立てたうえでフォームに現在値が表示されるであること。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-044	IT-02	表示順	P2	表示順の結合確認	値を入力して「設定」を押す（検証成功）を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で値を入力して「設定」を押す（検証成功）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 値を入力して「設定」を押す（検証成功）
 3. 画面表示と後続状態を確認する"	変更のあったキーについて option_value と最終更新者相当の member_id が更新され、成功メッセージの後に同一画面を GET で開き直す遷移となること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-045	IT-02	表示順	P2	表示順の結合確認	値を入力して「設定」を押す（検証失敗）を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で値を入力して「設定」を押す（検証失敗）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 値を入力して「設定」を押す（検証失敗）
-3. 画面表示と後続状態を確認する"	保存は行わず、同一テンプレートを再描画してフィールドエラーを表示すること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-046	IT-25	更新抑止	P1	更新抑止の結合確認	CSRF 検証に失敗するを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でCSRF 検証に失敗するの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-045	IT-25	更新抑止	P1	更新抑止の結合確認	値を入力して「設定」を押す（検証失敗）を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で値を入力して「設定」を押す（検証失敗）の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	保存は行わず、同一テンプレートを再描画してフィールドエラーを表示すること。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-046	IT-12	内部情報	P1	内部情報の結合確認	CSRF 検証に失敗するを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でCSRF 検証に失敗するの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	Symfony のアクセス拒否（HTTP 403）が投げられる実装である（表示文言やHTTPコードはフレームワークとエラーハンドラを正とする）であること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-047	IT-12	内部情報	P1	内部情報の結合確認	表示要素を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で表示要素の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	{% block title %} は「追加システム設定」であること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-048	IT-15	機密情報	P1	機密情報の結合確認	CSS・レイアウトを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でCSS・レイアウトの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	Form/config_layout.html.twig が bootstrap_3_horizontal_layout を継承すること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-049	IT-28	実行結果	P2	実行結果の結合確認	送信を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-047	IT-28	実行結果	P2	実行結果の結合確認	モーダル・ポップアップを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. モーダル・ポップアップを確認する
+3. 画面表示と後続状態を確認する"	本機能ではモーダルや確認ダイアログは用いないこと。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-048	IT-28	ヘッダ	P2	ヘッダの結合確認	送信を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で送信の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 送信
 3. 画面表示と後続状態を確認する"	"method=""post""、アクションは GET で画面を開くのと同じパスを指す生成URL（メソッドのみ POST で別ハンドラにつながる構成）であること。"
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-050	IT-28	実行結果	P2	実行結果の結合確認	買取査定申込み完了画面の自動遷移秒数を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で買取査定申込み完了画面の自動遷移秒数の確認に必要な条件を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-049	IT-28	件名	P2	件名の結合確認	買取査定申込み完了画面の自動遷移秒数を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. 買取査定申込み完了画面の自動遷移秒数を確認する
-3. 画面表示と後続状態を確認する"	mtb_option.option_valueであること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-051	IT-28	件名	P2	件名の結合確認	スマレジ通信エラー送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. スマレジ通信エラー送信メールアドレス
 3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-052	IT-28	件名	P2	件名の結合確認	入荷通知メールの許可を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 入荷通知メールの許可を確認する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-050	IT-28	件名	P2	件名の結合確認	スマレジへの送信URLを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. スマレジへの送信URL
 3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-053	IT-28	件名	P2	件名の結合確認	固定価格商品部門IDを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で固定価格商品部門IDの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 固定価格商品部門IDを確認する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-051	IT-28	件名	P2	件名の結合確認	スマレジ通信エラー送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でスマレジ通信エラー送信メールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. スマレジ通信エラー送信メールアドレス
 3. 画面表示と後続状態を確認する"	mtb_option.option_valueであること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-054	IT-28	本文	P2	本文の結合確認	買取部門集計送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 買取部門集計送信メールアドレス
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-052	IT-28	本文	P2	本文の結合確認	入荷通知メールの許可を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 入荷通知メールの許可を確認する
 3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-055	IT-28	本文	P2	本文の結合確認	必須項目が空欄である会員送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 必須項目が空欄である会員送信メールアドレス
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-053	IT-28	本文	P2	本文の結合確認	固定価格商品部門IDを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 固定価格商品部門IDを確認する
 3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-056	IT-28	本文	P2	本文の結合確認	ポイント利用が反映されない決済の送信先メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でポイント利用が反映されない決済の送信先メールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ポイント利用が反映されない決済の送信先メールアドレス
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-054	IT-28	本文	P2	本文の結合確認	買取部門集計送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で買取部門集計送信メールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 買取部門集計送信メールアドレス
 3. 画面表示と後続状態を確認する"	mtb_option.option_valueであること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-057	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	支店システム連携エラー通知先メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で支店システム連携エラー通知先メールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-055	IT-28	本文	P2	本文の結合確認	必須項目が空欄である会員送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で必須項目が空欄である会員送信メールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 必須項目が空欄である会員送信メールアドレス
+3. 画面表示と後続状態を確認する"	mtb_option.option_valueであること。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-056	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ポイント差分発生通知メールを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でポイント差分発生通知メールの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ポイント差分発生通知メールを確認する
+3. 画面表示と後続状態を確認する"	mtb_option.option_valueであること。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-057	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	支店システム連携エラー通知先メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で支店システム連携エラー通知先メールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 支店システム連携エラー通知先メールアドレスを確認する
 3. 画面表示と後続状態を確認する"	mtb_option.option_valueであること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	購入処理エラー通知先メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で購入処理エラー通知先メールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-058	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	購入処理エラー通知先メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で購入処理エラー通知先メールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 購入処理エラー通知先メールアドレスを確認する
 3. 画面表示と後続状態を確認する"	mtb_option.option_valueであること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-059	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	イベント決済確認エラー通知メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でイベント決済確認エラー通知メールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-059	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	イベント決済確認エラー通知メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でイベント決済確認エラー通知メールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. イベント決済確認エラー通知メールアドレスを確認する
 3. 画面表示と後続状態を確認する"	mtb_option.option_valueであること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	身分証の有効期限切れ会員送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で身分証の有効期限切れ会員送信メールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-060	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	身分証の有効期限切れ会員送信メールアドレスを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で身分証の有効期限切れ会員送信メールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 身分証の有効期限切れ会員送信メールアドレス
 3. 画面表示と後続状態を確認する"	mtb_option.option_valueであること。
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-061	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	フォームに存在するキーが findAll() の結果に無いを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でフォームに存在するキーが findAll() の結果に無いの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. フォームに存在するキーが findAll() の結果に無いを確認する
 3. 画面表示と後続状態を確認する"	保存ループの対象外となり、INSERT は行わないこと。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	送信値と現行値が文字列として同一を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で送信値と現行値が文字列として同一の確認に必要な条件を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-062	IT-25	一覧	P2	一覧の結合確認	送信値と現行値が文字列として同一を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で送信値と現行値が文字列として同一の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 送信値と現行値が文字列として同一
 3. 画面表示と後続状態を確認する"	persist しない（member_id も更新しない）であること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	複数管理者が短時間に順に保存を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で複数管理者が短時間に順に保存の確認に必要な条件を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-063	IT-12	画面表示データ	P2	画面表示データの結合確認	複数管理者が短時間に順に保存を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で複数管理者が短時間に順に保存の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 複数管理者が短時間に順に保存
-3. 画面表示と後続状態を確認する"	楽観ロックは無いであること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-064	IT-25	一覧	P2	一覧の結合確認	update_date 列を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でupdate_date 列の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-064	IT-25	画面表示データ	P2	画面表示データの結合確認	update_date 列を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でupdate_date 列の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. update_date 列を確認する
 3. 画面表示と後続状態を確認する"	当コントローラは option_value と member_id のみ更新対象として明示していること。
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-065	IT-12	画面表示データ	P2	画面表示データの結合確認	参照側との一致を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で参照側との一致の確認に必要な条件を指定する	"1. 対象画面を表示する
@@ -236,36 +236,21 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-066	IT-25	画面表示データ	P2	画面表示データの結合確認	文字列としての比較を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で文字列としての比較の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 文字列としての比較を確認する
 3. 画面表示と後続状態を確認する"	整数フィールドでも保存判定は文字列キャスト後であるため、0 と 00 のような差が入力経路で生じた場合のみ更新扱いになりうるであること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-067	IT-12	画面表示データ	P2	画面表示データの結合確認	成功時出力を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-067	IT-25	フォーム送信	P1	フォーム送信の結合確認	成功時出力を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-068	IT-25	画面表示データ	P2	画面表示データの結合確認	失敗時出力を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	フラッシュ成功メッセージ（翻訳キー admin.register.complete）であること。
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-068	IT-16	ファイル選択	P2	ファイル選択の結合確認	失敗時出力を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	同一レスポンスでフィールドエラー表示であること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-069	IT-25	フォーム送信	P1	フォーム送信の結合確認	副作用を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-069	IT-12	非同期更新	P1	非同期更新の結合確認	副作用を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	変更が検出された mtb_option 行の option_value と member_id を更新し flush すること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-070	IT-16	ファイル選択	P2	ファイル選択の結合確認	mtb_optionを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でmtb_optionの確認に必要な条件を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-070	IT-12	エラー継続	P3	エラー継続の結合確認	mtb_optionを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でmtb_optionの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. mtb_optionを確認する
 3. 画面表示と後続状態を確認する"	最終更新した管理者の識別子（dtb_member.id 参照）であること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-071	IT-12	非同期更新	P1	非同期更新の結合確認	mtb_optionを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でmtb_optionの確認に必要な条件を指定する	"1. 対象画面を表示する
+追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-071	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	mtb_optionを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でmtb_optionの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. mtb_optionを確認する
 3. 画面表示と後続状態を確認する"	日時であること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-072	IT-12	エラー継続	P3	エラー継続の結合確認	登録/更新を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-073	IT-25	件数上限	P2	件数上限の結合確認	CSRFを試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）でCSRFの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. CSRFを確認する
-3. 画面表示と後続状態を確認する"	フォーム名をトークン ID に用い、POST パラメータからネストされたトークンを検証すること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-074	IT-25	欠損値	P2	欠損値の結合確認	管理画面に入れた管理者を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で管理画面に入れた管理者の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 管理画面に入れた管理者を確認する
-3. 画面表示と後続状態を確認する"	当パスが権限拒否や IP 制限に該当しない限り、表示・保存が可能であることを前提とする（プラグイン側に個別 Voter は無く、管理画面配下の共通セキュリティに依拠する実装である）であること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-075	IT-25	データなし	P2	データなしの結合確認	保存成功を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で保存成功の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 保存成功
-3. 画面表示と後続状態を確認する"	同一機能の初期表示（GET）へ HTTP リダイレクトすること。
-追加システム設定（HareruyaEcプラグイン）	IT-M10-16-ADMIN-BASE-SETTING-SETTING-SHOP-ADDITIONAL-SYSTEM-076	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	保存失敗を試験できる状態である	追加システム設定（HareruyaEcプラグイン）（m10_16_admin_base_setting_setting_shop_additional_system）で保存失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 保存失敗
-3. 画面表示と後続状態を確認する"	同一テンプレートをその場で再描画すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -367,4 +352,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.109, No.110, No.111, No.215, No.228, No.261。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 11件 — No.109, No.110, No.111, No.215, No.218, No.329, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

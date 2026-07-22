@@ -10,16 +10,17 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
 | IT-05 | 実行結果 |
-| IT-02 | 公開コンテンツ、初期行数 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-06 | ロールバック |
+| IT-11 | 実行結果 |
 | IT-28 | ヘッダ、件名、実行結果、本文 |
 | IT-16 | ファイル選択 |
 
@@ -63,210 +64,201 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	表示要素を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	「基本情報編集」見出し直下のブロック内で、店舗営業時間の直下にメール4欄があること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-009	IT-25	URL	P2	URLの操作結果確認	入力項目を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	入力項目を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 入力項目
-3. 画面表示と後続状態を確認する"	いずれも単一行のメール入力型であること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	送信元メールアドレス（From）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 送信元メールアドレス（From）
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	送信エラー受付メールアドレス（ReturnPath）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 送信エラー受付メールアドレス（ReturnPath）
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	4項目のうち1つだけ空を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で4項目のうち1つだけ空の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	送信エラー受付メールアドレス（ReturnPath）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で送信エラー受付メールアドレス（ReturnPath）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 送信エラー受付メールアドレス（ReturnPath）
+3. 画面表示と後続状態を確認する"	dtb_base_info.email04であること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	4項目のうち1つだけ空を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 4項目のうち1つだけ空を確認する
-3. 画面表示と後続状態を確認する"	NotBlankにより当該項目がエラーであること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	メール送信処理が同一PHPリクエスト内で続くコードパスがあるを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. メール送信処理が同一PHPリクエスト内で続くコードパスがある
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	メール送信時の読み込みを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	メール送信時の読み込みを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. メール送信時の読み込み
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	結果キャッシュを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	結果キャッシュを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 結果キャッシュを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	成功時出力を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	失敗時出力を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	成功時出力を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	仮会員登録確認（購入会員向け）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 仮会員登録確認（購入会員向け）を確認する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	失敗時出力を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-019	IT-22	部分入力	P2	部分入力の入力検証	会員登録完了を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で会員登録完了の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 会員登録完了を確認する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-018	IT-22	部分入力	P2	部分入力の入力検証	仮会員登録確認（購入会員向け）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で仮会員登録確認（購入会員向け）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 仮会員登録確認（購入会員向け）を確認する
 3. 画面表示と後続状態を確認する"	email04であること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-019	IT-26	登録内容	P1	登録時の登録内容確認	会員登録完了を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で会員登録完了の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-020	IT-26	登録内容	P1	登録時の登録内容確認	お問い合わせ受付（問い合わせ送信者向け）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でお問い合わせ受付（問い合わせ送信者向け）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-021	IT-26	登録内容	P1	登録時の登録内容確認	注文メール（購入者向け、テンプレートID固定取得）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で注文メール（購入者向け、テンプレートID固定取得）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-022	IT-26	登録内容	P1	登録時の登録内容確認	管理画面からの仮会員確認メール再送を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で管理画面からの仮会員確認メール再送の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	email04であること。
 店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-023	IT-26	登録内容	P1	登録時の登録内容確認	管理画面からの受注通知送信を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で管理画面からの受注通知送信の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	email04であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-024	IT-26	登録内容	P1	登録時の登録内容確認	CSRFを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でCSRFの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-024	IT-26	登録内容	P1	登録時の登録内容確認	CSRFを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-025	IT-26	登録内容	P1	登録時の登録内容確認	フォーム全体が有効かつメール項目も有効で保存完了を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-026	IT-26	登録内容	P1	登録時の登録内容確認	保存成功を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-025	IT-26	登録内容	P1	登録時の登録内容確認	フォーム全体が有効かつメール項目も有効で保存完了を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-027	IT-26	登録内容	P1	登録時の登録内容確認	検証失敗を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-026	IT-26	登録内容	P1	登録時の登録内容確認	保存成功を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-028	IT-26	登録内容	P1	登録時の登録内容確認	DB書き込みを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-027	IT-26	登録内容	P1	登録時の登録内容確認	検証失敗を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-029	IT-26	登録内容	P1	登録時の登録内容確認	結果キャッシュを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で結果キャッシュの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-028	IT-26	登録内容	P1	登録時の登録内容確認	DB書き込みを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でDB書き込みの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-030	IT-26	実行結果	P1	登録時の実行結果確認	メール送信ログを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でメール送信ログの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-029	IT-26	実行結果	P1	登録時の実行結果確認	結果キャッシュを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で結果キャッシュの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-031	IT-23	実行結果	P1	登録時の実行結果確認	dtb_base_infoを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でdtb_base_infoの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-030	IT-23	実行結果	P1	登録時の実行結果確認	メール送信ログを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でメール送信ログの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	送信元メールアドレス（From）であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	メール送信そのものは本画面の保存では起きず、送信処理側でログ出力がある（送信詳細は MailService 呼び出し元を正とする）であること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-031	IT-26	更新内容	P1	更新時の更新内容確認	dtb_base_infoを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でdtb_base_infoの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-032	IT-26	更新内容	P1	更新時の更新内容確認	dtb_base_infoを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でdtb_base_infoの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-033	IT-26	更新内容	P1	更新時の更新内容確認	dtb_base_infoを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でdtb_base_infoの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	送信エラー受付メールアドレスであること。
 店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-034	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で登録/更新の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-035	IT-26	更新内容	P1	更新時の更新内容確認	トランザクション境界を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でトランザクション境界の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-035	IT-26	更新内容	P1	更新時の更新内容確認	トランザクション境界を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-036	IT-26	更新内容	P1	更新時の更新内容確認	ロックを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-037	IT-26	更新内容	P1	更新時の更新内容確認	例外時を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-036	IT-26	更新内容	P1	更新時の更新内容確認	ロックを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-038	IT-26	更新内容	P1	更新時の更新内容確認	店舗基本情報を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-037	IT-26	更新内容	P1	更新時の更新内容確認	例外時を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-039	IT-26	更新内容	P1	更新時の更新内容確認	メール項目4種を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-038	IT-26	更新内容	P1	更新時の更新内容確認	店舗基本情報を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-040	IT-26	更新内容	P1	更新時の更新内容確認	厳密メール検証を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で厳密メール検証の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-039	IT-26	更新内容	P1	更新時の更新内容確認	メール項目4種を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でメール項目4種の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-041	IT-05	実行結果	P1	更新時の実行結果確認	店舗基本設定画面を開くを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で店舗基本設定画面を開くの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-040	IT-05	実行結果	P1	更新時の実行結果確認	厳密メール検証を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で厳密メール検証の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-042	IT-05	実行結果	P1	更新時の実行結果確認	4項目を含むフォーム全体を送信し検証に成功するを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で4項目を含むフォーム全体を送信し検証に成功するの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-041	IT-05	実行結果	P1	更新時の実行結果確認	店舗基本設定画面を開くを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で店舗基本設定画面を開くの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	メール4列を含む店舗基本情報が永続化され、成功メッセージののち同一画面にリダイレクトされ、再表示で新値が読み込まれるであること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-043	IT-02	初期行数	P2	初期行数の結合確認	メールのいずれかを空にして送信するを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でメールのいずれかを空にして送信するの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	「基本情報編集」ボックス内に、上から順に送信元／問い合わせ受付／返信受付／送信エラー受付の各メール入力欄が表示されるであること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-042	IT-02	初期行数	P2	初期行数の結合確認	4項目を含むフォーム全体を送信し検証に成功するを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で4項目を含むフォーム全体を送信し検証に成功するの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 4項目を含むフォーム全体を送信し検証に成功する
+3. 画面表示と後続状態を確認する"	メール4列を含む店舗基本情報が永続化され、成功メッセージののち同一画面にリダイレクトされ、再表示で新値が読み込まれるであること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-043	IT-02	表示順	P2	表示順の結合確認	メールのいずれかを空にして送信するを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でメールのいずれかを空にして送信するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メールのいずれかを空にして送信する
 3. 画面表示と後続状態を確認する"	サーバ検証でエラーとなり、同一画面に留まるであること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-044	IT-25	更新抑止	P1	更新抑止の結合確認	表示要素を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で表示要素の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-044	IT-25	更新抑止	P1	更新抑止の結合確認	メール形式でない文字列を入力して送信するを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でメール形式でない文字列を入力して送信するの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	厳密メール検証でエラーとなり、同一画面に留まるであること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-045	IT-12	内部情報	P1	内部情報の結合確認	表示要素を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で表示要素の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	「基本情報編集」見出し直下のブロック内で、店舗営業時間の直下にメール4欄があること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-045	IT-12	内部情報	P1	内部情報の結合確認	入力項目を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で入力項目の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	いずれも単一行のメール入力型であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-046	IT-15	機密情報	P1	機密情報の結合確認	送信元メールアドレス（From）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で送信元メールアドレス（From）の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	dtb_base_info.email01であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-047	IT-06	ロールバック	P3	ロールバックの結合確認	送信エラー受付メールアドレス（ReturnPath）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で送信エラー受付メールアドレス（ReturnPath）の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-046	IT-06	ロールバック	P3	ロールバックの結合確認	入力項目を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で入力項目の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_base_info.email04であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-048	IT-28	実行結果	P2	実行結果の結合確認	メール送信処理が同一PHPリクエスト内で続くコードパスがあるを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でメール送信処理が同一PHPリクエスト内で続くコードパスがあるの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	いずれも単一行のメール入力型であること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-047	IT-11	実行結果	P2	実行結果の結合確認	送信元メールアドレス（From）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で送信元メールアドレス（From）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 送信元メールアドレス（From）
+3. 画面表示と後続状態を確認する"	dtb_base_info.email01であること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-048	IT-28	実行結果	P2	実行結果の結合確認	4項目のうち1つだけ空を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で4項目のうち1つだけ空の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 4項目のうち1つだけ空を確認する
+3. 画面表示と後続状態を確認する"	NotBlankにより当該項目がエラーであること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-049	IT-28	ヘッダ	P2	ヘッダの結合確認	メール送信処理が同一PHPリクエスト内で続くコードパスがあるを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でメール送信処理が同一PHPリクエスト内で続くコードパスがあるの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メール送信処理が同一PHPリクエスト内で続くコードパスがある
 3. 画面表示と後続状態を確認する"	アプリケーションコンテナが共有する MailService は生成時に取得した店舗基本情報参照を保持すること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-049	IT-28	実行結果	P2	実行結果の結合確認	メール送信時の読み込みを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でメール送信時の読み込みの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-050	IT-28	件名	P2	件名の結合確認	メール送信時の読み込みを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. メール送信時の読み込み
-3. 画面表示と後続状態を確認する"	MailService のコンストラクタでの取得値を参照すること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-050	IT-28	ヘッダ	P2	ヘッダの結合確認	結果キャッシュを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で結果キャッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 結果キャッシュを確認する
-3. 画面表示と後続状態を確認する"	BaseInfo 取得が結果キャッシュを使うこと。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-051	IT-28	件名	P2	件名の結合確認	成功時出力を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-052	IT-28	件名	P2	件名の結合確認	失敗時出力を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 失敗時出力を確認する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-051	IT-28	件名	P2	件名の結合確認	結果キャッシュを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 結果キャッシュを確認する
 3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-053	IT-28	件名	P2	件名の結合確認	仮会員登録確認（購入会員向け）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で仮会員登録確認（購入会員向け）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 仮会員登録確認（購入会員向け）を確認する
-3. 画面表示と後続状態を確認する"	email04であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-054	IT-28	本文	P2	本文の結合確認	会員登録完了を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 会員登録完了を確認する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-052	IT-28	件名	P2	件名の結合確認	成功時出力を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	管理画面向け保存完了フラッシュであること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-053	IT-28	本文	P2	本文の結合確認	失敗時出力を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-055	IT-28	本文	P2	本文の結合確認	お問い合わせ受付（問い合わせ送信者向け）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. お問い合わせ受付（問い合わせ送信者向け）
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-054	IT-28	本文	P2	本文の結合確認	仮会員登録確認（購入会員向け）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 仮会員登録確認（購入会員向け）を確認する
 3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-056	IT-28	本文	P2	本文の結合確認	注文メール（購入者向け、テンプレートID固定取得）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で注文メール（購入者向け、テンプレートID固定取得）の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-055	IT-28	本文	P2	本文の結合確認	会員登録完了を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で会員登録完了の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 会員登録完了を確認する
+3. 画面表示と後続状態を確認する"	email04であること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-056	IT-28	本文	P2	本文の結合確認	お問い合わせ受付（問い合わせ送信者向け）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でお問い合わせ受付（問い合わせ送信者向け）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. お問い合わせ受付（問い合わせ送信者向け）
+3. 画面表示と後続状態を確認する"	email04であること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-057	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	注文メール（購入者向け、テンプレートID固定取得）を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で注文メール（購入者向け、テンプレートID固定取得）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 注文メール（購入者向け、テンプレートID固定取得）を確認する
 3. 画面表示と後続状態を確認する"	email04であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-057	IT-28	本文	P2	本文の結合確認	管理画面からの仮会員確認メール再送を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で管理画面からの仮会員確認メール再送の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	管理画面からの仮会員確認メール再送を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で管理画面からの仮会員確認メール再送の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 管理画面からの仮会員確認メール再送を確認する
 3. 画面表示と後続状態を確認する"	email04であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	管理画面からの受注通知送信を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で管理画面からの受注通知送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-059	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	管理画面からの受注通知送信を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で管理画面からの受注通知送信の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 管理画面からの受注通知送信
 3. 画面表示と後続状態を確認する"	email04であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-059	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSRFを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でCSRFの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	CSRFを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でCSRFの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSRFを確認する
 3. 画面表示と後続状態を確認する"	フレームワーク標準どおりフォーム送信に必須であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	フォーム全体が有効かつメール項目も有効で保存完了を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でフォーム全体が有効かつメール項目も有効で保存完了の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-061	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	フォーム全体が有効かつメール項目も有効で保存完了を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でフォーム全体が有効かつメール項目も有効で保存完了の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. フォーム全体が有効かつメール項目も有効で保存完了
 3. 画面表示と後続状態を確認する"	店舗基本設定画面のGET（同一画面）であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-061	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	保存成功を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で保存成功の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	保存成功を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で保存成功の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 保存成功
 3. 画面表示と後続状態を確認する"	GETで店舗基本情報を再取得し、フォームとTwigグローバルは保存後の値で初期化されるであること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検証失敗を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検証失敗を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検証失敗を確認する
 3. 画面表示と後続状態を確認する"	同一レスポンスでテンプレートを再描画であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	DB書き込みを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でDB書き込みの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-064	IT-25	一覧	P2	一覧の結合確認	DB書き込みを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でDB書き込みの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. DB書き込みを確認する
 3. 画面表示と後続状態を確認する"	成功時、店舗基本情報行が更新されるであること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-064	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	結果キャッシュを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で結果キャッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-065	IT-12	画面表示データ	P2	画面表示データの結合確認	結果キャッシュを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で結果キャッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 結果キャッシュを確認する
-3. 画面表示と後続状態を確認する"	BaseInfo の更新後、ClearCacheEventSubscriber の条件が満たされればDoctrine結果キャッシュが全削除されるであること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-065	IT-25	一覧	P2	一覧の結合確認	メール送信ログを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でメール送信ログの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-066	IT-25	画面表示データ	P2	画面表示データの結合確認	メール送信ログを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でメール送信ログの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メール送信ログ
 3. 画面表示と後続状態を確認する"	メール送信そのものは本画面の保存では起きず、送信処理側でログ出力がある（送信詳細は MailService 呼び出し元を正とする）であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-066	IT-12	画面表示データ	P2	画面表示データの結合確認	dtb_base_infoを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でdtb_base_infoの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-067	IT-12	画面表示データ	P2	画面表示データの結合確認	dtb_base_infoを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でdtb_base_infoの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_base_infoを確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-067	IT-25	画面表示データ	P2	画面表示データの結合確認	dtb_base_infoを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でdtb_base_infoの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. dtb_base_infoを確認する
-3. 画面表示と後続状態を確認する"	問い合わせ受付メールアドレスであること。
 店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-068	IT-25	画面表示データ	P2	画面表示データの結合確認	dtb_base_infoを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でdtb_base_infoの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_base_infoを確認する
+3. 画面表示と後続状態を確認する"	問い合わせ受付メールアドレスであること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-069	IT-25	フォーム送信	P1	フォーム送信の結合確認	dtb_base_infoを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でdtb_base_infoの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_base_infoを確認する
+3. 画面表示と後続状態を確認する"	返信受付メールアドレスであること。
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-070	IT-16	ファイル選択	P2	ファイル選択の結合確認	dtb_base_infoを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でdtb_base_infoの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. dtb_base_infoを確認する
 3. 画面表示と後続状態を確認する"	送信エラー受付メールアドレスであること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-069	IT-25	フォーム送信	P1	フォーム送信の結合確認	登録/更新を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-071	IT-12	非同期更新	P1	非同期更新の結合確認	登録/更新を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-070	IT-16	ファイル選択	P2	ファイル選択の結合確認	トランザクション境界を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でトランザクション境界の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-072	IT-12	エラー継続	P3	エラー継続の結合確認	トランザクション境界を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でトランザクション境界の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. トランザクション境界を確認する
 3. 画面表示と後続状態を確認する"	明示的なトランザクション境界が実装にある場合は処理フローの保存処理を正とすること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-071	IT-12	非同期更新	P1	非同期更新の結合確認	ロックを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でロックの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-073	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	ロックを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でロックの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ロックを確認する
 3. 画面表示と後続状態を確認する"	行ロック・悲観ロック・楽観ロック・ロックファイルを使用しないこと。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-072	IT-12	エラー継続	P3	エラー継続の結合確認	例外時を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で例外時の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 例外時を確認する
-3. 画面表示と後続状態を確認する"	検証エラーもしくは保存前の例外では対象更新を確定しないこと。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-073	IT-25	件数上限	P2	件数上限の結合確認	店舗基本情報を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で店舗基本情報の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 店舗基本情報を確認する
-3. 画面表示と後続状態を確認する"	ショップ全体設定の複合であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-074	IT-25	欠損値	P2	欠損値の結合確認	メール項目4種を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）でメール項目4種の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. メール項目4種を確認する
-3. 画面表示と後続状態を確認する"	フォームおよびDB列の email01〜email04であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-075	IT-25	データなし	P2	データなしの結合確認	厳密メール検証を試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で厳密メール検証の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 厳密メール検証を確認する
-3. 画面表示と後続状態を確認する"	Symfonyバリデータ Email の strict オプションが有効な検証であること。
-店舗基本設定のメールアドレス設定（pf-eccube3）	IT-M10-09-ADMIN-BASE-SETTING-SETTING-SHOP-MAIL-076	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	店舗基本設定画面を開くを試験できる状態である	店舗基本設定のメールアドレス設定（pf-eccube3）（m10_09_admin_base_setting_setting_shop_mail）で店舗基本設定画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 店舗基本設定画面を開く
-3. 画面表示と後続状態を確認する"	「基本情報編集」ボックス内に、上から順に送信元／問い合わせ受付／返信受付／送信エラー受付の各メール入力欄が表示されるであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -368,4 +360,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.78, No.109, No.110, No.215, No.358, No.421。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 9件 — No.78, No.109, No.110, No.218, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

@@ -10,7 +10,7 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
 | IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
@@ -206,19 +206,19 @@ F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-055	I
 F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-056	IT-12	内部情報	P1	内部情報の結合確認	会員 IDとパスワードの同一判定を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で会員 IDとパスワードの同一判定の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	会員IDとパスワードが同一の場合は更新を進めず、編集フォームを再描画すること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-057	IT-15	機密情報	P1	機密情報の結合確認	国と都道府県の整合を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で国と都道府県の整合の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	日本と海外の組み合わせ不整合を送信後の検証で拒否すること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-058	IT-06	ロールバック	P3	ロールバックの結合確認	本人確認ステータスの未確認化を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で本人確認ステータスの未確認化の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-057	IT-06	ロールバック	P3	ロールバックの結合確認	国と都道府県の整合を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で国と都道府県の整合の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	住所系（国・郵便番号・都道府県・住所）の変更時は確認済み・簡易書留確認済みから未確認へ戻すであること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-059	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	お名前（姓・名）を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でお名前（姓・名）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	日本と海外の組み合わせ不整合を送信後の検証で拒否すること。
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	本人確認ステータスの未確認化を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で本人確認ステータスの未確認化の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 本人確認ステータスの未確認化を確認する
+3. 画面表示と後続状態を確認する"	住所系（国・郵便番号・都道府県・住所）の変更時は確認済み・簡易書留確認済みから未確認へ戻すであること。
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-059	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	お名前（姓・名）を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でお名前（姓・名）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. お名前（姓・名）を確認する
 3. 画面表示と後続状態を確認する"	dtb_customer.name01／name02であること。
 F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	フリガナ（姓・名）を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でフリガナ（姓・名）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. フリガナ（姓・名）を確認する
 3. 画面表示と後続状態を確認する"	dtb_customer.kana01／kana02であること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-061	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	メールアドレスを試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でメールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-061	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	メールアドレスを試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でメールアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メールアドレスを確認する
 3. 画面表示と後続状態を確認する"	dtb_customer.emailであること。
 F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	パスワードを試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でパスワードの確認に必要な条件を指定する	"1. 対象画面を表示する
@@ -227,48 +227,45 @@ F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-062	I
 F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	郵便番号を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で郵便番号の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 郵便番号を確認する
 3. 画面表示と後続状態を確認する"	dtb_customer.postal_code（国内）／abroad_postal_code（国外、現行はzip01／zip02／zipcode）であること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-064	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	都道府県を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で都道府県の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-064	IT-25	一覧	P2	一覧の結合確認	都道府県を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で都道府県の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 都道府県を確認する
 3. 画面表示と後続状態を確認する"	dtb_customer.pref_idであること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-065	IT-25	一覧	P2	一覧の結合確認	住所（市区町村番地・建物名等）を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で住所（市区町村番地・建物名等）の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-065	IT-12	画面表示データ	P2	画面表示データの結合確認	住所（市区町村番地・建物名等）を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で住所（市区町村番地・建物名等）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 住所（市区町村番地・建物名等）を確認する
-3. 画面表示と後続状態を確認する"	dtb_customer.addr01／addr02／addr03（現行はaddr01／addr02）であること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-066	IT-12	画面表示データ	P2	画面表示データの結合確認	生年月日を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で生年月日の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-066	IT-25	画面表示データ	P2	画面表示データの結合確認	生年月日を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で生年月日の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 生年月日を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-067	IT-25	画面表示データ	P2	画面表示データの結合確認	MTG Companion登録名（姓・名）を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でMTG Companion登録名（姓・名）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	dtb_customer.birthであること。
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-067	IT-12	画面表示データ	P2	画面表示データの結合確認	MTG Companion登録名（姓・名）を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でMTG Companion登録名（姓・名）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. MTG Companion登録名（姓・名）を確認する
-3. 画面表示と後続状態を確認する"	dtb_playerの英字姓・名（first_name_en／last_name_en）であること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-068	IT-12	画面表示データ	P2	画面表示データの結合確認	パスワード欄が初期のマスク値のまま送信を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でパスワード欄が初期のマスク値のまま送信の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. パスワード欄が初期のマスク値のまま送信
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-069	IT-25	画面表示データ	P2	画面表示データの結合確認	会員IDとパスワードが同一を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で会員IDとパスワードが同一の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-068	IT-25	画面表示データ	P2	画面表示データの結合確認	パスワード欄が初期のマスク値のまま送信を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でパスワード欄が初期のマスク値のまま送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. パスワード欄が初期のマスク値のまま送信
+3. 画面表示と後続状態を確認する"	従前パスワードを維持し更新しないこと。
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-069	IT-25	フォーム送信	P1	フォーム送信の結合確認	会員IDとパスワードが同一を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で会員IDとパスワードが同一の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 会員IDとパスワードが同一を確認する
 3. 画面表示と後続状態を確認する"	更新を進めず編集フォームを再描画すること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-070	IT-25	フォーム送信	P1	フォーム送信の結合確認	国と都道府県の組み合わせが不整合を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で国と都道府県の組み合わせが不整合の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-070	IT-16	ファイル選択	P2	ファイル選択の結合確認	国と都道府県の組み合わせが不整合を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で国と都道府県の組み合わせが不整合の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 国と都道府県の組み合わせが不整合を確認する
 3. 画面表示と後続状態を確認する"	国にエラーを付し再描画すること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-071	IT-16	ファイル選択	P2	ファイル選択の結合確認	isChange・countryCode付き送信を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でisChange・countryCode付き送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-071	IT-12	非同期更新	P1	非同期更新の結合確認	isChange・countryCode付き送信を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でisChange・countryCode付き送信の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. isChange・countryCode付き送信
 3. 画面表示と後続状態を確認する"	更新せず入力を保持して再描画する（住所項目の切替）であること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-072	IT-12	非同期更新	P1	非同期更新の結合確認	スマレジ連携失敗を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でスマレジ連携失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-072	IT-12	エラー継続	P3	エラー継続の結合確認	スマレジ連携失敗を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でスマレジ連携失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. スマレジ連携失敗を確認する
 3. 画面表示と後続状態を確認する"	更新を確定せずエラーを表示して再描画すること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-073	IT-12	エラー継続	P3	エラー継続の結合確認	会員と選手情報を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で会員と選手情報の確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-073	IT-25	件数上限	P2	件数上限の結合確認	会員と選手情報を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で会員と選手情報の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 会員と選手情報を確認する
 3. 画面表示と後続状態を確認する"	更新時、会員情報と選手情報の更新を同一の確定処理で反映すること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-074	IT-25	件数上限	P2	件数上限の結合確認	スマレジを試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でスマレジの確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-074	IT-25	欠損値	P2	欠損値の結合確認	スマレジを試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でスマレジの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. スマレジを確認する
 3. 画面表示と後続状態を確認する"	スマレジ会員情報更新の成功を更新確定の前提とすること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-075	IT-25	欠損値	P2	欠損値の結合確認	支店システムを試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で支店システムの確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-075	IT-25	データなし	P2	データなしの結合確認	支店システムを試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で支店システムの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 支店システムを確認する
 3. 画面表示と後続状態を確認する"	更新確定後に通知すること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-076	IT-25	データなし	P2	データなしの結合確認	APIを試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
+F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-076	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	APIを試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. APIを確認する
 3. 画面表示と後続状態を確認する"	更新時にスマレジへ会員情報更新を連携すること。
-F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-077	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	成功時出力を試験できる状態である	F06-18（会員情報変更）（f06_18_front_member_mypage_customer_edit）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	会員情報の更新、会員情報変更完了画面への遷移であること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -370,4 +367,4 @@ F06-18（会員情報変更）	IT-F06-18-FRONT-MEMBER-MYPAGE-CUSTOMER-EDIT-077	I
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.329。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 4件 — No.109, No.110, No.330, No.510。上限緩和または個別ケース化で収載可能。

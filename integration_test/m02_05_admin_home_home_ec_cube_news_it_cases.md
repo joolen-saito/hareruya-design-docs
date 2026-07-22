@@ -10,13 +10,12 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | 対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-16 | ファイル選択 |
+| IT-02 | 初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 
 ## テストケースTSV
 
@@ -34,129 +33,111 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 
 ```tsv
 機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-001	IT-15	CSRF	P1	CSRFの結合確認	eccube_info_urlを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でeccube_info_urlの確認に必要な条件を指定する	"1. CSRFの認証・Cookie・セッション・試行制限など前提条件を設定する
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-001	IT-15	未認証	P1	未認証の結合確認	eccube_info_urlを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でeccube_info_urlの確認に必要な条件を指定する	"1. 未認証の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	アプリケーション設定に保持される文字列であること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-002	IT-15	未認証	P1	未認証の結合確認	ホーム画面を開くを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でホーム画面を開くの確認に必要な条件を指定する	"1. 未認証の認証・Cookie・セッション・試行制限など前提条件を設定する
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-002	IT-15	対象データ	P1	対象データの結合確認	ホーム画面を開くを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でホーム画面を開くの確認に必要な条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	EC-CUBEお知らせカードが表示され、情報iframe が設定された URL を読み込み開始すること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-003	IT-15	対象データ	P1	対象データの結合確認	情報iframe 内を閲覧・操作するを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で情報iframe 内を閲覧・操作するの確認に必要な条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-003	IT-20	出力抑止	P1	出力抑止の結合確認	情報iframe 内を閲覧・操作するを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で情報iframe 内を閲覧・操作するの確認に必要な条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	表示される内容・遷移・スクロールは、読み込み先ドキュメントおよびブラウザのふるまいに従うであること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-004	IT-20	出力抑止	P1	出力抑止の結合確認	非管理者・未認証を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で非管理者・未認証の確認に必要な条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-004	IT-20	識別子	P1	識別子の結合確認	非管理者・未認証を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で非管理者・未認証の確認に必要な条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ホーム画面自体に到達できないため、本カードも利用できないこと。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-005	IT-20	識別子	P1	識別子の結合確認	表示要素を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で表示要素の確認に必要な条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-005	IT-15	状態変化	P1	状態変化の結合確認	表示要素を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で表示要素の確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	カード見出しは翻訳キーに基づくタイトルであること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-006	IT-15	状態変化	P1	状態変化の結合確認	モーダル・ポップアップを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	本カード自体はモーダルやトーストを開かないこと。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	eccube_info_url が空文字になる運用設定を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でeccube_info_url が空文字になる運用設定の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. eccube_info_url が空文字になる運用設定を確認する
-3. 画面表示と後続状態を確認する"	iframe の src が空になり、ブラウザは空の文書を読み込むであること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	外部サイトが iframe 埋め込みを拒否するを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で外部サイトが iframe 埋め込みを拒否するの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 外部サイトが iframe 埋め込みを拒否するを確認する
-3. 画面表示と後続状態を確認する"	ブラウザがコンテンツを表示しない、もしくはエラー表示にすること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-009	IT-25	URL	P2	URLの操作結果確認	ネットワーク不通・タイムアウトを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でネットワーク不通・タイムアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ネットワーク不通・タイムアウトを確認する
-3. 画面表示と後続状態を確認する"	ブラウザのエラー表示に委ねるであること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	ホーム画面を開いたまま時間が経過するを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. ホーム画面を開いたまま時間が経過するを確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	参照時点を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 参照時点を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	APIを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. APIを確認する
-3. 画面表示と後続状態を確認する"	本カードはお知らせ取得のための専用 API を呼び出さないこと。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	失敗時を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 失敗時を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入力を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 入力
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	成功時出力を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	失敗時出力を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	副作用を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	利用者入力を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 利用者入力
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-019	IT-22	部分入力	P2	部分入力の入力検証	eccube_info_urlを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でeccube_info_urlの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. eccube_info_urlを確認する
-3. 画面表示と後続状態を確認する"	本カードの Twig は値の形式検証を行わず、そのまま src に出力すること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-020	IT-02	初期行数	P2	初期行数の結合確認	未認証を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で未認証の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 未認証を確認する
-3. 画面表示と後続状態を確認する"	利用不可であること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-021	IT-02	表示順	P2	表示順の結合確認	管理者として認証済みを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で管理者として認証済みの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 管理者として認証済みを確認する
-3. 画面表示と後続状態を確認する"	ホーム画面が表示される範囲で本カードを閲覧できること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-022	IT-25	更新抑止	P1	更新抑止の結合確認	細粒度の権限を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で細粒度の権限の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ホーム上のカード単位で表示を切り替える実装は本カードに無いであること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-023	IT-12	内部情報	P1	内部情報の結合確認	ホーム画面を開くを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でホーム画面を開くの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	同一画面内にお知らせカードと情報iframe を表示すること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-024	IT-15	機密情報	P1	機密情報の結合確認	情報iframe 内のリンクを押下を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で情報iframe 内のリンクを押下の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	iframe 内のナビゲーションもしくは新規タブ等、読み込み先 HTML の指定に従うであること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-025	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	情報iframe の読み込み失敗・拒否を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で情報iframe の読み込み失敗・拒否の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 情報iframe の読み込み失敗・拒否を確認する
-3. 画面表示と後続状態を確認する"	ブラウザの表示に委ねるであること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-026	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	TLS 証明書エラー等を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でTLS 証明書エラー等の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. TLS 証明書エラー等を確認する
-3. 画面表示と後続状態を確認する"	ブラウザのインタースティシャルに委ねるであること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-027	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	お知らせカードの表示のみを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でお知らせカードの表示のみの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. お知らせカードの表示のみを確認する
-3. 画面表示と後続状態を確認する"	本ブロック単体では業務監査ログを追加で書く処理は持たないこと。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-028	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ホーム画面表示時を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でホーム画面表示時の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ホーム画面表示時を確認する
-3. 画面表示と後続状態を確認する"	お知らせカードの表示のためだけにセッションを更新しないこと。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-029	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	eccube_info_urlを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でeccube_info_urlの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. eccube_info_urlを確認する
-3. 画面表示と後続状態を確認する"	アプリケーション設定に保持される文字列であること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-030	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ホーム画面を開くを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でホーム画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ホーム画面を開く
-3. 画面表示と後続状態を確認する"	EC-CUBEお知らせカードが表示され、情報iframe が設定された URL を読み込み開始すること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-031	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	情報iframe 内を閲覧・操作するを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で情報iframe 内を閲覧・操作するの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 情報iframe 内を閲覧・操作するを確認する
-3. 画面表示と後続状態を確認する"	表示される内容・遷移・スクロールは、読み込み先ドキュメントおよびブラウザのふるまいに従うであること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-032	IT-25	一覧	P2	一覧の結合確認	非管理者・未認証を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で非管理者・未認証の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 非管理者・未認証を確認する
-3. 画面表示と後続状態を確認する"	ホーム画面自体に到達できないため、本カードも利用できないこと。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-033	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-034	IT-25	画面表示データ	P2	画面表示データの結合確認	モーダル・ポップアップを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-006	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	モーダル・ポップアップを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	本カード自体はモーダルやトーストを開かないこと。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-035	IT-12	画面表示データ	P2	画面表示データの結合確認	eccube_info_url が空文字になる運用設定を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でeccube_info_url が空文字になる運用設定の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-007	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	eccube_info_url が空文字になる運用設定を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でeccube_info_url が空文字になる運用設定の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. eccube_info_url が空文字になる運用設定を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-036	IT-16	ファイル選択	P2	ファイル選択の結合確認	ホーム画面を開いたまま時間が経過するを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でホーム画面を開いたまま時間が経過するの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	iframe の src が空になり、ブラウザは空の文書を読み込むであること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-008	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	外部サイトが iframe 埋め込みを拒否するを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. 外部サイトが iframe 埋め込みを拒否するを確認する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	ネットワーク不通・タイムアウトを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. ネットワーク不通・タイムアウトを確認する
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-010	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	ホーム画面を開いたまま時間が経過するを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でホーム画面を開いたまま時間が経過するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ホーム画面を開いたまま時間が経過するを確認する
 3. 画面表示と後続状態を確認する"	情報iframe 内のコンテンツは自動では更新されないこと。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-037	IT-12	非同期更新	P1	非同期更新の結合確認	参照時点を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-011	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	参照時点を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 参照時点を確認する
-3. 画面表示と後続状態を確認する"	情報iframe の内容は、ブラウザが eccube_info_url を取得した時点の応答であること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-038	IT-25	件数上限	P2	件数上限の結合確認	失敗時を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で失敗時の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	APIを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. APIを確認する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	失敗時を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 失敗時を確認する
-3. 画面表示と後続状態を確認する"	アプリケーションが定義するお知らせ用 API の成否を本カード内で判定しないこと。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-039	IT-25	欠損値	P2	欠損値の結合確認	入力を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入力を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 入力
-3. 画面表示と後続状態を確認する"	ホーム画面の GET 表示要求であること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-040	IT-25	データなし	P2	データなしの結合確認	成功時出力を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-015	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	成功時出力を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	お知らせカードを含むホーム画面 HTMLであること。
-m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-041	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	失敗時出力を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	失敗時出力を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	サーバがホーム HTML を生成できない場合はフレームワークの例外処理に委ねるであること。
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-017	IT-22	部分入力	P2	部分入力の入力検証	副作用を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 副作用を確認する
+3. 画面表示と後続状態を確認する"	本カードのレンダリングのみでは、お知らせ内容に関するデータベース更新やキャッシュ書き込みは行わないこと。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-018	IT-02	初期行数	P2	初期行数の結合確認	利用者入力を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で利用者入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 利用者入力
+3. 画面表示と後続状態を確認する"	本カードはフォームを持たないこと。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-019	IT-02	表示順	P2	表示順の結合確認	eccube_info_urlを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でeccube_info_urlの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. eccube_info_urlを確認する
+3. 画面表示と後続状態を確認する"	本カードの Twig は値の形式検証を行わず、そのまま src に出力すること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-020	IT-25	更新抑止	P1	更新抑止の結合確認	未認証を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で未認証の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	利用不可であること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-021	IT-12	内部情報	P1	内部情報の結合確認	管理者として認証済みを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で管理者として認証済みの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ホーム画面が表示される範囲で本カードを閲覧できること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-022	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	細粒度の権限を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で細粒度の権限の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 細粒度の権限を確認する
+3. 画面表示と後続状態を確認する"	ホーム上のカード単位で表示を切り替える実装は本カードに無いであること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-023	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ホーム画面を開くを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でホーム画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ホーム画面を開く
+3. 画面表示と後続状態を確認する"	同一画面内にお知らせカードと情報iframe を表示すること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-024	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	情報iframe 内のリンクを押下を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で情報iframe 内のリンクを押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 情報iframe 内のリンクを押下
+3. 画面表示と後続状態を確認する"	iframe 内のナビゲーションもしくは新規タブ等、読み込み先 HTML の指定に従うであること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-025	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	情報iframe の読み込み失敗・拒否を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で情報iframe の読み込み失敗・拒否の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 情報iframe の読み込み失敗・拒否を確認する
+3. 画面表示と後続状態を確認する"	ブラウザの表示に委ねるであること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-026	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	TLS 証明書エラー等を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でTLS 証明書エラー等の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. TLS 証明書エラー等を確認する
+3. 画面表示と後続状態を確認する"	ブラウザのインタースティシャルに委ねるであること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-027	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	お知らせカードの表示のみを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でお知らせカードの表示のみの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. お知らせカードの表示のみを確認する
+3. 画面表示と後続状態を確認する"	本ブロック単体では業務監査ログを追加で書く処理は持たないこと。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-028	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ホーム画面表示時を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でホーム画面表示時の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ホーム画面表示時を確認する
+3. 画面表示と後続状態を確認する"	お知らせカードの表示のためだけにセッションを更新しないこと。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-029	IT-25	一覧	P2	一覧の結合確認	eccube_info_urlを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でeccube_info_urlの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. eccube_info_urlを確認する
+3. 画面表示と後続状態を確認する"	アプリケーション設定に保持される文字列であること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-030	IT-12	画面表示データ	P2	画面表示データの結合確認	ホーム画面を開くを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でホーム画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ホーム画面を開く
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-031	IT-25	画面表示データ	P2	画面表示データの結合確認	情報iframe 内を閲覧・操作するを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で情報iframe 内を閲覧・操作するの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 情報iframe 内を閲覧・操作するを確認する
+3. 画面表示と後続状態を確認する"	表示される内容・遷移・スクロールは、読み込み先ドキュメントおよびブラウザのふるまいに従うであること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-032	IT-12	画面表示データ	P2	画面表示データの結合確認	非管理者・未認証を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で非管理者・未認証の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 非管理者・未認証を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-033	IT-25	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	カード見出しは翻訳キーに基づくタイトルであること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-034	IT-12	非同期更新	P1	非同期更新の結合確認	外部サイトが iframe 埋め込みを拒否するを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）で外部サイトが iframe 埋め込みを拒否するの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 外部サイトが iframe 埋め込みを拒否するを確認する
+3. 画面表示と後続状態を確認する"	ブラウザがコンテンツを表示しない、もしくはエラー表示にすること。
+m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02-05-ADMIN-HOME-HOME-EC-CUBE-NEWS-035	IT-12	エラー継続	P3	エラー継続の結合確認	ネットワーク不通・タイムアウトを試験できる状態である	m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）（m02_05_admin_home_home_ec_cube_news）でネットワーク不通・タイムアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ネットワーク不通・タイムアウトを確認する
+3. 画面表示と後続状態を確認する"	ブラウザのエラー表示に委ねるであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -258,4 +239,4 @@ m02-05_admin_home_home_ec_cube_news（管理画面_EC-CUBEお知らせ）	IT-M02
 | ウェブアプリケーション / 注文・決済・在庫 / 原子性（IT-08） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 9 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.359, No.381, No.387。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 9件 — No.381, No.382, No.412, No.413, No.414, No.415, No.416, No.422, No.510。上限緩和または個別ケース化で収載可能。

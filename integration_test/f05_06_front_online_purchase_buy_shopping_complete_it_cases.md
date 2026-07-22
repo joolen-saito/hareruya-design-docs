@@ -10,7 +10,7 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
 | IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
@@ -20,8 +20,7 @@
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-06 | ロールバック |
-| IT-11 | 実行結果 |
-| IT-28 | ヘッダ、件名、実行結果、本文 |
+| IT-28 | 件名、実行結果、本文 |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -181,99 +180,93 @@ F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCH
 F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-047	IT-12	内部情報	P1	内部情報の結合確認	表示要素を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で表示要素の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	記入・確認画面は見出し「買取依頼内容の確認」、STEP2表示、職業・生年月日（会員に未登録のときのみ）、振込口座情報（銀行名・支店名・口座種別・口座番号・口座名義）、個口数、自動承諾の選択、適格請求書発行事業者登録の確認であること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-048	IT-15	機密情報	P1	機密情報の結合確認	JS挙動を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でJS挙動の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	数量更新を受けてカートを再計算すること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-049	IT-06	ロールバック	P3	ロールバックの結合確認	モーダル・ポップアップを試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でモーダル・ポップアップの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-048	IT-06	ロールバック	P3	ロールバックの結合確認	JS挙動を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でJS挙動の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	適格請求書発行事業者についての説明モーダルを表示すること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-050	IT-11	実行結果	P2	実行結果の結合確認	合計買取価格を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で合計買取価格の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	数量更新を受けてカートを再計算すること。
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-049	IT-28	実行結果	P2	実行結果の結合確認	合計買取価格を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で合計買取価格の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 合計買取価格を確認する
 3. 画面表示と後続状態を確認する"	カート内の各商品の買取価格×数量の総和を、記入・確認画面で表示する（算出はF05-05と同じ）であること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-051	IT-28	実行結果	P2	実行結果の結合確認	メモへの保存対象を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でメモへの保存対象の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-050	IT-28	実行結果	P2	実行結果の結合確認	メモへの保存対象を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でメモへの保存対象の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メモへの保存対象
 3. 画面表示と後続状態を確認する"	カート内のうちカード詳細IDが無くまとめて買取以外の商品（パック・サプライ等）を「名称x数量」でメモへ記録すること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-052	IT-28	ヘッダ	P2	ヘッダの結合確認	完了見出しを試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で完了見出しの確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-051	IT-28	件名	P2	件名の結合確認	完了見出しを試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. 完了見出しを確認する
-3. 画面表示と後続状態を確認する"	完了画面の表示時であること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-053	IT-28	件名	P2	件名の結合確認	完了案内を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 完了案内を確認する
 3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-054	IT-28	件名	P2	件名の結合確認	オーダーIDを試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. オーダーIDを確認する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-052	IT-28	件名	P2	件名の結合確認	完了案内を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 完了案内を確認する
 3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-055	IT-28	件名	P2	件名の結合確認	自動承諾の選択肢を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で自動承諾の選択肢の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-053	IT-28	件名	P2	件名の結合確認	オーダーIDを試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でオーダーIDの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. オーダーIDを確認する
+3. 画面表示と後続状態を確認する"	完了画面の表示時であること。
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-054	IT-28	本文	P2	本文の結合確認	自動承諾の選択肢を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で本文の対象項目を未入力にする	"1. 対象画面を表示する
 2. 自動承諾の選択肢
-3. 画面表示と後続状態を確認する"	記入・確認画面の表示時であること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-056	IT-28	本文	P2	本文の結合確認	登録番号を入力してくださいを試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 登録番号を入力してください
 3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-057	IT-28	本文	P2	本文の結合確認	登録番号に全角を含むことは出来ませんを試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 登録番号に全角を含むことは出来ませんを確認する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-055	IT-28	本文	P2	本文の結合確認	登録番号を入力してくださいを試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 登録番号を入力してください
 3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-058	IT-28	本文	P2	本文の結合確認	職業・生年月日を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で職業・生年月日の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-056	IT-28	本文	P2	本文の結合確認	登録番号に全角を含むことは出来ませんを試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で登録番号に全角を含むことは出来ませんの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 登録番号に全角を含むことは出来ませんを確認する
+3. 画面表示と後続状態を確認する"	front.purchase.error.not_fullwidth_qualified_invoice_issuer_code_inputであること。
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-057	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	職業・生年月日を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で職業・生年月日の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 職業・生年月日を確認する
 3. 画面表示と後続状態を確認する"	会員に未登録の場合のみ入力を求め、確定時に会員へ登録すること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-059	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	自動承諾を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で自動承諾の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	自動承諾を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で自動承諾の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 自動承諾を確認する
 3. 画面表示と後続状態を確認する"	「自動承諾を利用する」を選ぶと自動承諾フラグを真に設定すること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-060	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	メモ保存を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でメモ保存の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-059	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	メモ保存を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でメモ保存の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. メモ保存
 3. 画面表示と後続状態を確認する"	パック・サプライ等（カード詳細IDなし、まとめて買取以外）は「名称x数量」を改行区切りでメモへ保存すること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-061	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	適格請求書発行事業者を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で適格請求書発行事業者の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	適格請求書発行事業者を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で適格請求書発行事業者の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 適格請求書発行事業者を確認する
 3. 画面表示と後続状態を確認する"	「はい」のとき登録番号を入力させ、適格請求書発行事業者口座と発行事業者フラグを設定すること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-062	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ご職業を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でご職業の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-061	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ご職業を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でご職業の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ご職業を確認する
 3. 画面表示と後続状態を確認する"	確認フォームのキーjobであること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	生年月日を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で生年月日の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	生年月日を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で生年月日の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 生年月日を確認する
 3. 画面表示と後続状態を確認する"	確認フォームのキーbirthであること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-064	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	銀行名を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で銀行名の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	銀行名を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で銀行名の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 銀行名を確認する
 3. 画面表示と後続状態を確認する"	振込口座（bank_code）であること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-065	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	支店名を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で支店名の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-064	IT-25	一覧	P2	一覧の結合確認	支店名を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で支店名の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 支店名を確認する
 3. 画面表示と後続状態を確認する"	振込口座（branch_code）であること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-066	IT-25	一覧	P2	一覧の結合確認	口座種別を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で口座種別の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-065	IT-12	画面表示データ	P2	画面表示データの結合確認	口座種別を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で口座種別の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 口座種別を確認する
-3. 画面表示と後続状態を確認する"	振込口座（account_type）であること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-067	IT-12	画面表示データ	P2	画面表示データの結合確認	口座番号を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で口座番号の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-066	IT-25	画面表示データ	P2	画面表示データの結合確認	口座番号を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で口座番号の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 口座番号を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-068	IT-25	画面表示データ	P2	画面表示データの結合確認	個口数を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で個口数の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	振込口座（account_no）であること。
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-067	IT-12	画面表示データ	P2	画面表示データの結合確認	個口数を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で個口数の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 個口数を確認する
-3. 画面表示と後続状態を確認する"	確認フォームのキーpackageCount（非マップ）であること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-069	IT-12	画面表示データ	P2	画面表示データの結合確認	自動承諾を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で自動承諾の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 自動承諾を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-070	IT-25	画面表示データ	P2	画面表示データの結合確認	適格請求書発行事業者の登録番号を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で適格請求書発行事業者の登録番号の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-068	IT-25	画面表示データ	P2	画面表示データの結合確認	自動承諾を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で自動承諾の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 自動承諾を確認する
+3. 画面表示と後続状態を確認する"	確認フォームのキーautoApprovalFlg（非マップ）であること。
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-069	IT-25	フォーム送信	P1	フォーム送信の結合確認	適格請求書発行事業者の登録番号を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で適格請求書発行事業者の登録番号の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 適格請求書発行事業者の登録番号を確認する
 3. 画面表示と後続状態を確認する"	登録番号フォームのキーqualifiedInvoiceIssuerCodeであること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-071	IT-25	フォーム送信	P1	フォーム送信の結合確認	カートが空で記入・確認を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でカートが空で記入・確認の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-070	IT-16	ファイル選択	P2	ファイル選択の結合確認	カートが空で記入・確認を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でカートが空で記入・確認の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. カートが空で記入・確認を確認する
 3. 画面表示と後続状態を確認する"	カート画面へリダイレクトすること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-072	IT-16	ファイル選択	P2	ファイル選択の結合確認	未ログインで記入・確認を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で未ログインで記入・確認の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-071	IT-12	非同期更新	P1	非同期更新の結合確認	未ログインで記入・確認を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で未ログインで記入・確認の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 未ログインで記入・確認を確認する
 3. 画面表示と後続状態を確認する"	買取ログイン画面へリダイレクトすること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-073	IT-12	非同期更新	P1	非同期更新の結合確認	適格請求書発行事業者が「いいえ」を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で適格請求書発行事業者が「いいえ」の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-072	IT-12	エラー継続	P3	エラー継続の結合確認	適格請求書発行事業者が「いいえ」を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で適格請求書発行事業者が「いいえ」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 適格請求書発行事業者が「いいえ」を確認する
 3. 画面表示と後続状態を確認する"	登録番号の検証・登録を行わないこと。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-074	IT-12	エラー継続	P3	エラー継続の結合確認	登録途中で例外を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で登録途中で例外の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-073	IT-25	件数上限	P2	件数上限の結合確認	登録途中で例外を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で登録途中で例外の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録途中で例外を確認する
 3. 画面表示と後続状態を確認する"	トランザクションをロールバックし、例外を送出すること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-075	IT-25	件数上限	P2	件数上限の結合確認	完了画面の再訪（セッション破棄後）を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で完了画面の再訪（セッション破棄後）の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-074	IT-25	欠損値	P2	欠損値の結合確認	完了画面の再訪（セッション破棄後）を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で完了画面の再訪（セッション破棄後）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 完了画面の再訪（セッション破棄後）を確認する
 3. 画面表示と後続状態を確認する"	オーダーIDが無い状態で完了画面を表示すること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-076	IT-25	欠損値	P2	欠損値の結合確認	受注と管理画面を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で受注と管理画面の確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-075	IT-25	データなし	P2	データなしの結合確認	受注と管理画面を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で受注と管理画面の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注と管理画面を確認する
 3. 画面表示と後続状態を確認する"	確定で登録した買取受注は管理画面の買取注文として現れるであること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-077	IT-25	データなし	P2	データなしの結合確認	トランザクションを試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でトランザクションの確認に必要な条件を指定する	"1. 対象画面を表示する
+F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-076	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	トランザクションを試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）でトランザクションの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. トランザクションを確認する
 3. 画面表示と後続状態を確認する"	会員更新・口座・受注・履歴・メインカードの登録は1トランザクションで確定すること。
-F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCHASE-BUY-SHOPPING-COMPLETE-078	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	支店連携を試験できる状態である	F05-06（ネット買取買取手続き〜完了）（f05_06_front_online_purchase_buy_shopping_complete）で支店連携の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 支店連携を確認する
-3. 画面表示と後続状態を確認する"	会員情報を更新した場合のみ支店システムへ会員更新を通知すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -375,4 +368,4 @@ F05-06（ネット買取買取手続き〜完了）	IT-F05-06-FRONT-ONLINE-PURCH
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 4件 — No.109, No.110, No.219, No.255。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.109, No.110, No.215, No.228, No.261, No.510。上限緩和または個別ケース化で収載可能。

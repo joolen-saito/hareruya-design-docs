@@ -10,9 +10,9 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
@@ -61,180 +61,159 @@ m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理�
 m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	ファイルアップロード制限が有効な状態で開く・登録するを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でファイルアップロード制限が有効な状態で開く・登録するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ファイルアップロード制限が有効な状態で開く・登録する
 3. 画面表示と後続状態を確認する"	環境変数によるアップロード制限が有効なとき、当URLはアクセス拒否（HTTP403）となり画面に到達しないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-009	IT-25	URL	P2	URLの操作結果確認	未ログインまたは権限で拒否される利用者を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で未ログインまたは権限で拒否される利用者の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	未ログインまたは権限で拒否される利用者を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 未ログインまたは権限で拒否される利用者を確認する
-3. 画面表示と後続状態を確認する"	管理画面の共通ルールに従いアクセスできない（詳細は管理画面認証・認可の実装を正とする）であること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	表示要素を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	コードエディタを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. コードエディタを確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	JS挙動（保存ボタン制御）を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でJS挙動（保存ボタン制御）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. JS挙動（保存ボタン制御）
-3. 画面表示と後続状態を確認する"	エディタの注釈変更時に、エラー種別の注釈が1件でもあれば「登録」ボタンを非活性にし、無ければ活性にすること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS挙動（送信直前の同期）を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. JS挙動（送信直前の同期）
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入力項目を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 入力項目
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	エディタ注釈変更を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. エディタ注釈変更を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	フォーム送信を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. フォーム送信
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	保存対象を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 保存対象
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-019	IT-22	部分入力	P2	部分入力の入力検証	保存方式を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で保存方式の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 保存方式
-3. 画面表示と後続状態を確認する"	フォームのコード値でファイル全文を上書きすること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-020	IT-26	登録内容	P1	登録時の登録内容確認	初期表示の条件を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で初期表示の条件の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-021	IT-26	登録内容	P1	登録時の登録内容確認	構文検証を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で構文検証の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-022	IT-26	登録内容	P1	登録時の登録内容確認	コードを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でコードの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-023	IT-26	登録内容	P1	登録時の登録内容確認	対象ファイルが存在しないを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で対象ファイルが存在しないの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	初期表示はせず空のエディタとなること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-024	IT-26	登録内容	P1	登録時の登録内容確認	対象ファイルが存在するが書き込み不可を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で対象ファイルが存在するが書き込み不可の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-025	IT-26	登録内容	P1	登録時の登録内容確認	コードを空のまま登録を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-026	IT-26	登録内容	P1	登録時の登録内容確認	ファイル書き込みで入出力例外を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-027	IT-26	登録内容	P1	登録時の登録内容確認	画面とローカルファイルを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-028	IT-26	登録内容	P1	登録時の登録内容確認	店舗フロントとの整合を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-029	IT-26	登録内容	P1	登録時の登録内容確認	同時編集を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で同時編集の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-030	IT-26	実行結果	P1	登録時の実行結果確認	APIを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でAPIの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-031	IT-23	実行結果	P1	登録時の実行結果確認	失敗時を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で失敗時の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ファイル書き込み失敗は当画面でエラーメッセージとログ記録として扱うこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-032	IT-26	更新内容	P1	更新時の更新内容確認	入力を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で入力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-033	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-034	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で失敗時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-035	IT-26	更新内容	P1	更新時の更新内容確認	クライアント側エラー注釈を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でクライアント側エラー注釈の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	Aceエディタが返すエラー注釈は「登録」ボタンの活性制御にのみ用いること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-036	IT-26	更新内容	P1	更新時の更新内容確認	未ログイン（一般利用者）を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で未ログイン（一般利用者）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-037	IT-26	更新内容	P1	更新時の更新内容確認	ログイン済み管理者（通常）を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-038	IT-26	更新内容	P1	更新時の更新内容確認	ファイルアップロード制限が有効な状態を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-039	IT-26	更新内容	P1	更新時の更新内容確認	コンテンツ管理からCSS管理を開くを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-040	IT-26	更新内容	P1	更新時の更新内容確認	「登録」で保存に成功を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-041	IT-26	更新内容	P1	更新時の更新内容確認	永続化先を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で永続化先の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-042	IT-05	実行結果	P1	更新時の実行結果確認	コードエディタを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でコードエディタの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-043	IT-05	実行結果	P1	更新時の実行結果確認	ファイルストレージを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でファイルストレージの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	保存したファイルの配信元となる外部ストレージであること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-044	IT-02	初期行数	P2	初期行数の結合確認	ファイルアップロード制限を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でファイルアップロード制限の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ファイルアップロード制限
-3. 画面表示と後続状態を確認する"	環境変数により、特定の管理画面URLでのファイル更新を一括で拒否する仕組みであること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-045	IT-02	表示順	P2	表示順の結合確認	コンテンツ管理からCSS管理を開くを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でコンテンツ管理からCSS管理を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. コンテンツ管理からCSS管理を開く
-3. 画面表示と後続状態を確認する"	コードエディタに、保存済みのカスタマイズCSSの全文が初期表示されるであること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-046	IT-25	更新抑止	P1	更新抑止の結合確認	「登録」を押すを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で「登録」を押すの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	エディタの内容をcustomize.cssへ全文上書き保存し、続けてファイルストレージへ同名でアップロードすること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-047	IT-12	内部情報	P1	内部情報の結合確認	「CSS管理」リンク（戻る導線）を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で「CSS管理」リンク（戻る導線）の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ページ管理（コンテンツ管理一覧）へ遷移すること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-048	IT-15	機密情報	P1	機密情報の結合確認	ファイルアップロード制限が有効な状態で開く・登録するを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でファイルアップロード制限が有効な状態で開く・登録するの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	環境変数によるアップロード制限が有効なとき、当URLはアクセス拒否（HTTP403）となり画面に到達しないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-049	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	表示要素を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	カード見出し「CSS設定」であること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-050	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	コードエディタを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でコードエディタの確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	コードエディタを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でコードエディタの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. コードエディタを確認する
 3. 画面表示と後続状態を確認する"	コード入力領域はAceエディタとして初期化し、CSSモード、配色テーマtomorrowを適用すること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-051	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	JS挙動（送信直前の同期）を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でJS挙動（送信直前の同期）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS挙動（保存ボタン制御）を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. JS挙動（保存ボタン制御）
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS挙動（送信直前の同期）を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. JS挙動（送信直前の同期）
-3. 画面表示と後続状態を確認する"	フォーム送信時に、隠しテキストエリアへエディタの現在値を書き戻してから送信すること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-052	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	モーダル・ポップアップを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	当画面はモーダル、確認ダイアログ、トーストを持たないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-053	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	入力項目を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入力項目を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 入力項目
-3. 画面表示と後続状態を確認する"	コードを入力する複数行テキスト入力（textarea）が1つであること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-054	IT-25	一覧	P2	一覧の結合確認	エディタ注釈変更を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でエディタ注釈変更の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	エディタ注釈変更を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. エディタ注釈変更を確認する
-3. 画面表示と後続状態を確認する"	サーバ側ではCSS構文の妥当性を検証しないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-055	IT-12	画面表示データ	P2	画面表示データの結合確認	フォーム送信を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でフォーム送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	フォーム送信を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. フォーム送信
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-056	IT-25	画面表示データ	P2	画面表示データの結合確認	保存対象を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で保存対象の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-018	IT-22	部分入力	P2	部分入力の入力検証	保存対象を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で保存対象の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 保存対象
 3. 画面表示と後続状態を確認する"	単一ファイルcustomize.cssのみであること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-057	IT-12	画面表示データ	P2	画面表示データの結合確認	保存方式を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で保存方式の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 保存方式
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-019	IT-26	登録内容	P1	登録時の登録内容確認	保存方式を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で保存方式の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-020	IT-26	登録内容	P1	登録時の登録内容確認	初期表示の条件を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で初期表示の条件の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-021	IT-26	登録内容	P1	登録時の登録内容確認	構文検証を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で構文検証の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-022	IT-26	登録内容	P1	登録時の登録内容確認	コードを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でコードの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ファイルhtml/user_data/assets/css/customize.css（フォーム項目キー css、TextareaType、requiredは偽）であること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-023	IT-26	登録内容	P1	登録時の登録内容確認	対象ファイルが存在しないを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で対象ファイルが存在しないの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-024	IT-26	登録内容	P1	登録時の登録内容確認	対象ファイルが存在するが書き込み不可を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-025	IT-26	登録内容	P1	登録時の登録内容確認	コードを空のまま登録を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-026	IT-26	登録内容	P1	登録時の登録内容確認	ファイル書き込みで入出力例外を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-027	IT-26	登録内容	P1	登録時の登録内容確認	画面とローカルファイルを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-028	IT-26	登録内容	P1	登録時の登録内容確認	店舗フロントとの整合を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で店舗フロントとの整合の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-029	IT-26	実行結果	P1	登録時の実行結果確認	同時編集を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で同時編集の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-030	IT-23	実行結果	P1	登録時の実行結果確認	APIを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でAPIの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当画面の保存処理は店舗フロント向けの業務APIを呼び出さないこと。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-031	IT-26	更新内容	P1	更新時の更新内容確認	失敗時を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で失敗時の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-032	IT-26	更新内容	P1	更新時の更新内容確認	入力を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で入力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-033	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-034	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で失敗時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	書き込み失敗時はエラーフラッシュを表示し同一画面に留まるであること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-035	IT-26	更新内容	P1	更新時の更新内容確認	クライアント側エラー注釈を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でクライアント側エラー注釈の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-036	IT-26	更新内容	P1	更新時の更新内容確認	未ログイン（一般利用者）を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-037	IT-26	更新内容	P1	更新時の更新内容確認	ログイン済み管理者（通常）を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-038	IT-26	更新内容	P1	更新時の更新内容確認	ファイルアップロード制限が有効な状態を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-039	IT-26	更新内容	P1	更新時の更新内容確認	コンテンツ管理からCSS管理を開くを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-040	IT-26	更新内容	P1	更新時の更新内容確認	「登録」で保存に成功を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で「登録」で保存に成功の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-041	IT-05	実行結果	P1	更新時の実行結果確認	永続化先を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で永続化先の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-042	IT-05	実行結果	P1	更新時の実行結果確認	コードエディタを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でコードエディタの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面のコード入力欄に表示されるブラウザ内エディタであること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-043	IT-02	初期行数	P2	初期行数の結合確認	ファイルストレージを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でファイルストレージの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ファイルストレージを確認する
+3. 画面表示と後続状態を確認する"	保存したファイルの配信元となる外部ストレージであること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-044	IT-02	表示順	P2	表示順の結合確認	ファイルアップロード制限を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でファイルアップロード制限の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ファイルアップロード制限
+3. 画面表示と後続状態を確認する"	環境変数により、特定の管理画面URLでのファイル更新を一括で拒否する仕組みであること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-045	IT-25	更新抑止	P1	更新抑止の結合確認	コンテンツ管理からCSS管理を開くを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でコンテンツ管理からCSS管理を開くの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	コードエディタに、保存済みのカスタマイズCSSの全文が初期表示されるであること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-046	IT-12	内部情報	P1	内部情報の結合確認	「登録」を押すを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で「登録」を押すの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	エディタの内容をcustomize.cssへ全文上書き保存し、続けてファイルストレージへ同名でアップロードすること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-047	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	未ログインまたは権限で拒否される利用者を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で未ログインまたは権限で拒否される利用者の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 未ログインまたは権限で拒否される利用者を確認する
+3. 画面表示と後続状態を確認する"	管理画面の共通ルールに従いアクセスできない（詳細は管理画面認証・認可の実装を正とする）であること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-048	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	表示要素を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	カード見出し「CSS設定」であること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-049	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	JS挙動（保存ボタン制御）を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でJS挙動（保存ボタン制御）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS挙動（保存ボタン制御）
+3. 画面表示と後続状態を確認する"	エディタの注釈変更時に、エラー種別の注釈が1件でもあれば「登録」ボタンを非活性にし、無ければ活性にすること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-050	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	JS挙動（送信直前の同期）を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でJS挙動（送信直前の同期）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS挙動（送信直前の同期）
+3. 画面表示と後続状態を確認する"	フォーム送信時に、隠しテキストエリアへエディタの現在値を書き戻してから送信すること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-051	IT-25	一覧	P2	一覧の結合確認	モーダル・ポップアップを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. モーダル・ポップアップを確認する
+3. 画面表示と後続状態を確認する"	当画面はモーダル、確認ダイアログ、トーストを持たないこと。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-052	IT-12	画面表示データ	P2	画面表示データの結合確認	入力項目を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力項目
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-058	IT-25	画面表示データ	P2	画面表示データの結合確認	初期表示の条件を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で初期表示の条件の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-053	IT-25	画面表示データ	P2	画面表示データの結合確認	エディタ注釈変更を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でエディタ注釈変更の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. エディタ注釈変更を確認する
+3. 画面表示と後続状態を確認する"	サーバ側ではCSS構文の妥当性を検証しないこと。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-054	IT-12	画面表示データ	P2	画面表示データの結合確認	フォーム送信を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でフォーム送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. フォーム送信
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-055	IT-25	フォーム送信	P1	フォーム送信の結合確認	保存方式を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で保存方式の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 保存方式
+3. 画面表示と後続状態を確認する"	フォームのコード値でファイル全文を上書きすること。
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-056	IT-16	ファイル選択	P2	ファイル選択の結合確認	初期表示の条件を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で初期表示の条件の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 初期表示の条件を確認する
 3. 画面表示と後続状態を確認する"	対象ファイルが存在し、かつ書き込み可能なときに限り、現行内容をエディタへ初期表示すること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-059	IT-25	フォーム送信	P1	フォーム送信の結合確認	構文検証を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で構文検証の確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-057	IT-12	非同期更新	P1	非同期更新の結合確認	構文検証を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で構文検証の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 構文検証を確認する
 3. 画面表示と後続状態を確認する"	サーバー側でCSS構文の妥当性検証は行わないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-060	IT-16	ファイル選択	P2	ファイル選択の結合確認	コードを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でコードの確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-058	IT-12	エラー継続	P3	エラー継続の結合確認	コードを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でコードの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. コードを確認する
 3. 画面表示と後続状態を確認する"	ファイルhtml/user_data/assets/css/customize.css（フォーム項目キー css、TextareaType、requiredは偽）であること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-061	IT-12	非同期更新	P1	非同期更新の結合確認	対象ファイルが存在しないを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で対象ファイルが存在しないの確認に必要な条件を指定する	"1. 対象画面を表示する
+m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-059	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	対象ファイルが存在しないを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で対象ファイルが存在しないの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 対象ファイルが存在しないを確認する
 3. 画面表示と後続状態を確認する"	初期表示はせず空のエディタとなること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-062	IT-12	エラー継続	P3	エラー継続の結合確認	対象ファイルが存在するが書き込み不可を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で対象ファイルが存在するが書き込み不可の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 対象ファイルが存在するが書き込み不可を確認する
-3. 画面表示と後続状態を確認する"	初期表示で現行内容を読み込まない（空表示）であること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-063	IT-25	件数上限	P2	件数上限の結合確認	コードを空のまま登録を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でコードを空のまま登録の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. コードを空のまま登録を確認する
-3. 画面表示と後続状態を確認する"	項目は任意のため検証は妨げないこと。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-064	IT-25	欠損値	P2	欠損値の結合確認	ファイル書き込みで入出力例外を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）でファイル書き込みで入出力例外の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ファイル書き込みで入出力例外を確認する
-3. 画面表示と後続状態を確認する"	保存失敗メッセージを表示し、ログへ対象パスと例外を記録し、同一画面へ留まるであること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-065	IT-25	データなし	P2	データなしの結合確認	画面とローカルファイルを試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で画面とローカルファイルの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 画面とローカルファイルを確認する
-3. 画面表示と後続状態を確認する"	保存成功後にリダイレクトで再表示するため、エディタには直前に保存したローカルファイル内容が再度初期表示されるであること。
-m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）	IT-M09-05-ADMIN-CONTENT-CONTENT-CSS-066	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	店舗フロントとの整合を試験できる状態である	m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理）（m09_05_admin_content_content_css）で店舗フロントとの整合の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 店舗フロントとの整合を確認する
-3. 画面表示と後続状態を確認する"	店舗フロントが参照するのはストレージ配信もしくはローカルの同パスファイルであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -336,4 +315,4 @@ m09-05_admin_content_content_css（管理画面_コンテンツ管理_CSS管理�
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.109, No.110, No.111, No.329, No.333。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 12件 — No.109, No.110, No.111, No.329, No.330, No.334, No.359, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

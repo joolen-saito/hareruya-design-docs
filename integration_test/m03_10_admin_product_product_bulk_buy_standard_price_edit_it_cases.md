@@ -10,9 +10,9 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、件数上限、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
@@ -61,81 +61,81 @@ m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品�
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	JS 挙動を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でJS 挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. JS 挙動を確認する
 3. 画面表示と後続状態を確認する"	.js-buy-price と .js-base-price（NM 基準価格）の入力で価格比率を再計算であること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-009	IT-25	URL	P2	URLの操作結果確認	買取価格(NM)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で買取価格(NM)の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	買取価格(NM)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 買取価格(NM)を確認する
-3. 画面表示と後続状態を確認する"	保存時は上記ルールで全通常規格の dtb_product_class.buy_price を再計算・更新であること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	基準価格 (NM)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 基準価格 (NM)を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	基準価格 (SP)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 基準価格 (SP)を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	商品 ID（表示兼隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で商品 ID（表示兼隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	基準価格 (SP)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で基準価格 (SP)の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 基準価格 (SP)を確認する
+3. 画面表示と後続状態を確認する"	POST 値は読み取り専用であること。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	商品 ID（表示兼隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 商品 ID（表示兼隠し）を確認する
-3. 画面表示と後続状態を確認する"	…[product_id]であること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	NM 規格 ID（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. NM 規格 ID（隠し）を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	SP / MP / HP 規格 ID（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	SP / MP / HP 規格 ID（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. SP / MP / HP 規格 ID（隠し）を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	状態ステータス（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	状態ステータス（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 状態ステータス（隠し）を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	割引率（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 割引率（隠し）を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	販売価格（NM）（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 販売価格（NM）（隠し）を確認する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	割引率（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 割引率（隠し）を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	複数行送信の途中で例外を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 複数行送信の途中で例外
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	販売価格（NM）（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 販売価格（NM）（隠し）を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-019	IT-22	部分入力	P2	部分入力の入力検証	NM 規格が無い商品・言語を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でNM 規格が無い商品・言語の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. NM 規格が無い商品・言語を確認する
-3. 画面表示と後続状態を確認する"	product_class_id_nm が 0 となり保存スキップであること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-020	IT-23	検索条件	P2	検索時の検索条件確認	一覧との表示差を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-018	IT-22	部分入力	P2	部分入力の入力検証	複数行送信の途中で例外を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で複数行送信の途中で例外の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 複数行送信の途中で例外
+3. 画面表示と後続状態を確認する"	それ以前にコミットした商品グループは保存済みのままであること。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-019	IT-23	検索条件	P2	検索時の検索条件確認	NM 規格が無い商品・言語を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-021	IT-23	検索条件	P2	検索時の検索条件確認	販売価格を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-020	IT-23	検索条件	P2	検索時の検索条件確認	一覧との表示差を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-022	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-021	IT-23	検索条件	P2	検索時の検索条件確認	販売価格を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-023	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-022	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-024	IT-23	検索条件	P2	検索時の検索条件確認	dtb_product_classを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-023	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-025	IT-23	検索条件	P2	検索時の検索条件確認	登録/更新を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-024	IT-23	検索条件	P2	検索時の検索条件確認	dtb_product_classを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-026	IT-23	検索条件	P2	検索時の検索条件確認	買取 vs 販売（NM）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-025	IT-23	検索条件	P2	検索時の検索条件確認	登録/更新を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-027	IT-23	検索条件	P2	検索時の検索条件確認	確定成功を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-026	IT-23	検索条件	P2	検索時の検索条件確認	買取 vs 販売（NM）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-027	IT-23	検索条件	P2	検索時の検索条件確認	確定成功を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で確定成功の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-028	IT-23	検索条件	P2	検索時の検索条件確認	フォーム検証失敗を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でフォーム検証失敗の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-029	IT-23	検索条件	P2	検索時の検索条件確認	規格 ID 不正・削除済みを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で規格 ID 不正・削除済みの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-030	IT-23	検索条件	P2	検索時の検索条件確認	買取がマスタに無い（条件を満たす低額帯）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で買取がマスタに無い（条件を満たす低額帯）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-031	IT-23	検索条件	P2	検索時の検索条件確認	M03-10-MSG-002を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でM03-10-MSG-002の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-032	IT-23	検索条件	P2	検索時の検索条件確認	M03-10-MSG-003を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でM03-10-MSG-003の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-033	IT-23	検索条件	P2	検索時の検索条件確認	M03-10-MSG-004を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でM03-10-MSG-004の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-033	IT-23	実行結果	P2	検索時の実行結果確認	M03-10-MSG-004を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でM03-10-MSG-004の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-034	IT-23	実行結果	P2	検索時の実行結果確認	フラッシュを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でフラッシュの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
@@ -145,171 +145,162 @@ m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品�
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-036	IT-23	実行結果	P2	検索時の実行結果確認	トランザクション境界を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でトランザクション境界の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-037	IT-23	実行結果	P2	検索時の実行結果確認	ロックを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でロックの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-037	IT-26	登録内容	P1	登録時の登録内容確認	ロックを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でロックの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-038	IT-26	登録内容	P1	登録時の登録内容確認	買取価格を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で買取価格の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-039	IT-26	登録内容	P1	登録時の登録内容確認	商品一覧で商品にチェックし「買取・基準価格一括編集」相当のボタンを押すを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で商品一覧で商品にチェックし「買取・基準価格一括編集」相当のボタンを押すの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-040	IT-26	登録内容	P1	登録時の登録内容確認	編集画面をブックマーク相当で開くを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で編集画面をブックマーク相当で開くの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同上であること。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-041	IT-26	登録内容	P1	登録時の登録内容確認	ids を付けずに編集 URL へ入るを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でids を付けずに編集 URL へ入るの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	エラーフラッシュのうえ、セッションの eccube.admin.product.search.page_no を使って GET /{admin_route}/product/page/{page_no} へリダイレクト…であること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-042	IT-26	登録内容	P1	登録時の登録内容確認	「登録」で確定を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で「登録」で確定の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-042	IT-26	登録内容	P1	登録時の登録内容確認	「登録」で確定を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-043	IT-26	登録内容	P1	登録時の登録内容確認	「商品一覧」リンクを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-044	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-043	IT-26	登録内容	P1	登録時の登録内容確認	「商品一覧」リンクを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-045	IT-26	登録内容	P1	登録時の登録内容確認	JS 挙動を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-044	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-046	IT-26	登録内容	P1	登録時の登録内容確認	買取価格(NM)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-045	IT-26	登録内容	P1	登録時の登録内容確認	JS 挙動を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-047	IT-26	登録内容	P1	登録時の登録内容確認	基準価格 (NM)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で基準価格 (NM)の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-046	IT-26	登録内容	P1	登録時の登録内容確認	買取価格(NM)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で買取価格(NM)の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-048	IT-26	実行結果	P1	登録時の実行結果確認	基準価格 (SP)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で基準価格 (SP)の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-047	IT-26	実行結果	P1	登録時の実行結果確認	基準価格 (NM)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で基準価格 (NM)の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-049	IT-23	実行結果	P1	登録時の実行結果確認	商品 ID（表示兼隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で商品 ID（表示兼隠し）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-048	IT-23	実行結果	P1	登録時の実行結果確認	基準価格 (SP)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で基準価格 (SP)の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	…[product_id]であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	POST 値は読み取り専用であること。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-049	IT-26	更新内容	P1	更新時の更新内容確認	商品 ID（表示兼隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で商品 ID（表示兼隠し）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-050	IT-26	更新内容	P1	更新時の更新内容確認	NM 規格 ID（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でNM 規格 ID（隠し）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-051	IT-26	更新内容	P1	更新時の更新内容確認	SP / MP / HP 規格 ID（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でSP / MP / HP 規格 ID（隠し）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-052	IT-26	更新内容	P1	更新時の更新内容確認	状態ステータス（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で状態ステータス（隠し）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	テンプレートで廃止時の空白表示に使うこと。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-053	IT-26	更新内容	P1	更新時の更新内容確認	割引率（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で割引率（隠し）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	保存時の率計算は商品に紐づく買取減額率を優先し、フォームの rate は主説明から外れるであること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-054	IT-26	更新内容	P1	更新時の更新内容確認	販売価格（NM）（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で販売価格（NM）（隠し）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-054	IT-26	更新内容	P1	更新時の更新内容確認	販売価格（NM）（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-055	IT-26	更新内容	P1	更新時の更新内容確認	複数行送信の途中で例外を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-056	IT-26	更新内容	P1	更新時の更新内容確認	NM 規格が無い商品・言語を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-055	IT-26	更新内容	P1	更新時の更新内容確認	複数行送信の途中で例外を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-057	IT-26	更新内容	P1	更新時の更新内容確認	一覧との表示差を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-056	IT-26	更新内容	P1	更新時の更新内容確認	NM 規格が無い商品・言語を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-058	IT-26	更新内容	P1	更新時の更新内容確認	販売価格を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-057	IT-26	更新内容	P1	更新時の更新内容確認	一覧との表示差を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-059	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-058	IT-26	更新内容	P1	更新時の更新内容確認	販売価格を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で販売価格の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-060	IT-05	実行結果	P1	更新時の実行結果確認	失敗時出力を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-059	IT-05	実行結果	P1	更新時の実行結果確認	成功時出力を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-061	IT-05	実行結果	P1	更新時の実行結果確認	dtb_product_classを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でdtb_product_classの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-060	IT-05	実行結果	P1	更新時の実行結果確認	失敗時出力を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	編集 HTML 200 とエラーフラッシュ、もしくは一覧へのリダイレクトとエラーフラッシュ（ids 空）であること。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-061	IT-05	削除条件	P1	削除時の削除条件確認	dtb_product_classを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	条件別に再計算され更新であること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-062	IT-05	削除条件	P1	削除時の削除条件確認	登録/更新を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-062	IT-05	削除条件	P1	削除時の削除条件確認	登録/更新を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-063	IT-05	削除条件	P1	削除時の削除条件確認	買取 vs 販売（NM）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-063	IT-05	削除条件	P1	削除時の削除条件確認	買取 vs 販売（NM）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	買取が販売を超えると admin.product_class.buyprice_valid_bulk（日本語確認値は販売価格との比較文）であること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-064	IT-05	削除条件	P1	削除時の削除条件確認	確定成功を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-064	IT-05	削除条件	P1	削除時の削除条件確認	確定成功を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一覧はセッションのページ番号と resume で再検索表示であること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-065	IT-05	削除条件	P1	削除時の削除条件確認	フォーム検証失敗を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	編集画面再表示＋エラーメッセージであること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-066	IT-05	削除条件	P1	削除時の削除条件確認	規格 ID 不正・削除済みを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で規格 ID 不正・削除済みの確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-065	IT-05	削除条件	P1	削除時の削除条件確認	フォーム検証失敗を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でフォーム検証失敗の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-066	IT-05	実行結果	P1	削除時の実行結果確認	規格 ID 不正・削除済みを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で規格 ID 不正・削除済みの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-067	IT-05	実行結果	P1	削除時の実行結果確認	買取がマスタに無い（条件を満たす低額帯）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で買取がマスタに無い（条件を満たす低額帯）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	編集画面再表示＋ admin.product.not_found_nm_priceであること。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-068	IT-05	実行結果	P1	削除時の実行結果確認	M03-10-MSG-002を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でM03-10-MSG-002の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録ボタン押下時、`!$form->isSubmitted() \であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-069	IT-05	実行結果	P1	削除時の実行結果確認	M03-10-MSG-003を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でM03-10-MSG-003の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-070	IT-05	実行結果	P1	削除時の実行結果確認	M03-10-MSG-004を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でM03-10-MSG-004の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録確定が例外なく完了したときであること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-071	IT-02	初期行数	P2	初期行数の結合確認	フラッシュを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でフラッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録確定後、価格更新処理（StoreAction::handle）で Exception 送出時に $e->getMessage() を表示であること。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-070	IT-02	初期行数	P2	初期行数の結合確認	M03-10-MSG-004を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でM03-10-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-10-MSG-004を確認する
+3. 画面表示と後続状態を確認する"	登録確定が例外なく完了したときであること。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-071	IT-02	表示順	P2	表示順の結合確認	フラッシュを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でフラッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. フラッシュを確認する
 3. 画面表示と後続状態を確認する"	成功・エラー・警告メッセージであること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-072	IT-02	表示順	P2	表示順の結合確認	監査ログ専用出力を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で監査ログ専用出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 監査ログ専用出力を確認する
-3. 画面表示と後続状態を確認する"	本機能固有のファイルログは主題としないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-073	IT-25	更新抑止	P1	更新抑止の結合確認	トランザクション境界を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でトランザクション境界の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-072	IT-25	更新抑止	P1	更新抑止の結合確認	監査ログ専用出力を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で監査ログ専用出力の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	本機能固有のファイルログは主題としないこと。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-073	IT-12	内部情報	P1	内部情報の結合確認	トランザクション境界を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でトランザクション境界の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	保存ループは商品行ごとに価格履歴INSERTと通常規格UPDATEを行い、1商品行ごとにコミットすること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-074	IT-12	内部情報	P1	内部情報の結合確認	ロックを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でロックの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	対象規格への行ロック・悲観ロック・楽観ロック・ロックファイルは使用しないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-075	IT-15	機密情報	P1	機密情報の結合確認	買取価格を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で買取価格の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	dtb_product_class.buy_price に統合（実在確認済み）であること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	商品一覧で商品にチェックし「買取・基準価格一括編集」相当のボタンを押すを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で商品一覧で商品にチェックし「買取・基準価格一括編集」相当のボタンを押すの確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ロックを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でロックの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ロックを確認する
+3. 画面表示と後続状態を確認する"	対象規格への行ロック・悲観ロック・楽観ロック・ロックファイルは使用しないこと。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-075	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	買取価格を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で買取価格の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 買取価格を確認する
+3. 画面表示と後続状態を確認する"	dtb_product_class.buy_price に統合（実在確認済み）であること。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	商品一覧で商品にチェックし「買取・基準価格一括編集」相当のボタンを押すを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で商品一覧で商品にチェックし「買取・基準価格一括編集」相当のボタンを押すの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 商品一覧で商品にチェックし「買取・基準価格一括編集」相当のボタンを押すを確認する
 3. 画面表示と後続状態を確認する"	選択商品について編集表が開くこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	編集画面をブックマーク相当で開くを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で編集画面をブックマーク相当で開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-077	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	編集画面をブックマーク相当で開くを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で編集画面をブックマーク相当で開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 編集画面をブックマーク相当で開く
 3. 画面表示と後続状態を確認する"	同上であること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ids を付けずに編集 URL へ入るを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でids を付けずに編集 URL へ入るの確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ids を付けずに編集 URL へ入るを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でids を付けずに編集 URL へ入るの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ids を付けずに編集 URL へ入るを確認する
 3. 画面表示と後続状態を確認する"	エラーフラッシュのうえ、セッションの eccube.admin.product.search.page_no を使って GET /{admin_route}/product/page/{page_no} へリダイレクト…であること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	「登録」で確定を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で「登録」で確定の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	「登録」で確定を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で「登録」で確定の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「登録」で確定を確認する
 3. 画面表示と後続状態を確認する"	検証成功時は更新後、セッションのページ番号と resume=1 付きで一覧へリダイレクトすること。
 m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	「商品一覧」リンクを試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で「商品一覧」リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「商品一覧」リンクを確認する
 3. 画面表示と後続状態を確認する"	セッションの eccube.admin.product.search.page_no（無ければ 1）へ遷移であること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-081	IT-12	画面表示データ	P2	画面表示データの結合確認	基準価格 (NM)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で基準価格 (NM)の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-081	IT-12	画面表示データ	P2	画面表示データの結合確認	JS 挙動を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でJS 挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS 挙動を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-082	IT-25	画面表示データ	P2	画面表示データの結合確認	買取価格(NM)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で買取価格(NM)の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 買取価格(NM)を確認する
+3. 画面表示と後続状態を確認する"	保存時は上記ルールで全通常規格の dtb_product_class.buy_price を再計算・更新であること。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-083	IT-12	画面表示データ	P2	画面表示データの結合確認	基準価格 (NM)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で基準価格 (NM)の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 基準価格 (NM)を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-082	IT-25	画面表示データ	P2	画面表示データの結合確認	基準価格 (SP)を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で基準価格 (SP)の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 基準価格 (SP)を確認する
-3. 画面表示と後続状態を確認する"	POST 値は読み取り専用であること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-083	IT-12	画面表示データ	P2	画面表示データの結合確認	商品 ID（表示兼隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で商品 ID（表示兼隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-084	IT-25	フォーム送信	P1	フォーム送信の結合確認	商品 ID（表示兼隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で商品 ID（表示兼隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 商品 ID（表示兼隠し）を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-084	IT-25	画面表示データ	P2	画面表示データの結合確認	NM 規格 ID（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でNM 規格 ID（隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	…[product_id]であること。
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-085	IT-16	ファイル選択	P2	ファイル選択の結合確認	NM 規格 ID（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でNM 規格 ID（隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. NM 規格 ID（隠し）を確認する
 3. 画面表示と後続状態を確認する"	…[product_class_id_nm]であること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-085	IT-25	フォーム送信	P1	フォーム送信の結合確認	SP / MP / HP 規格 ID（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でSP / MP / HP 規格 ID（隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-086	IT-12	非同期更新	P1	非同期更新の結合確認	SP / MP / HP 規格 ID（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）でSP / MP / HP 規格 ID（隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. SP / MP / HP 規格 ID（隠し）を確認する
 3. 画面表示と後続状態を確認する"	テンプレートの有無判定に使うこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-086	IT-16	ファイル選択	P2	ファイル選択の結合確認	状態ステータス（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で状態ステータス（隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-087	IT-12	エラー継続	P3	エラー継続の結合確認	状態ステータス（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で状態ステータス（隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 状態ステータス（隠し）を確認する
 3. 画面表示と後続状態を確認する"	テンプレートで廃止時の空白表示に使うこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-087	IT-12	非同期更新	P1	非同期更新の結合確認	割引率（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で割引率（隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-088	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	割引率（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で割引率（隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 割引率（隠し）を確認する
 3. 画面表示と後続状態を確認する"	保存時の率計算は商品に紐づく買取減額率を優先し、フォームの rate は主説明から外れるであること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-088	IT-12	エラー継続	P3	エラー継続の結合確認	販売価格（NM）（隠し）を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で販売価格（NM）（隠し）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 販売価格（NM）（隠し）を確認する
-3. 画面表示と後続状態を確認する"	更新しないこと。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-089	IT-25	件数上限	P2	件数上限の結合確認	複数行送信の途中で例外を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で複数行送信の途中で例外の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 複数行送信の途中で例外
-3. 画面表示と後続状態を確認する"	それ以前にコミットした商品グループは保存済みのままであること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-090	IT-25	データなし	P2	データなしの結合確認	一覧との表示差を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で一覧との表示差の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧との表示差を確認する
-3. 画面表示と後続状態を確認する"	成功後は一覧へ戻り resume でセッション検索を再利用するため、通常は最新の検索結果に反映されるであること。
-m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）	IT-M03-10-ADMIN-PRODUCT-PRODUCT-BULK-BUY-STANDARD-PRICE-EDIT-091	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	販売価格を試験できる状態である	m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）（m03_10_admin_product_product_bulk_buy_standard_price_edit）で販売価格の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 販売価格を確認する
-3. 画面表示と後続状態を確認する"	当機能では price02 を書き換えないこと。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -411,4 +402,4 @@ m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品�
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.109, No.110, No.111, No.336, No.338, No.346, No.413。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 10件 — No.109, No.110, No.111, No.346, No.359, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

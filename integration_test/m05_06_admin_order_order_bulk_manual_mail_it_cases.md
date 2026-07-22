@@ -10,16 +10,15 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、一覧、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 更新内容 |
 | IT-05 | 実行結果 |
-| IT-02 | 初期行数、表示順 |
-| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-11 | 実行結果 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
 | IT-28 | ヘッダ、件名、実行結果、本文 |
 
 ## テストケースTSV
@@ -62,78 +61,78 @@ m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通�
 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	入力画面で「確認」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で入力画面で「確認」を押すの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力画面で「確認」を押す
 3. 画面表示と後続状態を確認する"	検証成功時、先頭受注を用いた文面プレビュー付き確認画面を返すこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-009	IT-25	URL	P2	URLの操作結果確認	確認画面で「送信」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で確認画面で「送信」を押すの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	確認画面で「送信」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 確認画面で「送信」を押す
-3. 画面表示と後続状態を確認する"	受注ごとにメールを送り、成功フラッシュのうえ admin_order へリダイレクトすること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	確認画面で「手動メール通知画面に戻る」を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 確認画面で「手動メール通知画面に戻る」を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	入力画面で「受注一覧に戻る」を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 入力画面で「受注一覧に戻る」
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	表示要素を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	入力画面で「受注一覧に戻る」を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で入力画面で「受注一覧に戻る」の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力画面で「受注一覧に戻る」
+3. 画面表示と後続状態を確認する"	一覧へ戻ること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示要素を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	一覧は検索結果件数が正のときだけ一括用 form_bulk と「その他」ドロップダウンが描画されるであること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS挙動を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	件名を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	件名を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 件名を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	一部の配送IDがDBに存在しないを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 一部の配送IDがDBに存在しないを確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	確認画面で先頭受注が無い（理論上、受注配列が空）を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 確認画面で先頭受注が無い（理論上、受注配列が空）を確認する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	一部の配送IDがDBに存在しないを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 一部の配送IDがDBに存在しないを確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	外部メールを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 外部メールを確認する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	確認画面で先頭受注が無い（理論上、受注配列が空）を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 確認画面で先頭受注が無い（理論上、受注配列が空）を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-019	IT-22	部分入力	P2	部分入力の入力検証	DBを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でDBの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. DBを確認する
-3. 画面表示と後続状態を確認する"	送信のたび dtb_mail_history に行を追加し都度 flush すること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-020	IT-23	検索条件	P2	検索時の検索条件確認	ログを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-018	IT-22	部分入力	P2	部分入力の入力検証	外部メールを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で外部メールの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 外部メールを確認する
+3. 画面表示と後続状態を確認する"	受注ごとに1通ずつ SMTP 等へ送信する（ループ内順次）であること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-019	IT-23	検索条件	P2	検索時の検索条件確認	DBを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-021	IT-23	検索条件	P2	検索時の検索条件確認	フラッシュを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-020	IT-23	検索条件	P2	検索時の検索条件確認	ログを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-022	IT-23	検索条件	P2	検索時の検索条件確認	一覧から入口URLへ遷移成功を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-021	IT-23	検索条件	P2	検索時の検索条件確認	フラッシュを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-023	IT-23	検索条件	P2	検索時の検索条件確認	確認で送信POST成功を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-022	IT-23	検索条件	P2	検索時の検索条件確認	一覧から入口URLへ遷移成功を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-024	IT-23	検索条件	P2	検索時の検索条件確認	配送ID欠落エラーを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-023	IT-23	検索条件	P2	検索時の検索条件確認	確認で送信POST成功を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-025	IT-23	検索条件	P2	検索時の検索条件確認	M05-06-MSG-003を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-024	IT-23	検索条件	P2	検索時の検索条件確認	配送ID欠落エラーを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-026	IT-23	検索条件	P2	検索時の検索条件確認	M05-06-MSG-004を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-025	IT-23	検索条件	P2	検索時の検索条件確認	M05-06-MSG-003を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-027	IT-23	検索条件	P2	検索時の検索条件確認	M05-06-MSG-005を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-026	IT-23	検索条件	P2	検索時の検索条件確認	M05-06-MSG-004を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-027	IT-23	検索条件	P2	検索時の検索条件確認	M05-06-MSG-005を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でM05-06-MSG-005の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-028	IT-23	検索条件	P2	検索時の検索条件確認	M05-06-MSG-010を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でM05-06-MSG-010の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-029	IT-23	検索条件	P2	検索時の検索条件確認	EE-JS-MSG-049を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でEE-JS-MSG-049の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-030	IT-23	検索条件	P2	検索時の検索条件確認	M05-06-MSG-008を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でM05-06-MSG-008の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-031	IT-23	検索条件	P2	検索時の検索条件確認	M05-06-MSG-009を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でM05-06-MSG-009の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-032	IT-23	検索条件	P2	検索時の検索条件確認	トランザクション境界を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でトランザクション境界の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-032	IT-23	実行結果	P2	検索時の実行結果確認	トランザクション境界を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でトランザクション境界の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-033	IT-23	実行結果	P2	検索時の実行結果確認	ロックを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でロックの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
@@ -143,138 +142,129 @@ m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通�
 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-035	IT-23	実行結果	P2	検索時の実行結果確認	メール送信履歴テーブルを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でメール送信履歴テーブルの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-036	IT-23	実行結果	P2	検索時の実行結果確認	一括送信の確認画面を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で一括送信の確認画面の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-036	IT-26	更新内容	P1	更新時の更新内容確認	一括送信の確認画面を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で一括送信の確認画面の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-037	IT-26	更新内容	P1	更新時の更新内容確認	送信成功フラッシュを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で送信成功フラッシュの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-038	IT-26	更新内容	P1	更新時の更新内容確認	送信後リダイレクトを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で送信後リダイレクトの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-039	IT-26	更新内容	P1	更新時の更新内容確認	受注一覧で1件以上の配送行にチェックを入れ、「その他」→「メール一括通知」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で受注一覧で1件以上の配送行にチェックを入れ、「その他」→「メール一括通知」を押すの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	テンプレート未選択の一括手動メール入力画面が開くこと。
 m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-040	IT-26	更新内容	P1	更新時の更新内容確認	一覧で未チェックのまま「メール一括通知」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で一覧で未チェックのまま「メール一括通知」を押すの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	alert で「チェックボックスが選択されていません」と表示し、遷移を止めるであること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-041	IT-26	更新内容	P1	更新時の更新内容確認	入力画面でテンプレートプルダウンを変更するを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で入力画面でテンプレートプルダウンを変更するの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-041	IT-26	更新内容	P1	更新時の更新内容確認	入力画面でテンプレートプルダウンを変更するを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-042	IT-26	更新内容	P1	更新時の更新内容確認	入力画面で「確認」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-043	IT-26	更新内容	P1	更新時の更新内容確認	確認画面で「送信」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-042	IT-26	更新内容	P1	更新時の更新内容確認	入力画面で「確認」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-044	IT-26	更新内容	P1	更新時の更新内容確認	確認画面で「手動メール通知画面に戻る」を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-043	IT-26	更新内容	P1	更新時の更新内容確認	確認画面で「送信」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-045	IT-26	更新内容	P1	更新時の更新内容確認	入力画面で「受注一覧に戻る」を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-044	IT-26	更新内容	P1	更新時の更新内容確認	確認画面で「手動メール通知画面に戻る」を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-046	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で表示要素の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-045	IT-26	更新内容	P1	更新時の更新内容確認	入力画面で「受注一覧に戻る」を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で入力画面で「受注一覧に戻る」の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-047	IT-05	実行結果	P1	更新時の実行結果確認	JS挙動を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でJS挙動の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-046	IT-05	実行結果	P1	更新時の実行結果確認	表示要素を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で表示要素の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-048	IT-05	実行結果	P1	更新時の実行結果確認	モーダル・ポップアップを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-047	IT-05	実行結果	P1	更新時の実行結果確認	JS挙動を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でJS挙動の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	確認は別テンプレートの画面遷移で行う（専用モーダルはない）であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-049	IT-02	初期行数	P2	初期行数の結合確認	件名を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で件名の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 件名を確認する
-3. 画面表示と後続状態を確認する"	送信時に sendManualMailForBulk の件名として使われ、履歴の件名にもなること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-050	IT-02	表示順	P2	表示順の結合確認	一部の配送IDがDBに存在しないを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で一部の配送IDがDBに存在しないの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一部の配送IDがDBに存在しないを確認する
-3. 画面表示と後続状態を確認する"	欠落IDごとにエラーフラッシュ、admin_order へ戻ること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-051	IT-25	更新抑止	P1	更新抑止の結合確認	確認画面で先頭受注が無い（理論上、受注配列が空）を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で確認画面で先頭受注が無い（理論上、受注配列が空）の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	プレビュー本文は空であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-052	IT-12	内部情報	P1	内部情報の結合確認	外部メールを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で外部メールの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	受注ごとに1通ずつ SMTP 等へ送信する（ループ内順次）であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-053	IT-15	機密情報	P1	機密情報の結合確認	DBを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でDBの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	送信のたび dtb_mail_history に行を追加し都度 flush すること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-054	IT-11	実行結果	P2	実行結果の結合確認	ログを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でログの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ログを確認する
-3. 画面表示と後続状態を確認する"	本コントローラは送信ログを独自に追記しない（メーラー層のログに依存）であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-055	IT-28	実行結果	P2	実行結果の結合確認	フラッシュを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でフラッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. フラッシュを確認する
-3. 画面表示と後続状態を確認する"	欠落配送ID時はエラー複数、送信完了時は成功1件であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-056	IT-28	実行結果	P2	実行結果の結合確認	一覧から入口URLへ遷移成功を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で一覧から入口URLへ遷移成功の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧から入口URLへ遷移成功を確認する
-3. 画面表示と後続状態を確認する"	一括手動メール入力（テンプレ未選もしくは選択済み）であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-057	IT-28	ヘッダ	P2	ヘッダの結合確認	確認で送信POST成功を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で確認で送信POST成功の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 確認で送信POST成功
-3. 画面表示と後続状態を確認する"	admin_order（受注一覧であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-058	IT-28	件名	P2	件名の結合確認	配送ID欠落エラーを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 配送ID欠落エラーを確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-059	IT-28	件名	P2	件名の結合確認	M05-06-MSG-003を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. M05-06-MSG-003を確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-060	IT-28	件名	P2	件名の結合確認	M05-06-MSG-004を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でM05-06-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M05-06-MSG-004を確認する
-3. 画面表示と後続状態を確認する"	一括手動メール通知画面へのアクセス時、指定した配送IDのうち ShippingRepository で取得できないIDが存在するとき（%s は未取得の配送ID）であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-061	IT-28	本文	P2	本文の結合確認	M05-06-MSG-005を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. M05-06-MSG-005を確認する
-3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-062	IT-28	本文	P2	本文の結合確認	M05-06-MSG-010を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. M05-06-MSG-010を確認する
-3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-063	IT-28	本文	P2	本文の結合確認	EE-JS-MSG-049を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でEE-JS-MSG-049の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. EE-JS-MSG-049を確認する
-3. 画面表示と後続状態を確認する"	受注一覧で配送行のチェックが0件のまま「その他」ドロップダウン内の「メール一括通知」（#manualMailAll、a.dropdown-item）を押したときであること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-064	IT-28	本文	P2	本文の結合確認	M05-06-MSG-008を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でM05-06-MSG-008の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M05-06-MSG-008を確認する
-3. 画面表示と後続状態を確認する"	手動メール通知画面でテンプレ選択・件名・メッセージ本文のいずれかが未入力のまま mode=confirm／complete を送信したとき（NotBlank違反）であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-065	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M05-06-MSG-009を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でM05-06-MSG-009の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M05-06-MSG-009を確認する
-3. 画面表示と後続状態を確認する"	一括手動メール通知画面でテンプレ選択・件名が未入力のまま mode=confirm／complete を送信したとき（NotBlank違反）であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-066	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M05-06-MSG-010を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でM05-06-MSG-010の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M05-06-MSG-010を確認する
-3. 画面表示と後続状態を確認する"	#send_mail のクリック時、mode=complete のPOST送信前にブラウザ標準confirmを表示であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-067	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	トランザクション境界を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でトランザクション境界の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. トランザクション境界を確認する
-3. 画面表示と後続状態を確認する"	複数受注へのメール送信全体を包む明示トランザクションは持たないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ロックを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でロックの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ロックを確認する
-3. 画面表示と後続状態を確認する"	受注、配送、メール履歴に対する行ロック・悲観ロック・楽観ロック・ロックファイルは使用しないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-069	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	例外時を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で例外時の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 例外時を確認する
-3. 画面表示と後続状態を確認する"	途中の送信もしくは履歴保存で例外が起きた場合、すでに送信済みのメールとflush済みのメール履歴は戻らないこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	メール送信履歴テーブルを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でメール送信履歴テーブルの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. メール送信履歴テーブル
-3. 画面表示と後続状態を確認する"	dtb_mail_history（主キー id）であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	一括送信の確認画面を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で一括送信の確認画面の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一括送信の確認画面
-3. 画面表示と後続状態を確認する"	確認画面あり（mode=confirm で文面プレビュー → mode=complete で送信、manual_mail_all_confirm.twig）であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-072	IT-25	一覧	P2	一覧の結合確認	送信成功フラッシュを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で送信成功フラッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 送信成功フラッシュ
-3. 画面表示と後続状態を確認する"	admin.order.mail_send_completeであること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-073	IT-12	画面表示データ	P2	画面表示データの結合確認	送信後リダイレクトを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で送信後リダイレクトの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 送信後リダイレクト
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-074	IT-25	画面表示データ	P2	画面表示データの結合確認	受注一覧で1件以上の配送行にチェックを入れ、「その他」→「メール一括通知」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で受注一覧で1件以上の配送行にチェックを入れ、「その他」→「メール一括通知」を押すの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 受注一覧で1件以上の配送行にチェックを入れ、「その他」→「メール一括通知」を押すを確認する
-3. 画面表示と後続状態を確認する"	テンプレート未選択の一括手動メール入力画面が開くこと。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-075	IT-12	画面表示データ	P2	画面表示データの結合確認	一覧で未チェックのまま「メール一括通知」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で一覧で未チェックのまま「メール一括通知」を押すの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧で未チェックのまま「メール一括通知」を押すを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-076	IT-12	非同期更新	P1	非同期更新の結合確認	確認画面で「手動メール通知画面に戻る」を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で確認画面で「手動メール通知画面に戻る」の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 確認画面で「手動メール通知画面に戻る」を確認する
-3. 画面表示と後続状態を確認する"	入力画面に戻ること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-077	IT-12	エラー継続	P3	エラー継続の結合確認	入力画面で「受注一覧に戻る」を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で入力画面で「受注一覧に戻る」の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 入力画面で「受注一覧に戻る」
-3. 画面表示と後続状態を確認する"	一覧へ戻ること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-078	IT-25	欠損値	P2	欠損値の結合確認	JS挙動を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	テンプレ選択変更時、全 ids_* hidden の値を拾って ids%5B%5D= を連結し、ルート admin_order_manual_mail_all もしくは admin_order_manual_mail_…であること。
-m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-079	IT-25	データなし	P2	データなしの結合確認	モーダル・ポップアップを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	テンプレ選択変更時、全 ids_* hidden の値を拾って ids%5B%5D= を連結し、ルート admin_order_manual_mail_all もしくは admin_order_manual_mail_…であること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-048	IT-02	初期行数	P2	初期行数の結合確認	モーダル・ポップアップを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	確認は別テンプレートの画面遷移で行う（専用モーダルはない）であること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-049	IT-02	表示順	P2	表示順の結合確認	件名を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で件名の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 件名を確認する
+3. 画面表示と後続状態を確認する"	送信時に sendManualMailForBulk の件名として使われ、履歴の件名にもなること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-050	IT-25	更新抑止	P1	更新抑止の結合確認	一部の配送IDがDBに存在しないを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で一部の配送IDがDBに存在しないの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	欠落IDごとにエラーフラッシュ、admin_order へ戻ること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-051	IT-12	内部情報	P1	内部情報の結合確認	確認画面で先頭受注が無い（理論上、受注配列が空）を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で確認画面で先頭受注が無い（理論上、受注配列が空）の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	プレビュー本文は空であること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-052	IT-28	実行結果	P2	実行結果の結合確認	DBを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でDBの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. DBを確認する
+3. 画面表示と後続状態を確認する"	送信のたび dtb_mail_history に行を追加し都度 flush すること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-053	IT-28	実行結果	P2	実行結果の結合確認	ログを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でログの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ログを確認する
+3. 画面表示と後続状態を確認する"	本コントローラは送信ログを独自に追記しない（メーラー層のログに依存）であること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-054	IT-28	ヘッダ	P2	ヘッダの結合確認	フラッシュを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でフラッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. フラッシュを確認する
+3. 画面表示と後続状態を確認する"	欠落配送ID時はエラー複数、送信完了時は成功1件であること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-055	IT-28	件名	P2	件名の結合確認	一覧から入口URLへ遷移成功を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 一覧から入口URLへ遷移成功を確認する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-056	IT-28	件名	P2	件名の結合確認	確認で送信POST成功を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 確認で送信POST成功
+3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-057	IT-28	件名	P2	件名の結合確認	配送ID欠落エラーを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で配送ID欠落エラーの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 配送ID欠落エラーを確認する
+3. 画面表示と後続状態を確認する"	admin_orderであること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-058	IT-28	本文	P2	本文の結合確認	M05-06-MSG-003を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. M05-06-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-059	IT-28	本文	P2	本文の結合確認	M05-06-MSG-004を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. M05-06-MSG-004を確認する
+3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-060	IT-28	本文	P2	本文の結合確認	M05-06-MSG-005を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でM05-06-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-06-MSG-005を確認する
+3. 画面表示と後続状態を確認する"	一括手動メール通知確認画面で［送信］（POST mode=complete）が送信済み・有効かつテンプレートが存在するときであること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-061	IT-28	本文	P2	本文の結合確認	M05-06-MSG-010を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でM05-06-MSG-010の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-06-MSG-010を確認する
+3. 画面表示と後続状態を確認する"	手動メール通知確認画面・一括手動メール通知確認画面で［送信］（#send_mail）を押したとき（manual_mail.js の送信前 confirm）であること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-062	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	EE-JS-MSG-049を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でEE-JS-MSG-049の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. EE-JS-MSG-049を確認する
+3. 画面表示と後続状態を確認する"	受注一覧で配送行のチェックが0件のまま「その他」ドロップダウン内の「メール一括通知」（#manualMailAll、a.dropdown-item）を押したときであること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-063	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M05-06-MSG-008を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でM05-06-MSG-008の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-06-MSG-008を確認する
+3. 画面表示と後続状態を確認する"	手動メール通知画面でテンプレ選択・件名・メッセージ本文のいずれかが未入力のまま mode=confirm／complete を送信したとき（NotBlank違反）であること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-064	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M05-06-MSG-009を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でM05-06-MSG-009の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-06-MSG-009を確認する
+3. 画面表示と後続状態を確認する"	一括手動メール通知画面でテンプレ選択・件名が未入力のまま mode=confirm／complete を送信したとき（NotBlank違反）であること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-065	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M05-06-MSG-010を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でM05-06-MSG-010の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M05-06-MSG-010を確認する
+3. 画面表示と後続状態を確認する"	#send_mail のクリック時、mode=complete のPOST送信前にブラウザ標準confirmを表示であること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-066	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	トランザクション境界を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でトランザクション境界の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. トランザクション境界を確認する
+3. 画面表示と後続状態を確認する"	複数受注へのメール送信全体を包む明示トランザクションは持たないこと。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-067	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ロックを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でロックの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ロックを確認する
+3. 画面表示と後続状態を確認する"	受注、配送、メール履歴に対する行ロック・悲観ロック・楽観ロック・ロックファイルは使用しないこと。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-068	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	例外時を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で例外時の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 例外時を確認する
+3. 画面表示と後続状態を確認する"	途中の送信もしくは履歴保存で例外が起きた場合、すでに送信済みのメールとflush済みのメール履歴は戻らないこと。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-069	IT-25	一覧	P2	一覧の結合確認	メール送信履歴テーブルを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）でメール送信履歴テーブルの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. メール送信履歴テーブル
+3. 画面表示と後続状態を確認する"	dtb_mail_history（主キー id）であること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-070	IT-12	画面表示データ	P2	画面表示データの結合確認	一括送信の確認画面を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で一括送信の確認画面の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一括送信の確認画面
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-071	IT-25	画面表示データ	P2	画面表示データの結合確認	送信成功フラッシュを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で送信成功フラッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 送信成功フラッシュ
+3. 画面表示と後続状態を確認する"	admin.order.mail_send_completeであること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-072	IT-12	画面表示データ	P2	画面表示データの結合確認	送信後リダイレクトを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で送信後リダイレクトの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 送信後リダイレクト
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-073	IT-25	画面表示データ	P2	画面表示データの結合確認	受注一覧で1件以上の配送行にチェックを入れ、「その他」→「メール一括通知」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で受注一覧で1件以上の配送行にチェックを入れ、「その他」→「メール一括通知」を押すの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 受注一覧で1件以上の配送行にチェックを入れ、「その他」→「メール一括通知」を押すを確認する
+3. 画面表示と後続状態を確認する"	テンプレート未選択の一括手動メール入力画面が開くこと。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-074	IT-25	フォーム送信	P1	フォーム送信の結合確認	一覧で未チェックのまま「メール一括通知」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で一覧で未チェックのまま「メール一括通知」を押すの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧で未チェックのまま「メール一括通知」を押すを確認する
+3. 画面表示と後続状態を確認する"	alert で「チェックボックスが選択されていません」と表示し、遷移を止めるであること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-075	IT-12	エラー継続	P3	エラー継続の結合確認	確認画面で「送信」を押すを試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で確認画面で「送信」を押すの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 確認画面で「送信」を押す
+3. 画面表示と後続状態を確認する"	受注ごとにメールを送り、成功フラッシュのうえ admin_order へリダイレクトすること。
+m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）	IT-M05-06-ADMIN-ORDER-ORDER-BULK-MANUAL-MAIL-076	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	確認画面で「手動メール通知画面に戻る」を試験できる状態である	m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通知／手動メール一括）（m05_06_admin_order_order_bulk_manual_mail）で確認画面で「手動メール通知画面に戻る」の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 確認画面で「手動メール通知画面に戻る」を確認する
+3. 画面表示と後続状態を確認する"	入力画面に戻ること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -376,4 +366,4 @@ m05-06_admin_order_order_bulk_manual_mail（受注管理 — メール一括通�
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 9件 — No.50, No.109, No.110, No.111, No.359, No.381, No.382, No.412, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 12件 — No.51, No.109, No.110, No.111, No.215, No.382, No.385, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

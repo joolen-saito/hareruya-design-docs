@@ -10,15 +10,15 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、確認ダイアログ |
+| IT-25 | HTTPステータス、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
+| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-11 | 実行結果 |
 | IT-28 | ヘッダ、件名、実行結果、本文 |
 | IT-16 | ファイル選択 |
@@ -63,81 +63,81 @@ m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ�
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	表示要素（受注一覧）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で表示要素（受注一覧）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素（受注一覧）を確認する
 3. 画面表示と後続状態を確認する"	出荷行ごとに問い合わせ番号の入力欄（1行テキスト）と更新ボタンを表示する設計のJSを持つこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-009	IT-25	URL	P2	URLの操作結果確認	JS挙動（受注一覧）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でJS挙動（受注一覧）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	JS挙動（受注一覧）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. JS挙動（受注一覧）を確認する
-3. 画面表示と後続状態を確認する"	更新ボタンは初期状態で無効であること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	JS挙動（失敗応答）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. JS挙動（失敗応答）を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	CSS・レイアウトを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. CSS・レイアウトを確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	表示要素（受注編集）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で表示要素（受注編集）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	CSS・レイアウトを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. CSS・レイアウトを確認する
+3. 画面表示と後続状態を確認する"	更新ボタンのアイコンは未変更時がtext-secondary、変更検知時がtext-successであること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示要素（受注編集）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 表示要素（受注編集）を確認する
-3. 画面表示と後続状態を確認する"	出荷情報の中に「送り状No.」ラベルとツールチップ付きの1行テキスト欄を表示すること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	JS挙動（受注編集）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. JS挙動（受注編集）を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	半角変換を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	半角変換を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 半角変換を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	文字種を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 文字種を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	最大長（一覧の非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 最大長（一覧の非同期保存）
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	文字種を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 文字種を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	最大長（受注編集フォーム）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 最大長（受注編集フォーム）を確認する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	最大長（一覧の非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 最大長（一覧の非同期保存）
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-019	IT-22	部分入力	P2	部分入力の入力検証	保存単位を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で保存単位の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 保存単位
-3. 画面表示と後続状態を確認する"	問い合わせ番号は出荷単位で保持すること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-020	IT-23	検索条件	P2	検索時の検索条件確認	既存値の上書きを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-018	IT-22	部分入力	P2	部分入力の入力検証	最大長（受注編集フォーム）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で最大長（受注編集フォーム）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 最大長（受注編集フォーム）を確認する
+3. 画面表示と後続状態を確認する"	確認値200文字であること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-019	IT-23	検索条件	P2	検索時の検索条件確認	保存単位を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-021	IT-23	検索条件	P2	検索時の検索条件確認	送り状No.（受注一覧の出荷行）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-020	IT-23	検索条件	P2	検索時の検索条件確認	既存値の上書きを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-022	IT-23	検索条件	P2	検索時の検索条件確認	送り状No.（受注編集の出荷情報）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-021	IT-23	検索条件	P2	検索時の検索条件確認	送り状No.（受注一覧の出荷行）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-023	IT-23	検索条件	P2	検索時の検索条件確認	値が空（受注一覧の非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-022	IT-23	検索条件	P2	検索時の検索条件確認	送り状No.（受注編集の出荷情報）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-024	IT-23	検索条件	P2	検索時の検索条件確認	値が空（受注編集フォーム）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-023	IT-23	検索条件	P2	検索時の検索条件確認	値が空（受注一覧の非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-025	IT-23	検索条件	P2	検索時の検索条件確認	全角英数字を入力（受注一覧）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-024	IT-23	検索条件	P2	検索時の検索条件確認	値が空（受注編集フォーム）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-026	IT-23	検索条件	P2	検索時の検索条件確認	全角英数字を入力（受注編集フォーム）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-025	IT-23	検索条件	P2	検索時の検索条件確認	全角英数字を入力（受注一覧）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-027	IT-23	検索条件	P2	検索時の検索条件確認	ハイフン以外の記号・空白を含むを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-026	IT-23	検索条件	P2	検索時の検索条件確認	全角英数字を入力（受注編集フォーム）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-027	IT-23	検索条件	P2	検索時の検索条件確認	ハイフン以外の記号・空白を含むを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でハイフン以外の記号・空白を含むの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-028	IT-23	検索条件	P2	検索時の検索条件確認	最大長を超えるを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で最大長を超えるの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-029	IT-23	検索条件	P2	検索時の検索条件確認	存在しない出荷識別子（非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で存在しない出荷識別子（非同期保存）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-030	IT-23	検索条件	P2	検索時の検索条件確認	一覧と編集の一致を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で一覧と編集の一致の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-031	IT-23	検索条件	P2	検索時の検索条件確認	参照時点を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で参照時点の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-032	IT-23	検索条件	P2	検索時の検索条件確認	最大長の差を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で最大長の差の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-033	IT-23	検索条件	P2	検索時の検索条件確認	同時更新を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で同時更新の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-033	IT-23	実行結果	P2	検索時の実行結果確認	同時更新を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で同時更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-034	IT-23	実行結果	P2	検索時の実行結果確認	成功時出力を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
@@ -147,180 +147,165 @@ m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ�
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-036	IT-23	実行結果	P2	検索時の実行結果確認	副作用を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-037	IT-23	実行結果	P2	検索時の実行結果確認	dtb_shippingを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でdtb_shippingの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-037	IT-26	登録内容	P1	登録時の登録内容確認	dtb_shippingを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でdtb_shippingの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-038	IT-26	登録内容	P1	登録時の登録内容確認	dtb_shippingを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でdtb_shippingの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-039	IT-26	登録内容	P1	登録時の登録内容確認	登録/更新を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で登録/更新の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-040	IT-26	登録内容	P1	登録時の登録内容確認	送り状No.（受注一覧の非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で送り状No.（受注一覧の非同期保存）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	半角変換後に文字種/^[0-9a-zA-Z-]+$/uと最大長255文字を検証すること。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-041	IT-26	登録内容	P1	登録時の登録内容確認	受注一覧を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で受注一覧の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出荷行を一覧表示する管理画面であること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-042	IT-26	登録内容	P1	登録時の登録内容確認	出荷情報を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で出荷情報の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-042	IT-26	登録内容	P1	登録時の登録内容確認	出荷情報を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-043	IT-26	登録内容	P1	登録時の登録内容確認	受注一覧を開くを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-044	IT-26	登録内容	P1	登録時の登録内容確認	受注一覧で問い合わせ番号を入力し更新を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-043	IT-26	登録内容	P1	登録時の登録内容確認	受注一覧を開くを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-045	IT-26	登録内容	P1	登録時の登録内容確認	受注編集を開くを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-044	IT-26	登録内容	P1	登録時の登録内容確認	受注一覧で問い合わせ番号を入力し更新を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-046	IT-26	登録内容	P1	登録時の登録内容確認	受注編集で受注を保存を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-045	IT-26	登録内容	P1	登録時の登録内容確認	受注編集を開くを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-047	IT-26	登録内容	P1	登録時の登録内容確認	非管理者・未認証を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で非管理者・未認証の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-046	IT-26	登録内容	P1	登録時の登録内容確認	受注編集で受注を保存を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で受注編集で受注を保存の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-048	IT-26	実行結果	P1	登録時の実行結果確認	表示要素（受注一覧）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で表示要素（受注一覧）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-047	IT-26	実行結果	P1	登録時の実行結果確認	非管理者・未認証を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で非管理者・未認証の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-049	IT-23	実行結果	P1	登録時の実行結果確認	JS挙動（受注一覧）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でJS挙動（受注一覧）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-048	IT-23	実行結果	P1	登録時の実行結果確認	表示要素（受注一覧）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で表示要素（受注一覧）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新ボタンは初期状態で無効であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出荷行ごとに問い合わせ番号の入力欄（1行テキスト）と更新ボタンを表示する設計のJSを持つこと。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-049	IT-26	更新内容	P1	更新時の更新内容確認	JS挙動（受注一覧）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でJS挙動（受注一覧）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-050	IT-26	更新内容	P1	更新時の更新内容確認	JS挙動（失敗応答）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でJS挙動（失敗応答）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-051	IT-26	更新内容	P1	更新時の更新内容確認	CSS・レイアウトを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でCSS・レイアウトの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-052	IT-26	更新内容	P1	更新時の更新内容確認	表示要素（受注編集）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で表示要素（受注編集）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出荷情報の中に「送り状No.」ラベルとツールチップ付きの1行テキスト欄を表示すること。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-053	IT-26	更新内容	P1	更新時の更新内容確認	JS挙動（受注編集）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でJS挙動（受注編集）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	受注編集の問い合わせ番号欄は専用の非同期送信を持たず、受注編集フォームの通常送信で保存すること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-054	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-054	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-055	IT-26	更新内容	P1	更新時の更新内容確認	半角変換を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-056	IT-26	更新内容	P1	更新時の更新内容確認	文字種を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-055	IT-26	更新内容	P1	更新時の更新内容確認	半角変換を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-057	IT-26	更新内容	P1	更新時の更新内容確認	最大長（一覧の非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-056	IT-26	更新内容	P1	更新時の更新内容確認	文字種を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-058	IT-26	更新内容	P1	更新時の更新内容確認	最大長（受注編集フォーム）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-057	IT-26	更新内容	P1	更新時の更新内容確認	最大長（一覧の非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-059	IT-26	更新内容	P1	更新時の更新内容確認	保存単位を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で保存単位の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-058	IT-26	更新内容	P1	更新時の更新内容確認	最大長（受注編集フォーム）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で最大長（受注編集フォーム）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-060	IT-05	実行結果	P1	更新時の実行結果確認	既存値の上書きを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で既存値の上書きの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-059	IT-05	実行結果	P1	更新時の実行結果確認	保存単位を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で保存単位の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-061	IT-05	実行結果	P1	更新時の実行結果確認	送り状No.（受注一覧の出荷行）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で送り状No.（受注一覧の出荷行）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-060	IT-05	実行結果	P1	更新時の実行結果確認	既存値の上書きを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で既存値の上書きの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_shipping.tracking_numberであること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-062	IT-02	初期行数	P2	初期行数の結合確認	送り状No.（受注編集の出荷情報）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で送り状No.（受注編集の出荷情報）の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	保存時は当該出荷の伝票番号列を受信値で上書きすること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-061	IT-02	初期行数	P2	初期行数の結合確認	送り状No.（受注一覧の出荷行）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で送り状No.（受注一覧の出荷行）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 送り状No.（受注一覧の出荷行）を確認する
+3. 画面表示と後続状態を確認する"	dtb_shipping.tracking_numberであること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-062	IT-02	表示順	P2	表示順の結合確認	送り状No.（受注編集の出荷情報）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で送り状No.（受注編集の出荷情報）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 送り状No.（受注編集の出荷情報）を確認する
 3. 画面表示と後続状態を確認する"	dtb_shipping.tracking_numberであること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-063	IT-02	表示順	P2	表示順の結合確認	値が空（受注一覧の非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で値が空（受注一覧の非同期保存）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 値が空（受注一覧の非同期保存）
-3. 画面表示と後続状態を確認する"	文字種検証が空文字に一致せず検証エラーとなり保存しないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-064	IT-25	更新抑止	P1	更新抑止の結合確認	値が空（受注編集フォーム）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で値が空（受注編集フォーム）の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-063	IT-25	更新抑止	P1	更新抑止の結合確認	値が空（受注一覧の非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で値が空（受注一覧の非同期保存）の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	文字種検証が空文字に一致せず検証エラーとなり保存しないこと。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-064	IT-12	内部情報	P1	内部情報の結合確認	値が空（受注編集フォーム）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で値が空（受注編集フォーム）の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	任意項目のため空のまま保存し得るであること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-065	IT-12	内部情報	P1	内部情報の結合確認	全角英数字を入力（受注一覧）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で全角英数字を入力（受注一覧）の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	半角へ変換してから検証するため、半角英数字とハイフンの範囲なら保存されるであること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-066	IT-15	機密情報	P1	機密情報の結合確認	全角英数字を入力（受注編集フォーム）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で全角英数字を入力（受注編集フォーム）の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	半角変換を行わないため、半角英数字とハイフン以外と判定され検証エラーとなること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-067	IT-11	実行結果	P2	実行結果の結合確認	ハイフン以外の記号・空白を含むを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でハイフン以外の記号・空白を含むの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-065	IT-11	実行結果	P2	実行結果の結合確認	全角英数字を入力（受注一覧）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で全角英数字を入力（受注一覧）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 全角英数字を入力（受注一覧）
+3. 画面表示と後続状態を確認する"	半角へ変換してから検証するため、半角英数字とハイフンの範囲なら保存されるであること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-066	IT-28	実行結果	P2	実行結果の結合確認	全角英数字を入力（受注編集フォーム）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で全角英数字を入力（受注編集フォーム）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 全角英数字を入力（受注編集フォーム）
+3. 画面表示と後続状態を確認する"	半角変換を行わないため、半角英数字とハイフン以外と判定され検証エラーとなること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-067	IT-28	実行結果	P2	実行結果の結合確認	ハイフン以外の記号・空白を含むを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でハイフン以外の記号・空白を含むの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ハイフン以外の記号・空白を含むを確認する
 3. 画面表示と後続状態を確認する"	いずれの経路でも文字種検証エラーとなり保存しないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-068	IT-28	実行結果	P2	実行結果の結合確認	最大長を超えるを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で最大長を超えるの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-068	IT-28	ヘッダ	P2	ヘッダの結合確認	最大長を超えるを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で最大長を超えるの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 最大長を超えるを確認する
 3. 画面表示と後続状態を確認する"	文字数超過の検証エラーとなり保存しないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-069	IT-28	実行結果	P2	実行結果の結合確認	存在しない出荷識別子（非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で存在しない出荷識別子（非同期保存）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-069	IT-28	件名	P2	件名の結合確認	存在しない出荷識別子（非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. 存在しない出荷識別子（非同期保存）
-3. 画面表示と後続状態を確認する"	出荷の取得に失敗し、フレームワークの未検出応答となること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-070	IT-28	ヘッダ	P2	ヘッダの結合確認	一覧と編集の一致を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で一覧と編集の一致の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧と編集の一致を確認する
-3. 画面表示と後続状態を確認する"	受注一覧と受注編集はいずれも同一の出荷情報の伝票番号列を参照・更新すること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-071	IT-28	件名	P2	件名の結合確認	参照時点を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 参照時点を確認する
 3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-072	IT-28	件名	P2	件名の結合確認	最大長の差を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 最大長の差を確認する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-070	IT-28	件名	P2	件名の結合確認	一覧と編集の一致を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 一覧と編集の一致を確認する
 3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-073	IT-28	件名	P2	件名の結合確認	同時更新を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で同時更新の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 同時更新を確認する
-3. 画面表示と後続状態を確認する"	出荷単位の上書き保存であり、同一出荷を複数の管理者が同時に保存した場合は後勝ちとなること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-074	IT-28	本文	P2	本文の結合確認	成功時出力を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 成功時出力を確認する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-071	IT-28	件名	P2	件名の結合確認	参照時点を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 参照時点を確認する
+3. 画面表示と後続状態を確認する"	一覧・編集とも画面表示時点の永続化済みの値を表示すること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-072	IT-28	本文	P2	本文の結合確認	最大長の差を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 最大長の差を確認する
 3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-075	IT-28	本文	P2	本文の結合確認	失敗時出力を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 失敗時出力を確認する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-073	IT-28	本文	P2	本文の結合確認	同時更新を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で本文の対象項目を未入力にする	"1. 対象画面を表示する
+2. 同時更新を確認する
 3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-076	IT-28	本文	P2	本文の結合確認	副作用を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-074	IT-28	本文	P2	本文の結合確認	成功時出力を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	受注一覧ではステータスOK・出荷識別子・保存後の値を持つJSONであること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-075	IT-28	本文	P2	本文の結合確認	失敗時出力を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	受注一覧では検証エラー時にステータスNGとエラー文言配列をHTTP400、保存例外時にステータスNGをHTTP500であること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	出荷情報の伝票番号列の更新であること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-077	IT-28	本文	P2	本文の結合確認	dtb_shippingを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でdtb_shippingの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_shippingを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でdtb_shippingの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_shippingを確認する
 3. 画面表示と後続状態を確認する"	非同期保存の対象出荷を特定するキーであること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-078	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	dtb_shippingを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でdtb_shippingの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_shippingを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でdtb_shippingの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_shippingを確認する
 3. 画面表示と後続状態を確認する"	問い合わせ番号の保存先であること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-080	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	送り状No.（受注一覧の非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で送り状No.（受注一覧の非同期保存）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	送り状No.（受注一覧の非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で送り状No.（受注一覧の非同期保存）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 送り状No.（受注一覧の非同期保存）
 3. 画面表示と後続状態を確認する"	半角変換後に文字種/^[0-9a-zA-Z-]+$/uと最大長255文字を検証すること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	受注一覧を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で受注一覧の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	受注一覧を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で受注一覧の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注一覧を確認する
 3. 画面表示と後続状態を確認する"	出荷行を一覧表示する管理画面であること。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出荷情報を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で出荷情報の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 出荷情報を確認する
 3. 画面表示と後続状態を確認する"	出荷を表す台帳であること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	受注一覧を開くを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で受注一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-083	IT-25	一覧	P2	一覧の結合確認	受注一覧を開くを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で受注一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注一覧を開く
 3. 画面表示と後続状態を確認する"	出荷行を含む受注一覧を表示すること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	受注一覧で問い合わせ番号を入力し更新を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で受注一覧で問い合わせ番号を入力し更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-084	IT-12	画面表示データ	P2	画面表示データの結合確認	受注一覧で問い合わせ番号を入力し更新を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で受注一覧で問い合わせ番号を入力し更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注一覧で問い合わせ番号を入力し更新
-3. 画面表示と後続状態を確認する"	入力欄の値を非同期（XHR）で送信し、当該出荷の問い合わせ番号を保存すること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-085	IT-25	一覧	P2	一覧の結合確認	受注編集を開くを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で受注編集を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-085	IT-25	画面表示データ	P2	画面表示データの結合確認	受注編集を開くを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で受注編集を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注編集を開く
 3. 画面表示と後続状態を確認する"	出荷情報の中に問い合わせ番号（送り状No.）欄を、現在の保存値を初期値として表示すること。
 m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-086	IT-12	画面表示データ	P2	画面表示データの結合確認	受注編集で受注を保存を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で受注編集で受注を保存の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 受注編集で受注を保存
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-087	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素（受注一覧）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で表示要素（受注一覧）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示要素（受注一覧）を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-088	IT-25	フォーム送信	P1	フォーム送信の結合確認	JS挙動（失敗応答）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でJS挙動（失敗応答）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-087	IT-16	ファイル選択	P2	ファイル選択の結合確認	JS挙動（受注一覧）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でJS挙動（受注一覧）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS挙動（受注一覧）を確認する
+3. 画面表示と後続状態を確認する"	更新ボタンは初期状態で無効であること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-088	IT-12	非同期更新	P1	非同期更新の結合確認	JS挙動（失敗応答）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でJS挙動（失敗応答）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. JS挙動（失敗応答）を確認する
 3. 画面表示と後続状態を確認する"	XHRがHTTPエラー応答（4xx／5xx）を返した場合、応答JSONのmessages配列を改行連結してアラート表示すること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-089	IT-16	ファイル選択	P2	ファイル選択の結合確認	CSS・レイアウトを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. CSS・レイアウトを確認する
-3. 画面表示と後続状態を確認する"	更新ボタンのアイコンは未変更時がtext-secondary、変更検知時がtext-successであること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-090	IT-12	エラー継続	P3	エラー継続の結合確認	JS挙動（受注編集）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でJS挙動（受注編集）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. JS挙動（受注編集）を確認する
-3. 画面表示と後続状態を確認する"	受注編集の問い合わせ番号欄は専用の非同期送信を持たず、受注編集フォームの通常送信で保存すること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-091	IT-25	件数上限	P2	件数上限の結合確認	モーダル・ポップアップを試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	本機能はモーダル・ポップアップ・トーストを表示しないこと。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-092	IT-25	欠損値	P2	欠損値の結合確認	半角変換を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で半角変換の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 半角変換を確認する
-3. 画面表示と後続状態を確認する"	受注一覧の非同期保存では、受け取った値を全角英数字から半角英数字へ変換してから検証・保存すること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-093	IT-25	データなし	P2	データなしの結合確認	文字種を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で文字種の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 文字種を確認する
-3. 画面表示と後続状態を確認する"	半角英数字とハイフンのみを許可すること。
-m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-094	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	最大長（一覧の非同期保存）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で最大長（一覧の非同期保存）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 最大長（一覧の非同期保存）
-3. 画面表示と後続状態を確認する"	確認値255文字であること。
+m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）	IT-M05-13-ADMIN-ORDER-ORDER-TRACKING-NUMBER-089	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	表示要素（受注編集）を試験できる状態である	m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ番号入力）（m05_13_admin_order_order_tracking_number）で表示要素（受注編集）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素（受注編集）を確認する
+3. 画面表示と後続状態を確認する"	出荷情報の中に「送り状No.」ラベルとツールチップ付きの1行テキスト欄を表示すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -422,4 +407,4 @@ m05-13_admin_order_order_tracking_number（管理画面_受注_問い合わせ�
 | ウェブアプリケーション / 販売価格 / 価格改定（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 2 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.109, No.110, No.111, No.357, No.359, No.385。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 11件 — No.109, No.110, No.111, No.359, No.381, No.387, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

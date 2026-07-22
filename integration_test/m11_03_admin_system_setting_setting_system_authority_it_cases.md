@@ -10,9 +10,9 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
@@ -62,81 +62,81 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	モーダル・ポップアップを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	本機能ではモーダル、確認ダイアログ、トースト専用処理は使わないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-009	IT-25	URL	P2	URLの操作結果確認	M11-03-MSG-001を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	M11-03-MSG-001を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. M11-03-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	POST送信フォームが有効で、権限設定保存処理が例外なく完了したときであること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	M11-03-MSG-002を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. M11-03-MSG-002を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	M11-03-MSG-003を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. M11-03-MSG-003を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	M11-03-MSG-004を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	M11-03-MSG-003を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M11-03-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	POST送信フォームが有効で、権限設定保存処理中に例外が発生したときであること。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M11-03-MSG-004を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. M11-03-MSG-004を確認する
-3. 画面表示と後続状態を確認する"	POST送信時、権限が未選択かつ拒否URLが空でないこと。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	M11-03-MSG-005を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. M11-03-MSG-005を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	権限を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	権限を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 権限を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	拒否URLを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	拒否URLを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 拒否URLを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	登録済み行をすべて削除して送信を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 登録済み行をすべて削除して送信
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	同一権限に複数の拒否URLを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 同一権限に複数の拒否URLを確認する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	登録済み行をすべて削除して送信を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 登録済み行をすべて削除して送信
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	一覧と保存結果を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 一覧と保存結果
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	同一権限に複数の拒否URLを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 同一権限に複数の拒否URLを確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-019	IT-22	部分入力	P2	部分入力の入力検証	ナビ非表示と実際の拒否を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でナビ非表示と実際の拒否の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ナビ非表示と実際の拒否を確認する
-3. 画面表示と後続状態を確認する"	グローバルは「フルURL文字列」、ナビ側の比較は階層id連結や path() 生成URLとの包含判定であり、投票者のパス前方一致とは文字列の作り方が異なること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-020	IT-23	検索条件	P2	検索時の検索条件確認	Creator・日時を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-018	IT-22	部分入力	P2	部分入力の入力検証	一覧と保存結果を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で一覧と保存結果の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 一覧と保存結果
+3. 画面表示と後続状態を確認する"	保存成功後は再GETで一覧が読み直されるであること。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-019	IT-23	検索条件	P2	検索時の検索条件確認	ナビ非表示と実際の拒否を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-021	IT-23	検索条件	P2	検索時の検索条件確認	データベースを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-020	IT-23	検索条件	P2	検索時の検索条件確認	Creator・日時を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-022	IT-23	検索条件	P2	検索時の検索条件確認	キャッシュを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-021	IT-23	検索条件	P2	検索時の検索条件確認	データベースを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-023	IT-23	検索条件	P2	検索時の検索条件確認	Twig グローバルを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-022	IT-23	検索条件	P2	検索時の検索条件確認	キャッシュを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-024	IT-23	検索条件	P2	検索時の検索条件確認	イベントを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-023	IT-23	検索条件	P2	検索時の検索条件確認	Twig グローバルを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-025	IT-23	検索条件	P2	検索時の検索条件確認	セッションを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-024	IT-23	検索条件	P2	検索時の検索条件確認	イベントを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-026	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-025	IT-23	検索条件	P2	検索時の検索条件確認	セッションを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-027	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-026	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-027	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で失敗時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-028	IT-23	検索条件	P2	検索時の検索条件確認	登録/更新を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で登録/更新の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-029	IT-23	検索条件	P2	検索時の検索条件確認	権限を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で権限の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-030	IT-23	検索条件	P2	検索時の検索条件確認	ログイン済みで拒否ルールに該当しないを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でログイン済みで拒否ルールに該当しないの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-031	IT-23	検索条件	P2	検索時の検索条件確認	GETで開くを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でGETで開くの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-032	IT-23	検索条件	P2	検索時の検索条件確認	フォーム検証エラーを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でフォーム検証エラーの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-033	IT-23	検索条件	P2	検索時の検索条件確認	当機能の保存処理を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で当機能の保存処理の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-033	IT-23	実行結果	P2	検索時の実行結果確認	当機能の保存処理を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で当機能の保存処理の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-034	IT-23	実行結果	P2	検索時の実行結果確認	パスの正規化を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でパスの正規化の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
@@ -146,171 +146,165 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-036	IT-23	実行結果	P2	検索時の実行結果確認	ロックを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でロックの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-037	IT-23	実行結果	P2	検索時の実行結果確認	例外時を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で例外時の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-037	IT-26	登録内容	P1	登録時の登録内容確認	例外時を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で例外時の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-038	IT-26	登録内容	P1	登録時の登録内容確認	AuthorityVoterを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でAuthorityVoterの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-039	IT-26	登録内容	P1	登録時の登録内容確認	ナビから当画面を開くを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でナビから当画面を開くの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-040	IT-26	登録内容	P1	登録時の登録内容確認	行の「削除」を押すを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で行の「削除」を押すの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当該行が表から消えるであること。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-041	IT-26	登録内容	P1	登録時の登録内容確認	「登録」を押し検証に成功するを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で「登録」を押し検証に成功するの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	データベースの権限ロールが送信内容で置き換わり、成功メッセージのあと同一画面へ戻ること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-042	IT-26	登録内容	P1	登録時の登録内容確認	「登録」を押し検証に失敗するを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で「登録」を押し検証に失敗するの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-042	IT-26	登録内容	P1	登録時の登録内容確認	「登録」を押し検証に失敗するを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-043	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-044	IT-26	登録内容	P1	登録時の登録内容確認	JS 挙動を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-043	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-045	IT-26	登録内容	P1	登録時の登録内容確認	モーダル・ポップアップを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-044	IT-26	登録内容	P1	登録時の登録内容確認	JS 挙動を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-046	IT-26	登録内容	P1	登録時の登録内容確認	M11-03-MSG-001を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-045	IT-26	登録内容	P1	登録時の登録内容確認	モーダル・ポップアップを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-047	IT-26	登録内容	P1	登録時の登録内容確認	M11-03-MSG-002を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-002の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-046	IT-26	登録内容	P1	登録時の登録内容確認	M11-03-MSG-001を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-001の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-048	IT-26	実行結果	P1	登録時の実行結果確認	M11-03-MSG-003を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-003の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-047	IT-26	実行結果	P1	登録時の実行結果確認	M11-03-MSG-002を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-002の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-049	IT-23	実行結果	P1	登録時の実行結果確認	M11-03-MSG-004を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-004の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-048	IT-23	実行結果	P1	登録時の実行結果確認	M11-03-MSG-003を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-003の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	POST送信時、権限が未選択かつ拒否URLが空でないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	POST送信フォームが有効で、権限設定保存処理中に例外が発生したときであること。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-049	IT-26	更新内容	P1	更新時の更新内容確認	M11-03-MSG-004を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-004の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-050	IT-26	更新内容	P1	更新時の更新内容確認	M11-03-MSG-005を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-005の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-051	IT-26	更新内容	P1	更新時の更新内容確認	権限を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で権限の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-052	IT-26	更新内容	P1	更新時の更新内容確認	拒否URLを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で拒否URLの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_authority_role.deny_urlであること。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-053	IT-26	更新内容	P1	更新時の更新内容確認	登録済み行をすべて削除して送信を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で登録済み行をすべて削除して送信の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	既存行はすべて削除され、有効な権限＋URLの組がなければ権限ロールは0件になること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-054	IT-26	更新内容	P1	更新時の更新内容確認	同一権限に複数の拒否URLを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で同一権限に複数の拒否URLの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-054	IT-26	更新内容	P1	更新時の更新内容確認	同一権限に複数の拒否URLを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-055	IT-26	更新内容	P1	更新時の更新内容確認	一覧と保存結果を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-056	IT-26	更新内容	P1	更新時の更新内容確認	ナビ非表示と実際の拒否を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-055	IT-26	更新内容	P1	更新時の更新内容確認	一覧と保存結果を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-057	IT-26	更新内容	P1	更新時の更新内容確認	Creator・日時を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-056	IT-26	更新内容	P1	更新時の更新内容確認	ナビ非表示と実際の拒否を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-058	IT-26	更新内容	P1	更新時の更新内容確認	データベースを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-057	IT-26	更新内容	P1	更新時の更新内容確認	Creator・日時を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-059	IT-26	更新内容	P1	更新時の更新内容確認	キャッシュを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でキャッシュの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-058	IT-26	更新内容	P1	更新時の更新内容確認	データベースを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でデータベースの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-060	IT-05	実行結果	P1	更新時の実行結果確認	Twig グローバルを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でTwig グローバルの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-059	IT-05	実行結果	P1	更新時の実行結果確認	キャッシュを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でキャッシュの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-061	IT-05	実行結果	P1	更新時の実行結果確認	イベントを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でイベントの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-060	IT-05	実行結果	P1	更新時の実行結果確認	Twig グローバルを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でTwig グローバルの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	管理画面の最初の controller 処理で、AuthorityRoles を拒否URLのフルパス配列として登録すること。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-061	IT-05	削除条件	P1	削除時の削除条件確認	イベントを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	admin.setting.system.authority.index.initialize と .complete がそれぞれ表示前・保存後に発火すること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-062	IT-05	削除条件	P1	削除時の削除条件確認	セッションを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-062	IT-05	削除条件	P1	削除時の削除条件確認	セッションを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	業務データとしてのセッション更新は行わないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-063	IT-05	削除条件	P1	削除時の削除条件確認	成功時出力を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-063	IT-05	削除条件	P1	削除時の削除条件確認	成功時出力を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	リダイレクト後の画面に成功メッセージであること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-064	IT-05	削除条件	P1	削除時の削除条件確認	失敗時出力を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-064	IT-05	削除条件	P1	削除時の削除条件確認	失敗時出力を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一画面でのフィールドエラーであること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-065	IT-05	削除条件	P1	削除時の削除条件確認	登録/更新を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-066	IT-05	削除条件	P1	削除時の削除条件確認	権限を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で権限の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-065	IT-05	削除条件	P1	削除時の削除条件確認	登録/更新を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で登録/更新の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-066	IT-05	実行結果	P1	削除時の実行結果確認	権限を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で権限の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-067	IT-05	実行結果	P1	削除時の実行結果確認	ログイン済みで拒否ルールに該当しないを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でログイン済みで拒否ルールに該当しないの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面表示・保存が原則可能（管理ロールや追加の認可層は管理画面共通実装を正とする）であること。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-068	IT-05	実行結果	P1	削除時の実行結果確認	GETで開くを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でGETで開くの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	権限管理の編集画面であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-069	IT-05	実行結果	P1	削除時の実行結果確認	フォーム検証エラーを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でフォーム検証エラーの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-070	IT-05	実行結果	P1	削除時の実行結果確認	当機能の保存処理を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で当機能の保存処理の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	業務セッション状態を更新しない（フラッシュメッセージ以外）であること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-071	IT-02	初期行数	P2	初期行数の結合確認	パスの正規化を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でパスの正規化の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	該当フィールドにメッセージを表示し、DB は更新しないこと。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-070	IT-02	初期行数	P2	初期行数の結合確認	当機能の保存処理を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で当機能の保存処理の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 当機能の保存処理
+3. 画面表示と後続状態を確認する"	業務セッション状態を更新しない（フラッシュメッセージ以外）であること。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-071	IT-02	表示順	P2	表示順の結合確認	パスの正規化を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でパスの正規化の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. パスの正規化を確認する
 3. 画面表示と後続状態を確認する"	利用者が入力する拒否URLの末尾スラッシュの有無により、ナビ判定と投票者判定で期待が一致しない場合があること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-072	IT-02	表示順	P2	表示順の結合確認	トランザクション境界を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でトランザクション境界の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. トランザクション境界を確認する
-3. 画面表示と後続状態を確認する"	明示的なトランザクション境界が実装にある場合は処理フローの保存処理を正とすること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-073	IT-25	更新抑止	P1	更新抑止の結合確認	ロックを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でロックの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-072	IT-25	更新抑止	P1	更新抑止の結合確認	トランザクション境界を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でトランザクション境界の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	明示的なトランザクション境界が実装にある場合は処理フローの保存処理を正とすること。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-073	IT-12	内部情報	P1	内部情報の結合確認	ロックを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でロックの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	行ロック・悲観ロック・楽観ロック・ロックファイルを使用しないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-074	IT-12	内部情報	P1	内部情報の結合確認	例外時を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で例外時の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	検証エラーもしくは保存前の例外では対象更新を確定しないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-075	IT-15	機密情報	P1	機密情報の結合確認	AuthorityVoterを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でAuthorityVoterの確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ログイン済み Member について、当該権限に登録された拒否パスと現在リクエストのパスが前方一致するかを検査し、一致すればアクセス拒否を返す投票者であること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-076	IT-06	ロールバック	P3	ロールバックの結合確認	ナビから当画面を開くを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でナビから当画面を開くの確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-074	IT-06	ロールバック	P3	ロールバックの結合確認	例外時を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で例外時の確認に必要な条件を指定する	"1. ロールバックの対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録済みの権限ロールがあれば表に行として並ぶこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	行の「削除」を押すを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で行の「削除」を押すの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検証エラーもしくは保存前の例外では対象更新を確定しないこと。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-075	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	AuthorityVoterを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でAuthorityVoterの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. AuthorityVoterを確認する
+3. 画面表示と後続状態を確認する"	ログイン済み Member について、当該権限に登録された拒否パスと現在リクエストのパスが前方一致するかを検査し、一致すればアクセス拒否を返す投票者であること。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ナビから当画面を開くを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でナビから当画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ナビから当画面を開く
+3. 画面表示と後続状態を確認する"	登録済みの権限ロールがあれば表に行として並ぶこと。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-077	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	行の「削除」を押すを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で行の「削除」を押すの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 行の「削除」を押す
 3. 画面表示と後続状態を確認する"	当該行が表から消えるであること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-078	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	「登録」を押し検証に成功するを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で「登録」を押し検証に成功するの確認に必要な条件を指定する	"1. 対象画面を表示する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	「登録」を押し検証に成功するを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で「登録」を押し検証に成功するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「登録」を押し検証に成功するを確認する
 3. 画面表示と後続状態を確認する"	データベースの権限ロールが送信内容で置き換わり、成功メッセージのあと同一画面へ戻ること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	「登録」を押し検証に失敗するを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で「登録」を押し検証に失敗するの確認に必要な条件を指定する	"1. 対象画面を表示する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	「登録」を押し検証に失敗するを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で「登録」を押し検証に失敗するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「登録」を押し検証に失敗するを確認する
 3. 画面表示と後続状態を確認する"	同一画面でフィールドエラーが付き、保存しないこと。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-080	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	表示要素を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示要素を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	見出し「権限設定」であること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-081	IT-25	一覧	P2	一覧の結合確認	M11-03-MSG-002を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-081	IT-12	画面表示データ	P2	画面表示データの結合確認	M11-03-MSG-001を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M11-03-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-082	IT-25	画面表示データ	P2	画面表示データの結合確認	M11-03-MSG-002を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M11-03-MSG-002を確認する
 3. 画面表示と後続状態を確認する"	POST送信フォームが有効で、権限設定保存処理中に例外が発生したときであること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-082	IT-12	画面表示データ	P2	画面表示データの結合確認	M11-03-MSG-003を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-083	IT-12	画面表示データ	P2	画面表示データの結合確認	M11-03-MSG-003を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M11-03-MSG-003を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-083	IT-12	画面表示データ	P2	画面表示データの結合確認	M11-03-MSG-005を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-084	IT-25	画面表示データ	P2	画面表示データの結合確認	M11-03-MSG-004を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M11-03-MSG-004を確認する
+3. 画面表示と後続状態を確認する"	POST送信時、権限が未選択かつ拒否URLが空でないこと。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-085	IT-25	フォーム送信	P1	フォーム送信の結合確認	M11-03-MSG-005を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でM11-03-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M11-03-MSG-005を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-084	IT-25	画面表示データ	P2	画面表示データの結合確認	権限を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で権限の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	POST送信時、権限が選択済みかつ拒否URLが空であること。
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-086	IT-16	ファイル選択	P2	ファイル選択の結合確認	権限を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で権限の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 権限を確認する
 3. 画面表示と後続状態を確認する"	dtb_authority_role.authority_idであること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-085	IT-25	フォーム送信	P1	フォーム送信の結合確認	拒否URLを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で拒否URLの確認に必要な条件を指定する	"1. 対象画面を表示する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-087	IT-12	非同期更新	P1	非同期更新の結合確認	拒否URLを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で拒否URLの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 拒否URLを確認する
 3. 画面表示と後続状態を確認する"	dtb_authority_role.deny_urlであること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-086	IT-16	ファイル選択	P2	ファイル選択の結合確認	登録済み行をすべて削除して送信を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で登録済み行をすべて削除して送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-088	IT-12	エラー継続	P3	エラー継続の結合確認	登録済み行をすべて削除して送信を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で登録済み行をすべて削除して送信の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録済み行をすべて削除して送信
 3. 画面表示と後続状態を確認する"	既存行はすべて削除され、有効な権限＋URLの組がなければ権限ロールは0件になること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-087	IT-12	非同期更新	P1	非同期更新の結合確認	同一権限に複数の拒否URLを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で同一権限に複数の拒否URLの確認に必要な条件を指定する	"1. 対象画面を表示する
+権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-089	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	同一権限に複数の拒否URLを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で同一権限に複数の拒否URLの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 同一権限に複数の拒否URLを確認する
 3. 画面表示と後続状態を確認する"	各行が独立したレコードとして保存され、拒否判定はループで順に試されるであること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-088	IT-12	エラー継続	P3	エラー継続の結合確認	一覧と保存結果を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）で一覧と保存結果の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 一覧と保存結果
-3. 画面表示と後続状態を確認する"	保存成功後は再GETで一覧が読み直されるであること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-089	IT-25	欠損値	P2	欠損値の結合確認	Creator・日時を試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でCreator・日時の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. Creator・日時を確認する
-3. 画面表示と後続状態を確認する"	マッピングでは作成者・作成日時・更新日時は非NULLであること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-090	IT-25	データなし	P2	データなしの結合確認	データベースを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でデータベースの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. データベースを確認する
-3. 画面表示と後続状態を確認する"	保存時に dtb_authority_role を全件置換に近い形で更新する（既存行削除のあと必要行を INSERT 相当）であること。
-権限管理（システム設定／拒否URL）	IT-M11-03-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-AUTHORITY-091	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	キャッシュを試験できる状態である	権限管理（システム設定／拒否URL）（m11_03_admin_system_setting_setting_system_authority）でキャッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. キャッシュを確認する
-3. 画面表示と後続状態を確認する"	本画面専用のキャッシュ更新は行わないこと。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -412,4 +406,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.109, No.110, No.334, No.336, No.338, No.357, No.412。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 9件 — No.109, No.110, No.338, No.346, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

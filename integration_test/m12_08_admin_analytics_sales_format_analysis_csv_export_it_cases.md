@@ -11,9 +11,9 @@
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | 対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 更新内容 |
@@ -43,62 +43,63 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
 M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-001	IT-27	出力失敗	P1	出力失敗の結合確認	集計月を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で出力失敗の対象ファイルと処理条件を指定する	"1. 対象画面で出力失敗のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力失敗のファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-002	IT-15	CSRF	P1	CSRFの結合確認	集計結果の「CSVダウンロード」を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でCSRFの対象ファイルと処理条件を指定する	"1. 対象画面でCSRFのファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	CSRFのファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-003	IT-15	未認証	P1	未認証の結合確認	表示要素を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で未認証の対象ファイルと処理条件を指定する	"1. 未認証の認証・Cookie・セッション・試行制限など前提条件を設定する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-002	IT-15	未認証	P1	未認証の結合確認	集計結果の「CSVダウンロード」を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で未認証の対象ファイルと処理条件を指定する	"1. 未認証の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	送信された集計月でフォーマットごとの日別売上を集計し、日別の売上表をCSVとして出力すること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-003	IT-15	対象データ	P1	対象データの結合確認	表示要素を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で対象データの対象ファイルと処理条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	CSVファイルのダウンロードであること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-004	IT-15	対象データ	P1	対象データの結合確認	JS挙動を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で対象データの対象ファイルと処理条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-004	IT-20	出力抑止	P1	出力抑止の結合確認	JS挙動を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で出力抑止の対象ファイルと処理条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	本機能ではダウンロードのみで、動的な表示切替は扱わないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-005	IT-20	出力抑止	P1	出力抑止の結合確認	条件の取得元を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で出力抑止の対象ファイルと処理条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-005	IT-20	識別子	P1	識別子の結合確認	条件の取得元を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で識別子の対象ファイルと処理条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	集計月はCSVダウンロードの送信値とすること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-006	IT-20	識別子	P1	識別子の結合確認	出力対象を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で識別子の対象ファイルと処理条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-006	IT-15	状態変化	P1	状態変化の結合確認	出力対象を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で状態変化の対象ファイルと処理条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	日別の売上表（日・各フォーマット・日別合計）を出力すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-007	IT-15	状態変化	P1	状態変化の結合確認	データ行を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で状態変化の対象ファイルと処理条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	日に続けて各フォーマットの売上を出力し、末尾に当日の日別合計を出力すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-008	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	参照時点を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で確認ダイアログの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	データ行を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で確認ダイアログの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. データ行を確認する
+3. 画面表示と後続状態を確認する"	日に続けて各フォーマットの売上を出力し、末尾に当日の日別合計を出力すること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	参照時点を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でHTTPステータスの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 参照時点を確認する
 3. 画面表示と後続状態を確認する"	画面表示もしくはCSV・帳票出力の実行時点で検索条件に一致するデータを参照すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-009	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	一覧・出力の整合を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でHTTPステータスの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	一覧・出力の整合を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 一覧・出力の整合を確認する
-3. 画面表示と後続状態を確認する"	一覧、CSV、帳票に出る値はそれぞれの実行時点のDB値を基準にすること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-010	IT-25	URL	P2	URLの操作結果確認	同時更新を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でURLの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 同時更新を確認する
-3. 画面表示と後続状態を確認する"	出力中に他処理が対象データを更新した場合のスナップショット保証は持たないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 入力
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-012	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	成功時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 成功時出力を確認する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	同時更新を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. 同時更新を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-013	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	失敗時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 入力
+3. 画面表示と後続状態を確認する"	送信された集計月であること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	成功時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	失敗時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	データ取得失敗時はアプリケーションの共通例外処理に委ねるであること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	副作用を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	副作用を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	検索を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	検索を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 検索
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	ログイン済み管理者を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. ログイン済み管理者を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-017	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	「CSVダウンロード」押下を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 「CSVダウンロード」押下
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	集計月が未入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 集計月が未入力
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	ログイン済み管理者を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. ログイン済み管理者を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-019	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	認証・権限不足を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 認証・権限不足を確認する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	「CSVダウンロード」押下を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 「CSVダウンロード」押下
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-020	IT-22	部分入力	P2	部分入力の入力検証	集計月を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 集計月を確認する
-3. 画面表示と後続状態を確認する"	CSVダウンロードの送信に含まれる年月であること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-018	IT-22	部分入力	P2	部分入力の入力検証	集計月が未入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 集計月が未入力
+3. 画面表示と後続状態を確認する"	集計月は必須のため、未入力では送信できないこと。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-019	IT-23	検索条件	P2	検索時の検索条件確認	認証・権限不足を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-020	IT-23	検索条件	P2	検索時の検索条件確認	集計月を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-021	IT-23	検索条件	P2	検索時の検索条件確認	集計結果の「CSVダウンロード」を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
@@ -117,10 +118,10 @@ M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN
 M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-026	IT-23	検索条件	P2	検索時の検索条件確認	データ行を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-027	IT-23	検索条件	P2	検索時の検索条件確認	参照時点を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-027	IT-23	検索条件	P2	検索時の検索条件確認	参照時点を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-028	IT-23	検索条件	P2	検索時の検索条件確認	一覧・出力の整合を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-028	IT-23	検索条件	P2	検索時の検索条件確認	一覧・出力の整合を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-029	IT-23	検索条件	P2	検索時の検索条件確認	同時更新を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
@@ -135,172 +136,155 @@ M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN
 M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-032	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-033	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-033	IT-23	実行結果	P2	検索時の実行結果確認	副作用を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-034	IT-23	検索条件	P2	検索時の検索条件確認	検索を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で検索条件の対象ファイルと処理条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-034	IT-23	実行結果	P2	検索時の実行結果確認	検索を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-035	IT-23	実行結果	P2	検索時の実行結果確認	ログイン済み管理者を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-036	IT-23	実行結果	P2	検索時の実行結果確認	「CSVダウンロード」押下を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-037	IT-23	実行結果	P2	検索時の実行結果確認	集計月が未入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-037	IT-26	更新内容	P1	更新時の更新内容確認	集計月が未入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-038	IT-23	実行結果	P2	検索時の実行結果確認	認証・権限不足を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-038	IT-26	更新内容	P1	更新時の更新内容確認	認証・権限不足を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-039	IT-26	更新内容	P1	更新時の更新内容確認	集計月を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-040	IT-26	更新内容	P1	更新時の更新内容確認	集計結果の「CSVダウンロード」を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	送信された集計月でフォーマットごとの日別売上を集計し、日別の売上表をCSVとして出力すること。
 M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-041	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-042	IT-26	更新内容	P1	更新時の更新内容確認	JS挙動を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本機能ではダウンロードのみで、動的な表示切替は扱わないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-043	IT-26	更新内容	P1	更新時の更新内容確認	条件の取得元を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-042	IT-26	更新内容	P1	更新時の更新内容確認	JS挙動を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-044	IT-26	更新内容	P1	更新時の更新内容確認	出力対象を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-045	IT-26	更新内容	P1	更新時の更新内容確認	データ行を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-043	IT-26	更新内容	P1	更新時の更新内容確認	条件の取得元を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-046	IT-26	更新内容	P1	更新時の更新内容確認	参照時点を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-044	IT-26	更新内容	P1	更新時の更新内容確認	出力対象を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-047	IT-26	更新内容	P1	更新時の更新内容確認	一覧・出力の整合を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-045	IT-26	更新内容	P1	更新時の更新内容確認	データ行を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-048	IT-26	更新内容	P1	更新時の更新内容確認	同時更新を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-046	IT-26	更新内容	P1	更新時の更新内容確認	参照時点を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-049	IT-05	実行結果	P1	更新時の実行結果確認	入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-047	IT-05	実行結果	P1	更新時の実行結果確認	一覧・出力の整合を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-050	IT-05	実行結果	P1	更新時の実行結果確認	成功時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-048	IT-05	実行結果	P1	更新時の実行結果確認	同時更新を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	日別の売上表のCSVファイルであること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-051	IT-16	実行結果	P2	実行結果の結合確認	失敗時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	出力中に他処理が対象データを更新した場合のスナップショット保証は持たないこと。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-049	IT-16	実行結果	P2	実行結果の結合確認	入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-052	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	副作用を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-050	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	成功時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-053	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	検索を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-051	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	失敗時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-054	IT-27	実行結果	P2	実行結果の結合確認	ログイン済み管理者を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-052	IT-27	実行結果	P2	実行結果の結合確認	副作用を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-055	IT-27	実行結果	P2	実行結果の結合確認	「CSVダウンロード」押下を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-053	IT-27	実行結果	P2	実行結果の結合確認	検索を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-054	IT-24	出力内容	P2	出力内容の結合確認	ログイン済み管理者を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-055	IT-24	出力内容	P2	出力内容の結合確認	「CSVダウンロード」押下を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-056	IT-24	出力内容	P2	出力内容の結合確認	集計月が未入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-057	IT-24	出力内容	P2	出力内容の結合確認	認証・権限不足を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
 M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-058	IT-24	出力内容	P2	出力内容の結合確認	集計月を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-059	IT-24	出力内容	P2	出力内容の結合確認	集計結果の「CSVダウンロード」を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-060	IT-24	出力内容	P2	出力内容の結合確認	表示要素を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-061	IT-27	削除	P1	削除の結合確認	JS挙動を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-059	IT-27	削除	P1	削除の結合確認	集計結果の「CSVダウンロード」を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-062	IT-27	移動・リネーム	P2	移動・リネームの結合確認	条件の取得元を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-060	IT-27	移動・リネーム	P2	移動・リネームの結合確認	表示要素を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-063	IT-27	コピー	P1	コピーの結合確認	出力対象を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-061	IT-27	コピー	P1	コピーの結合確認	JS挙動を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-064	IT-33	ファイル登録	P1	ファイル登録の結合確認	データ行を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-062	IT-33	ファイル登録	P1	ファイル登録の結合確認	条件の取得元を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-065	IT-33	ファイル出力	P1	ファイル出力の結合確認	参照時点を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-063	IT-33	ファイル出力	P1	ファイル出力の結合確認	出力対象を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-066	IT-27	JSON	P1	JSONの結合確認	一覧・出力の整合を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-064	IT-27	JSON	P1	JSONの結合確認	データ行を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-067	IT-27	同名ファイル	P1	同名ファイルの結合確認	同時更新を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-065	IT-27	同名ファイル	P1	同名ファイルの結合確認	参照時点を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-068	IT-27	入力JSON	P1	入力JSONの結合確認	入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-066	IT-27	入力JSON	P1	入力JSONの結合確認	一覧・出力の整合を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-069	IT-27	配置先	P1	配置先の結合確認	成功時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-067	IT-27	配置先	P1	配置先の結合確認	同時更新を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-070	IT-27	スキーマ	P1	スキーマの結合確認	失敗時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-068	IT-27	スキーマ	P1	スキーマの結合確認	入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-071	IT-02	初期行数	P2	初期行数の結合確認	副作用を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	無し（参照・出力のみ）であること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-072	IT-02	表示順	P2	表示順の結合確認	検索を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 検索
-3. 画面表示と後続状態を確認する"	検索条件に合致するレコードを抽出すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-073	IT-25	更新抑止	P1	更新抑止の結合確認	ログイン済み管理者を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-074	IT-12	内部情報	P1	内部情報の結合確認	「CSVダウンロード」押下を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	画面遷移せずCSVを出力すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-075	IT-15	機密情報	P1	機密情報の結合確認	集計月が未入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	認証・権限不足を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 認証・権限不足を確認する
-3. 画面表示と後続状態を確認する"	出力しないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	集計月を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 集計月を確認する
-3. 画面表示と後続状態を確認する"	CSVダウンロードの送信に含まれる年月であること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	集計結果の「CSVダウンロード」を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 集計結果の「CSVダウンロード」
-3. 画面表示と後続状態を確認する"	送信された集計月でフォーマットごとの日別売上を集計し、日別の売上表をCSVとして出力すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	表示要素を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	CSVファイルのダウンロードであること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	JS挙動を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	本機能ではダウンロードのみで、動的な表示切替は扱わないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	条件の取得元を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 条件の取得元を確認する
-3. 画面表示と後続状態を確認する"	集計月はCSVダウンロードの送信値とすること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出力対象を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力対象を確認する
-3. 画面表示と後続状態を確認する"	日別の売上表（日・各フォーマット・日別合計）を出力すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-083	IT-25	一覧	P2	一覧の結合確認	データ行を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. データ行を確認する
-3. 画面表示と後続状態を確認する"	日に続けて各フォーマットの売上を出力し、末尾に当日の日別合計を出力すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-084	IT-12	画面表示データ	P2	画面表示データの結合確認	参照時点を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 参照時点を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-085	IT-25	画面表示データ	P2	画面表示データの結合確認	一覧・出力の整合を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 一覧・出力の整合を確認する
-3. 画面表示と後続状態を確認する"	一覧、CSV、帳票に出る値はそれぞれの実行時点のDB値を基準にすること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-086	IT-12	画面表示データ	P2	画面表示データの結合確認	同時更新を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 同時更新を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-087	IT-25	画面表示データ	P2	画面表示データの結合確認	入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 入力
-3. 画面表示と後続状態を確認する"	送信された集計月であること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-088	IT-25	フォーム送信	P1	フォーム送信の結合確認	成功時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-069	IT-02	初期行数	P2	初期行数の結合確認	成功時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	日別の売上表のCSVファイルであること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-089	IT-16	ファイル選択	P2	ファイル選択の結合確認	失敗時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-090	IT-12	非同期更新	P1	非同期更新の結合確認	副作用を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	無し（参照・出力のみ）であること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-091	IT-12	エラー継続	P3	エラー継続の結合確認	検索を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 検索
-3. 画面表示と後続状態を確認する"	検索条件に合致するレコードを抽出すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-092	IT-25	件数上限	P2	件数上限の結合確認	ログイン済み管理者を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-070	IT-02	表示順	P2	表示順の結合確認	失敗時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	データ取得失敗時はアプリケーションの共通例外処理に委ねるであること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-071	IT-25	更新抑止	P1	更新抑止の結合確認	副作用を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-072	IT-12	内部情報	P1	内部情報の結合確認	検索を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	検索条件に合致するレコードを抽出すること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-073	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	ログイン済み管理者を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. ログイン済み管理者を確認する
 3. 画面表示と後続状態を確認する"	集計結果のCSV出力が可能であること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-093	IT-25	欠損値	P2	欠損値の結合確認	「CSVダウンロード」押下を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	「CSVダウンロード」押下を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 「CSVダウンロード」押下
 3. 画面表示と後続状態を確認する"	画面遷移せずCSVを出力すること。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-094	IT-25	データなし	P2	データなしの結合確認	集計月が未入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-075	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	集計月が未入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 集計月が未入力
 3. 画面表示と後続状態を確認する"	集計月は必須のため、未入力では送信できないこと。
-M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-095	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	認証・権限不足を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	認証・権限不足を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 認証・権限不足を確認する
 3. 画面表示と後続状態を確認する"	出力しないこと。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-077	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	集計月を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 集計月を確認する
+3. 画面表示と後続状態を確認する"	CSVダウンロードの送信に含まれる年月であること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	集計結果の「CSVダウンロード」を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 集計結果の「CSVダウンロード」
+3. 画面表示と後続状態を確認する"	送信された集計月でフォーマットごとの日別売上を集計し、日別の売上表をCSVとして出力すること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示要素を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	CSVファイルのダウンロードであること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-080	IT-25	一覧	P2	一覧の結合確認	JS挙動を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	本機能ではダウンロードのみで、動的な表示切替は扱わないこと。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-081	IT-12	画面表示データ	P2	画面表示データの結合確認	条件の取得元を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 条件の取得元を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-082	IT-25	画面表示データ	P2	画面表示データの結合確認	出力対象を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 出力対象を確認する
+3. 画面表示と後続状態を確認する"	日別の売上表（日・各フォーマット・日別合計）を出力すること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-083	IT-12	画面表示データ	P2	画面表示データの結合確認	データ行を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. データ行を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-084	IT-25	画面表示データ	P2	画面表示データの結合確認	参照時点を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 参照時点を確認する
+3. 画面表示と後続状態を確認する"	画面表示もしくはCSV・帳票出力の実行時点で検索条件に一致するデータを参照すること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-085	IT-25	フォーム送信	P1	フォーム送信の結合確認	一覧・出力の整合を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 一覧・出力の整合を確認する
+3. 画面表示と後続状態を確認する"	一覧、CSV、帳票に出る値はそれぞれの実行時点のDB値を基準にすること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-086	IT-16	ファイル選択	P2	ファイル選択の結合確認	同時更新を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-087	IT-12	非同期更新	P1	非同期更新の結合確認	入力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 入力
+3. 画面表示と後続状態を確認する"	送信された集計月であること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-088	IT-12	エラー継続	P3	エラー継続の結合確認	成功時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	日別の売上表のCSVファイルであること。
+M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN-ANALYTICS-SALES-FORMAT-ANALYSIS-CSV-EXPORT-089	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	失敗時出力を試験できる状態である	M12-08（フォーマット売上分析 CSVダウンロード）（m12_08_admin_analytics_sales_format_analysis_csv_export）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	データ取得失敗時はアプリケーションの共通例外処理に委ねるであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -393,4 +377,4 @@ M12-08（フォーマット売上分析 CSVダウンロード）	IT-M12-08-ADMIN
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 9件 — No.109, No.110, No.111, No.412, No.413, No.414, No.415, No.422, No.510。上限緩和または個別ケース化で収載可能。

@@ -10,15 +10,15 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | 対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、一覧、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | データ正当性、実行結果、検索条件 |
+| IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 削除条件、実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
 
 ## テストケースTSV
 
@@ -36,63 +36,63 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 
 ```tsv
 機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-001	IT-15	CSRF	P1	CSRFの結合確認	ログイン履歴を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン履歴の確認に必要な条件を指定する	"1. CSRFの認証・Cookie・セッション・試行制限など前提条件を設定する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-001	IT-15	未認証	P1	未認証の結合確認	ログイン履歴を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン履歴の確認に必要な条件を指定する	"1. 未認証の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	管理画面ログインの各試行を1行として記録した履歴であること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-002	IT-15	未認証	P1	未認証の結合確認	ログイン試行日時を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン試行日時の確認に必要な条件を指定する	"1. 未認証の認証・Cookie・セッション・試行制限など前提条件を設定する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-002	IT-15	対象データ	P1	対象データの結合確認	ログイン試行日時を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン試行日時の確認に必要な条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	履歴行の作成日時であること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-003	IT-15	対象データ	P1	対象データの結合確認	詳細検索を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で詳細検索の確認に必要な条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-003	IT-20	出力抑止	P1	出力抑止の結合確認	詳細検索を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で詳細検索の確認に必要な条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ログインID単独・IPアドレス単独・期間・成功失敗区分による絞り込みであること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-004	IT-20	出力抑止	P1	出力抑止の結合確認	ログイン履歴一覧を開くを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン履歴一覧を開くの確認に必要な条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-004	IT-20	識別子	P1	識別子の結合確認	ログイン履歴一覧を開くを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン履歴一覧を開くの確認に必要な条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	セッションに保存済みの検索条件があればその条件で、なければ全件を作成日時の新しい順で1ページ目に表示すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-005	IT-20	識別子	P1	識別子の結合確認	検索を実行を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索を実行の確認に必要な条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-005	IT-15	状態変化	P1	状態変化の結合確認	検索を実行を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索を実行の確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	入力した検索条件で絞り込み、1ページ目を表示すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-006	IT-15	状態変化	P1	状態変化の結合確認	ページ送りを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でページ送りの確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	保存済みの検索条件のまま指定ページを表示すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	表示件数を変更を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示件数を変更の確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-006	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	ページ送りを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でページ送りの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ページ送りを確認する
+3. 画面表示と後続状態を確認する"	保存済みの検索条件のまま指定ページを表示すること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-007	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	表示件数を変更を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示件数を変更の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示件数を変更を確認する
 3. 画面表示と後続状態を確認する"	表示件数プルダウンの選択でこのURLへ遷移し、件数をセッションへ保存して1ページ目を表示すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	前回条件で再表示を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で前回条件で再表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-008	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	前回条件で再表示を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 前回条件で再表示を確認する
-3. 画面表示と後続状態を確認する"	セッションに保存済みの検索条件・ページ番号で一覧を再表示すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-009	IT-25	URL	P2	URLの操作結果確認	表示要素を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	キーワード検索欄、詳細検索の開閉リンク、詳細検索内のログインID欄・IPアドレス欄・期間欄・ステータスのチェックボックス、検索ボタン、検索結果件数、表示件数プルダウン、履歴の一覧表、ページャを表示すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	JS挙動を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	CSS・レイアウトを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. CSS・レイアウトを確認する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	表示要素を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-010	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	JS挙動を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. JS挙動を確認する
+3. 画面表示と後続状態を確認する"	表示件数プルダウンを変更すると、選択肢の値に設定したURLへwindow.location.hrefで遷移すること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-011	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	CSS・レイアウトを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. CSS・レイアウトを確認する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	本機能はモーダル、確認ダイアログ、トーストを表示しないこと。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	画面タイトルを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	画面タイトルを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 画面タイトルを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	詳細検索リンクを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	詳細検索リンクを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 詳細検索リンク
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	検索ボタンを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 検索ボタン
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	検索結果件数を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 検索結果件数
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	成功区分バッジを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 成功区分バッジを確認する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-015	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	検索ボタンを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 検索ボタン
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	失敗区分バッジを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 失敗区分バッジを確認する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	検索結果件数を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 検索結果件数
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-019	IT-22	部分入力	P2	部分入力の入力検証	期間の値が範囲外のときを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で期間の値が範囲外のときの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 期間の値が範囲外のときを確認する
-3. 画面表示と後続状態を確認する"	期間欄に範囲下限の検証があること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-017	IT-22	部分入力	P2	部分入力の入力検証	成功区分バッジを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で成功区分バッジの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功区分バッジを確認する
+3. 画面表示と後続状態を確認する"	行の区分が成功のときであること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-018	IT-23	検索条件	P2	検索時の検索条件確認	失敗区分バッジを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-019	IT-23	検索条件	P2	検索時の検索条件確認	期間の値が範囲外のときを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-020	IT-23	検索条件	P2	検索時の検索条件確認	表示対象を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
@@ -111,10 +111,10 @@ m11-04_admin_system_setting_setting_system_login_history（管理画面_ログ�
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-025	IT-23	検索条件	P2	検索時の検索条件確認	ステータスを未チェックを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-026	IT-23	検索条件	P2	検索時の検索条件確認	検索結果が0件を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-026	IT-23	検索条件	P2	検索時の検索条件確認	検索結果が0件を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索結果が0件の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-027	IT-23	検索条件	P2	検索時の検索条件確認	表示件数に不正値を渡すを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-027	IT-23	検索条件	P2	検索時の検索条件確認	表示件数に不正値を渡すを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示件数に不正値を渡すの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-028	IT-23	検索条件	P2	検索時の検索条件確認	管理者削除済みの履歴行を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で管理者削除済みの履歴行の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
@@ -129,94 +129,94 @@ m11-04_admin_system_setting_setting_system_login_history（管理画面_ログ�
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-031	IT-23	検索条件	P2	検索時の検索条件確認	失敗履歴の保存失敗を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で失敗履歴の保存失敗の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-032	IT-23	検索条件	P2	検索時の検索条件確認	表示列との整合性を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示列との整合性の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-032	IT-23	実行結果	P2	検索時の実行結果確認	表示列との整合性を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示列との整合性の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-033	IT-23	検索条件	P2	検索時の検索条件確認	件数との整合性を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で件数との整合性の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-033	IT-23	実行結果	P2	検索時の実行結果確認	件数との整合性を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で件数との整合性の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-034	IT-23	実行結果	P2	検索時の実行結果確認	入力を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で入力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-035	IT-23	実行結果	P2	検索時の実行結果確認	成功時出力を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-036	IT-23	実行結果	P2	検索時の実行結果確認	失敗時出力を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-036	IT-26	登録内容	P1	登録時の登録内容確認	失敗時出力を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で失敗時出力の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-037	IT-23	実行結果	P2	検索時の実行結果確認	副作用を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で副作用の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-037	IT-26	登録内容	P1	登録時の登録内容確認	副作用を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で副作用の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-038	IT-26	登録内容	P1	登録時の登録内容確認	mtb_login_history_statusを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でmtb_login_history_statusの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-039	IT-26	登録内容	P1	登録時の登録内容確認	登録/更新を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で登録/更新の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-040	IT-26	登録内容	P1	登録時の登録内容確認	ログインID・IPアドレスを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログインID・IPアドレスの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-041	IT-26	登録内容	P1	登録時の登録内容確認	ログイン履歴を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン履歴の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	管理画面ログインの各試行を1行として記録した履歴であること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-042	IT-26	登録内容	P1	登録時の登録内容確認	ログイン試行日時を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン試行日時の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-041	IT-26	登録内容	P1	登録時の登録内容確認	ログイン履歴を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-043	IT-26	登録内容	P1	登録時の登録内容確認	詳細検索を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-044	IT-26	登録内容	P1	登録時の登録内容確認	ログイン履歴一覧を開くを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-042	IT-26	登録内容	P1	登録時の登録内容確認	ログイン試行日時を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-045	IT-26	登録内容	P1	登録時の登録内容確認	検索を実行を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-043	IT-26	登録内容	P1	登録時の登録内容確認	詳細検索を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-046	IT-26	登録内容	P1	登録時の登録内容確認	ページ送りを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-044	IT-26	登録内容	P1	登録時の登録内容確認	ログイン履歴一覧を開くを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-047	IT-26	登録内容	P1	登録時の登録内容確認	表示件数を変更を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示件数を変更の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-045	IT-26	登録内容	P1	登録時の登録内容確認	検索を実行を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索を実行の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-048	IT-26	実行結果	P1	登録時の実行結果確認	前回条件で再表示を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で前回条件で再表示の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-046	IT-26	実行結果	P1	登録時の実行結果確認	ページ送りを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でページ送りの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-049	IT-23	実行結果	P1	登録時の実行結果確認	表示要素を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示要素の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-047	IT-23	実行結果	P1	登録時の実行結果確認	表示件数を変更を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示件数を変更の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	キーワード検索欄、詳細検索の開閉リンク、詳細検索内のログインID欄・IPアドレス欄・期間欄・ステータスのチェックボックス、検索ボタン、検索結果件数、表示件数プルダウン、履歴の一覧表、ページャを表示すること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	表示件数プルダウンの選択でこのURLへ遷移し、件数をセッションへ保存して1ページ目を表示すること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-048	IT-26	更新内容	P1	更新時の更新内容確認	前回条件で再表示を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で前回条件で再表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-049	IT-26	更新内容	P1	更新時の更新内容確認	表示要素を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示要素の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-050	IT-26	更新内容	P1	更新時の更新内容確認	JS挙動を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でJS挙動の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-051	IT-26	更新内容	P1	更新時の更新内容確認	CSS・レイアウトを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でCSS・レイアウトの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	詳細検索ブロックはBootstrapのcollapseで折りたたみ、初期は閉じるであること。
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-052	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-053	IT-26	更新内容	P1	更新時の更新内容確認	画面タイトルを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で画面タイトルの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一覧画面を表示したときであること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-054	IT-26	更新内容	P1	更新時の更新内容確認	詳細検索リンクを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で詳細検索リンクの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-053	IT-26	更新内容	P1	更新時の更新内容確認	画面タイトルを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-055	IT-26	更新内容	P1	更新時の更新内容確認	検索ボタンを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-056	IT-26	更新内容	P1	更新時の更新内容確認	検索結果件数を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-054	IT-26	更新内容	P1	更新時の更新内容確認	詳細検索リンクを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-057	IT-26	更新内容	P1	更新時の更新内容確認	成功区分バッジを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-055	IT-26	更新内容	P1	更新時の更新内容確認	検索ボタンを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-058	IT-26	更新内容	P1	更新時の更新内容確認	失敗区分バッジを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-056	IT-26	更新内容	P1	更新時の更新内容確認	検索結果件数を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-059	IT-26	更新内容	P1	更新時の更新内容確認	期間の値が範囲外のときを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で期間の値が範囲外のときの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-057	IT-26	更新内容	P1	更新時の更新内容確認	成功区分バッジを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で成功区分バッジの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-060	IT-05	実行結果	P1	更新時の実行結果確認	表示対象を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示対象の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-058	IT-05	実行結果	P1	更新時の実行結果確認	失敗区分バッジを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で失敗区分バッジの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-061	IT-05	実行結果	P1	更新時の実行結果確認	成功失敗区分の意味を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で成功失敗区分の意味の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-059	IT-05	実行結果	P1	更新時の実行結果確認	期間の値が範囲外のときを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で期間の値が範囲外のときの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	期間欄に範囲下限の検証があること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-060	IT-05	削除条件	P1	削除時の削除条件確認	表示対象を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ログイン履歴のうち検索条件に一致する行を表示すること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-061	IT-05	削除条件	P1	削除時の削除条件確認	成功失敗区分の意味を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	区分の保存値は失敗が0、成功が1であること。
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-062	IT-05	削除条件	P1	削除時の削除条件確認	表示件数を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
@@ -225,93 +225,78 @@ m11-04_admin_system_setting_setting_system_login_history（管理画面_ログ�
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-063	IT-05	削除条件	P1	削除時の削除条件確認	業務計算を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本機能では金額・在庫などの業務計算を行わないこと。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-064	IT-05	削除条件	P1	削除時の削除条件確認	検索条件をすべて空で検索を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	全件を対象に並び順で表示すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-065	IT-05	削除条件	P1	削除時の削除条件確認	ステータスを未チェックを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	区分での絞り込みをせず、成功・失敗の双方を表示すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-066	IT-05	削除条件	P1	削除時の削除条件確認	検索結果が0件を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索結果が0件の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-064	IT-05	削除条件	P1	削除時の削除条件確認	検索条件をすべて空で検索を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索条件をすべて空で検索の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-065	IT-05	実行結果	P1	削除時の実行結果確認	ステータスを未チェックを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でステータスを未チェックの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-066	IT-05	実行結果	P1	削除時の実行結果確認	検索結果が0件を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索結果が0件の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	一覧表を出さず、0件メッセージを表示すること。
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-067	IT-05	実行結果	P1	削除時の実行結果確認	表示件数に不正値を渡すを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示件数に不正値を渡すの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
 m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-068	IT-05	実行結果	P1	削除時の実行結果確認	管理者削除済みの履歴行を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で管理者削除済みの履歴行の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	履歴行のログインID・IPアドレス・区分は保持されるため一覧に表示すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-069	IT-05	実行結果	P1	削除時の実行結果確認	参照時点を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で参照時点の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-070	IT-05	実行結果	P1	削除時の実行結果確認	記録との整合性を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で記録との整合性の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	表示する履歴は認証処理側が記録した行であり、本機能は更新しないこと。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-071	IT-02	初期行数	P2	初期行数の結合確認	失敗履歴の保存失敗を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で失敗履歴の保存失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 失敗履歴の保存失敗
-3. 画面表示と後続状態を確認する"	失敗履歴の書き込みに失敗した場合は履歴行が作られず、認証機能側でサーバログに記録されるであること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-072	IT-02	表示順	P2	表示順の結合確認	表示列との整合性を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示列との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示列との整合性を確認する
-3. 画面表示と後続状態を確認する"	一覧の各列は履歴行の保存値をそのまま表示すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-073	IT-25	更新抑止	P1	更新抑止の結合確認	件数との整合性を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で件数との整合性の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-069	IT-02	初期行数	P2	初期行数の結合確認	参照時点を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 参照時点を確認する
+3. 画面表示と後続状態を確認する"	一覧は表示要求時点でdtb_login_historyから読み取った行であること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-070	IT-02	表示順	P2	表示順の結合確認	記録との整合性を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で記録との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 記録との整合性を確認する
+3. 画面表示と後続状態を確認する"	表示する履歴は認証処理側が記録した行であり、本機能は更新しないこと。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-071	IT-25	更新抑止	P1	更新抑止の結合確認	失敗履歴の保存失敗を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で失敗履歴の保存失敗の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	検索結果件数はページネーション部品が数えた総件数であり、表示中ページの行数とは別であること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-074	IT-12	内部情報	P1	内部情報の結合確認	入力を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で入力の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	失敗履歴の書き込みに失敗した場合は履歴行が作られず、認証機能側でサーバログに記録されるであること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-072	IT-12	内部情報	P1	内部情報の結合確認	表示列との整合性を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示列との整合性の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	一覧表示要求、検索条件のPOST、ページ番号・表示件数を含むGETであること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-075	IT-15	機密情報	P1	機密情報の結合確認	成功時出力を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で成功時出力の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	検索条件に一致する履歴行を、ID・ログインID・IPアドレス・ログイン試行日時・成功失敗区分の列でページ表示すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	一覧の各列は履歴行の保存値をそのまま表示すること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-073	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	件数との整合性を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で件数との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 件数との整合性を確認する
+3. 画面表示と後続状態を確認する"	検索結果件数はページネーション部品が数えた総件数であり、表示中ページの行数とは別であること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	入力を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力
+3. 画面表示と後続状態を確認する"	一覧表示要求、検索条件のPOST、ページ番号・表示件数を含むGETであること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-075	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
+3. 画面表示と後続状態を確認する"	検索条件に一致する履歴行を、ID・ログインID・IPアドレス・ログイン試行日時・成功失敗区分の列でページ表示すること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	検索条件の検証失敗時は一覧を出さず、詳細検索を開いた状態で見直しメッセージを表示すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-077	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	副作用を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	検索条件・ページ番号・表示件数のセッション保存のみであること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	mtb_login_history_statusを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でmtb_login_history_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	mtb_login_history_statusを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でmtb_login_history_statusの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. mtb_login_history_statusを確認する
 3. 画面表示と後続状態を確認する"	区分名であること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	登録/更新を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ログインID・IPアドレスを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログインID・IPアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-080	IT-25	一覧	P2	一覧の結合確認	ログインID・IPアドレスを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログインID・IPアドレスの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ログインID・IPアドレスを確認する
 3. 画面表示と後続状態を確認する"	任意であること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ログイン履歴を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン履歴の確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-081	IT-12	画面表示データ	P2	画面表示データの結合確認	ログイン履歴を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン履歴の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ログイン履歴を確認する
-3. 画面表示と後続状態を確認する"	管理画面ログインの各試行を1行として記録した履歴であること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ログイン試行日時を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン試行日時の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-082	IT-25	画面表示データ	P2	画面表示データの結合確認	ログイン試行日時を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン試行日時の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ログイン試行日時を確認する
 3. 画面表示と後続状態を確認する"	履歴行の作成日時であること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-083	IT-25	一覧	P2	一覧の結合確認	詳細検索を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で詳細検索の確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-083	IT-12	画面表示データ	P2	画面表示データの結合確認	詳細検索を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で詳細検索の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 詳細検索
-3. 画面表示と後続状態を確認する"	ログインID単独・IPアドレス単独・期間・成功失敗区分による絞り込みであること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-084	IT-12	画面表示データ	P2	画面表示データの結合確認	ログイン履歴一覧を開くを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン履歴一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ログイン履歴一覧を開く
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-085	IT-25	画面表示データ	P2	画面表示データの結合確認	検索を実行を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索を実行の確認に必要な条件を指定する	"1. 対象画面を表示する
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-084	IT-25	画面表示データ	P2	画面表示データの結合確認	ログイン履歴一覧を開くを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でログイン履歴一覧を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ログイン履歴一覧を開く
+3. 画面表示と後続状態を確認する"	セッションに保存済みの検索条件があればその条件で、なければ全件を作成日時の新しい順で1ページ目に表示すること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-085	IT-25	フォーム送信	P1	フォーム送信の結合確認	検索を実行を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索を実行の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索を実行
 3. 画面表示と後続状態を確認する"	入力した検索条件で絞り込み、1ページ目を表示すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-086	IT-12	画面表示データ	P2	画面表示データの結合確認	ページ送りを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でページ送りの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ページ送りを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-087	IT-12	非同期更新	P1	非同期更新の結合確認	JS挙動を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	表示件数プルダウンを変更すると、選択肢の値に設定したURLへwindow.location.hrefで遷移すること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-088	IT-12	エラー継続	P3	エラー継続の結合確認	CSS・レイアウトを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. CSS・レイアウトを確認する
-3. 画面表示と後続状態を確認する"	詳細検索ブロックはBootstrapのcollapseで折りたたみ、初期は閉じるであること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-089	IT-25	欠損値	P2	欠損値の結合確認	画面タイトルを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で画面タイトルの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 画面タイトルを確認する
-3. 画面表示と後続状態を確認する"	一覧画面を表示したときであること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-090	IT-25	データなし	P2	データなしの結合確認	詳細検索リンクを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で詳細検索リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 詳細検索リンク
-3. 画面表示と後続状態を確認する"	一覧画面を表示したときであること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-091	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	検索ボタンを試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索ボタンの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検索ボタン
-3. 画面表示と後続状態を確認する"	一覧画面を表示したときであること。
-m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-092	IT-23	データ正当性	P3	データ正当性の結合確認	検索結果件数を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で検索結果件数の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検索結果件数
-3. 画面表示と後続状態を確認する"	検索結果がある一覧表示時に件数を表示すること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-086	IT-12	エラー継続	P3	エラー継続の結合確認	前回条件で再表示を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で前回条件で再表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 前回条件で再表示を確認する
+3. 画面表示と後続状態を確認する"	セッションに保存済みの検索条件・ページ番号で一覧を再表示すること。
+m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）	IT-M11-04-ADMIN-SYSTEM-SETTING-SETTING-SYSTEM-LOGIN-HISTORY-087	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	表示要素を試験できる状態である	m11-04_admin_system_setting_setting_system_login_history（管理画面_ログイン履歴）（m11_04_admin_system_setting_setting_system_login_history）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示要素を確認する
+3. 画面表示と後続状態を確認する"	キーワード検索欄、詳細検索の開閉リンク、詳細検索内のログインID欄・IPアドレス欄・期間欄・ステータスのチェックボックス、検索ボタン、検索結果件数、表示件数プルダウン、履歴の一覧表、ページャを表示すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -411,6 +396,6 @@ m11-04_admin_system_setting_setting_system_login_history（管理画面_ログ�
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| その他 | 同種の対象外観点 2 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.109, No.110, No.111, No.359, No.381, No.382, No.412。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 11件 — No.109, No.110, No.111, No.382, No.385, No.412, No.413, No.414, No.415, No.422, No.510。上限緩和または個別ケース化で収載可能。

@@ -10,7 +10,7 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
 | IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
@@ -19,7 +19,7 @@
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-28 | 件名、実行結果、本文 |
+| IT-28 | ヘッダ、件名、実行結果、本文 |
 | IT-16 | ファイル選択 |
 
 ## テストケースTSV
@@ -179,43 +179,43 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-047	IT-12	内部情報	P1	内部情報の結合確認	表示要素を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で表示要素の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	スタート画面は見出し「オンライン本人確認について」、説明、本人確認状況、身分証種別の選択、「撮影画面へ」であること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-048	IT-15	機密情報	P1	機密情報の結合確認	JS挙動を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）でJS挙動の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	画像は本サイト提供の撮影用ページ（アプリ）で撮影し、撮影結果を画像データとして送信すること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-049	IT-28	実行結果	P2	実行結果の結合確認	スタート説明を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）でスタート説明の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-048	IT-28	実行結果	P2	実行結果の結合確認	スタート説明を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）でスタート説明の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. スタート説明を確認する
 3. 画面表示と後続状態を確認する"	スタート画面の表示時であること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-050	IT-28	実行結果	P2	実行結果の結合確認	再アップロード注意を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で再アップロード注意の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-049	IT-28	ヘッダ	P2	ヘッダの結合確認	再アップロード注意を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で再アップロード注意の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 再アップロード注意
 3. 画面表示と後続状態を確認する"	スタート画面の表示時であること。
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-050	IT-28	件名	P2	件名の結合確認	撮影案内を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で件名の対象項目を未入力にする	"1. 対象画面を表示する
+2. 撮影案内を確認する
+3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
 会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-051	IT-28	件名	P2	件名の結合確認	申請完了を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で件名の対象項目を未入力にする	"1. 対象画面を表示する
 2. 申請完了を確認する
-3. 画面表示と後続状態を確認する"	件名でエラーが表示され、対象処理が完了しないこと。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-052	IT-28	件名	P2	件名の結合確認	確認中表示を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で件名の対象項目を未入力にする	"1. 対象画面を表示する
-2. 確認中表示を確認する
 3. 画面表示と後続状態を確認する"	件名でエラーが表示されず、対象処理を継続できること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-053	IT-28	件名	P2	件名の結合確認	F06-13-MSG-001を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）でF06-13-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-052	IT-28	件名	P2	件名の結合確認	確認中表示を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で確認中表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 確認中表示を確認する
+3. 画面表示と後続状態を確認する"	申請完了画面の表示時であること。
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-053	IT-28	本文	P2	本文の結合確認	F06-13-MSG-001を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で本文の対象項目を未入力にする	"1. 対象画面を表示する
 2. F06-13-MSG-001を確認する
-3. 画面表示と後続状態を確認する"	申請送信後に身分証画像フォームの検証が失敗し、isError=1 付きで撮影画面（mypage_identification_photograph）が再表示されたとき（window.onload 時）であること。
+3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
 会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-054	IT-28	本文	P2	本文の結合確認	利用端末の限定を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で本文の対象項目を未入力にする	"1. 対象画面を表示する
 2. 利用端末の限定を確認する
-3. 画面表示と後続状態を確認する"	本文でエラーが表示され、対象処理が完了しないこと。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-055	IT-28	本文	P2	本文の結合確認	画像の保存を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で本文の対象項目を未入力にする	"1. 対象画面を表示する
-2. 画像の保存
 3. 画面表示と後続状態を確認する"	本文でエラーが表示されず、対象処理を継続できること。
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-055	IT-28	本文	P2	本文の結合確認	画像の保存を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で画像の保存の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 画像の保存
+3. 画面表示と後続状態を確認する"	撮影画像はオブジェクトストレージへ保存し、身分証画像として会員（選手情報）に紐づけて記録すること。
 会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-056	IT-28	本文	P2	本文の結合確認	ステータス更新を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）でステータス更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ステータス更新を確認する
 3. 画面表示と後続状態を確認する"	申請成立で本人確認ステータスを確認中に更新すること。
 会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-057	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	撮影画像（本人写真・身分証オモテ・ウラ等）を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で撮影画像（本人写真・身分証オモテ・ウラ等）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 撮影画像（本人写真・身分証オモテ・ウラ等）を確認する
 3. 画面表示と後続状態を確認する"	画像データ（撮影用ページで撮影したもの）であること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-058	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	撮影画面へ直接アクセス（未送信）を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で撮影画面へ直接アクセス（未送信）の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-058	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	撮影画面へ直接アクセス（未送信）を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で撮影画面へ直接アクセス（未送信）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 撮影画面へ直接アクセス（未送信）
 3. 画面表示と後続状態を確認する"	マイページへ戻すであること。
 会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-059	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	撮影フォーム検証失敗を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で撮影フォーム検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 撮影フォーム検証失敗を確認する
 3. 画面表示と後続状態を確認する"	エラー状態を付けて撮影画面へ戻すであること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-060	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	画像の拡張子が判別不可を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で画像の拡張子が判別不可の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-060	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	画像の拡張子が判別不可を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で画像の拡張子が判別不可の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 画像の拡張子が判別不可を確認する
 3. 画面表示と後続状態を確認する"	エラー画面を表示し申請を確定しないこと。
 会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-061	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	画像と選手情報を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で画像と選手情報の確認に必要な条件を指定する	"1. 対象画面を表示する
@@ -224,48 +224,45 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-062	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	オブジェクトストレージを試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）でオブジェクトストレージの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. オブジェクトストレージを確認する
 3. 画面表示と後続状態を確認する"	画像はオブジェクトストレージへ保存し、保存先をDBに記録すること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-063	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	会員情報変更との関係を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で会員情報変更との関係の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-063	IT-25	一覧	P2	一覧の結合確認	会員情報変更との関係を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で会員情報変更との関係の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 会員情報変更との関係を確認する
 3. 画面表示と後続状態を確認する"	住所・氏名・生年月日の変更時は本人確認ステータスが未確認へ戻り得るため、再申請が必要となる（会員情報変更機能を正とする）であること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-064	IT-25	一覧	P2	一覧の結合確認	成功時出力を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-064	IT-12	画面表示データ	P2	画面表示データの結合確認	成功時出力を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	身分証画像の保存、本人確認ステータスの確認中への更新、申請完了画面、申請完了メール送信であること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-065	IT-12	画面表示データ	P2	画面表示データの結合確認	失敗時出力を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-065	IT-25	画面表示データ	P2	画面表示データの結合確認	失敗時出力を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-066	IT-25	画面表示データ	P2	画面表示データの結合確認	副作用を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	撮影画面の再表示、もしくは画像データエラー画面であること。
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-066	IT-12	画面表示データ	P2	画面表示データの結合確認	副作用を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	身分証画像の保存、選手情報の身分証種別・本人確認ステータス更新、メール送信であること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-067	IT-12	画面表示データ	P2	画面表示データの結合確認	選手情報（dtb_player）を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で選手情報（dtb_player）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 選手情報（dtb_player）を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-068	IT-25	画面表示データ	P2	画面表示データの結合確認	選手情報（dtb_player）を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で選手情報（dtb_player）の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-067	IT-25	画面表示データ	P2	画面表示データの結合確認	選手情報（dtb_player）を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で選手情報（dtb_player）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 選手情報（dtb_player）を確認する
+3. 画面表示と後続状態を確認する"	身分証種別（マスタ参照）であること。
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-068	IT-25	フォーム送信	P1	フォーム送信の結合確認	選手情報（dtb_player）を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で選手情報（dtb_player）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 選手情報（dtb_player）を確認する
 3. 画面表示と後続状態を確認する"	本人確認ステータス（マスタ参照）であること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-069	IT-25	フォーム送信	P1	フォーム送信の結合確認	身分証画像（dtb_identification_image）を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で身分証画像（dtb_identification_image）の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-069	IT-16	ファイル選択	P2	ファイル選択の結合確認	身分証画像（dtb_identification_image）を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で身分証画像（dtb_identification_image）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 身分証画像（dtb_identification_image）を確認する
 3. 画面表示と後続状態を確認する"	撮影画像1枚ごとに記録すること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-070	IT-16	ファイル選択	P2	ファイル選択の結合確認	登録/更新を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-070	IT-12	非同期更新	P1	非同期更新の結合確認	登録/更新を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 登録/更新を確認する
 3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-071	IT-12	非同期更新	P1	非同期更新の結合確認	マイページの「オンライン本人確認」ブロックを試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）でマイページの「オンライン本人確認」ブロックの確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-071	IT-12	エラー継続	P3	エラー継続の結合確認	マイページの「オンライン本人確認」ブロックを試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）でマイページの「オンライン本人確認」ブロックの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. マイページの「オンライン本人確認」ブロックを確認する
 3. 画面表示と後続状態を確認する"	スタート画面（GET /mypage/identification）であること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-072	IT-12	エラー継続	P3	エラー継続の結合確認	申請・検証失敗を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で申請・検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-072	IT-25	件数上限	P2	件数上限の結合確認	申請・検証失敗を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で申請・検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 申請・検証失敗を確認する
 3. 画面表示と後続状態を確認する"	撮影画面（エラー状態付き）であること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-073	IT-25	件数上限	P2	件数上限の結合確認	申請・画像データ不正を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で申請・画像データ不正の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-073	IT-25	欠損値	P2	欠損値の結合確認	申請・画像データ不正を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で申請・画像データ不正の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 申請・画像データ不正を確認する
 3. 画面表示と後続状態を確認する"	共通エラー画面であること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-074	IT-25	欠損値	P2	欠損値の結合確認	申請・PCまたは送信内容なし・未送信を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で申請・PCまたは送信内容なし・未送信の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-074	IT-25	データなし	P2	データなしの結合確認	申請・PCまたは送信内容なし・未送信を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で申請・PCまたは送信内容なし・未送信の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 申請・PCまたは送信内容なし・未送信
 3. 画面表示と後続状態を確認する"	マイページ（/mypage）であること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-075	IT-25	データなし	P2	データなしの結合確認	申請の検証失敗を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で申請の検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
+会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-075	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	申請の検証失敗を試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で申請の検証失敗の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 申請の検証失敗を確認する
 3. 画面表示と後続状態を確認する"	撮影画面を再表示し、エラー状態を反映すること。
-会員 — オンライン本人確認	IT-F06-13-FRONT-MEMBER-MYPAGE-ONLINE-IDENTIFICATION-076	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	種別未選択・未送信・直接アクセスを試験できる状態である	会員 — オンライン本人確認（f06_13_front_member_mypage_online_identification）で種別未選択・未送信・直接アクセスの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 種別未選択・未送信・直接アクセス
-3. 画面表示と後続状態を確認する"	スタート画面もしくはマイページへ戻すであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -367,4 +364,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.109, No.110, No.111, No.215, No.228, No.261。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 7件 — No.109, No.110, No.111, No.215, No.218, No.329, No.510。上限緩和または個別ケース化で収載可能。

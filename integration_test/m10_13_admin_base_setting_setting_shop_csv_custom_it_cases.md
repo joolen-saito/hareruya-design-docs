@@ -11,9 +11,9 @@
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
 | IT-27 | JSON、コピー、スキーマ、入力JSON、出力失敗、削除、同名ファイル、実行結果、移動・リネーム、配置先 |
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
@@ -66,250 +66,233 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-009	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	既存定義で「削除」相当の導線を実行するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でHTTPステータスの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 既存定義で「削除」相当の導線を実行する
 3. 画面表示と後続状態を確認する"	CSRF付きのDELETE相当のリクエスト後、カスタム定義が削除され、一覧（新規状態）へ戻るリダイレクトが返るであること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-010	IT-25	URL	P2	URLの操作結果確認	カスタムCSVのダウンロードを別画面から実行するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でURLの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	カスタムCSVのダウンロードを別画面から実行するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. カスタムCSVのダウンロードを別画面から実行する
-3. 画面表示と後続状態を確認する"	当機能の保存結果である csv_extension_id を指定し、ストリーミングでCSVが返るであること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	表示要素を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 表示要素を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-012	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	JS 挙動を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. JS 挙動を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-013	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	JS 挙動を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で文字列長バリデーションの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS 挙動を確認する
+3. 画面表示と後続状態を確認する"	jQueryで、選択されたoption要素を相手リストへappendToすること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	本機能では管理画面標準の削除確認は、アンカーのdata-message等に依存するパターンを用いる（詳細は共通スクリプトを正とする）であること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	対象CSV種別を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 対象CSV種別を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	名称を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	名称を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 名称を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	保存単位を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	保存単位を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 保存単位
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-017	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	更新者を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 更新者を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	CSV出力項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. CSV出力項目を確認する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	更新者を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 更新者を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-019	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	カスタムCSVを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. カスタムCSVを確認する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	CSV出力項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. CSV出力項目を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-020	IT-22	部分入力	P2	部分入力の入力検証	出力名を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 出力名を確認する
-3. 画面表示と後続状態を確認する"	dtb_csv_extension.name（NULL 可）であること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-019	IT-22	部分入力	P2	部分入力の入力検証	カスタムCSVを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で部分入力の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. カスタムCSVを確認する
+3. 画面表示と後続状態を確認する"	表示切替であること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-020	IT-26	登録内容	P1	登録時の登録内容確認	出力名を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-021	IT-26	登録内容	P1	登録時の登録内容確認	CSV出力しない項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-022	IT-26	登録内容	P1	登録時の登録内容確認	CSV出力する項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-023	IT-26	登録内容	P1	登録時の登録内容確認	既存定義の更新で、削除用の前置き分岐が真を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	旧紐付けを生SQL DELETEしてから再挿入すること。
 カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-024	IT-26	登録内容	P1	登録時の登録内容確認	ソフトデリート可能なエンティティを物理削除を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除処理は remove による削除であること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-025	IT-26	登録内容	P1	登録時の登録内容確認	標準CSV設定との関係を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-025	IT-26	登録内容	P1	登録時の登録内容確認	標準CSV設定との関係を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-026	IT-26	登録内容	P1	登録時の登録内容確認	エクスポート時を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-027	IT-26	登録内容	P1	登録時の登録内容確認	入力を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-026	IT-26	登録内容	P1	登録時の登録内容確認	エクスポート時を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-028	IT-26	登録内容	P1	登録時の登録内容確認	成功時出力を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-027	IT-26	登録内容	P1	登録時の登録内容確認	入力を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-029	IT-26	登録内容	P1	登録時の登録内容確認	失敗時出力を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-028	IT-26	登録内容	P1	登録時の登録内容確認	成功時出力を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-030	IT-26	登録内容	P1	登録時の登録内容確認	dtb_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-029	IT-26	登録内容	P1	登録時の登録内容確認	失敗時出力を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で登録内容の対象ファイルと処理条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-031	IT-26	実行結果	P1	登録時の実行結果確認	dtb_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-030	IT-26	実行結果	P1	登録時の実行結果確認	dtb_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-032	IT-23	実行結果	P1	登録時の実行結果確認	dtb_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-031	IT-23	実行結果	P1	登録時の実行結果確認	dtb_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新日時であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	最終保存操作の管理者（dtb_member.id 参照）であること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-032	IT-26	更新内容	P1	更新時の更新内容確認	dtb_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-033	IT-26	更新内容	P1	更新時の更新内容確認	dtb_csv_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-034	IT-26	更新内容	P1	更新時の更新内容確認	dtb_csvを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-035	IT-26	更新内容	P1	更新時の更新内容確認	dtb_csvを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-036	IT-26	更新内容	P1	更新時の更新内容確認	dtb_csvを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	マスタ更新日時であること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-037	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ソートキーであること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-036	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-038	IT-26	更新内容	P1	更新時の更新内容確認	CSV出力項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-039	IT-26	更新内容	P1	更新時の更新内容確認	カスタムCSVを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-037	IT-26	更新内容	P1	更新時の更新内容確認	CSV出力項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-040	IT-26	更新内容	P1	更新時の更新内容確認	出力名を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-038	IT-26	更新内容	P1	更新時の更新内容確認	カスタムCSVを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-041	IT-26	更新内容	P1	更新時の更新内容確認	CSV種別を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-039	IT-26	更新内容	P1	更新時の更新内容確認	出力名を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-042	IT-26	更新内容	P1	更新時の更新内容確認	カスタムCSV定義を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-040	IT-26	更新内容	P1	更新時の更新内容確認	CSV種別を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新内容の対象ファイルと処理条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-043	IT-05	実行結果	P1	更新時の実行結果確認	出力項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-041	IT-05	実行結果	P1	更新時の実行結果確認	カスタムCSV定義を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-044	IT-05	実行結果	P1	更新時の実行結果確認	利用者を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-042	IT-05	実行結果	P1	更新時の実行結果確認	出力項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_csv の1行であること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-043	IT-05	削除条件	P1	削除時の削除条件確認	利用者を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本機能では管理者アカウント（dtb_member 由来のログイン主体）を指すであること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-045	IT-05	削除条件	P1	削除時の削除条件確認	管理画面ナビから当機能を開くを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-044	IT-05	削除条件	P1	削除時の削除条件確認	管理画面ナビから当機能を開くを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	既定のCSV種別（実装ではエントリ時のパラメータ既定により商品CSV種別に相当する）について、フォームが表示されるであること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-046	IT-05	削除条件	P1	削除時の削除条件確認	「CSV出力項目」セレクトを変更するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-045	IT-05	削除条件	P1	削除時の削除条件確認	「CSV出力項目」セレクトを変更するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ブラウザが同一機能の別CSV種別のGETへ遷移し、選択に応じたマスタ集合でリストが組み替わるであること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-047	IT-05	削除条件	P1	削除時の削除条件確認	「カスタムCSV」セレクトを変更するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-046	IT-05	削除条件	P1	削除時の削除条件確認	「カスタムCSV」セレクトを変更するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一CSV種別のまま、選択した定義ID付きもしくは未定義（新規）のGETへ遷移すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-048	IT-05	削除条件	P1	削除時の削除条件確認	二段リストと矢印ボタンで項目を移動し、「設定」を押すを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	カスタム定義の名称・CSV種別・更新者が保存され、出力側リストの並びに従い dtb_csv_csv_extension が作り直されるであること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-049	IT-05	削除条件	P1	削除時の削除条件確認	既存定義で「削除」相当の導線を実行するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で削除条件の対象ファイルと処理条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-047	IT-05	削除条件	P1	削除時の削除条件確認	二段リストと矢印ボタンで項目を移動し、「設定」を押すを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で削除条件の対象ファイルと処理条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-050	IT-05	実行結果	P1	削除時の実行結果確認	カスタムCSVのダウンロードを別画面から実行するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-048	IT-05	実行結果	P1	削除時の実行結果確認	既存定義で「削除」相当の導線を実行するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-051	IT-05	実行結果	P1	削除時の実行結果確認	表示要素を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-049	IT-05	実行結果	P1	削除時の実行結果確認	カスタムCSVのダウンロードを別画面から実行するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ページタイトル「システム設定」、サブタイトル「カスタムCSV出力項目設定」であること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-052	IT-05	実行結果	P1	削除時の実行結果確認	JS 挙動を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能の保存結果である csv_extension_id を指定し、ストリーミングでCSVが返るであること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-050	IT-05	実行結果	P1	削除時の実行結果確認	表示要素を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-053	IT-05	実行結果	P1	削除時の実行結果確認	モーダル・ポップアップを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-051	IT-05	実行結果	P1	削除時の実行結果確認	JS 挙動を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本機能では管理画面標準の削除確認は、アンカーのdata-message等に依存するパターンを用いる（詳細は共通スクリプトを正とする）であること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-054	IT-16	実行結果	P2	実行結果の結合確認	対象CSV種別を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	jQueryで、選択されたoption要素を相手リストへappendToすること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-052	IT-16	実行結果	P2	実行結果の結合確認	モーダル・ポップアップを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-055	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	名称を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-053	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	対象CSV種別を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でフォーマット定義で対象条件に該当する値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示されず、対象処理を継続できること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-056	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	保存単位を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-054	IT-17	フォーマット定義	P2	フォーマット定義の入力検証	名称を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でフォーマット定義で対象条件に該当しない値を指定する	"1. 対象画面でフォーマット定義のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	フォーマット定義でエラーが表示され、対象処理が完了しないこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-057	IT-27	実行結果	P2	実行結果の結合確認	更新者を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-055	IT-27	実行結果	P2	実行結果の結合確認	保存単位を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-058	IT-27	実行結果	P2	実行結果の結合確認	CSV出力項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-056	IT-27	実行結果	P2	実行結果の結合確認	更新者を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で実行結果の対象ファイルと処理条件を指定する	"1. 対象画面で実行結果のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	実行結果のファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-059	IT-24	出力内容	P2	出力内容の結合確認	カスタムCSVを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-057	IT-24	出力内容	P2	出力内容の結合確認	CSV出力項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-060	IT-24	出力内容	P2	出力内容の結合確認	出力名を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-058	IT-24	出力内容	P2	出力内容の結合確認	カスタムCSVを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-061	IT-24	出力内容	P2	出力内容の結合確認	CSV出力しない項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-059	IT-24	出力内容	P2	出力内容の結合確認	出力名を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-062	IT-24	出力内容	P2	出力内容の結合確認	CSV出力する項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-060	IT-24	出力内容	P2	出力内容の結合確認	CSV出力しない項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容のファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-063	IT-24	出力内容	P2	出力内容の結合確認	既存定義の更新で、削除用の前置き分岐が真を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-061	IT-24	出力内容	P2	出力内容の結合確認	CSV出力する項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で出力内容の対象ファイルと処理条件を指定する	"1. 対象画面で出力内容のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	出力内容でエラーが表示されず、対象処理を継続できること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-064	IT-27	削除	P1	削除の結合確認	ソフトデリート可能なエンティティを物理削除を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-062	IT-27	削除	P1	削除の結合確認	既存定義の更新で、削除用の前置き分岐が真を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で削除の対象ファイルと処理条件を指定する	"1. 対象画面で削除のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	削除の該当レコードが取得結果に含まれないこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-065	IT-27	移動・リネーム	P2	移動・リネームの結合確認	標準CSV設定との関係を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-063	IT-27	移動・リネーム	P2	移動・リネームの結合確認	ソフトデリート可能なエンティティを物理削除を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で移動・リネームの対象ファイルと処理条件を指定する	"1. 対象画面で移動・リネームのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	移動・リネームの該当レコードが取得結果に含まれないこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-066	IT-27	コピー	P1	コピーの結合確認	エクスポート時を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-064	IT-27	コピー	P1	コピーの結合確認	標準CSV設定との関係を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でコピーの対象ファイルと処理条件を指定する	"1. 対象画面でコピーのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	コピーのファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-067	IT-33	ファイル登録	P1	ファイル登録の結合確認	入力を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-065	IT-33	ファイル登録	P1	ファイル登録の結合確認	エクスポート時を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でファイル登録の対象ファイルと処理条件を指定する	"1. 対象画面でファイル登録のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル登録のファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-068	IT-33	ファイル出力	P1	ファイル出力の結合確認	成功時出力を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-066	IT-33	ファイル出力	P1	ファイル出力の結合確認	入力を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でファイル出力の対象ファイルと処理条件を指定する	"1. 対象画面でファイル出力のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	ファイル出力のファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-069	IT-27	JSON	P1	JSONの結合確認	失敗時出力を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-067	IT-27	JSON	P1	JSONの結合確認	成功時出力を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でJSONの対象ファイルと処理条件を指定する	"1. 対象画面でJSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	JSONのファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-070	IT-27	同名ファイル	P1	同名ファイルの結合確認	dtb_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-068	IT-27	同名ファイル	P1	同名ファイルの結合確認	失敗時出力を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で同名ファイルの対象ファイルと処理条件を指定する	"1. 対象画面で同名ファイルのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	同名ファイルのファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-071	IT-27	入力JSON	P1	入力JSONの結合確認	dtb_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-069	IT-27	入力JSON	P1	入力JSONの結合確認	dtb_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で入力JSONの対象ファイルと処理条件を指定する	"1. 対象画面で入力JSONのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	入力JSONの対象レコードの値が変更されないこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-072	IT-27	配置先	P1	配置先の結合確認	dtb_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-070	IT-27	配置先	P1	配置先の結合確認	dtb_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で配置先の対象ファイルと処理条件を指定する	"1. 対象画面で配置先のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	配置先の該当レコードが取得結果に含まれること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-073	IT-27	スキーマ	P1	スキーマの結合確認	dtb_csv_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-071	IT-27	スキーマ	P1	スキーマの結合確認	dtb_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でスキーマの対象ファイルと処理条件を指定する	"1. 対象画面でスキーマのファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	スキーマのファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-074	IT-02	初期行数	P2	初期行数の結合確認	dtb_csvを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-072	IT-02	初期行数	P2	初期行数の結合確認	dtb_csv_csv_extensionを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で初期行数の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. dtb_csv_csv_extensionを確認する
+3. 画面表示と後続状態を確認する"	出力順であること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-073	IT-02	表示順	P2	表示順の結合確認	dtb_csvを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. dtb_csvを確認する
 3. 画面表示と後続状態を確認する"	本機能は参照・外部キー先であること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-075	IT-02	表示順	P2	表示順の結合確認	dtb_csvを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で表示順の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. dtb_csvを確認する
-3. 画面表示と後続状態を確認する"	ソートキーであること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-076	IT-25	更新抑止	P1	更新抑止の結合確認	dtb_csvを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-074	IT-25	更新抑止	P1	更新抑止の結合確認	dtb_csvを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で更新抑止の対象ファイルと処理条件を指定する	"1. 対象画面で更新抑止のファイル処理を実行する
 2. 出力ファイルまたは取り込み結果を確認する"	更新抑止のファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-077	IT-12	内部情報	P1	内部情報の結合確認	登録/更新を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-075	IT-12	内部情報	P1	内部情報の結合確認	dtb_csvを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で内部情報の対象ファイルと処理条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-078	IT-15	機密情報	P1	機密情報の結合確認	CSV出力項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で機密情報の対象ファイルと処理条件を指定する	"1. 対象画面で機密情報のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	機密情報のファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-079	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	カスタムCSVを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	マスタ更新日時であること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-076	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	登録/更新を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. 登録/更新を確認する
+3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-077	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSV出力項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. CSV出力項目を確認する
+3. 画面表示と後続状態を確認する"	フォーム上はNotBlankであること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-078	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	カスタムCSVを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. カスタムCSVを確認する
 3. 画面表示と後続状態を確認する"	NotBlank制約付きだが空値「新規作成」ありであること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-080	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	出力名を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-079	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	出力名を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 出力名を確認する
 3. 画面表示と後続状態を確認する"	NotBlankであること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-081	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	CSV種別を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSV種別を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. CSV種別を確認する
 3. 画面表示と後続状態を確認する"	mtb_csv_type に相当する区分であること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-082	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	カスタムCSV定義を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-081	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	カスタムCSV定義を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. カスタムCSV定義を確認する
 3. 画面表示と後続状態を確認する"	dtb_csv_extension の1行であること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-083	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出力項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-082	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	出力項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 出力項目を確認する
 3. 画面表示と後続状態を確認する"	dtb_csv の1行であること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-084	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	利用者を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-083	IT-25	一覧	P2	一覧の結合確認	利用者を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 利用者を確認する
 3. 画面表示と後続状態を確認する"	本機能では管理者アカウント（dtb_member 由来のログイン主体）を指すであること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-085	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	管理画面ナビから当機能を開くを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面レイアウトの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-084	IT-12	画面表示データ	P2	画面表示データの結合確認	管理画面ナビから当機能を開くを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 管理画面ナビから当機能を開く
-3. 画面表示と後続状態を確認する"	既定のCSV種別（実装ではエントリ時のパラメータ既定により商品CSV種別に相当する）について、フォームが表示されるであること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-086	IT-25	一覧	P2	一覧の結合確認	「CSV出力項目」セレクトを変更するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で一覧の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-085	IT-25	画面表示データ	P2	画面表示データの結合確認	「CSV出力項目」セレクトを変更するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 「CSV出力項目」セレクトを変更するを確認する
 3. 画面表示と後続状態を確認する"	ブラウザが同一機能の別CSV種別のGETへ遷移し、選択に応じたマスタ集合でリストが組み替わるであること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-087	IT-12	画面表示データ	P2	画面表示データの結合確認	「カスタムCSV」セレクトを変更するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-086	IT-12	画面表示データ	P2	画面表示データの結合確認	「カスタムCSV」セレクトを変更するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 「カスタムCSV」セレクトを変更するを確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-088	IT-25	画面表示データ	P2	画面表示データの結合確認	二段リストと矢印ボタンで項目を移動し、「設定」を押すを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-087	IT-25	画面表示データ	P2	画面表示データの結合確認	二段リストと矢印ボタンで項目を移動し、「設定」を押すを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 二段リストと矢印ボタンで項目を移動し、「設定」を押すを確認する
 3. 画面表示と後続状態を確認する"	カスタム定義の名称・CSV種別・更新者が保存され、出力側リストの並びに従い dtb_csv_csv_extension が作り直されるであること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-089	IT-12	画面表示データ	P2	画面表示データの結合確認	既存定義で「削除」相当の導線を実行するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-088	IT-25	フォーム送信	P1	フォーム送信の結合確認	既存定義で「削除」相当の導線を実行するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 既存定義で「削除」相当の導線を実行する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-090	IT-25	画面表示データ	P2	画面表示データの結合確認	カスタムCSVのダウンロードを別画面から実行するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で画面表示データの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. カスタムCSVのダウンロードを別画面から実行する
-3. 画面表示と後続状態を確認する"	当機能の保存結果である csv_extension_id を指定し、ストリーミングでCSVが返るであること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-091	IT-25	フォーム送信	P1	フォーム送信の結合確認	表示要素を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でフォーム送信の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	CSRF付きのDELETE相当のリクエスト後、カスタム定義が削除され、一覧（新規状態）へ戻るリダイレクトが返るであること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-089	IT-16	ファイル選択	P2	ファイル選択の結合確認	カスタムCSVのダウンロードを別画面から実行するを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
+2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-090	IT-12	非同期更新	P1	非同期更新の結合確認	表示要素を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	ページタイトル「システム設定」、サブタイトル「カスタムCSV出力項目設定」であること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-092	IT-16	ファイル選択	P2	ファイル選択の結合確認	JS 挙動を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でファイル選択の対象ファイルと処理条件を指定する	"1. 対象画面でファイル選択のファイル処理を実行する
-2. 出力ファイルまたは取り込み結果を確認する"	ファイル選択のファイル出力内容または取り込み結果が対象データと一致すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-093	IT-12	非同期更新	P1	非同期更新の結合確認	モーダル・ポップアップを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で非同期更新の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-091	IT-12	エラー継続	P3	エラー継続の結合確認	JS 挙動を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
+2. JS 挙動を確認する
+3. 画面表示と後続状態を確認する"	jQueryで、選択されたoption要素を相手リストへappendToすること。
+カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-092	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	モーダル・ポップアップを試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	本機能では管理画面標準の削除確認は、アンカーのdata-message等に依存するパターンを用いる（詳細は共通スクリプトを正とする）であること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-094	IT-12	エラー継続	P3	エラー継続の結合確認	対象CSV種別を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でエラー継続の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 対象CSV種別を確認する
-3. 画面表示と後続状態を確認する"	フォームの「CSV出力項目」は、内部クエリで商品・受注・配送の3種に限定すること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-095	IT-25	件数上限	P2	件数上限の結合確認	名称を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で件数上限の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 名称を確認する
-3. 画面表示と後続状態を確認する"	必須であること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-096	IT-25	欠損値	P2	欠損値の結合確認	保存単位を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で欠損値の対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 保存単位
-3. 画面表示と後続状態を確認する"	1回の「設定」で1件の dtb_csv_extension と、それに紐づく dtb_csv_csv_extension の全置換を行うこと。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-097	IT-25	データなし	P2	データなしの結合確認	更新者を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）でデータなしの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. 更新者を確認する
-3. 画面表示と後続状態を確認する"	保存のたびに、当該リクエストのログイン中管理者主キーを member_id に上書きすること。
-カスタムCSV出力項目設定（店舗設定／システム設定）	IT-M10-13-ADMIN-BASE-SETTING-SETTING-SHOP-CSV-CUSTOM-098	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	CSV出力項目を試験できる状態である	カスタムCSV出力項目設定（店舗設定／システム設定）（m10_13_admin_base_setting_setting_shop_csv_custom）で公開コンテンツの対象ファイルと処理条件を指定する	"1. 対象画面を表示する
-2. CSV出力項目を確認する
-3. 画面表示と後続状態を確認する"	画面切替のみであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -401,4 +384,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | ウェブアプリケーション / 一覧 / ページング（IT-23） | 元設計HTMLに該当する処理・I/Fがないため |
 | ウェブサービス / 非同期連携 / 通知引渡し（IT-08） | 本機能は対象の外部I/Fを扱わないため |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 3件 — No.109, No.110, No.111。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 9件 — No.87, No.109, No.110, No.111, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

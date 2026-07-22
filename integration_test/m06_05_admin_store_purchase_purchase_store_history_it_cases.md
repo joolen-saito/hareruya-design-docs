@@ -10,15 +10,16 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | 対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | 実行結果、検索条件 |
+| IT-23 | データ正当性、実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
+| IT-16 | ファイル選択 |
 
 ## テストケースTSV
 
@@ -36,63 +37,63 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 
 ```tsv
 機能名	テストID	I/FID	テスト観点	優先度	テスト項目名	前提条件	入力データ/リクエスト内容	操作手順/実行方法	期待結果／レスポンス
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-001	IT-15	CSRF	P1	CSRFの結合確認	棚戻し列を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で棚戻し列の確認に必要な条件を指定する	"1. CSRFの認証・Cookie・セッション・試行制限など前提条件を設定する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-001	IT-15	未認証	P1	未認証の結合確認	棚戻し列を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で棚戻し列の確認に必要な条件を指定する	"1. 未認証の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	restocked_flg・restocked_dateを追加であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-002	IT-15	未認証	P1	未認証の結合確認	ナビ「店頭買取管理」→「買取商品履歴」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でナビ「店頭買取管理」→「買取商品履歴」の確認に必要な条件を指定する	"1. 未認証の認証・Cookie・セッション・試行制限など前提条件を設定する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-002	IT-15	対象データ	P1	対象データの結合確認	ナビ「店頭買取管理」→「買取商品履歴」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でナビ「店頭買取管理」→「買取商品履歴」の確認に必要な条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	検索フォームのみ表示され、結果一覧は出さない（初回）であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-003	IT-15	対象データ	P1	対象データの結合確認	検索フォームの「検索する」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索フォームの「検索する」の確認に必要な条件を指定する	"1. 対象データの認証・Cookie・セッション・試行制限など前提条件を設定する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-003	IT-20	出力抑止	P1	出力抑止の結合確認	検索フォームの「検索する」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索フォームの「検索する」の確認に必要な条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	入力された条件で一覧を表示すること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-004	IT-20	出力抑止	P1	出力抑止の結合確認	ページャの各種リンクを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でページャの各種リンクの確認に必要な条件を指定する	"1. 出力抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-004	IT-20	識別子	P1	識別子の結合確認	ページャの各種リンクを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でページャの各種リンクの確認に必要な条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	直近の検索条件をセッションから復元し、指定ページを表示すること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-005	IT-20	識別子	P1	識別子の結合確認	CSV メニュー「選択した商品履歴取得」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV メニュー「選択した商品履歴取得」の確認に必要な条件を指定する	"1. 識別子の認証・Cookie・セッション・試行制限など前提条件を設定する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-005	IT-15	状態変化	P1	状態変化の結合確認	CSV メニュー「選択した商品履歴取得」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV メニュー「選択した商品履歴取得」の確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	チェック済み履歴IDだけを CSV に含めるであること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-006	IT-15	状態変化	P1	状態変化の結合確認	CSV メニュー「検索結果全件取得」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV メニュー「検索結果全件取得」の確認に必要な条件を指定する	"1. 状態変化の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	セッション上の直近検索条件で絞った全件を CSV に含めるであること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-007	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	表示要素を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-006	IT-25	確認ダイアログ	P3	確認ダイアログの操作結果確認	CSV メニュー「検索結果全件取得」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV メニュー「検索結果全件取得」の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. CSV メニュー「検索結果全件取得」
+3. 画面表示と後続状態を確認する"	セッション上の直近検索条件で絞った全件を CSV に含めるであること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-007	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	表示要素を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	タイトルは「店頭買取管理」、サブタイトルは「買取商品履歴」であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	買取価格（画面・CSV）を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で買取価格（画面・CSV）の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-008	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	買取価格（画面・CSV）を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 買取価格（画面・CSV）を確認する
-3. 画面表示と後続状態を確認する"	実在庫の getUnitCost() に相当する値を表示・出力すること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-009	IT-25	URL	P2	URLの操作結果確認	増減数を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で増減数の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 増減数を確認する
-3. 画面表示と後続状態を確認する"	履歴の afterQuantity - beforeQuantityであること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	ステータス選択肢を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. ステータス選択肢
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	査定IDを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 査定IDを確認する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	増減数を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. 増減数を確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	検索フォーム CSRFを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索フォーム CSRFの確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-010	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	ステータス選択肢を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でステータス選択肢の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ステータス選択肢
+3. 画面表示と後続状態を確認する"	フォームは買取成立・キャンセル・入庫待ち・未登録在庫あり・入庫済み・管理者取消の 6 種のみをクエリ候補として出す（マスタ定数 1,2,11,12,13,14であること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-011	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	査定IDを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. 査定IDを確認する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	検索フォーム CSRFを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 検索フォーム CSRF
-3. 画面表示と後続状態を確認する"	本フォームは CSRF 保護を無効にしてあり、トークン無しで POST できる（実装を確認値とする）であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	CSV の export_type 不正を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	CSV の export_type 不正を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. CSV の export_type 不正を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	会員ID・査定IDに空文字を入力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	会員ID・査定IDに空文字を入力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 会員ID・査定IDに空文字を入力
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	並び替え UIを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 並び替え UIを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	店舗名表示を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 店舗名表示を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	入力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 入力
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-015	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	並び替え UIを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 並び替え UIを確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	成功時出力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	店舗名表示を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 店舗名表示を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-019	IT-22	部分入力	P2	部分入力の入力検証	失敗時出力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	ソート不正時はフラッシュエラーと初回画面相当であること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-017	IT-22	部分入力	P2	部分入力の入力検証	入力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力
+3. 画面表示と後続状態を確認する"	検索フォームの各フィールド、ページ番号、表示件数、CSV の export_type と選択 ID 列であること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-018	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-019	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-020	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
@@ -111,10 +112,10 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-025	IT-23	検索条件	P2	検索時の検索条件確認	管理画面にログイン済みを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-026	IT-23	検索条件	P2	検索時の検索条件確認	ページャ・表示件数リンクを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-026	IT-23	検索条件	P2	検索時の検索条件確認	ページャ・表示件数リンクを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でページャ・表示件数リンクの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-027	IT-23	検索条件	P2	検索時の検索条件確認	CSV エラー（選択なし／検索なし）を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-027	IT-23	検索条件	P2	検索時の検索条件確認	CSV エラー（選択なし／検索なし）を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV エラー（選択なし／検索なし）の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-028	IT-23	検索条件	P2	検索時の検索条件確認	sort の order 不正を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でsort の order 不正の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
@@ -129,165 +130,150 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-031	IT-23	検索条件	P2	検索時の検索条件確認	order パラメータが ASC/DESC 以外を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でorder パラメータが ASC/DESC 以外の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-032	IT-23	検索条件	P2	検索時の検索条件確認	M06-05-MSG-001を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でM06-05-MSG-001の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-032	IT-23	実行結果	P2	検索時の実行結果確認	M06-05-MSG-001を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でM06-05-MSG-001の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-033	IT-23	検索条件	P2	検索時の検索条件確認	M06-05-MSG-002を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でM06-05-MSG-002の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-033	IT-23	実行結果	P2	検索時の実行結果確認	M06-05-MSG-002を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でM06-05-MSG-002の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-034	IT-23	実行結果	P2	検索時の実行結果確認	保存内容を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で保存内容の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-035	IT-23	実行結果	P2	検索時の実行結果確認	棚戻し列を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で棚戻し列の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-036	IT-23	実行結果	P2	検索時の実行結果確認	ナビ「店頭買取管理」→「買取商品履歴」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でナビ「店頭買取管理」→「買取商品履歴」の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-036	IT-26	登録内容	P1	登録時の登録内容確認	ナビ「店頭買取管理」→「買取商品履歴」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でナビ「店頭買取管理」→「買取商品履歴」の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-037	IT-23	実行結果	P2	検索時の実行結果確認	検索フォームの「検索する」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索フォームの「検索する」の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-037	IT-26	登録内容	P1	登録時の登録内容確認	検索フォームの「検索する」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索フォームの「検索する」の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-038	IT-26	登録内容	P1	登録時の登録内容確認	ページャの各種リンクを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でページャの各種リンクの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-039	IT-26	登録内容	P1	登録時の登録内容確認	CSV メニュー「選択した商品履歴取得」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV メニュー「選択した商品履歴取得」の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	チェック済み履歴IDだけを CSV に含めるであること。
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-040	IT-26	登録内容	P1	登録時の登録内容確認	CSV メニュー「検索結果全件取得」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV メニュー「検索結果全件取得」の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-041	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で表示要素の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	タイトルは「店頭買取管理」、サブタイトルは「買取商品履歴」であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-042	IT-26	登録内容	P1	登録時の登録内容確認	買取価格（画面・CSV）を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で買取価格（画面・CSV）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-041	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-043	IT-26	登録内容	P1	登録時の登録内容確認	増減数を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-044	IT-26	登録内容	P1	登録時の登録内容確認	ステータス選択肢を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-042	IT-26	登録内容	P1	登録時の登録内容確認	買取価格（画面・CSV）を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-045	IT-26	登録内容	P1	登録時の登録内容確認	査定IDを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-043	IT-26	登録内容	P1	登録時の登録内容確認	増減数を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-046	IT-26	登録内容	P1	登録時の登録内容確認	検索フォーム CSRFを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-044	IT-26	登録内容	P1	登録時の登録内容確認	ステータス選択肢を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-047	IT-26	登録内容	P1	登録時の登録内容確認	CSV の export_type 不正を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV の export_type 不正の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-045	IT-26	登録内容	P1	登録時の登録内容確認	査定IDを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で査定IDの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-048	IT-26	実行結果	P1	登録時の実行結果確認	会員ID・査定IDに空文字を入力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で会員ID・査定IDに空文字を入力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-046	IT-26	実行結果	P1	登録時の実行結果確認	検索フォーム CSRFを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索フォーム CSRFの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-049	IT-23	実行結果	P1	登録時の実行結果確認	並び替え UIを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で並び替え UIの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-047	IT-23	実行結果	P1	登録時の実行結果確認	CSV の export_type 不正を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV の export_type 不正の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	トレイトが sort/order をセッションに持つ一方、履歴一覧クエリは並びを固定するため、画面のソート意図とクエリが一致しない（実装を確認値とする）であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実装は例外を投げるであること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-048	IT-26	更新内容	P1	更新時の更新内容確認	会員ID・査定IDに空文字を入力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で会員ID・査定IDに空文字を入力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-049	IT-26	更新内容	P1	更新時の更新内容確認	並び替え UIを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で並び替え UIの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-050	IT-26	更新内容	P1	更新時の更新内容確認	店舗名表示を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で店舗名表示の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-051	IT-26	更新内容	P1	更新時の更新内容確認	入力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で入力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索フォームの各フィールド、ページ番号、表示件数、CSV の export_type と選択 ID 列であること。
 店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-052	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-053	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で失敗時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ソート不正時はフラッシュエラーと初回画面相当であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-054	IT-26	更新内容	P1	更新時の更新内容確認	副作用を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で副作用の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-053	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-055	IT-26	更新内容	P1	更新時の更新内容確認	dtb_otc_buy_order_stockを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-056	IT-26	更新内容	P1	更新時の更新内容確認	dtb_otc_buy_orderを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-054	IT-26	更新内容	P1	更新時の更新内容確認	副作用を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-057	IT-26	更新内容	P1	更新時の更新内容確認	dtb_productを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-055	IT-26	更新内容	P1	更新時の更新内容確認	dtb_otc_buy_order_stockを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-058	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-056	IT-26	更新内容	P1	更新時の更新内容確認	dtb_otc_buy_orderを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-059	IT-26	更新内容	P1	更新時の更新内容確認	管理画面にログイン済みを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で管理画面にログイン済みの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-057	IT-26	更新内容	P1	更新時の更新内容確認	dtb_productを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でdtb_productの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-060	IT-05	実行結果	P1	更新時の実行結果確認	ページャ・表示件数リンクを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でページャ・表示件数リンクの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-058	IT-05	実行結果	P1	更新時の実行結果確認	登録/更新を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で登録/更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-061	IT-05	実行結果	P1	更新時の実行結果確認	CSV エラー（選択なし／検索なし）を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV エラー（選択なし／検索なし）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-059	IT-05	実行結果	P1	更新時の実行結果確認	管理画面にログイン済みを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で管理画面にログイン済みの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	admin_otcbuyorder_history_page へリダイレクトであること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-062	IT-02	初期行数	P2	初期行数の結合確認	sort の order 不正を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でsort の order 不正の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. sort の order 不正を確認する
-3. 画面表示と後続状態を確認する"	初回表示相当の配列応答であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-063	IT-02	表示順	P2	表示順の結合確認	検索 POSTを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索 POSTの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検索 POST
-3. 画面表示と後続状態を確認する"	同一条件で一覧表示であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-064	IT-25	更新抑止	P1	更新抑止の結合確認	CSV 失敗リダイレクトを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV 失敗リダイレクトの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本コントローラにルート単位の追加制限は無く、管理画面ファイアウォール内の利用者が到達しうる（実装を確認値とする）であること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-060	IT-02	初期行数	P2	初期行数の結合確認	ページャ・表示件数リンクを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でページャ・表示件数リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ページャ・表示件数リンクを確認する
+3. 画面表示と後続状態を確認する"	admin_otcbuyorder_history_page の GETであること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-061	IT-02	表示順	P2	表示順の結合確認	CSV エラー（選択なし／検索なし）を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV エラー（選択なし／検索なし）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. CSV エラー（選択なし／検索なし）
+3. 画面表示と後続状態を確認する"	admin_otcbuyorder_history_page へリダイレクトであること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-062	IT-25	更新抑止	P1	更新抑止の結合確認	sort の order 不正を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でsort の order 不正の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	保存済みページ番号の一覧であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-065	IT-12	内部情報	P1	内部情報の結合確認	order パラメータが ASC/DESC 以外を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でorder パラメータが ASC/DESC 以外の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	初回表示相当の配列応答であること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-063	IT-12	内部情報	P1	内部情報の結合確認	検索 POSTを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索 POSTの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	管理画面共通のソートエラーメッセージを出し、初回表示相当へであること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-066	IT-15	機密情報	P1	機密情報の結合確認	M06-05-MSG-001を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でM06-05-MSG-001の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	「選択した商品履歴取得」でCSV出力（export_type=check_export）を送信し、選択商品履歴（otcBuyOrderHistoryIds）が空のときであること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M06-05-MSG-002を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でM06-05-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	同一条件で一覧表示であること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-064	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	CSV 失敗リダイレクトを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV 失敗リダイレクトの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. CSV 失敗リダイレクトを確認する
+3. 画面表示と後続状態を確認する"	保存済みページ番号の一覧であること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-065	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	order パラメータが ASC/DESC 以外を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でorder パラメータが ASC/DESC 以外の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. order パラメータが ASC/DESC 以外を確認する
+3. 画面表示と後続状態を確認する"	管理画面共通のソートエラーメッセージを出し、初回表示相当へであること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-066	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M06-05-MSG-001を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でM06-05-MSG-001の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M06-05-MSG-001を確認する
+3. 画面表示と後続状態を確認する"	「選択した商品履歴取得」でCSV出力（export_type=check_export）を送信し、選択商品履歴（otcBuyOrderHistoryIds）が空のときであること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-067	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M06-05-MSG-002を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でM06-05-MSG-002の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M06-05-MSG-002を確認する
 3. 画面表示と後続状態を確認する"	「検索結果全件取得」でCSV出力（export_type=all_export）を送信し、セッションの検索条件（eccube.admin.otcbuyorder_history.search）が null のときであること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-068	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	保存内容を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で保存内容の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-068	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	保存内容を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で保存内容の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 保存内容
 3. 画面表示と後続状態を確認する"	検索条件の表示用データ、ページ番号、表示件数、ソート列名、昇降順であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	棚戻し列を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で棚戻し列の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-069	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	棚戻し列を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で棚戻し列の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 棚戻し列を確認する
 3. 画面表示と後続状態を確認する"	restocked_flg・restocked_dateを追加であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-070	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	ナビ「店頭買取管理」→「買取商品履歴」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でナビ「店頭買取管理」→「買取商品履歴」の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ナビ「店頭買取管理」→「買取商品履歴」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でナビ「店頭買取管理」→「買取商品履歴」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ナビ「店頭買取管理」→「買取商品履歴」を確認する
 3. 画面表示と後続状態を確認する"	検索フォームのみ表示され、結果一覧は出さない（初回）であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	検索フォームの「検索する」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索フォームの「検索する」の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-071	IT-25	一覧	P2	一覧の結合確認	検索フォームの「検索する」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索フォームの「検索する」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索フォームの「検索する」
 3. 画面表示と後続状態を確認する"	入力された条件で一覧を表示すること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ページャの各種リンクを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でページャの各種リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-072	IT-12	画面表示データ	P2	画面表示データの結合確認	ページャの各種リンクを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でページャの各種リンクの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ページャの各種リンクを確認する
-3. 画面表示と後続状態を確認する"	直近の検索条件をセッションから復元し、指定ページを表示すること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-073	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	CSV メニュー「選択した商品履歴取得」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV メニュー「選択した商品履歴取得」の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-073	IT-25	画面表示データ	P2	画面表示データの結合確認	CSV メニュー「選択した商品履歴取得」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV メニュー「選択した商品履歴取得」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSV メニュー「選択した商品履歴取得」
 3. 画面表示と後続状態を確認する"	チェック済み履歴IDだけを CSV に含めるであること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-074	IT-25	一覧	P2	一覧の結合確認	CSV メニュー「検索結果全件取得」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV メニュー「検索結果全件取得」の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-074	IT-12	画面表示データ	P2	画面表示データの結合確認	CSV メニュー「検索結果全件取得」を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV メニュー「検索結果全件取得」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSV メニュー「検索結果全件取得」
-3. 画面表示と後続状態を確認する"	セッション上の直近検索条件で絞った全件を CSV に含めるであること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-075	IT-12	画面表示データ	P2	画面表示データの結合確認	表示要素を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-076	IT-12	画面表示データ	P2	画面表示データの結合確認	増減数を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で増減数の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-075	IT-25	フォーム送信	P1	フォーム送信の結合確認	買取価格（画面・CSV）を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で買取価格（画面・CSV）の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 買取価格（画面・CSV）を確認する
+3. 画面表示と後続状態を確認する"	実在庫の getUnitCost() に相当する値を表示・出力すること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-076	IT-16	ファイル選択	P2	ファイル選択の結合確認	増減数を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で増減数の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 増減数を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-077	IT-25	画面表示データ	P2	画面表示データの結合確認	ステータス選択肢を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でステータス選択肢の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. ステータス選択肢
-3. 画面表示と後続状態を確認する"	フォームは買取成立・キャンセル・入庫待ち・未登録在庫あり・入庫済み・管理者取消の 6 種のみをクエリ候補として出す（マスタ定数 1,2,11,12,13,14であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-078	IT-25	フォーム送信	P1	フォーム送信の結合確認	査定IDを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で査定IDの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	履歴の afterQuantity - beforeQuantityであること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-077	IT-12	エラー継続	P3	エラー継続の結合確認	査定IDを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で査定IDの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 査定IDを確認する
 3. 画面表示と後続状態を確認する"	送信値が非 null のとき完全一致で検索であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-079	IT-12	非同期更新	P1	非同期更新の結合確認	CSV の export_type 不正を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV の export_type 不正の確認に必要な条件を指定する	"1. 対象画面を表示する
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-078	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	検索フォーム CSRFを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で検索フォーム CSRFの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 検索フォーム CSRF
+3. 画面表示と後続状態を確認する"	本フォームは CSRF 保護を無効にしてあり、トークン無しで POST できる（実装を確認値とする）であること。
+店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-079	IT-23	データ正当性	P3	データ正当性の結合確認	CSV の export_type 不正を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）でCSV の export_type 不正の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSV の export_type 不正を確認する
 3. 画面表示と後続状態を確認する"	実装は例外を投げるであること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-080	IT-12	エラー継続	P3	エラー継続の結合確認	会員ID・査定IDに空文字を入力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で会員ID・査定IDに空文字を入力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 会員ID・査定IDに空文字を入力
-3. 画面表示と後続状態を確認する"	非 null のため条件が付き、意図せず件数 0 になりうる（実装を確認値とする）であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-081	IT-25	件数上限	P2	件数上限の結合確認	並び替え UIを試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で並び替え UIの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 並び替え UIを確認する
-3. 画面表示と後続状態を確認する"	トレイトが sort/order をセッションに持つ一方、履歴一覧クエリは並びを固定するため、画面のソート意図とクエリが一致しない（実装を確認値とする）であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-082	IT-25	欠損値	P2	欠損値の結合確認	店舗名表示を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で店舗名表示の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 店舗名表示を確認する
-3. 画面表示と後続状態を確認する"	注文と店舗が左結合のため、店舗無しの注文では店舗名列は空表示になりうるであること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-083	IT-25	データなし	P2	データなしの結合確認	入力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 入力
-3. 画面表示と後続状態を確認する"	検索フォームの各フィールド、ページ番号、表示件数、CSV の export_type と選択 ID 列であること。
-店頭買取管理 — 買取商品履歴（検索／一覧）	IT-M06-05-ADMIN-STORE-PURCHASE-PURCHASE-STORE-HISTORY-084	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	成功時出力を試験できる状態である	店頭買取管理 — 買取商品履歴（検索／一覧）（m06_05_admin_store_purchase_purchase_store_history）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	HTML 一覧、もしくは CSV ストリームであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -387,6 +373,6 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | データベースアクセス / 金額計算 / 税・端数（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
-| その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.109, No.110, No.111, No.357, No.382。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 11件 — No.109, No.110, No.111, No.359, No.385, No.412, No.413, No.414, No.415, No.422, No.510。上限緩和または個別ケース化で収載可能。

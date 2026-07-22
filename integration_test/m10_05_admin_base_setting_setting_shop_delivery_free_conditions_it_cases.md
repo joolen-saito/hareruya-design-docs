@@ -10,14 +10,14 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
 | IT-05 | 実行結果 |
-| IT-02 | 初期行数、表示順 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-16 | ファイル選択 |
 
@@ -61,171 +61,165 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	金額に負値・数字以外・桁超過を送るを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で金額に負値・数字以外・桁超過を送るの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 金額に負値・数字以外・桁超過を送るを確認する
 3. 画面表示と後続状態を確認する"	フォーム検証エラーになり保存しないこと。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-009	IT-25	URL	P2	URLの操作結果確認	金額にカンマ付きのみを送った場合など、金額型とRegexの順序によりエラーにな…を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で金額にカンマ付きのみを送った場合など、金額型とRegexの順序によりエラーにな…の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	金額にカンマ付きのみを送った場合など、金額型とRegexの順序によりエラーにな…を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 金額にカンマ付きのみを送った場合など、金額型とRegexの順序によりエラーにな…を確認する
-3. 画面表示と後続状態を確認する"	テストでは桁区切り文字列がエラーとなる例があること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	delivery_free_quantity は非NULL、delivery_…を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. delivery_free_quantity は非NULL、delivery_…を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	保存単位を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 保存単位
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	全画面共通の参照を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で全画面共通の参照の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	保存単位を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で保存単位の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 保存単位
+3. 画面表示と後続状態を確認する"	dtb_base_info の単一行であること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	全画面共通の参照を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 全画面共通の参照を確認する
-3. 画面表示と後続状態を確認する"	アプリ各处で読み込まれる BaseInfo はクエリ結果キャッシュの影響を受ける場合がある（店舗マスタ共通の注意）であること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	検証失敗時を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 検証失敗時を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	DBを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	DBを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. DBを確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	Doctrineイベントを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	Doctrineイベントを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. Doctrineイベントを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	結果キャッシュを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 結果キャッシュを確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	成功時出力を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	結果キャッシュを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 結果キャッシュを確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	失敗時出力を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	成功時出力を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-019	IT-22	部分入力	P2	部分入力の入力検証	登録/更新を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 登録/更新を確認する
-3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-018	IT-22	部分入力	P2	部分入力の入力検証	失敗時出力を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 失敗時出力を確認する
+3. 画面表示と後続状態を確認する"	項目エラーであること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-019	IT-26	登録内容	P1	登録時の登録内容確認	登録/更新を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で登録/更新の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-020	IT-26	登録内容	P1	登録時の登録内容確認	管理画面へ到達できる管理者で、親画面への拒否設定に該当しないを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で管理画面へ到達できる管理者で、親画面への拒否設定に該当しないの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
 店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-021	IT-26	登録内容	P1	登録時の登録内容確認	未認証・権限・IP要件を満たさないを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で未認証・権限・IP要件を満たさないの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
 店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-022	IT-26	登録内容	P1	登録時の登録内容確認	保存成功→リダイレクトを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で保存成功→リダイレクトの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	画面上部に成功メッセージが出た状態で、BaseInfo は保存後の値を読み込み直した表示になること。
 店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-023	IT-26	登録内容	P1	登録時の登録内容確認	入力検証エラーを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で入力検証エラーの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	該当 form_row にエラー表示であること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-024	IT-26	登録内容	P1	登録時の登録内容確認	結果キャッシュ関連を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で結果キャッシュ関連の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-024	IT-26	登録内容	P1	登録時の登録内容確認	結果キャッシュ関連を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-025	IT-26	登録内容	P1	登録時の登録内容確認	管理者を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-026	IT-26	登録内容	P1	登録時の登録内容確認	店舗基本設定画面の「送料設定」を見るを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-025	IT-26	登録内容	P1	登録時の登録内容確認	管理者を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-027	IT-26	登録内容	P1	登録時の登録内容確認	閾値を入力して画面下部の「登録」を押す（親フォームと一体）を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-026	IT-26	登録内容	P1	登録時の登録内容確認	店舗基本設定画面の「送料設定」を見るを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-028	IT-26	登録内容	P1	登録時の登録内容確認	入力が検証ルールを満たさないを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-027	IT-26	登録内容	P1	登録時の登録内容確認	閾値を入力して画面下部の「登録」を押す（親フォームと一体）を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-029	IT-26	登録内容	P1	登録時の登録内容確認	購入者がカートまたは購入フローを使う（閾値保存後）を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で購入者がカートまたは購入フローを使う（閾値保存後）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-028	IT-26	登録内容	P1	登録時の登録内容確認	入力が検証ルールを満たさないを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で入力が検証ルールを満たさないの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-030	IT-26	実行結果	P1	登録時の実行結果確認	表示要素を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で表示要素の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-029	IT-26	実行結果	P1	登録時の実行結果確認	購入者がカートまたは購入フローを使う（閾値保存後）を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で購入者がカートまたは購入フローを使う（閾値保存後）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-031	IT-23	実行結果	P1	登録時の実行結果確認	入力項目を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で入力項目の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-030	IT-23	実行結果	P1	登録時の実行結果確認	表示要素を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で表示要素の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	「送料無料条件(金額)」は金額用 money 型であること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ボックス見出し「送料設定」であること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-031	IT-26	更新内容	P1	更新時の更新内容確認	入力項目を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で入力項目の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-032	IT-26	更新内容	P1	更新時の更新内容確認	金額に負値・数字以外・桁超過を送るを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で金額に負値・数字以外・桁超過を送るの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
 店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-033	IT-26	更新内容	P1	更新時の更新内容確認	金額にカンマ付きのみを送った場合など、金額型とRegexの順序によりエラーにな…を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で金額にカンマ付きのみを送った場合など、金額型とRegexの順序によりエラーにな…の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
 店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-034	IT-26	更新内容	P1	更新時の更新内容確認	delivery_free_quantity は非NULL、delivery_…を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）でdelivery_free_quantity は非NULL、delivery_…の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	数量側のみによる無料化と表示分岐となること。
 店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-035	IT-26	更新内容	P1	更新時の更新内容確認	保存単位を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で保存単位の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	dtb_base_info の単一行であること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-036	IT-26	更新内容	P1	更新時の更新内容確認	全画面共通の参照を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で全画面共通の参照の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-036	IT-26	更新内容	P1	更新時の更新内容確認	全画面共通の参照を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-037	IT-26	更新内容	P1	更新時の更新内容確認	検証失敗時を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-038	IT-26	更新内容	P1	更新時の更新内容確認	DBを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-037	IT-26	更新内容	P1	更新時の更新内容確認	検証失敗時を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-039	IT-26	更新内容	P1	更新時の更新内容確認	Doctrineイベントを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-038	IT-26	更新内容	P1	更新時の更新内容確認	DBを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-040	IT-26	更新内容	P1	更新時の更新内容確認	結果キャッシュを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-039	IT-26	更新内容	P1	更新時の更新内容確認	Doctrineイベントを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-041	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-040	IT-26	更新内容	P1	更新時の更新内容確認	結果キャッシュを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で結果キャッシュの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-042	IT-05	実行結果	P1	更新時の実行結果確認	失敗時出力を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-041	IT-05	実行結果	P1	更新時の実行結果確認	成功時出力を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で成功時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-043	IT-05	実行結果	P1	更新時の実行結果確認	登録/更新を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で登録/更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-042	IT-05	実行結果	P1	更新時の実行結果確認	失敗時出力を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で失敗時出力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-044	IT-02	初期行数	P2	初期行数の結合確認	管理画面へ到達できる管理者で、親画面への拒否設定に該当しないを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で管理画面へ到達できる管理者で、親画面への拒否設定に該当しないの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	項目エラーであること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-043	IT-02	初期行数	P2	初期行数の結合確認	登録/更新を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で登録/更新の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 登録/更新を確認する
+3. 画面表示と後続状態を確認する"	当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）であること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-044	IT-02	表示順	P2	表示順の結合確認	管理画面へ到達できる管理者で、親画面への拒否設定に該当しないを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で管理画面へ到達できる管理者で、親画面への拒否設定に該当しないの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 管理画面へ到達できる管理者で、親画面への拒否設定に該当しないを確認する
 3. 画面表示と後続状態を確認する"	「送料設定」含む店舗基本設定の表示・保存が可能であること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-045	IT-02	表示順	P2	表示順の結合確認	未認証・権限・IP要件を満たさないを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で未認証・権限・IP要件を満たさないの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 未認証・権限・IP要件を満たさないを確認する
-3. 画面表示と後続状態を確認する"	親画面共通の結果として保存操作に至らない（詳細は管理画面認証を正とする）であること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-046	IT-25	更新抑止	P1	更新抑止の結合確認	保存成功→リダイレクトを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で保存成功→リダイレクトの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-045	IT-25	更新抑止	P1	更新抑止の結合確認	未認証・権限・IP要件を満たさないを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で未認証・権限・IP要件を満たさないの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	親画面共通の結果として保存操作に至らない（詳細は管理画面認証を正とする）であること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-046	IT-12	内部情報	P1	内部情報の結合確認	保存成功→リダイレクトを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で保存成功→リダイレクトの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	画面上部に成功メッセージが出た状態で、BaseInfo は保存後の値を読み込み直した表示になること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-047	IT-12	内部情報	P1	内部情報の結合確認	入力検証エラーを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で入力検証エラーの確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	該当 form_row にエラー表示であること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-048	IT-15	機密情報	P1	機密情報の結合確認	結果キャッシュ関連を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で結果キャッシュ関連の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	BaseInfo 更新経路におけるキャッシュ削除のデバッグログがあり得るであること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-049	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	管理者を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で管理者の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-047	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	入力検証エラーを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で入力検証エラーの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力検証エラー
+3. 画面表示と後続状態を確認する"	該当 form_row にエラー表示であること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-048	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	結果キャッシュ関連を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で結果キャッシュ関連の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 結果キャッシュ関連を確認する
+3. 画面表示と後続状態を確認する"	BaseInfo 更新経路におけるキャッシュ削除のデバッグログがあり得るであること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-049	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	管理者を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で管理者の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 管理者を確認する
 3. 画面表示と後続状態を確認する"	管理画面にログインし店舗設定を保存できる利用者（認可の詳細は管理画面共通実装を正とする）であること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-050	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	店舗基本設定画面の「送料設定」を見るを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で店舗基本設定画面の「送料設定」を見るの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-050	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	店舗基本設定画面の「送料設定」を見るを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で店舗基本設定画面の「送料設定」を見るの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 店舗基本設定画面の「送料設定」を見るを確認する
 3. 画面表示と後続状態を確認する"	「送料無料条件(金額)」「送料無料条件(数量)」の入力欄が並ぶこと。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-051	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	閾値を入力して画面下部の「登録」を押す（親フォームと一体）を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で閾値を入力して画面下部の「登録」を押す（親フォームと一体）の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-051	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	閾値を入力して画面下部の「登録」を押す（親フォームと一体）を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で閾値を入力して画面下部の「登録」を押す（親フォームと一体）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 閾値を入力して画面下部の「登録」を押す（親フォームと一体）
 3. 画面表示と後続状態を確認する"	検証に成功すれば dtb_base_info が更新され、管理画面向け登録完了メッセージ後に同一店舗基本設定画面がGETで再表示されるであること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-052	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	入力が検証ルールを満たさないを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で入力が検証ルールを満たさないの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-052	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	入力が検証ルールを満たさないを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で入力が検証ルールを満たさないの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力が検証ルールを満たさない
 3. 画面表示と後続状態を確認する"	同一レスポンスでフォームが再描画され、該当フィールドにエラーが付くであること。
 店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-053	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	購入者がカートまたは購入フローを使う（閾値保存後）を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で購入者がカートまたは購入フローを使う（閾値保存後）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 購入者がカートまたは購入フローを使う（閾値保存後）
 3. 画面表示と後続状態を確認する"	保存値が読み込まれた店舗基本情報を参照して、コア実装どおり無料判定・メッセージが行われるであること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-054	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示要素を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-054	IT-25	一覧	P2	一覧の結合確認	表示要素を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で表示要素の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示要素を確認する
 3. 画面表示と後続状態を確認する"	ボックス見出し「送料設定」であること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-055	IT-12	画面表示データ	P2	画面表示データの結合確認	金額にカンマ付きのみを送った場合など、金額型とRegexの順序によりエラーにな…を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で金額にカンマ付きのみを送った場合など、金額型とRegexの順序によりエラーにな…の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-055	IT-12	画面表示データ	P2	画面表示データの結合確認	入力項目を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力項目
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-056	IT-12	画面表示データ	P2	画面表示データの結合確認	金額にカンマ付きのみを送った場合など、金額型とRegexの順序によりエラーにな…を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で金額にカンマ付きのみを送った場合など、金額型とRegexの順序によりエラーにな…の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 金額にカンマ付きのみを送った場合など、金額型とRegexの順序によりエラーにな…を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-056	IT-25	画面表示データ	P2	画面表示データの結合確認	delivery_free_quantity は非NULL、delivery_…を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）でdelivery_free_quantity は非NULL、delivery_…の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-057	IT-25	画面表示データ	P2	画面表示データの結合確認	delivery_free_quantity は非NULL、delivery_…を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）でdelivery_free_quantity は非NULL、delivery_…の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. delivery_free_quantity は非NULL、delivery_…を確認する
 3. 画面表示と後続状態を確認する"	数量側のみによる無料化と表示分岐となること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-057	IT-12	画面表示データ	P2	画面表示データの結合確認	保存単位を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で保存単位の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 保存単位
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-058	IT-25	フォーム送信	P1	フォーム送信の結合確認	検証失敗時を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で検証失敗時の確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-058	IT-16	ファイル選択	P2	ファイル選択の結合確認	全画面共通の参照を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で全画面共通の参照の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 全画面共通の参照を確認する
+3. 画面表示と後続状態を確認する"	アプリ各处で読み込まれる BaseInfo はクエリ結果キャッシュの影響を受ける場合がある（店舗マスタ共通の注意）であること。
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-059	IT-12	非同期更新	P1	非同期更新の結合確認	検証失敗時を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で検証失敗時の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検証失敗時を確認する
 3. 画面表示と後続状態を確認する"	画面上の入力とTwigグローバルの閾値表示がずれ得るであること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-059	IT-16	ファイル選択	P2	ファイル選択の結合確認	DBを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）でDBの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-060	IT-12	エラー継続	P3	エラー継続の結合確認	DBを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）でDBの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. DBを確認する
 3. 画面表示と後続状態を確認する"	dtb_base_info の当2列を更新したうえ、flushであること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-060	IT-12	非同期更新	P1	非同期更新の結合確認	Doctrineイベントを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）でDoctrineイベントの確認に必要な条件を指定する	"1. 対象画面を表示する
+店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-061	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	Doctrineイベントを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）でDoctrineイベントの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. Doctrineイベントを確認する
 3. 画面表示と後続状態を確認する"	店舗基本情報エンティティの共通ライフサイクル（更新日時など）が他列とともに適用される（詳細はエンティティ定義側を正とする）であること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-061	IT-12	エラー継続	P3	エラー継続の結合確認	結果キャッシュを試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で結果キャッシュの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 結果キャッシュを確認する
-3. 画面表示と後続状態を確認する"	親機能と同様、BaseInfo 更新経路により結果キャッシュクリアが走る設定があり得るであること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-062	IT-25	件数上限	P2	件数上限の結合確認	成功時出力を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	管理画面成功フラッシュであること。
-店舗基本設定 — 配送料無料条件（閾値）	IT-M10-05-ADMIN-BASE-SETTING-SETTING-SHOP-DELIVERY-FREE-CONDITIONS-063	IT-25	欠損値	P2	欠損値の結合確認	失敗時出力を試験できる状態である	店舗基本設定 — 配送料無料条件（閾値）（m10_05_admin_base_setting_setting_shop_delivery_free_conditions）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	項目エラーであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -327,4 +321,4 @@ Excel／Googleスプレッドシートへはコードフェンス内を A1 に�
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.109, No.110, No.111, No.338, No.346, No.359, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 10件 — No.109, No.110, No.111, No.357, No.381, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

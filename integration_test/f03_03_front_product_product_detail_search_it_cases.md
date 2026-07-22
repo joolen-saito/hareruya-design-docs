@@ -10,9 +10,9 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、URL、データなし、フォーム送信、件数上限、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
@@ -158,54 +158,54 @@ F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-040
 F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-041	IT-12	内部情報	P1	内部情報の結合確認	カテゴリの除外判定を試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でカテゴリの除外判定の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	カテゴリdtb_categoryのfront_search_hide_flg（フロント検索非表示）で判定であること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-042	IT-15	機密情報	P1	機密情報の結合確認	カードタイプ・フォーマットの限定を試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でカードタイプ・フォーマットの限定の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	mtb_cardtype・mtb_formatに同等の対象フラグ・並び順を保持であること。
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-042	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	カードタイプ・フォーマットの限定を試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でカードタイプ・フォーマットの限定の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. カードタイプ・フォーマットの限定を確認する
+3. 画面表示と後続状態を確認する"	mtb_cardtype・mtb_formatに同等の対象フラグ・並び順を保持であること。
 F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-043	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	送信先・送信方式を試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で送信先・送信方式の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 送信先・送信方式
 3. 画面表示と後続状態を確認する"	同一（一覧側の経路に依存であること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-044	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	展開選択を試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で展開選択の確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-044	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	展開選択を試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で展開選択の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 展開選択
 3. 画面表示と後続状態を確認する"	複数の選択肢をチェックボックス・ラジオとして展開表示する形式であること。
 F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-045	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	詳細検索フォームを表示するを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で詳細検索フォームを表示するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 詳細検索フォームを表示する
 3. 画面表示と後続状態を確認する"	商品結果を表示せず、詳細検索フォームを表示すること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-046	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	詳細検索フォームを送信するを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で詳細検索フォームを送信するの確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-046	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	詳細検索フォームを送信するを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で詳細検索フォームを送信するの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 詳細検索フォームを送信する
 3. 画面表示と後続状態を確認する"	入力値をクエリとして商品一覧の検索エンドポイントへ送り、検索結果一覧を表示すること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-047	IT-25	一覧	P2	一覧の結合確認	カテゴリ選択肢の除外を試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でカテゴリ選択肢の除外の確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-047	IT-12	画面表示データ	P2	画面表示データの結合確認	カテゴリ選択肢の除外を試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でカテゴリ選択肢の除外の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. カテゴリ選択肢の除外
-3. 画面表示と後続状態を確認する"	フロント検索で非表示とする親カテゴリ配下の項目は選択肢から除外すること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-048	IT-12	画面表示データ	P2	画面表示データの結合確認	隠しパラメータを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で隠しパラメータの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-048	IT-25	画面表示データ	P2	画面表示データの結合確認	隠しパラメータを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で隠しパラメータの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 隠しパラメータを確認する
+3. 画面表示と後続状態を確認する"	並び順・カードID・タグ・セールフラグは入力欄ではなく隠しパラメータとして送信に引き継ぐであること。
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-049	IT-12	画面表示データ	P2	画面表示データの結合確認	商品名を試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で商品名の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 商品名を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-049	IT-12	画面表示データ	P2	画面表示データの結合確認	カテゴリを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でカテゴリの確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-050	IT-25	画面表示データ	P2	画面表示データの結合確認	カテゴリを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でカテゴリの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. カテゴリを確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-050	IT-25	画面表示データ	P2	画面表示データの結合確認	カードセットを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でカードセットの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	クエリcategoryであること。
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-051	IT-25	フォーム送信	P1	フォーム送信の結合確認	カードセットを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でカードセットの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. カードセットを確認する
 3. 画面表示と後続状態を確認する"	クエリcardsetであること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-051	IT-25	フォーム送信	P1	フォーム送信の結合確認	色アイデンティティを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で色アイデンティティの確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-052	IT-16	ファイル選択	P2	ファイル選択の結合確認	色アイデンティティを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で色アイデンティティの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 色アイデンティティを確認する
 3. 画面表示と後続状態を確認する"	クエリcolorIdentitiesであること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-052	IT-16	ファイル選択	P2	ファイル選択の結合確認	レアリティを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でレアリティの確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-053	IT-12	非同期更新	P1	非同期更新の結合確認	レアリティを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でレアリティの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. レアリティを確認する
 3. 画面表示と後続状態を確認する"	クエリrarityであること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-053	IT-12	非同期更新	P1	非同期更新の結合確認	カードタイプを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でカードタイプの確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-054	IT-12	エラー継続	P3	エラー継続の結合確認	カードタイプを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でカードタイプの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. カードタイプを確認する
 3. 画面表示と後続状態を確認する"	クエリcardtypesであること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-054	IT-12	エラー継続	P3	エラー継続の結合確認	フォーマットを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でフォーマットの確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-055	IT-25	件数上限	P2	件数上限の結合確認	フォーマットを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でフォーマットの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. フォーマットを確認する
 3. 画面表示と後続状態を確認する"	クエリformatであること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-055	IT-25	欠損値	P2	欠損値の結合確認	イラストレーターを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でイラストレーターの確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-056	IT-25	データなし	P2	データなしの結合確認	イラストレーターを試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）でイラストレーターの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. イラストレーターを確認する
 3. 画面表示と後続状態を確認する"	クエリillustratorであること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-056	IT-25	データなし	P2	データなしの結合確認	価格帯（下限）を試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で価格帯（下限）の確認に必要な条件を指定する	"1. 対象画面を表示する
+F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-057	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	価格帯（下限）を試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で価格帯（下限）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 価格帯（下限）を確認する
 3. 画面表示と後続状態を確認する"	クエリpriceFromであること。
-F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-057	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	価格帯（上限）を試験できる状態である	F03-03（商品詳細検索）（f03_03_front_product_product_detail_search）で価格帯（上限）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 価格帯（上限）を確認する
-3. 画面表示と後続状態を確認する"	クエリpriceToであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -307,4 +307,4 @@ F03-03（商品詳細検索）	IT-F03-03-FRONT-PRODUCT-PRODUCT-DETAIL-SEARCH-057
 | ウェブアプリケーション / 状態遷移 / 遷移可否（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
 | その他 | 同種の対象外観点 8 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.334, No.336, No.338, No.357, No.412。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.336, No.338, No.346, No.413, No.510。上限緩和または個別ケース化で収載可能。

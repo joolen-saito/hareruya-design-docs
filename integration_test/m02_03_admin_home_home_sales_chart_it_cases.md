@@ -10,9 +10,9 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、データなし、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-23 | 実行結果 |
@@ -61,180 +61,159 @@ m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ
 m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	JS挙動を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. JS挙動を確認する
 3. 画面表示と後続状態を確認する"	ホーム画面表示後にグラフ用データを非同期で1回取得すること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-009	IT-25	URL	P2	URLの操作結果確認	グラフ整形を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でグラフ整形の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	グラフ整形を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. グラフ整形を確認する
-3. 画面表示と後続状態を確認する"	縦棒の値は売上金額のみを用いること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	タブ切替を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. タブ切替を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	CSS・レイアウトを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. CSS・レイアウトを確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. モーダル・ポップアップを確認する
-3. 画面表示と後続状態を確認する"	本グラフはモーダル、ポップアップ、トースト、確認ダイアログを表示しないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入力項目を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 入力項目
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示形式を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 表示形式を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示後に受注が更新されたを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 表示後に受注が更新されたを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	グラフ用JSONに件数が含まれるを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. グラフ用JSONに件数が含まれるを確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	参照時点を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 参照時点を確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	サマリとグラフを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. サマリとグラフを確認する
-3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-019	IT-22	部分入力	P2	部分入力の入力検証	更新との整合性を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で更新との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 更新との整合性を確認する
-3. 画面表示と後続状態を確認する"	本グラフは参照のみであり、受注台帳やマスタを更新しないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-020	IT-26	登録内容	P1	登録時の登録内容確認	外部連携との整合性を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で外部連携との整合性の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-021	IT-26	登録内容	P1	登録時の登録内容確認	APIを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でAPIの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-022	IT-26	登録内容	P1	登録時の登録内容確認	バッチを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でバッチの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-023	IT-26	登録内容	P1	登録時の登録内容確認	成功時を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で成功時の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	取得が成功した場合、週間・月間・年間のバケット集合を返し、画面は対応するcanvasに棒グラフを描画すること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-024	IT-26	登録内容	P1	登録時の登録内容確認	失敗時を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で失敗時の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-025	IT-26	登録内容	P1	登録時の登録内容確認	入力を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-026	IT-26	登録内容	P1	登録時の登録内容確認	成功時出力を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-027	IT-26	登録内容	P1	登録時の登録内容確認	失敗時出力を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-028	IT-26	登録内容	P1	登録時の登録内容確認	副作用を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-029	IT-26	登録内容	P1	登録時の登録内容確認	登録/更新を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で登録/更新の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-030	IT-26	実行結果	P1	登録時の実行結果確認	利用者入力を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で利用者入力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-031	IT-23	実行結果	P1	登録時の実行結果確認	Ajax妥当性を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でAjax妥当性の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	サーバはXMLHttpRequestであり、かつCSRF検証に通る場合にのみグラフ用データを返すこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-032	IT-26	更新内容	P1	更新時の更新内容確認	未認証を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で未認証の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-033	IT-26	更新内容	P1	更新時の更新内容確認	管理者として認証済みを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で管理者として認証済みの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-034	IT-26	更新内容	P1	更新時の更新内容確認	ホーム画面を開くを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でホーム画面を開くの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-035	IT-26	更新内容	P1	更新時の更新内容確認	週間・月間・年間タブ操作を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で週間・月間・年間タブ操作の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一画面内のタブ表示切替であること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-036	IT-26	更新内容	P1	更新時の更新内容確認	グラフ取得成功を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でグラフ取得成功の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-037	IT-26	更新内容	P1	更新時の更新内容確認	グラフ取得失敗を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-038	IT-26	更新内容	P1	更新時の更新内容確認	グラフ用AjaxがCSRFまたはXMLHttpRequest条件を満たさないを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-039	IT-26	更新内容	P1	更新時の更新内容確認	データベース読み取りの障害を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-040	IT-26	更新内容	P1	更新時の更新内容確認	表示直後に台帳が変化を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-041	IT-26	更新内容	P1	更新時の更新内容確認	売上グラフを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で売上グラフの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-042	IT-05	実行結果	P1	更新時の実行結果確認	ホーム画面を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でホーム画面の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-043	IT-05	実行結果	P1	更新時の実行結果確認	ホーム画面を開くを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でホーム画面を開くの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	売上状況カードに週間・月間・年間のタブと読み込み中表示を含むグラフ領域が描画されるであること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-044	IT-02	初期行数	P2	初期行数の結合確認	売上グラフ用データの非同期取得を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で売上グラフ用データの非同期取得の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 売上グラフ用データの非同期取得を確認する
-3. 画面表示と後続状態を確認する"	ホーム画面のレイアウトで共通設定されているAjax用ヘッダにCSRFトークンが付与され、サーバはXMLHttpRequestかつCSRFが妥当な場合にのみ週間・月間・年間のバケット集合をJSONで返すこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-045	IT-02	表示順	P2	表示順の結合確認	週間・月間・年間タブを切り替えるを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で週間・月間・年間タブを切り替えるの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 週間・月間・年間タブを切り替えるを確認する
-3. 画面表示と後続状態を確認する"	同一ページ内でタブ表示が切り替わり、対応するcanvasに描画済みのグラフが表示されるであること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-046	IT-25	更新抑止	P1	更新抑止の結合確認	非管理者・未認証を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で非管理者・未認証の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ホーム画面自体に到達できないため、本グラフも利用できないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-047	IT-12	内部情報	P1	内部情報の結合確認	表示要素を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で表示要素の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	売上状況カードのグラフ部分には、週間・月間・年間の3タブ、各タブに対応する canvas（chart-0・chart-1・chart-2）、読み込み中インジケータ（#loading）を配置すること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-048	IT-15	機密情報	P1	機密情報の結合確認	JS挙動を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でJS挙動の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ホーム画面表示後にグラフ用データを非同期で1回取得すること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-049	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	タブ切替を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でタブ切替の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. タブ切替を確認する
-3. 画面表示と後続状態を確認する"	週間・月間・年間タブは管理画面共通のピル型タブとして表示領域を切り替えるであること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-050	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	CSS・レイアウトを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	CSS・レイアウトを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でCSS・レイアウトの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. CSS・レイアウトを確認する
 3. 画面表示と後続状態を確認する"	管理画面共通のカード、タブ、グラフ領域、ローディング表示のクラスを使うこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-051	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	入力項目を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	モーダル・ポップアップを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+2. モーダル・ポップアップを確認する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	入力項目を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 入力項目
-3. 画面表示と後続状態を確認する"	本グラフはフォーム・テキスト入力を持たないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-052	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示形式を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で表示形式の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示形式を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 表示形式を確認する
-3. 画面表示と後続状態を確認する"	ツールチップと縦軸目盛りは通貨記号を前置し、3桁区切りのカンマを付すであること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-053	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	表示後に受注が更新されたを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で表示後に受注が更新されたの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	表示後に受注が更新されたを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 表示後に受注が更新されたを確認する
-3. 画面表示と後続状態を確認する"	描画済みのグラフは自動更新しないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-054	IT-25	一覧	P2	一覧の結合確認	グラフ用JSONに件数が含まれるを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でグラフ用JSONに件数が含まれるの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	グラフ用JSONに件数が含まれるを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. グラフ用JSONに件数が含まれるを確認する
-3. 画面表示と後続状態を確認する"	棒グラフ描画では売上金額のみを使うこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-055	IT-12	画面表示データ	P2	画面表示データの結合確認	参照時点を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	参照時点を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 参照時点を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-056	IT-25	画面表示データ	P2	画面表示データの結合確認	サマリとグラフを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でサマリとグラフの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-018	IT-22	部分入力	P2	部分入力の入力検証	サマリとグラフを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でサマリとグラフの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. サマリとグラフを確認する
 3. 画面表示と後続状態を確認する"	今月・今日・昨日の売上サマリはホーム画面HTML表示時に読み取り、グラフは別リクエストで読み取るであること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-057	IT-12	画面表示データ	P2	画面表示データの結合確認	更新との整合性を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で更新との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 更新との整合性を確認する
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-019	IT-26	登録内容	P1	登録時の登録内容確認	更新との整合性を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で更新との整合性の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-020	IT-26	登録内容	P1	登録時の登録内容確認	外部連携との整合性を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で外部連携との整合性の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-021	IT-26	登録内容	P1	登録時の登録内容確認	APIを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でAPIの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-022	IT-26	登録内容	P1	登録時の登録内容確認	バッチを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でバッチの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本グラフはバッチを起動しないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-023	IT-26	登録内容	P1	登録時の登録内容確認	成功時を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で成功時の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-024	IT-26	登録内容	P1	登録時の登録内容確認	失敗時を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-025	IT-26	登録内容	P1	登録時の登録内容確認	入力を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-026	IT-26	登録内容	P1	登録時の登録内容確認	成功時出力を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-027	IT-26	登録内容	P1	登録時の登録内容確認	失敗時出力を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-028	IT-26	登録内容	P1	登録時の登録内容確認	副作用を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で副作用の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-029	IT-26	実行結果	P1	登録時の実行結果確認	登録/更新を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で登録/更新の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-030	IT-23	実行結果	P1	登録時の実行結果確認	利用者入力を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で利用者入力の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	本グラフはフォームを持たないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-031	IT-26	更新内容	P1	更新時の更新内容確認	Ajax妥当性を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でAjax妥当性の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-032	IT-26	更新内容	P1	更新時の更新内容確認	未認証を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で未認証の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-033	IT-26	更新内容	P1	更新時の更新内容確認	管理者として認証済みを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で管理者として認証済みの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-034	IT-26	更新内容	P1	更新時の更新内容確認	ホーム画面を開くを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でホーム画面を開くの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一画面内に売上状況グラフ領域を表示であること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-035	IT-26	更新内容	P1	更新時の更新内容確認	週間・月間・年間タブ操作を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で週間・月間・年間タブ操作の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-036	IT-26	更新内容	P1	更新時の更新内容確認	グラフ取得成功を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-037	IT-26	更新内容	P1	更新時の更新内容確認	グラフ取得失敗を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-038	IT-26	更新内容	P1	更新時の更新内容確認	グラフ用AjaxがCSRFまたはXMLHttpRequest条件を満たさないを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-039	IT-26	更新内容	P1	更新時の更新内容確認	データベース読み取りの障害を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-040	IT-26	更新内容	P1	更新時の更新内容確認	表示直後に台帳が変化を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で表示直後に台帳が変化の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-041	IT-05	実行結果	P1	更新時の実行結果確認	売上グラフを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で売上グラフの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-042	IT-05	実行結果	P1	更新時の実行結果確認	ホーム画面を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でホーム画面の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	管理者認証後に表示されるダッシュボードであること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-043	IT-02	初期行数	P2	初期行数の結合確認	ホーム画面を開くを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でホーム画面を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. ホーム画面を開く
+3. 画面表示と後続状態を確認する"	売上状況カードに週間・月間・年間のタブと読み込み中表示を含むグラフ領域が描画されるであること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-044	IT-02	表示順	P2	表示順の結合確認	売上グラフ用データの非同期取得を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で売上グラフ用データの非同期取得の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 売上グラフ用データの非同期取得を確認する
+3. 画面表示と後続状態を確認する"	ホーム画面のレイアウトで共通設定されているAjax用ヘッダにCSRFトークンが付与され、サーバはXMLHttpRequestかつCSRFが妥当な場合にのみ週間・月間・年間のバケット集合をJSONで返すこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-045	IT-25	更新抑止	P1	更新抑止の結合確認	週間・月間・年間タブを切り替えるを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で週間・月間・年間タブを切り替えるの確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	同一ページ内でタブ表示が切り替わり、対応するcanvasに描画済みのグラフが表示されるであること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-046	IT-12	内部情報	P1	内部情報の結合確認	非管理者・未認証を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で非管理者・未認証の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	ホーム画面自体に到達できないため、本グラフも利用できないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-047	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	グラフ整形を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でグラフ整形の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. グラフ整形を確認する
+3. 画面表示と後続状態を確認する"	縦棒の値は売上金額のみを用いること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-048	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	タブ切替を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でタブ切替の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. タブ切替を確認する
+3. 画面表示と後続状態を確認する"	週間・月間・年間タブは管理画面共通のピル型タブとして表示領域を切り替えるであること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-049	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	モーダル・ポップアップを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. モーダル・ポップアップを確認する
+3. 画面表示と後続状態を確認する"	本グラフはモーダル、ポップアップ、トースト、確認ダイアログを表示しないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-050	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	入力項目を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力項目
+3. 画面表示と後続状態を確認する"	本グラフはフォーム・テキスト入力を持たないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-051	IT-25	一覧	P2	一覧の結合確認	表示形式を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で表示形式の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示形式を確認する
+3. 画面表示と後続状態を確認する"	ツールチップと縦軸目盛りは通貨記号を前置し、3桁区切りのカンマを付すであること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-052	IT-12	画面表示データ	P2	画面表示データの結合確認	表示後に受注が更新されたを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で表示後に受注が更新されたの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示後に受注が更新されたを確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-058	IT-25	画面表示データ	P2	画面表示データの結合確認	外部連携との整合性を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で外部連携との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-053	IT-25	画面表示データ	P2	画面表示データの結合確認	グラフ用JSONに件数が含まれるを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でグラフ用JSONに件数が含まれるの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. グラフ用JSONに件数が含まれるを確認する
+3. 画面表示と後続状態を確認する"	棒グラフ描画では売上金額のみを使うこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-054	IT-12	画面表示データ	P2	画面表示データの結合確認	参照時点を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 参照時点を確認する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-055	IT-25	フォーム送信	P1	フォーム送信の結合確認	更新との整合性を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で更新との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 更新との整合性を確認する
+3. 画面表示と後続状態を確認する"	本グラフは参照のみであり、受注台帳やマスタを更新しないこと。
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-056	IT-16	ファイル選択	P2	ファイル選択の結合確認	外部連携との整合性を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で外部連携との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 外部連携との整合性を確認する
 3. 画面表示と後続状態を確認する"	外部連携やバッチにより受注が更新される場合の反映タイミングは、外部連携機能もしくはバッチ機能の設計を正とすること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-059	IT-25	フォーム送信	P1	フォーム送信の結合確認	APIを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-057	IT-12	非同期更新	P1	非同期更新の結合確認	APIを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でAPIの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. APIを確認する
 3. 画面表示と後続状態を確認する"	グラフ用データはホーム画面表示後に管理画面内のAjaxとしてJSONを取得すること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-060	IT-16	ファイル選択	P2	ファイル選択の結合確認	バッチを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でバッチの確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-058	IT-12	エラー継続	P3	エラー継続の結合確認	バッチを試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）でバッチの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. バッチを確認する
 3. 画面表示と後続状態を確認する"	本グラフはバッチを起動しないこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-061	IT-12	非同期更新	P1	非同期更新の結合確認	成功時を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で成功時の確認に必要な条件を指定する	"1. 対象画面を表示する
+m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-059	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	成功時を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で成功時の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時を確認する
 3. 画面表示と後続状態を確認する"	取得が成功した場合、週間・月間・年間のバケット集合を返し、画面は対応するcanvasに棒グラフを描画すること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-062	IT-12	エラー継続	P3	エラー継続の結合確認	失敗時を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で失敗時の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 失敗時を確認する
-3. 画面表示と後続状態を確認する"	"XMLHttpRequestもしくはCSRF検証の要件を満たさない場合、HTTP400で{""status"":""NG""}を返すこと。"
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-063	IT-25	件数上限	P2	件数上限の結合確認	入力を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 入力
-3. 画面表示と後続状態を確認する"	ホーム画面のGET表示、およびグラフ用データのAjax GETであること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-064	IT-25	欠損値	P2	欠損値の結合確認	成功時出力を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 成功時出力を確認する
-3. 画面表示と後続状態を確認する"	週間・月間・年間のバケット集合を並べたJSON配列であること。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-065	IT-25	データなし	P2	データなしの結合確認	失敗時出力を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 失敗時出力を確認する
-3. 画面表示と後続状態を確認する"	Ajax要件もしくはCSRF検証を満たさない場合、HTTP400のJSON（statusがNG）を返すこと。
-m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）	IT-M02-03-ADMIN-HOME-HOME-SALES-CHART-066	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	副作用を試験できる状態である	m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ）（m02_03_admin_home_home_sales_chart）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 副作用を確認する
-3. 画面表示と後続状態を確認する"	本グラフの処理だけを見ると、受注台帳やマスタを更新しないこと。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -336,4 +315,4 @@ m02-03_admin_home_home_sales_chart（管理画面_トップ売上状況グラフ
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 5 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 5件 — No.109, No.110, No.111, No.329, No.333。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 12件 — No.109, No.110, No.111, No.329, No.330, No.334, No.359, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。

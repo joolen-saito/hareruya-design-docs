@@ -10,14 +10,14 @@
 
 | 関連ID | 本機能での主な確認範囲 |
 |--------|------------------------|
-| IT-15 | CSRF、対象データ、未認証、機密情報、状態変化 |
+| IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、URL、フォーム送信、一覧、件数上限、更新抑止、欠損値、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
 | IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 実行結果 |
-| IT-02 | 初期行数、表示順 |
+| IT-02 | 公開コンテンツ、初期行数、表示順 |
 | IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ、非同期更新 |
 | IT-16 | ファイル選択 |
 
@@ -61,81 +61,81 @@ M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SAL
 M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-008	IT-25	HTTPステータス	P2	HTTPステータスの操作結果確認	入力項目を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で入力項目の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 入力項目
 3. 画面表示と後続状態を確認する"	商品名（日/英）・商品コードのテキスト欄、集計タイプのラジオ、集計日From・To、利用端末のチェックボックス、表示項目（注文）のチェックボックス、表示項目（明細）のチェックボックスであること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-009	IT-25	URL	P2	URLの操作結果確認	JS挙動を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でJS挙動の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-009	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	JS挙動を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. JS挙動を確認する
-3. 画面表示と後続状態を確認する"	日付入力にデートタイムピッカーを適用すること。
+3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
 M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-010	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	集計単位を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 集計単位を確認する
-3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示され、対象処理が完了しないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-011	IT-22	必須バリデーション	P2	必須バリデーションの入力検証	注文・注文確認・入金・出荷指示・出荷・キャンセルを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で必須バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
-2. 注文・注文確認・入金・出荷指示・出荷・キャンセルを確認する
 3. 画面表示と後続状態を確認する"	必須バリデーションでエラーが表示されず、対象処理を継続できること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-012	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	会員数・メールニュース登録数を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で会員数・メールニュース登録数の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-011	IT-22	文字列長バリデーション	P2	文字列長バリデーションの入力検証	注文・注文確認・入金・出荷指示・出荷・キャンセルを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で注文・注文確認・入金・出荷指示・出荷・キャンセルの確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 注文・注文確認・入金・出荷指示・出荷・キャンセルを確認する
+3. 画面表示と後続状態を確認する"	注文と注文明細を結合し、期間単位で件数・金額・平均単価を算出すること。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-012	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	会員数・メールニュース登録数を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 会員数・メールニュース登録数を確認する
-3. 画面表示と後続状態を確認する"	会員（dtb_player）を登録日の期間単位でグループ化し、登録数とメールマガジン登録フラグが立つ件数を数えるであること。
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
 M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-013	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	利用端末を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
 2. 利用端末を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	件数・金額の算入条件を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で相関バリデーションの対象項目を未入力にする	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-014	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	件数・金額の算入条件を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
 2. 件数・金額の算入条件を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	平均単価を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-015	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	平均単価を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
 2. 平均単価を確認する
-3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-016	IT-22	相関バリデーション	P2	相関バリデーションの入力検証	期間の補完を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 期間の補完を確認する
 3. 画面表示と後続状態を確認する"	相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	商品名（日/英）・商品コードを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
-2. 商品名（日/英）・商品コードを確認する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-016	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	期間の補完を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でDBとの相関バリデーションで対象条件に該当する値を指定する	"1. 対象画面を表示する
+2. 期間の補完を確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示されず、対象処理を継続できること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-018	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	利用端末を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
-2. 利用端末を確認する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-017	IT-22	DBとの相関バリデーション	P2	DBとの相関バリデーションの入力検証	商品名（日/英）・商品コードを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でDBとの相関バリデーションで対象条件に該当しない値を指定する	"1. 対象画面を表示する
+2. 商品名（日/英）・商品コードを確認する
 3. 画面表示と後続状態を確認する"	DBとの相関バリデーションでエラーが表示され、対象処理が完了しないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-019	IT-22	部分入力	P2	部分入力の入力検証	表示項目（注文）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目（注文）の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 表示項目（注文）を確認する
-3. 画面表示と後続状態を確認する"	フォームキー columns_orderであること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-020	IT-23	検索条件	P2	検索時の検索条件確認	表示項目（明細）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-018	IT-22	部分入力	P2	部分入力の入力検証	利用端末を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で利用端末の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 利用端末を確認する
+3. 画面表示と後続状態を確認する"	フォームキー device_typeであること。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-019	IT-23	検索条件	P2	検索時の検索条件確認	表示項目（注文）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-021	IT-23	検索条件	P2	検索時の検索条件確認	当日の会員登録が無いを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-020	IT-23	検索条件	P2	検索時の検索条件確認	表示項目（明細）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-022	IT-23	検索条件	P2	検索時の検索条件確認	表示項目を未選択を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-021	IT-23	検索条件	P2	検索時の検索条件確認	当日の会員登録が無いを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-023	IT-23	検索条件	P2	検索時の検索条件確認	参照時点を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-022	IT-23	検索条件	P2	検索時の検索条件確認	表示項目を未選択を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-024	IT-23	検索条件	P2	検索時の検索条件確認	CSVとの整合性を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-023	IT-23	検索条件	P2	検索時の検索条件確認	参照時点を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-025	IT-23	検索条件	P2	検索時の検索条件確認	一覧と合計の整合性を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-024	IT-23	検索条件	P2	検索時の検索条件確認	CSVとの整合性を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-026	IT-23	検索条件	P2	検索時の検索条件確認	更新との整合性を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-025	IT-23	検索条件	P2	検索時の検索条件確認	一覧と合計の整合性を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当する値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-027	IT-23	検索条件	P2	検索時の検索条件確認	入力を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-026	IT-23	検索条件	P2	検索時の検索条件確認	更新との整合性を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件で対象条件に該当しない値を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-027	IT-23	検索条件	P2	検索時の検索条件確認	入力を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で入力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-028	IT-23	検索条件	P2	検索時の検索条件確認	成功時出力を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で成功時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-029	IT-23	検索条件	P2	検索時の検索条件確認	失敗時出力を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で失敗時出力の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-030	IT-23	検索条件	P2	検索時の検索条件確認	副作用を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で副作用の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
 M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-031	IT-23	検索条件	P2	検索時の検索条件確認	dtb_orderを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でdtb_orderの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
 M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-032	IT-23	検索条件	P2	検索時の検索条件確認	dtb_playerを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でdtb_playerの確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-033	IT-23	検索条件	P2	検索時の検索条件確認	利用端末・表示項目を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で利用端末・表示項目の確認に必要な条件を指定する	"1. 検索条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	検索条件の該当レコードが取得結果に含まれないこと。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-033	IT-23	実行結果	P2	検索時の実行結果確認	利用端末・表示項目を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で利用端末・表示項目の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
 M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-034	IT-23	実行結果	P2	検索時の実行結果確認	「日別集計」「月別集計」を開くを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で「日別集計」「月別集計」を開くの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
@@ -145,147 +145,141 @@ M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SAL
 M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-036	IT-23	実行結果	P2	検索時の実行結果確認	「CSVダウンロード」押下を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で「CSVダウンロード」押下の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の該当レコードが取得結果に含まれること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-037	IT-26	登録内容	P1	登録時の登録内容確認	認証・権限不足を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で認証・権限不足の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-037	IT-26	登録内容	P1	登録時の登録内容確認	検索ボタン押下を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索ボタン押下の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-038	IT-26	登録内容	P1	登録時の登録内容確認	集計表示を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で集計表示の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-038	IT-26	登録内容	P1	登録時の登録内容確認	認証・権限不足を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で認証・権限不足の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-039	IT-26	登録内容	P1	登録時の登録内容確認	表示項目（注文）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目（注文）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-039	IT-26	登録内容	P1	登録時の登録内容確認	集計表示を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で集計表示の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-040	IT-26	登録内容	P1	登録時の登録内容確認	表示項目（明細）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目（明細）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-040	IT-26	登録内容	P1	登録時の登録内容確認	表示項目（注文）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目（注文）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	商品別の注文・注文確認・入金・出荷指示・出荷・キャンセルの各指標から表示するものを選ぶであること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-041	IT-26	登録内容	P1	登録時の登録内容確認	検索条件セッションを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件セッションの確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-042	IT-26	登録内容	P1	登録時の登録内容確認	サイドメニュー「日別集計」を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	来客数・注文・リピート注文数・会員数・注文確認・入金・出荷指示・出荷・キャンセルの各指標から表示するものを選ぶであること。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-041	IT-26	登録内容	P1	登録時の登録内容確認	表示項目（明細）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目（明細）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-043	IT-26	登録内容	P1	登録時の登録内容確認	サイドメニュー「月別集計」を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-042	IT-26	登録内容	P1	登録時の登録内容確認	検索条件セッションを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-043	IT-26	登録内容	P1	登録時の登録内容確認	サイドメニュー「日別集計」を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-044	IT-26	登録内容	P1	登録時の登録内容確認	検索ボタン押下を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-044	IT-26	登録内容	P1	登録時の登録内容確認	サイドメニュー「月別集計」を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-045	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-045	IT-26	登録内容	P1	登録時の登録内容確認	検索ボタン押下を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-046	IT-26	登録内容	P1	登録時の登録内容確認	入力項目を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で入力項目の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-046	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示要素の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-047	IT-26	実行結果	P1	登録時の実行結果確認	JS挙動を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でJS挙動の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-047	IT-26	実行結果	P1	登録時の実行結果確認	入力項目を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で入力項目の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-048	IT-23	実行結果	P1	登録時の実行結果確認	集計単位を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で集計単位の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-048	IT-23	実行結果	P1	登録時の実行結果確認	JS挙動を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でJS挙動の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	集計タイプが日次なら注文日を%Y/%m/%d、月次なら%Y/%mでグループ化すること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-049	IT-26	更新内容	P1	更新時の更新内容確認	注文・注文確認・入金・出荷指示・出荷・キャンセルを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で注文・注文確認・入金・出荷指示・出荷・キャンセルの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	日付入力にデートタイムピッカーを適用すること。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-049	IT-26	更新内容	P1	更新時の更新内容確認	集計単位を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で集計単位の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-050	IT-26	更新内容	P1	更新時の更新内容確認	会員数・メールニュース登録数を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で会員数・メールニュース登録数の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-050	IT-26	更新内容	P1	更新時の更新内容確認	注文・注文確認・入金・出荷指示・出荷・キャンセルを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で注文・注文確認・入金・出荷指示・出荷・キャンセルの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-051	IT-26	更新内容	P1	更新時の更新内容確認	利用端末を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で利用端末の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-051	IT-26	更新内容	P1	更新時の更新内容確認	会員数・メールニュース登録数を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で会員数・メールニュース登録数の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-052	IT-26	更新内容	P1	更新時の更新内容確認	件数・金額の算入条件を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で件数・金額の算入条件の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-052	IT-26	更新内容	P1	更新時の更新内容確認	利用端末を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で利用端末の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	注文確認は受注ステータスが新規受付・入金待ち・保留、入金は決済処理中、出荷指示は出荷準備・ピッキング、出荷は出荷済み・対応済み、キャンセルはキャンセルの各ステータスに属する明細のみを算入すること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-053	IT-26	更新内容	P1	更新時の更新内容確認	平均単価を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で平均単価の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-054	IT-26	更新内容	P1	更新時の更新内容確認	期間の補完を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	利用端末が指定された場合、来客数・注文・商品別・リピート・来客者数の各副問い合わせに端末IDの絞り込みを加えるであること。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-053	IT-26	更新内容	P1	更新時の更新内容確認	件数・金額の算入条件を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で件数・金額の算入条件の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-055	IT-26	更新内容	P1	更新時の更新内容確認	商品名（日/英）・商品コードを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-054	IT-26	更新内容	P1	更新時の更新内容確認	平均単価を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-055	IT-26	更新内容	P1	更新時の更新内容確認	期間の補完を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-056	IT-26	更新内容	P1	更新時の更新内容確認	利用端末を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-056	IT-26	更新内容	P1	更新時の更新内容確認	商品名（日/英）・商品コードを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-057	IT-26	更新内容	P1	更新時の更新内容確認	表示項目（注文）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-057	IT-26	更新内容	P1	更新時の更新内容確認	利用端末を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-058	IT-26	更新内容	P1	更新時の更新内容確認	表示項目（明細）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目（明細）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-058	IT-26	更新内容	P1	更新時の更新内容確認	表示項目（注文）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目（注文）の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-059	IT-05	実行結果	P1	更新時の実行結果確認	当日の会員登録が無いを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で当日の会員登録が無いの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-059	IT-05	実行結果	P1	更新時の実行結果確認	表示項目（明細）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目（明細）の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-060	IT-05	実行結果	P1	更新時の実行結果確認	表示項目を未選択を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目を未選択の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-060	IT-05	実行結果	P1	更新時の実行結果確認	当日の会員登録が無いを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で当日の会員登録が無いの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	日付列のみの一覧となること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-061	IT-02	初期行数	P2	初期行数の結合確認	参照時点を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	会員数・メールニュース登録数をNULLから0へ補正すること。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-061	IT-02	初期行数	P2	初期行数の結合確認	表示項目を未選択を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目を未選択の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 表示項目を未選択
+3. 画面表示と後続状態を確認する"	日付列のみの一覧となること。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-062	IT-02	表示順	P2	表示順の結合確認	参照時点を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で参照時点の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 参照時点を確認する
 3. 画面表示と後続状態を確認する"	集計結果は検索実行時にデータベースから読み取った値であること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-062	IT-02	表示順	P2	表示順の結合確認	CSVとの整合性を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でCSVとの整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. CSVとの整合性を確認する
-3. 画面表示と後続状態を確認する"	集計実行で検索条件をセッションへ保存すること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-063	IT-25	更新抑止	P1	更新抑止の結合確認	一覧と合計の整合性を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で一覧と合計の整合性の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-063	IT-25	更新抑止	P1	更新抑止の結合確認	CSVとの整合性を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でCSVとの整合性の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	集計実行で検索条件をセッションへ保存すること。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-064	IT-12	内部情報	P1	内部情報の結合確認	一覧と合計の整合性を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で一覧と合計の整合性の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	合計行は表示中の集計結果を合算した値であり、別問い合わせの再集計ではないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-064	IT-12	内部情報	P1	内部情報の結合確認	更新との整合性を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で更新との整合性の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	本機能は参照のみで台帳を更新しないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-065	IT-15	機密情報	P1	機密情報の結合確認	入力を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で入力の確認に必要な条件を指定する	"1. 機密情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	検索条件（集計タイプ・集計日・利用端末・表示項目・商品名/商品コード）であること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-066	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-065	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	更新との整合性を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で更新との整合性の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 更新との整合性を確認する
+3. 画面表示と後続状態を確認する"	本機能は参照のみで台帳を更新しないこと。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-066	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	入力を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. 入力
+3. 画面表示と後続状態を確認する"	検索条件（集計タイプ・集計日・利用端末・表示項目・商品名/商品コード）であること。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-067	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	成功時出力を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で成功時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 成功時出力を確認する
 3. 画面表示と後続状態を確認する"	集計結果一覧と合計行を含む画面であること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-067	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	失敗時出力を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で失敗時出力の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 失敗時出力を確認する
 3. 画面表示と後続状態を確認する"	データ取得失敗時はアプリケーションの共通例外処理に委ねるであること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-068	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	副作用を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-069	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	副作用を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で副作用の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 副作用を確認する
 3. 画面表示と後続状態を確認する"	検索条件セッションへの保存であること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-069	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	dtb_orderを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でdtb_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_orderを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でdtb_orderの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_orderを確認する
 3. 画面表示と後続状態を確認する"	利用端末の絞り込みであること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-070	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_playerを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でdtb_playerの確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	dtb_playerを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でdtb_playerの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. dtb_playerを確認する
 3. 画面表示と後続状態を確認する"	メールニュース登録数の集計であること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-071	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	利用端末・表示項目を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で利用端末・表示項目の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-072	IT-25	一覧	P2	一覧の結合確認	利用端末・表示項目を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で利用端末・表示項目の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 利用端末・表示項目を確認する
 3. 画面表示と後続状態を確認する"	任意の複数選択であること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-072	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	「日別集計」「月別集計」を開くを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で「日別集計」「月別集計」を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-073	IT-12	画面表示データ	P2	画面表示データの結合確認	「日別集計」「月別集計」を開くを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で「日別集計」「月別集計」を開くの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「日別集計」「月別集計」を開く
-3. 画面表示と後続状態を確認する"	集計検索画面（初期状態）であること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-073	IT-25	一覧	P2	一覧の結合確認	検索ボタン押下を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-074	IT-25	画面表示データ	P2	画面表示データの結合確認	検索ボタン押下を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索ボタン押下
 3. 画面表示と後続状態を確認する"	同一画面に集計結果一覧を表示であること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-074	IT-12	画面表示データ	P2	画面表示データの結合確認	「CSVダウンロード」押下を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で「CSVダウンロード」押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-075	IT-12	画面表示データ	P2	画面表示データの結合確認	「CSVダウンロード」押下を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で「CSVダウンロード」押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 「CSVダウンロード」押下
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-075	IT-25	画面表示データ	P2	画面表示データの結合確認	検索ボタン押下を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-076	IT-25	画面表示データ	P2	画面表示データの結合確認	検索ボタン押下を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索ボタン押下
 3. 画面表示と後続状態を確認する"	CSVダウンロードが同条件で再集計するための条件が保存されるであること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-076	IT-12	画面表示データ	P2	画面表示データの結合確認	認証・権限不足を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で認証・権限不足の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-077	IT-25	フォーム送信	P1	フォーム送信の結合確認	認証・権限不足を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で認証・権限不足の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 認証・権限不足を確認する
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-077	IT-25	画面表示データ	P2	画面表示データの結合確認	集計表示を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で集計表示の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	集計を表示しないこと。
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-078	IT-16	ファイル選択	P2	ファイル選択の結合確認	集計表示を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で集計表示の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 集計表示を確認する
 3. 画面表示と後続状態を確認する"	本機能単体で業務監査ログを追加で書く処理は持たないこと。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-078	IT-25	フォーム送信	P1	フォーム送信の結合確認	表示項目（注文）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目（注文）の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-079	IT-12	非同期更新	P1	非同期更新の結合確認	表示項目（注文）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目（注文）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示項目（注文）を確認する
 3. 画面表示と後続状態を確認する"	来客数・注文・リピート注文数・会員数・注文確認・入金・出荷指示・出荷・キャンセルの各指標から表示するものを選ぶであること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-079	IT-16	ファイル選択	P2	ファイル選択の結合確認	表示項目（明細）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目（明細）の確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-080	IT-12	エラー継続	P3	エラー継続の結合確認	表示項目（明細）を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で表示項目（明細）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示項目（明細）を確認する
 3. 画面表示と後続状態を確認する"	商品別の注文・注文確認・入金・出荷指示・出荷・キャンセルの各指標から表示するものを選ぶであること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-080	IT-12	非同期更新	P1	非同期更新の結合確認	検索条件セッションを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件セッションの確認に必要な条件を指定する	"1. 対象画面を表示する
+M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-081	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	検索条件セッションを試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索条件セッションの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 検索条件セッション
 3. 画面表示と後続状態を確認する"	集計実行時に検索条件を保存するセッション領域であること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-081	IT-12	エラー継続	P3	エラー継続の結合確認	サイドメニュー「日別集計」を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でサイドメニュー「日別集計」の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. サイドメニュー「日別集計」を確認する
-3. 画面表示と後続状態を確認する"	集計タイプ日次、集計日を当月初日〜当月末日とした検索画面を表示すること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-082	IT-25	件数上限	P2	件数上限の結合確認	サイドメニュー「月別集計」を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）でサイドメニュー「月別集計」の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. サイドメニュー「月別集計」を確認する
-3. 画面表示と後続状態を確認する"	集計タイプ月次、集計日を当月初日の2か月前〜当月末日とした検索画面を表示すること。
-M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SALES-DAILY-MONTHLY-SUMMARY-083	IT-25	欠損値	P2	欠損値の結合確認	検索ボタン押下を試験できる状態である	M12-01（日別/月別集計 集計一覧表示）（m12_01_admin_analytics_sales_daily_monthly_summary）で検索ボタン押下の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 検索ボタン押下
-3. 画面表示と後続状態を確認する"	入力された検索条件で集計し、同一画面に集計結果一覧を表示すること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -387,4 +381,4 @@ M12-01（日別/月別集計 集計一覧表示）	IT-M12-01-ADMIN-ANALYTICS-SAL
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | その他 | 同種の対象外観点 4 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 6件 — No.56, No.109, No.110, No.111, No.414, No.416。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 8件 — No.109, No.110, No.111, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。
