@@ -14,6 +14,11 @@ type OracleEntry = Record<string, unknown>;
 const cache = new Map<string, Record<string, OracleEntry>>();
 
 function loadFile(fileKey: string): Record<string, OracleEntry> {
+  // 隔離ガード（CONCRETIZATION_FIRST_PLAN §_drafts隔離）: 正式解決器は草案(_drafts/)・
+  // パス区切り・親参照を一切解決しない。候補オラクルを正式消費経路へ混入させないための機械強制。
+  if (/(^|[\/\\])_drafts([\/\\]|$)|[\/\\]|\.\./.test(fileKey)) {
+    throw new Error(`oracle: illegal fileKey "${fileKey}" (drafts/path traversal are not resolvable by the official resolver)`);
+  }
   if (cache.has(fileKey)) return cache.get(fileKey)!;
   const path = join(__dirname, "..", "fixtures", "oracle", `${fileKey}.json`);
   const data = JSON.parse(readFileSync(path, "utf8")) as Record<string, OracleEntry>;

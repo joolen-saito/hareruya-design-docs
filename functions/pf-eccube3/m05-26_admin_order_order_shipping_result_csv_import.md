@@ -1,4 +1,4 @@
-# m05-26_admin_order_order_shipping_result_csv_import（管理画面_受注管理_出荷実績インポート登録）
+# 受注管理 — 出荷実績インポート登録
 
 ## 概要
 

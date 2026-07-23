@@ -1,4 +1,4 @@
-# m07-01_admin_online_purchase_purchase_online_search_list（ネット買取管理_買取検索一覧）
+# ネット買取管理 — 買取検索一覧
 
 ## 概要
 

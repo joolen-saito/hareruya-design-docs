@@ -1,4 +1,4 @@
-# m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）
+# 受注管理 — 出荷指示リスト作成
 
 ## 概要
 

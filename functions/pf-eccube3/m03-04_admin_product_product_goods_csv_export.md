@@ -1,4 +1,4 @@
-# m03-04_admin_product_product_goods_csv_export（管理画面_商品管理_グッズ商品CSV出力）
+# 商品管理 — グッズ商品CSV出力
 
 ## 概要
 

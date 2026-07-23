@@ -1,4 +1,4 @@
-# m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）
+# 商品管理 — 略称タグ登録/編集
 
 ## 概要
 

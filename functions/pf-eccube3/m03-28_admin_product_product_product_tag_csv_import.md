@@ -1,4 +1,4 @@
-# m03-28_admin_product_product_product_tag_csv_import（管理画面_商品管理_商品タグ更新CSV登録）
+# 商品管理 — 商品タグ更新CSV登録
 
 ## 概要
 

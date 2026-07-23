@@ -1,4 +1,4 @@
-# m03-41_admin_product_product_category_csv_import（管理画面_商品管理_カテゴリCSV登録）
+# 商品管理 — カテゴリCSV登録
 
 ## 概要
 

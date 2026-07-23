@@ -1,4 +1,4 @@
-# m03-26_admin_product_product_card_csv_import（管理画面_商品管理_カード商品CSV登録）
+# 商品管理 — カード商品CSV登録
 
 ## 概要
 

@@ -1,4 +1,4 @@
-# m07-04_admin_online_purchase_purchase_manual_mail（管理画面_ネット買取管理_手動メール通知）
+# ネット買取管理 — 手動メール通知
 
 ## 概要
 

@@ -1,4 +1,4 @@
-# m03-45_admin_product_product_category_list（管理画面_商品管理_カテゴリ一覧）
+# 商品管理 — カテゴリ一覧
 
 ## 概要
 

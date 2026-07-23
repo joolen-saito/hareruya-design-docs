@@ -1,4 +1,4 @@
-# m09-06_admin_content_content_js（管理画面_コンテンツ管理_JavaScript管理）
+# コンテンツ管理 — JavaScript管理
 
 管理画面のコンテンツ管理配下で、店舗フロント全ページへ読み込まれるカスタマイズ用JavaScriptファイル（customize.js）の内容を編集画面のエディタで編集し、保存する機能である。
 

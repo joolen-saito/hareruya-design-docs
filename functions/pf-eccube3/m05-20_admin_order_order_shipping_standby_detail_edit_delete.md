@@ -1,4 +1,4 @@
-# m05-20_admin_order_order_shipping_standby_detail_edit_delete（管理画面_受注管理_出荷指示リスト詳細_備考編集・リスト削除）
+# 受注管理 — 出荷指示リスト詳細（備考編集・リスト削除）
 
 ## 概要
 

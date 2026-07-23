@@ -1,4 +1,4 @@
-# m07-05_admin_online_purchase_purchase_csv_export_deposit（ネット買取管理_入金CSV）
+# ネット買取管理 — 入金CSV
 
 ## 概要
 

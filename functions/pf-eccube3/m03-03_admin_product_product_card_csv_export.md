@@ -1,4 +1,4 @@
-# m03-03_admin_product_product_card_csv_export（管理画面_商品管理_カード商品CSV出力）
+# 商品管理 — カード商品CSV出力
 
 ## 概要
 

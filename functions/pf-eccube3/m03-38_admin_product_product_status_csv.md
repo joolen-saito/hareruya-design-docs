@@ -1,4 +1,4 @@
-# m03-38_admin_product_product_status_csv（管理画面_商品管理_商品公開CSV登録）
+# 商品管理 — 商品公開CSV登録
 
 ## 概要
 

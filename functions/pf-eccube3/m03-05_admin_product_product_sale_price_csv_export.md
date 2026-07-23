@@ -1,4 +1,4 @@
-# m03-05_admin_product_product_sale_price_csv_export（管理画面_商品管理_セール用価格変更CSV出力）
+# 商品管理 — セール用価格変更CSV出力
 
 ## 概要
 

@@ -1,4 +1,4 @@
-# m03-35_admin_product_product_section_csv_import（管理画面_商品管理_部門更新CSV登録）
+# 商品管理 — 部門更新CSV登録
 
 ## 概要
 

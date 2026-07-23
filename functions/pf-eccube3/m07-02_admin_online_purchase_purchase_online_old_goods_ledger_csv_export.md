@@ -1,4 +1,4 @@
-# m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export（管理画面_ネット買取管理_古物台帳入力用CSV出力）
+# ネット買取管理 — 古物台帳入力用CSV出力
 
 ## 概要
 

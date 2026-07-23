@@ -1,4 +1,4 @@
-# m03-10_admin_product_product_bulk_buy_standard_price_edit（管理画面_商品管理_買取・基準価格一括編集）
+# 商品管理 — 買取・基準価格一括編集
 
 ## 概要
 

@@ -1,4 +1,4 @@
-# m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）
+# 商品管理 — 高額商品価格変更CSV登録
 
 ## 概要
 

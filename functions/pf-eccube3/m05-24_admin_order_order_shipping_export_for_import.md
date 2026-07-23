@@ -1,4 +1,4 @@
-# m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）
+# 受注管理 — 出荷実績入力用CSV出力
 
 ## 概要
 

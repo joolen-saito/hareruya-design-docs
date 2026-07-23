@@ -1,4 +1,4 @@
-# m03-11_admin_product_product_category_register_edit（管理画面_商品管理_カテゴリ登録・編集）
+# 商品管理 — カテゴリ登録・編集
 
 ## 概要
 

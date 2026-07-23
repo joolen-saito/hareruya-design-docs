@@ -1,4 +1,4 @@
-# m03-27_admin_product_product_goods_csv_import（管理画面_商品管理_グッズ商品CSV登録）
+# 商品管理 — グッズ商品CSV登録
 
 ## 概要
 

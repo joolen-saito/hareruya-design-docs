@@ -1,4 +1,4 @@
-# m03-40_admin_product_product_shelf_number_csv_import（管理画面_商品管理_棚番号更新CSV登録）
+# 商品管理 — 棚番号更新CSV登録
 
 ## 概要
 

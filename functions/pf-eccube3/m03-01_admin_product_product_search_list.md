@@ -1,4 +1,4 @@
-# m03-01_admin_product_product_search_list（管理画面_商品管理_商品検索・一覧）
+# 商品管理 — 商品検索・一覧
 
 ## 概要
 

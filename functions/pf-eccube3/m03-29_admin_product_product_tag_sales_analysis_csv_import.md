@@ -1,4 +1,4 @@
-# m03-29_admin_product_product_tag_sales_analysis_csv_import（管理画面_商品管理_売上分析タグ更新CSV登録）
+# 商品管理 — 売上分析タグ更新CSV登録
 
 ## 概要
 

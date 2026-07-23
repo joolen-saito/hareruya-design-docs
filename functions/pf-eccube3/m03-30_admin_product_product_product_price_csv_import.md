@@ -1,4 +1,4 @@
-# m03-30_admin_product_product_product_price_csv_import（管理画面_商品管理_セール用価格変更CSV登録）
+# 商品管理 — セール用価格変更CSV登録
 
 ## 概要
 

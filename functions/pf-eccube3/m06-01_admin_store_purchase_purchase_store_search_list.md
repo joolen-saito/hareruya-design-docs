@@ -1,4 +1,4 @@
-# m06-01_admin_store_purchase_purchase_store_search_list（管理画面_店頭買取管理_買取検索一覧）
+# 店頭買取管理 — 買取検索一覧
 
 ## 概要
 

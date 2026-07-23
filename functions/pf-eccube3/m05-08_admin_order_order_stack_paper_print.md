@@ -1,4 +1,4 @@
-# m05-08_admin_order_order_stack_paper_print（受注管理 — スタック用紙印刷）
+# 受注管理 — スタック用紙印刷
 
 ## 概要
 

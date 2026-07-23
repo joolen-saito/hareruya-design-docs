@@ -1,4 +1,4 @@
-# m03-33_admin_product_product_sale_high_price_csv_import（管理画面_商品管理_セール用高額商品価格変更CSV登録）
+# 商品管理 — セール用高額商品価格変更CSV登録
 
 ## 概要
 

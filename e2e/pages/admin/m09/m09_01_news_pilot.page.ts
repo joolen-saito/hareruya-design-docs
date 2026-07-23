@@ -75,8 +75,15 @@ export class NewsPilotPage {
     return { token, publishDate, visibleValue };
   }
 
+  /**
+   * 登録フォームを送信する。
+   * ハーネス事情: 稼働環境は dev モードで Symfony Web Debug Toolbar(.sf-toolbar) が
+   * 送信ボタン上にオーバーレイし .click() の pointer event を横取りする（本番には無い dev 専用UI）。
+   * そのため form.requestSubmit() で送信する。これは submit ボタン押下と等価に
+   * ネイティブHTML5検証（valueMissing 等）と通常のフォーム送信/ナビゲーションを発火する。
+   */
   async submitRegister() {
-    await this.registerButton.click();
+    await this.form.evaluate((f) => (f as HTMLFormElement).requestSubmit());
   }
 
   /** #admin_news_title の HTML5 制約検証結果を読む（valueMissing 等）。 */

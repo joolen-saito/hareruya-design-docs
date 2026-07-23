@@ -1,4 +1,4 @@
-# 店舗設定／自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）
+# 店舗設定 — 自動送信メールテンプレート編集（pf-eccube3 + HareruyaEc）
 
 ## 概要
 
