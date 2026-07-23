@@ -49,17 +49,17 @@
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
 | 1 | トレードチーム | 日時作業として、前日の売り上げを確認し、売上過多が発生してか含め確認を行う 売上分析データを取得する 分析作業を行うために、受注/売上分析より売り上げ分析データを取得する | M12-03（受注/売上分析 集計一覧表示）（M12-03） | 前日の売り上げを確認し、売上過多が発生してか含め確認を行うこと。 |
-| 2 | トレードチーム | 分析結果整理として、取得したデータを整理する | 該当なし（物理作業。EC-CUBE操作なし）（-） | 取得したデータを整理すること。 |
-| 3 | トレードチーム | 価格確認として、晴れる屋サイトの受注等などから情報を収集し価格設定を行う ※買取価格は参照していない。 価格変更の共有および、EC-CUBEに価格変更を反映させる | 該当なし（物理作業。EC-CUBE操作なし）（-） | 晴れる屋サイトの受注等などから情報を収集し価格設定を行うこと。 |
-| 4 | トレードチーム | 価格反映作業として、※販売価格の上昇調整のみ | 要確認（EC-CUBE工程だが機能Noを特定できない）（-） | ※販売価格の上昇調整のみこと。 |
+| 2 | トレードチーム | 分析結果整理として、取得したデータを整理する | 現場作業（物理作業。EC-CUBE操作なし）（-） | 取得したデータを整理すること。 |
+| 3 | トレードチーム | 価格確認として、晴れる屋サイトの受注等などから情報を収集し価格設定を行う ※買取価格は参照していない。 価格変更の共有および、EC-CUBEに価格変更を反映させる | 現場作業（物理作業。EC-CUBE操作なし）（-） | 晴れる屋サイトの受注等などから情報を収集し価格設定を行うこと。 |
+| 4 | トレードチーム | 価格反映作業として、※販売価格の上昇調整のみ | 商品管理 — セール用価格変更CSV登録 ほか（M03-30・M03-31）（M03-30・M03-31） | ※販売価格の上昇調整のみこと。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
 | 1 | トレードチーム | M12-03（受注/売上分析 集計一覧表示）で「日時作業として、前日の売り上げを確認し、売上過多が発生してか含め確認を行う 売上分析データを取得する 分析作業を行うために、受注/売上分析より売り上げ分析データを取得する」を行う | 商品コード=ST-CARD-PRICE-002-R01 | 前日の売り上げを確認し、売上過多が発生してか含め確認を行うこと。 | 照合/査定結果（一致・可否）と後続処理の可否 |
-| 2 | トレードチーム | 現場作業として「分析結果整理として、取得したデータを整理する」を実施する（EC-CUBE操作なし） | 商品コード=ST-CARD-PRICE-002-R01 | 取得したデータを整理すること。 | 現物・現品、チェック票/帳票の記入、数量、サイン（EC-CUBE の更新は発生しない） |
-| 3 | トレードチーム | 現場作業として「価格確認として、晴れる屋サイトの受注等などから情報を収集し価格設定を行う ※買取価格は参照していない。 価格変更の共有および、EC-CUBEに価格変更を反映させる」を実施する（EC-CUBE操作なし） | 変更後価格=550円 | 晴れる屋サイトの受注等などから情報を収集し価格設定を行うこと。 | 現物・現品、チェック票/帳票の記入、数量、サイン（EC-CUBE の更新は発生しない） |
-| 4 | トレードチーム | 「価格反映作業として、※販売価格の上昇調整のみ」を行う（実施画面は要確認。機能Noを特定できていない） | 価格変更CSV=ST-PRICE-PRICE-002-R01.csv | ※販売価格の上昇調整のみこと。 | 更新後の値と更新履歴 |
+| 2 | トレードチーム | 現場作業として「分析結果整理として、取得したデータを整理する」を実施する（EC-CUBE操作なし・業務結果を観測） | 商品コード=ST-CARD-PRICE-002-R01 | 取得したデータを整理すること。 | 現物・現品、チェック票/帳票の記入、数量、サイン（EC-CUBE の更新は発生しない） |
+| 3 | トレードチーム | 現場作業として「価格確認として、晴れる屋サイトの受注等などから情報を収集し価格設定を行う ※買取価格は参照していない。 価格変更の共有および、EC-CUBEに価格変更を反映させる」を実施する（EC-CUBE操作なし・業務結果を観測） | 変更後価格=550円 | 晴れる屋サイトの受注等などから情報を収集し価格設定を行うこと。 | 現物・現品、チェック票/帳票の記入、数量、サイン（EC-CUBE の更新は発生しない） |
+| 4 | トレードチーム | 商品管理 — セール用価格変更CSV登録 ほか（M03-30・M03-31）で「価格反映作業として、※販売価格の上昇調整のみ」を行う | 価格変更CSV=ST-PRICE-PRICE-002-R01.csv | ※販売価格の上昇調整のみこと。 | 更新後の値と更新履歴 |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -78,7 +78,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| DL-01 | #17 受注/売上分析 | #18 受注*1 | (自由端＝原典で接続先未定義) | 「受注/売上分析」で産出/更新された「受注*1」が確認できること。 | 原典上の照合キー未定義（要業務確認） | 要確認（消費先が原典未定義） |
+| DL-01 | #17 受注/売上分析 | #18 受注*1 | 終端（業務フロー図に消費先の記載なし） | 「受注/売上分析」で「受注*1」が産出/更新され、`## 完了条件` の最終業務状態で確認できること。 | 照合キーは原典未定義（シードID単一データ環境で同一性を担保） | 終端（消費先の記載なし・完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 価格調整対応（日次・売り上げによる価格調整）の対象データが完了状態として追跡できる。
@@ -120,11 +120,11 @@
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
   | M12-01（日別/月別集計 集計一覧表示） | M12-01 | `functions/pf-eccube3/m12-01_admin_analytics_sales_daily_monthly_summary.md` | `integration_test/e2e/m12_01_admin_analytics_sales_daily_monthly_summary_e2e_cases.md` |
-  | M12-02（日別/月別集計 CSVダウンロード） | M12-02 | `functions/pf-eccube3/m12-02_admin_analytics_sales_daily_monthly_csv_export.md` | `integration_test/e2e/m12_02_admin_analytics_sales_daily_monthly_csv_export_e2e_cases.md` |
+  | 分析 — 日別/月別集計CSVダウンロード | M12-02 | `functions/pf-eccube3/m12-02_admin_analytics_sales_daily_monthly_csv_export.md` | `integration_test/e2e/m12_02_admin_analytics_sales_daily_monthly_csv_export_e2e_cases.md` |
   | M12-03（受注/売上分析 集計一覧表示） | M12-03 | `functions/pf-eccube3/m12-03_admin_analytics_sales_order_analysis_summary.md` | `integration_test/e2e/m12_03_admin_analytics_sales_order_analysis_summary_e2e_cases.md` |
-  | M12-04（受注/売上分析 CSVダウンロード） | M12-04 | `functions/pf-eccube3/m12-04_admin_analytics_sales_order_analysis_csv_export.md` | `integration_test/e2e/m12_04_admin_analytics_sales_order_analysis_csv_export_e2e_cases.md` |
+  | 分析 — 受注/売上分析CSVダウンロード | M12-04 | `functions/pf-eccube3/m12-04_admin_analytics_sales_order_analysis_csv_export.md` | `integration_test/e2e/m12_04_admin_analytics_sales_order_analysis_csv_export_e2e_cases.md` |
   | M12-07（フォーマット売上分析 集計一覧表示） | M12-07 | `functions/pf-eccube3/m12-07_admin_analytics_sales_format_analysis_summary.md` | `integration_test/e2e/m12_07_admin_analytics_sales_format_analysis_summary_e2e_cases.md` |
-  | M12-08（フォーマット売上分析 CSVダウンロード） | M12-08 | `functions/pf-eccube3/m12-08_admin_analytics_sales_format_analysis_csv_export.md` | `integration_test/e2e/m12_08_admin_analytics_sales_format_analysis_csv_export_e2e_cases.md` |
+  | 分析 — フォーマット売上分析CSVダウンロード | M12-08 | `functions/pf-eccube3/m12-08_admin_analytics_sales_format_analysis_csv_export.md` | `integration_test/e2e/m12_08_admin_analytics_sales_format_analysis_csv_export_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0204_基本設計仕様書(商品管理).html`
   - `excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html`

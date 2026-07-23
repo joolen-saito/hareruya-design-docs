@@ -48,14 +48,14 @@
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
-| 1 | トレードチーム | 集計用データ取得として、商品マスタから、集計に必要な在庫データを取得 検索条件は 「公開」「日本語、英語」「ノーマル、Foil」 「NM」「販売価格：1～200円」 カスタムデータCSVダウンロードの「通常作業用」「入庫数確認用」を使用 | 要確認（EC-CUBE工程だが機能Noを特定できない）（-） | 商品マスタから、集計に必要な在庫データを取得 検索条件は 「公開」「日本語、英語」「ノーマルこと。 |
-| 2 | トレードチーム | 集計作業として、ダウンロードしたデータを整形し、エクセルにて集計作業を行う。 集計した結果を集計用スプレッドシートに張り付ける | 該当なし（外部システム/ツール操作。EC-CUBE操作なし）（-） | ダウンロードしたデータを整形し、エクセルにて集計作業を行うこと。 |
+| 1 | トレードチーム | 集計用データ取得として、商品マスタから、集計に必要な在庫データを取得 検索条件は 「公開」「日本語、英語」「ノーマル、Foil」 「NM」「販売価格：1～200円」 カスタムデータCSVダウンロードの「通常作業用」「入庫数確認用」を使用 | 商品管理 — カスタムデータ CSV ダウンロード（商品情報） ほか（M03-01・M03-06）（M03-01・M03-06） | 商品マスタから、集計に必要な在庫データを取得 検索条件は 「公開」「日本語、英語」「ノーマルこと。 |
+| 2 | トレードチーム | 集計作業として、ダウンロードしたデータを整形し、エクセルにて集計作業を行う。 集計した結果を集計用スプレッドシートに張り付ける | 外部システム/ツール作業（EC-CUBE操作なし）（-） | ダウンロードしたデータを整形し、エクセルにて集計作業を行うこと。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
-| 1 | トレードチーム | 「集計用データ取得として、商品マスタから、集計に必要な在庫データを取得 検索条件は 「公開」「日本語、英語」「ノーマル、Foil」 「NM」「販売価格：1～200円」 カスタムデータCSVダウンロードの「通常作業用」「入庫数確認用」を使用」を行う（実施画面は要確認。機能Noを特定できていない） | 商品コード=ST-STOCK-ZAIKO-012-R01 | 商品マスタから、集計に必要な在庫データを取得 検索条件は 「公開」「日本語、英語」「ノーマルこと。 | 在庫数と在庫変更履歴 |
-| 2 | トレードチーム | 外部システム/ツール上で「集計作業として、ダウンロードしたデータを整形し、エクセルにて集計作業を行う。 集計した結果を集計用スプレッドシートに張り付ける」を実施する（EC-CUBE操作なし） | 商品コード=ST-STOCK-ZAIKO-012-R01 | ダウンロードしたデータを整形し、エクセルにて集計作業を行うこと。 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない） |
+| 1 | トレードチーム | 商品管理 — カスタムデータ CSV ダウンロード（商品情報） ほか（M03-01・M03-06）で「集計用データ取得として、商品マスタから、集計に必要な在庫データを取得 検索条件は 「公開」「日本語、英語」「ノーマル、Foil」 「NM」「販売価格：1～200円」 カスタムデータCSVダウンロードの「通常作業用」「入庫数確認用」を使用」を行う | 商品コード=ST-STOCK-ZAIKO-012-R01 | 商品マスタから、集計に必要な在庫データを取得 検索条件は 「公開」「日本語、英語」「ノーマルこと。 | 在庫数と在庫変更履歴 |
+| 2 | トレードチーム | 外部システム/ツール上で「集計作業として、ダウンロードしたデータを整形し、エクセルにて集計作業を行う。 集計した結果を集計用スプレッドシートに張り付ける」を実施する（EC-CUBE操作なし・業務結果を観測） | 商品コード=ST-STOCK-ZAIKO-012-R01 | ダウンロードしたデータを整形し、エクセルにて集計作業を行うこと。 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない） |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -74,7 +74,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| DL-01 | #319 集計作業 | #320 在庫集計用シート | (自由端＝原典で接続先未定義) | 「集計作業」で産出/更新された「在庫集計用シート」が確認できること。 | 商品コード=ST-STOCK-ZAIKO-012-R01 | 要確認（消費先が原典未定義） |
+| DL-01 | #319 集計作業 | #320 在庫集計用シート | 終端（業務フロー図に消費先の記載なし） | 「集計作業」で「在庫集計用シート」が産出/更新され、`## 完了条件` の最終業務状態で確認できること。 | 商品コード=ST-STOCK-ZAIKO-012-R01 | 終端（消費先の記載なし・完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 在庫0枚種類数集計の対象データが完了状態として追跡できる。
@@ -115,12 +115,12 @@
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
-  | M04-01（在庫検索/一覧） | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/e2e/m04_01_admin_stock_stock_search_list_e2e_cases.md` |
-  | M04-02（在庫編集機能） | M04-02 | `functions/ec-cube-enterprise/m04-02_admin_stock_stock_edit.md` | `integration_test/e2e/m04_02_admin_stock_stock_edit_e2e_cases.md` |
-  | M04-03（在庫一括編集） | M04-03 | `functions/pf-eccube3/m04-03_admin_stock_stock_bulk_edit.md` | `integration_test/e2e/m04_03_admin_stock_stock_bulk_edit_e2e_cases.md` |
-  | M04-04（在庫情報CSV出力） | M04-04 | `functions/ec-cube-enterprise/m04-04_admin_stock_stock_csv_export.md` | `integration_test/e2e/m04_04_admin_stock_stock_csv_export_e2e_cases.md` |
-  | M04-08（在庫移動・振替検索/一覧） | M04-08 | `functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md` | `integration_test/e2e/m04_08_admin_stock_stock_move_transfer_search_list_e2e_cases.md` |
-  | M04-09（在庫移動・振替登録/編集） | M04-09 | `functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md` | `integration_test/e2e/m04_09_admin_stock_stock_move_transfer_register_edit_e2e_cases.md` |
+  | 在庫管理 — 在庫検索/一覧 | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/e2e/m04_01_admin_stock_stock_search_list_e2e_cases.md` |
+  | 在庫管理 — 在庫編集機能 | M04-02 | `functions/ec-cube-enterprise/m04-02_admin_stock_stock_edit.md` | `integration_test/e2e/m04_02_admin_stock_stock_edit_e2e_cases.md` |
+  | 在庫管理 — 在庫一括編集 | M04-03 | `functions/pf-eccube3/m04-03_admin_stock_stock_bulk_edit.md` | `integration_test/e2e/m04_03_admin_stock_stock_bulk_edit_e2e_cases.md` |
+  | 在庫管理 — 在庫情報CSV出力 | M04-04 | `functions/ec-cube-enterprise/m04-04_admin_stock_stock_csv_export.md` | `integration_test/e2e/m04_04_admin_stock_stock_csv_export_e2e_cases.md` |
+  | 在庫管理 — 在庫移動・振替検索/一覧 | M04-08 | `functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md` | `integration_test/e2e/m04_08_admin_stock_stock_move_transfer_search_list_e2e_cases.md` |
+  | 在庫管理 — 在庫移動・振替登録/編集 | M04-09 | `functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md` | `integration_test/e2e/m04_09_admin_stock_stock_move_transfer_register_edit_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html`
   - `excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html`

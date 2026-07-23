@@ -48,16 +48,16 @@
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
-| 1 | 店舗チーム | 新規会員登録として、会員登録する | M13-12（イベント新規申込登録）（M13-12） | 会員登録すること。 |
+| 1 | 店舗チーム | 新規会員登録として、会員登録する | イベント管理 — イベント新規申込登録（M13-12） | 会員登録すること。 |
 | 2 | 店舗チーム | ポイント付与として、ポイントグランターを用いてポイント付与を行う | API その他 — PointGranterAPI連携（A17-03） | ポイントグランターを用いてポイント付与を行うこと。 |
-| 3 | 店舗チーム | 売上登録として、スマレジに当日のイベント金額を登録する | 該当なし（外部システム/ツール操作。EC-CUBE操作なし）（-） | スマレジに当日のイベント金額を登録すること。 |
+| 3 | 店舗チーム | 売上登録として、スマレジに当日のイベント金額を登録する | 外部システム/ツール作業（EC-CUBE操作なし）（-） | スマレジに当日のイベント金額を登録すること。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
-| 1 | 店舗チーム | M13-12（イベント新規申込登録）で「新規会員登録として、会員登録する」を行う | 商品コード=ST-CARD-EVENT-003-R01 | 会員登録すること。 | 一覧・詳細に追加された対象データ |
+| 1 | 店舗チーム | イベント管理 — イベント新規申込登録で「新規会員登録として、会員登録する」を行う | 商品コード=ST-CARD-EVENT-003-R01 | 会員登録すること。 | 一覧・詳細に追加された対象データ |
 | 2 | 店舗チーム | API その他 — PointGranterAPI連携で「ポイント付与として、ポイントグランターを用いてポイント付与を行う」を行う | イベントID=ST-EVENT-EVENT-003-R01 | ポイントグランターを用いてポイント付与を行うこと。 | 画面表示・処理ステータス・処理履歴 |
-| 3 | 店舗チーム | 外部システム/ツール上で「売上登録として、スマレジに当日のイベント金額を登録する」を実施する（EC-CUBE操作なし） | イベントID=ST-EVENT-EVENT-003-R01 | スマレジに当日のイベント金額を登録すること。 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない） |
+| 3 | 店舗チーム | 外部システム/ツール上で「売上登録として、スマレジに当日のイベント金額を登録する」を実施する（EC-CUBE操作なし・業務結果を観測） | イベントID=ST-EVENT-EVENT-003-R01 | スマレジに当日のイベント金額を登録すること。 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない） |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -76,8 +76,8 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| DL-01 | #50 新規会員登録 | #51 会員*1 | (自由端＝原典で接続先未定義) | 「新規会員登録」で産出/更新された「会員*1」が確認できること。 | 会員番号=ST-MEMBER-EVENT-003-R01 | 要確認（消費先が原典未定義） |
-| DL-02 | #56 売上登録 | #57 売上 | (自由端＝原典で接続先未定義) | 「売上登録」で産出/更新された「売上」が確認できること。 | 原典上の照合キー未定義（要業務確認） | 要確認（消費先が原典未定義） |
+| DL-01 | #50 新規会員登録 | #51 会員*1 | 終端（業務フロー図に消費先の記載なし） | 「新規会員登録」で「会員*1」が産出/更新され、`## 完了条件` の最終業務状態で確認できること。 | 会員番号=ST-MEMBER-EVENT-003-R01 | 終端（消費先の記載なし・完了条件で観測） |
+| DL-02 | #56 売上登録 | #57 売上 | 終端（業務フロー図に消費先の記載なし） | 「売上登録」で「売上」が産出/更新され、`## 完了条件` の最終業務状態で確認できること。 | 照合キーは原典未定義（シードID単一データ環境で同一性を担保） | 終端（消費先の記載なし・完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - イベント受付～実施の対象データが完了状態として追跡できる。
@@ -119,11 +119,11 @@
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
   | API その他 — PointGranterAPI連携 | A17-03 | `functions/pf-eccube3/a17-03_api_other_point_granter.md` | `integration_test/e2e/a17_03_api_other_point_granter_e2e_cases.md` |
-  | M13-06（イベント申込検索） | M13-06 | `functions/pf-eccube3/m13-06_admin_event_event_entry_management_search.md` | `integration_test/e2e/m13_06_admin_event_event_entry_management_search_e2e_cases.md` |
+  | イベント管理 — イベント申込検索 | M13-06 | `functions/pf-eccube3/m13-06_admin_event_event_entry_management_search.md` | `integration_test/e2e/m13_06_admin_event_event_entry_management_search_e2e_cases.md` |
   | イベント管理 — イベント申込一括編集 | M13-07 | `functions/pf-eccube3/m13-07_admin_event_event_entry_bulk_update.md` | `integration_test/e2e/m13_07_admin_event_event_entry_bulk_update_e2e_cases.md` |
-  | M13-10（イベント申込詳細・編集） | M13-10 | `functions/pf-eccube3/m13-10_admin_event_event_entry_edit.md` | `integration_test/e2e/m13_10_admin_event_event_entry_edit_e2e_cases.md` |
+  | イベント管理 — イベント申込詳細・編集 | M13-10 | `functions/pf-eccube3/m13-10_admin_event_event_entry_edit.md` | `integration_test/e2e/m13_10_admin_event_event_entry_edit_e2e_cases.md` |
   | イベント管理 — イベント申込登録検索 | M13-11 | `functions/pf-eccube3/m13-11_admin_event_event_entry_search.md` | `integration_test/e2e/m13_11_admin_event_event_entry_search_e2e_cases.md` |
-  | M13-12（イベント新規申込登録） | M13-12 | `functions/pf-eccube3/m13-12_admin_event_event_entry_register.md` | `integration_test/e2e/m13_12_admin_event_event_entry_register_e2e_cases.md` |
+  | イベント管理 — イベント新規申込登録 | M13-12 | `functions/pf-eccube3/m13-12_admin_event_event_entry_register.md` | `integration_test/e2e/m13_12_admin_event_event_entry_register_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0214_基本設計仕様書(イベント管理).html`
   - `excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html`

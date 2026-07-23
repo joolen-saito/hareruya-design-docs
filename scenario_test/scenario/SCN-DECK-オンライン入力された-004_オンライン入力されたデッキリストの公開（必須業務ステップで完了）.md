@@ -74,7 +74,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| DL-01 | #7 イベント・大会デッキ登録 | #8 デッキ管理 | (自由端＝原典で接続先未定義) | 「イベント・大会デッキ登録」で産出/更新された「デッキ管理」が確認できること。 | デッキID=ST-DECK-DECK-002-R01 | 要確認（消費先が原典未定義） |
+| DL-01 | #7 イベント・大会デッキ登録 | #8 デッキ管理 | 終端（業務フロー図に消費先の記載なし） | 「イベント・大会デッキ登録」で「デッキ管理」が産出/更新され、`## 完了条件` の最終業務状態で確認できること。 | デッキID=ST-DECK-DECK-002-R01 | 終端（消費先の記載なし・完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - オンライン入力されたデッキリストの公開の対象データが完了状態として追跡できる。
@@ -116,7 +116,7 @@
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
   | デッキ管理 — 新規登録・編集・削除・複製 | M15-05 | `functions/pf-eccube3/m15-05_admin_deck_deck_edit.md` | `integration_test/e2e/m15_05_admin_deck_deck_edit_e2e_cases.md` |
-  | デッキ管理 — デッキ登録 CSV（取込） | M15-06 | `functions/pf-eccube3/m15-06_admin_deck_deck_csv_import.md` | `integration_test/e2e/m15_06_admin_deck_deck_csv_import_e2e_cases.md` |
+  | デッキ管理 — デッキ登録CSV（取込） | M15-06 | `functions/pf-eccube3/m15-06_admin_deck_deck_csv_import.md` | `integration_test/e2e/m15_06_admin_deck_deck_csv_import_e2e_cases.md` |
   | API デッキビルダー — デッキ情報登録 | A15-09 | `functions/pf-api/a15-09_api_deck_builder_deck_register.md` | `integration_test/e2e/a15_09_api_deck_builder_deck_register_e2e_cases.md` |
   | API デッキビルダー — デッキ登録インポート | A15-17 | `functions/pf-api/a15-17_api_deck_builder_deck_import_register.md` | `integration_test/e2e/a15_17_api_deck_builder_deck_import_register_e2e_cases.md` |
   | API デッキビルダー — デッキ情報更新 | A15-10 | `functions/pf-api/a15-10_api_deck_builder_deck_update.md` | `integration_test/e2e/a15_10_api_deck_builder_deck_update_e2e_cases.md` |

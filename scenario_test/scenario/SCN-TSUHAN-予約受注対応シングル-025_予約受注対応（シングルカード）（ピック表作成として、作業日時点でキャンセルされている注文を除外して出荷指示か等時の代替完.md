@@ -65,7 +65,7 @@
 ## 実行手順（代替系・異常系）
 | # | 分岐ID | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|---|
-| 1 | A1 | 通販チーム | 条件「ピック表作成として、作業日時点でキャンセルされている注文を除外して出荷指示からピック表を印刷」となるデータ/操作を実行する（実施画面は要確認。機能Noを特定できていない） | 条件「ピック表作成として、作業日時点でキャンセルされている注文を除外して出荷指示からピック表を印刷」を満たす対象データ（基準: 受注番号=ST-ORDER-TSUHAN-011-R03） | 対象データをキャンセル状態にし、在庫戻し、通知、履歴を確認できる状態にすること。 | キャンセル状態、在庫戻し、通知結果、操作履歴 |
+| 1 | A1 | 通販チーム | 条件「ピック表作成として、作業日時点でキャンセルされている注文を除外して出荷指示からピック表を印刷」となるデータ/操作を実行し、業務結果を確認する（業務フロー記載の分岐。専用の機能設計書なし） | 条件「ピック表作成として、作業日時点でキャンセルされている注文を除外して出荷指示からピック表を印刷」を満たす対象データ（基準: 受注番号=ST-ORDER-TSUHAN-011-R03） | 対象データをキャンセル状態にし、在庫戻し、通知、履歴を確認できる状態にすること。 | キャンセル状態、在庫戻し、通知結果、操作履歴 |
 
 ## データ連鎖（業務フロー原典のデータ遷移線）
 本層は機能テストではなく、**データのつながりで業務が完遂できるか**を見る。下表は業務フロー図の
@@ -74,7 +74,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |
+| - | - | - | - | 業務フロー図にデータ遷移線（点線）の記載がないため、データ連鎖は `## 完了条件` の最終業務状態で観測する。 | - | データ遷移線なし（完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 対象データをキャンセル状態にし、在庫戻し、通知、履歴を確認できる状態にすること。
@@ -120,7 +120,7 @@
   | 管理画面_受注管理_ピッキングリスト印刷 | M05-21 | `functions/pf-eccube3/m05-21_admin_order_order_shipping_standby_picking_list_print.md` | `integration_test/e2e/m05_21_admin_order_order_shipping_standby_picking_list_print_e2e_cases.md` |
   | 受注管理_出荷指示_納品書印刷（日本語） | M05-22 | `functions/pf-eccube3/m05-22_admin_order_order_shipping_standby_print_delivery_slips_ja.md` | `integration_test/e2e/m05_22_admin_order_order_shipping_standby_print_delivery_slips_ja_e2e_cases.md` |
   | 管理画面_受注管理_出荷指示_納品書印刷_英語 | M05-23 | `functions/pf-eccube3/m05-23_admin_order_order_shipping_standby_print_delivery_slips_en.md` | `integration_test/e2e/m05_23_admin_order_order_shipping_standby_print_delivery_slips_en_e2e_cases.md` |
-  | 管理画面_受注管理_出荷実績入力用CSV出力 | M05-24 | `functions/pf-eccube3/m05-24_admin_order_order_shipping_export_for_import.md` | `integration_test/e2e/m05_24_admin_order_order_shipping_export_for_import_e2e_cases.md` |
+  | 受注管理 — 出荷実績入力用CSV出力 | M05-24 | `functions/pf-eccube3/m05-24_admin_order_order_shipping_export_for_import.md` | `integration_test/e2e/m05_24_admin_order_order_shipping_export_for_import_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0203_基本設計仕様書(受注管理機能).html`
   - `excel_to_html/output/0304_基本設計仕様書(フロント_注文).html`

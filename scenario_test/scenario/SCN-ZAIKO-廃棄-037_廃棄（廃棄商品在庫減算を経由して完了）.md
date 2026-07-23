@@ -48,16 +48,16 @@
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
-| 1 | トレードチーム | 廃棄商品検索として、状態の変化、イベントの賞品等様々な理由で廃棄が発生する 廃棄は在庫を有する各部署がそれぞれ行う | 要確認（EC-CUBE工程だが機能Noを特定できない）（-） | 状態の変化、イベントの賞品等様々な理由で廃棄が発生すること。 |
-| 2 | トレードチーム | 廃棄商品在庫減算として、在庫変動理由を廃棄にして在庫を減らす 在庫変動理由が廃棄の場合は承認が必要 | 要確認（EC-CUBE工程だが機能Noを特定できない）（-） | 在庫変動理由を廃棄にして在庫を減らすこと。 |
-| 3 | トレードチーム | 廃棄商品在庫変動承認として、承認者が承認すると在庫が減る | M04-01（在庫検索/一覧）（M04-01） | 承認者が承認すると在庫が減ること。 |
+| 1 | トレードチーム | 廃棄商品検索として、状態の変化、イベントの賞品等様々な理由で廃棄が発生する 廃棄は在庫を有する各部署がそれぞれ行う | 在庫管理 — 在庫検索/一覧（M04-01） | 状態の変化、イベントの賞品等様々な理由で廃棄が発生すること。 |
+| 2 | トレードチーム | 廃棄商品在庫減算として、在庫変動理由を廃棄にして在庫を減らす 在庫変動理由が廃棄の場合は承認が必要 | 在庫管理 — 在庫編集機能（M04-02） | 在庫変動理由を廃棄にして在庫を減らすこと。 |
+| 3 | トレードチーム | 廃棄商品在庫変動承認として、承認者が承認すると在庫が減る | 在庫管理 — 在庫検索/一覧（M04-01） | 承認者が承認すると在庫が減ること。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
-| 1 | トレードチーム | 「廃棄商品検索として、状態の変化、イベントの賞品等様々な理由で廃棄が発生する 廃棄は在庫を有する各部署がそれぞれ行う」を行う（実施画面は要確認。機能Noを特定できていない） | 商品コード=ST-STOCK-ZAIKO-015-R02 | 状態の変化、イベントの賞品等様々な理由で廃棄が発生すること。 | 画面表示・処理ステータス・処理履歴 |
-| 2 | トレードチーム | 「廃棄商品在庫減算として、在庫変動理由を廃棄にして在庫を減らす 在庫変動理由が廃棄の場合は承認が必要」を行う（実施画面は要確認。機能Noを特定できていない） | 商品コード=ST-STOCK-ZAIKO-015-R02 | 在庫変動理由を廃棄にして在庫を減らすこと。 | 在庫数と在庫変更履歴 |
-| 3 | トレードチーム | M04-01（在庫検索/一覧）で「廃棄商品在庫変動承認として、承認者が承認すると在庫が減る」を行う | 商品コード=ST-STOCK-ZAIKO-015-R02 | 承認者が承認すると在庫が減ること。 | 在庫数と在庫変更履歴 |
+| 1 | トレードチーム | 在庫管理 — 在庫検索/一覧で「廃棄商品検索として、状態の変化、イベントの賞品等様々な理由で廃棄が発生する 廃棄は在庫を有する各部署がそれぞれ行う」を行う | 商品コード=ST-STOCK-ZAIKO-015-R02 | 状態の変化、イベントの賞品等様々な理由で廃棄が発生すること。 | 画面表示・処理ステータス・処理履歴 |
+| 2 | トレードチーム | 在庫管理 — 在庫編集機能で「廃棄商品在庫減算として、在庫変動理由を廃棄にして在庫を減らす 在庫変動理由が廃棄の場合は承認が必要」を行う | 商品コード=ST-STOCK-ZAIKO-015-R02 | 在庫変動理由を廃棄にして在庫を減らすこと。 | 在庫数と在庫変更履歴 |
+| 3 | トレードチーム | 在庫管理 — 在庫検索/一覧で「廃棄商品在庫変動承認として、承認者が承認すると在庫が減る」を行う | 商品コード=ST-STOCK-ZAIKO-015-R02 | 承認者が承認すると在庫が減ること。 | 在庫数と在庫変更履歴 |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -76,7 +76,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| DL-01 | #12 承認 | #13 在庫 | (自由端＝原典で接続先未定義) | 「承認」で産出/更新された「在庫」が確認できること。 HTML設計書では在庫増減はdtb_product_stock.stock/dtb_product_class.stockへ反映され、dtb_stock_historyに登録元区分付きで記録される旨が記載（消費先の明示はなし）（出典: 0202_在庫管理）。 | 商品コード=ST-STOCK-ZAIKO-015-R02 | 要確認（消費先が原典未定義） |
+| DL-01 | #12 承認 | #13 在庫 | 終端（業務フロー図に消費先の記載なし） | 「承認」で「在庫」が産出/更新され、`## 完了条件` の最終業務状態で確認できること。 HTML設計書では在庫増減はdtb_product_stock.stock/dtb_product_class.stockへ反映され、dtb_stock_historyに登録元区分付きで記録される旨が記載（消費先の明示はなし）（出典: 0202_在庫管理）。 | 商品コード=ST-STOCK-ZAIKO-015-R02 | 終端（消費先の記載なし・完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 廃棄商品在庫減算の条件対応後、廃棄の対象データが完了状態として追跡できる。
@@ -117,12 +117,12 @@
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
-  | M04-01（在庫検索/一覧） | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/e2e/m04_01_admin_stock_stock_search_list_e2e_cases.md` |
-  | M04-02（在庫編集機能） | M04-02 | `functions/ec-cube-enterprise/m04-02_admin_stock_stock_edit.md` | `integration_test/e2e/m04_02_admin_stock_stock_edit_e2e_cases.md` |
-  | M04-03（在庫一括編集） | M04-03 | `functions/pf-eccube3/m04-03_admin_stock_stock_bulk_edit.md` | `integration_test/e2e/m04_03_admin_stock_stock_bulk_edit_e2e_cases.md` |
-  | M04-04（在庫情報CSV出力） | M04-04 | `functions/ec-cube-enterprise/m04-04_admin_stock_stock_csv_export.md` | `integration_test/e2e/m04_04_admin_stock_stock_csv_export_e2e_cases.md` |
-  | M04-08（在庫移動・振替検索/一覧） | M04-08 | `functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md` | `integration_test/e2e/m04_08_admin_stock_stock_move_transfer_search_list_e2e_cases.md` |
-  | M04-09（在庫移動・振替登録/編集） | M04-09 | `functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md` | `integration_test/e2e/m04_09_admin_stock_stock_move_transfer_register_edit_e2e_cases.md` |
+  | 在庫管理 — 在庫検索/一覧 | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/e2e/m04_01_admin_stock_stock_search_list_e2e_cases.md` |
+  | 在庫管理 — 在庫編集機能 | M04-02 | `functions/ec-cube-enterprise/m04-02_admin_stock_stock_edit.md` | `integration_test/e2e/m04_02_admin_stock_stock_edit_e2e_cases.md` |
+  | 在庫管理 — 在庫一括編集 | M04-03 | `functions/pf-eccube3/m04-03_admin_stock_stock_bulk_edit.md` | `integration_test/e2e/m04_03_admin_stock_stock_bulk_edit_e2e_cases.md` |
+  | 在庫管理 — 在庫情報CSV出力 | M04-04 | `functions/ec-cube-enterprise/m04-04_admin_stock_stock_csv_export.md` | `integration_test/e2e/m04_04_admin_stock_stock_csv_export_e2e_cases.md` |
+  | 在庫管理 — 在庫移動・振替検索/一覧 | M04-08 | `functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md` | `integration_test/e2e/m04_08_admin_stock_stock_move_transfer_search_list_e2e_cases.md` |
+  | 在庫管理 — 在庫移動・振替登録/編集 | M04-09 | `functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md` | `integration_test/e2e/m04_09_admin_stock_stock_move_transfer_register_edit_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html`
   - `excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html`

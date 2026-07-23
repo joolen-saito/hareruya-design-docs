@@ -38,13 +38,7 @@ UNRANKED = len(BUSINESS_ORDER) + 1
 
 # 元シナリオが「手作業か EC-CUBE 操作か判定できない」工程を明示する要確認ラベルは、推測で
 # 画面・機能Noを creating するより正しい。許可ラベルは通し、それ以外の `要確認` は従来どおり禁止。
-ALLOWED_UNRESOLVED_LABELS = (
-    "要確認（EC-CUBE工程だが機能Noを特定できない）",
-    "要確認（業務フロー上は手作業だが、CSV/インポート等のシステム操作を含む）",
-    "要確認（EC-CUBE操作か外部ツール作業かを業務側で確定させること）",
-    "実施画面は要確認。機能Noを特定できていない",
-    "EC-CUBE操作か外部ツール作業かは要確認",
-)
+ALLOWED_UNRESOLVED_LABELS: tuple[str, ...] = ()
 FORBIDDEN = (
     "UI標準",
     "設計書に記載のとおり",

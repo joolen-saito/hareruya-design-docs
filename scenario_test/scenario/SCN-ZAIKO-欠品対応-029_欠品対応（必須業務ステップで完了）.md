@@ -48,14 +48,14 @@
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
-| 1 | トレードチーム | 欠品対応に依頼が来た時として、欠品対応依頼スプレッドシートで該当の捜索依頼品の内容を確認する。 依頼内容を確認 ※U、C、基本土地、買取価格の付かない詰め合わせ系の対応 ※R＝バルクレアはトレードが管理 バックヤード、仕入れ作業中カードの中からの「補填」を基本線として対応 | 該当なし（外部システム/ツール操作。EC-CUBE操作なし）（-） | 欠品対応依頼スプレッドシートで該当の捜索依頼品の内容を確認すること。 |
-| 2 | トレードチーム | 欠品商品の捜索結果報告として、ラインワークスにて結果を共有する | 該当なし（外部システム/ツール操作。EC-CUBE操作なし）（-） | ラインワークスにて結果を共有すること。 |
+| 1 | トレードチーム | 欠品対応に依頼が来た時として、欠品対応依頼スプレッドシートで該当の捜索依頼品の内容を確認する。 依頼内容を確認 ※U、C、基本土地、買取価格の付かない詰め合わせ系の対応 ※R＝バルクレアはトレードが管理 バックヤード、仕入れ作業中カードの中からの「補填」を基本線として対応 | 外部システム/ツール作業（EC-CUBE操作なし）（-） | 欠品対応依頼スプレッドシートで該当の捜索依頼品の内容を確認すること。 |
+| 2 | トレードチーム | 欠品商品の捜索結果報告として、ラインワークスにて結果を共有する | 外部システム/ツール作業（EC-CUBE操作なし）（-） | ラインワークスにて結果を共有すること。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
-| 1 | トレードチーム | 外部システム/ツール上で「欠品対応に依頼が来た時として、欠品対応依頼スプレッドシートで該当の捜索依頼品の内容を確認する。 依頼内容を確認 ※U、C、基本土地、買取価格の付かない詰め合わせ系の対応 ※R＝バルクレアはトレードが管理 バックヤード、仕入れ作業中カードの中からの「補填」を基本線として対応」を実施する（EC-CUBE操作なし） | 商品コード=ST-STOCK-ZAIKO-011-R01 | 欠品対応依頼スプレッドシートで該当の捜索依頼品の内容を確認すること。 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない） |
-| 2 | トレードチーム | 外部システム/ツール上で「欠品商品の捜索結果報告として、ラインワークスにて結果を共有する」を実施する（EC-CUBE操作なし） | 商品コード=ST-STOCK-ZAIKO-011-R01 | ラインワークスにて結果を共有すること。 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない） |
+| 1 | トレードチーム | 外部システム/ツール上で「欠品対応に依頼が来た時として、欠品対応依頼スプレッドシートで該当の捜索依頼品の内容を確認する。 依頼内容を確認 ※U、C、基本土地、買取価格の付かない詰め合わせ系の対応 ※R＝バルクレアはトレードが管理 バックヤード、仕入れ作業中カードの中からの「補填」を基本線として対応」を実施する（EC-CUBE操作なし・業務結果を観測） | 商品コード=ST-STOCK-ZAIKO-011-R01 | 欠品対応依頼スプレッドシートで該当の捜索依頼品の内容を確認すること。 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない） |
+| 2 | トレードチーム | 外部システム/ツール上で「欠品商品の捜索結果報告として、ラインワークスにて結果を共有する」を実施する（EC-CUBE操作なし・業務結果を観測） | 商品コード=ST-STOCK-ZAIKO-011-R01 | ラインワークスにて結果を共有すること。 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない） |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -74,7 +74,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |
+| - | - | - | - | 業務フロー図にデータ遷移線（点線）の記載がないため、データ連鎖は `## 完了条件` の最終業務状態で観測する。 | - | データ遷移線なし（完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 欠品対応の対象データが完了状態として追跡できる。
@@ -115,9 +115,9 @@
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
-  | M04-17（在庫履歴検索/一覧） | M04-17 | `functions/pf-eccube3/m04-17_admin_stock_stock_history_search_list.md` | `integration_test/e2e/m04_17_admin_stock_stock_history_search_list_e2e_cases.md` |
-  | M04-18（在庫履歴CSV出力） | M04-18 | `functions/pf-eccube3/m04-18_admin_stock_stock_history_csv_export.md` | `integration_test/e2e/m04_18_admin_stock_stock_history_csv_export_e2e_cases.md` |
-  | M04-20（欠品履歴CSV出力） | M04-20 | `functions/ec-cube-enterprise/m04-20_admin_stock_stock_shortage_history_csv_export.md` | `integration_test/e2e/m04_20_admin_stock_stock_shortage_history_csv_export_e2e_cases.md` |
+  | 在庫管理 — 在庫履歴検索/一覧 | M04-17 | `functions/pf-eccube3/m04-17_admin_stock_stock_history_search_list.md` | `integration_test/e2e/m04_17_admin_stock_stock_history_search_list_e2e_cases.md` |
+  | 在庫管理 — 在庫履歴CSV出力 | M04-18 | `functions/pf-eccube3/m04-18_admin_stock_stock_history_csv_export.md` | `integration_test/e2e/m04_18_admin_stock_stock_history_csv_export_e2e_cases.md` |
+  | 在庫管理 — 欠品履歴CSV出力 | M04-20 | `functions/ec-cube-enterprise/m04-20_admin_stock_stock_shortage_history_csv_export.md` | `integration_test/e2e/m04_20_admin_stock_stock_shortage_history_csv_export_e2e_cases.md` |
   | その他_MTGバイヤー_店頭買取 | O01-01 | `functions/pf-eccube3/o01-01_other_mtg_buyer_mtg_buyer_store_purchase.md` | `integration_test/e2e/o01_01_other_mtg_buyer_mtg_buyer_store_purchase_e2e_cases.md` |
   | F01-02（支店トップページ表示） | F01-02 | `functions/pf-eccube3/f01-02_front_top_home_branch.md` | `integration_test/e2e/f01_02_front_top_home_branch_e2e_cases.md` |
   | A01-02（スマレジwebhook連携エラー再連携） | A01-02 | `functions/ec-cube-enterprise/a01-02_api_stock_smaregi_webhook_error_retry.md` | `integration_test/e2e/a01_02_api_stock_smaregi_webhook_error_retry_e2e_cases.md` |

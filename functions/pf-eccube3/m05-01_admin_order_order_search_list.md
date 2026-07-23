@@ -228,10 +228,10 @@ DB関連の記述は ec-cube-enterprise を正とする。検索パターンの�
 
 | メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
 |--------------|----------|--------------|----------|----------|----------|
-| M05-01-MSG-001 | 管理画面上部 | 削除に失敗しました | Failed to delete | 削除しようとした受注が見つからないとき | 受注情報検索・一覧画面に遷移する |
-| M05-01-MSG-002 | 管理画面上部 | 削除に失敗しました | Failed to delete | 受注を削除できないとき | 受注情報検索・一覧画面に遷移する |
-| M05-01-MSG-003 | 管理画面上部 | 削除しました | Deleted | 受注を削除したとき | 受注情報検索・一覧画面に遷移する |
-| M05-01-MSG-004 | 管理画面上部 | 削除しました | Deleted | 選択した受注を削除したとき | 受注情報検索・一覧画面に遷移する |
+| M05-01-MSG-001 | 管理画面上部 | 削除に失敗しました | 削除に失敗しました | 削除しようとした受注が見つからないとき | 受注情報検索・一覧画面に遷移する |
+| M05-01-MSG-002 | 管理画面上部 | 削除に失敗しました | 削除に失敗しました | 受注を削除できないとき | 受注情報検索・一覧画面に遷移する |
+| M05-01-MSG-003 | 管理画面上部 | 削除しました | 削除しました | 受注を削除したとき | 受注情報検索・一覧画面に遷移する |
+| M05-01-MSG-004 | 管理画面上部 | 削除しました | 削除しました | 選択した受注を削除したとき | 受注情報検索・一覧画面に遷移する |
 | M05-01-MSG-013 | 管理画面上部 | 検索パターン名を入力して下さい | 検索パターン名を入力して下さい | 検索条件名を入力せずに保存したとき | 受注情報検索・一覧画面に遷移する |
 | M05-01-MSG-014 | 管理画面上部 | 検索条件を保存しました | 検索条件を保存しました | 検索条件を保存したとき | 受注情報検索・一覧画面に遷移する |
 | M05-01-MSG-015 | 管理画面上部 | 検索条件を削除できませんでした | 検索条件を削除できませんでした | 削除しようとした検索条件が見つからないとき | 受注情報検索・一覧画面に遷移する |
@@ -240,16 +240,16 @@ DB関連の記述は ec-cube-enterprise を正とする。検索パターンの�
 | M05-01-MSG-018 | 画面中央(ダイアログ) | Update failed. | Update failed. | 送り状番号の更新に失敗したとき | エラーを表示し、受注情報検索・一覧画面に留まる |
 | M05-01-MSG-023 | 入力項目直下 | カタカナで入力してください。 | カタカナで入力してください。 | 検索条件にカタカナ以外を入力して検索したとき | 受注情報検索・一覧画面に留まる |
 | M05-01-MSG-024 | 入力項目直下 | カタカナで入力してください。 | カタカナで入力してください。 | 検索条件にカタカナ以外を入力して検索したとき | 受注情報検索・一覧画面に留まる |
-| M05-01-MSG-025 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 要ソース確認 | 要ソース確認 |
-| M05-01-MSG-026 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 要ソース確認 | 要ソース確認 |
-| M05-01-MSG-027 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 要ソース確認 | 要ソース確認 |
-| M05-01-MSG-028 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 要ソース確認 | 要ソース確認 |
-| M05-01-MSG-029 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 要ソース確認 | 要ソース確認 |
-| M05-01-MSG-030 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 要ソース確認 | 要ソース確認 |
-| M05-01-MSG-031 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 要ソース確認 | 要ソース確認 |
-| M05-01-MSG-032 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 要ソース確認 | 要ソース確認 |
-| M05-01-MSG-033 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 要ソース確認 | 要ソース確認 |
-| M05-01-MSG-034 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 要ソース確認 | 要ソース確認 |
+| M05-01-MSG-025 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 注文日の開始日が終了日より後の状態で検索したとき | 注文一覧画面に留まる（詳細検索枠を開いてエラー表示） |
+| M05-01-MSG-026 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 入金日の開始日が終了日より後の状態で検索したとき | 注文一覧画面に留まる（詳細検索枠を開いてエラー表示） |
+| M05-01-MSG-027 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 更新日の開始日が終了日より後の状態で検索したとき | 注文一覧画面に留まる（詳細検索枠を開いてエラー表示） |
+| M05-01-MSG-028 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | お届け日の開始日が終了日より後の状態で検索したとき | 注文一覧画面に留まる（詳細検索枠を開いてエラー表示） |
+| M05-01-MSG-029 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | ピック日の開始日が終了日より後の状態で検索したとき | 注文一覧画面に留まる（詳細検索枠を開いてエラー表示） |
+| M05-01-MSG-030 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 出荷指示日の開始日が終了日より後の状態で検索したとき | 注文一覧画面に留まる（詳細検索枠を開いてエラー表示） |
+| M05-01-MSG-031 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 出荷日の開始日が終了日より後の状態で検索したとき | 注文一覧画面に留まる（詳細検索枠を開いてエラー表示） |
+| M05-01-MSG-032 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | キャンセル日の開始日が終了日より後の状態で検索したとき | 注文一覧画面に留まる（詳細検索枠を開いてエラー表示） |
+| M05-01-MSG-033 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 売上確定日の開始日が終了日より後の状態で検索したとき | 注文一覧画面に留まる（詳細検索枠を開いてエラー表示） |
+| M05-01-MSG-034 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 店頭予約日の開始日が終了日より後の状態で検索したとき | 注文一覧画面に留まる（詳細検索枠を開いてエラー表示） |
 
 ---
 

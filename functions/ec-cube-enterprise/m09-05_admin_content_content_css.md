@@ -278,9 +278,9 @@ CSS管理は、管理者がブラウザ経由で店舗フロントに適用す�
 
 | メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
 |---|---|---|----------|---|---|
-| M09-05-MSG-001 | 管理画面上部 | この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。 | If this feature is used infrequently, disabling it while not in use provides additional security. You can disable this feature by setting the environment variable ECCUBE_RESTRICT_FILE_UPLOAD to 1. | CSS管理画面を初めて開いたとき（同じログイン中は1回のみ） | CSS管理画面に留まる |
+| M09-05-MSG-001 | 管理画面上部 | この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。 | この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。 | CSS管理画面を初めて開いたとき（同じログイン中は1回のみ） | CSS管理画面に留まる |
 | M09-05-MSG-002 | 管理画面上部 | 保存しました | 保存しました | CSSの変更を保存したとき | CSS管理画面に遷移する |
-| M09-05-MSG-003 | 管理画面上部 | 保存に失敗しました | Failed to save | CSSの変更の保存中にエラーが起きたとき | CSS管理画面に留まる |
+| M09-05-MSG-003 | 管理画面上部 | 保存に失敗しました | 保存に失敗しました | CSSの変更の保存中にエラーが起きたとき | CSS管理画面に留まる |
 
 ## ログ・監査
 

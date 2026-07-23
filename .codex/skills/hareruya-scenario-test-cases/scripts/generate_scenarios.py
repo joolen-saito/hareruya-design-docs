@@ -527,6 +527,16 @@ ROW_SUMMARY: dict[str, str] = {}
 # 索引表と本文の不一致（To-Be新規業務の取りこぼし / 名称ドリフト）。生成時に警告する。
 MISSING_PATTERNS: list[tuple[Path, str, str, str]] = []
 
+# 工程判定レジスタ 08_要確認トリアージ.tsv（人手キュレート・機能No実在検証済み）。
+# キー=(業務, R番号) -> (判定, 機能No, uncertain)。要確認だった工程を判定に応じた具体手順へ落とす。
+# 判定: TRACE-IN/AUTO(機能No割当) / EXTERNAL(外部) / PHYSICAL(物理) / CUSTOMER(顧客) /
+#       DECISION(分岐) / UNKNOWN(設計書不在)。
+# uncertain=True は判定理由が `[要判断]`（GAP/DOC/DECIDE＝割当機能が当該作業を対象外と明記/重複疑い）
+# の行。この機能Noは割り当てず FLOW_ONLY に落とす（機能doc自身が対象外と記す割当は捏造・codex指摘）。
+TRIAGE_REGISTER: dict[tuple[str, str], tuple[str, str, bool]] = {}
+# 機能No -> DesignDoc（レジスタの機能Noから具体画面へ解決するため）。
+FEATURE_DOC: dict[str, "DesignDoc"] = {}
+
 
 def reset_generation_state() -> None:
     """生成状態を初期化する。同一プロセスで generate() を複数回呼ぶと、前回の分類や警告が
@@ -536,6 +546,42 @@ def reset_generation_state() -> None:
     MISSING_PATTERNS.clear()
     FLOW_TEXT_BY_PATH.clear()
     FLOW_GRAPH_BY_PATH.clear()
+    TRIAGE_REGISTER.clear()
+    FEATURE_DOC.clear()
+
+
+def row_r_number(row: str) -> str:
+    """行文字列から業務フローのR番号（R35 等）を取り出す。トリアージレジスタとの結合キー。"""
+    m = re.search(r"R(\d+)", full_text(row))
+    return m.group(1) if m else ""
+
+
+def load_triage_register(repo: Path, docs: "list[DesignDoc]") -> None:
+    """`08_要確認トリアージ.tsv`（人手判定・機能No実在検証済み）を (業務, R番号) で読み込む。
+
+    要確認だった工程の判定・機能Noを確定情報として使う。機能Noは docs（functions/ 実在）に
+    存在するもののみ採用し、実在しない番号は割当しない（捏造防止）。
+    """
+    import csv as _csv
+    FEATURE_DOC.clear()
+    for d in docs:
+        if d.feature_no and d.feature_no != "-":
+            FEATURE_DOC.setdefault(d.feature_no.upper(), d)
+    path = repo / "scenario_test" / "scenario" / "08_要確認トリアージ.tsv"
+    if not path.exists():
+        return
+    with path.open(encoding="utf-8") as f:
+        for row in _csv.DictReader(f, delimiter="\t"):
+            biz = (row.get("業務") or "").strip()
+            body = row.get("業務行動(本文)") or ""
+            judge = (row.get("判定") or "").strip()
+            feature = (row.get("機能No") or "").strip().upper()
+            reason = row.get("判定理由") or ""
+            uncertain = "[要判断]" in reason  # 割当機能が当該作業を対象外と明記/重複疑い＝機能割当しない
+            m = re.search(r"R(\d+):", body)
+            if not biz or not m or judge in ("", "HEADING"):
+                continue
+            TRIAGE_REGISTER[(biz, m.group(1))] = (judge, feature, uncertain)
 
 
 def parse_flow_nodes(text: str) -> dict[str, tuple[str, str]]:
@@ -1270,44 +1316,90 @@ def step_rows(business_title: str, pattern: Pattern, docs: list[DesignDoc]) -> l
         doc = step_docs[idx - 1]
         feature = doc.feature_no if doc else "-"
         work = row_work_kind(row)
+        expect = expected_assertion(row)
         if non_eccube:
             screen = NON_ECCUBE_SCREEN
             expect = NON_ECCUBE_EXPECT
             observation = NON_ECCUBE_OBSERVATION
         elif work == WORK_PHYSICAL:
-            screen = PHYSICAL_SCREEN
-            expect = expected_assertion(row)
-            observation = PHYSICAL_OBSERVATION
+            screen, observation = PHYSICAL_SCREEN, PHYSICAL_OBSERVATION
         elif work == WORK_EXTERNAL:
-            screen = EXTERNAL_SCREEN
-            expect = expected_assertion(row)
-            observation = EXTERNAL_OBSERVATION
-        elif work == WORK_AMBIGUOUS and doc is None:
-            # キーワード辞書が発火していれば EC-CUBE 工程と確定でき、下の通常分岐で描画される。
-            screen = AMBIGUOUS_SCREEN
-            expect = expected_assertion(row)
-            observation = AMBIGUOUS_OBSERVATION
-        elif doc is None:
-            # EC-CUBE 工程だが設計書を特定できない。埋めずに要確認として出す。
-            screen = UNRESOLVED_SCREEN
-            expect = expected_assertion(row)
-            observation = expected_observation(row)
+            screen, observation = EXTERNAL_SCREEN, EXTERNAL_OBSERVATION
+        elif doc is not None:
+            screen, observation = doc.title, expected_observation(row)
         else:
-            screen = doc.title
-            expect = expected_assertion(row)
-            observation = expected_observation(row)
+            # doc未特定（要確認だった工程）。08トリアージレジスタの判定で具体化する。
+            screen, feature, observation = resolve_step_via_triage(business_title, row)
         result.append((actor, action, screen, feature, expect, observation))
     return result
 
 
+def pick_primary_feature(row: str, feats: list[str]) -> str:
+    """複数機能のうち、作業の操作動詞に合う主機能を選ぶ（先頭固定だとCSV出力工程に一覧画面を割当てる誤り）。"""
+    if not feats:
+        return ""
+    text = row_title(row) + " " + row_detail(row)
+
+    def title_of(f: str) -> str:
+        return FEATURE_DOC[f].title if f in FEATURE_DOC else ""
+
+    verb_groups = (
+        (("CSV出力", "出力", "ダウンロード", "帳票"), ("CSV出力", "出力", "ダウンロード", "帳票", "EXPORT")),
+        (("取込", "インポート", "登録CSV", "アップロード"), ("取込", "インポート", "IMPORT", "CSV登録")),
+        (("承認", "差戻", "却下"), ("承認",)),
+        (("詳細", "確認", "編集"), ("編集", "詳細")),
+    )
+    for row_words, title_words in verb_groups:
+        if any(w in text for w in row_words):
+            for f in feats:
+                if any(w.lower() in title_of(f).lower() for w in title_words):
+                    return f
+    return feats[0]
+
+
+def resolve_step_via_triage(business_title: str, row: str) -> tuple[str, str, str]:
+    """要確認だった工程（doc未特定）を、08トリアージレジスタの判定で具体化する。
+    戻り値 = (画面/機能表示, 機能No, 確認対象)。いずれも「要確認」を出さない。
+
+    - TRACE-IN/AUTO + 実在機能No → その機能の画面と観測点（機能テストで担保される画面）
+    - EXTERNAL → 外部システム作業（EC-CUBE更新なし・業務結果で観測）
+    - PHYSICAL/CUSTOMER → 物理/顧客作業（現物・帳票で観測）
+    - DECISION → 業務判断（分岐条件を評価）
+    - UNKNOWN/未収載 → 業務フロー記載の操作として実施し、業務結果で観測（画面は創作しない）
+    """
+    judge, feature, uncertain = TRIAGE_REGISTER.get((business_title, row_r_number(row)), ("", "", False))
+    # 割当機能が当該作業を対象外と明記/重複疑い（TSVが[要判断]と記録）の行は、機能を割り当てず
+    # 業務フロー記載の操作＋業務結果観測に落とす（機能doc自身が対象外と記す割当は捏造）。
+    if judge in ("TRACE-IN", "AUTO") and feature and not uncertain:
+        # 機能Noは「M04-09,M04-32」等の複数（工程が触れる画面群）のことがある。作業の操作動詞で
+        # 主画面を選ぶ（CSV/出力→出力系、取込→取込系、承認→承認系）。無ければ実在する先頭。
+        feats = [f.strip().upper() for f in feature.split(",") if f.strip() and f.strip().upper() in FEATURE_DOC]
+        primary = pick_primary_feature(row, feats)
+        if primary:
+            doc = FEATURE_DOC[primary]
+            allno = "・".join(feats)
+            label = doc.title if len(feats) == 1 else f"{doc.title} ほか（{allno}）"
+            return label, allno, expected_observation(row)
+    if judge == "EXTERNAL":
+        return EXTERNAL_SCREEN, "-", EXTERNAL_OBSERVATION
+    if judge in ("PHYSICAL", "CUSTOMER"):
+        return PHYSICAL_SCREEN, "-", PHYSICAL_OBSERVATION
+    if judge == "DECISION":
+        return DECISION_SCREEN, "-", DECISION_OBSERVATION
+    # UNKNOWN / 未収載: 業務フロー記載の操作で実施し、業務結果を観測する（画面は創作しない）。
+    return FLOW_ONLY_SCREEN, "-", expected_observation(row)
+
+
 # 物理作業・外部システム作業・機能No未特定の表示。EC-CUBE 画面での観測を主張しない。
-PHYSICAL_SCREEN = "該当なし（物理作業。EC-CUBE操作なし）"
+PHYSICAL_SCREEN = "現場作業（物理作業。EC-CUBE操作なし）"
 PHYSICAL_OBSERVATION = "現物・現品、チェック票/帳票の記入、数量、サイン（EC-CUBE の更新は発生しない）"
-EXTERNAL_SCREEN = "該当なし（外部システム/ツール操作。EC-CUBE操作なし）"
+EXTERNAL_SCREEN = "外部システム/ツール作業（EC-CUBE操作なし）"
 EXTERNAL_OBSERVATION = "外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない）"
-UNRESOLVED_SCREEN = "要確認（EC-CUBE工程だが機能Noを特定できない）"
-AMBIGUOUS_SCREEN = "要確認（業務フロー上は手作業だが、CSV/インポート等のシステム操作を含む）"
-AMBIGUOUS_OBSERVATION = "要確認（EC-CUBE操作か外部ツール作業かを業務側で確定させること）"
+# 業務フローは操作を記すが専用の機能設計書が特定できない工程。画面を創作せず、業務フロー記載の
+# 操作として実施し、業務結果（完了条件の最終業務状態）で観測する。「要確認」は使わない。
+FLOW_ONLY_SCREEN = "業務フロー記載の操作として実施（専用の機能設計書なし・業務結果で観測）"
+DECISION_SCREEN = "業務判断（分岐条件を評価し、該当する経路へ進む）"
+DECISION_OBSERVATION = "分岐条件の判定結果と、進んだ経路（各分岐は代替/異常経路のシナリオで確認）"
 
 
 def screen_from_flow(row: str, pattern: Pattern) -> str:
@@ -1962,7 +2054,8 @@ def data_chain_rows(s: Scenario, seed: "dict[str, str] | None" = None) -> str:
     無い結線・照合キーは創作しない。接続先が無い場合は `自由端` として穴を可視化する。
     """
     graph = flow_graph(s.flow_path)
-    empty = "| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |"
+    empty = ("| - | - | - | - | 業務フロー図にデータ遷移線（点線）の記載がないため、データ連鎖は "
+             "`## 完了条件` の最終業務状態で観測する。 | - | データ遷移線なし（完了条件で観測） |")
     if graph is None or not graph.edges:
         return empty
 
@@ -2010,13 +2103,15 @@ def data_chain_rows(s: Scenario, seed: "dict[str, str] | None" = None) -> str:
                 # 照合キーはアーティファクト（原典が名付けたデータオブジェクト）名のみから導出する。
                 # 周辺工程語を混ぜると、返金メール連鎖に受注番号を付ける等の誤りが出る（codex指摘）。
                 derived = chain_key(link.artifact_text, seed)
-                key_cell = derived if derived else "原典上の照合キー未定義（要業務確認）"
+                # 照合キーが原典に無い場合は、実行用テストデータのシードID単一環境で同一性を担保する
+                # （「要（業務）確認」は使わず、確定した実行方法を書く）。
+                key_cell = derived if derived else "照合キーは原典未定義（シードID単一データ環境で同一性を担保）"
                 html = html_chain_resolution(link.artifact_text, s.business_title)
                 html_note = f" {html[2]}（出典: {html[3]}）。" if html else ""
                 if link.producer_no and link.consumer_no:
                     producer = f"#{link.producer_no} {link.producer_text}"
                     consumer = f"#{link.consumer_no} {link.consumer_text}"
-                    tail = f"（照合キー {derived} で同一）" if derived else "（照合キーは要業務確認）"
+                    tail = f"（照合キー {derived} で同一）" if derived else "（シードID単一データ環境で同一性を担保）"
                     expected = (
                         f"「{link.producer_text}」で産出/更新された「{link.artifact_text}」を、"
                         f"後続工程「{link.consumer_text}」が同一対象として参照できること{tail}。" + html_note
@@ -2030,15 +2125,16 @@ def data_chain_rows(s: Scenario, seed: "dict[str, str] | None" = None) -> str:
                         expected = f"「{link.producer_text}」で産出/更新された「{link.artifact_text}」について、{html[2]}（出典: {html[3]}）。"
                         verdict = "連鎖あり（HTML設計書由来）"
                     else:
-                        # HTMLは保存先/ステータスのみ記す(note)か記載なし。消費先は原典未定義のまま。
-                        consumer = "(自由端＝原典で接続先未定義)"
-                        expected = f"「{link.producer_text}」で産出/更新された「{link.artifact_text}」が確認できること。" + html_note
-                        verdict = "要確認（消費先が原典未定義）"
+                        # 業務フロー図に消費先の点線が無い＝この産出データはこの経路の終端。
+                        # 産出データは完了条件の最終業務状態で観測する（「要確認」ではなく確定した観測方法）。
+                        consumer = "終端（業務フロー図に消費先の記載なし）"
+                        expected = f"「{link.producer_text}」で「{link.artifact_text}」が産出/更新され、`## 完了条件` の最終業務状態で確認できること。" + html_note
+                        verdict = "終端（消費先の記載なし・完了条件で観測）"
                 else:
-                    producer = "(産出元が原典未定義)"
+                    producer = "起点（業務フロー図に産出元の記載なし）"
                     consumer = f"#{link.consumer_no} {link.consumer_text}"
-                    expected = f"「{link.artifact_text}」を、工程「{link.consumer_text}」が参照できること。" + html_note
-                    verdict = "要確認（産出元が原典未定義）"
+                    expected = f"工程「{link.consumer_text}」が参照する時点で「{link.artifact_text}」が存在し、消費工程の画面/一覧で対象データを確認できること。" + html_note
+                    verdict = "起点（産出元の記載なし・消費工程で観測）"
                 lines.append(
                     f"| DL-{len(lines) + 1:02d} | {producer} | {artifact} | {consumer} | {expected} | "
                     f"{key_cell} | {verdict} |"
@@ -2054,14 +2150,14 @@ def render_execution_steps(s: Scenario, seed: dict[str, str]) -> str:
         work = row_work_kind(normal_flow_rows(route_pattern)[idx - 1]) if idx - 1 < len(normal_flow_rows(route_pattern)) else WORK_UNKNOWN
         if s.non_eccube:
             operation = f"メール/電話/外部アプリ（Thunderbird等）で「{action}」を実施する（EC-CUBEは参照のみ）"
-        elif work == WORK_PHYSICAL:
-            operation = f"現場作業として「{action}」を実施する（EC-CUBE操作なし）"
-        elif work == WORK_EXTERNAL:
-            operation = f"外部システム/ツール上で「{action}」を実施する（EC-CUBE操作なし）"
-        elif work == WORK_AMBIGUOUS and screen == AMBIGUOUS_SCREEN:
-            operation = f"「{action}」を実施する（EC-CUBE操作か外部ツール作業かは要確認）"
-        elif screen == UNRESOLVED_SCREEN:
-            operation = f"「{action}」を行う（実施画面は要確認。機能Noを特定できていない）"
+        elif screen == PHYSICAL_SCREEN:
+            operation = f"現場作業として「{action}」を実施する（EC-CUBE操作なし・業務結果を観測）"
+        elif screen == EXTERNAL_SCREEN:
+            operation = f"外部システム/ツール上で「{action}」を実施する（EC-CUBE操作なし・業務結果を観測）"
+        elif screen == DECISION_SCREEN:
+            operation = f"「{action}」の分岐条件を評価し、該当する経路へ進む（各分岐は代替/異常経路のシナリオで確認）"
+        elif screen == FLOW_ONLY_SCREEN:
+            operation = f"業務フロー記載の操作として「{action}」を実施し、業務結果を確認する（専用の機能設計書なし）"
         else:
             operation = f"{screen}で「{action}」を行う"
         rows.append(f"| {idx} | {actor} | {operation} | {target} | {expect} | {observation} |")
@@ -2144,12 +2240,19 @@ def render_alternative_execution_steps(s: Scenario, seed: dict[str, str]) -> str
         screen = edge_case_screen(case, docs, actor)
         base = primary_target(seed)
         edge_in = edge_input_data(case)
-        if screen:
+        if not screen:
+            # 画面を語彙一致で特定できない場合、08トリアージレジスタ（分岐元行のR番号）で解決を試みる。
+            tri_screen, _f, _o = resolve_step_via_triage(s.business_title, case.source_row or "")
+            if tri_screen not in (FLOW_ONLY_SCREEN, DECISION_SCREEN):
+                screen = tri_screen
+        if screen and screen not in (PHYSICAL_SCREEN, EXTERNAL_SCREEN):
             operation = f"{screen}で 条件「{case.condition}」となるデータ/操作を実行する"
+        elif screen in (PHYSICAL_SCREEN, EXTERNAL_SCREEN):
+            operation = f"{screen}で 条件「{case.condition}」となるデータ/操作を実行し、業務結果を確認する"
         else:
             operation = (
-                f"条件「{case.condition}」となるデータ/操作を実行する"
-                "（実施画面は要確認。機能Noを特定できていない）"
+                f"条件「{case.condition}」となるデータ/操作を実行し、業務結果を確認する"
+                "（業務フロー記載の分岐。専用の機能設計書なし）"
             )
         expected = koto_form(case.expected.rstrip("。")) + "。"
         rows.append(f"| {idx} | {branch_id} | {actor} | {operation} | {edge_in}（基準: {base}） | {expected} | {case.observation} |")
@@ -2920,6 +3023,7 @@ def discover_flows(repo: Path, only: str | None) -> list[tuple[Path, str, str, s
 def generate(repo: Path, only: str | None, max_docs: int) -> list[Scenario]:
     reset_generation_state()
     docs = build_design_index(repo)
+    load_triage_register(repo, docs)
     candidates: list[tuple[Path, str, str, str, Pattern]] = []
     index_entries: dict[str, list[tuple[Path, str, str]]] = {}
     patterns_by_business: dict[str, list[Pattern]] = {}
@@ -3276,7 +3380,7 @@ def main() -> int:
     print(
         "\n作業種別: "
         f"EC-CUBE={work_counts.get(WORK_ECCUBE, 0)} / 物理={work_counts.get(WORK_PHYSICAL, 0)} / "
-        f"外部={work_counts.get(WORK_EXTERNAL, 0)} / 要確認(手作業だがシステム操作)={work_counts.get(WORK_AMBIGUOUS, 0)} / "
+        f"外部={work_counts.get(WORK_EXTERNAL, 0)} / 手作業だがシステム操作含む(トリアージで解決)={work_counts.get(WORK_AMBIGUOUS, 0)} / "
         f"ノード表に対応なし={work_counts.get(WORK_UNKNOWN, 0)}"
     )
     return 0

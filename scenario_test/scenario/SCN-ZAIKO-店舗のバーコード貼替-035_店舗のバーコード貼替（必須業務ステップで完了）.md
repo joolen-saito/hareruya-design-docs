@@ -41,21 +41,21 @@
 ## データパターン
 | パターンID | 種別 | 対象ステップ/分岐ID | 目的 | 前提差分 | 入力データ | 期待観測点 |
 |---|---|---|---|---|---|---|
-| DP-N001 | 正常系 代表 | 正常系#1-#2 | 正常代表の代表データで業務経路を確認する。 | 必須業務ステップのみを実施し、条件付き登録・保留・棄却を発生させない。 標準権限の担当者でログインし、標準マスタと基準シードデータを使用する。 | 担当者アカウント=st-user-zaiko-014-r01 / 商品コード=ST-STOCK-ZAIKO-014-R01 / 数量=3 / 店舗=晴れる屋テスト店舗 / 会員番号=ST-MEMBER-ZAIKO-014-R01 / 移動元ロケーション=本店バックヤード | 出力されたCSV/帳票の件数と内容<br>要確認（EC-CUBE操作か外部ツール作業かを業務側で確定させること）<br>店舗のバーコード貼替の対象データが完了状態として追跡できる。 |
+| DP-N001 | 正常系 代表 | 正常系#1-#2 | 正常代表の代表データで業務経路を確認する。 | 必須業務ステップのみを実施し、条件付き登録・保留・棄却を発生させない。 標準権限の担当者でログインし、標準マスタと基準シードデータを使用する。 | 担当者アカウント=st-user-zaiko-014-r01 / 商品コード=ST-STOCK-ZAIKO-014-R01 / 数量=3 / 店舗=晴れる屋テスト店舗 / 会員番号=ST-MEMBER-ZAIKO-014-R01 / 移動元ロケーション=本店バックヤード | 出力されたCSV/帳票の件数と内容<br>現物・現品、チェック票/帳票の記入、数量、サイン（EC-CUBE の更新は発生しない）<br>店舗のバーコード貼替の対象データが完了状態として追跡できる。 |
 
 > 分岐条件・対象ステップ・期待観測点は業務フロー原典由来。**入力データ列の具体値（在庫=0・数量=N・日時・シードID等）は、原典の分岐条件を実行可能にするための実行用の具体化（非原典値）**であり、原典に literal に書かれた値ではない（`## 実行用テストデータ` のシードIDと同種）。
 
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
-| 1 | 店舗チーム | バーコード貼替リストCSV出力として、バーコード貼替リストCSV出力画面で、店舗と価格調整期間を選択し CSV出力を行う（右図を参照） | M04-30（バーコード貼替リストCSV出力）（M04-30） | バーコード貼替リストCSV出力画面で、店舗と価格調整期間を選択し CSV出力を行う（右図を参照）こと。 |
-| 2 | トレードチーム | 対象商品のバーコード貼替として、バーコード貼替リストCSVからバーコードを発行し 商品に貼り付ける | 要確認（業務フロー上は手作業だが、CSV/インポート等のシステム操作を含む）（-） | バーコード貼替リストCSVからバーコードを発行し 商品に貼り付けること。 |
+| 1 | 店舗チーム | バーコード貼替リストCSV出力として、バーコード貼替リストCSV出力画面で、店舗と価格調整期間を選択し CSV出力を行う（右図を参照） | 在庫管理 — バーコード貼替リストCSV出力（M04-30） | バーコード貼替リストCSV出力画面で、店舗と価格調整期間を選択し CSV出力を行う（右図を参照）こと。 |
+| 2 | トレードチーム | 対象商品のバーコード貼替として、バーコード貼替リストCSVからバーコードを発行し 商品に貼り付ける | 現場作業（物理作業。EC-CUBE操作なし）（-） | バーコード貼替リストCSVからバーコードを発行し 商品に貼り付けること。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
-| 1 | 店舗チーム | M04-30（バーコード貼替リストCSV出力）で「バーコード貼替リストCSV出力として、バーコード貼替リストCSV出力画面で、店舗と価格調整期間を選択し CSV出力を行う（右図を参照）」を行う | 商品コード=ST-STOCK-ZAIKO-014-R01 | バーコード貼替リストCSV出力画面で、店舗と価格調整期間を選択し CSV出力を行う（右図を参照）こと。 | 出力されたCSV/帳票の件数と内容 |
-| 2 | トレードチーム | 「対象商品のバーコード貼替として、バーコード貼替リストCSVからバーコードを発行し 商品に貼り付ける」を実施する（EC-CUBE操作か外部ツール作業かは要確認） | 商品コード=ST-STOCK-ZAIKO-014-R01 | バーコード貼替リストCSVからバーコードを発行し 商品に貼り付けること。 | 要確認（EC-CUBE操作か外部ツール作業かを業務側で確定させること） |
+| 1 | 店舗チーム | 在庫管理 — バーコード貼替リストCSV出力で「バーコード貼替リストCSV出力として、バーコード貼替リストCSV出力画面で、店舗と価格調整期間を選択し CSV出力を行う（右図を参照）」を行う | 商品コード=ST-STOCK-ZAIKO-014-R01 | バーコード貼替リストCSV出力画面で、店舗と価格調整期間を選択し CSV出力を行う（右図を参照）こと。 | 出力されたCSV/帳票の件数と内容 |
+| 2 | トレードチーム | 現場作業として「対象商品のバーコード貼替として、バーコード貼替リストCSVからバーコードを発行し 商品に貼り付ける」を実施する（EC-CUBE操作なし・業務結果を観測） | 商品コード=ST-STOCK-ZAIKO-014-R01 | バーコード貼替リストCSVからバーコードを発行し 商品に貼り付けること。 | 現物・現品、チェック票/帳票の記入、数量、サイン（EC-CUBE の更新は発生しない） |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -74,7 +74,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |
+| - | - | - | - | 業務フロー図にデータ遷移線（点線）の記載がないため、データ連鎖は `## 完了条件` の最終業務状態で観測する。 | - | データ遷移線なし（完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 店舗のバーコード貼替の対象データが完了状態として追跡できる。
@@ -103,7 +103,7 @@
 
 | 機構的観点 | 委譲先IT観点 | 結合テストケースID | 状態 |
 |---|---|---|---|
-| 担当者に必要な権限がない | IT-15 | `IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-002`<br>`IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-003`<br>`IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-004`<br>ほか 16 件 | 委譲済 |
+| 担当者に必要な権限がない | IT-15 | `IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-002`<br>`IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-003`<br>`IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-004`<br>ほか 20 件 | 委譲済 |
 | 入力値の必須項目不足または形式不正がある | IT-22 | `IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-010`<br>`IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-011`<br>`IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-012`<br>ほか 37 件 | 委譲済 |
 | 同一対象に対して同じ処理を重複実行する | IT-08 | `IT-O01-01-OTHER-MTG-BUYER-MTG-BUYER-STORE-PURCHASE-032` | 委譲済 |
 | 検索条件に一致する対象データが存在しない | IT-23 / IT-14 | `IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-020`<br>`IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-021`<br>`IT-M04-30-ADMIN-STOCK-STOCK-BARCODE-REPLACEMENT-LIST-CSV-EXPORT-022`<br>ほか 54 件 | 委譲済 |
@@ -111,16 +111,16 @@
 ## トレーサビリティ
 - **カバーする業務フロー番号**: 在庫管理 / パターン14 / 経路1
 - **期待する主要機能No**: M04-30
-- **シナリオに紐づく機能No**: M04-30, M04-20, O01-01, M03-05, M04-08, A01-02
+- **シナリオに紐づく機能No**: M04-30, M04-20, O01-01, M04-08, M04-04, M03-05
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
-  | M04-30（バーコード貼替リストCSV出力） | M04-30 | `functions/ec-cube-enterprise/m04-30_admin_stock_stock_barcode_replacement_list_csv_export.md` | `integration_test/e2e/m04_30_admin_stock_stock_barcode_replacement_list_csv_export_e2e_cases.md` |
-  | M04-20（欠品履歴CSV出力） | M04-20 | `functions/ec-cube-enterprise/m04-20_admin_stock_stock_shortage_history_csv_export.md` | `integration_test/e2e/m04_20_admin_stock_stock_shortage_history_csv_export_e2e_cases.md` |
+  | 在庫管理 — バーコード貼替リストCSV出力 | M04-30 | `functions/ec-cube-enterprise/m04-30_admin_stock_stock_barcode_replacement_list_csv_export.md` | `integration_test/e2e/m04_30_admin_stock_stock_barcode_replacement_list_csv_export_e2e_cases.md` |
+  | 在庫管理 — 欠品履歴CSV出力 | M04-20 | `functions/ec-cube-enterprise/m04-20_admin_stock_stock_shortage_history_csv_export.md` | `integration_test/e2e/m04_20_admin_stock_stock_shortage_history_csv_export_e2e_cases.md` |
   | その他_MTGバイヤー_店頭買取 | O01-01 | `functions/pf-eccube3/o01-01_other_mtg_buyer_mtg_buyer_store_purchase.md` | `integration_test/e2e/o01_01_other_mtg_buyer_mtg_buyer_store_purchase_e2e_cases.md` |
-  | 管理画面_商品管理_セール用価格変更CSV出力 | M03-05 | `functions/pf-eccube3/m03-05_admin_product_product_sale_price_csv_export.md` | `integration_test/e2e/m03_05_admin_product_product_sale_price_csv_export_e2e_cases.md` |
-  | M04-08（在庫移動・振替検索/一覧） | M04-08 | `functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md` | `integration_test/e2e/m04_08_admin_stock_stock_move_transfer_search_list_e2e_cases.md` |
-  | A01-02（スマレジwebhook連携エラー再連携） | A01-02 | `functions/ec-cube-enterprise/a01-02_api_stock_smaregi_webhook_error_retry.md` | `integration_test/e2e/a01_02_api_stock_smaregi_webhook_error_retry_e2e_cases.md` |
+  | 在庫管理 — 在庫移動・振替検索/一覧 | M04-08 | `functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md` | `integration_test/e2e/m04_08_admin_stock_stock_move_transfer_search_list_e2e_cases.md` |
+  | 在庫管理 — 在庫情報CSV出力 | M04-04 | `functions/ec-cube-enterprise/m04-04_admin_stock_stock_csv_export.md` | `integration_test/e2e/m04_04_admin_stock_stock_csv_export_e2e_cases.md` |
+  | 商品管理 — セール用価格変更CSV出力 | M03-05 | `functions/pf-eccube3/m03-05_admin_product_product_sale_price_csv_export.md` | `integration_test/e2e/m03_05_admin_product_product_sale_price_csv_export_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html`
   - `excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html`

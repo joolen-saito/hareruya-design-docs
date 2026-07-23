@@ -48,13 +48,13 @@
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
 | 1 | トレードチーム | 対象商品データダウンロードとして、商品マスターから該当する商品を検索し「(カードorグッズ)商品CSV出力」 からcsvファイルをダウンロードする | カード管理 — カード検索（一覧・条件抽出）（M14-01） | 商品マスターから該当する商品を検索し「(カードorグッズ)商品CSV出力」 からcsvファイルをダウンロードすること。 |
-| 2 | トレードチーム | CSV調整対応として、CSVファイル内の公開ステータスを変更する | 管理画面_商品管理_カード商品CSV登録（M03-26） | CSVファイル内の公開ステータスを変更すること。 |
+| 2 | トレードチーム | CSV調整対応として、CSVファイル内の公開ステータスを変更する | 商品管理 — カード商品CSV登録（M03-26） | CSVファイル内の公開ステータスを変更すること。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
 | 1 | トレードチーム | カード管理 — カード検索（一覧・条件抽出）で「対象商品データダウンロードとして、商品マスターから該当する商品を検索し「(カードorグッズ)商品CSV出力」 からcsvファイルをダウンロードする」を行う | 商品コード=ST-PRODUCT-PRODUCT-008-R01 | 商品マスターから該当する商品を検索し「(カードorグッズ)商品CSV出力」 からcsvファイルをダウンロードすること。 | 出力されたCSV/帳票の件数と内容 |
-| 2 | トレードチーム | 管理画面_商品管理_カード商品CSV登録で「CSV調整対応として、CSVファイル内の公開ステータスを変更する」を行う | 商品コード=ST-PRODUCT-PRODUCT-008-R01 | CSVファイル内の公開ステータスを変更すること。 | 出力されたCSV/帳票の件数と内容 |
+| 2 | トレードチーム | 商品管理 — カード商品CSV登録で「CSV調整対応として、CSVファイル内の公開ステータスを変更する」を行う | 商品コード=ST-PRODUCT-PRODUCT-008-R01 | CSVファイル内の公開ステータスを変更すること。 | 出力されたCSV/帳票の件数と内容 |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -73,7 +73,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |
+| - | - | - | - | 業務フロー図にデータ遷移線（点線）の記載がないため、データ連鎖は `## 完了条件` の最終業務状態で観測する。 | - | データ遷移線なし（完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 複数公開、非公開切り替え作業の対象データが完了状態として追跡できる。
@@ -119,7 +119,7 @@
   | カード管理 — カード CSV 登録（取込） | M14-05 | `functions/pf-eccube3/m14-05_admin_card_card_csv_import.md` | `integration_test/e2e/m14_05_admin_card_card_csv_import_e2e_cases.md` |
   | カード管理 — カードセット一覧 | M14-06 | `functions/pf-eccube3/m14-06_admin_card_cardset_list.md` | `integration_test/e2e/m14_06_admin_card_cardset_list_e2e_cases.md` |
   | カード管理 — カードセット新規登録・編集・削除 | M14-08 | `functions/pf-eccube3/m14-08_admin_card_cardset_register_update_delete.md` | `integration_test/e2e/m14_08_admin_card_cardset_register_update_delete_e2e_cases.md` |
-  | 管理画面_商品管理_カード商品CSV登録 | M03-26 | `functions/pf-eccube3/m03-26_admin_product_product_card_csv_import.md` | `integration_test/e2e/m03_26_admin_product_product_card_csv_import_e2e_cases.md` |
+  | 商品管理 — カード商品CSV登録 | M03-26 | `functions/pf-eccube3/m03-26_admin_product_product_card_csv_import.md` | `integration_test/e2e/m03_26_admin_product_product_card_csv_import_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0204_基本設計仕様書(商品管理).html`
   - `excel_to_html/output/0208_基本設計仕様書(カード管理).html`

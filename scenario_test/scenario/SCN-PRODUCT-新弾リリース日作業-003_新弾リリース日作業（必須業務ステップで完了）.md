@@ -40,21 +40,21 @@
 ## データパターン
 | パターンID | 種別 | 対象ステップ/分岐ID | 目的 | 前提差分 | 入力データ | 期待観測点 |
 |---|---|---|---|---|---|---|
-| DP-N001 | 正常系 代表 | 正常系#1-#2 | 正常代表の代表データで業務経路を確認する。 | 必須業務ステップのみを実施し、条件付き登録・保留・棄却を発生させない。 標準権限の担当者でログインし、標準マスタと基準シードデータを使用する。 | 担当者アカウント=st-user-product-003-r01 / 商品コード=ST-PRODUCT-PRODUCT-003-R01 / 数量=3 / 店舗=晴れる屋テスト店舗 / カテゴリ=テストカテゴリ / 販売価格=500円 | 出力されたCSV/帳票の件数と内容<br>画面表示・処理ステータス・処理履歴<br>新弾リリース日作業の対象データが完了状態として追跡できる。 |
+| DP-N001 | 正常系 代表 | 正常系#1-#2 | 正常代表の代表データで業務経路を確認する。 | 必須業務ステップのみを実施し、条件付き登録・保留・棄却を発生させない。 標準権限の担当者でログインし、標準マスタと基準シードデータを使用する。 | 担当者アカウント=st-user-product-003-r01 / 商品コード=ST-PRODUCT-PRODUCT-003-R01 / 数量=3 / 店舗=晴れる屋テスト店舗 / カテゴリ=テストカテゴリ / 販売価格=500円 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない）<br>画面表示・処理ステータス・処理履歴<br>新弾リリース日作業の対象データが完了状態として追跡できる。 |
 
 > 分岐条件・対象ステップ・期待観測点は業務フロー原典由来。**入力データ列の具体値（在庫=0・数量=N・日時・シードID等）は、原典の分岐条件を実行可能にするための実行用の具体化（非原典値）**であり、原典に literal に書かれた値ではない（`## 実行用テストデータ` のシードIDと同種）。
 
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
-| 1 | トレードチーム | 新弾リリース前日以前として、予約商品の情報を通常商品に切り替えるために 更新用カード商品 商品情報を更新するためのCSVを作成する | 要確認（EC-CUBE工程だが機能Noを特定できない）（-） | 予約商品の情報を通常商品に切り替えるために 更新用カード商品 商品情報を更新するためのCSVを作成すること。 |
-| 2 | トレードチーム | 新弾リリース日として、通常販売商品とするため予約商品の情報を上書きする | 要確認（EC-CUBE工程だが機能Noを特定できない）（-） | 通常販売商品とするため予約商品の情報を上書きすること。 |
+| 1 | トレードチーム | 新弾リリース前日以前として、予約商品の情報を通常商品に切り替えるために 更新用カード商品 商品情報を更新するためのCSVを作成する | 外部システム/ツール作業（EC-CUBE操作なし）（-） | 予約商品の情報を通常商品に切り替えるために 更新用カード商品 商品情報を更新するためのCSVを作成すること。 |
+| 2 | トレードチーム | 新弾リリース日として、通常販売商品とするため予約商品の情報を上書きする | 商品管理 — カード商品CSV登録（M03-26） | 通常販売商品とするため予約商品の情報を上書きすること。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
-| 1 | トレードチーム | 「新弾リリース前日以前として、予約商品の情報を通常商品に切り替えるために 更新用カード商品 商品情報を更新するためのCSVを作成する」を行う（実施画面は要確認。機能Noを特定できていない） | 商品コード=ST-PRODUCT-PRODUCT-003-R01 | 予約商品の情報を通常商品に切り替えるために 更新用カード商品 商品情報を更新するためのCSVを作成すること。 | 出力されたCSV/帳票の件数と内容 |
-| 2 | トレードチーム | 「新弾リリース日として、通常販売商品とするため予約商品の情報を上書きする」を行う（実施画面は要確認。機能Noを特定できていない） | 商品コード=ST-PRODUCT-PRODUCT-003-R01 | 通常販売商品とするため予約商品の情報を上書きすること。 | 画面表示・処理ステータス・処理履歴 |
+| 1 | トレードチーム | 外部システム/ツール上で「新弾リリース前日以前として、予約商品の情報を通常商品に切り替えるために 更新用カード商品 商品情報を更新するためのCSVを作成する」を実施する（EC-CUBE操作なし・業務結果を観測） | 商品コード=ST-PRODUCT-PRODUCT-003-R01 | 予約商品の情報を通常商品に切り替えるために 更新用カード商品 商品情報を更新するためのCSVを作成すること。 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない） |
+| 2 | トレードチーム | 商品管理 — カード商品CSV登録で「新弾リリース日として、通常販売商品とするため予約商品の情報を上書きする」を行う | 商品コード=ST-PRODUCT-PRODUCT-003-R01 | 通常販売商品とするため予約商品の情報を上書きすること。 | 画面表示・処理ステータス・処理履歴 |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -73,7 +73,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |
+| - | - | - | - | 業務フロー図にデータ遷移線（点線）の記載がないため、データ連鎖は `## 完了条件` の最終業務状態で観測する。 | - | データ遷移線なし（完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 新弾リリース日作業の対象データが完了状態として追跡できる。
@@ -114,12 +114,12 @@
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
-  | 管理画面_商品管理_商品検索・一覧 | M03-01 | `functions/pf-eccube3/m03-01_admin_product_product_search_list.md` | `integration_test/e2e/m03_01_admin_product_product_search_list_e2e_cases.md` |
-  | M03-02（商品編集機能） | M03-02 | `functions/pf-eccube3/m03-02_admin_product_product_edit.md` | `integration_test/e2e/m03_02_admin_product_product_edit_e2e_cases.md` |
-  | 管理画面_商品管理_商品規格一覧 | M03-08 | `functions/pf-eccube3/m03-08_admin_product_product_product_class_list.md` | `integration_test/e2e/m03_08_admin_product_product_product_class_list_e2e_cases.md` |
-  | M03-09（商品規格登録/編集） | M03-09 | `functions/pf-eccube3/m03-09_admin_product_product_class_edit.md` | `integration_test/e2e/m03_09_admin_product_product_class_edit_e2e_cases.md` |
+  | 商品管理 — 商品検索・一覧 | M03-01 | `functions/pf-eccube3/m03-01_admin_product_product_search_list.md` | `integration_test/e2e/m03_01_admin_product_product_search_list_e2e_cases.md` |
+  | 商品管理 — 商品編集機能 | M03-02 | `functions/pf-eccube3/m03-02_admin_product_product_edit.md` | `integration_test/e2e/m03_02_admin_product_product_edit_e2e_cases.md` |
+  | 商品管理 — 商品規格一覧 | M03-08 | `functions/pf-eccube3/m03-08_admin_product_product_product_class_list.md` | `integration_test/e2e/m03_08_admin_product_product_product_class_list_e2e_cases.md` |
+  | 商品管理 — 商品規格登録/編集 | M03-09 | `functions/pf-eccube3/m03-09_admin_product_product_class_edit.md` | `integration_test/e2e/m03_09_admin_product_product_class_edit_e2e_cases.md` |
   | 商品管理 — 部門CSV入力 | M03-20 | `functions/pf-eccube3/m03-20_admin_product_product_department_csv_import.md` | `integration_test/e2e/m03_20_admin_product_product_department_csv_import_e2e_cases.md` |
-  | 管理画面_商品管理_カード商品CSV登録 | M03-26 | `functions/pf-eccube3/m03-26_admin_product_product_card_csv_import.md` | `integration_test/e2e/m03_26_admin_product_product_card_csv_import_e2e_cases.md` |
+  | 商品管理 — カード商品CSV登録 | M03-26 | `functions/pf-eccube3/m03-26_admin_product_product_card_csv_import.md` | `integration_test/e2e/m03_26_admin_product_product_card_csv_import_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0204_基本設計仕様書(商品管理).html`
   - `excel_to_html/output/0208_基本設計仕様書(カード管理).html`

@@ -48,14 +48,14 @@
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
-| 1 | トレードチーム | 詰め合わせ商品作成として、セット詰め合わせの画面を確認し 在庫が少ないものの詰め合わせ商品を作成する | M04-01（在庫検索/一覧）（M04-01） | セット詰め合わせの画面を確認し 在庫が少ないものの詰め合わせ商品を作成すること。 |
-| 2 | トレードチーム | 17時ごろを行う | 要確認（EC-CUBE工程だが機能Noを特定できない）（-） | 17時ごろこと。 |
+| 1 | トレードチーム | 詰め合わせ商品作成として、セット詰め合わせの画面を確認し 在庫が少ないものの詰め合わせ商品を作成する | 在庫管理 — 在庫検索/一覧（M04-01） | セット詰め合わせの画面を確認し 在庫が少ないものの詰め合わせ商品を作成すること。 |
+| 2 | トレードチーム | 17時ごろを行う | 在庫管理 — 在庫分割結合登録/編集（M04-13） | 17時ごろこと。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
-| 1 | トレードチーム | M04-01（在庫検索/一覧）で「詰め合わせ商品作成として、セット詰め合わせの画面を確認し 在庫が少ないものの詰め合わせ商品を作成する」を行う | 商品コード=ST-STOCK-ZAIKO-013-R01 | セット詰め合わせの画面を確認し 在庫が少ないものの詰め合わせ商品を作成すること。 | 在庫数と在庫変更履歴 |
-| 2 | トレードチーム | 「17時ごろを行う」を行う（実施画面は要確認。機能Noを特定できていない） | 商品コード=ST-STOCK-ZAIKO-013-R01 | 17時ごろこと。 | 画面表示・処理ステータス・処理履歴 |
+| 1 | トレードチーム | 在庫管理 — 在庫検索/一覧で「詰め合わせ商品作成として、セット詰め合わせの画面を確認し 在庫が少ないものの詰め合わせ商品を作成する」を行う | 商品コード=ST-STOCK-ZAIKO-013-R01 | セット詰め合わせの画面を確認し 在庫が少ないものの詰め合わせ商品を作成すること。 | 在庫数と在庫変更履歴 |
+| 2 | トレードチーム | 在庫管理 — 在庫分割結合登録/編集で「17時ごろを行う」を行う | 商品コード=ST-STOCK-ZAIKO-013-R01 | 17時ごろこと。 | 画面表示・処理ステータス・処理履歴 |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -74,7 +74,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |
+| - | - | - | - | 業務フロー図にデータ遷移線（点線）の記載がないため、データ連鎖は `## 完了条件` の最終業務状態で観測する。 | - | データ遷移線なし（完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 詰め合わせ商品入庫フローの対象データが完了状態として追跡できる。
@@ -115,12 +115,12 @@
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
-  | M04-01（在庫検索/一覧） | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/e2e/m04_01_admin_stock_stock_search_list_e2e_cases.md` |
-  | M04-12（在庫分割結合検索/一覧） | M04-12 | `functions/ec-cube-enterprise/m04-12_admin_stock_stock_split_join_search_list.md` | `integration_test/e2e/m04_12_admin_stock_stock_split_join_search_list_e2e_cases.md` |
+  | 在庫管理 — 在庫検索/一覧 | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/e2e/m04_01_admin_stock_stock_search_list_e2e_cases.md` |
+  | 在庫管理 — 在庫分割結合検索/一覧 | M04-12 | `functions/ec-cube-enterprise/m04-12_admin_stock_stock_split_join_search_list.md` | `integration_test/e2e/m04_12_admin_stock_stock_split_join_search_list_e2e_cases.md` |
   | M04-14（在庫分割結合情報CSV出力） | M04-14 | `functions/ec-cube-enterprise/m04-14_admin_stock_stock_split_join_csv_export.md` | `integration_test/e2e/m04_14_admin_stock_stock_split_join_csv_export_e2e_cases.md` |
-  | M04-23（在庫分割結合CSV登録） | M04-23 | `functions/ec-cube-enterprise/m04-23_admin_stock_stock_split_join_csv_import.md` | `integration_test/e2e/m04_23_admin_stock_stock_split_join_csv_import_e2e_cases.md` |
+  | 在庫管理 — 在庫分割結合CSV登録 | M04-23 | `functions/ec-cube-enterprise/m04-23_admin_stock_stock_split_join_csv_import.md` | `integration_test/e2e/m04_23_admin_stock_stock_split_join_csv_import_e2e_cases.md` |
   | その他_MTGバイヤー_店頭買取 | O01-01 | `functions/pf-eccube3/o01-01_other_mtg_buyer_mtg_buyer_store_purchase.md` | `integration_test/e2e/o01_01_other_mtg_buyer_mtg_buyer_store_purchase_e2e_cases.md` |
-  | M04-20（欠品履歴CSV出力） | M04-20 | `functions/ec-cube-enterprise/m04-20_admin_stock_stock_shortage_history_csv_export.md` | `integration_test/e2e/m04_20_admin_stock_stock_shortage_history_csv_export_e2e_cases.md` |
+  | 在庫管理 — 欠品履歴CSV出力 | M04-20 | `functions/ec-cube-enterprise/m04-20_admin_stock_stock_shortage_history_csv_export.md` | `integration_test/e2e/m04_20_admin_stock_stock_shortage_history_csv_export_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html`
   - `excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html`

@@ -48,12 +48,12 @@
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
-| 1 | 通販チーム | 【既存業務】別部署からの発送依頼処理として、※商品在庫移動依頼に限る 配送依頼 依頼フォーム（googleフォーム）から配送したい内容を依頼 申し込み後に通販チーム宛にgoogleメールが届く ※複数先に配送する場合や、件数が多い場合はメールにて受けつけている 依頼確認 依頼を確認したらラベルの印刷を手動で対応 | 該当なし（外部システム/ツール操作。EC-CUBE操作なし）（-） | ※商品在庫移動依頼に限ること。 |
+| 1 | 通販チーム | 【既存業務】別部署からの発送依頼処理として、※商品在庫移動依頼に限る 配送依頼 依頼フォーム（googleフォーム）から配送したい内容を依頼 申し込み後に通販チーム宛にgoogleメールが届く ※複数先に配送する場合や、件数が多い場合はメールにて受けつけている 依頼確認 依頼を確認したらラベルの印刷を手動で対応 | 外部システム/ツール作業（EC-CUBE操作なし）（-） | ※商品在庫移動依頼に限ること。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
-| 1 | 通販チーム | 外部システム/ツール上で「【既存業務】別部署からの発送依頼処理として、※商品在庫移動依頼に限る 配送依頼 依頼フォーム（googleフォーム）から配送したい内容を依頼 申し込み後に通販チーム宛にgoogleメールが届く ※複数先に配送する場合や、件数が多い場合はメールにて受けつけている 依頼確認 依頼を確認したらラベルの印刷を手動で対応」を実施する（EC-CUBE操作なし） | 移動元ロケーション=本店バックヤード | ※商品在庫移動依頼に限ること。 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない） |
+| 1 | 通販チーム | 外部システム/ツール上で「【既存業務】別部署からの発送依頼処理として、※商品在庫移動依頼に限る 配送依頼 依頼フォーム（googleフォーム）から配送したい内容を依頼 申し込み後に通販チーム宛にgoogleメールが届く ※複数先に配送する場合や、件数が多い場合はメールにて受けつけている 依頼確認 依頼を確認したらラベルの印刷を手動で対応」を実施する（EC-CUBE操作なし・業務結果を観測） | 移動元ロケーション=本店バックヤード | ※商品在庫移動依頼に限ること。 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない） |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -72,7 +72,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |
+| - | - | - | - | 業務フロー図にデータ遷移線（点線）の記載がないため、データ連鎖は `## 完了条件` の最終業務状態で観測する。 | - | データ遷移線なし（完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 【既存業務】別部署からの発送依頼処理 ※商品在庫移動依頼に限るの対象データが完了状態として追跡できる。
@@ -113,12 +113,12 @@
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
-  | M04-01（在庫検索/一覧） | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/e2e/m04_01_admin_stock_stock_search_list_e2e_cases.md` |
-  | M04-02（在庫編集機能） | M04-02 | `functions/ec-cube-enterprise/m04-02_admin_stock_stock_edit.md` | `integration_test/e2e/m04_02_admin_stock_stock_edit_e2e_cases.md` |
-  | M04-03（在庫一括編集） | M04-03 | `functions/pf-eccube3/m04-03_admin_stock_stock_bulk_edit.md` | `integration_test/e2e/m04_03_admin_stock_stock_bulk_edit_e2e_cases.md` |
-  | M04-04（在庫情報CSV出力） | M04-04 | `functions/ec-cube-enterprise/m04-04_admin_stock_stock_csv_export.md` | `integration_test/e2e/m04_04_admin_stock_stock_csv_export_e2e_cases.md` |
-  | M04-08（在庫移動・振替検索/一覧） | M04-08 | `functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md` | `integration_test/e2e/m04_08_admin_stock_stock_move_transfer_search_list_e2e_cases.md` |
-  | M04-09（在庫移動・振替登録/編集） | M04-09 | `functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md` | `integration_test/e2e/m04_09_admin_stock_stock_move_transfer_register_edit_e2e_cases.md` |
+  | 在庫管理 — 在庫検索/一覧 | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/e2e/m04_01_admin_stock_stock_search_list_e2e_cases.md` |
+  | 在庫管理 — 在庫編集機能 | M04-02 | `functions/ec-cube-enterprise/m04-02_admin_stock_stock_edit.md` | `integration_test/e2e/m04_02_admin_stock_stock_edit_e2e_cases.md` |
+  | 在庫管理 — 在庫一括編集 | M04-03 | `functions/pf-eccube3/m04-03_admin_stock_stock_bulk_edit.md` | `integration_test/e2e/m04_03_admin_stock_stock_bulk_edit_e2e_cases.md` |
+  | 在庫管理 — 在庫情報CSV出力 | M04-04 | `functions/ec-cube-enterprise/m04-04_admin_stock_stock_csv_export.md` | `integration_test/e2e/m04_04_admin_stock_stock_csv_export_e2e_cases.md` |
+  | 在庫管理 — 在庫移動・振替検索/一覧 | M04-08 | `functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md` | `integration_test/e2e/m04_08_admin_stock_stock_move_transfer_search_list_e2e_cases.md` |
+  | 在庫管理 — 在庫移動・振替登録/編集 | M04-09 | `functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md` | `integration_test/e2e/m04_09_admin_stock_stock_move_transfer_register_edit_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html`
   - `excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html`

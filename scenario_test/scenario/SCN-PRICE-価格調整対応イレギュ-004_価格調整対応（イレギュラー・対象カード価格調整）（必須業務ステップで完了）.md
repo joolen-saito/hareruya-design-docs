@@ -48,14 +48,14 @@
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
-| 1 | トレードチーム | 価格確認として、在庫数を確認し、価格調整の参考材料とする ※価格は参考にしていない。在庫数を参照している | 該当なし（物理作業。EC-CUBE操作なし）（-） | 在庫数を確認し、価格調整の参考材料とすること。 |
-| 2 | トレードチーム | 価格反映作業として、価格変更の共有および、EC-CUBEに価格変更を反映させる | 要確認（EC-CUBE工程だが機能Noを特定できない）（-） | 価格変更の共有および、EC-CUBEに価格変更を反映させること。 |
+| 1 | トレードチーム | 価格確認として、在庫数を確認し、価格調整の参考材料とする ※価格は参考にしていない。在庫数を参照している | 現場作業（物理作業。EC-CUBE操作なし）（-） | 在庫数を確認し、価格調整の参考材料とすること。 |
+| 2 | トレードチーム | 価格反映作業として、価格変更の共有および、EC-CUBEに価格変更を反映させる | 業務フロー記載の操作として実施（専用の機能設計書なし・業務結果で観測）（-） | 価格変更の共有および、EC-CUBEに価格変更を反映させること。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
-| 1 | トレードチーム | 現場作業として「価格確認として、在庫数を確認し、価格調整の参考材料とする ※価格は参考にしていない。在庫数を参照している」を実施する（EC-CUBE操作なし） | 変更後価格=550円 | 在庫数を確認し、価格調整の参考材料とすること。 | 現物・現品、チェック票/帳票の記入、数量、サイン（EC-CUBE の更新は発生しない） |
-| 2 | トレードチーム | 「価格反映作業として、価格変更の共有および、EC-CUBEに価格変更を反映させる」を行う（実施画面は要確認。機能Noを特定できていない） | 変更後価格=550円 | 価格変更の共有および、EC-CUBEに価格変更を反映させること。 | 更新後の値と更新履歴 |
+| 1 | トレードチーム | 現場作業として「価格確認として、在庫数を確認し、価格調整の参考材料とする ※価格は参考にしていない。在庫数を参照している」を実施する（EC-CUBE操作なし・業務結果を観測） | 変更後価格=550円 | 在庫数を確認し、価格調整の参考材料とすること。 | 現物・現品、チェック票/帳票の記入、数量、サイン（EC-CUBE の更新は発生しない） |
+| 2 | トレードチーム | 業務フロー記載の操作として「価格反映作業として、価格変更の共有および、EC-CUBEに価格変更を反映させる」を実施し、業務結果を確認する（専用の機能設計書なし） | 変更後価格=550円 | 価格変更の共有および、EC-CUBEに価格変更を反映させること。 | 更新後の値と更新履歴 |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -74,7 +74,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| DL-01 | #46 価格確認 | #47 並び順ファイル | (自由端＝原典で接続先未定義) | 「価格確認」で産出/更新された「並び順ファイル」が確認できること。 | 原典上の照合キー未定義（要業務確認） | 要確認（消費先が原典未定義） |
+| DL-01 | #46 価格確認 | #47 並び順ファイル | 終端（業務フロー図に消費先の記載なし） | 「価格確認」で「並び順ファイル」が産出/更新され、`## 完了条件` の最終業務状態で確認できること。 | 照合キーは原典未定義（シードID単一データ環境で同一性を担保） | 終端（消費先の記載なし・完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 価格調整対応（イレギュラー・対象カード価格調整）の対象データが完了状態として追跡できる。
@@ -115,11 +115,11 @@
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
-  | 管理画面_商品管理_商品検索・一覧 | M03-01 | `functions/pf-eccube3/m03-01_admin_product_product_search_list.md` | `integration_test/e2e/m03_01_admin_product_product_search_list_e2e_cases.md` |
-  | 管理画面_商品管理_セール用価格変更CSV出力 | M03-05 | `functions/pf-eccube3/m03-05_admin_product_product_sale_price_csv_export.md` | `integration_test/e2e/m03_05_admin_product_product_sale_price_csv_export_e2e_cases.md` |
+  | 商品管理 — 商品検索・一覧 | M03-01 | `functions/pf-eccube3/m03-01_admin_product_product_search_list.md` | `integration_test/e2e/m03_01_admin_product_product_search_list_e2e_cases.md` |
+  | 商品管理 — セール用価格変更CSV出力 | M03-05 | `functions/pf-eccube3/m03-05_admin_product_product_sale_price_csv_export.md` | `integration_test/e2e/m03_05_admin_product_product_sale_price_csv_export_e2e_cases.md` |
   | 商品管理 — 買取/販売価格履歴（検索・一覧・CSV出力） | M03-23 | `functions/pf-eccube3/m03-23_admin_product_product_buy_sale_price_history.md` | `integration_test/e2e/m03_23_admin_product_product_buy_sale_price_history_e2e_cases.md` |
   | 商品管理 — 買取/販売価格履歴 CSV 出力 | M03-24 | `functions/pf-eccube3/m03-24_admin_product_product_buy_sale_price_history_csv_export.md` | `integration_test/e2e/m03_24_admin_product_product_buy_sale_price_history_csv_export_e2e_cases.md` |
-  | 管理画面_商品管理_セール用価格変更CSV登録 | M03-30 | `functions/pf-eccube3/m03-30_admin_product_product_product_price_csv_import.md` | `integration_test/e2e/m03_30_admin_product_product_product_price_csv_import_e2e_cases.md` |
+  | 商品管理 — セール用価格変更CSV登録 | M03-30 | `functions/pf-eccube3/m03-30_admin_product_product_product_price_csv_import.md` | `integration_test/e2e/m03_30_admin_product_product_product_price_csv_import_e2e_cases.md` |
   | M03-31（セール用価格変更CSV登録） | M03-31 | `functions/pf-eccube3/m03-31_admin_product_product_sale_price_csv_import.md` | `integration_test/e2e/m03_31_admin_product_product_sale_price_csv_import_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0204_基本設計仕様書(商品管理).html`

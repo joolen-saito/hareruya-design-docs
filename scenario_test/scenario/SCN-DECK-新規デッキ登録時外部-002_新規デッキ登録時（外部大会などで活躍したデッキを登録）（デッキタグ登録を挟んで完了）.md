@@ -48,14 +48,14 @@
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
-| 1 | 顧客戦略チーム | デッキ内容取得として、イベント情報、デッキ情報を取得 「EVENT COVERAGE」など？ | 該当なし（物理作業。EC-CUBE操作なし）（-） | イベント情報、デッキ情報を取得 「EVENT COVERAGE」など？こと。 |
+| 1 | 顧客戦略チーム | デッキ内容取得として、イベント情報、デッキ情報を取得 「EVENT COVERAGE」など？ | 現場作業（物理作業。EC-CUBE操作なし）（-） | イベント情報、デッキ情報を取得 「EVENT COVERAGE」など？こと。 |
 | 2 | 顧客戦略チーム | デッキタグ登録として、登録しようとしているデッキに該当するタグが無い場合、登録する | デッキ管理 — デッキタグ一覧（カスタム管理画面）（M15-07） | 登録しようとしているデッキに該当するタグが無い場合、登録すること。 |
 | 3 | 顧客戦略チーム | デッキ登録として、デッキを登録する | デッキ管理 — 新規登録・編集・削除・複製（M15-05） | デッキを登録すること。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
-| 1 | 顧客戦略チーム | 現場作業として「デッキ内容取得として、イベント情報、デッキ情報を取得 「EVENT COVERAGE」など？」を実施する（EC-CUBE操作なし） | デッキID=ST-DECK-DECK-001-R02 | イベント情報、デッキ情報を取得 「EVENT COVERAGE」など？こと。 | 現物・現品、チェック票/帳票の記入、数量、サイン（EC-CUBE の更新は発生しない） |
+| 1 | 顧客戦略チーム | 現場作業として「デッキ内容取得として、イベント情報、デッキ情報を取得 「EVENT COVERAGE」など？」を実施する（EC-CUBE操作なし・業務結果を観測） | デッキID=ST-DECK-DECK-001-R02 | イベント情報、デッキ情報を取得 「EVENT COVERAGE」など？こと。 | 現物・現品、チェック票/帳票の記入、数量、サイン（EC-CUBE の更新は発生しない） |
 | 2 | 顧客戦略チーム | デッキ管理 — デッキタグ一覧（カスタム管理画面）で「デッキタグ登録として、登録しようとしているデッキに該当するタグが無い場合、登録する」を行う | デッキID=ST-DECK-DECK-001-R02 | 登録しようとしているデッキに該当するタグが無い場合、登録すること。 | 一覧・詳細に追加された対象データ |
 | 3 | 顧客戦略チーム | デッキ管理 — 新規登録・編集・削除・複製で「デッキ登録として、デッキを登録する」を行う | デッキID=ST-DECK-DECK-001-R02 | デッキを登録すること。 | 一覧・詳細に追加された対象データ |
 
@@ -76,7 +76,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| DL-01 | #7 イベント・大会デッキ登録 | #8 デッキ管理 | (自由端＝原典で接続先未定義) | 「イベント・大会デッキ登録」で産出/更新された「デッキ管理」が確認できること。 | デッキID=ST-DECK-DECK-001-R02 | 要確認（消費先が原典未定義） |
+| DL-01 | #7 イベント・大会デッキ登録 | #8 デッキ管理 | 終端（業務フロー図に消費先の記載なし） | 「イベント・大会デッキ登録」で「デッキ管理」が産出/更新され、`## 完了条件` の最終業務状態で確認できること。 | デッキID=ST-DECK-DECK-001-R02 | 終端（消費先の記載なし・完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - デッキタグ登録の条件対応後、新規デッキ登録時（外部大会などで活躍したデッキを登録）の対象データが完了状態として追跡できる。
@@ -121,7 +121,7 @@
   | API デッキビルダー — 直近大会情報取得 | A15-16 | `functions/pf-api/a15-16_api_deck_builder_deck_recent_event.md` | `integration_test/e2e/a15_16_api_deck_builder_deck_recent_event_e2e_cases.md` |
   | デッキ管理 — デッキタグ一覧（カスタム管理画面） | M15-07 | `functions/pf-eccube3/m15-07_admin_deck_deck_tag_list.md` | `integration_test/e2e/m15_07_admin_deck_deck_tag_list_e2e_cases.md` |
   | デッキ管理 — 新規登録・編集・削除・複製 | M15-05 | `functions/pf-eccube3/m15-05_admin_deck_deck_edit.md` | `integration_test/e2e/m15_05_admin_deck_deck_edit_e2e_cases.md` |
-  | デッキ管理 — デッキ登録 CSV（取込） | M15-06 | `functions/pf-eccube3/m15-06_admin_deck_deck_csv_import.md` | `integration_test/e2e/m15_06_admin_deck_deck_csv_import_e2e_cases.md` |
+  | デッキ管理 — デッキ登録CSV（取込） | M15-06 | `functions/pf-eccube3/m15-06_admin_deck_deck_csv_import.md` | `integration_test/e2e/m15_06_admin_deck_deck_csv_import_e2e_cases.md` |
   | API デッキビルダー — デッキ情報登録 | A15-09 | `functions/pf-api/a15-09_api_deck_builder_deck_register.md` | `integration_test/e2e/a15_09_api_deck_builder_deck_register_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0212_基本設計仕様書(デッキ管理).html`

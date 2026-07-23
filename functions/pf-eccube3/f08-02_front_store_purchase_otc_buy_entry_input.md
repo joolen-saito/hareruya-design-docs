@@ -146,8 +146,8 @@ DB関連は ec-cube-enterprise を正とする。査定申込みの保存先で�
 
 | メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
 |---|---|---|----------|---|---|
-| F08-02-MSG-001 | 画面中央(ダイアログ) | front.otcbuy.error.assessment_only | front.otcbuy.error.assessment_only | 要ソース確認 | 要ソース確認 |
-| F08-02-MSG-002 | 画面中央(ダイアログ) | front.otcbuy.error.membership_assessment | front.otcbuy.error.membership_assessment | 要ソース確認 | 要ソース確認 |
+| F08-02-MSG-001 | 画面中央(ダイアログ) | front.otcbuy.error.assessment_only | front.otcbuy.error.assessment_only | 会員登録フォームに入力した状態で、会員登録なしの申込を選択したとき | 申込は中止され、入力画面に留まる |
+| F08-02-MSG-002 | 画面中央(ダイアログ) | front.otcbuy.error.membership_assessment | front.otcbuy.error.membership_assessment | 会員登録ありの申込を選択し、会員登録フォームの必須入力が不足しているとき | 申込は中止され、入力画面に留まる |
 
 ## 業務ルール・計算
 

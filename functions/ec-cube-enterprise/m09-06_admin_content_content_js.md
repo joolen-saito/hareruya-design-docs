@@ -156,9 +156,9 @@ JavaScript管理は、管理者がフロント共通テンプレートから読�
 
 | メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
 |---|---|---|----------|---|---|
-| M09-06-MSG-001 | 管理画面上部 | この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。 | If this feature is used infrequently, disabling it while not in use provides additional security. You can disable this feature by setting the environment variable ECCUBE_RESTRICT_FILE_UPLOAD to 1. | JavaScript管理画面を表示したとき | JavaScript管理画面に留まる |
+| M09-06-MSG-001 | 管理画面上部 | この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。 | この機能の利用頻度が低い場合、使用しない間は無効化することでセキュリティを更に向上させることができます。環境変数 ECCUBE_RESTRICT_FILE_UPLOAD を 1 に設定することで機能を無効化することが可能です。 | JavaScript管理画面を表示したとき | JavaScript管理画面に留まる |
 | M09-06-MSG-002 | 管理画面上部 | 保存しました | 保存しました | JavaScriptの変更を保存したとき | JavaScript管理画面に遷移する |
-| M09-06-MSG-003 | 管理画面上部 | 保存に失敗しました | Failed to save | JavaScriptの変更の保存中にエラーが起きたとき | JavaScript管理画面に留まる |
+| M09-06-MSG-003 | 管理画面上部 | 保存に失敗しました | 保存に失敗しました | JavaScriptの変更の保存中にエラーが起きたとき | JavaScript管理画面に留まる |
 
 ## 業務ルール・計算
 

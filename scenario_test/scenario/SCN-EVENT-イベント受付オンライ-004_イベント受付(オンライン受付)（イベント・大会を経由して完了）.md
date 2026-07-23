@@ -72,7 +72,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| DL-01 | #13 イベント・大会申込 | #14 イベント情報*1 | (自由端＝原典で接続先未定義) | 「イベント・大会申込」で産出/更新された「イベント情報*1」が確認できること。 | イベントID=ST-EVENT-EVENT-002-R03 | 要確認（消費先が原典未定義） |
+| DL-01 | #13 イベント・大会申込 | #14 イベント情報*1 | 終端（業務フロー図に消費先の記載なし） | 「イベント・大会申込」で「イベント情報*1」が産出/更新され、`## 完了条件` の最終業務状態で確認できること。 | イベントID=ST-EVENT-EVENT-002-R03 | 終端（消費先の記載なし・完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - イベント・大会の条件対応後、イベント受付(オンライン受付)の対象データが完了状態として追跡できる。
@@ -113,11 +113,11 @@
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
-  | M13-06（イベント申込検索） | M13-06 | `functions/pf-eccube3/m13-06_admin_event_event_entry_management_search.md` | `integration_test/e2e/m13_06_admin_event_event_entry_management_search_e2e_cases.md` |
+  | イベント管理 — イベント申込検索 | M13-06 | `functions/pf-eccube3/m13-06_admin_event_event_entry_management_search.md` | `integration_test/e2e/m13_06_admin_event_event_entry_management_search_e2e_cases.md` |
   | イベント管理 — イベント申込一括編集 | M13-07 | `functions/pf-eccube3/m13-07_admin_event_event_entry_bulk_update.md` | `integration_test/e2e/m13_07_admin_event_event_entry_bulk_update_e2e_cases.md` |
-  | M13-10（イベント申込詳細・編集） | M13-10 | `functions/pf-eccube3/m13-10_admin_event_event_entry_edit.md` | `integration_test/e2e/m13_10_admin_event_event_entry_edit_e2e_cases.md` |
+  | イベント管理 — イベント申込詳細・編集 | M13-10 | `functions/pf-eccube3/m13-10_admin_event_event_entry_edit.md` | `integration_test/e2e/m13_10_admin_event_event_entry_edit_e2e_cases.md` |
   | イベント管理 — イベント申込登録検索 | M13-11 | `functions/pf-eccube3/m13-11_admin_event_event_entry_search.md` | `integration_test/e2e/m13_11_admin_event_event_entry_search_e2e_cases.md` |
-  | M13-12（イベント新規申込登録） | M13-12 | `functions/pf-eccube3/m13-12_admin_event_event_entry_register.md` | `integration_test/e2e/m13_12_admin_event_event_entry_register_e2e_cases.md` |
+  | イベント管理 — イベント新規申込登録 | M13-12 | `functions/pf-eccube3/m13-12_admin_event_event_entry_register.md` | `integration_test/e2e/m13_12_admin_event_event_entry_register_e2e_cases.md` |
   | F07-01（イベント大会TOP） | F07-01 | `functions/pf-eccube3/f07-01_front_event_event_top.md` | `integration_test/e2e/f07_01_front_event_event_top_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0214_基本設計仕様書(イベント管理).html`

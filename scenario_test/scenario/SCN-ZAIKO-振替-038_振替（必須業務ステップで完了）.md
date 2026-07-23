@@ -48,14 +48,14 @@
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
-| 1 | トレードチーム | 振替対象商品検索として、状態違い、エキスパンション違いで振替が発生する 振替は在庫を有する各部署がそれぞれ行う 在庫検索一覧画面で振替したい商品を選択し、在庫移動・振替登録 ボタンを押下する（複数の商品を選択可能） | M04-01（在庫検索/一覧）（M04-01） | 状態違い、エキスパンション違いで振替が発生すること。 |
-| 2 | トレードチーム | 在庫振替登録として、一覧画面で選択した商品に対してそれぞれ振替先の商品を選択し 振替登録を行う 振替は承認は必要ないので、 在庫振替登録をした時点で在庫に反映される | M04-08（在庫移動・振替検索/一覧）（M04-08） | 一覧画面で選択した商品に対してそれぞれ振替先の商品を選択し 振替登録を行うこと。 |
+| 1 | トレードチーム | 振替対象商品検索として、状態違い、エキスパンション違いで振替が発生する 振替は在庫を有する各部署がそれぞれ行う 在庫検索一覧画面で振替したい商品を選択し、在庫移動・振替登録 ボタンを押下する（複数の商品を選択可能） | 在庫管理 — 在庫検索/一覧（M04-01） | 状態違い、エキスパンション違いで振替が発生すること。 |
+| 2 | トレードチーム | 在庫振替登録として、一覧画面で選択した商品に対してそれぞれ振替先の商品を選択し 振替登録を行う 振替は承認は必要ないので、 在庫振替登録をした時点で在庫に反映される | 在庫管理 — 在庫移動・振替検索/一覧（M04-08） | 一覧画面で選択した商品に対してそれぞれ振替先の商品を選択し 振替登録を行うこと。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
-| 1 | トレードチーム | M04-01（在庫検索/一覧）で「振替対象商品検索として、状態違い、エキスパンション違いで振替が発生する 振替は在庫を有する各部署がそれぞれ行う 在庫検索一覧画面で振替したい商品を選択し、在庫移動・振替登録 ボタンを押下する（複数の商品を選択可能）」を行う | 移動元ロケーション=本店バックヤード | 状態違い、エキスパンション違いで振替が発生すること。 | 画面表示・処理ステータス・処理履歴 |
-| 2 | トレードチーム | M04-08（在庫移動・振替検索/一覧）で「在庫振替登録として、一覧画面で選択した商品に対してそれぞれ振替先の商品を選択し 振替登録を行う 振替は承認は必要ないので、 在庫振替登録をした時点で在庫に反映される」を行う | 商品コード=ST-STOCK-ZAIKO-016-R01 | 一覧画面で選択した商品に対してそれぞれ振替先の商品を選択し 振替登録を行うこと。 | 在庫数と在庫変更履歴 |
+| 1 | トレードチーム | 在庫管理 — 在庫検索/一覧で「振替対象商品検索として、状態違い、エキスパンション違いで振替が発生する 振替は在庫を有する各部署がそれぞれ行う 在庫検索一覧画面で振替したい商品を選択し、在庫移動・振替登録 ボタンを押下する（複数の商品を選択可能）」を行う | 移動元ロケーション=本店バックヤード | 状態違い、エキスパンション違いで振替が発生すること。 | 画面表示・処理ステータス・処理履歴 |
+| 2 | トレードチーム | 在庫管理 — 在庫移動・振替検索/一覧で「在庫振替登録として、一覧画面で選択した商品に対してそれぞれ振替先の商品を選択し 振替登録を行う 振替は承認は必要ないので、 在庫振替登録をした時点で在庫に反映される」を行う | 商品コード=ST-STOCK-ZAIKO-016-R01 | 一覧画面で選択した商品に対してそれぞれ振替先の商品を選択し 振替登録を行うこと。 | 在庫数と在庫変更履歴 |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -74,7 +74,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |
+| - | - | - | - | 業務フロー図にデータ遷移線（点線）の記載がないため、データ連鎖は `## 完了条件` の最終業務状態で観測する。 | - | データ遷移線なし（完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 振替の対象データが完了状態として追跡できる。
@@ -115,9 +115,9 @@
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
-  | M04-01（在庫検索/一覧） | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/e2e/m04_01_admin_stock_stock_search_list_e2e_cases.md` |
-  | M04-08（在庫移動・振替検索/一覧） | M04-08 | `functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md` | `integration_test/e2e/m04_08_admin_stock_stock_move_transfer_search_list_e2e_cases.md` |
-  | M04-09（在庫移動・振替登録/編集） | M04-09 | `functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md` | `integration_test/e2e/m04_09_admin_stock_stock_move_transfer_register_edit_e2e_cases.md` |
+  | 在庫管理 — 在庫検索/一覧 | M04-01 | `functions/ec-cube-enterprise/m04-01_admin_stock_stock_search_list.md` | `integration_test/e2e/m04_01_admin_stock_stock_search_list_e2e_cases.md` |
+  | 在庫管理 — 在庫移動・振替検索/一覧 | M04-08 | `functions/ec-cube-enterprise/m04-08_admin_stock_stock_move_transfer_search_list.md` | `integration_test/e2e/m04_08_admin_stock_stock_move_transfer_search_list_e2e_cases.md` |
+  | 在庫管理 — 在庫移動・振替登録/編集 | M04-09 | `functions/ec-cube-enterprise/m04-09_admin_stock_stock_move_transfer_register_edit.md` | `integration_test/e2e/m04_09_admin_stock_stock_move_transfer_register_edit_e2e_cases.md` |
   | M04-10（在庫移動・振替情報CSV出力） | M04-10 | `functions/ec-cube-enterprise/m04-10_admin_stock_stock_move_transfer_csv_export.md` | `integration_test/e2e/m04_10_admin_stock_stock_move_transfer_csv_export_e2e_cases.md` |
   | M04-22（在庫移動・振替CSV登録） | M04-22 | `functions/ec-cube-enterprise/m04-22_admin_stock_stock_move_transfer_csv_import.md` | `integration_test/e2e/m04_22_admin_stock_stock_move_transfer_csv_import_e2e_cases.md` |
   | M04-27（在庫移動実績入力用CSV出力） | M04-27 | `functions/ec-cube-enterprise/m04-27_admin_stock_stock_move_result_csv_export.md` | `integration_test/e2e/m04_27_admin_stock_stock_move_result_csv_export_e2e_cases.md` |

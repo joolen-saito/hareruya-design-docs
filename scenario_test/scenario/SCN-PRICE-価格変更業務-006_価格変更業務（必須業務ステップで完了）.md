@@ -41,21 +41,21 @@
 ## データパターン
 | パターンID | 種別 | 対象ステップ/分岐ID | 目的 | 前提差分 | 入力データ | 期待観測点 |
 |---|---|---|---|---|---|---|
-| DP-N001 | 正常系 代表 | 正常系#1-#2 | 正常代表の代表データで業務経路を確認する。 | 必須業務ステップのみを実施し、条件付き登録・保留・棄却を発生させない。 標準権限の担当者でログインし、標準マスタと基準シードデータを使用する。 | 担当者アカウント=st-user-price-005-r01 / 商品コード=ST-CARD-PRICE-005-R01 / 価格変更CSV=ST-PRICE-PRICE-005-R01.csv / 数量=3 / 店舗=晴れる屋テスト店舗 / 会員番号=ST-MEMBER-PRICE-005-R01 | 一覧・詳細に追加された対象データ<br>取込結果と対象件数・エラー行<br>価格変更業務の対象データが完了状態として追跡できる。 |
+| DP-N001 | 正常系 代表 | 正常系#1-#2 | 正常代表の代表データで業務経路を確認する。 | 必須業務ステップのみを実施し、条件付き登録・保留・棄却を発生させない。 標準権限の担当者でログインし、標準マスタと基準シードデータを使用する。 | 担当者アカウント=st-user-price-005-r01 / 商品コード=ST-CARD-PRICE-005-R01 / 価格変更CSV=ST-PRICE-PRICE-005-R01.csv / 数量=3 / 店舗=晴れる屋テスト店舗 / 会員番号=ST-MEMBER-PRICE-005-R01 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない）<br>取込結果と対象件数・エラー行<br>価格変更業務の対象データが完了状態として追跡できる。 |
 
 > 分岐条件・対象ステップ・期待観測点は業務フロー原典由来。**入力データ列の具体値（在庫=0・数量=N・日時・シードID等）は、原典の分岐条件を実行可能にするための実行用の具体化（非原典値）**であり、原典に literal に書かれた値ではない（`## 実行用テストデータ` のシードIDと同種）。
 
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
-| 1 | トレードチーム | 価格変更ファイル作成として、変更価格メモを残した商品を抜粋し価格変更共有用ファイルを作成する。 その後、変更後の価格を入力した価格変更用CSVを作成する ※価格変更共有用ファイルを関係各所へ共有する | 要確認（EC-CUBE工程だが機能Noを特定できない）（-） | 変更価格メモを残した商品を抜粋し価格変更共有用ファイルを作成すること。 |
-| 2 | トレードチーム | 価格変更反映作業として、価格変更用csvを商品csv管理＞価格変更csvよりインポートする | 要確認（EC-CUBE工程だが機能Noを特定できない）（-） | 価格変更用csvを商品csv管理＞価格変更csvよりインポートすること。 |
+| 1 | トレードチーム | 価格変更ファイル作成として、変更価格メモを残した商品を抜粋し価格変更共有用ファイルを作成する。 その後、変更後の価格を入力した価格変更用CSVを作成する ※価格変更共有用ファイルを関係各所へ共有する | 外部システム/ツール作業（EC-CUBE操作なし）（-） | 変更価格メモを残した商品を抜粋し価格変更共有用ファイルを作成すること。 |
+| 2 | トレードチーム | 価格変更反映作業として、価格変更用csvを商品csv管理＞価格変更csvよりインポートする | 商品管理 — セール用価格変更CSV登録 ほか（M03-30・M03-31）（M03-30・M03-31） | 価格変更用csvを商品csv管理＞価格変更csvよりインポートすること。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
-| 1 | トレードチーム | 「価格変更ファイル作成として、変更価格メモを残した商品を抜粋し価格変更共有用ファイルを作成する。 その後、変更後の価格を入力した価格変更用CSVを作成する ※価格変更共有用ファイルを関係各所へ共有する」を行う（実施画面は要確認。機能Noを特定できていない） | 変更後価格=550円 | 変更価格メモを残した商品を抜粋し価格変更共有用ファイルを作成すること。 | 一覧・詳細に追加された対象データ |
-| 2 | トレードチーム | 「価格変更反映作業として、価格変更用csvを商品csv管理＞価格変更csvよりインポートする」を行う（実施画面は要確認。機能Noを特定できていない） | 変更後価格=550円 | 価格変更用csvを商品csv管理＞価格変更csvよりインポートすること。 | 取込結果と対象件数・エラー行 |
+| 1 | トレードチーム | 外部システム/ツール上で「価格変更ファイル作成として、変更価格メモを残した商品を抜粋し価格変更共有用ファイルを作成する。 その後、変更後の価格を入力した価格変更用CSVを作成する ※価格変更共有用ファイルを関係各所へ共有する」を実施する（EC-CUBE操作なし・業務結果を観測） | 変更後価格=550円 | 変更価格メモを残した商品を抜粋し価格変更共有用ファイルを作成すること。 | 外部システム/ツール側の登録・記録内容（EC-CUBE の更新は発生しない） |
+| 2 | トレードチーム | 商品管理 — セール用価格変更CSV登録 ほか（M03-30・M03-31）で「価格変更反映作業として、価格変更用csvを商品csv管理＞価格変更csvよりインポートする」を行う | 変更後価格=550円 | 価格変更用csvを商品csv管理＞価格変更csvよりインポートすること。 | 取込結果と対象件数・エラー行 |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -74,7 +74,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |
+| - | - | - | - | 業務フロー図にデータ遷移線（点線）の記載がないため、データ連鎖は `## 完了条件` の最終業務状態で観測する。 | - | データ遷移線なし（完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 価格変更業務の対象データが完了状態として追跡できる。
@@ -115,11 +115,11 @@
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
-  | 管理画面_商品管理_商品検索・一覧 | M03-01 | `functions/pf-eccube3/m03-01_admin_product_product_search_list.md` | `integration_test/e2e/m03_01_admin_product_product_search_list_e2e_cases.md` |
-  | 管理画面_商品管理_セール用価格変更CSV出力 | M03-05 | `functions/pf-eccube3/m03-05_admin_product_product_sale_price_csv_export.md` | `integration_test/e2e/m03_05_admin_product_product_sale_price_csv_export_e2e_cases.md` |
+  | 商品管理 — 商品検索・一覧 | M03-01 | `functions/pf-eccube3/m03-01_admin_product_product_search_list.md` | `integration_test/e2e/m03_01_admin_product_product_search_list_e2e_cases.md` |
+  | 商品管理 — セール用価格変更CSV出力 | M03-05 | `functions/pf-eccube3/m03-05_admin_product_product_sale_price_csv_export.md` | `integration_test/e2e/m03_05_admin_product_product_sale_price_csv_export_e2e_cases.md` |
   | 商品管理 — 買取/販売価格履歴（検索・一覧・CSV出力） | M03-23 | `functions/pf-eccube3/m03-23_admin_product_product_buy_sale_price_history.md` | `integration_test/e2e/m03_23_admin_product_product_buy_sale_price_history_e2e_cases.md` |
   | 商品管理 — 買取/販売価格履歴 CSV 出力 | M03-24 | `functions/pf-eccube3/m03-24_admin_product_product_buy_sale_price_history_csv_export.md` | `integration_test/e2e/m03_24_admin_product_product_buy_sale_price_history_csv_export_e2e_cases.md` |
-  | 管理画面_商品管理_セール用価格変更CSV登録 | M03-30 | `functions/pf-eccube3/m03-30_admin_product_product_product_price_csv_import.md` | `integration_test/e2e/m03_30_admin_product_product_product_price_csv_import_e2e_cases.md` |
+  | 商品管理 — セール用価格変更CSV登録 | M03-30 | `functions/pf-eccube3/m03-30_admin_product_product_product_price_csv_import.md` | `integration_test/e2e/m03_30_admin_product_product_product_price_csv_import_e2e_cases.md` |
   | M03-31（セール用価格変更CSV登録） | M03-31 | `functions/pf-eccube3/m03-31_admin_product_product_sale_price_csv_import.md` | `integration_test/e2e/m03_31_admin_product_product_sale_price_csv_import_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0204_基本設計仕様書(商品管理).html`

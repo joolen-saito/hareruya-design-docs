@@ -72,7 +72,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |
+| - | - | - | - | 業務フロー図にデータ遷移線（点線）の記載がないため、データ連鎖は `## 完了条件` の最終業務状態で観測する。 | - | データ遷移線なし（完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - デッキ公開の条件対応後、オンライン入力されたデッキリストの公開の対象データが完了状態として追跡できる。
@@ -118,7 +118,7 @@
   | API デッキビルダー — デッキ情報参照 | A15-12 | `functions/pf-api/a15-12_api_deck_builder_deck_get.md` | `integration_test/e2e/a15_12_api_deck_builder_deck_get_e2e_cases.md` |
   | API デッキビルダー — デッキ情報検索 | A15-13 | `functions/pf-api/a15-13_api_deck_builder_deck_search.md` | `integration_test/e2e/a15_13_api_deck_builder_deck_search_e2e_cases.md` |
   | デッキ管理 — デッキ検索・一覧 | M15-01 | `functions/pf-eccube3/m15-01_admin_deck_deck_search.md` | `integration_test/e2e/m15_01_admin_deck_deck_search_e2e_cases.md` |
-  | F06-14（予約済み大会一覧） | F06-14 | `functions/pf-eccube3/f06-14_front_member_mypage_event_reserved_list.md` | `integration_test/e2e/f06_14_front_member_mypage_event_reserved_list_e2e_cases.md` |
+  | 会員 — 予約済み大会一覧 | F06-14 | `functions/pf-eccube3/f06-14_front_member_mypage_event_reserved_list.md` | `integration_test/e2e/f06_14_front_member_mypage_event_reserved_list_e2e_cases.md` |
 - **関連HTML設計書**:
   - `excel_to_html/output/0212_基本設計仕様書(デッキ管理).html`
   - `excel_to_html/output/0515_基本設計仕様書(API_デッキビルダー).html`

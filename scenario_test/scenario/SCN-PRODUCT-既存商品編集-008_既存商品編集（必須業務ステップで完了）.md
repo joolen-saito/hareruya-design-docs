@@ -47,12 +47,12 @@
 ## メインフロー（正常系）
 | # | 担当者 | 業務行動 | 利用画面・機能 | 確認する業務結果 |
 |---|---|---|---|---|
-| 1 | トレードチーム | 商品マスター編集として、既存の商品情報の編集を行う ※単体の公開、非公開ステータス変更もこの業務で行う | 管理画面_商品管理_商品検索・一覧（M03-01） | 既存の商品情報の編集を行うこと。 |
+| 1 | トレードチーム | 商品マスター編集として、既存の商品情報の編集を行う ※単体の公開、非公開ステータス変更もこの業務で行う | 商品管理 — 商品検索・一覧（M03-01） | 既存の商品情報の編集を行うこと。 |
 
 ## 実行手順（正常系）
 | # | 担当者 | 操作 | 入力/対象 | 期待結果 | 確認対象 |
 |---|---|---|---|---|---|
-| 1 | トレードチーム | 管理画面_商品管理_商品検索・一覧で「商品マスター編集として、既存の商品情報の編集を行う ※単体の公開、非公開ステータス変更もこの業務で行う」を行う | 商品コード=ST-PRODUCT-PRODUCT-005-R01 | 既存の商品情報の編集を行うこと。 | 画面表示・処理ステータス・処理履歴 |
+| 1 | トレードチーム | 商品管理 — 商品検索・一覧で「商品マスター編集として、既存の商品情報の編集を行う ※単体の公開、非公開ステータス変更もこの業務で行う」を行う | 商品コード=ST-PRODUCT-PRODUCT-005-R01 | 既存の商品情報の編集を行うこと。 | 画面表示・処理ステータス・処理履歴 |
 
 ## 代替フロー / 異常系分岐
 | 分岐ID | 起点# | 条件 | 期待挙動 | 確認対象 |
@@ -71,7 +71,7 @@
 
 | 連鎖ID | 産出工程 | 産出データ/帳票 | 消費工程 | 期待（データのつながり） | 照合キー | 判定 |
 |---|---|---|---|---|---|---|
-| - | - | - | - | 原典に該当するデータ遷移線が無い | - | 要確認（原典未記載） |
+| - | - | - | - | 業務フロー図にデータ遷移線（点線）の記載がないため、データ連鎖は `## 完了条件` の最終業務状態で観測する。 | - | データ遷移線なし（完了条件で観測） |
 
 ## 完了条件（業務的ゴール／データ状態の最終確認）
 - 既存商品編集の対象データが完了状態として追跡できる。
@@ -112,10 +112,10 @@
 - **触れる画面と既存ケース**:
   | 画面 | 機能No | 機能仕様 | 既存ケース |
   |---|---|---|---|
-  | 管理画面_商品管理_商品検索・一覧 | M03-01 | `functions/pf-eccube3/m03-01_admin_product_product_search_list.md` | `integration_test/e2e/m03_01_admin_product_product_search_list_e2e_cases.md` |
-  | M03-02（商品編集機能） | M03-02 | `functions/pf-eccube3/m03-02_admin_product_product_edit.md` | `integration_test/e2e/m03_02_admin_product_product_edit_e2e_cases.md` |
-  | 管理画面_商品管理_商品規格一覧 | M03-08 | `functions/pf-eccube3/m03-08_admin_product_product_product_class_list.md` | `integration_test/e2e/m03_08_admin_product_product_product_class_list_e2e_cases.md` |
-  | M03-09（商品規格登録/編集） | M03-09 | `functions/pf-eccube3/m03-09_admin_product_product_class_edit.md` | `integration_test/e2e/m03_09_admin_product_product_class_edit_e2e_cases.md` |
+  | 商品管理 — 商品検索・一覧 | M03-01 | `functions/pf-eccube3/m03-01_admin_product_product_search_list.md` | `integration_test/e2e/m03_01_admin_product_product_search_list_e2e_cases.md` |
+  | 商品管理 — 商品編集機能 | M03-02 | `functions/pf-eccube3/m03-02_admin_product_product_edit.md` | `integration_test/e2e/m03_02_admin_product_product_edit_e2e_cases.md` |
+  | 商品管理 — 商品規格一覧 | M03-08 | `functions/pf-eccube3/m03-08_admin_product_product_product_class_list.md` | `integration_test/e2e/m03_08_admin_product_product_product_class_list_e2e_cases.md` |
+  | 商品管理 — 商品規格登録/編集 | M03-09 | `functions/pf-eccube3/m03-09_admin_product_product_class_edit.md` | `integration_test/e2e/m03_09_admin_product_product_class_edit_e2e_cases.md` |
   | その他_MTGバイヤー_店頭買取 | O01-01 | `functions/pf-eccube3/o01-01_other_mtg_buyer_mtg_buyer_store_purchase.md` | `integration_test/e2e/o01_01_other_mtg_buyer_mtg_buyer_store_purchase_e2e_cases.md` |
   | 商品管理 — 略称タグCSV入力 | M03-16 | `functions/pf-eccube3/m03-16_admin_product_product_storage_code_import.md` | `integration_test/e2e/m03_16_admin_product_product_storage_code_import_e2e_cases.md` |
 - **関連HTML設計書**:
