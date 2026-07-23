@@ -128,7 +128,7 @@ POST更新時は `StockMoveInstructionDetailUpdateAction` が `updateDate`・`Up
 - **詳細/登録/削除の対象なし**: `find($id)` が null で `NotFoundHttpException`（404）。
 - **削除可否**: 送り状No.登録済み（`trackingNo` が非null・非空）の指示は削除不可。`StockMoveInstructionDeleteException` を捕捉し `admin.stock.move_instruction.delete_error_after_tracking` を表示、詳細へリダイレクト。削除可の場合は紐づく在庫移動の `moveInstructionId`・`trackingNo` を null にしてから指示を `remove`、`admin.common.delete_complete` を表示し一覧（`resume=1`）へ。
 - **CSV未選択/不正ファイル**: `csv_file` が未指定・`isValid()` false → `admin.stock.move_instruction.csv_tracking_file_invalid`、一覧へリダイレクト。
-- **CSV取込時の例外**: `Throwable` 捕捉時は `log_error` 出力のうえフラッシュ表示。controller は `RuntimeException` の message が `..._csv_tracking_header_invalid` / `..._csv_tracking_file_invalid` / `..._csv_tracking_temp_dir_invalid` に一致する場合のみ固有メッセージへ振り分けるが、これらの message を throw する実装は現行ソースに存在しない（防御的分岐・要実機確認。`grep` で throw 箇所なし）。実際のヘッダ不正は例外ではなく `StockMoveInstructionCsvImporter::validateBeforeImport`（StockMoveInstructionCsvImporter.php:57-68）が `getErrors()` に「CSVのフォーマットが一致しません。」を積む経路（M04-24-MSG-009）で表示される。上記キー以外の `RuntimeException`/`Throwable` は `..._csv_tracking_upload_error_detail`（`%detail%` 埋込）で表示。
+- **CSV取込時の例外**: `Throwable` 捕捉時は `log_error` 出力のうえフラッシュ表示。controller は `RuntimeException` の message が `..._csv_tracking_header_invalid` / `..._csv_tracking_file_invalid` / `..._csv_tracking_temp_dir_invalid` に一致する場合のみ固有メッセージへ振り分けるが、これらの message を throw する実装は現行ソースに存在しない（防御的分岐・要実機確認。`grep` で throw 箇所なし）。実際のヘッダ不正は例外ではなく `StockMoveInstructionCsvImporter::validateBeforeImport`（StockMoveInstructionCsvImporter.php:57-68）が `getErrors()` に「CSVのフォーマットが一致しません。」を積む経路（（除外:要ソース確認））で表示される。上記キー以外の `RuntimeException`/`Throwable` は `..._csv_tracking_upload_error_detail`（`%detail%` 埋込）で表示。
 - **送り状CSV出力でID無し**: `ids` 空配列は404。
 
 ### 状態・データ更新
@@ -158,7 +158,6 @@ POST更新時は `StockMoveInstructionDetailUpdateAction` が `updateDate`・`Up
 | M04-24-MSG-006 | 管理画面上部 | 削除しました | Deleted | 在庫移動指示を削除したとき | 在庫移動指示リスト作成/検索画面に遷移する |
 | M04-24-MSG-007 | 管理画面上部 | ファイルが不正です。 | ファイルが不正です。 | 不正なCSVファイルをアップロードしたとき | 在庫移動指示リスト作成/検索画面に遷移する |
 | M04-24-MSG-008 | 管理画面上部 | エラーは20件まで表示されます | エラーは20件まで表示されます | CSV取込で21件以上のエラーが発生したとき | 在庫移動指示リスト作成/検索画面に遷移する |
-| M04-24-MSG-009 | 管理画面上部 | 要ソース確認 | 要ソース確認 | 要ソース確認 | 要ソース確認 |
 | M04-24-MSG-010 | 管理画面上部 | 送り状No.を一括登録しました。 | 送り状No.を一括登録しました。 | CSVから送り状番号を1件以上登録できたとき | 在庫移動指示リスト作成/検索画面に遷移する |
 | M04-24-MSG-011 | 管理画面上部 | 有効な行がありません。 | 有効な行がありません。 | CSV取込で登録できる行が1件もなかったとき | 在庫移動指示リスト作成/検索画面に遷移する |
 | M04-24-MSG-012 | 管理画面上部 | CSVのヘッダーが不正です。 | CSVのヘッダーが不正です。 | CSV取込でCSVのヘッダーが不正なとき | 在庫移動指示リスト作成/検索画面に遷移する |

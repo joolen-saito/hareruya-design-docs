@@ -541,7 +541,7 @@ def infer_viewpoint(flow_type: str, operation: str, expected: str) -> str:
         return "CSV/帳票"
     if "メール" in text or "通知" in text:
         return "メール/通知"
-    if "GMO" in text or "スマレジ" in text or "MTG" in text or "Backlog" in text:
+    if "SPLINKS" in text or "スマレジ" in text or "MTG" in text or "Backlog" in text:
         return "外部連携"
     if "登録" in text or "更新" in text or "ステータス" in text or "履歴" in text or "金額" in text:
         return "データ更新"

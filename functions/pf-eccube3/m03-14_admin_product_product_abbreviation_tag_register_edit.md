@@ -243,7 +243,6 @@ ec-cube-enterprise のコア管理画面におけるルート `admin_product_sto
 | M03-14-MSG-005 | 管理画面上部 | 要ソース確認 | This value should not be blank. | 要ソース確認 | 要ソース確認 |
 | M03-14-MSG-006 | 管理画面上部 | CSVのフォーマットが一致しません | Unmatched CSV format | CSVファイルを指定せずにインポートしたとき | 略称タグCSVアップロード画面に遷移する |
 | M03-14-MSG-007 | 管理画面上部 | CSVのフォーマットが一致しません | Unmatched CSV format | 形式が正しくないCSVファイルをインポートしたとき | 略称タグCSVアップロード画面に遷移する |
-| M03-14-MSG-008 | 管理画面上部 | 要ソース確認 | 要ソース確認 | 要ソース確認 | 要ソース確認 |
 | M03-14-MSG-009 | 管理画面上部 | 登録が完了しました。 | Registration completed. | CSVファイルのインポートが完了したとき | 略称タグCSVアップロード画面に遷移する |
 | M03-14-MSG-010 | ブラウザ確認ダイアログ（window.confirm） | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | You can not revert this action. Are you sure to delete %name%? | 略称タグの削除ボタンを押したとき（送信前確認） | 送信せず現在の画面に留まる |
 | M03-14-MSG-011 | 要ソース確認 | 並び順は {{ min }} から {{ max }} の間で入力してください。 | 並び順は {{ min }} から {{ max }} の間で入力してください。 | 並び順に指定できる範囲外の値を入力して保存したとき | 要ソース確認 |
