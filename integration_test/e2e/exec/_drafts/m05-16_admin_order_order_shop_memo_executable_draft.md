@@ -1,6 +1,7 @@
 # W1候補: m05-16 ショップ用メモ登録 — 実行可能グレード候補（母集合59全量踏破）
 
 > 2026-07-23 ／ **候補グレード（candidate・D6前・O5未確定・実装/実走なし）**
+> **codexレビュー: R1要修正(Major2)→R2妥当＝候補確定**（`REVIEW_LEDGER.md`と同期）
 > source_class=standard-src+design は fid_kubun.tsv（D1・fid_kubun.tsv:260）による**暫定付与**（確定はD6）。
 > **O5合格・承認済み草案・具体化完了（正式）・O6/聖域/多軸join/C6C7通過をいずれも主張しない**。
 > fixture_version は全て `@TBD-D5`。統治: `integration_test/CONCRETIZATION_FIRST_PLAN.md`（改訂2・三段会計）。
@@ -288,7 +289,8 @@ C-025-EN／C-020-EN／C-028-EN。全行§4.1に実体掲載・文言はen一次�
 | 012〜017（相関・DB相関の両極） | 両極とも対応constraint不存在→excluded（極性以前に検証自体が不存在） | OrderType.php:233-238・md:190 |
 | 053（フロント「表示しない」=否定期待） | 否定は実在（md:115）だがuniversal negativeで観測契約不能→TBD（excludedにしない=実在仕様の除外禁止） | md:115,37 |
 
-**codex敵対レビューは未実施**（本書は候補。この後codexレビュー予定。C4検出実績は同レビュー後に追記する）。
+**codex敵対レビュー実施済み: R1要修正(Major2)→是正→R2妥当（候補確定）**（`REVIEW_LEDGER.md`）。
+R1でMajor2件（bind/会計系）を検出・是正した記録がC4-manual運用の実効性証跡を兼ねる（未検出の可能性は残る）。
 
 ---
 

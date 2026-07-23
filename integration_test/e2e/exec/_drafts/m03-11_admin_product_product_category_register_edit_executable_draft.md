@@ -1,7 +1,8 @@
 # W2候補: m03-11 カテゴリ登録・編集 — 実行可能グレード候補（母集合78全量踏破・excel-primary係数実測）
 
 > 2026-07-23 ／ **候補グレード（candidate・D6前）・excel-primary（区分=カスタマイズ）**／
-> W2バッチ1号（excel-primary 366機能側の係数実測用）。
+> **codexレビュー: R1要修正(Blocker2)＋方針裁定(A)→R2妥当＝候補確定**（`REVIEW_LEDGER.md`と同期）
+> W2バッチ1号（excel-primary 306機能側〔＝現行踏襲/カスタマイズ・fid_kubun実測。新規実装45は別区分〕の係数実測用）。
 > **改訂1: codexレビューR1是正（Blocker2＋Major2）＋ユーザー方針裁定（Interpretation A・規約リテラル）**＝
 > (1) **画像仕様をExcel確定へ是正**: 0204:6285,6287の取り消し線は `<span class="cell-strike">` として
 > **HTML内に残存**（初回の「書式喪失で矛盾」は本候補の抽出ミス＝タグ剥がしでclass情報を落とした誤読。
@@ -477,7 +478,8 @@ m03-11_admin_product_product_category_register_edit	E2E-M0311C-089	IT-24	外部�
   踏襲値としてbound維持・ee参照はsource欄から除去（3claim付け替え）。
   ③Major: 255/3000/400等の踏襲値の扱い→同方針で解決。④EX-A 14件はcodex妥当確認・EX-B 4件は
   条件付き妥当（pf md逐語裏付けを§8に追記）。ja/en確定3件は現物一致の確認済み。
-  C4対象の極性取り違えは①以外に検出されず（未検出の可能性は残る）。この改訂1はcodex再確認待ち。
+  C4対象の極性取り違えは①以外に検出されず（未検出の可能性は残る）。
+  **本改訂1はcodex R2で「妥当（候補確定）」判定済み**（`REVIEW_LEDGER.md`）。
 
 ---
 
