@@ -1,0 +1,248 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "B0候補（D6前・O5未確定・source_class暫定=standard-src+design/fid_kubun.tsv D1:256）。codex R1要修正（Blocker1+Major2）→改訂1是正済み: (1)cancel_return(15→5)の見落とし訂正=DELIVERED有効from11状態 (2)「全変更UPDATE/行追加経路なし」撤回（在庫履歴INSERT=StockReduceProcessor:140-153を明記・行数不変は2表限定維持） (3)BC-1影響bindの導出表=GUI専属20行+併用6行（md §9）。正式解決器はこの_drafts/を読んではならない（CFP §7隔離）。期待値の正はL1オラクルID（三段参照。SEED初期値・DB名称マスタのリテラルを期待に焼き込まない）。fixture_versionは@TBD-D5。bindは母集合の期待テキスト実内容で判定。本jsonはmd §1から手動導出（機械導出器はM0成果物・未実装）。重要: BC-DRAFT-M05-12-01=設計書規定の一括操作GUI（プルダウン/決定/モーダル一括起動）はee HEADでコミットc51e2bda15により削除済み（サーバPUTと行チェックボックスは現存）。BC-DRAFT-M05-12-02=トークン不正は仕様400に対し実装はAccessDeniedHttpExceptionをthrow。DOC-DRAFT-M05-12-01=md:144の配送完了遷移元列挙はワークフロー設定(admin_to_delivered)と矛盾（正は設定=md:45自己宣言）。",
+    "source": "integration_test/e2e/exec/_drafts/m05-12_admin_order_order_bulk_status_change_executable_draft.md §1",
+    "baseline": {
+      "design_md_commit": "ea56f47（repo HEAD d1e94c5）",
+      "ee_commit": "9dbc4dd12080ac6a3d58a97f67e23e4a4a6e4f51",
+      "gui_removal_commit": "c51e2bda15e03ecd011c8cacc485658e2415ab81 (2026-07-09)",
+      "all_it_cases_sha256_prefix": "7911f190d273",
+      "fid_kubun": "M05-12=標準 standard-src+design（暫定付与・確定はD6）"
+    }
+  },
+  "L1-M0512-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "未認証GET /%eccube_admin_route%/order はadmin_loginのログイン画面へリダイレクト（受注一覧・一括変更利用不可）",
+    "source": "security.yaml:40-47 / md:79,287"
+  },
+  "L1-M0512-002": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "未認証の直接PUTは処理されない（status OKのJSONを返さない・DB不変。具体応答形302/401等は未契約=要実機）",
+    "source": "md:287,79 / security.yaml:40-47"
+  },
+  "L1-M0512-003": {
+    "claim_type": "http_status",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "PUT /%eccube_admin_route%/shipping/{出荷ID}/order_status（admin_shipping_update_order_status・id=\\d+・PUTのみ・JSON応答）。idは出荷ID（受注IDでない）",
+    "source": "OrderController.php:483-484 / md:77,81"
+  },
+  "L1-M0512-004": {
+    "claim_type": "api_contract",
+    "ls": 0,
+    "reason": "non-translated",
+    "http_status": 400,
+    "expected": "XHRでないPUTはHTTP400 {\"status\":\"NG\"}（トークン検証前に短絡）・DB不変",
+    "source": "OrderController.php:486-488 / md:208,120,318"
+  },
+  "L1-M0512-005": {
+    "claim_type": "api_contract",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "【仕様側】トークン不正はHTTP400・DB不変。トークンは_tokenパラメータ or ECCUBE-CSRF-TOKENヘッダ（正規値=meta[name=eccube-csrf-token]）",
+    "bc_draft": "BC-DRAFT-M05-12-02: 実装はisTokenValidがAccessDeniedHttpException('CSRF token is invalid.')をthrow（400を返す分岐なし・403系見込み・要実機確定）",
+    "source": "AbstractController.php:252-263 / Constant.php:41 / default_frame.twig:16,81-88 / md:120,208,318"
+  },
+  "L1-M0512-006": {
+    "claim_type": "api_contract",
+    "ls": 0,
+    "reason": "non-translated",
+    "http_status": 400,
+    "expected": "order_statusの対応状況IDが不存在ならHTTP400 {\"status\":\"NG\"}・DB不変",
+    "source": "OrderController.php:491-495 / md:205,319"
+  },
+  "L1-M0512-007": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected_ja": "%name%: ステータス変更をスキップしました",
+    "expected_en": "%name%: Status change has been skipped",
+    "expected": "現在の対応状況=変更先のとき変更せずスキップ: HTTP200 {\"status\":\"OK\",\"message\":...}（%name%=出荷ID）・DB不変",
+    "source": "OrderController.php:499-501 / messages.ja.yaml:2610 / messages.en.yaml:2450 / md:123,166,189,320"
+  },
+  "L1-M0512-008": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected_ja": "%name%: %from% から %to% にはステータス変更できません",
+    "expected_en": "%name%: You are not allowed to change the status from %from% to %to%",
+    "expected": "遷移不可の組合せは変更せず: HTTP200 OK+message（%name%=出荷ID・%from%/%to%=mtb_order_status.nameのDB現在値を実行時に埋込。名称マスタはインストール経路依存のためリテラル焼込禁止）・DB不変",
+    "source": "OrderController.php:552-560 / messages.ja.yaml:2608 / messages.en.yaml:2445 / md:124,167,259,321"
+  },
+  "L1-M0512-009": {
+    "claim_type": "state_machine",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "遷移可否はSymfony workflow order（state_machine）のtransitions定義で決まる（can=enabled transitionのtoに変更先idが含まれるか）。L1の遷移規則の正はこの設定",
+    "source": "OrderStateMachine.php:57-85 / order_state_machine.php:19-217 / md:45,63,190"
+  },
+  "L1-M0512-010": {
+    "claim_type": "state_machine",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "DELIVERED(5)への遷移可能元={1,2,3,4,6,9,10,12,13,14,15}の11状態（ship: 1,4,6／admin_to_delivered: 1,2,3,6,9,10,12,13,14／cancel_return: 15）。7・8からは不可",
+    "doc_draft": "DOC-DRAFT-M05-12-01: md:144「新規受付・入金済み・対応中から…それ以外からは遷移できない」は設定と矛盾（正は設定=md:45の自己宣言）",
+    "source": "order_state_machine.php:67-70,161-174,75-78 / Master/OrderStatus.php:31-57 / md:144（矛盾側）"
+  },
+  "L1-M0512-011": {
+    "claim_type": "state_machine",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "PENDING(7)・PROCESSING(8)はどのtransitionのfromにも現れない=これらを現在状況とする受注は全変更先へ遷移不可（常にL1-008のfailed message）",
+    "source": "order_state_machine.php:30-45,46-214（grep 0出現実測） / Master/OrderStatus.php:43-45"
+  },
+  "L1-M0512-012": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "変更先=5のとき当該出荷が未出荷（shipping_date IS NULL=isShipped偽）なら出荷日に現在日時を設定（ブラケット法T1≦値≦T2で観測）",
+    "source": "OrderController.php:504-507 / Shipping.php:701-704,114-115 / md:141,253"
+  },
+  "L1-M0512-013": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "配送完了は受注配下の全出荷が出荷済みのときのみ受注へ適用。未出荷が1件でも残ればdtb_order.order_status_idは不変のままJSON OK",
+    "source": "OrderController.php:508-517 / md:142,191,206"
+  },
+  "L1-M0512-014": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "変更先が配送完了以外で遷移可なら受注へ即適用",
+    "source": "OrderController.php:518-520 / md:140"
+  },
+  "L1-M0512-015": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "apply完了でOrder.OrderStatusが変更先へ再設定（onCompleted）→persist/flushでdtb_order.order_status_id=変更先id",
+    "source": "OrderStateMachine.php:187-194 / OrderController.php:542-544 / Order.php:640-641 / md:256,268"
+  },
+  "L1-M0512-016": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "一括契約はnotificationMail非送信（BulkStatusUpdateの送信データはorder_statusのみ）→sendShippingNotifyMailを呼ばずdtb_shipping.mail_send_date不変・JSONに\"mail\":false",
+    "source": "OrderController.php:522-528 / confirmationModal_js.twig:162-170 / Shipping.php:141-142 / md:130,94,194,254"
+  },
+  "L1-M0512-017": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "変更先が対応中(4)/キャンセル(3)のとき在庫無制限でない商品明細のProductClass/ProductStockをpersist/flush（商品情報更新）",
+    "source": "OrderController.php:529-541 / OrderItem.php:75-78 / ProductClass.php:187-188 / md:126,192"
+  },
+  "L1-M0512-018": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "cancel/admin_cancel遷移のリスナ=rollbackStock+rollbackUsePoint。rollbackStockは受注店舗対応dtb_product_stock.stockを明細数量ぶん加算（bcadd）",
+    "source": "OrderStateMachine.php:96-97,155-160 / StockReduceProcessor.php:65-68,91,126-138 / md:126,192"
+  },
+  "L1-M0512-019": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "会員受注は変更後updateOrderSummaryでdtb_customer.buy_times=対象status受注COUNT・buy_total=同SUM(total)を再計算（対象status={1,6,5,4}。キャンセル等へ抜けた受注は分母から外れる）",
+    "source": "OrderController.php:546-551 / OrderRepository.php:645-670 / md:127,193,220,257"
+  },
+  "L1-M0512-020": {
+    "claim_type": "api_contract",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "処理正常終了時のJSONは{\"status\":\"OK\"}にmessage/mailを合成した形（HTTP200）",
+    "source": "OrderController.php:570 / md:128,229,240"
+  },
+  "L1-M0512-021": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "dtb_order/dtb_shippingの2表に限定した行数不変（updateOrderStatus本体はfind済み既存エンティティのみpersist・new生成なし）。「全変更UPDATE/行追加経路なし」の一般主張はしない: キャンセル系遷移はStockReduceProcessor::saveStockHistoryが在庫履歴行をINSERTする（2表限定claimの外側。C-062は非キャンセル遷移で観測）",
+    "source": "OrderController.php:497-560（new生成なし実測） / StockReduceProcessor.php:140-153 / md:264-268"
+  },
+  "L1-M0512-022": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "受注一覧の各出荷行の先頭セルにinput#check_{出荷ID}（name=ids[]・value=出荷ID・data-id・data-order-id・data-update-status-url=当該出荷の更新URL）。HEADで現存",
+    "source": "index.twig:1196-1202 / md:89,61,252"
+  },
+  "L1-M0512-023": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "ヘッダ全選択#toggle_check_all（HEAD現存）: オンで全行チェック・オフで全解除・個別チェックの変更で全選択が外れる",
+    "source": "index.twig:1179,113-119,100-102 / md:89,90"
+  },
+  "L1-M0512-024": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "expected_ja": "一括操作／決定",
+    "expected_en": "All／Submit",
+    "expected": "【仕様側期待】1件以上チェックで一括操作領域を表示（見出しadmin.common.bulk_actions・決定admin.common.decision）・0件で隠す",
+    "bc_draft": "BC-DRAFT-M05-12-01: ee HEADのindex.twigに該当要素0件（c51e2bda15で.btn-bulk-wrapper/#btn_bulk_status/toggleBtnBulk削除）＝実走×見込み",
+    "source": "削除diff(c51e2bda15) / messages.ja.yaml:1722,1645 / messages.en.yaml:1750,1676 / md:75,89,90,152-156,201"
+  },
+  "L1-M0512-025": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "expected_ja": "対応状況の変更",
+    "expected_en": "Update Status",
+    "expected": "【仕様側期待】プルダウン#option_bulk_status: 初期行value=\"\"=admin.order.change_status・続けて登録済み対応状況をsort_no順に列挙（名称はDB照会値）",
+    "bc_draft": "BC-DRAFT-M05-12-01: HEADに要素0件（同上）",
+    "source": "削除diff(c51e2bda15) / messages.ja.yaml:2572 / messages.en.yaml:2409 / md:62,89,155,260"
+  },
+  "L1-M0512-026": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "reason": "script-literal-no-en-resource",
+    "expected_ja": "対応状況を選択してください",
+    "expected": "【仕様側期待】変更先未選択で決定→ブラウザ標準アラート（スクリプト直書き・enロケール資源なし）・サーバへ送信せず中断",
+    "bc_draft": "BC-DRAFT-M05-12-01: cmJSに実装現存だがindex.twigがincludeしない＝発火導線なし",
+    "source": "confirmationModal_js.twig:46-49 / md:91,165,202,301,317"
+  },
+  "L1-M0512-027": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "expected_ja": "処理中...／完了しました。／閉じる",
+    "expected_en": "Processing ...／Completed.／Close",
+    "expected": "【仕様側期待】確認モーダル#sentUpdateModal: 送信中=本文「処理中...」+進捗バー→全件終了=進捗バー非表示+本文「完了しました。」+閉じる#bulkChangeComplete表示",
+    "bc_draft": "BC-DRAFT-M05-12-01: markupはHEAD現存（index.twig:1291-1327）だがcmJS未include＝バインドなし",
+    "source": "confirmationModal_js.twig:66-69,119-123 / index.twig:1291-1327 / messages.ja.yaml:2562,2563,1643 / messages.en.yaml:2399,2400,1674 / md:64,91,93,96,157-159"
+  },
+  "L1-M0512-028": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "【仕様側期待】一括送信=input[data-id]:checkedの集合を対象に各出荷のdata-update-status-urlへ{'order_status':選択値}のみを1件ずつPUT・1件の応答完了後に次を送る逐次処理",
+    "bc_draft": "BC-DRAFT-M05-12-01: GUI起動導線なし（サーバ側契約はL1-003/020で自立）",
+    "source": "confirmationModal_js.twig:157-186,124-140 / md:92,112-113,65,218"
+  },
+  "L1-M0512-029": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected_ja": "システムエラーが発生しました",
+    "expected_en": "System error occurred",
+    "expected": "【仕様側期待】応答messageは#sentUpdateModal #bulkErrorsへNOTICE追記（スキップ/遷移不可）・HTTP失敗（400/500系）はERROR=admin.common.system_errorを追記し他出荷の処理は続行（#bulkErrorsは一括削除モーダルにも存在＝#sentUpdateModal配下に限定して観測）",
+    "bc_draft": "BC-DRAFT-M05-12-01: GUI起動導線なし",
+    "source": "confirmationModal_js.twig:103-118 / messages.ja.yaml:1607 / messages.en.yaml:1653 / md:114,168,178-179,203-204"
+  },
+  "L1-M0512-030": {
+    "claim_type": "nav",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "閉じる→GET /%eccube_admin_route%/order?resume=1（旧実装削除diff逐語）。resume=1のセッション復旧（検索条件・ページ番号・表示件数）はサーバ側にHEADで現存（主判定はresume GETで自立・閉じる導線はBC-1）",
+    "source": "削除diff(c51e2bda15) / OrderController.php:121,212-215 / md:78,116,300,307"
+  },
+  "L1-M0512-031": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "一括は出荷ごとに独立確定（単一Txでまとめてロールバックしない）。一部の出荷がスキップ・遷移不可・エラーでも他の出荷の変更は確定する",
+    "source": "md:221,179,345 / confirmationModal_js.twig:171-184 / OrderController.php:483-571（単発処理）"
+  }
+}

@@ -1,0 +1,158 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "B0バッチ2候補（D6前・O5未確定・source_class暫定=standard-src+design/fid_kubun.tsv D1:163）。正式解決器はこの_drafts/を読んではならない（CFP §7隔離）。期待値の正はL1オラクルID（三段参照・SEED値/DB照会値を期待値の正にしない）。fixture_versionは@TBD-D5。bindは母集合の期待テキスト実内容で判定（観点ラベル不使用）。ステータス名・マスタ行集合は環境依存データ（csv vs migrations）のため固定リテラルを持たず、比較基準はdb.ts実値（L1-M0201-008/020）。行識別子はDOM各行リンクhrefのorder_status_idクエリ値（twig:130）＝名称→id復元をしない（nameに一意制約なし・改訂1）。BC-DRAFT-m02-01-1（order_status_idクエリの受注一覧側不消費）を含む＝期待は設計側のまま。改訂1: codexレビューR1是正=L1-017の過大claim除去（Ajax失敗時カード維持は未実証推論→md§9-4要確認へ分離）・L1-009に画面識別子#search_form追加・L1-005出典にAdminController.php:131追加（md改訂1と同期導出）。",
+    "source": "integration_test/e2e/exec/_drafts/m02-01_admin_home_home_order_status_executable_draft.md §1（本jsonはmd §1から導出・手編集禁止）",
+    "baseline": {
+      "design_md_commit": "repo HEAD d1e94c5e38246d0eff45b4079ee42397c994e69d",
+      "ee_commit": "9dbc4dd12080ac6a3d58a97f67e23e4a4a6e4f51",
+      "fid_kubun": "M02-01=標準 standard-src+design（暫定付与・確定はD6）",
+      "all_it_cases_sha256_prefix": "7911f190d273",
+      "fid_kubun_sha256_prefix": "44fbf02f1e4c"
+    }
+  },
+  "L1-M0201-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "expected": "未認証のGET /%eccube_admin_route%/ はadmin_loginのログイン画面へリダイレクトされ、#order-statusへ到達しない",
+    "source": "security.yaml:40-47 / m02-01md:76,240"
+  },
+  "L1-M0201-002": {
+    "claim_type": "http_status",
+    "expected_status": 200,
+    "route": "admin_homepage",
+    "path": "/%eccube_admin_route%/",
+    "methods": ["GET"],
+    "ls": 0,
+    "source": "AdminController.php:102-104 / m02-01md:64,241"
+  },
+  "L1-M0201-003": {
+    "claim_type": "display_field",
+    "expected_ja": "注文状況",
+    "expected_en": "Order Status",
+    "heading_link_route": "admin_order",
+    "ls": 1,
+    "note": "設計上の呼称は「受注状況」・画面文言は「注文状況」（md:7で明記）。見出しはadmin_orderへのリンク（クエリなし）",
+    "source": "index.twig:121-125 / messages.ja.yaml:1874 / messages.en.yaml:1852 / m02-01md:7,60"
+  },
+  "L1-M0201-004": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "expected": "各行=aリンク内に名称span＋件数span.h4。件数は整数（Twig出力そのまま・整形なし）・正規表現 ^\\d+$",
+    "count_regex": "^\\d+$",
+    "source": "index.twig:128-141 / m02-01md:84,73"
+  },
+  "L1-M0201-005": {
+    "claim_type": "business_rule",
+    "excludes": [3, 5, 7, 8, 15],
+    "excludes_names_by_const": {"CANCEL": 3, "DELIVERED": 5, "PENDING": 7, "PROCESSING": 8, "RETURNED": 15},
+    "ls": 0,
+    "expected": "同一の$excludes配列が件数集計(getOrderEachStatus($excludes)への引数渡し→SQL NOT IN)と表示行マスタ取得(Criteria notIn)の双方に適用される",
+    "note": "拡張フックADMIN_ADMIM_INDEX_ORDERで差替可（プラグイン未導入環境では既定値=本候補の前提。導入環境では前提不成立として停止）",
+    "source": "AdminController.php:114-119,121-128,131,136 / OrderStatus.php:35,39,43,45,57 / m02-01md:97-99,153,175,231"
+  },
+  "L1-M0201-006": {
+    "claim_type": "aggregation",
+    "ls": 0,
+    "expected": "件数=dtb_orderをorder_status_idでGROUP BYしCOUNT(t1.id)（WHERE order_status_id NOT IN excludes）。期間・会員・支払方法・配送先・店舗の条件なし=全件集計",
+    "verify_sql_semantics": "SELECT COUNT(id) FROM dtb_order WHERE order_status_id = <id>（非除外idごと）",
+    "source": "AdminController.php:337-362 (SQL:339-349) / m02-01md:103-105,130"
+  },
+  "L1-M0201-007": {
+    "claim_type": "display",
+    "expected_zero_literal": "0",
+    "ls": 0,
+    "expected": "件数対応表に無いステータス行は0を表示（非除外なら0件でも行として残る）",
+    "source": "index.twig:136 / m02-01md:110,155,162"
+  },
+  "L1-M0201-008": {
+    "claim_type": "display_order",
+    "ls": 0,
+    "expected": "行の並び=sort_no昇順（orderBy sort_no ASC）。マスタ行集合は環境依存（csv=8行 vs migrations=13行+名称UPDATE4件）→分母はdb.ts照会値・観測は単調非減少+帯行相対位置",
+    "source": "AdminController.php:134-138 / m02-01md:109,154,213 / import_csv ja:1-9 / Version20251125150428.php:59-116 / Version20260220000001.php:47-50,64-75"
+  },
+  "L1-M0201-009": {
+    "claim_type": "nav",
+    "expected_url_path": "/%eccube_admin_route%/order",
+    "expected_query": null,
+    "ls": 0,
+    "expected": "見出しリンク→admin_order（order_status_idクエリなし）。遷移先は検索フォームを持つ受注一覧画面（画面識別子=#search_form）",
+    "screen_identifier_selector": "#search_form",
+    "note": "画面同定はURL/route＋#search_form存在（locale非依存）で自立。見出し文言 ja「受注一覧」/en \"All Orders\"（Order/index.twig:14・ja:2455・en:2302）は補助観測＝判定要素にしない",
+    "source": "index.twig:123 / OrderController.php:138 / Order/index.twig:349 / m02-01md:74,115,156,250,65"
+  },
+  "L1-M0201-010": {
+    "claim_type": "nav",
+    "expected_url_template": "/%eccube_admin_route%/order?order_status_id=<当該ステータスid>",
+    "query_param": "order_status_id",
+    "ls": 0,
+    "expected": "各ステータス行リンクのhrefに当該idのorder_status_idクエリが載る",
+    "source": "index.twig:130 / m02-01md:75,121,156,259"
+  },
+  "L1-M0201-011": {
+    "claim_type": "cross_feature",
+    "bug_candidate": "BC-DRAFT-m02-01-1",
+    "ls": 0,
+    "expected_by_design": "クエリで渡されたステータス識別子が受注一覧の初期検索条件に反映される（設計md:75）",
+    "implementation_observed": "ee OrderControllerはorder_status_idを消費しない（全文grep 0件・GET初期表示は検索を実行せず検索セッション削除=OrderController.php:181,226-241,244）→乖離見込み。期待値は設計側のまま・実走で乖離確定",
+    "source": "m02-01md:75,122 / OrderController.php:181,226-241,244"
+  },
+  "L1-M0201-012": {
+    "claim_type": "no_ui",
+    "forbidden_selectors_in_card": ["form", "input", "textarea", "select", ".modal", ".toast", "[role=dialog]"],
+    "ls": 0,
+    "expected": "カード#order-status内にフォーム・入力要素・モーダル・ポップアップ・トースト・確認ダイアログ・専用JSなし",
+    "source": "m02-01md:85-88 / index.twig:121-143（実測0件）"
+  },
+  "L1-M0201-013": {
+    "claim_type": "no_api",
+    "ls": 0,
+    "expected": "件数は初期HTMLのサーバ側レンダリングに含まれ、本ブロック用の専用APIリクエストが発生しない（売上グラフのadmin_homepage_saleは別ブロック=評価除外）",
+    "source": "m02-01md:186,12 / AdminController.php:131,193-204,210 / index.twig:136"
+  },
+  "L1-M0201-014": {
+    "claim_type": "read_only",
+    "tables": ["dtb_order", "mtb_order_status"],
+    "ls": 0,
+    "expected": "表示処理はdtb_order/mtb_order_statusを更新しない（行数・帯行値・update_date不変。persist/flush不出現=実測）",
+    "source": "m02-01md:177,199 / AdminController.php:104-205"
+  },
+  "L1-M0201-015": {
+    "claim_type": "refresh",
+    "ls": 0,
+    "expected": "表示中の件数は自動更新しない（ポーリング/Ajaxなし）。再表示時にその時点の台帳を再集計",
+    "source": "m02-01md:166,174,252"
+  },
+  "L1-M0201-016": {
+    "claim_type": "input",
+    "ls": 0,
+    "expected": "入力=GETホーム表示要求のみ。クエリでステータスを本ブロックが受け取らない→不要クエリ付与でも行・件数不変",
+    "source": "m02-01md:196,230 / AdminController.php:104,121-127,143-148,171-184"
+  },
+  "L1-M0201-017": {
+    "claim_type": "isolation",
+    "ls": 0,
+    "expected": "API/バッチの成否を本ブロック内で判定しない（カード内に成否判定に基づく表示分岐・専用フォールバック/エラー文言を持たない）。DB読み取り失敗時は共通例外処理へ委譲",
+    "note": "改訂1: 「他ブロックAjax失敗時もカードは初期HTMLのまま」は一次資料から導けないためclaimから除去（abort観測はmd§9-4の要確認=探索的・合否判定に使わない）",
+    "source": "m02-01md:188,198,267"
+  },
+  "L1-M0201-018": {
+    "claim_type": "db_schema",
+    "ls": 0,
+    "expected": "mtb_order_status: id=smallint採番なし・name=string(255)・sort_no=smallint。display_order_count(boolean default false)はカード行生成で非参照（twig grep 0件）",
+    "source": "AbstractMasterEntity.php:32-41 / OrderStatus.php:78-79 / m02-01md:205-214 / index.twig全文"
+  },
+  "L1-M0201-019": {
+    "claim_type": "no_batch",
+    "ls": 0,
+    "expected": "本ブロックはバッチを起動しない",
+    "note": "実行時観測手段は未契約（実行保留=md §9-3）。claim自体はController:104-205の静的実測で拘束",
+    "source": "m02-01md:187 / AdminController.php:104-205"
+  },
+  "L1-M0201-020": {
+    "claim_type": "data",
+    "ls": 0,
+    "expected": "行のステータス名=mtb_order_status.nameのpassthrough。名称はマスタデータ（インストール経路依存）→比較基準は「行識別子（href order_status_id）と同一idのdb.ts name実値」・固定リテラルを期待にしない・名称→id復元をしない",
+    "source": "index.twig:133 / import_csv ja:1-9・en:1-9 / Version20260220000001.php:47-50 / m02-01md:212"
+  }
+}

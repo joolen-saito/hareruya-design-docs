@@ -1,0 +1,191 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "B0候補（D6前・O5未確定・source_class暫定=standard-src+design/fid_kubun.tsv D1:257）。正式解決器はこの_drafts/を読んではならない（CFP §7隔離）。期待値の正はL1オラクルID（三段参照）。fixture_versionは@TBD-D5。bindは母集合の期待テキスト実内容で判定（観点・前提/入力ラベルはノイズ）。本jsonはmd §1から手動導出（機械導出器はM0成果物・未実装）。改訂1（codex R1是正）: (a)Blocker=033同時更新のEX-A偽陰性→bound化・L1-M0513-023新設（後勝ち・ロックなし=md:172,272）・会計bound68/excluded21 (b)Major1=空文字vendor根拠訂正: Regexは空文字skip（RegexValidator.php:33-35）・Lengthはnullのみreturnし空文字は長さ0検査でmax違反なし（LengthValidator.php:30-38）＝違反0件（''保存の読みは維持） (c)Major2=SEED初期値を期待の正にせず操作前スナップショットS0同値比較へ (d)Major3=EX-A17件のper-ID実引き表をmd§9に新設。特記: (1)BC-DRAFT=受注一覧の入力欄/更新ボタンのマークアップ未配置（grep実測0件・設計書md:79自認）→UI操作系はfixme相当・サーバ側はrequest契約で観測 (2)DOC-DRAFT-1=一覧空文字（設計書md:155=検証エラー vs vendor読み=違反0件で''保存）→C-022実機裁定 (3)DOC-DRAFT-2=XHR+トークン不正（設計書=NG400 vs ee=AccessDeniedHttpException throw）→補完行C-030は非XHR側のみ主張。保存系は使い捨てSEED出荷（900051311/900051312）限定・afterEachでSEED再適用（破壊的更新の統治）。",
+    "source": "integration_test/e2e/exec/_drafts/m05-13_admin_order_order_tracking_number_executable_draft.md §1",
+    "baseline": {
+      "design_md_commit": "d1e94c5e38246d0eff45b4079ee42397c994e69d",
+      "ee_commit": "9dbc4dd12080ac6a3d58a97f67e23e4a4a6e4f51",
+      "vendor_validator_version": "symfony/validator v7.4.3",
+      "all_it_cases_sha256_prefix": "7911f190d273",
+      "fid_kubun": "M05-13=標準 standard-src+design（暫定付与・確定はD6）"
+    }
+  },
+  "L1-M0513-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "未認証の一覧GET/編集GET/非同期保存PUTはadmin firewallによりadmin_loginへ誘導され本機能を利用できない",
+    "source": "m05-13md:69,226 / security.yaml:40-46"
+  },
+  "L1-M0513-002": {
+    "claim_type": "http_status",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "GET/POST /%eccube_admin_route%/order（admin_order）・PUT /%eccube_admin_route%/shipping/{id}/tracking_number（admin_shipping_update_tracking_number・id=数字=出荷id）・GET/POST /order/{id}/edit（admin_order_edit・id=受注id）",
+    "source": "OrderController.php:138,576 / EditController.php:146-147 / m05-13md:65-68,71"
+  },
+  "L1-M0513-003": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "受注一覧は出荷行単位（1行=1出荷。for Order in pagination × for Shipping in Order.Shippings）・行checkboxは id=check_<出荷id>・data-id=<出荷id>",
+    "source": "index.twig:1193-1197 / m05-13md:55"
+  },
+  "L1-M0513-004": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "一覧インラインJSに updateTrackingNumber（PUT・tracking_number送信・成功時#tracking_number_<id>反映）・button初期無効・keyupで有効化+text-secondary→text-success・Enter(13)で保存後次欄フォーカス・OK以外alert('Update failed.')・fail時messages改行連結alert が実在。行内マークアップ（input/button.update_tracking_number・#tracking_number_*）は0件=未配置（BC-DRAFT基盤・md:79自認・不具合候補#1承継）",
+    "bc_draft": true,
+    "source": "index.twig:178-201,219-261 / m05-13md:79-82,119"
+  },
+  "L1-M0513-005": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "expected_ja": "送り状No.",
+    "expected_en": "Tracking No.",
+    "expected": "受注編集（単一配送branchのみ）の出荷情報に送り状No.欄: label[data-bs-toggle=tooltip]+説明アイコン・input[type=text]（1行・id=order_Shipping_tracking_number）・直下にform_errors。複数配送は欄なし（Shippingサブフォーム不追加・mapped:false/data=先頭Shipping）",
+    "source": "edit.twig:1780-1783,1601-1602,1617,1788 / OrderType.php:451-461,378-381 / ShippingType.php:394-397 / messages.ja.yaml:2531 / messages.en.yaml:2368 / m05-13md:83"
+  },
+  "L1-M0513-006": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "expected_ja": "お問い合せ番号（出荷伝票番号）がある場合、こちらから入力できます。受注一覧からまとめて入力することも可能です。",
+    "expected_en": "If you have a tracking number (delivery slip number), you can enter from here. You can also bulk-input from All Orders.",
+    "expected": "送り状No.ラベルのtitle属性=tooltip.order.shipping_info.tracking_number",
+    "source": "messages.ja.yaml:3616 / messages.en.yaml:3230 / edit.twig:1780 / m05-13md:53,83"
+  },
+  "L1-M0513-007": {
+    "claim_type": "validation_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "unit": "characters",
+    "max_length": 200,
+    "pattern": "/^[0-9a-zA-Z-]+$/u",
+    "expected": "編集フォーム経路: 任意（required:false・NotBlank不在）・Length max=eccube_mtext_len=200・Regex半角英数ハイフン。空文字はRegexがskip・Lengthは長さ0として検査するがmax=200に違反しない=違反0件で空保存・空へ消去可",
+    "source": "ShippingType.php:197-206 / eccube.yaml:118 / RegexValidator.php:33-35 / LengthValidator.php:30-38 / m05-13md:147,156,217"
+  },
+  "L1-M0513-008": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected_ja": "半角英数字かハイフンのみを入力してください。",
+    "expected_en": "Entry must be alphanumeric characters or hyphens.",
+    "expected": "編集経路の文字種エラー（form_error.graph_and_hyphen_only）。表示位置=欄直下（form_errors(form.Shipping.tracking_number)）",
+    "source": "validators.ja.yaml:41 / validators.en.yaml:36 / edit.twig:1783 / m05-13md:118"
+  },
+  "L1-M0513-009": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected_ja": "長すぎます。この値は200文字以下で入力してください。",
+    "expected_en": "This value is too long. It should have 200 characters or less.",
+    "expected": "編集経路のLength超過文言（Symfonyカタログ choice・limit=200解決後）。表示位置=欄直下",
+    "source": "vendor validators.ja.xlf:78-79 / validators.en.xlf:78-79 / m05-13md:121,160"
+  },
+  "L1-M0513-010": {
+    "claim_type": "validation_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "unit": "characters",
+    "max_length": 255,
+    "pattern": "/^[0-9a-zA-Z-]+$/u",
+    "expected": "一覧非同期経路: XHR+トークン正当→mb_convert_kana('a')で全角英数→半角に変換後、Length max=eccube_stext_len=255+Regexで検証（コントローラ内validator直接呼出し）",
+    "source": "OrderController.php:583-593 / eccube.yaml:137 / m05-13md:146,216"
+  },
+  "L1-M0513-011": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected_ja": "送り状No.は半角英数字かハイフンのみを入力してください。",
+    "expected_en": "Only Roman alphabets, numbers and hyphens are accepted for tracking numbers.",
+    "expected": "一覧経路の文字種エラー（admin.order.tracking_number_error）。応答JSONのmessages配列要素（アラート表示側はUI未配置=BC-DRAFT）",
+    "source": "messages.ja.yaml:2532 / messages.en.yaml:2369 / OrderController.php:592 / m05-13md:117"
+  },
+  "L1-M0513-012": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected_ja": "長すぎます。この値は255文字以下で入力してください。",
+    "expected_en": "This value is too long. It should have 255 characters or less.",
+    "expected": "一覧経路のLength超過文言（limit=255解決後）。応答JSONのmessages配列要素",
+    "source": "vendor validators.ja.xlf:78-79 / validators.en.xlf:78-79 / OrderController.php:590 / m05-13md:121,135"
+  },
+  "L1-M0513-013": {
+    "claim_type": "json",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "成功応答=HTTP200 {\"status\":\"OK\",\"shipping_id\":<出荷id>,\"tracking_number\":<半角変換後の保存値>}。画面遷移なし（入力欄反映はBC-DRAFT副観測）",
+    "source": "OrderController.php:613,615 / m05-13md:178,187,236"
+  },
+  "L1-M0513-014": {
+    "claim_type": "json",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "失敗応答: 検証エラー=400 {\"status\":\"NG\",\"messages\":[...]}／非XHR=400 {\"status\":\"NG\"}（短絡評価で非XHR側のみ確定）／保存例外=500 {\"status\":\"NG\"}（決定的誘発不能=要実機副観測）",
+    "source": "OrderController.php:579-581,605,616-619 / m05-13md:188,248-249"
+  },
+  "L1-M0513-015": {
+    "claim_type": "doc_draft",
+    "doc_draft": "DOC-DRAFT-2",
+    "ls": 0,
+    "expected": "【実機確定待ち・確定期待にしない】XHR+トークン不正: 設計書=NG JSONをHTTP400（md:96,247）vs ee=isTokenValidがAccessDeniedHttpExceptionをthrow（403系・NG400に到達しない読み）",
+    "source": "AbstractController.php:252-263 / Constant.php:41 / m05-13md:96,247"
+  },
+  "L1-M0513-016": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "unit": "characters",
+    "db_column": "dtb_shipping.tracking_number",
+    "db_max_length": 255,
+    "expected": "保存先=dtb_shipping.tracking_number（STRING255・NULL許容）。出荷単位1値・当該行を受信値で上書き・persist/flush即時・削除なし（行数不変）。一覧255=DB255段差0／編集200<DB255段差55",
+    "source": "Shipping.php:117-118 / OrderController.php:609-611 / m05-13md:137-138,149,200,204-208"
+  },
+  "L1-M0513-017": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "data-passthrough",
+    "expected": "一覧経路=半角変換後値を保存（ＡＢＣ１２３→ABC123）／編集経路=変換なし恒等（全角はそのままRegexエラー）。受理値は改変なくDB列へ",
+    "source": "OrderController.php:584 / ShippingType.php:197-206 / m05-13md:133,157-158"
+  },
+  "L1-M0513-018": {
+    "claim_type": "doc_draft",
+    "doc_draft": "DOC-DRAFT-1",
+    "ls": 0,
+    "expected": "【実機裁定・確定期待にしない】一覧経路の空文字: 設計書=文字種検証エラーで保存しない・空消去不成立（md:155）vs vendor=Regexは空文字でreturn(skip)・Lengthはnullのみreturnし空文字は長さ0として検査するがmax=255に違反しない=違反0件でOK・''保存（空消去成立）の読み",
+    "source": "RegexValidator.php:33-35 / LengthValidator.php:30-38 / OrderController.php:583 / m05-13md:155,216"
+  },
+  "L1-M0513-019": {
+    "claim_type": "http_status",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "存在しない出荷idへのPUT=フレームワークの未検出応答（HTTP404・XHR/トークン判定前に解決失敗）・保存されない。応答本文の形式（JSON/HTML）は要実機",
+    "source": "OrderController.php:576-577 / m05-13md:161"
+  },
+  "L1-M0513-020": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "編集経路: 登録（mode=register）で受注全体と同時に検証・保存。成功=当該受注の編集画面へリダイレクト／検証エラー=欄直下に項目エラー・受注を保存しない（同一画面再表示）",
+    "source": "EditController.php:754 / m05-13md:104-107,237,250"
+  },
+  "L1-M0513-021": {
+    "claim_type": "consistency",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "一覧・編集は同一のdtb_shipping.tracking_numberを参照・更新（片方の保存値が他方の初期値）・表示時点の永続値。最大長の差: 201..255字は非同期でのみ保存され、編集再保存で200超過エラーに掛かり得る",
+    "source": "m05-13md:169-171 / Shipping.php:117-118 / OrderController.php:609 / ShippingType.php:197"
+  },
+  "L1-M0513-023": {
+    "claim_type": "concurrency",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "同一出荷への競合保存は後勝ち=最後に保存した受信値がdtb_shipping.tracking_numberに確定・楽観/悲観ロックなし（複数管理者の保存がいずれもロック競合エラーにならず後の保存が上書き）。決定的観測は2管理セッションA→Bの順序確定した連続PUT",
+    "source": "m05-13md:172,272 / OrderController.php:608-612（persist/flushのみ・ロック取得呼出なし=傍証）"
+  },
+  "L1-M0513-022": {
+    "claim_type": "request_contract",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "PUT契約: meta[name=eccube-csrf-token]の実値をECCUBE-CSRF-TOKENヘッダ（または_tokenパラメータ）で送付・X-Requested-With: XMLHttpRequest・form body tracking_number=<値>",
+    "source": "default_frame.twig:16,83-87 / AbstractController.php:256 / Constant.php:41 / index.twig:180-182"
+  }
+}

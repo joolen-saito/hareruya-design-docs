@@ -1,0 +1,199 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "B0候補（D6前・O5未確定・source_class暫定=standard-src+design/fid_kubun.tsv D1:165）。正式解決器はこの_drafts/を読んではならない（CFP §7隔離）。期待値の正はL1オラクルID（三段参照）＝集計ケースはSEED固定値でなく『L1区間式のdb.ts独立評価値⇔sale_chart JSON応答』の突合＝**過去確定バケットのみ全値（絶対値）突合、現在期間バケットは適用前後JSON応答差分Δのみ**（改訂2の二層方式・§6.3e。canvas目視/VRTは補助）。fixture_versionは@TBD-D5。bindは母集合の期待テキスト実内容で判定（観点・前提/入力ラベルはノイズ）。本jsonはmd §1から手動導出（機械導出器はM0成果物・未実装）。%eccube_admin_route%/locale/currency/timezoneは環境値（既定 admin/ja/JPY/Asia/Tokyo=eccube.yaml:69・services.yaml:8-13）。スコープ委譲: 売上対象外ステータスの既定集合・拡張差し替え・サマリ集計はm02-02md正（m02-03md:12,40。実装実値3/7/8/15は照合補助）。read-only裁定=DOC-DRAFT-m02-03-1（DB操作節md:210-216はテンプレノイズ・正は参照のみ。根拠は設計4箇所md:30,173,196,306＋AdminController.php全文grep 0件）。CSRF負例は2系統で応答が異なる（非XHR=400 {\"status\":\"NG\"}確定＝L1-006／XHR+CSRF不正=AccessDeniedHttpException→共通例外委譲・2026-07-06実走403実測。設計書md:109の400全称記載はDOC-DRAFT-m02-03-2＝期待は『成功配列を返さない』まで・ステータス非固定）。既知実行時異常: #loading非表示×実績=BC-DRAFT-m02-03-1（期待は設計側=非表示を維持・原因未特定）。通貨記号グリフ・Chartインスタンス読取・DB障害系・時刻窓は要実機（md §9）。改訂2（codex R2是正・now依存を絶対値一致の対象から外す）: サーバtoDate（Carbon::now()@AdminController.php:227の1時点固定）とdb.ts SQLのnow()は別時点で直接束縛不能（バケットキーは日/月粒度・HTTP Dateヘッダは応答時刻＝同一観測手段なし・要実機）。改訂1の『1時間skew窓0件→全バケット完全一致決定的』は実時差≤1時間が証明不能のため撤回（codex R2正）。判定は常にバケット二層方式（md §6.3e・縮退分岐なし）: (1)過去確定バケット（週間/月間の今日キーより前の全日キー・年間の当月キーより前の全月キー＝order_date<当日0時/当月1日0時の行のみで構成されnow実値に非依存）=隔離・凍結DB前提で絶対値の完全一致 (2)現在期間バケット（週間/月間の今日キー・年間の当月キー）=絶対値一致を一切主張せずSEED適用前後のsale_chart JSON応答差分Δのみ検証（既存now近傍行は両応答で相殺されΔは決定的）。ガード=未来日付行0件（order_date>now()の集計対象行0・skew仮定不要）＋同一日run確認（0時近傍/月境界日abort）＋アプリ/DB時計整合は環境前提（要実機）。サーバ基準時刻の観測手段が実機で確定すれば現在期間バケットも絶対一致へ引き上げ可。期待の正はL1集計式のまま（実装に寄せない・SEED非正の三段参照維持）。",
+    "source": "integration_test/e2e/exec/_drafts/m02-03_admin_home_home_sales_chart_executable_draft.md §1",
+    "baseline": {
+      "design_md_commit": "d1e94c5e38246d0eff45b4079ee42397c994e69d",
+      "ee_commit": "9dbc4dd12080ac6a3d58a97f67e23e4a4a6e4f51",
+      "all_it_cases_sha256_prefix": "7911f190d273",
+      "fid_kubun": "M02-03=標準 standard-src+design（暫定付与・確定はD6）/ fid_kubun.tsv sha256先頭=44fbf02f1e4c"
+    }
+  },
+  "L1-M0203-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "未認証で GET /%eccube_admin_route%/ または /sale_chart → admin_login のログイン画面へ誘導・本グラフ/グラフ用データは利用不可（Ajaxにも到達できない）",
+    "source": "security.yaml:40-46 / EccubeExtension.php:81-88 / m02-03md:80,234"
+  },
+  "L1-M0203-002": {
+    "claim_type": "http_status",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "ホーム=GET /%eccube_admin_route%/（admin_homepage・GETのみ）。グラフはこの1画面内のカード内領域",
+    "source": "AdminController.php:102-104 / m02-03md:77"
+  },
+  "L1-M0203-003": {
+    "claim_type": "http_status",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "グラフ用データ=GET /%eccube_admin_route%/sale_chart（admin_homepage_sale・GETのみ・XHR+CSRF前提・クエリ/ボディの利用者入力なし）",
+    "source": "AdminController.php:210-211 / m02-03md:78,193"
+  },
+  "L1-M0203-004": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "expected": "pill型3タブ #pills-weekly-tab（ja=週間/en=Weekly・初期active・aria-selected=true）/#pills-monthly-tab（月間/Monthly）/#pills-year-tab（年間/Yearly）＝nav-link btn btn-ec-tab・data-bs-toggle=pill／ペイン#pills-weekly（初期tab-pane fade show active）/#pills-monthly/#pills-year 内に canvas#chart-0/#chart-1/#chart-2／#loading。管理共通クラス使用",
+    "source": "index.twig:146,180-208 / messages.ja.yaml:1884-1886 / messages.en.yaml:1862-1864 / m02-03md:88,91-92"
+  },
+  "L1-M0203-005": {
+    "claim_type": "ajax_rule",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "CSRF供給: meta[name=eccube-csrf-token]＋$.ajaxSetupで全Ajaxに ECCUBE-CSRF-TOKEN ヘッダ付与。isTokenValidは_tokenパラメータまたは同ヘッダを TOKEN_NAME('_token') IDで検証",
+    "source": "default_frame.twig:16,83-87 / AbstractController.php:252-263 / Constant.php:41 / m02-03md:78,108"
+  },
+  "L1-M0203-006": {
+    "claim_type": "ajax_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "非XHRで GET /sale_chart（認証済みでも）→ HTTP 400・本文 {\"status\":\"NG\"}・以降の集計なし・3要素配列は返らない（isXmlHttpRequest偽の短絡・CSRF評価前）",
+    "source": "AdminController.php:213-215 / m02-03md:78,109,185"
+  },
+  "L1-M0203-007": {
+    "claim_type": "ajax_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "XHR+CSRF欠落/不正→ isTokenValidが AccessDeniedHttpException('CSRF token is invalid.') をthrow→共通例外委譲・成功配列を返さない。実効ステータス/本文は要実機（2026-07-06実走403実測）。設計書md:109の『いずれも400 NG』全称はDOC-DRAFT-m02-03-2＝400を固定期待にしない",
+    "source": "AbstractController.php:256-261 / AdminController.php:213 / m02-03md:78,109 / m02_03_e2e_cases E2E-M02-03-013失敗理由"
+  },
+  "L1-M0203-008": {
+    "claim_type": "json_contract",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "成功時: 3要素配列 [週間, 月間, 年間]。各要素は { \"<バケットキー>\": { \"price\": <売上金額合計>, \"count\": <件数> }, ... }（price/count双方保持）",
+    "source": "AdminController.php:239-241,526-535 / m02-03md:116,194"
+  },
+  "L1-M0203-009": {
+    "claim_type": "bucket_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "区間: 週間=today()->subWeek()（当日0時-1週間）〜now・キーY/m/d／月間=startOfMonth（当月1日0時）〜now・キーY/m/d／年間=subYear()->startOfMonth()（1年前の月初0時）〜now・キーY/m。終了境界は3区間同一の取得処理開始時now",
+    "source": "AdminController.php:226-237 / m02-03md:111-113,131-133,169"
+  },
+  "L1-M0203-010": {
+    "claim_type": "boundary_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "order_date >= fromDate かつ <= toDate（開始日時以上・終了日時以下＝両端含む。m02-02サマリの終了未満と非対称）・order_date昇順",
+    "source": "AdminController.php:503-504,509 / m02-03md:135"
+  },
+  "L1-M0203-011": {
+    "claim_type": "bucket_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "from〜toを1日ずつ進めてキー生成・price=0/count=0で初期化→売上なし期間も0バケットで残り横軸ラベル欠落なし（0件なら全バケット0・棒高さ0）",
+    "source": "AdminController.php:526-529 / m02-03md:145,155,158"
+  },
+  "L1-M0203-012": {
+    "claim_type": "bucket_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "年間はキー書式Y/mのため同一月の各日が同一キーへ集約＝年間グラフは月単位の棒（週間・月間はY/m/dで日ごと）",
+    "source": "AdminController.php:237,526-529 / m02-03md:24,114,146,159"
+  },
+  "L1-M0203-013": {
+    "claim_type": "aggregation_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "条件一致の各受注: order_dateをキー書式変換した該当バケットに price += payment_total・count += 1。payment_total=0はcount+1/price+0（棒高さ0）。税/送料等の再計算なし",
+    "source": "AdminController.php:531-534 / m02-03md:115,144,157"
+  },
+  "L1-M0203-014": {
+    "claim_type": "aggregation_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "売上対象外ステータスは OrderStatus NOT IN (:excludes) で非算入。実装既定=CANCEL(3)/PENDING(7)/PROCESSING(8)/RETURNED(15)＝照合補助の実装実値。既定集合の確定列挙・拡張差し替えの正はm02-02md（委譲）",
+    "source": "AdminController.php:55,505-506 / OrderStatus.php:34-57 / m02-03md:68,135,156"
+  },
+  "L1-M0203-015": {
+    "claim_type": "js_rule",
+    "ls": 1,
+    "expected": "表示後$(function)で1回だけ$.ajax(GET/json)→doneで配列を順に#chart-0/1/2へ対応づけ new Chart(type:'bar')。labels=バケットキー・datasets1系列のみ data=各バケットprice（countは系列に使わない）・label=ja「売上金額」/en \"Sales Amount\"",
+    "source": "index.twig:19,55-94 / messages.ja.yaml:1887 / messages.en.yaml:1865 / m02-03md:89,120-122,143"
+  },
+  "L1-M0203-016": {
+    "claim_type": "js_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "failハンドラ空・alwaysで$('#loading').hide()＝成否にかかわらず完了時に#loading非表示。失敗時はグラフ未描画のまま同一画面・専用通知（モーダル/トースト/アラート/フラッシュ）なし。※既存実走で#loading非表示にならない×実績=BC-DRAFT-m02-03-1（期待は設計側を維持）",
+    "source": "index.twig:96-98 / m02-03md:89,123,185,247,257,261"
+  },
+  "L1-M0203-017": {
+    "claim_type": "tab_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "タブ切替=Bootstrap pill（data-bs-toggle=pill）の同一ページ内表示切替のみ。追加サーバ問い合わせ・グラフ再生成・サーバへ送る入力値の生成なし",
+    "source": "index.twig:182-190 / m02-03md:79,91,149,245"
+  },
+  "L1-M0203-018": {
+    "claim_type": "display",
+    "ls": 0,
+    "reason": "non-translated（記号グリフは環境値・要実機）",
+    "expected": "ツールチップ=currency_symbol()前置+3桁カンマ。縦軸目盛り=Math.floor(value)===value（整数値のみ）のとき通貨記号+桁区切りでラベル・非整数はラベルなし。横軸=バケットキーそのまま。各canvas height=100（ctx.canvas.height=100）",
+    "source": "index.twig:29-49,76 / EccubeExtension.php:67,372-378 / m02-03md:90,147"
+  },
+  "L1-M0203-019": {
+    "claim_type": "db_effect_read_only",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "ホーム表示・グラフ取得ともdtb_order/マスタへ登録・更新・削除なし（AdminController.php全文にpersist/flush/INSERT/UPDATE 0件=grep実測）。観測=表示+XHR+タブ操作前後で dtb_order行数・主キー順全列md5ダイジェスト・mtb_order_status全列md5ダイジェスト不変。前提=標準環境（書込みlistenerなし）。DB操作節md:210-216はDOC-DRAFT-m02-03-1のテンプレノイズ＝期待にしない",
+    "source": "m02-03md:30,173,196,306 / AdminController.php:210-241,500-537"
+  },
+  "L1-M0203-020": {
+    "claim_type": "data_rule",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "読み取り時点の永続化済みデータのみを読む・バッチを起動しない。バッチ/外部連携で更新済みなら次回のグラフ取得時にその時点のDB値がバケットへ反映。反映タイミングの正は外部連携/バッチ設計（委譲宣言はオラクル化しない）。『起動しない』は限定構成（同期完結+無書込+次回取得反映）で観測",
+    "source": "m02-03md:174,183 / AdminController.php:210-241"
+  },
+  "L1-M0203-021": {
+    "claim_type": "data_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "描画済みグラフは自動更新しない（XHRは初期表示時1回のみ・ポーリング/interval/websocketなし）。反映はホーム再表示時の再取得のみ。リアルタイムダッシュボードではない",
+    "source": "index.twig:16-103 / m02-03md:160,259"
+  },
+  "L1-M0203-022": {
+    "claim_type": "data_rule",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "サマリ=ホームHTML表示時読取（m02-02側）・グラフ=表示後の別Ajax読取＝別リクエスト・同一トランザクション非固定・一致は非保証（一致を期待にしない）。区間間（週/月/年）もスナップショット非固定＝重なる期間の厳密一致非保証（等式期待を置かない）",
+    "source": "m02-03md:170-171 / AdminController.php:153-157,210-241"
+  },
+  "L1-M0203-023": {
+    "claim_type": "empty_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "該当受注0件でもエラーにならず継続: 集計結果が空でも0初期化済みバケットがそのまま返り、画面は棒高さ0のグラフを描画（各区間のバケットは期間内キーを0で埋める）",
+    "source": "AdminController.php:512-535 / m02-03md:155,226"
+  },
+  "L1-M0203-024": {
+    "claim_type": "cookie_session",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "グラフ表示のための専用Cookie新規設定なし・本グラフ専用のセッションキー書込なし。観測=表示+XHR+タブ操作前後でcontextのCookie集合に認証/セッション系以外の新規Cookieが増えない",
+    "source": "m02-03md:293-294,300,196 / AdminController.php:210-241"
+  },
+  "L1-M0203-025": {
+    "claim_type": "ext_hook",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "売上対象外ステータスは取得のたび ADMIN_ADMIM_INDEX_SALES で確定してから集計に使用（プラグイン差し替え可能性）。標準環境（差し替えなし）では既定値が実効＝集計系ケースの前提条件。差し替え仕様の正はm02-02md",
+    "source": "AdminController.php:217-224 / m02-03md:110,40"
+  },
+  "L1-M0203-026": {
+    "claim_type": "orm_layer",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "ORM共通フィルタ soft_deleteable（enabled:true）により論理削除済み受注（deleted_at IS NOT NULL）は集計対象外＝db.ts突合SQLに deleted_at IS NULL を含める（設計md:45スコープ外＝実装層claim・設計期待の上書きではない）",
+    "source": "doctrine.yaml:78-86 / Order.php:153,771-772 / m02-03md:45"
+  },
+  "L1-M0203-027": {
+    "claim_type": "TBD",
+    "ls": null,
+    "expected": "【未確定・オラクル化不能】DB読み取り障害→共通例外処理委譲・本グラフ専用メッセージなし。HTTPステータス/例外型の列挙は設計スコープ外（md:46）・安全な障害誘発手段なし＝未確定オラクル台帳（excludedにしない）",
+    "source": "m02-03md:258,195,46"
+  }
+}

@@ -1,0 +1,306 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "B0候補（D6前・O5未確定・source_class暫定=standard-src+design/fid_kubun.tsv D1）。正式解決器はこの_drafts/を読んではならない（CFP §7隔離）。期待値の正はL1オラクルID（三段参照・SEEDを期待値の正にしない）。fixture_versionは@TBD-D5。bindは母集合の期待テキスト実内容で判定（観点ラベル不使用）。既知の実装バグ（set()/edit()戻り値型不整合による500=BC-DRAFT-m01-02-001）は乖離検出として扱い、期待値を実装に寄せていない。影響行の正規リスト（論理行17=ja行・物理行23=+EN従属6）はmd §9が単一の正（C-040含む）。Cookie名・秘密鍵原値は仕様非固定のため収載しない。codexレビューR1: 要修正Blockerなし→Major1（§9列挙へのC-040追加=正規リスト化）を是正済み。",
+    "source": "integration_test/e2e/exec/_drafts/m01-02_admin_login_two_factor_auth_executable_draft.md §1（本jsonはmd §1から導出・手編集禁止）",
+    "baseline": {
+      "design_md_commit": "ec17cd0 (repo HEAD d1e94c5)",
+      "ee_commit": "9dbc4dd12080ac6a3d58a97f67e23e4a4a6e4f51",
+      "vendor_validator_version": "symfony/validator v7.4.3",
+      "totp_library_version": "robthree/twofactorauth 1.8.2",
+      "fid_kubun": "M01-02=標準 standard-src+design（暫定付与・確定はD6）",
+      "all_it_cases_sha256_prefix": "7911f190d273"
+    }
+  },
+  "L1-M0102-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "expected": "未ログインの/auth・/set・/editへのアクセスはadmin_loginのログイン画面へリダイレクト（到達不可）",
+    "source": "security.yaml:40-47 / m01-02md:370"
+  },
+  "L1-M0102-002": {
+    "claim_type": "nav",
+    "ls": 0,
+    "expected": "個別2FA ON・Cookie無効・秘密鍵ありの管理画面リクエストはadmin_two_factor_auth（/auth）へ302",
+    "source": "TwoFactorAuthListener.php:74-82,88 / m01-02md:150"
+  },
+  "L1-M0102-003": {
+    "claim_type": "nav",
+    "ls": 0,
+    "expected": "同条件で秘密鍵なしはadmin_two_factor_auth_set（/set）へ302",
+    "source": "TwoFactorAuthListener.php:84-88 / m01-02md:151"
+  },
+  "L1-M0102-004": {
+    "claim_type": "nav",
+    "ls": 0,
+    "expected": "追加認証画面自身へのリクエストはガード対象外（後続処理を実行）",
+    "source": "TwoFactorAuthListener.php:31,59-62 / m01-02md:145"
+  },
+  "L1-M0102-005": {
+    "claim_type": "nav",
+    "ls": 0,
+    "expected": "/setは当該管理者の秘密鍵未設定時のみガード対象外（設定済みなら対象）",
+    "source": "TwoFactorAuthListener.php:36,66-72 / m01-02md:146-147"
+  },
+  "L1-M0102-006": {
+    "claim_type": "nav",
+    "ls": 0,
+    "expected": "秘密鍵設定済み管理者の/setアクセスは/authへリダイレクト（専用メッセージなし）",
+    "source": "TwoFactorAuthController.php:91-95 / m01-02md:296,414,252"
+  },
+  "L1-M0102-007": {
+    "claim_type": "nav",
+    "ls": 0,
+    "expected": "システム2FA無効または認証済みCookie有効での/auth・/set直接アクセスはadmin_homepageへリダイレクト（専用メッセージなし）",
+    "source": "TwoFactorAuthController.php:46-48,87-89 / m01-02md:118,126,251"
+  },
+  "L1-M0102-008": {
+    "claim_type": "nav",
+    "ls": 0,
+    "expected": "個別2FA OFFの管理者には誘導しない（保護画面利用可）",
+    "source": "TwoFactorAuthListener.php:74-78 / m01-02md:148,294,371"
+  },
+  "L1-M0102-009": {
+    "claim_type": "nav",
+    "ls": 0,
+    "expected": "システム2FA無効（eccube_2fa_enabled='0'/false）なら誘導を一切行わない",
+    "note": "env変更を要するため候補ケースなし（md §9記録）",
+    "source": "TwoFactorAuthListener.php:55-57 / TwoFactorAuthService.php:125-133 / eccube.yaml:23,252 / m01-02md:144,293,372"
+  },
+  "L1-M0102-010": {
+    "claim_type": "nav",
+    "ls": 0,
+    "expected": "/editは認証済みCookie無効ならadmin_homepageへリダイレクト（その後ガードで/auth等へ・専用メッセージなし）",
+    "source": "TwoFactorAuthController.php:106-108 / m01-02md:134,297,253"
+  },
+  "L1-M0102-011": {
+    "claim_type": "nav",
+    "ls": 0,
+    "expected": "追加認証で6桁トークンがDB秘密鍵と一致するとadmin_homepageへリダイレクトし認証済みCookieを付与",
+    "source": "TwoFactorAuthController.php:58-63 / m01-02md:121,88"
+  },
+  "L1-M0102-012": {
+    "claim_type": "message",
+    "expected_ja": "トークンに誤りがあります。再度入力してください。",
+    "expected_en": "There is an error in the token. Please try again.",
+    "ls": 1,
+    "note": "追加認証はTOTP不一致・フォーム不正とも同一文言（.text-dangerに表示・同一画面滞留）",
+    "source": "TwoFactorAuthController.php:64-66,70-72 / messages.ja.yaml:3227 / messages.en.yaml:2858 / two_factor_auth.twig:27-29 / m01-02md:180,256,408-409"
+  },
+  "L1-M0102-013": {
+    "claim_type": "message",
+    "expected_ja": "トークンに誤りがあります。数字6桁で入力してください。",
+    "expected_en": "There is an error in the token. Please enter in 6 digits.",
+    "ls": 1,
+    "note": "初回設定・本人再設定のフォーム不正（未入力・6桁数字以外）",
+    "source": "TwoFactorAuthController.php:153-155 / messages.ja.yaml:3228 / messages.en.yaml:2859 / m01-02md:193,209,410"
+  },
+  "L1-M0102-014": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "expected": "初回設定・本人再設定でフォーム妥当だがTOTP不一致はreinput文言（L1-M0102-012と同一）で同一画面に留まる",
+    "source": "TwoFactorAuthController.php:141-152 / m01-02md:192,208,411"
+  },
+  "L1-M0102-015": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "expected": "初回設定・本人再設定の検証成功時、dtb_member.two_factor_auth_keyへhiddenの秘密鍵候補値を保存（persist/flush即時確定・削除なし）",
+    "source": "TwoFactorAuthController.php:143-144 / m01-02md:352"
+  },
+  "L1-M0102-016": {
+    "claim_type": "message",
+    "expected_ja": "2段階認証の設定が完了しました。",
+    "expected_en": "Two-factor authentication setting is complete.",
+    "ls": 1,
+    "note": "adminフラッシュ名前空間（eccube.admin.success）・ホーム画面相当で表示",
+    "source": "TwoFactorAuthController.php:145 / AbstractController.php:107-110 / messages.ja.yaml:3226 / messages.en.yaml:2857 / m01-02md:216,267"
+  },
+  "L1-M0102-017": {
+    "claim_type": "message",
+    "expected_ja": "既に2段階認証の設定が行われています。再設定すると登録済みのデバイスが使用出来なくなります。",
+    "expected_en": "Two-factor authentication has already been set. If you reset it, you will not be able to use the registered device.",
+    "ls": 1,
+    "note": "本人の再設定画面のGETで秘密鍵が既にDBにあるときのみ（/setは鍵ありだとL1-M0102-006で事前リダイレクト）",
+    "source": "TwoFactorAuthController.php:129-132 / AbstractController.php:137-140 / messages.ja.yaml:3225 / messages.en.yaml:2856 / m01-02md:207,266"
+  },
+  "L1-M0102-018": {
+    "claim_type": "validation",
+    "ls": 0,
+    "expected": "device_tokenはNotBlank＋Length(min=6,max=6)＋attr maxlength=6（text・必須）",
+    "source": "TwoFactorAuthType.php:32-48 / m01-02md:284,360"
+  },
+  "L1-M0102-019": {
+    "claim_type": "message",
+    "expected_ja": "入力されていません。",
+    "expected_en": "No value found.",
+    "ls": 1,
+    "note": "NotBlankのフィールド検証文言（トークン欄直下form_errorsに併記されうる）",
+    "source": "validators.ja.yaml:17 / validators.en.yaml:17 / two_factor_auth.twig:36 / two_factor_auth_set.twig:60 / two_factor_auth_edit.twig:89 / m01-02md:181,194,210"
+  },
+  "L1-M0102-020": {
+    "claim_type": "message",
+    "expected_ja": "この値は6文字ちょうどで入力してください。",
+    "expected_en": "This value should have exactly 6 characters.",
+    "ls": 1,
+    "note": "Length(min=max=6)違反（5桁・7桁とも）はexactMessage。min==maxでexactMessage選択・setPlural(6)でcharacters側。ee validators.yamlに上書きなし（grep実測）",
+    "source": "vendor LengthValidator.php:71-74,85,91-95,106 / vendor Length.php:51 / validators.ja.xlf:181-184 / validators.en.xlf:181-184"
+  },
+  "L1-M0102-021": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "expected": "追加認証画面はauth_key除去（device_token+_tokenのみ）。初回設定・本人再設定はhidden auth_key（NotBlank）を持つ。DOM idはblock prefix admin_two_factor_auth由来",
+    "selectors": {
+      "device_token": "#admin_two_factor_auth_device_token",
+      "auth_key": "#admin_two_factor_auth_auth_key",
+      "csrf": "#admin_two_factor_auth__token"
+    },
+    "source": "TwoFactorAuthController.php:51-53 / TwoFactorAuthType.php:49-55,61-65 / two_factor_auth_set.twig:48 / two_factor_auth_edit.twig:51 / m01-02md:103,285,361"
+  },
+  "L1-M0102-022": {
+    "claim_type": "display_field",
+    "expected_ja": { "heading_h5": "2段階認証", "placeholder": "トークン", "submit": "認証" },
+    "expected_en": { "heading_h5": "Two-factor auth", "placeholder": "Token", "submit": "Authentication" },
+    "ls": 1,
+    "source": "two_factor_auth.twig:25,34,39 / messages.ja.yaml:3221,3223,3224 / messages.en.yaml:2852,2854,2855 / m01-02md:171,178-179"
+  },
+  "L1-M0102-023": {
+    "claim_type": "display_field",
+    "expected_ja": { "qr_description": "QRコードを2段階認証用スマートフォンアプリで読み込み、表示された6桁の数字を入力してください。", "submit": "登録" },
+    "expected_en": { "qr_description": "Please read the QR code with the two-factor authentication app.", "submit": "Register" },
+    "ls": 1,
+    "note": "#qrcode存在・script内otpauth://totp URIのsecret=がhidden auth_key値と一致",
+    "source": "two_factor_auth_set.twig:50,51,21,63 / messages.ja.yaml:3685,1629 / messages.en.yaml:3297,1661 / m01-02md:189-191"
+  },
+  "L1-M0102-024": {
+    "claim_type": "display_field",
+    "expected_ja": "システム設定 2段階認証 - {店舗名}",
+    "expected_en": "System Settings Two-factor auth - {店舗名}",
+    "ls": 1,
+    "note": "default_frameのtitle合成（sub_title+title+shop_name）。{店舗名}=店舗基本情報のショップ名（実行時値）",
+    "source": "default_frame.twig:17 / two_factor_auth_edit.twig:15-16 / messages.ja.yaml:2987,3221 / messages.en.yaml:2674,2852 / m01-02md:200-201"
+  },
+  "L1-M0102-025": {
+    "claim_type": "display_field",
+    "expected_ja": { "card_title": "2段階認証", "qr_label": "QRコード", "token_label": "トークン", "required_badge": "必須", "tooltip": "QRコードを2段階認証用スマートフォンアプリで読み込み、表示された6桁の数字を入力してください。", "submit": "登録" },
+    "expected_en": { "card_title": "Two-factor auth", "qr_label": "QR code", "token_label": "Token", "required_badge": "Required", "tooltip": "Please read the QR code with the two-factor authentication app.", "submit": "Register" },
+    "ls": 1,
+    "source": "two_factor_auth_edit.twig:58,70,78-81,112-113 / messages.ja.yaml:3221,3222,3223,1721,3685,1629 / messages.en.yaml:2852,2853,2854,1749,3297,1661 / m01-02md:203-206"
+  },
+  "L1-M0102-026": {
+    "claim_type": "cookie",
+    "ls": 0,
+    "expected": "認証済みCookie: HttpOnly=true・path=ベースパス+管理ルートセグメント・expire=eccube_2fa_expire日（既定14。0はセッション扱い）・Secure/SameSite(None)はeccube_force_ssl連動",
+    "note": "Cookie名は仕様非固定（ECCUBE_2FA_COOKIE_NAME既定eccube_2fa）＝名称一致では判定しない",
+    "source": "TwoFactorAuthService.php:29,34,55-62,102-112 / eccube.yaml:23-25,252-254 / m01-02md:60-63,471-480"
+  },
+  "L1-M0102-027": {
+    "claim_type": "cookie",
+    "ls": 0,
+    "expected": "Cookie検証=管理者ID+秘密鍵由来ハッシュ一致かつdate期限内。秘密鍵更新で旧Cookie・旧鍵由来トークンは無効",
+    "source": "TwoFactorAuthService.php:65-86,88-91 / m01-02md:307,136"
+  },
+  "L1-M0102-028": {
+    "claim_type": "integration",
+    "ls": 0,
+    "expected": "TOTP検証はverifyCode($authKey,$token,2)=許容ウィンドウ±2周期（RobThree既定SHA1/30秒/6桁・秘密鍵はcreateSecret生成のbase32）",
+    "source": "TwoFactorAuthService.php:53,115-118,120-123 / m01-02md:310,274 / e2e/helpers/totp.ts:1-10"
+  },
+  "L1-M0102-029": {
+    "claim_type": "rate_limit",
+    "expected_status": 429,
+    "expected_ja": "試行回数の上限を超過しました。しばらくお待ちいただき、再度お試しください。",
+    "expected_en": "The maximum number of attempts has been exceeded. Please wait a moment and try again.",
+    "ls": 1,
+    "note": "本番向け設定（prod）のみ: admin_two_factor_auth POST・type:user・5回/30分。既定(非prod)configには未定義=非活性（環境依存・実行保留）。初回設定・本人再設定POSTは対象外",
+    "source": "prod/eccube_rate_limiter.yaml:83-88 / eccube_rate_limiter.yaml:1-18（未定義=実測） / RateLimiterListener.php:76-82 / ExceptionListener.php:165-169 / messages.ja.yaml:3791 / messages.en.yaml:3402 / m01-02md:243,420-428"
+  },
+  "L1-M0102-030": {
+    "claim_type": "display_field",
+    "expected_ja": "2段階認証 設定",
+    "expected_en": "Two-Factor Auth",
+    "ls": 1,
+    "note": "ヘッダユーザーメニュー内リンク。ログイン中管理者の個別2FAがONのときのみ表示（/editへのリンク）",
+    "source": "default_frame.twig:184 / messages.ja.yaml:1897 / messages.en.yaml:1875 / m01-02md:222"
+  },
+  "L1-M0102-031": {
+    "claim_type": "display_field",
+    "expected_ja": { "column_heading": "2段階認証", "tooltip_completed": "2段階認証の設定は完了しています。", "tooltip_incompleted": "2段階認証の設定が未完了です。このユーザでログインし、設定を完了させてください。" },
+    "expected_en": { "column_heading": "Two-factor auth", "tooltip_completed": "Two-factor authentication settings are complete.", "tooltip_incompleted": "Two-factor authentication settings are incomplete. Please log in as this user to complete the settings." },
+    "ls": 1,
+    "note": "メンバー一覧。アイコンは個別2FA ONの行のみ・completed/incompletedはtwo_factor_auth_keyの有無で分岐",
+    "source": "member.twig:157,188-193 / messages.ja.yaml:3210-3212 / messages.en.yaml:2841-2843 / m01-02md:228-230"
+  },
+  "L1-M0102-032": {
+    "claim_type": "display_field",
+    "expected_ja": { "row_label": "2段階認証", "tooltip": "有効にすると2段階認証でのログインが必要になります。2段階認証のデバイス設定をしていない状態でログインした場合、設定後にログインできるようになります。" },
+    "expected_en": { "row_label": "Two-factor auth", "tooltip": "If enabled, you must log in using two-factor authentication. You will be able to login after setting up two-factor authentication." },
+    "ls": 1,
+    "note": "メンバー編集の2段階認証行（two_factor_auth_enabledトグル=ToggleSwitchType）",
+    "source": "member_edit.twig:227-234 / MemberType.php:148-149 / messages.ja.yaml:3210,3684 / messages.en.yaml:2841,3296 / m01-02md:236-237"
+  },
+  "L1-M0102-033": {
+    "claim_type": "db_effect",
+    "expected_ja": "保存しました",
+    "expected_en": "Saved",
+    "ls": 1,
+    "expected": "メンバー編集保存でdtb_member.two_factor_auth_enabledを更新。本機能専用メッセージなし＝共通保存メッセージのみ",
+    "source": "MemberController.php:190,218 / messages.ja.yaml:1591 / messages.en.yaml:1636 / m01-02md:254,278,286"
+  },
+  "L1-M0102-034": {
+    "claim_type": "db_schema",
+    "ls": 0,
+    "expected": "dtb_member.two_factor_auth_key=string(255)・nullable／two_factor_auth_enabled=boolean・default false",
+    "source": "Member.php:143-147 / m01-02md:343-344"
+  },
+  "L1-M0102-035": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "expected": "専用モーダル・ポップアップ・トーストを使わない（auth/set/edit 3twigにmodal要素0件=実測）",
+    "source": "m01-02md:102 / two_factor_auth.twig・two_factor_auth_set.twig・two_factor_auth_edit.twig全文"
+  },
+  "L1-M0102-036": {
+    "claim_type": "display_field",
+    "expected_ja": { "title": "ログイン - {店舗名}", "noscript": "JavaScript を有効にしてご利用ください", "copyright": "Copyright © 2000-{当年} EC-CUBE CO.,LTD. All Rights Reserved." },
+    "expected_en": { "title": "Login - {店舗名}", "noscript": "Please enable JavaScript" },
+    "ls": 1,
+    "note": "追加認証・初回設定はログインフレーム。{店舗名}{当年}は実行時値。noscriptはJS無効前提=実行保留",
+    "source": "login_frame.twig:16,25-27 / two_factor_auth.twig:11,46-49 / two_factor_auth_set.twig:11,70-73 / messages.ja.yaml:1871,1899 / messages.en.yaml:1849,1877 / m01-02md:163,167-172"
+  },
+  "L1-M0102-037": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "expected": "追加認証成功時は成功メッセージなし（遷移とCookie付与のみ。auth()成功分岐にaddSuccess/addFlash呼出なし=実測）",
+    "source": "m01-02md:249 / TwoFactorAuthController.php:58-63"
+  },
+  "L1-M0102-038": {
+    "claim_type": "csrf",
+    "ls": 0,
+    "expected": "フォームCSRF有効（admin_two_factor_auth[_token]）。トークン改変POSTはフォーム無効→auth=reinput／set・edit=invalidのエラー系（認証不成立・Cookie付与なし）",
+    "source": "framework.yaml:7 / two_factor_auth.twig:23 / two_factor_auth_set.twig:47 / two_factor_auth_edit.twig:50 / TwoFactorAuthController.php:70-72,153-155 / m01-02md:287,362"
+  },
+  "L1-M0102-039": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "expected": "保存される秘密鍵の元=GETでcreateSecret()生成しhiddenに埋めた秘密鍵候補（POSTで送り返されたauth_key値がそのまま保存値）",
+    "source": "TwoFactorAuthController.php:133-134,139,143 / m01-02md:285,361"
+  },
+  "L1-M0102-040": {
+    "claim_type": "nav",
+    "ls": 0,
+    "expected": "追加認証POSTでフォーム妥当だが秘密鍵未設定の管理者は/setへリダイレクト",
+    "source": "TwoFactorAuthController.php:58,67-69 / m01-02md:119"
+  },
+  "L1-M0102-041": {
+    "claim_type": "cookie",
+    "ls": 0,
+    "expected": "Cookie値は複数管理者ID分エントリのJSON（検証ハッシュ+更新時刻）。認証済み状態はブラウザのCookie×管理者の秘密鍵に依存（ブラウザ間非共有・排他なし）",
+    "source": "TwoFactorAuthService.php:93-100 / m01-02md:299,474"
+  },
+  "L1-M0102-042": {
+    "claim_type": "log_suppression",
+    "ls": 0,
+    "expected": "ログにパスワード・TOTP秘密鍵/6桁トークン・なりすまし対策トークン・2FA Cookie値・セッションID完全値を出してはならない",
+    "note": "設計書由来・不出力をコードで立証していない・観測手段未契約＝実行保留",
+    "source": "m01-02md:439-445"
+  }
+}
