@@ -12,14 +12,13 @@
 |--------|------------------------|
 | IT-15 | CSRF、対象データ、未認証、状態変化 |
 | IT-20 | 出力抑止、識別子 |
-| IT-25 | HTTPステータス、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
+| IT-25 | HTTPステータス、フォーム送信、一覧、更新抑止、画面レイアウト、画面表示データ、確認ダイアログ |
 | IT-22 | DBとの相関バリデーション、必須バリデーション、文字列長バリデーション、相関バリデーション、部分入力 |
-| IT-23 | データ正当性、実行結果、検索条件 |
+| IT-23 | 実行結果、検索条件 |
 | IT-26 | 実行結果、更新内容、登録内容 |
 | IT-05 | 削除条件、実行結果 |
 | IT-02 | 公開コンテンツ、初期行数、表示順 |
-| IT-12 | 内部情報、画面レイアウト、画面表示データ、非同期更新 |
-| IT-16 | ファイル選択 |
+| IT-12 | エラー継続、内部情報、画面レイアウト、画面表示データ |
 
 ## テストケースTSV
 
@@ -148,159 +147,159 @@ m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — �
 m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-037	IT-26	登録内容	P1	登録時の登録内容確認	M03-14-MSG-010を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-010の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-038	IT-26	登録内容	P1	登録時の登録内容確認	M03-14-MSG-012を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-012の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-038	IT-26	登録内容	P1	登録時の登録内容確認	M03-14-MSG-011を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-011の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-039	IT-26	登録内容	P1	登録時の登録内容確認	GET 一覧または編集を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でGET 一覧または編集の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-039	IT-26	登録内容	P1	登録時の登録内容確認	M03-14-MSG-012を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-012の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-040	IT-26	登録内容	P1	登録時の登録内容確認	削除方式を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で削除方式の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-040	IT-26	登録内容	P1	登録時の登録内容確認	GET 一覧または編集を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でGET 一覧または編集の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	同一であること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-041	IT-26	登録内容	P1	登録時の登録内容確認	ナビから略称タグ登録／編集を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でナビから略称タグ登録／編集の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-042	IT-26	登録内容	P1	登録時の登録内容確認	行の id または名称または「変更」を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	admin.product.storage.page_no と admin.product.storage.page_count が更新もしくは初期化されるであること。
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-041	IT-26	登録内容	P1	登録時の登録内容確認	削除方式を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で削除方式の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-043	IT-26	登録内容	P1	登録時の登録内容確認	画面下部「登録」を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-042	IT-26	登録内容	P1	登録時の登録内容確認	ナビから略称タグ登録／編集を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で登録内容の対象項目に最大長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-043	IT-26	登録内容	P1	登録時の登録内容確認	行の id または名称または「変更」を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で登録内容の対象項目に最大長+1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-044	IT-26	登録内容	P1	登録時の登録内容確認	表示件数プルダウンを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-044	IT-26	登録内容	P1	登録時の登録内容確認	画面下部「登録」を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で登録内容の対象項目に最小長の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-045	IT-26	登録内容	P1	登録時の登録内容確認	行の削除（window.confirm 確認ダイアログ経由）を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-045	IT-26	登録内容	P1	登録時の登録内容確認	表示件数プルダウンを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で登録内容の対象項目に最小長-1の値を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されないこと。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-046	IT-26	登録内容	P1	登録時の登録内容確認	表示要素を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で表示要素の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-046	IT-26	登録内容	P1	登録時の登録内容確認	行の削除（window.confirm 確認ダイアログ経由）を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で行の削除（window.confirm 確認ダイアログ経由）の確認に必要な条件を指定する	"1. 登録内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	登録内容の対象レコードが追加されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-047	IT-26	実行結果	P1	登録時の実行結果確認	JS 挙動を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でJS 挙動の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-047	IT-26	実行結果	P1	登録時の実行結果確認	表示要素を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で表示要素の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが追加されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-048	IT-23	実行結果	P1	登録時の実行結果確認	モーダル・ポップアップを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-048	IT-23	実行結果	P1	登録時の実行結果確認	JS 挙動を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でJS 挙動の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除前の確認のみ（削除共通）であること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-049	IT-26	更新内容	P1	更新時の更新内容確認	アルファベット順ソートフラグを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でアルファベット順ソートフラグの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	.js-page-count の change でクエリに page_count をセットしてページ全体を読み込み直すであること。
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-049	IT-26	更新内容	P1	更新時の更新内容確認	モーダル・ポップアップを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-050	IT-26	更新内容	P1	更新時の更新内容確認	登録送信で入力不備があったときを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で登録送信で入力不備があったときの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-050	IT-26	更新内容	P1	更新時の更新内容確認	アルファベット順ソートフラグを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でアルファベット順ソートフラグの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-051	IT-26	更新内容	P1	更新時の更新内容確認	CSV 出力・インポートを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でCSV 出力・インポートの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-051	IT-26	更新内容	P1	更新時の更新内容確認	登録送信で入力不備があったときを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で登録送信で入力不備があったときの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-052	IT-26	更新内容	P1	更新時の更新内容確認	入力を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で入力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-052	IT-26	更新内容	P1	更新時の更新内容確認	CSV 出力・インポートを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でCSV 出力・インポートの確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GET 側はページ番号、表示件数、編集対象の id（任意）、POST はフォーム複数項目とSymfonyフォーム用トークンであること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-053	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で成功時出力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-054	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	詳細処理は別であること。
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-053	IT-26	更新内容	P1	更新時の更新内容確認	入力を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で入力の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-055	IT-26	更新内容	P1	更新時の更新内容確認	副作用を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-054	IT-26	更新内容	P1	更新時の更新内容確認	成功時出力を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で更新内容の対象項目に最大長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-055	IT-26	更新内容	P1	更新時の更新内容確認	失敗時出力を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で更新内容の対象項目に最大長+1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-056	IT-26	更新内容	P1	更新時の更新内容確認	mtb_storage_codeを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-056	IT-26	更新内容	P1	更新時の更新内容確認	副作用を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で更新内容の対象項目に最小長の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-057	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-057	IT-26	更新内容	P1	更新時の更新内容確認	mtb_storage_codeを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で更新内容の対象項目に最小長-1の値を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されないこと。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-058	IT-26	更新内容	P1	更新時の更新内容確認	名称を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で名称の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-058	IT-26	更新内容	P1	更新時の更新内容確認	登録/更新を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で登録/更新の確認に必要な条件を指定する	"1. 更新内容の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	更新内容の対象レコードの値が変更されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-059	IT-05	実行結果	P1	更新時の実行結果確認	並び順を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で並び順の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-059	IT-05	実行結果	P1	更新時の実行結果確認	名称を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で名称の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードの値が変更されること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-060	IT-05	実行結果	P1	更新時の実行結果確認	管理画面ログイン済み運用者を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で管理画面ログイン済み運用者の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-060	IT-05	実行結果	P1	更新時の実行結果確認	並び順を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で並び順の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	NotBlank と IntegerType と 0〜32767 の Rangeであること。
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-061	IT-05	削除条件	P1	削除時の削除条件確認	管理画面ログイン済み運用者を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	ルート単位のアノテーションにより追加の許可フラグ情報はソース上読み取っておらず、商品管理へ辿れる主体はいずれも当画面を再利用し得るであること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-061	IT-05	削除条件	P1	削除時の削除条件確認	「新規登録へ戻る」リンクを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-062	IT-05	削除条件	P1	削除時の削除条件確認	「新規登録へ戻る」リンクを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GET …/product/storageであること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-062	IT-05	削除条件	P1	削除時の削除条件確認	「登録」押下後成功または失敗を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-063	IT-05	削除条件	P1	削除時の削除条件確認	「登録」押下後成功または失敗を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	いずれも GET admin_product_storage_code（サイトルート上は /{admin_route}/product/storage）であること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-063	IT-05	削除条件	P1	削除時の削除条件確認	「CSV 出力」「CSV に取込」を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で削除条件で対象条件に該当する値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-064	IT-05	削除条件	P1	削除時の削除条件確認	「CSV 出力」「CSV に取込」を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	それぞれ GET …/export と GET …/csvであること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-064	IT-05	削除条件	P1	削除時の削除条件確認	削除実行後成功または商品紐づけ失敗を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で削除条件で対象条件に該当しない値を指定する	"1. 削除条件の対象レコードと前提状態を用意する
-2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	GET …/product/storageであること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-065	IT-05	削除条件	P1	削除時の削除条件確認	フォーム入力不備を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でフォーム入力不備の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-065	IT-05	削除条件	P1	削除時の削除条件確認	削除実行後成功または商品紐づけ失敗を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で削除実行後成功または商品紐づけ失敗の確認に必要な条件を指定する	"1. 削除条件の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	削除条件の対象レコードが削除状態にならないこと。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-066	IT-05	実行結果	P1	削除時の実行結果確認	DELETE 時に関連商品があるを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でDELETE 時に関連商品があるの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-066	IT-05	実行結果	P1	削除時の実行結果確認	フォーム入力不備を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でフォーム入力不備の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-067	IT-05	実行結果	P1	削除時の実行結果確認	M03-14-MSG-001を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-001の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-067	IT-05	実行結果	P1	削除時の実行結果確認	DELETE 時に関連商品があるを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でDELETE 時に関連商品があるの確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
-3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	商品管理 — 略称タグ登録／編集画面に遷移すること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-068	IT-05	実行結果	P1	削除時の実行結果確認	M03-14-MSG-002を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-002の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	メッセージ鍵ベースでエラーフラッシュであること。
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-068	IT-05	実行結果	P1	削除時の実行結果確認	M03-14-MSG-001を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-001の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	実行結果の対象レコードが削除状態になること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-069	IT-05	実行結果	P1	削除時の実行結果確認	M03-14-MSG-003を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-003の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-069	IT-05	実行結果	P1	削除時の実行結果確認	M03-14-MSG-002を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-002の確認に必要な条件を指定する	"1. 実行結果の対象レコードと前提状態を用意する
 2. 登録・更新・削除・検索のいずれか対象のDB操作を発生させる
 3. 対象テーブルのレコード（区分・件数・更新値）を確認する"	商品管理 — 略称タグ登録／編集画面に遷移すること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-070	IT-02	初期行数	P2	初期行数の結合確認	M03-14-MSG-004を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-070	IT-02	初期行数	P2	初期行数の結合確認	M03-14-MSG-003を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-003の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-14-MSG-003を確認する
+3. 画面表示と後続状態を確認する"	商品管理 — 略称タグ登録／編集画面に遷移すること。
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-071	IT-02	表示順	P2	表示順の結合確認	M03-14-MSG-004を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-004の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-14-MSG-004を確認する
 3. 画面表示と後続状態を確認する"	商品管理 — 略称タグ登録／編集画面に遷移すること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-071	IT-02	表示順	P2	表示順の結合確認	M03-14-MSG-005を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-005の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. M03-14-MSG-005を確認する
-3. 画面表示と後続状態を確認する"	要ソース確認であること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-072	IT-25	更新抑止	P1	更新抑止の結合確認	M03-14-MSG-006を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-006の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-072	IT-25	更新抑止	P1	更新抑止の結合確認	M03-14-MSG-005を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-005の確認に必要な条件を指定する	"1. 更新抑止の認証・Cookie・セッション・試行制限など前提条件を設定する
+2. 対象の認証操作を実行する
+3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	要ソース確認であること。
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-073	IT-12	内部情報	P1	内部情報の結合確認	M03-14-MSG-006を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-006の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
 2. 対象の認証操作を実行する
 3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	略称タグCSVアップロード画面に遷移すること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-073	IT-12	内部情報	P1	内部情報の結合確認	M03-14-MSG-007を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-007の確認に必要な条件を指定する	"1. 内部情報の認証・Cookie・セッション・試行制限など前提条件を設定する
-2. 対象の認証操作を実行する
-3. 画面表示・遷移・Cookie・セッション・履歴など観測値を確認する"	略称タグCSVアップロード画面に遷移すること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M03-14-MSG-008を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-008の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-074	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M03-14-MSG-007を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-007の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-14-MSG-007を確認する
+3. 画面表示と後続状態を確認する"	略称タグCSVアップロード画面に遷移すること。
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-075	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M03-14-MSG-008を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-008の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-14-MSG-008を確認する
 3. 画面表示と後続状態を確認する"	要ソース確認であること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-075	IT-25	画面レイアウト	P2	画面レイアウトの結合確認	M03-14-MSG-009を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-009の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M03-14-MSG-009を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-009の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-14-MSG-009を確認する
 3. 画面表示と後続状態を確認する"	略称タグCSVアップロード画面に遷移すること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-076	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M03-14-MSG-010を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-010の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-077	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M03-14-MSG-010を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-010の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-14-MSG-010を確認する
 3. 画面表示と後続状態を確認する"	送信せず現在の画面に留まるであること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-077	IT-12	画面レイアウト	P2	画面レイアウトの結合確認	M03-14-MSG-012を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-012の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M03-14-MSG-011を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-011の確認に必要な条件を指定する	"1. 対象画面を表示する
+2. M03-14-MSG-011を確認する
+3. 画面表示と後続状態を確認する"	要ソース確認であること。
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	M03-14-MSG-012を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でM03-14-MSG-012の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. M03-14-MSG-012を確認する
 3. 画面表示と後続状態を確認する"	送信せず現在の画面に留まるであること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-078	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	GET 一覧または編集を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でGET 一覧または編集の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	GET 一覧または編集を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でGET 一覧または編集の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. GET 一覧または編集を確認する
 3. 画面表示と後続状態を確認する"	admin.product.storage.page_no と admin.product.storage.page_count が更新もしくは初期化されるであること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-079	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	削除方式を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で削除方式の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-081	IT-25	一覧	P2	一覧の結合確認	削除方式を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で削除方式の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 削除方式
 3. 画面表示と後続状態を確認する"	同一であること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-080	IT-12	画面レイアウト	P2	画面レイアウトの入力検証	ナビから略称タグ登録／編集を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でナビから略称タグ登録／編集の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-082	IT-12	画面表示データ	P2	画面表示データの結合確認	ナビから略称タグ登録／編集を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でナビから略称タグ登録／編集の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. ナビから略称タグ登録／編集を確認する
-3. 画面表示と後続状態を確認する"	上部に登録フォーム、下部に一覧であること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-081	IT-25	一覧	P2	一覧の結合確認	行の id または名称または「変更」を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で行の id または名称または「変更」の確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-083	IT-25	画面表示データ	P2	画面表示データの結合確認	行の id または名称または「変更」を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で行の id または名称または「変更」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 行の id または名称または「変更」を確認する
 3. 画面表示と後続状態を確認する"	上部フォームが当該行の内容になり、一覧は表示されるであること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-082	IT-12	画面表示データ	P2	画面表示データの結合確認	画面下部「登録」を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で画面下部「登録」の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-084	IT-12	画面表示データ	P2	画面表示データの結合確認	画面下部「登録」を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で画面下部「登録」の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 画面下部「登録」を確認する
 3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-083	IT-25	画面表示データ	P2	画面表示データの結合確認	表示件数プルダウンを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で表示件数プルダウンの確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-085	IT-25	画面表示データ	P2	画面表示データの結合確認	表示件数プルダウンを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で表示件数プルダウンの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 表示件数プルダウンを確認する
 3. 画面表示と後続状態を確認する"	.js-page-count の変更でクエリのみ付いて再読込であること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-084	IT-12	画面表示データ	P2	画面表示データの結合確認	行の削除（window.confirm 確認ダイアログ経由）を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で行の削除（window.confirm 確認ダイアログ経由）の確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-086	IT-25	フォーム送信	P1	フォーム送信の結合確認	行の削除（window.confirm 確認ダイアログ経由）を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で行の削除（window.confirm 確認ダイアログ経由）の確認に必要な条件を指定する	"1. 対象画面を表示する
 2. 行の削除（window.confirm 確認ダイアログ経由）
-3. 画面表示と後続状態を確認する"	画面表示データでエラーが表示されず、対象処理を継続できること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-085	IT-16	ファイル選択	P2	ファイル選択の結合確認	モーダル・ポップアップを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
+3. 画面表示と後続状態を確認する"	コアの共通トークン名で CSRF が検証されるであること。
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-087	IT-12	エラー継続	P3	エラー継続の結合確認	モーダル・ポップアップを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でモーダル・ポップアップの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. モーダル・ポップアップを確認する
 3. 画面表示と後続状態を確認する"	削除前の確認のみ（削除共通）であること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-086	IT-12	非同期更新	P1	非同期更新の結合確認	アルファベット順ソートフラグを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でアルファベット順ソートフラグの確認に必要な条件を指定する	"1. 対象画面を表示する
+m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-088	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	アルファベット順ソートフラグを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でアルファベット順ソートフラグの確認に必要な条件を指定する	"1. 対象画面を表示する
 2. アルファベット順ソートフラグを確認する
 3. 画面表示と後続状態を確認する"	キー storage_code[alphabetSortFlg]であること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-087	IT-02	公開コンテンツ	P1	公開コンテンツの結合確認	CSV 出力・インポートを試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）でCSV 出力・インポートの確認に必要な条件を指定する	"1. 対象画面を表示する
-2. CSV 出力・インポートを確認する
-3. 画面表示と後続状態を確認する"	詳細処理は別であること。
-m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）	IT-M03-14-ADMIN-PRODUCT-PRODUCT-ABBREVIATION-TAG-REGISTER-EDIT-088	IT-23	データ正当性	P3	データ正当性の結合確認	入力を試験できる状態である	m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — 略称タグ登録／編集）（m03_14_admin_product_product_abbreviation_tag_register_edit）で入力の確認に必要な条件を指定する	"1. 対象画面を表示する
-2. 入力
-3. 画面表示と後続状態を確認する"	GET 側はページ番号、表示件数、編集対象の id（任意）、POST はフォーム複数項目とSymfonyフォーム用トークンであること。
 ```
 
 ## テスト層による母集合除外（結合テスト対象外）
@@ -400,6 +399,6 @@ m03-14_admin_product_product_abbreviation_tag_register_edit（商品管理 — �
 | バッチアプリケーション / 時刻境界 / 日時切替（IT-30） | 本機能はバッチ処理を起動しないため |
 | ウェブサービス / 冪等・再処理 / 冪等キー（IT-08） | 本機能はバッチ処理を起動しないため |
 | データベースアクセス / ポイント / ライフサイクル（IT-33） | 元設計HTMLに該当する処理・I/Fがないため |
-| その他 | 同種の対象外観点 2 件は上記分類と同じ理由で対象外 |
+| その他 | 同種の対象外観点 3 件は上記分類と同じ理由で対象外 |
 
-> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 11件 — No.109, No.110, No.111, No.359, No.381, No.387, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。
+> 別枠（非該当ではない）: 本機能に該当するが上限（max_cases）または実行キー重複で今回未収載の結合観点 10件 — No.109, No.110, No.111, No.382, No.385, No.412, No.413, No.414, No.415, No.510。上限緩和または個別ケース化で収載可能。
