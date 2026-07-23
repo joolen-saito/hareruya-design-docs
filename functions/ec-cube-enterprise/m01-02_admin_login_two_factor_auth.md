@@ -260,11 +260,11 @@
 
 ### メッセージID対応（自動棚卸）
 
-| メッセージID | 表示位置 | 画面上の文言 | 表示条件 | 後続処理 |
-|---|---|---|---|---|
-| M01-02-MSG-001 | 画面上部 | 要ソース確認（variable: $res['error']） | 要ソース確認 | 要ソース確認 |
-| M01-02-MSG-002 | 管理画面上部 | 既に2段階認証の設定が行われています。再設定すると登録済みのデバイスが使用出来なくなります。 | 二段階認証を設定済みの管理者が、設定画面を開いたとき | 本人の再設定画面に留まる |
-| M01-02-MSG-003 | 管理画面上部 | 2段階認証の設定が完了しました。 | 二段階認証の設定を完了したとき | ホーム画面に遷移する |
+| メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
+|---|---|---|----------|---|---|
+| M01-02-MSG-001 | 画面上部 | 要ソース確認（variable: $res['error']） | There is an error in the token. Please try again. ／ There is an error in the token. Please enter in 6 digits. | 要ソース確認 | 要ソース確認 |
+| M01-02-MSG-002 | 管理画面上部 | 既に2段階認証の設定が行われています。再設定すると登録済みのデバイスが使用出来なくなります。 | Two-factor authentication has already been set. If you reset it, you will not be able to use the registered device. | 二段階認証を設定済みの管理者が、設定画面を開いたとき | 本人の再設定画面に留まる |
+| M01-02-MSG-003 | 管理画面上部 | 2段階認証の設定が完了しました。 | Two-factor authentication setting is complete. | 二段階認証の設定を完了したとき | ホーム画面に遷移する |
 
 ## 業務ルール・計算
 
