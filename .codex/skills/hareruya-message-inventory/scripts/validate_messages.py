@@ -36,24 +36,32 @@ def load_rows() -> list[dict]:
         return list(csv.DictReader(fh, delimiter="\t"))
 
 
-def source_has(text: str) -> bool:
-    """textが実ソースに存在するか（固定リテラル部分で判定）。"""
-    # プレースホルダ %x% {x} を除いた最長の固定断片で照合
+def _targets() -> list[str]:
+    t = [str(EE / "src/Eccube"), str(EE / "app"), str(EE / "html")]
+    # Symfony 標準バリデータ等、vendor 同梱の翻訳もユーザーに実表示される正当なソース。
+    t += [str(p) for p in sorted(EE.glob("vendor/symfony/*/Resources/translations")) if p.is_dir()]
+    return t
+
+
+def _frag_has(text: str) -> bool:
     frag = max(re.split(r"%[^%]+%|\{[^}]*\}|\\n", text), key=len).strip()
     if len(frag) < 4:
         frag = text.strip()[:20]
     if not frag:
         return True
-    targets = [
-        str(EE / "src/Eccube"),   # locale/template/Controller/Form/Service 全て
-        str(EE / "app"),
-        str(EE / "html"),
-    ]
-    # Symfony 標準バリデータ等、vendor 同梱の翻訳もユーザーに実表示される正当なソース。
-    # vendor 全体は走査せず翻訳リソースに限定（誤ヒット・低速化の回避）。
-    targets += [str(p) for p in sorted(EE.glob("vendor/symfony/*/Resources/translations")) if p.is_dir()]
-    r = subprocess.run(["grep", "-rqF", "--", frag, *targets], capture_output=True)
-    return r.returncode == 0
+    return subprocess.run(["grep", "-rqF", "--", frag, *_targets()], capture_output=True).returncode == 0
+
+
+def source_has(text: str) -> bool:
+    """textが実ソースに存在するか（固定リテラル部分で判定）。
+
+    fable5戦略の多候補形式「候補A ／ 候補B ／ …」は、各候補が逐語存在すれば正当
+    （例外由来で単一に絞れない文言の全列挙）。全候補が実在する場合のみ真とする。
+    """
+    cands = [c.strip() for c in re.split(r"／|\s/\s", text) if c.strip()]
+    if len(cands) > 1:
+        return all(_frag_has(c) for c in cands)
+    return _frag_has(text)
 
 
 def main() -> int:

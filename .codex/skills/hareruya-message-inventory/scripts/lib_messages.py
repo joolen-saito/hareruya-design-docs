@@ -35,15 +35,16 @@ def _strip_quotes(v: str) -> str:
     return v
 
 
-def load_translations() -> dict[str, str]:
+def load_translations(locale: str = "ja") -> dict[str, str]:
     """Symfony翻訳YAMLを寛容にパースしフラットな dotted key -> 文言 に。
 
     PyYAMLはEC-CUBEの未クォートコロン値で失敗するため、Symfony準拠の
     ライン単位パーサで解決する（フラットdottedキー主体、ブロックスカラー対応）。
     ネスト（インデント階層）にも対応し、親キーをドットで連結する。
+    locale で 'ja' / 'en' を切り替え（messages.<locale>.yaml / validators.<locale>.yaml）。
     """
     flat: dict[str, str] = {}
-    for name in ("messages.ja.yaml", "validators.ja.yaml"):
+    for name in (f"messages.{locale}.yaml", f"validators.{locale}.yaml"):
         path = LOCALE_DIR / name
         if not path.exists():
             continue
