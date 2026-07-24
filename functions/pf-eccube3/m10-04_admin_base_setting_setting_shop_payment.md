@@ -346,14 +346,14 @@
 | M10-04-MSG-009 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | Sorry, we are unable to delete %name%, because it has related data. | 関連データのある支払方法を削除しようとしたとき | 支払方法一覧画面に遷移する |
 | M10-04-MSG-010 | 管理画面上部 | 「%name%」を表示にしました。 | %name% is displayed | 支払方法を表示に切り替えたとき | 支払方法一覧画面に遷移する |
 | M10-04-MSG-011 | 管理画面上部 | 「%name%」を非表示にしました。 | %name% is hidden | 支払方法を非表示に切り替えたとき | 支払方法一覧画面に遷移する |
-| M10-04-MSG-012 | 入力項目直下（利用条件下限欄） | 数字で入力してください。 | Please enter with numbers. | 利用条件の下限に数字以外を入力して送信したとき | 支払方法編集画面に留まる |
+| M10-04-MSG-012 | 入力項目直下（利用条件下限欄） | 数字で入力してください。 | Entry must be numbers. | 利用条件の下限に数字以外を入力して送信したとき | 支払方法編集画面に留まる |
 | M10-04-MSG-013 | 入力項目直下（利用条件下限欄） | 下限・上限の値を確認してください | Please check the minimum and maximum amounts. | 利用条件の下限より小さい上限を入力して送信したとき | 支払方法編集画面に留まる |
 | M10-04-MSG-014 | 削除確認モーダル本文 | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | You can not revert this action. Are you sure to delete %name%? | 支払方法の削除ボタンを押したとき（削除前の確認） | 削除でモーダルを閉じて支払方法一覧画面に遷移、キャンセルでモーダルを閉じる |
 | M10-04-MSG-015 | 画像入力項目直下(#payment_image_error) | アップロードに失敗しました | Failed to upload | 支払方法の画像をアップロードできなかったとき | 支払方法編集画面に留まる |
-| M10-04-MSG-016 | 入力項目直下 | 入力されていません。 | The field is empty. | 必須項目が未入力のまま送信したとき | 支払方法編集画面に留まる |
+| M10-04-MSG-016 | 入力項目直下 | 入力されていません。 | No value found. | 必須項目が未入力のまま送信したとき | 支払方法編集画面に留まる |
 | M10-04-MSG-017 | 入力項目直下 | 長すぎます。この値は{{ limit }}文字以下で入力してください。 | This value is too long. It should have {{ limit }} character or less.\|This value is too long. It should have {{ limit }} characters or less. | 入力できる文字数を超えて送信したとき | 支払方法編集画面に留まる |
 | M10-04-MSG-018 | 画面中央(ダイアログ/モーダル) | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | You can not revert this action. Are you sure to delete %name%? | 支払方法の削除アイコンを押したとき（削除前の確認） | 削除でモーダルを閉じて支払方法一覧画面に遷移、キャンセルでモーダルを閉じる |
-| M10-04-MSG-019 | 入力項目直下 | 数字で入力してください。 | Please enter with numbers. | 利用条件の下限に数字以外を入力して送信したとき | 支払方法編集画面に留まる |
+| M10-04-MSG-019 | 入力項目直下 | 数字で入力してください。 | Entry must be numbers. | 利用条件の下限に数字以外を入力して送信したとき | 支払方法編集画面に留まる |
 | M10-04-MSG-020 | 入力項目直下/フォーム上部 | 下限・上限の値を確認してください | Please check the minimum and maximum amounts. | 利用条件の下限より小さい上限を入力して送信したとき | 支払方法編集画面に留まる |
 
 ---

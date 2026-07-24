@@ -25,8 +25,8 @@ def rows_for(fid: str):
     for l in lines[1:]:
         f = l.split("\t")
         if f[0].startswith(area + "-MSG-"):
-            out.append({"id": f[0], "ja": f[ic["メッセージ内容"]][:70],
-                        "en": f[ic["メッセージ内容(英語)"]][:70],
+            out.append({"id": f[0], "ja": f[ic["メッセージ内容"]][:300],
+                        "en": f[ic["メッセージ内容(英語)"]][:300],
                         "evidence": f[ic["根拠(file:line)"]][:110]})
     return out
 

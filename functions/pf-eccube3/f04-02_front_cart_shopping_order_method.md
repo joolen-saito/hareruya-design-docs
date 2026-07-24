@@ -172,7 +172,7 @@
 |--------------|----------|--------------|----------|----------|----------|
 | F04-02-MSG-003 | 画面上部 | 購入処理で予期しないエラーが発生しました。恐れ入りますがお問い合わせページよりご連絡ください。 | Sorry, we have faced an unexpected error during the checkout process. Please contact us from the inquiry form. We are sorry for the inconvenience. | 注文を確定するときに、予期しない問題が起きたとき | 購入エラー画面に遷移する |
 | F04-02-MSG-005 | 画面上部 | 購入処理でエラーが発生しました。 | An error occurred during the checkout process. | プレオーダーの注文手続きで、購入処理中の注文情報を取得できないとき | 購入エラー画面に遷移する |
-| F04-02-MSG-006 | 入力項目直下 | 数字で入力してください。 | Please enter with numbers. | ログインしてポイントを利用する注文で、使用ポイントに数字以外を入力して送信したとき | ご注文方法指定画面に留まる |
+| F04-02-MSG-006 | 入力項目直下 | 数字で入力してください。 | Entry must be numbers. | ログインしてポイントを利用する注文で、使用ポイントに数字以外を入力して送信したとき | ご注文方法指定画面に留まる |
 
 MSG-001/002/004 は決済モジュールや例外が返す文字列をそのまま表示するため、固定リテラルが実ソースに存在せず `要ソース確認`。MSG-003 はキー `front.shopping.system_error`（`messages.ja.yaml:1557`）の逐語値。
 

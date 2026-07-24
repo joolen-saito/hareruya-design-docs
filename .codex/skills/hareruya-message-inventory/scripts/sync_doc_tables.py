@@ -52,6 +52,8 @@ def col_source(header_cell: str) -> str | None:
         return "後続処理"
     if "条件" in h:
         return "トリガー（条件）"
+    if "英語" in h:
+        return "メッセージ内容(英語)"
     if "文言" in h or "メッセージ内容" in h:
         return "メッセージ内容"
     if "表示位置" in h or "どこに" in h:

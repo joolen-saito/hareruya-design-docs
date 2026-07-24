@@ -55,3 +55,38 @@
 2. **EN列に日本語が出たらエラー扱い**。JAコピーを禁止し、英訳が取れなければ「要ソース確認」。実英訳は messages.en.yaml / validators.en.yaml / *.en.twig / JS英語literal から取得。
 3. JS/Twig 抽出時に `//`・`/* */`・Twig コメント（`{# #}`）を除外。
 4. 再生成後に検査（CI）: 「JA列に日本語なしの行」「EN列に日本語含有の行」「JA=EN の行」を検出したら fail（例外は明示許可制）。
+
+---
+
+## 是正結果（2026-07-24 完了 / codex 再レビュー済み）
+
+### 根本原因の確定
+翻訳ロードのパーサ（`lib_messages.load_translations`）が**スペース入り英語ソースキー**（`This value should not be blank.` 等）を読めず、EC-CUBE の yaml 上書き（`validators.ja.yaml:17 → 入力されていません。`）を取りこぼし、vendor xlf 値（`この値は空にできません。`）を誤採用していた。EN 逆引きも誤キーを拾っていた。
+
+### 是正内容
+- スペース入り英語キー対応のフルパーサでマップ再構築。`This value should not be blank.` → ja「入力されていません。」/ en「No value found.」を正しく解決。
+- 単一候補: codex 特定の実キーで en を引き直し（**36件是正**）。
+- ハードコード英語 alert（en 空欄）: en=ja を補完（**6件**）。
+- codex 再レビュー（全24機能）の真の指摘を是正:
+  - `M07-03-MSG-004/005/010`・`M04-08-MSG-014`（ハードコード日本語で英訳キー非在）: 捏造英語を除去し **「（英訳なし）」** へ。
+  - `M07-03-MSG-015` 候補: `The field is empty.`→`No value found.`（誤キー form.type.select.notselect）、`Please enter with numbers.`→`Entry must be numbers.`（form_error.numeric_only）。
+  - `M10-04-MSG-016`: `The field is empty.`→`No value found.`（NotBlank）。
+- `sync_doc_tables.py` に英語列分岐（`if "英語" in h: return "メッセージ内容(英語)"`）を追加し、設計書表への ja 誤流入を防止。
+
+### 最終検証（全成果物）
+| 成果物 | EN列に日本語（英訳なし除く） |
+|---|---|
+| message_inventory.tsv（正本） | **0** |
+| MESSAGE_LIST.tsv | **0** |
+| MESSAGE_LIST.md | **0** |
+| 設計書 functions/**/*.md（英語列） | **0** |
+
+- JA列の純英語 **20件**は全て `alert('English')` のハードコード英語（twig/js 逐語）で、英語ロケールでも英語表示＝**正当（捏造ではない）**。en=ja とした。
+- ハードコード日本語（英訳非在）は **「（英訳なし）」** と明示。日本語を英訳列に混入させず、かつ捏造もしない。
+- `validate_messages.py`: 1316行 / 捏造検証1316件 / 非在0件 = **PASS**。
+- codex 再レビュー（切詰め300字へ拡大し偽陽性排除後）: 真の言語混在・捏造 **残0**。
+
+### 是正の分類方針（恒久ルール）
+- 翻訳キー（英訳あり）→ en.yaml/xlf の**同一キーの英訳**（yaml 上書き優先）。
+- ハードコード英語 → ja=en=英語（英語ロケールでも同一表示）。
+- ハードコード日本語（英訳非在）→ en=**「（英訳なし）」**（英訳を創作しない）。
