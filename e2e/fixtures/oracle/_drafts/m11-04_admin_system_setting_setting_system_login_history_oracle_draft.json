@@ -1,0 +1,250 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "B0候補（D6前・O5未確定・codex R1要修正→改訂1で是正・R2待ち。source_class暫定=standard-src+design/fid_kubun.tsv D1:342）。正式解決器はこの_drafts/を読んではならない（CFP §7隔離）。期待値の正はL1オラクルID（三段参照）＝検索/並び替えケースはSEED固定値でなく『L1式のdb.ts独立評価値⇔UI表示』の突合。fixture_versionは@TBD-D5。bindは母集合の期待テキスト実内容で判定（観点・前提/入力ラベルはノイズ。ただし母集合018-035は前提列が設計書の実項目名を順送りしており読替の足がかりに採用=md §10参照）。本jsonはmd §1から手動導出（機械導出器はM0成果物・未実装）。%eccube_admin_route%は環境値（既定admin=eccube.yaml:3,69）。DOC-DRAFT-M1104-01（未解決・断定しない＝codex R1是正）: 設計書DB操作節md:255-257は同設計書5箇所（md:7,211,231,284,364）の参照専用宣言と矛盾する（設計内矛盾）。LoginHistoryController.php全文にpersist/flush/INSERT/UPDATE/remove 0件（grep実測）だが、LoginHistoryListenerがKernelEvents::REQUEST（全リクエストで発火しうる）でonPostLogin（persist/flush）・LoginFailureEventでonAuthenticationFailure（生SQL INSERT）という別経路の書込を実装として持つ。これら3点は設計内矛盾と書込経路の存在を示すのみで「テンプレノイズ/read-only正/是正不要」は導けない。無書込の主張はController経由の一覧・検索・ページング操作の観測範囲に限定し、全経路・全テーブルの無書込・設計書側の正誤は主張しない。DOC-DRAFT-M1104-02=検証失敗・0件時のja共通メッセージが設計書と実カタログで逐語不一致（enは完全一致）。失敗履歴の書き込み失敗（md:212）はTBD（L1-M1104-029・本候補では観測契約を定義できていない。安全な誘発手段の有無は断定しない）。",
+    "source": "integration_test/e2e/exec/_drafts/m11-04_admin_system_setting_setting_system_login_history_executable_draft.md §1",
+    "baseline": {
+      "design_md_commit": "ea56f4725d5621e40acf3b390759091da6eb64a3",
+      "ee_commit": "9dbc4dd12080ac6a3d58a97f67e23e4a4a6e4f51",
+      "all_it_cases_sha256_prefix": "7911f190d273",
+      "fid_kubun": "M11-04=標準 standard-src+design（暫定付与・確定はD6）/ fid_kubun.tsv sha256先頭=44fbf02f1e4c"
+    }
+  },
+  "L1-M1104-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "supplement_only": true,
+    "expected": "未ログインで一覧GET/POST・ページ送りGETへアクセスすると、admin firewall（pattern ^/%eccube_admin_route%/・form_loginエントリポイントadmin_login）によりログイン画面へ誘導され本機能を利用できない",
+    "source": "m11-04md:280 / security.yaml:40-46"
+  },
+  "L1-M1104-002": {
+    "claim_type": "http_status",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "一覧・検索=GET/POST /%eccube_admin_route%/setting/system/login_history（admin_setting_system_login_history）／ページ送り=GET/POST .../login_history/{page_no}（admin_setting_system_login_history_page・page_noは数字のみ）。いずれもindex()単一メソッドで処理",
+    "source": "LoginHistoryController.php:47-48"
+  },
+  "L1-M1104-003": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "dtb_login_historyの1レコードはid（自動採番）・user_name（TEXT・NULL許容）・client_ip（TEXT・NULL許容）・create_date/update_date（タイムゾーン付き日時）・Status（login_history_status_id FK・NOT NULL）・LoginUser（member_id FK・onDelete SET NULL）を持つ",
+    "source": "LoginHistory.php:26,32-35,37-41,46-47,52-53,55-61 / m11-04md:7,57"
+  },
+  "L1-M1104-004": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "expected_ja": {"failure_name": "失敗", "success_name": "成功"},
+    "expected_en": {"failure_name": "Failure", "success_name": "Success"},
+    "failure_id": 0,
+    "success_id": 1,
+    "expected": "mtb_login_history_statusはテーブルmtb_login_history_status・FAILURE=0・SUCCESS=1の2値マスタ（CSV初期データ）",
+    "source": "LoginHistoryStatus.php:23,32,37 / mtb_login_history_status.csv(ja/en) / m11-04md:61,174"
+  },
+  "L1-M1104-005": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "page_noもresumeも無い初回表示（GET・POSTでない）: 検索条件を空にしセッションeccube.admin.login_history.searchへ保存、page_noを1にしてセッション保存。全件対象・作成日時降順・id降順で1ページ目を表示",
+    "source": "LoginHistoryController.php:96-101 / m11-04md:99"
+  },
+  "L1-M1104-006": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "page_no指定またはGET ?resume=1のとき: page_noがあればそれをセッションsearch.page_noへ保存、無ければセッション既存値（既定1）。検索条件はセッションsearch（既定[]）から読み出す",
+    "source": "LoginHistoryController.php:88-95 / m11-04md:98"
+  },
+  "L1-M1104-007": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "POST検索が検証成功: 検索データをセッションsearchへ保存・page_noを1にしてセッション保存。絞り込み結果の1ページ目を表示",
+    "source": "LoginHistoryController.php:73-78 / m11-04md:105"
+  },
+  "L1-M1104-008": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "POST検索が検証失敗: paginationは空配列・has_errorsはtrueで返り一覧テーブルは表示されない。検索条件（eccube.admin.login_history.search）・ページ番号（.search.page_no）への保存は行われない（codex R2是正: page_countはフォーム検証より前の55-65行で評価・保存され得るためこの不保存の対象に含めない）",
+    "source": "LoginHistoryController.php:78-87 / m11-04md:107"
+  },
+  "L1-M1104-009": {
+    "claim_type": "page_count_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "page_max_values": [10, 50, 100, 300, 500, 1000, 2000, 10000, 12000],
+    "default_config_value": 10,
+    "expected": "page_countパラメータはis_numeric()かつ表示件数マスタのnameとPHPの緩い比較==で等価（数値等価であり文字列としての厳密一致ではない＝codex R2是正）の場合のみ採用されセッションsearch.page_countへ保存。不一致・非数値は不採用（既定はセッション既存値、無ければeccube_default_page_count=10。ただし既存PHPUnitは素のPOST直後の既定選択値として50件を観測しており数値が食い違う=要実機§9-4）",
+    "source": "LoginHistoryController.php:55-65 / eccube.yaml:142 / mtb_page_max.csv(ja) / m11-04md:175"
+  },
+  "L1-M1104-010": {
+    "claim_type": "js_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "表示件数プルダウン（#page_count_pulldown）のchangeイベントで、選択肢のvalue（page_count付きURL）へwindow.location.hrefで遷移する",
+    "source": "login_history.twig:24-29 / m11-04md:85"
+  },
+  "L1-M1104-011": {
+    "claim_type": "display",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "詳細検索ブロック（#searchDetail）はBootstrap collapseクラス付与で初期折りたたみ、has_errorsが真のときのみshowクラスが追加され開いた状態になる",
+    "source": "login_history.twig:50 / m11-04md:86"
+  },
+  "L1-M1104-012": {
+    "claim_type": "search_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "multi（キーワード）検索: 入力から半角・全角スペースをpreg_replace('/\\s+|[　]+/u','',...)で除去した文字列でuser_name LIKE %...% OR client_ip LIKE %...%の部分一致",
+    "source": "LoginHistoryRepository.php:50-57 / m11-04md:122,173"
+  },
+  "L1-M1104-013": {
+    "claim_type": "search_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "user_name単独検索: スペース除去なしでuser_name LIKE %入力値%の部分一致",
+    "source": "LoginHistoryRepository.php:65-69 / m11-04md:123"
+  },
+  "L1-M1104-014": {
+    "claim_type": "search_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "client_ip単独検索: スペース除去なしでclient_ip LIKE %入力値%の部分一致",
+    "source": "LoginHistoryRepository.php:59-63 / m11-04md:124"
+  },
+  "L1-M1104-015": {
+    "claim_type": "search_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "期間検索: create_datetime_start指定時はcreate_date >= start（以上）。create_datetime_end指定時はcloneし+1日調整をせずそのままcreate_date < end（未満）。既存PHPUnit実測: -1hour→3件・+1hour→0件（start）／+1hour→3件・-1hour→0件（end）。フォーム非公開のlegacy create_date_start/endパラメータも別途存在するがフォームからは到達しない（+1日調整あり=create_datetime_end側と異なる）",
+    "source": "LoginHistoryRepository.php:72-98 / LoginHistoryRepositoryGetQueryBuilderBySearchDataAdminTest.php:172-178 / m11-04md:125-126"
+  },
+  "L1-M1104-016": {
+    "claim_type": "search_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "Status（複数選択）: count(Status)が真のときのみStatus IN (:Status)を適用。空/未チェックのときは絞り込みをせず成功・失敗の双方を対象。既存PHPUnit実測: [SUCCESS]→1件・[FAILURE]→2件・両方→3件",
+    "source": "LoginHistoryRepository.php:100-105 / LoginHistoryRepositoryGetQueryBuilderBySearchDataAdminTest.php:114-118 / m11-04md:127,197"
+  },
+  "L1-M1104-017": {
+    "claim_type": "sort_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "並び順はcreate_date降順を第1キー、id降順を第2キー",
+    "source": "LoginHistoryRepository.php:108-110 / m11-04md:100,128,172"
+  },
+  "L1-M1104-018": {
+    "claim_type": "ext_hook",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "検索クエリは最終行でQueries::customize(QueryKey::LOGIN_HISTORY_SEARCH_ADMIN, $qb, $searchData)を経由し拡張ポイントによる差し替えが可能",
+    "source": "LoginHistoryRepository.php:112 / QueryKey.php:26 / m11-04md:130"
+  },
+  "L1-M1104-019": {
+    "claim_type": "validation_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "max_length": 255,
+    "expected": "multi/user_name/client_ipはいずれもAssert\\Length(max: eccube_stext_len=255)のみ。NotBlank等の必須制約は無し（required=>false）",
+    "source": "SearchLoginHistoryType.php:43-63 / eccube.yaml:137 / m11-04md:182-184,265-267"
+  },
+  "L1-M1104-020": {
+    "claim_type": "validation_rule",
+    "ls": 1,
+    "expected_ja": "不正な日付です。",
+    "expected_en": "Invalid DateTime.",
+    "expected": "create_datetime_start/endはAssert\\Range(min:'0003-01-01', minMessage:'form_error.out_of_range')。母集合059が実文言でほぼ逐語対応",
+    "source": "SearchLoginHistoryType.php:70-103 / validators.ja.yaml:60 / validators.en.yaml:47 / m11-04md:158,185-186,268"
+  },
+  "L1-M1104-021": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected_ja": {"success": "成功", "failure": "失敗"},
+    "expected_en": {"success": "Success", "failure": "Failure"},
+    "success_badge_class": "badge-ec-blue",
+    "failure_badge_class": "badge-ec-red",
+    "expected": "成功区分バッジ=Status.id==SUCCESSのときbadge-ec-blue+区分名「成功」/Success。それ以外（失敗）はbadge-ec-red+「失敗」/Failure",
+    "source": "login_history.twig:171-174 / mtb_login_history_status.csv(ja/en) / m11-04md:148-149"
+  },
+  "L1-M1104-022": {
+    "claim_type": "db_effect(observed-scope)",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "doc_draft": "DOC-DRAFT-M1104-01（未解決・断定しない＝codex R1是正）",
+    "expected": "LoginHistoryController::index()（LoginHistoryController.php 120行全文）にpersist/flush/INSERT/UPDATE/removeが0件（grep実測・exit code 1）。設計書DB操作節（md:255-257）は同一設計書5箇所（md:7,211,231,284,364）の参照専用宣言と矛盾する（設計内矛盾・未解決）。別クラスLoginHistoryListenerがKernelEvents::REQUEST（全リクエストで発火しうる）を購読しonPostLogin（54-90行）でpersist/flush、LoginFailureEventでonAuthenticationFailure（94-142行）で生SQL INSERTを行う実装上の書込経路が別途実在する（本コントローラのindex()からは呼ばれない）。本claimが保証する観測範囲はController経由の一覧・検索・ページング操作に限定し、全経路・全テーブルの無書込は主張しない。設計書DB操作節の正誤・テンプレ由来・是正要否も裁定しない",
+    "source": "LoginHistoryController.php:1-120（全文grep0件） / m11-04md:7,211,231,257,284,364 / LoginHistoryListener.php:49-51,54-90,94-142"
+  },
+  "L1-M1104-023": {
+    "claim_type": "empty_rule",
+    "ls": 1,
+    "expected_ja": {
+      "no_result": "検索条件に合致するデータが見つかりませんでした",
+      "try_change": "検索条件を変えて、再度検索をお試しください",
+      "try_advanced": "[詳細検索]も試してみましょう"
+    },
+    "expected_en": {
+      "no_result": "Sorry, no data matches your search condition(s)",
+      "try_change": "Please change the search condition(s) and try again.",
+      "try_advanced": "Try [Advanced Search]"
+    },
+    "expected": "検索結果0件のとき一覧テーブルを出さず上記3メッセージを表示。検索結果件数はページネーション部品の総件数でありページ内行数とは別",
+    "source": "login_history.twig:194-201 / messages.ja.yaml:1735-1737 / messages.en.yaml:1764-1766 / m11-04md:200,214,316"
+  },
+  "L1-M1104-024": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "expected_ja": {"id": "ID", "user_name": "ログインID", "client_ip": "IPアドレス", "create_date": "ログイン試行日", "status": "ステータス"},
+    "expected_en": {"id": "ID", "user_name": "ID", "client_ip": "IP Address", "create_date": "Login Attempt Date", "status": "Status"},
+    "create_date_format": "Y/m/d H:i:s",
+    "expected": "一覧列: ID=id／ログインID=user_name／IPアドレス=client_ip／ログイン試行日=create_dateをdate_format('','Y/m/d H:i:s')整形／ステータス=バッジ(L1-021)。列は保存値をそのまま表示（表示列との整合性）",
+    "source": "login_history.twig:149-174 / messages.ja.yaml:1805,3313,3316-3318 / messages.en.yaml:1805,2927,2930-2932 / m11-04md:213,229"
+  },
+  "L1-M1104-025": {
+    "claim_type": "data_integrity",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "LoginHistory.LoginUserはonDelete:'SET NULL'のFK。管理者削除後もuser_name/client_ip/Statusはプレーン列のため保持され一覧に表示され続ける（member_idのみNULL化）",
+    "source": "LoginHistory.php:59-61 / m11-04md:202"
+  },
+  "L1-M1104-026": {
+    "claim_type": "display",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "表示要素一式: キーワード欄（multi・ツールチップ付きヘルプアイコン）・詳細検索開閉リンク・user_name欄・client_ip欄・期間欄（開始/終了・フォームtype側attrでdata-toggle: datetimepicker付与）・Statusチェックボックス群・検索ボタン・検索結果件数・表示件数プルダウン・履歴一覧表・ページャ",
+    "source": "login_history.twig:42-183（全文実測） / SearchLoginHistoryType.php:81-85,98-102（codex R1是正: data-toggle属性の出典はtwigでなくFormType） / m11-04md:84"
+  },
+  "L1-M1104-027": {
+    "claim_type": "session_rule",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "GET .../login_history?resume=1はresumeパラメータが真値のためL1-006の分岐へ入り、セッション保存済みの検索条件・ページ番号で一覧を再表示する",
+    "source": "LoginHistoryController.php:88-95 / m11-04md:75（codex R1是正: 旧引用md:86は詳細検索collapseのCSS節でありresumeの根拠でない）"
+  },
+  "L1-M1104-028": {
+    "claim_type": "message",
+    "ls": 1,
+    "doc_draft": "DOC-DRAFT-M1104-02",
+    "expected_ja": {
+      "invalid_condition": "検索条件に誤りがあります",
+      "try_change": "検索条件を変えて、再度検索をお試しください"
+    },
+    "expected_en": {
+      "invalid_condition": "Error found in the search condition(s)",
+      "try_change": "Please change the search condition(s) and try again."
+    },
+    "design_ja_paraphrase": {
+      "invalid_condition": "検索条件が無効です。",
+      "try_change": "検索条件を変えてお試しください。"
+    },
+    "expected": "検証失敗時: 実カタログのja文言は設計書md:155-156のja文言（要約パラフレーズ）と逐語不一致。en側は完全一致。オラクルの正はソース実値",
+    "source": "m11-04md:155-157 / messages.ja.yaml:1734,1736 / messages.en.yaml:1763,1765"
+  },
+  "L1-M1104-029": {
+    "claim_type": "TBD",
+    "ls": null,
+    "expected": "【未確定・オラクル化不能】失敗履歴の書き込みに失敗した場合は履歴行が作られず、認証機能側でサーバログに記録される。本機能はその場合に該当行を表示しない＝実claimである。書き込み失敗の誘発は本機能の外（認証機能側のDB例外）に依存するが、本候補では安全な誘発手段の設計・観測契約を定義できていない（誘発手段の有無自体は断定しない＝codex R1是正）",
+    "source": "m11-04md:212 / LoginHistoryListener.php:107-142"
+  }
+}

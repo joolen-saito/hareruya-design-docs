@@ -1,0 +1,245 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "B0候補（D6前・O5未確定・source_class暫定=standard-src+design/fid_kubun.tsv D1:258）。codex R1要修正（Blocker2+Major）→改訂1是正済み: (1)excluded29のper-ID実引き表をmd§9-EXに新設 (2)C-048の二重期待を分離=実装観測（3→4 commitStockでstock=S0-qty・在庫履歴+1行INSERT=確定期待）とMSG-003「在庫変動なし」の設計側期待（BC-3へ×確定で隔離） (3)BC-5の在庫数量不足引用をStock:108-113へ訂正（93-95は在庫レコード不存在の別分岐） (4)L1-019に発火条件補完（会員+player存在時のみ・Σ=0は残高不変） (5)C-045/C-048をS0差分オラクル化。正式解決器はこの_drafts/を読んではならない（CFP §7隔離）。期待値の正はL1オラクルID（三段参照。SEED初期値・DB名称マスタ・時刻のリテラルを期待に焼き込まない。不変側はS0スナップショット同値=m05-13方式）。fixture_versionは@TBD-D5。bindは母集合の期待テキスト実内容で判定。本jsonはmd §1から手動導出（機械導出器はM0成果物・未実装）。重要: BC-DRAFT-M05-14-01=プルダウンに現在ステータス自身が残る（OrderType:417-421 continue+data=現在。設計md:84,184は出さないと規定）。BC-DRAFT-M05-14-02=status_changeのform invalidはエラー表示なしの302リダイレクト（EditController:769-771・PRG）でfailed_to_change_status__short表示は実質到達不能。BC-DRAFT-M05-14-03=MSG-003「在庫の変動はありません」vs 3→4 back_to_in_progressのcommitStock在庫再減算（ee内部矛盾・不具合候補）。BC-DRAFT-M05-14-04=1→6はtransition payのupdatePaymentDateが入金日を無条件上書き（md:186,206と乖離）。BC-DRAFT-M05-14-05=status_change経路に購入例外catchなし（在庫不足3→4等は500系見込み）。DOC-DRAFT-M05-14-01=md:108リダイレクト⇔md:151/205/302エラー表示+巻き戻しの自己矛盾。DOC-DRAFT-M05-14-02=md:144「cancel.completeは日本語のみ」⇔messages.en.yaml:2447実在。",
+    "source": "integration_test/e2e/exec/_drafts/m05-14_admin_order_order_status_change_executable_draft.md §1",
+    "baseline": {
+      "design_md_commit": "ec17cd0（repo HEAD 017ab3b）",
+      "ee_commit": "9dbc4dd12080ac6a3d58a97f67e23e4a4a6e4f51",
+      "all_it_cases_sha256_prefix": "7911f190d273",
+      "fid_kubun": "M05-14=標準 standard-src+design（暫定付与・確定はD6）"
+    }
+  },
+  "L1-M0514-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "未認証GET /%eccube_admin_route%/order/{id}/edit はadmin_loginのログイン画面へ誘導（受注編集画面へ到達不可＝本操作利用不可）",
+    "source": "security.yaml:40-47 / md:73,287"
+  },
+  "L1-M0514-002": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "未認証の直接POST（mode=status_change）は処理されない（変更・フラッシュが発生しない・DB不変。具体応答形302/401等は未契約=要実機）",
+    "source": "md:73,287 / security.yaml:40-47"
+  },
+  "L1-M0514-003": {
+    "claim_type": "http_status",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "GET/POST /%eccube_admin_route%/order/{id}/edit（admin_order_edit・id=\\d+=受注ID）。新規=/order/new。不存在idはNotFoundHttpException（HTTP404）",
+    "source": "EditController.php:146-147,204-217 / md:70-71,315"
+  },
+  "L1-M0514-004": {
+    "claim_type": "request_contract",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "POST mode=status_change（#form1 hidden mode・.change-statusボタンJSがmode設定+actionを編集画面パスへ戻して送信・clear_dateのtargetクエリ非引継）・変更先=order[OrderStatus]（mapped=false）・フォームCSRF order[_token]同梱",
+    "source": "edit.twig:789-790,530-536 / EditController.php:504-505 / OrderType.php:429-439 / md:75,85,105,239"
+  },
+  "L1-M0514-005": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated（テンプレート直書きja・ロケール資源なし）",
+    "expected": "既存受注のみ「現在のステータス」行を表示・値=Order.OrderStatus.name（mtb_order_status.nameのDB現在値・リテラル焼込禁止）",
+    "source": "edit.twig:833-837 / md:83,99,60"
+  },
+  "L1-M0514-006": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "expected_ja": "対応状況",
+    "expected_en": "Order Status",
+    "expected": "対応状況ラベル+tooltip（tooltip.order.order_status ja:3613/en:3227逐語）+form_widget(form.OrderStatus)+直下form_errors",
+    "source": "edit.twig:840-845 / messages.ja.yaml:2523,3613 / messages.en.yaml:2360,3227 / md:83"
+  },
+  "L1-M0514-007": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "プルダウン#order_OrderStatus=EntityType単一選択・NotBlank・選択肢=mtb_order_statusをsort_no昇順で取得しcan()偽の遷移不可ステータスを除外。【仕様側】現在のステータス自身は出さない",
+    "bc_draft": "BC-DRAFT-M05-14-01: 実装は同一ステータスを除外処理からスキップして選択肢に残し初期選択値にする（OrderType.php:417-421,438）",
+    "source": "OrderType.php:405-440 / md:84,184,195"
+  },
+  "L1-M0514-008": {
+    "claim_type": "state_machine",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "遷移可否はSymfony workflow order（state_machine）のtransitions定義（can=enabled transitionのtoに変更先id）。遷移マトリクスの正はmd §3.1（m05-12と同一config・cancel_return含む）",
+    "source": "OrderStateMachine.php:57-70 / order_state_machine.php:46-214 / md:58,184"
+  },
+  "L1-M0514-009": {
+    "claim_type": "state_machine",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "PENDING(7)/PROCESSING(8)はどのtransitionのfromにも現れない＝遷移先0件（実装のプルダウンは現在ステータスのみ残る）。編集画面はこの2状態で登録系ボタンdisabled",
+    "source": "order_state_machine.php:30-45,46-214 / edit.twig:757-762,1927"
+  },
+  "L1-M0514-010": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "変更前後いずれか取得不可または両者同一→何も変更せず当該受注の編集画面へ302リダイレクト（フラッシュなし・日時セットなし・更新者/更新日時の更新なし・全列S0同値）",
+    "source": "EditController.php:762-767 / md:107,165,203-204"
+  },
+  "L1-M0514-011": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "(a)OrderItems明細サブフォーム невалид→HTTP200同画面再表示（フォームエラー表示あり・DB不変） (b)それ以外のform invalid（OrderStatus空NotBlank・choices外id・トークン不正等）→エラー表示なしで302リダイレクト・DB不変",
+    "bc_draft": "BC-DRAFT-M05-14-02（(b)の無表示）・DOC-DRAFT-M05-14-01（md:108リダイレクト⇔md:151/205/302エラー表示の自己矛盾）",
+    "source": "EditController.php:500-502,769-771 / md:106-108,151,166,277,302"
+  },
+  "L1-M0514-012": {
+    "claim_type": "validation_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "許可されない遷移先の強制送信（レンダ選択肢外id）→EntityType choices違反でform invalid→無表示リダイレクト・DB不変（日時列含む全列S0同値）。failed_to_change_status__shortのFormError分岐はchoicesと同源のcan()のためstatus_change経路で実質到達不能",
+    "bc_draft": "BC-DRAFT-M05-14-02の一部",
+    "source": "OrderType.php:417-425,505-533 / EditController.php:769-771 / md:151,205,278,302"
+  },
+  "L1-M0514-013": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "変更成立時: dtb_order.order_status_id=変更先id・operator_id=操作中の管理者・update_date∈[T1,T2]（ブラケット法）",
+    "source": "EditController.php:800-808 / OrderStateMachine.php:187-195 / Order.php:649-651,542-543 / md:111,130,188,257"
+  },
+  "L1-M0514-014": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "変更後=DELIVERED(5)かつ変更前≠5: dtb_order.shipping_dateと受注配下の全dtb_shipping.shipping_dateに同一の現在日時（単一$now・相互一致で判定）を無条件セット（既存値も上書き）",
+    "source": "EditController.php:773-780 / md:124,186,219,256,258"
+  },
+  "L1-M0514-015": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "変更後=CANCEL(3)かつ変更前≠3かつ取消日未設定（初回キャンセル）: cancel_date=現在日時。設定済みならセットしない（S0同値）",
+    "source": "EditController.php:782-785 / md:125,186,206,254"
+  },
+  "L1-M0514-016": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "変更後=PAID(6)かつ変更前≠6かつ入金日未設定: payment_date=現在日時（コントローラ補完）。2→6(paywait)・admin_to_paid系はリスナなし=既設定不変。【実装検出】1→6はtransition payのupdatePaymentDateが無条件セット=既設定でも上書き",
+    "bc_draft": "BC-DRAFT-M05-14-04: md:186,206「上書きしない」と乖離（仕様側期待=上書きしない・実走×見込み）",
+    "source": "EditController.php:786-788 / OrderStateMachine.php:95,111-116 / order_state_machine.php:47-50 / md:126,134,186,206,253"
+  },
+  "L1-M0514-017": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "変更後=PICKING(10)かつ変更前≠10かつ確認日未設定: confirm_date=現在日時（既設定は上書きなし・リスナなし）",
+    "source": "EditController.php:789-791 / OrderStateMachine.php:91-103 / md:127,186,255"
+  },
+  "L1-M0514-018": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "取消系遷移（cancel/admin_cancel）リスナ: rollbackStock=在庫無制限でない明細の受注店舗対応dtb_product_stock.stockをbcadd加算（悲観ロック）+在庫履歴INSERT／rollbackUsePoint=spended_points≠0の会員+player時にdtb_player.pointへ返却+dtb_point_history +行INSERT",
+    "source": "OrderStateMachine.php:96-97,133-138,155-160 / StockReduceProcessor.php:65-67,91,97,126,141-153 / PointProcessor.php:125-132 / PointService.php:88-92,129-160 / md:242,40"
+  },
+  "L1-M0514-019": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "初回キャンセル時cancelOrderPoints。発火条件=会員受注（Customer実体）かつplayer行存在時のみ（ゲスト受注・player不在は早期returnで何もしない=gained_points不変・履歴残存）。条件成立時: dtb_order.gained_points=0・当該受注のdtb_point_history全行DELETE（リスナINSERT行含む・削除はΣ判定より前のループで実施）・Σpoint_change≠0のときのみdtb_player.pointからΣ差戻し（Σ=0は残高不変のまま早期return〔行削除とgained_points=0は実施済み〕）。本機能唯一の行削除経路",
+    "source": "PointService.php:96-126（ガード98-106・gained_points=108-109・削除ループ111-118・Σ=0早期return=120-122・差戻し124-125） / EditController.php:782-784,816-818 / md:242"
+  },
+  "L1-M0514-020": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "【確定期待=実装観測】取消(3)→対応中(4)=back_to_in_progressのcommitStock+commitUsePoint: 在庫無制限でない明細のdtb_product_stock.stockを明細数量ぶん再減算（stock=S0-qtyのΔ・bcsub）+受注減算種別の在庫履歴+1行INSERT・使用ポイント再徴収（spended≠0の会員+player時）。在庫数量不足（bcsub後負値）はShoppingException throw・status_change経路catchなし=未捕捉伝播（実応答は断定せず要実機）",
+    "bc_draft": "BC-DRAFT-M05-14-03: 設計書MSG-003「在庫の変動はありません」（md:159）はこの挙動と乖離。設計側期待（在庫S0同値）は×確定としてBC-3に隔離＝本claimと混在させない（codex R1是正）/ BC-DRAFT-M05-14-05（catch非対称）",
+    "source": "OrderStateMachine.php:98,145-150,123-128 / StockReduceProcessor.php:56-58,108-113（数量不足throw=111-113。93-95は在庫レコード不存在の別分岐）,141-153 / edit.twig:660-666 / md:159,40,314"
+  },
+  "L1-M0514-021": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "DELIVERED新規遷移時gainPoints: 会員+player+gained_points≠0のときのみdtb_player.point+=gained_points+dtb_point_history購入種別+行INSERT。player.smaregi_id非空かつgained≠0ならdtb_messenger_jobへ1行INSERT（status=PENDING・同一トランザクション）・commit後dispatch（dispatch後のジョブ状態遷移は要実機）。workflowのcommitAddPoint/rollbackAddPointはno-op",
+    "source": "EditController.php:810-815,827-830 / PointService.php:42-73 / SmaregiOrderGainPointEventService.php:45-65,71-108 / OrderStateMachine.php:168-172,178-182 / md:112,131,187"
+  },
+  "L1-M0514-022": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "smaregi_code有かつ変更後≠取消のときpostSmaregiProcess(['product'])で外部連携呼出（連携内容は別機能正・SEEDはsmaregi_code=NULLで回避）",
+    "source": "EditController.php:820-824 / md:113,132,189,221,229"
+  },
+  "L1-M0514-023": {
+    "claim_type": "tx",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "遷移適用・更新者/更新日時・ポイント反映・連携ジョブ積みはwrapInTransactionの単一トランザクション（成功時flush+commit・失敗時rollback）。apply失敗（InvalidArgumentException）はform段遮断により実質到達不能＝DB完全不変（日時のメモリセット非永続化含む）が代理観測",
+    "source": "EditController.php:800-825 / OrderStateMachine.php:39-47 / md:110,134,218,335"
+  },
+  "L1-M0514-024": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected_ja_cancel": "全キャンセルが完了しました。",
+    "expected_en_cancel": "Order cancellation completed.",
+    "expected_ja_save": "保存しました",
+    "expected_en_save": "Saved",
+    "expected": "成立時フラッシュ: 変更後=取消→admin.order.cancel.complete／それ以外→admin.order.save.complete",
+    "doc_draft": "DOC-DRAFT-M05-14-02: md:144「cancel.completeは日本語のみ」⇔en:2447実在（正=ee実装宣言md:15に従いen逐語）",
+    "source": "EditController.php:832-836 / messages.ja.yaml:2612,2614 / messages.en.yaml:2447,2449 / md:143-145"
+  },
+  "L1-M0514-025": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected_ja": "%from% から %to% にはステータス変更できません",
+    "expected_en": "You are not allowed to change the status from %from% to %to%",
+    "expected": "遷移不可エラー（admin.order.failed_to_change_status__short・%from%/%to%=mtb_order_status.nameのDB現在値・表示位置=プルダウン直下form_errors）。status_change経路では表示到達不能（期待は仕様側のまま保持）",
+    "bc_draft": "BC-DRAFT-M05-14-02",
+    "source": "messages.ja.yaml:2609 / messages.en.yaml:2446 / OrderType.php:520-531 / edit.twig:844 / md:151,178"
+  },
+  "L1-M0514-026": {
+    "claim_type": "dialog",
+    "ls": 0,
+    "reason": "non-translated（スクリプト直書きja・enロケール資源なし）",
+    "expected_msg001": "過去にキャンセルされているため、在庫数やポイントの変動はありません。\nキャンセルしてもよろしいですか？",
+    "expected_msg002": "全キャンセル時、在庫数等は以下のように変動します。\nキャンセルしてもよろしいですか？\n在庫数：キャンセル分増加\n使用ポイント：払い戻し\n付与済みポイント：取り消し",
+    "expected_msg003": "キャンセルからステータスを変更する場合は、在庫の変動はありません。\n別途、在庫の減算操作を行ってください。",
+    "expected": "confirm（mode=register/status_changeのみ発火）: MSG-001=選択取消∧前≠取消∧取消日設定済み／MSG-002=選択取消∧前≠取消（取消日未設定）／MSG-003=前=取消∧選択≠取消。OK→送信続行・キャンセル→送信中止（POST不発生）。MSG-003文言はBC-DRAFT-M05-14-03参照",
+    "source": "edit.twig:617-666,739-745 / md:86,104,155-159,171-177"
+  },
+  "L1-M0514-027": {
+    "claim_type": "nav",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "変更成立時302→admin_order_edit（同一受注id）・リダイレクト後画面にフラッシュ表示",
+    "source": "EditController.php:838 / md:71,114,300"
+  },
+  "L1-M0514-028": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "新規受注登録画面（/order/new）: OrderStatusフォーム自体を追加しない＝プルダウン・「現在のステータス」行・.change-statusボタンとも非表示",
+    "source": "OrderType.php:408-411 / edit.twig:833,842,985-991 / md:72,289"
+  },
+  "L1-M0514-029": {
+    "claim_type": "integrity",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "プルダウン・現在表示は画面表示時点のステータスに基づく（他セッションの変更で自動更新されない・再読込で反映。表示領域を再取得するJS機構なし=実測）",
+    "source": "md:217 / edit.twig:833-845"
+  },
+  "L1-M0514-030": {
+    "claim_type": "integrity",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "受注一覧のステータス・各日時表示は本操作の保存完了後の永続化済みデータ（DB現在値）に従う",
+    "source": "md:220"
+  },
+  "L1-M0514-031": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "dtb_order/dtb_shippingに行の追加・削除なし（行数不変・new/remove 0件=実測）。変更列はorder_status_id・各日時・operator_id・update_date（+副産物別表）に限られ他列はS0同値。メール送信呼出なし（M05-15別機能）。行削除は別表dtb_point_historyのみ（L1-019）・行追加は副産物別表のみ",
+    "source": "EditController.php:760-839 / md:37,264-269"
+  }
+}

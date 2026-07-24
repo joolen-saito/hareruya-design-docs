@@ -1,0 +1,189 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "B0候補（D6前・O5未確定・source_class暫定=standard-src+design/fid_kubun.tsv D1）。codex R1敵対レビュー=要修正（Blocker1=026/027/028を逆極性ケースにbind／Blocker2=EX-D 032/039の委譲先未実証／Major3=前面503二層の過大主張／Major4=メニュー非表示の引用誤り／Major5=C-013のI/O失敗時ファイル不変の断定が捏造／Major6=§4行数自己矛盾）→R1是正版→codex R2再監査=5/6閉塞・残3点（要修正1=028のTBD分類が不正確・要修正2=Cookie名の現物不一致・要修正3=§8機械集計段落の重複記載）→R2是正版（本版）。R2是正: (1) TBD3件の内訳を分離=026・027は設計書+実装が一致して示す実際の挙動と母集合の期待テキストが確認可能な形で逆方向の「逆極性TBD」、028はfile_put_contents/unlinkが例外・戻り値確認なしで呼ばれるため期待「変更される」を支持することも否定することも一次資料からできない「polarity不明TBD」であり、026/027と028を一括で「逆極性」と扱わないよう分類明確化（TBD件数=3は不変）。(2) C-005/C-007のCookie確認手順の表記を実装定数SystemService::MAINTENANCE_TOKEN_KEY=maintenance_tokenに統一（旧版はmaintenanceTokenと誤記=html/index.php内のローカル変数$maintenanceTokenとの混同）。(3) 会計集計の重複記載（func_scope_check判定段落と56対応表機械集計段落が同じpartial/TBD件数を二重に記載）を統合し、機械集計を本文中の唯一の集計箇所とした（会計数値は不変）。本機能はメンテナンス管理画面のボタン操作で.maintenanceファイルの生成/削除を切り替え、公開側フロントを503応答へ振り替える機能。管理画面のトグルルート（admin_content_maintenance・admin_disable_maintenance）はいずれもcondition: isMaintenanceModeAllowed()が付き、既定ECCUBE_ALLOW_MAINTENANCE_MODE=0（Processed false・2026-07-24実測）のため現況では両ルートとも到達不能=要実機（env切替）。加えてeccube_nav.yaml:196-199のメニュー項目condition（eccube_param:eccube_allow_maintenance_mode,expect:true）も既定で不成立=メニュー非表示（R1是正Major4でL1-M0909-024として追加）。一方、公開側503振り替え（html/index.php、Symfony Kernel起動前の素のPHP判定）と応答へのCookie付与・破棄（MaintenanceListener、KernelEvents::RESPONSE）はいずれもeccube_allow_maintenance_modeを一切参照しない。ただし発火条件は.maintenance存在のみでなく「存在+非admin path+Cookie不一致」の3条件の合致であり、admin path配下はこの503判定を素通りする（=503振替の対象外）だけで「常時到達可能」を意味しない（各ルート個別の到達可否は独立。R1是正Major3でL1-M0909-013を限定表現に修正）。したがって.maintenanceをfs.ts（docker exec）で直接配置・削除すればenv切替なしで公開側の挙動を検証できる。この二層構造（管理画面トグル=要実機／前面状態反映=env切替不要）を正直に分離した。DB不使用（isMaintenanceMode()はfile_existsのみ）のためDBスキーマなし。入力フォーム項目はゼロ（FormType空フォーム、->add()呼出0件）。会計（R1/R2是正後）=bound(非env-gated)12+bound(要実機・通常)33+partial1+TBD3+excluded7=56差分0。TBD3件の内訳（R2是正で分類明確化）: 逆極性TBD=2件（026=on×on非遷移で無反応=md:213,MC:50-63と逆方向／027=モード不問の強制削除=md:214,SS:168-181と逆方向。いずれも設計書+実装が一致して示す実際の挙動が母集合の期待テキストと確認可能な形で逆方向）、polarity不明TBD=1件（028=file_put_contents/unlinkが例外・戻り値確認なしで呼ばれるため期待「変更される」を支持することも否定することも一次資料からできない未規定。「逆方向であることが確認された」わけではない点で026/027と性質が異なる）。いずれもテストケースが正の原則に従い母集合を改変せず・実装挙動を期待の正にもせずboundから外した。partial1件（035）は誘発手段未確立に加え、SystemService::enableMaintenance/disableMaintenanceNowがfile_put_contents/unlinkを例外・戻り値確認なしで呼ぶのみ（SS:148-155,168-181）のため「変更されない」という期待の裏付けが一次資料から取れず、結果polarityを断定しない開放観測とした（旧版でC-013に「ファイル状態不変」と断定していたのは捏造につきR1是正で撤回）。excluded内訳: EX-A必須バリ不存在1（009）・EX-C相関バリ不存在+エラー表示層不存在2（012・015）・EX-B DB不使用2（016・017）・EX-D'別機能スコープ委譲2（032=自動メンテナンス・039=権限管理）。032は委譲先（プラグイン管理・自動メンテナンス切替の設計書/test_id）を実際に探索した結果ec-cube-enterprise配下に不存在と確認済み=「本機能では直接検証不能」の限定理由（「別機能で確認済み」とは主張しない）。039は委譲先functions/pf-eccube3/m11-03（権限管理）とIT-M11-03-*87行の実在は確認したが、ec-cube-enterprise側は未文書化かつ87行中「コンテンツ管理配下」を具体的対象とする行は確認できず=対象範囲の直接的裏付けは不足（「偽陰性なし」とは言い切らない）。BC-DRAFT=なし・DOC-DRAFT=なし（設計書と実装の全行照合で乖離未検出。enableMaintenance/disableMaintenanceNowのforce=true固定は設計書自身が「強制的に」md:116,124,201と明記しており齟齬に数えない）。029・038は前提ラベル（許可フラグが偽）が期待テキスト（変更される）と字義上整合しないが、前提列を明示的にノイズとして無視した上で代表事例へbindした旨を§10 C4に記録した。fixture_versionは@TBD-D5。bindは母集合の期待テキスト実内容で判定（観点・前提ラベル不使用）。",
+    "source": "integration_test/e2e/exec/_drafts/m09-09_admin_content_content_maintenance_executable_draft.md §1（機械導出・手編集禁止）",
+    "baseline": {
+      "design_md_commit": "ec17cd0 (repo HEAD 017ab3b)",
+      "ee_commit": "9dbc4dd12080ac6a3d58a97f67e23e4a4a6e4f51",
+      "vendor_versions": "symfony/framework-bundle ^6.4 || ^7.0",
+      "source_sha1_12": {
+        "MaintenanceController.php": "fd3a256a7970",
+        "SystemService.php": "bf4959149532",
+        "ControllerConditionService.php": "1475f76e8977",
+        "MaintenanceListener.php": "ad5a8bcc4d4e",
+        "maintenance.twig": "c66c2f40e655",
+        "html/index.php": "3f35a18a54ac",
+        "html/maintenance.php": "4ee19f8ac3c7",
+        "messages.ja.yaml": "b7c78070afaa",
+        "messages.en.yaml": "d7cf92a1de8c",
+        "eccube.yaml": "15ea9fd66c6f",
+        "security.yaml": "35e8ff7ec021",
+        ".env": "82fef6e96d55",
+        "AbstractController.php": "1a67393cd162",
+        "eccube_nav.yaml": "4ed1edc7b1b4"
+      },
+      "fid_kubun": "M09-09=標準 standard-src+design（fid_kubun.tsv:321・暫定付与・確定はD6）",
+      "baseline_tsv_sha256_16": "7911f190d273d4cf",
+      "env_gate_measurement_2026_07_24": {
+        "ECCUBE_ALLOW_MAINTENANCE_MODE": {"real": "0", "processed": false},
+        "ECCUBE_MAINTENANCE_FILE_PATH": {"processed": "/var/ec-cube/.maintenance"},
+        "maintenance_file_current_state": "ABSENT",
+        "ECCUBE_ADMIN_ROUTE": {"processed": "admin"}
+      }
+    }
+  },
+  "L1-M0909-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "expected": "未認証は本画面を利用できない（現況env=falseではルート条件不成立により到達不能=事実上利用不可。env=1到達時は管理領域の認証要件によりログインへ誘導される）",
+    "source": "m09-09md:257 / security.yaml:41-46 / L1-M0909-002"
+  },
+  "L1-M0909-002": {
+    "claim_type": "condition",
+    "ls": 0,
+    "expected": "GET/POST同一ルート/%eccube_admin_route%/content/maintenance（admin_content_maintenance）・解除ルート/%eccube_admin_route%/disable_maintenance/{mode}（admin_disable_maintenance）ともにcondition: isMaintenanceModeAllowed()が付く。同サービスはeccube_allow_maintenance_mode===trueを返すのみ。既定ECCUBE_ALLOW_MAINTENANCE_MODE=0＝Processed false（実測2026-07-24）＝現況は両ルートとも到達不能",
+    "source": "MaintenanceController.php:37,82 / ControllerConditionService.php:26-29 / eccube.yaml:304 / .env:62（実測）"
+  },
+  "L1-M0909-003": {
+    "claim_type": "display_field",
+    "expected_ja": ["メンテナンスモード", "有効にする", "無効にする"],
+    "expected_en": ["Maintenance mode", "To enable", "To disable"],
+    "ls": 1,
+    "expected": "GET表示: isMaintenanceMode()読取→無効中はラベル「有効にする」(送信値on)ボタン、有効中はラベル「無効にする」(送信値off)ボタンを表示。カード見出し「メンテナンスモード」＋説明文（改行あり）",
+    "source": "MaintenanceController.php:41 / maintenance.twig:28,34,39-45 / messages.ja.yaml:2956-2961 / messages.en.yaml:2643-2648 / m09-09md:77,89,166-169"
+  },
+  "L1-M0909-004": {
+    "claim_type": "fs_effect",
+    "expected_ja": "メンテナンスモードを有効にしました。",
+    "expected_en": "Maintenance mode has been enabled.",
+    "ls": 1,
+    "expected": "POST on（無効→有効）: isMaintenance===false && changeTo=='on'の分岐でのみenableMaintenance('', true)を呼ぶ（強制=true固定・モード識別子=空文字）。内部はfile_put_contents($path, \"{mode}:{token}\")（token=StringUtil::random(32)=32文字ランダム）。成功フラッシュを登録しadmin_content_maintenanceへredirect",
+    "source": "MaintenanceController.php:50-54,63 / SystemService.php:117-124,148-155 / StringUtil.php:49 / messages.ja.yaml:2962 / messages.en.yaml:2649 / m09-09md:63-64,116-118"
+  },
+  "L1-M0909-005": {
+    "claim_type": "fs_effect",
+    "expected_ja": "メンテナンスモードを無効にしました。",
+    "expected_en": "Maintenance mode has been disabled.",
+    "ls": 1,
+    "expected": "POST off（有効→無効）: isMaintenance===true && changeTo=='off'の分岐でのみdisableMaintenanceNow('', true)を呼ぶ（強制=true固定）。内部はモード識別子の一致を確認せずunlink($path)（force=true固定のためモード不問）。成功フラッシュを登録し同ルートへredirect",
+    "source": "MaintenanceController.php:55-63 / SystemService.php:168-181 / messages.ja.yaml:2963 / messages.en.yaml:2650 / m09-09md:120-124,201"
+  },
+  "L1-M0909-006": {
+    "claim_type": "condition",
+    "ls": 0,
+    "expected": "上記いずれの分岐にも該当しない場合（現在有効で送信on、現在無効で送信off等）はif/elseifのみでelse節が無い＝状態変更もフラッシュ登録もされず、そのままadmin_content_maintenanceへredirectする",
+    "source": "MaintenanceController.php:50-63（else節0件） / m09-09md:145,212-213"
+  },
+  "L1-M0909-007": {
+    "claim_type": "security_rule",
+    "ls": 0,
+    "expected": "CSRFトークン不正・欠落POST: form.isSubmitted()&&form.isValid()が偽となり、on/off分岐に一切入らず（ファイル操作なし・フラッシュ登録なし）フォームビューを返す（GET表示と同じ描画）。twigにform_errors描画は無く専用の失敗文言も設けない",
+    "source": "MaintenanceController.php:39-69 / maintenance.twig:1-55（form_errors 0件） / m09-09md:142,283"
+  },
+  "L1-M0909-008": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "expected": "入力欄はゼロ: createBuilder(FormType::class)->getForm()のみで->add()呼出は0件。画面のフォームはform[_token]（hidden・FormType既定CSRF）のみ・action=同一URLへPOST。POST bodyはform[_token]と隠しフィールドmaintenance（on/off）のみ",
+    "source": "MaintenanceController.php:43-44 / maintenance.twig:20-21 / m09-09md:93,206"
+  },
+  "L1-M0909-009": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "expected": "本画面はモーダル・ポップアップ・確認ダイアログを表示しない。メンテナンス切り替え専用のJavaScriptを持たず、確認ダイアログ・非同期送信・表示切替は行わない（通常のフォームPOST）",
+    "source": "m09-09md:90,92 / maintenance.twig:19-54（modal/dialog/script要素0件）"
+  },
+  "L1-M0909-010": {
+    "claim_type": "fs_effect",
+    "ls": 0,
+    "expected": "手動無効化はモード識別子の一致を確認せず強制的に目印ファイルを削除する（disableMaintenanceNow('', true)のforce=true固定によりcurrentMode===modeの判定は事実上不問）。自動メンテナンス中であっても本画面の操作で解除できる",
+    "source": "MaintenanceController.php:58 / SystemService.php:168-181 / m09-09md:124,201,214"
+  },
+  "L1-M0909-011": {
+    "claim_type": "fs_effect",
+    "ls": 0,
+    "expected": "メンテナンス状態の判定は目印ファイル.maintenanceの存在有無のみ（データベースは参照しない）。パスは設定キーeccube_content_maintenance_file_path（環境変数ECCUBE_MAINTENANCE_FILE_PATH、既定%kernel.project_dir%/.maintenance）。コンテナ実測パス=/var/ec-cube/.maintenance（現況=不存在）",
+    "source": "SystemService.php:186-190 / eccube.yaml:22,251 / m09-09md:63,199"
+  },
+  "L1-M0909-012": {
+    "claim_type": "fs_effect",
+    "ls": 0,
+    "expected": "応答へのCookie付与・破棄（MaintenanceListener、KernelEvents::RESPONSE購読）: isMaintenanceMode()が偽ならmaintenance_token Cookieを破棄。真かつ現在ユーザーがMemberかつ管理領域（isAdmin()）なら、目印ファイル内のトークンをSecure属性付きCookieとして付与。この処理はeccube_allow_maintenance_modeを一切参照しない（env切替非依存）",
+    "source": "MaintenanceListener.php:38-56 / m09-09md:118,126,314-321"
+  },
+  "L1-M0909-013": {
+    "claim_type": "http_status",
+    "expected_status": 503,
+    "ls": 0,
+    "expected": "公開側停止判定はhtml/index.php（Symfony Kernelインスタンス化前の素のPHP）で行う: .maintenanceファイル存在かつリクエストパスが管理画面プレフィックス配下でない場合に限り、Cookie maintenance_tokenと目印ファイル内トークンを比較し、不一致・欠落ならHTTP/1.1 503ヘッダを送出しhtml/maintenance.phpをrequireして終了。管理画面プレフィックス配下はこの503判定自体を素通りする（503振替の対象外）だけであり「常時到達可能」を意味しない＝各ルート個別の認証・条件（例: admin_content_maintenance自体は既定envでisMaintenanceModeAllowed()不成立のため到達不能のまま=L1-M0909-002）は本判定と独立に適用される。この判定もeccube_allow_maintenance_modeを一切参照しない（env切替非依存。R1是正Major3で「常時到達」の過大表現を限定）",
+    "source": "html/index.php:74-96 / m09-09md:130-134,151-156"
+  },
+  "L1-M0909-014": {
+    "claim_type": "message",
+    "expected_ja": ["ただいまメンテナンス中です。", "大変お手数ですが、しばらくしてから再度アクセスをお願いします。"],
+    "expected_en": null,
+    "ls": 0,
+    "expected": "停止画面（html/maintenance.php・静的PHP・英語リソースを持たない）: 見出しおよびページタイトル「ただいまメンテナンス中です。」、説明文「大変お手数ですが、しばらくしてから再度アクセスをお願いします。」",
+    "source": "html/maintenance.php:16,30,31 / m09-09md:182-183"
+  },
+  "L1-M0909-015": {
+    "claim_type": "api",
+    "ls": 0,
+    "expected": "本画面の切り替えは専用APIを呼び出さない（MaintenanceController::index全文にHTTPクライアント・外部API呼出0件）。バッチは起動しない",
+    "source": "m09-09md:236,237 / MaintenanceController.php:39-69"
+  },
+  "L1-M0909-016": {
+    "claim_type": "fs_effect",
+    "ls": 0,
+    "expected": "複数管理者が同時に切り替えた場合、最後に書き込まれた内容が残る（版管理・楽観ロックなし）",
+    "source": "m09-09md:329 / MaintenanceController.php・SystemService.php（ロック処理0件）"
+  },
+  "L1-M0909-017": {
+    "claim_type": "log",
+    "ls": 0,
+    "expected": "ログ禁止事項: メンテナンス用トークンの原値・Cookie値・なりすまし対策トークン・セッション識別子の完全値（設計書由来・コードで不出力を立証していない・観測未契約=実行保留）",
+    "source": "m09-09md:297-300（設計書由来のみ）"
+  },
+  "L1-M0909-018": {
+    "claim_type": "condition",
+    "ls": 0,
+    "expected": "権限管理での個別制限（管理画面の権限管理設定によるコンテンツ管理配下の表示・操作可否）は別レイヤで制御され、詳細は権限管理機能を正とする＝本設計書の主題外",
+    "source": "m09-09md:260"
+  },
+  "L1-M0909-019": {
+    "claim_type": "condition",
+    "ls": 0,
+    "expected": "プラグインのインストール・有効・無効・削除時に自動で切り替わる自動メンテナンス（auto_maintenance／auto_maintenance_update）の発火条件・内部処理、およびその有効・無効タイミングは別機能の処理に従う＝本設計書は扱わない",
+    "source": "m09-09md:13,34,228"
+  },
+  "L1-M0909-020": {
+    "claim_type": "validation_rule",
+    "ls": 0,
+    "expected": "フォーム項目はゼロ（->add()呼出0件）＝必須バリデーションを課す対象項目がそもそも存在しない",
+    "source": "m09-09md:93,206 / MaintenanceController.php:43-44"
+  },
+  "L1-M0909-021": {
+    "claim_type": "validation_rule",
+    "ls": 0,
+    "expected": "入力項目ゼロにつき項目間の相関バリデーションは定義不能。実在する唯一のサーバ側検証はFormType既定のCSRFトークン検証だが、twigにform_errors描画が無く専用の失敗文言も持たない＝「エラーが表示され」を満たす表示層が構成不能",
+    "source": "m09-09md:283 / maintenance.twig:1-55（form_errors 0件） / MaintenanceController.php:39-69"
+  },
+  "L1-M0909-022": {
+    "claim_type": "api",
+    "ls": 0,
+    "expected": "データベースは参照しない（isMaintenanceMode()はfile_existsのみ）。MaintenanceController・SystemServiceにRepository/Doctrine業務参照0件（SystemServiceが注入するEntityManagerInterfaceはgetDbversion()専用でメンテナンス操作には不使用）",
+    "source": "m09-09md:9,199,225 / SystemService.php:14-46 / MaintenanceController.php:1-106"
+  },
+  "L1-M0909-023": {
+    "claim_type": "condition",
+    "ls": 0,
+    "expected": "解除エンドポイントadmin_disable_maintenance（POST・isMaintenanceModeAllowed()同一条件・isTokenValid()必須・isXmlHttpRequest()必須）は、mode=manualならファイル存在時unlink、mode=auto_maintenance系はSystemService::disableMaintenance(mode)でTERMINATE時に条件一致した場合のみ削除。業務手順の詳細はmd:35で本設計書のスコープ外と明示＝ルート成立条件と大枠の効果のみ参考記載",
+    "source": "MaintenanceController.php:82-105 / m09-09md:35"
+  },
+  "L1-M0909-024": {
+    "claim_type": "condition",
+    "ls": 0,
+    "expected": "（R1是正Major4で新設）コンテンツ管理メニューの「メンテナンス管理」項目自体にcondition: { eccube_param: 'eccube_allow_maintenance_mode', expect: true }が付く。既定eccube_allow_maintenance_mode=falseの現況では、この条件が不成立となりメニュー項目が表示されない",
+    "source": "app/config/eccube/packages/eccube_nav.yaml:196-199（実測）"
+  }
+}

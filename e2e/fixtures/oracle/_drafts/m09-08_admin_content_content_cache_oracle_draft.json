@@ -1,0 +1,171 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "B0候補（D6前・O5未確定・source_class暫定=standard-src+design/fid_kubun.tsv D1・codex R1是正版〔Blocker1=012/015のCSRF読み替え過剰・Major2=C-005 fresh分岐回避の非決定性・DOC-DRAFT-1片側断定、の3点是正済み〕）。本機能はボタン操作でアプリキャッシュを一括削除する破壊系だが対象は環境キャッシュ（業務データ不変=md:163・DBスキーマなし=md:9,192）。削除は予約→レスポンス送出後TERMINATEでcache:clear --no-warmup実行（CacheUtil）。入力フォーム項目ゼロ（トークンのみ）。観測は画面（フラッシュ・同一画面200再描画・解除JS有無）とfs.ts（kernel.cache_dir直下マーカー消滅・.maintenanceファイル生成/消滅）に限定し、opcache等プロセス内キャッシュ=実行保留（観測未契約）・コマンド失敗系=要実機（誘発手段なし）・メンテ有効フロー=要実機（env切替=ECCUBE_ALLOW_MAINTENANCE_MODE。コンテナ実測=false既定）で正直に分離（捏造ゼロ）。fs.ts定数はコンテナ実測で確定: kernel.cache_dir=/var/ec-cube/var/cache/dev（APP_ENV=dev・build_dir同値）・.maintenance=/var/ec-cube/.maintenance（現況不存在）。cache:clearのマーカー消滅観測はvccc:161-190実引きで根拠づくが、「Cache is fresh」分岐（vccc:124=REQUEST_TIME<=filemtime(containerFile)の秒精度比較）成立時は旧dir退避（rename）→削除が行われない場合がある（分岐前のcacheClearer->clear=vccc:107自体は実行されるがcache_dir全体の削除ではない）。R1是正でこれを決定化: `ensureStale()`（コンテナファイルmtime＜現在epoch秒の厳密大小を機械確認・同一秒なら待機再実測）をPOST直前に必ず実行する契約とし、事前ウォームアップGETのみでの緩和（同一秒では回避が保証されない）という表現は撤回。残余（POST処理中の再コンパイル）はwaitGone timeoutで失敗表面化=偽成功なし・発生率は要実機で較正。キャッシュはS0スナップショット復元を課さない（再生成可能な派生物=原状回復対象外と明示。マーカー使い捨て+afterEach冪等クリーンアップ+.maintenance PRE不存在復帰）。serial必須・他suite同時実行不可・共有ステージング実行禁止。正式解決器はこの_drafts/を読んではならない（CFP §7隔離・oracle.ts:16-21のガードで機械強制）。期待値の正はL1オラクルID（三段参照・SEED値/実測パスを期待の正にしない）。fixture_versionは@TBD-D5。bindは母集合の期待テキスト実内容で判定（観点・前提ラベル不使用）。会計（R1是正後再計算）=bound完全50+読み替えbound0（012・015はcodex R1 Blocker裁定で相関バリ→トークン検証拒否側への読み替えboundを撤回しexcludedへ移動）+partial0+TBD1（052=プレースホルダ期待テキスト・MSG-005不存在）+excluded5（009必須バリ不存在=EX-A・012/015相関バリ不存在かつエラー表示層不存在=EX-C・016/017 DB不使用=EX-B）=56差分0。CSRF拒否の実挙動自体（予約なし・メンテ不操作・フラッシュなし・200再表示）は020/032/039/056がC-006でbound済みのため012/015のexcluded化による偽陰性はない。BC-DRAFT=なし。DOC-DRAFT=3件: (1)md:286のルートname記載がm09-08_admin_content_content_cacheで実装admin_content_cache（CC:29）と不一致=**未解決の設計・実装矛盾（設計書瑕疵の可能性を含む）として記録し、どちらが正かは断定しない**（R1是正でDOC-DRAFT-1の片側断定「設計書側誤記と推定」を撤回・D6裁定待ち。URLパス自体は両者一致のためE2E手順には影響しない） (2)母集合行015/052が参照するM09-08-MSG-005が設計書メッセージ表md:122-126に不存在・行052の期待テキストが「要ソース確認であること。」のまま混入 (3)MSG-003とMSG-006が同一文言・同一条件で重複掲載（軽微）。いずれも実装挙動を期待の正にしない（推定/要実機に留める）。",
+    "source": "integration_test/e2e/exec/_drafts/m09-08_admin_content_content_cache_executable_draft.md §1（機械導出・手編集禁止）",
+    "baseline": {
+      "design_md_commit": "ec17cd0 (repo HEAD 017ab3b)",
+      "ee_commit": "9dbc4dd12080ac6a3d58a97f67e23e4a4a6e4f51",
+      "vendor_versions": "symfony/framework-bundle v7.4.3",
+      "source_sha1_12": {
+        "CacheController.php": "ea27a168d5b5",
+        "CacheUtil.php": "b75aa6660577",
+        "cache.twig": "0f093c1fe62c",
+        "MaintenanceController.php": "fd3a256a7970",
+        "SystemService.php": "bf4959149532",
+        "ControllerConditionService.php": "1475f76e8977",
+        "messages.ja.yaml": "b7c78070afaa",
+        "messages.en.yaml": "d7cf92a1de8c",
+        "eccube.yaml": "15ea9fd66c6f",
+        "default_frame.twig(admin)": "d4cc70df1a48",
+        "AbstractController.php": "1a67393cd162",
+        "security.yaml": "35e8ff7ec021",
+        "vendor/CacheClearCommand.php": "6a918ce65418"
+      },
+      "fid_kubun": "M09-08=標準 standard-src+design（fid_kubun.tsv:320・暫定付与・確定はD6）",
+      "baseline_tsv_sha256_16": "7911f190d273d4cf"
+    }
+  },
+  "L1-M0908-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "expected": "未認証はadmin_loginへ誘導されキャッシュ管理画面へ到達しない（GET/POSTとも）・削除効果なし",
+    "source": "m09-08md:73,209-212 / security.yaml:41-46"
+  },
+  "L1-M0908-002": {
+    "claim_type": "http_status",
+    "expected_status": 200,
+    "ls": 0,
+    "expected": "GET/POST同一ルート /%eccube_admin_route%/content/cache（admin_content_cache）。GET=200で画面表示・この時点ではキャッシュ削除を行わない",
+    "source": "CacheController.php:29-31,37-49 / m09-08md:70,101-103"
+  },
+  "L1-M0908-003": {
+    "claim_type": "display_field",
+    "expected_ja": ["キャッシュ管理", "コンテンツ管理", "キャッシュ管理"],
+    "expected_en": ["Caches", "Contents", "Caches"],
+    "ls": 1,
+    "expected": "ページタイトル・サブタイトル・カード見出し",
+    "source": "cache.twig:15-16,40 / messages.ja.yaml:2855,2847,2944 / messages.en.yaml:2542,2534,2631 / m09-08md:81"
+  },
+  "L1-M0908-004": {
+    "claim_type": "message",
+    "expected_ja": "本番環境にFTPなどでTwigファイルをアップロードして入れ替えた場合、画面を反映させるにはTwigキャッシュを削除する必要があります。",
+    "expected_en": "If you replaced the Twig file on the production server with FTP etc, the UI will not be updated unless you delete the Twig cache.",
+    "ls": 1,
+    "expected": "カード内の説明文（全文一致）",
+    "source": "cache.twig:46 / messages.ja.yaml:2945 / messages.en.yaml:2632 / m09-08md:81"
+  },
+  "L1-M0908-005": {
+    "claim_type": "display_field",
+    "expected_ja": "キャッシュ削除",
+    "expected_en": "Delete Cache",
+    "ls": 1,
+    "expected": "削除ボタン（type=submit・btn btn-ec-conversion・管理共通card装飾内）",
+    "source": "cache.twig:37,51 / messages.ja.yaml:2946 / messages.en.yaml:2633 / m09-08md:81,83"
+  },
+  "L1-M0908-006": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "expected": "入力欄なし: 空のFormType（項目0）でフォームはhidden form[_token]1つのみ・action=同一URLへPOST・POST body=form[_token]のみ",
+    "source": "CacheController.php:33-34 / cache.twig:32-33 / m09-08md:85,144,183,200"
+  },
+  "L1-M0908-007": {
+    "claim_type": "message",
+    "expected_ja": "削除しました",
+    "expected_en": "Deleted",
+    "ls": 1,
+    "expected": "削除受付の成功フラッシュ（admin.common.delete_complete・成功種別eccube.admin.success・管理画面上部）",
+    "source": "CacheController.php:48 / AbstractController.php:107-110 / messages.ja.yaml:1593 / messages.en.yaml:1638 / m09-08md:124"
+  },
+  "L1-M0908-008": {
+    "claim_type": "http_status",
+    "expected_status": 200,
+    "ls": 0,
+    "expected": "POST成功時はリダイレクトせず同一画面をHTTP200で再描画（redirectToRoute呼出0件・Template直接描画）・フラッシュは同一応答内表示・別画面へ遷移しない",
+    "source": "CacheController.php:30,51-54 / m09-08md:112,221,224"
+  },
+  "L1-M0908-009": {
+    "claim_type": "fs_effect",
+    "ls": 0,
+    "expected": "押下時は削除の予約のみ（clearCache=フラグ設定）。実削除はレスポンス送出後のKernelEvents::TERMINATE（forceClearCache）でcache:clear --no-warmup --no-ansiを内部実行",
+    "source": "CacheUtil.php:47-50,61-81,209-213 / CacheController.php:42 / m09-08md:110,140"
+  },
+  "L1-M0908-010": {
+    "claim_type": "fs_effect",
+    "ls": 0,
+    "expected": "削除対象=アプリケーションキャッシュ全体（kernel.cache_dir=コンテナ実測/var/ec-cube/var/cache/dev・build_dir同値）。cache:clearは非fresh経路で実キャッシュdirを退避リネーム→新dirへ差し替え→旧dir削除するためcache_dir直下の任意ファイル（マーカー）が消える。※「Cache is fresh」分岐（vccc:124=REQUEST_TIME<=filemtime(containerFile)の秒精度比較）が成立すると旧dir退避（rename）→削除が行われない場合がある（分岐前のcacheClearer->clear=vccc:107自体は実行されるがカスタムclearer群の実行でありcache_dir全体の削除ではない）。観測成立条件はコンテナファイルmtime＜POSTのREQUEST_TIMEの厳密大小＝`ensureStale()`（R1是正で決定化。同一秒なら待機再実測。事前ウォームアップGETのみでは同一秒のGET→POSTで回避不保証=非決定のため撤回）",
+    "source": "vendor/CacheClearCommand.php:75-80,107,124-133,161-190 / CacheUtil.php:64-68 / m09-08md:138 / kernel.cache_dir=debug:container実測(md§6.2.1) / ensureStale契約=md§6.2.2"
+  },
+  "L1-M0908-011": {
+    "claim_type": "condition",
+    "ls": 0,
+    "expected": "コマンド実行に続けてopcache_reset・apc_clear_cache('user')/apc_clear_cache()・wincache_ucache_clearをそれぞれfunction_existsが真の環境でのみ実行（プロセス内キャッシュの観測手段未契約=実行保留）",
+    "source": "CacheUtil.php:83-94 / m09-08md:139,152"
+  },
+  "L1-M0908-012": {
+    "claim_type": "fs_effect",
+    "ls": 0,
+    "expected": "eccube_allow_maintenance_mode===trueのときのみ削除予約前に.maintenance生成（内容=auto_maintenance:ランダム32文字トークン・既にメンテ中なら生成しない=非force分岐）。無効時はメンテ操作なし。パス=env既定%kernel.project_dir%/.maintenance（コンテナ実測/var/ec-cube/.maintenance）。設定既定は無効（.env:62=0・コンテナ実測Processed=false）",
+    "source": "CacheController.php:38-40 / SystemService.php:117-124,148-155 / eccube.yaml:22,251,304 / .env:62 / m09-08md:60,109,141,151"
+  },
+  "L1-M0908-013": {
+    "claim_type": "message",
+    "ls": 0,
+    "expected": "設定有効時のみフラッシュ種別eccube.admin.disable_maintenanceを空文字で登録（画面に文言を表示しない内部フラグ・解除用JSの発火条件）",
+    "source": "CacheController.php:44-46 / m09-08md:111,125,128"
+  },
+  "L1-M0908-014": {
+    "claim_type": "fs_effect",
+    "ls": 0,
+    "expected": "解除JS: 当該フラグのフラッシュ存在かつ設定有効のときに限り応答ページのscriptブロックがページ読込時にadmin_disable_maintenance（mode=auto_maintenance）へ非同期POSTを1回送る。それ以外ではscriptブロック自体を出力しない",
+    "source": "cache.twig:18-27 / m09-08md:82,91"
+  },
+  "L1-M0908-015": {
+    "claim_type": "fs_effect",
+    "ls": 0,
+    "expected": "解除エンドポイント効果: POST /%eccube_admin_route%/disable_maintenance/{mode}（manual|auto_maintenance|auto_maintenance_update）。ルート条件=eccube_allow_maintenance_mode===trueのときのみ成立。auto_maintenanceは応答後TERMINATEで.maintenanceをモード一致時unlink・応答={\"success\":true}。XHRのCSRFは管理共通ajaxSetupのECCUBE-CSRF-TOKENヘッダ（エンドポイント内部仕様の詳細はmd:34で対象外=解除効果とルート成立条件のみ主張）",
+    "source": "MaintenanceController.php:82-105 / ControllerConditionService.php:26-29 / SystemService.php:141-146,162-181 / default_frame.twig:16,83-87 / m09-08md:62,72,114"
+  },
+  "L1-M0908-016": {
+    "claim_type": "security_rule",
+    "ls": 0,
+    "expected": "CSRF: トークン不正/欠落POSTはisValid不成立→削除を予約せず・メンテナンスモードも操作せず・完了フラッシュも登録せず同一画面を200再描画。成否は完了フラッシュの有無で区別（専用失敗文言なし・twigにform_errors描画なし=エラー文言は画面に出ない）",
+    "source": "CacheController.php:37-49 / cache.twig:31-60 / m09-08md:108,150,185,232"
+  },
+  "L1-M0908-017": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "expected": "モーダル・確認ダイアログ・トーストを持たない。削除前の確認ダイアログなし=ボタン押下で即送信",
+    "source": "m09-08md:84 / cache.twig:31-60（modal/dialog/toast要素0件=実引き）"
+  },
+  "L1-M0908-018": {
+    "claim_type": "api",
+    "ls": 0,
+    "expected": "外部API呼出なし（解除POSTは同一アプリ内管理エンドポイント）・業務データ（商品・会員・受注）不変・業務テーブルへ保存しない",
+    "source": "m09-08md:9,163,171,192 / CacheController.php:24-54（EntityManager書込・Repository呼出0件=実引き）"
+  },
+  "L1-M0908-019": {
+    "claim_type": "log",
+    "ls": 0,
+    "expected": "削除コマンドの実行出力はBufferedOutputへ収集し画面へ返さない（応答に反映しない）・追加の業務監査ログなし（サーバログ側の観測未契約=画面否定観測のみbound・残余は実行保留）",
+    "source": "CacheUtil.php:76-81,96 / m09-08md:173,242"
+  },
+  "L1-M0908-020": {
+    "claim_type": "fs_effect",
+    "ls": 0,
+    "expected": "連続押下は押下のたびに削除を予約し各レスポンス送出後に実行（抑止・多重防止なし=clearCacheは単純フラグ代入）。再押下=再予約・再実行",
+    "source": "m09-08md:153,175 / CacheUtil.php:47-50"
+  },
+  "L1-M0908-021": {
+    "claim_type": "message",
+    "ls": 0,
+    "expected": "削除コマンド失敗時: 応答済みのため完了フラッシュは既表示・本画面は成否を判定して通知しない・例外処理は共通処理へ委譲（誘発手段が一次資料に規定なし=要実機）",
+    "source": "m09-08md:174,233"
+  },
+  "L1-M0908-022": {
+    "claim_type": "log",
+    "ls": 0,
+    "expected": "ログ禁止事項: なりすまし対策トークンの原値・セッション識別子の完全値・Cookie値・メンテナンスファイルのトークン原値（設計書由来・コードで不出力を立証していない・観測未契約=実行保留）",
+    "source": "m09-08md:246-249（設計書由来のみ）"
+  }
+}

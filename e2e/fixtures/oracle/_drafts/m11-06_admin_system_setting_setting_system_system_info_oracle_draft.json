@@ -1,0 +1,203 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "B0候補（D6前・O5未確定・source_class暫定=standard-src+design/fid_kubun.tsv D1:344）。正式解決器はこの_drafts/を読んではならない（CFP §7隔離）。期待値の正はL1オラクルID（三段参照）。本機能は集計を持たない参照専用機能のため、動的値6項目のうちUser Agent以外（EC-CUBE/サーバーOS/DBサーバー/WEBサーバー/PHP）は値そのものを期待リテラルに固定せず、取得元関数・書式（恒等写像）までを期待の正とする。本jsonはmd §1から手動導出（機械導出器はM0成果物・未実装）。%eccube_admin_route%は環境値（既定 admin=eccube.yaml:3,69）。codex R1敵対レビュー=要修正（Blocker1+Major5+Minor2）→改訂1で是正・R2再確認待ち。改訂1要点: (1)C-017/L1-016の期待をdtb_authority_role単表の行数・全列ダイジェスト不変に限定（「いかなるテーブルへの書込もない」という全表を跨ぐ主張は撤回）。(2)DOC-DRAFT-m11-06-1はDB操作節md:188-192とread-only明記5箇所md:7,15,110,142,159の設計内矛盾として未解決のまま残し「read-onlyが設計として正しい」という断定を撤回、期待はSystemController.php単体の静的grep範囲＋dtb_authority_role不変という観測事実に限定。(3)L1-001の根拠をEccubeExtension.php（動的access_control注入によるROLE_ADMIN要件の実体）へ訂正（security.yamlはfirewall/form_loginのみ）。(4)L1-018/C-019は静的構造の確認までに限定し「完全一致」の誤記を「先頭一致（終端非アンカー）」に訂正、動的発火の再現はしない。(5)WEBサーバー行（SERVER_SOFTWARE）はテスト側が値を制御できないためL1-M1106-026として分離しE2Eでの値一致主張を撤回（User Agentのみ完全一致主張を維持）。(6)C-016はCookie値不変の観測に限定し「セッションキーが書き込まれない」という結論は静的grepと役割分担。(7)C-015は応答ヘッダの専用キャッシュ指定不在の観測に限定。BC-DRAFTなし（本機能はクロスフィーチャーの検索条件受け渡し等の処理経路を持たないため）。権限拒否（店舗オーナー/オペレーター=authority_id 4/5）はdtb_authority_role初期データ（id=20,21・deny_url=/setting/system/system）とAuthorityVoterの先頭一致（末尾非アンカー）により403となり、同一先頭パスのphpinfo応答も拒否される。サイドナビはTwigInitializeListener::getDisplayEccubeNavが同一のdeny_url先頭一致でフィルタする。eccube_phpinfo_enabled真側の確認は環境変数プロファイル切替を要し標準共有envでは実行不可（要実機=§9-2）。",
+    "source": "integration_test/e2e/exec/_drafts/m11-06_admin_system_setting_setting_system_system_info_executable_draft.md §1",
+    "baseline": {
+      "design_md_commit": "017ab3be9aac7d234838ef0fd3132ac9c36923b8",
+      "ee_commit": "9dbc4dd12080ac6a3d58a97f67e23e4a4a6e4f51",
+      "all_it_cases_sha256_prefix": "7911f190d273",
+      "fid_kubun": "M11-06=標準 standard-src+design（暫定付与・確定はD6）/ fid_kubun.tsv sha256先頭=44fbf02f1e4c"
+    }
+  },
+  "L1-M1106-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "未認証のGET /%eccube_admin_route%/setting/system/system は、EccubeExtensionがコンテナ構築時にsecurity設定へ動的注入するaccess_controlエントリ（path: ^/%eccube_admin_route%/, roles: ROLE_ADMIN。security.yaml自体にはROLE_ADMIN要件の記述はなくfirewall/form_loginのみを定義=codex R1是正）により認可要求され、admin firewallのform_loginによりadmin_loginのログイン画面へ誘導され、システム情報画面へ到達しない",
+    "source": "EccubeExtension.php:81-94,101-104 / security.yaml:40-46 / m11-06md:72,209"
+  },
+  "L1-M1106-002": {
+    "claim_type": "http_status",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "システム情報画面=GET /%eccube_admin_route%/setting/system/system（admin_setting_system_system・GETのみ）。権限が許可されればHTTP200で管理画面共通レイアウト（@admin/default_frame.twig拡張）のHTMLを応答",
+    "source": "SystemController.php:36-38 / system.twig:12 / m11-06md:68,172"
+  },
+  "L1-M1106-003": {
+    "claim_type": "display_structure",
+    "ls": 1,
+    "expected": "システム情報カードは画面本体の先頭カード（.c-primaryCol内の最初の.card）。見出し.card-title（リンクでないspan・ツールチップ付き・問い合わせアイコン.fa-question-circle同伴）・折りたたみトグルa[data-bs-toggle=collapse][href=#systemInfo]（.fa-angle-up）・本文#systemInfo（collapse show=既定open）。本文内は#server_info_box__body_innerにラベル(col-2)+値(col・id=server_info_box__value--{loop.index})の行を縦に並べる",
+    "expected_ja": { "card_title": "システム情報" },
+    "expected_en": { "card_title": "System Info" },
+    "source": "system.twig:23-54 / messages.ja.yaml:2996 / messages.en.yaml:2682 / m11-06md:57"
+  },
+  "L1-M1106-004": {
+    "claim_type": "display_rows",
+    "ls": 1,
+    "expected": "権限が許可される場合、システム情報カードに固定6行（EC-CUBE/サーバーOS/DBサーバー/WEBサーバー/PHP/User Agent、この順）のラベルと値が表示される。行数・順序は$info[]への無条件push順で固定（条件分岐なし）",
+    "expected_ja": {
+      "labels": ["EC-CUBE", "サーバーOS", "DBサーバー", "WEBサーバー", "PHP", "User Agent"]
+    },
+    "expected_en": {
+      "labels": ["EC-CUBE", "Server OS", "DB Server", "WEB Server", "PHP", "User Agent"]
+    },
+    "source": "SystemController.php:40-48 / messages.ja.yaml:3345-3350 / messages.en.yaml:2959-2964 / m11-06md:68,93"
+  },
+  "L1-M1106-005": {
+    "claim_type": "collapse_toggle",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "見出し右の角度アイコン（a[href=#systemInfo][data-bs-toggle=collapse]）押下でBootstrap collapseによりカード本文（#systemInfo）が折りたたまれ、再度押下で展開される（同一ページ内DOM操作のみ・サーバ問い合わせなし）",
+    "source": "system.twig:33-40 / m11-06md:69,81"
+  },
+  "L1-M1106-006": {
+    "claim_type": "conditional_display",
+    "ls": 1,
+    "expected": "PHP情報カード（#php_info_box__header+iframe）はeccube_phpinfo_enabled（既定=env ECCUBE_PHPINFO_ENABLED既定'0'→bool偽）が真のときのみDOM上に出力される。偽のときは当該カードのDOM要素自体が0件（システム情報カードのみ表示）",
+    "expected_ja": { "card_title": "PHP情報" },
+    "expected_en": { "card_title": "PHP Info" },
+    "source": "system.twig:61-80 / eccube.yaml:13,79 / messages.ja.yaml:3351 / messages.en.yaml:2965 / m11-06md:58,98,124,132"
+  },
+  "L1-M1106-007": {
+    "claim_type": "phpinfo_response",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "phpinfoルート（GET /%eccube_admin_route%/setting/system/system/phpinfo・admin_setting_system_system_phpinfo）はob_start+phpinfo()+ob_get_contentsで得たHTML断片をそのまま生Responseとして返す（共通フレーム非経由）。iframeのsrcはこのルートを指す",
+    "source": "SystemController.php:56-65 / system.twig:75 / m11-06md:28,70,99"
+  },
+  "L1-M1106-008": {
+    "claim_type": "field_eccube_version",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "EC-CUBE行の値はConstant::VERSION（製品定数バージョン文字列）。値そのものはリテラル固定しない（実装コミット依存の恒等写像claim）",
+    "source": "SystemController.php:41 / Constant.php:26 / m11-06md:118"
+  },
+  "L1-M1106-009": {
+    "claim_type": "field_server_os",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "サーバーOS行の値はphp_uname()の戻り値をそのまま表示（恒等写像・環境依存でリテラル固定しない）",
+    "source": "SystemController.php:42 / m11-06md:119"
+  },
+  "L1-M1106-010": {
+    "claim_type": "field_db_server",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "DBサーバー行の値はSystemService::getDbversion()。Doctrine既定接続のプラットフォーム名により接頭辞を切替（SQLite='SQLite version '+sqlite_version()／MySQL='MySQL '+version()／それ以外=空文字+version()）、ネイティブクエリで1スカラー取得して連結（値は恒等写像・接頭辞ルールのみ固定）",
+    "source": "SystemService.php:51-79 / SystemController.php:43 / m11-06md:120,141"
+  },
+  "L1-M1106-011": {
+    "claim_type": "field_user_agent",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "User Agent行の値は要求ヘッダUser-Agentをそのまま表示（無ければnull）。恒等写像（要求内容のパススルー）。テスト側が送信ヘッダを制御できるためE2Eで完全一致検証が可能（codex R1是正・改訂1でWEBサーバー行はL1-M1106-026へ分離）",
+    "source": "SystemController.php:48 / m11-06md:60,121,123"
+  },
+  "L1-M1106-012": {
+    "claim_type": "field_php_row_format",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "PHP行の値はphpversion()文字列に空白+丸括弧でget_loaded_extensions()の各要素をカンマ区切り連結（'X.Y.Z (ext1, ext2, …)'形式）。拡張が多い環境では長大な一行文字列となり得る（書式のみ固定・値は恒等写像）",
+    "source": "SystemController.php:46-47 / m11-06md:122,131"
+  },
+  "L1-M1106-013": {
+    "claim_type": "snapshot_no_refresh",
+    "ls": 0,
+    "reason": "data-passthrough",
+    "expected": "各行の値はその要求処理中に取得したスナップショットであり、画面を開いたままサーバ環境が変わっても自動更新しない",
+    "source": "m11-06md:140 / system.twig:23-83（script不存在）"
+  },
+  "L1-M1106-014": {
+    "claim_type": "no_cache",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "本機能の表示結果を専用にキャッシュしない",
+    "source": "m11-06md:160"
+  },
+  "L1-M1106-015": {
+    "claim_type": "no_session_write",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "本機能のコントローラ（index/phpinfo）はセッションを更新する処理を持たない（session操作0件=grep実測）。認証済みセッションの検証は管理領域の共通処理に従う",
+    "source": "SystemController.php:1-66（全文） / m11-06md:161,255"
+  },
+  "L1-M1106-016": {
+    "claim_type": "db_effect_observed",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "SystemController.php（index/phpinfo）単体の静的grep範囲内でpersist/flush/INSERT/UPDATE呼び出しが0件（同ファイル全文）。DB利用はSystemService::getDbversion()のSELECT一回のみ。この観測は当該コントローラ経由で登録・更新呼び出しが発生しないという静的事実にとどまり、依存先を含む全呼び出し経路の無書込証明ではなく、設計書DB操作節（md:188-192）とread-only明記5箇所（md:7,15,110,142,159）のどちらが設計として正しいかを断定するものでもない（DOC-DRAFT-m11-06-1は矛盾のまま未解決＝codex R1是正）。期待は本観測範囲＝SystemController.php単体の無登録呼び出しと、dtb_authority_roleテーブルの行数・全列ダイジェスト不変（C-017）に限定する",
+    "source": "m11-06md:110,142,159,7 / SystemController.php:1-66（persist/flush不出現・単体grep範囲）"
+  },
+  "L1-M1106-017": {
+    "claim_type": "authority_deny_schema",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "権限別拒否URLはdtb_authority_role（列authority_id・deny_url）に保存され、ログイン中メンバーの権限（Member::getAuthority()）に紐付く",
+    "source": "AuthorityRole.php:25,30,35-36,50-51 / m11-06md:59,183-184"
+  },
+  "L1-M1106-018": {
+    "claim_type": "authority_deny_matching_structure",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "AuthorityVoterのソース上には、要求パス（パス情報のみ）と管理ルート接頭辞+拒否URLパターンの先頭一致（正規表現・終端非アンカー）を全拒否行に対し検査し一致が一つでもあればACCESS_DENIEDとするtryブロック、および拒否URLが正規表現として不正な場合にExceptionを捕捉しpreg_quoteでエスケープした文字列に対する先頭一致（同じく終端非アンカー・「完全一致」ではない=codex R1是正）へフォールバックするcatchブロックが静的に存在する。本候補はこの構造の存在確認までであり、実際に不正な正規表現の拒否URLがロードされた際に例外送出・フォールバック分岐実行に至ることの動的再現・観測は行わない（要実機）",
+    "source": "AuthorityVoter.php:55-70 / m11-06md:103-104,201"
+  },
+  "L1-M1106-019": {
+    "claim_type": "authority_deny_initial_data",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "初期データでは店舗オーナー(tenant_owner・authority_id=4)・店舗オペレーター(tenant_operator・authority_id=5)にdeny_url=/setting/system/systemが設定される。AuthorityVoterの先頭一致は終端非アンカーのため、システム情報画面と同一先頭パスを持つphpinfo応答(/setting/system/system/phpinfo)の両方が403拒否となる。システム管理者(1)・モールオーナー(2)・モールオペレーター(3)には当該deny_urlが設定されておらず閲覧可能",
+    "source": "dtb_authority_role.csv:20-21 / mtb_authority.csv:2-6 / m11-06md:71,211"
+  },
+  "L1-M1106-020": {
+    "claim_type": "nav_filter",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "TwigInitializeListener::setAdminGlobalsがeccube_nav設定（setting>system_setting>system_index=admin_setting_system_system）からログイン中メンバーの拒否URLに合致するメニュー項目をgetDisplayEccubeNav()で除去してからeccubeNavをTwigへ渡す。拒否URLに合致する権限（店舗オーナー/オペレーター）ではサイドナビに「システム情報」項目が生成されない",
+    "source": "TwigInitializeListener.php:176-194,204-254（deny_url一致foreach=238-245） / eccube_nav.yaml:204,275-277 / m11-06md:212"
+  },
+  "L1-M1106-021": {
+    "claim_type": "page_transition",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "メニューからシステム情報を選ぶと、専用の別画面へは遷移せず同一画面としてシステム情報を表示する（本機能内に403以外の代替画面はない）",
+    "source": "m11-06md:220 / eccube_nav.yaml:275-277"
+  },
+  "L1-M1106-022": {
+    "claim_type": "TBD",
+    "ls": 0,
+    "reason": "tbd-observation-contract-undefined",
+    "expected": "【TBD・未確定オラクル】DB接続やバージョン取得に失敗した場合はアプリケーションの例外処理に委ねる（本機能専用の利用者向けメッセージなし）。HTTPステータス・例外型の列挙は設計書がスコープ外と明記（md:38）+安全な障害誘発手段が標準環境に無い＝観測契約定義不能（excludedにしない=実在仕様）",
+    "source": "m11-06md:130,173,230,38"
+  },
+  "L1-M1106-023": {
+    "claim_type": "no_form_no_validation",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "本機能はフォーム・テキスト入力を持たないため入力検証（必須/相関/DBとの相関）は成立しない（system.twigにinput/form/textarea/select 0件=grep実測。コントローラにcreateBuilder/createForm不出現）",
+    "source": "m11-06md:84,196-200 / system.twig:1-85（input/form不存在）"
+  },
+  "L1-M1106-024": {
+    "claim_type": "no_modal_no_dedicated_js",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "本機能はモーダル・確認ダイアログ・トーストを表示せず、本画面専用の独自スクリプトを持たない（折りたたみ=Bootstrap collapse、ツールチップ=Bootstrap data属性のみ。script/inline handler 0件=grep実測）",
+    "source": "m11-06md:81,83 / system.twig:1-85（script不存在）"
+  },
+  "L1-M1106-025": {
+    "claim_type": "display_page_title",
+    "ls": 1,
+    "expected": "ページタイトル領域（h2.c-pageTitle__title）に「システム情報」、サブタイトル領域（span.c-pageTitle__subTitle）に「システム設定」が表示される（block title/sub_titleをdefault_frame.twigが埋め込む）",
+    "expected_ja": { "title": "システム情報", "sub_title": "システム設定" },
+    "expected_en": { "title": "System Info", "sub_title": "System Settings" },
+    "source": "default_frame.twig:195-196 / system.twig:16-17 / messages.ja.yaml:2996,2987 / messages.en.yaml:2682,2674 / m11-06md:80"
+  },
+  "L1-M1106-026": {
+    "claim_type": "field_web_server_env_only",
+    "ls": 0,
+    "reason": "non-ui-observable（値は環境依存・E2E非制御）",
+    "expected": "WEBサーバー行の値は要求のサーバ変数SERVER_SOFTWARE（無ければnull相当）をそのまま表示する（表示経路自体はController:44で静的確認済み）。値そのものはE2Eテスト実行環境のWebサーバー/PHPプロセス設定に依存しPlaywright側から送信内容を制御できないため、表示経路の存在確認までとし値の一致検証はE2Eの検証範囲外（環境観測・サーバ側契約）とする（codex R1是正・改訂1でL1-M1106-011から分離）",
+    "source": "SystemController.php:44 / m11-06md:121"
+  }
+}

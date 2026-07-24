@@ -1,0 +1,251 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "B0候補（D6前・O5未確定・source_class暫定=standard-src+design/fid_kubun.tsv D1:334）。正式解決器はこの_drafts/を読んではならない（CFP §7隔離）。期待値の正はL1オラクルID（三段参照）。fixture_versionは@TBD-D5。bindは母集合の期待テキスト実内容で判定（観点・前提/入力ラベルはノイズ）。本jsonはmd §1から手動導出（機械導出器はM0成果物・未実装）。本機能の要点: (1)観測はDB(db.ts)が主(dtb_calendarへのCRUD) (2)相関バリデーション(同一店舗・同一holidayの重複禁止)が実在するためm05-13/m05-17の「相関constraint不存在→excluded」先例を踏襲せずbound。ただし確定的なのは新規側のみ(CalendarController.php:56-59がBaseInfoを明示オプション渡し)、更新側はBaseInfo未設定(CalendarController.php:87)のため確定不能=BC-DRAFT-M1012-02（改訂1でL1-029新設・C-013を実機裁定行へ是正=codex R1 Blocker是正） (3)DOC-DRAFT-M1012-01=title/holidayとも'required'=>trueだがNotBlank制約が存在せず(vendor FormType.php実測=requiredはビュー専用)、設計書の必須検証規定(md:168-169)と食い違う候補。C-007を実機裁定行とし確定期待にしない (4)破壊的更新(登録/更新/削除)は使い捨てSEED行に限定・S0スナップショット同値比較で不変性判定(SEED値を期待の正にしない)。dtb_calendarにはRLSポリシー3件が実在するが後続migration(Version20260319061014.php)で現行チェーン上は無効化済み（改訂1でmigration実測を追加）。改訂1（codex R1是正・Major）: L1-003のcreate_date/update_date出典行を44-56から61-68へ訂正、既存page.ts/spec.ts（e2e/pages,e2e/spec配下）が実在することを確認（旧「0件」記載は誤り・別系統のtest id体系で本候補とは独立）。codexレビュー: R1要修正（Blocker1+Major3）→改訂1で全数是正→R2=R1指摘4件すべて閉塞・小修正2点→改訂2で是正済み・R3再確認待ち。改訂2: (a)付録L1内訳の算術矛盾を訂正（21確定+2 DOC-DRAFT+1 BC-DRAFT+5補完専用=29とTSV実測で機械再確認。補完専用5件=L1-001,014,025,026,027） (b)L1-M1012-029に既存正式spec:353-358の旧断定（読みAのみ前提）との矛盾を相互参照として追記（正式ファイル無変更・整合はD6/D8のBC裁定へ委譲）。改訂3（codex R3是正）: md「5補完専用」とJSONのsupplement_only分類の不一致を解消。§4のTSV実測（bound側§4.1・補完側§4.2それぞれのL1参照を機械抽出）でL1-001/014はbound側から参照0件・補完側のみ参照と確認、L1-001とL1-014にsupplement_only:trueを付与（従来はL1-025/026/027の3件のみ付与されており不整合だった）。md↔JSONのsupplement_only集合={001,014,025,026,027}の5件で一致。",
+    "source": "integration_test/e2e/exec/_drafts/m10-12_admin_base_setting_setting_shop_calendar_executable_draft.md §1",
+    "baseline": {
+      "design_md_commit": "017ab3be9aac7d234838ef0fd3132ac9c36923b8",
+      "ee_commit": "9dbc4dd12080ac6a3d58a97f67e23e4a4a6e4f51",
+      "vendor_validator_version": "symfony/validator v7.4.3",
+      "vendor_form_version": "symfony/form v7.4.3",
+      "all_it_cases_sha256_prefix": "7911f190d273",
+      "fid_kubun": "M10-12=標準 standard-src+design（暫定付与・確定はD6・fid_kubun.tsv:334）"
+    }
+  },
+  "L1-M1012-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "supplement_only": true,
+    "expected": "未ログインで一覧GET/新規POST/削除DELETEへアクセスするとadmin firewallによりadmin_loginへリダイレクトされ本機能を利用できない（母集合に直接対応するtest_idなし・補完S-001/S-002専用。codex R3是正=§4実測でbound側からの参照0件・supplement_only付与）",
+    "source": "m10-12md:74 / security.yaml:40-46"
+  },
+  "L1-M1012-002": {
+    "claim_type": "http_status",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "GET/POST /%eccube_admin_route%/setting/shop/calendar（admin_setting_shop_calendar）・GET/POST .../calendar/new（admin_setting_shop_calendar_new）はいずれも index() で処理／DELETE .../calendar/{id}/delete（admin_setting_shop_calendar_delete・id=数字）は delete() で処理",
+    "source": "CalendarController.php:46-48,132"
+  },
+  "L1-M1012-003": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "dtb_calendarの1レコード=id(自動採番)・title(文字列255・NULL許容)・holiday(タイムゾーン付き日時・NOT NULL)・base_info_id(店舗FK・NOT NULL)・create_date/update_date(同型・NOT NULL)",
+    "source": "Calendar.php:44-56(id/title/holiday) および 61-68(create_date/update_date・codex R1是正=旧誤記44-56を訂正) / m10-12md:58"
+  },
+  "L1-M1012-004": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "一覧はgetListOrderByIdDesc($BaseInfo)によりID降順で取得・baseInfo指定時はその店舗の行のみに絞る",
+    "source": "CalendarRepository.php:62-75 / m10-12md:59"
+  },
+  "L1-M1012-005": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected_ja_save": "保存しました",
+    "expected_en_save": "Saved",
+    "expected_ja_delete": "削除しました",
+    "expected_en_delete": "Deleted",
+    "expected": "保存成功(新規/インライン更新とも)=admin.common.save_complete。削除成功=admin.common.delete_complete",
+    "source": "CalendarController.php:71,105,137 / messages.ja.yaml:1591,1593 / messages.en.yaml:1636,1638"
+  },
+  "L1-M1012-006": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "GETはBaseInfo未解決時getMallBaseInfo()を既定とし、一覧はその店舗の行のみ表示。画面上部に新規登録用の空白行(#calendar_item_new)が常に存在する",
+    "source": "CalendarController.php:49-53,78-81,116-122 / calendar.twig:82 / m10-12md:69"
+  },
+  "L1-M1012-007": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "新規作成: mode!='edit_inline'で通常束ね、送信済み+検証済みならbaseInfoセット+persist/flush、成功フラッシュ後admin_homepageへリダイレクト。TenantEventSubscriberはCalendarを明示的に除外するためbaseInfoはコントローラが明示セットする必要がある",
+    "source": "CalendarController.php:63-76 / TenantEventSubscriber.php:57-68(Calendar除外=67) / m10-12md:70"
+  },
+  "L1-M1012-008": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "鉛筆押下でJSが当該行の.listを隠し.editを表示(サーバ往復なし)。キャンセル押下は一覧設定画面へのフルGETリロード",
+    "source": "calendar.twig:39-49 / m10-12md:71"
+  },
+  "L1-M1012-009": {
+    "claim_type": "request_contract",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "インライン編集POSTにcalendar_id=<id>とmode=edit_inlineの隠しフィールドが含まれる。サーバはmode=='edit_inline'&&method=='POST'&&(string)Calendar.id===request.get('calendar_id')の行にのみ束ねる",
+    "source": "calendar.twig:109-110 / CalendarController.php:93-96 / m10-12md:72"
+  },
+  "L1-M1012-010": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "削除リンクはcsrf_token_for_anchor()によるCSRF属性とdata-method=delete・data-confirm=falseを持ち、行ごとの独立モーダル(#DeleteModal_{id})から送信される",
+    "source": "calendar.twig:147,152-153,169-172 / m10-12md:73"
+  },
+  "L1-M1012-011": {
+    "claim_type": "doc_draft",
+    "doc_draft": "DOC-DRAFT-M1012-01",
+    "ls": 0,
+    "expected": "【実機裁定・確定期待にしない】title: 設計書=未入力/空白は必須検証で無効(md:168) vs ee=required=>trueはビュー専用(vendor FormType.php:48,95)でNotBlank制約なし。Length(max=255)は空文字を長さ0として許容するため単独では無効化されない可能性",
+    "source": "CalendarType.php:50-58 / vendor/symfony/form/Extension/Core/Type/FormType.php:48,95 / m10-12md:168"
+  },
+  "L1-M1012-012": {
+    "claim_type": "doc_draft",
+    "doc_draft": "DOC-DRAFT-M1012-01",
+    "ls": 0,
+    "expected": "【実機裁定・確定期待にしない】holiday: 設計書=必須(md:169) vs ee=required=>trueはビュー専用・constraintsはRange(min)のみでNotBlank不在。DB列holidayはNOT NULLのため空値がフォーム層を素通りした場合はORM例外に至る可能性",
+    "source": "CalendarType.php:59-70 / Calendar.php:55-56 / m10-12md:169"
+  },
+  "L1-M1012-013": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "インライン編集の当該行にerrors[Calendar.id]>0がある場合has-errorクラスが付き、.listが非表示・.editのみ表示される",
+    "source": "calendar.twig:26-32,106 / CalendarController.php:109 / m10-12md:84"
+  },
+  "L1-M1012-014": {
+    "claim_type": "validation_rule",
+    "ls": 1,
+    "unit": "characters",
+    "max_length": 255,
+    "supplement_only": true,
+    "expected_ja": "長すぎます。この値は255文字以下で入力してください。",
+    "expected_en": "This value is too long. It should have 255 characters or less.",
+    "expected": "titleのForm層最大長=255文字(eccube_stext_len)。超過時はSymfony既定カタログのchoice文言(limit=255解決後)（母集合に直接対応するtest_idなし・補完S-004/S-004-EN専用。codex R3是正=§4実測でbound側からの参照0件・supplement_only付与）",
+    "source": "CalendarType.php:51-58 / eccube.yaml:137 / vendor validators.ja.xlf:78-79・validators.en.xlf:78-79 / m10-12md:168"
+  },
+  "L1-M1012-015": {
+    "claim_type": "validation_rule",
+    "ls": 1,
+    "expected_ja": "不正な日付です。",
+    "expected_en": "Invalid DateTime.",
+    "expected": "holidayのRange制約min='0003-01-01'未満はform_error.out_of_range。POST_SUBMITで再検証しエラーなら重複チェックへ進まず打ち切る",
+    "source": "CalendarType.php:65-70,84-96 / validators.ja.yaml:60 / validators.en.yaml:47 / m10-12md:134"
+  },
+  "L1-M1012-016": {
+    "claim_type": "validation_rule",
+    "ls": 1,
+    "expected_ja": "同日の定休日が既に存在しているため、設定できません。",
+    "expected_en": "Date is already existed.",
+    "expected": "【本機能固有の相関バリ・新規側で確定】POST_SUBMITが同一holiday+同一baseInfoの既存行数をカウントし1件以上あればholiday欄へadmin.setting.shop.calendar.holiday.available_errorを積む。新規側はCalendarController.php:56-59がBaseInfoを明示オプション渡しするため確定的。更新側の帰結はL1-M1012-029(BC-DRAFT-M1012-02)を参照=静的確定不能（codex R1是正）",
+    "source": "CalendarType.php:79-117 / CalendarController.php:56-59 / messages.ja.yaml:3192 / messages.en.yaml:2828 / m10-12md:135"
+  },
+  "L1-M1012-017": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "unit": "characters",
+    "db_columns": {
+      "title": "dtb_calendar.title STRING255 nullable",
+      "holiday": "dtb_calendar.holiday DATETIMETZ NOT NULL",
+      "base_info_id": "TenantTrait JoinColumn nullable=false"
+    },
+    "expected": "title/holidayとも恒等写像で保存。行の追加・削除はこの保存操作単体では発生しない",
+    "source": "Calendar.php:49-56 / TenantTrait.php:24-26 / m10-12md:60,61,168-169"
+  },
+  "L1-M1012-018": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "create_date/update_dateはコントローラが直接セットせず、汎用SaveEventSubscriber(method_exists判定・全エンティティ共通)がprePersistで両方・preUpdateでupdate_dateのみ設定する",
+    "source": "SaveEventSubscriber.php:37-46,62-68 / Calendar.php:117-140 / m10-12md:40"
+  },
+  "L1-M1012-019": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "インラインPOSTのcalendar_idが表示中のどの行のIDとも一致しない場合、いずれのeditCalendarFormもhandleRequestされず、persist/flush/フラッシュ/リダイレクトは一切発生しない",
+    "source": "CalendarController.php:93-114 / m10-12md:175"
+  },
+  "L1-M1012-020": {
+    "claim_type": "http_status",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "削除はisTokenValid()を明示呼出し、CSRFトークン不正/欠落ならAccessDeniedHttpExceptionをthrowする",
+    "source": "CalendarController.php:135 / AbstractController.php:252-262 / m10-12md:235"
+  },
+  "L1-M1012-021": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "削除はCalendarRepository::delete()がremove直後にflushする物理削除(論理削除フラグ列は存在しない)",
+    "source": "CalendarRepository.php:127-139 / m10-12md:118"
+  },
+  "L1-M1012-022": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "一覧の非編集表示はdate_dayフィルタで日粒度表示(DB内部値はタイムゾーン付き日時のまま)",
+    "source": "calendar.twig:126 / m10-12md:160"
+  },
+  "L1-M1012-023": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected_ja_title": "定休日カレンダー設定",
+    "expected_en_title": "Calendar",
+    "expected_ja_tooltip": "定休日カレンダーに表示する定休日を設定できます。",
+    "expected_en_tooltip": "You can set regular holidays for displaying in the business days calendar.",
+    "expected": "カード見出しタイトル+ツールチップ(title属性)",
+    "source": "calendar.twig:58-61 / messages.ja.yaml:2986,3681 / messages.en.yaml:2673,3293 / m10-12md:82"
+  },
+  "L1-M1012-024": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "新規作成成功・インライン更新成功のいずれもadmin_homepageルートへリダイレクト。検証失敗時はリダイレクトしない",
+    "source": "CalendarController.php:74,107 / m10-12md:162"
+  },
+  "L1-M1012-025": {
+    "claim_type": "concurrency",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "supplement_only": true,
+    "expected": "同一行への複数管理セッションの連続保存は最後の保存が残る(後勝ち)。Calendarに#[ORM\\Version]列は無く保存は単一flushのみ",
+    "source": "m10-12md:319-322 / Calendar.php(Version注釈0件・実測)"
+  },
+  "L1-M1012-026": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "supplement_only": true,
+    "expected_ja": "登録日(開始)",
+    "expected_en": "Registration Date (Start)",
+    "expected": "holiday入力欄のラベルはadmin.common.create_date__startを流用しており画面ラベルと項目意味(休業日)が字面上一致しない(quirk)",
+    "source": "CalendarType.php:60 / messages.ja.yaml:1834 / messages.en.yaml:1831 / m10-12md:86"
+  },
+  "L1-M1012-027": {
+    "claim_type": "message",
+    "ls": 1,
+    "supplement_only": true,
+    "expected_ja_title_col": "タイトル",
+    "expected_en_title_col": "Title",
+    "expected_ja_holiday_col": "日付",
+    "expected_en_holiday_col": "Date",
+    "expected": "一覧見出し列(admin.setting.shop.calendar.title / admin.setting.shop.calendar.holiday)",
+    "source": "calendar.twig:75-76 / messages.ja.yaml:3190-3191 / messages.en.yaml:2826-2827"
+  },
+  "L1-M1012-028": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "登録・更新の保存操作自体は不要な削除を含まない(index()内にremove()呼出は無くpersist/flushのみ)。既存の他行数は変化しない",
+    "source": "CalendarController.php:32-123(実測) / m10-12md:225"
+  },
+  "L1-M1012-029": {
+    "claim_type": "bc_draft",
+    "bc_draft": "BC-DRAFT-M1012-02",
+    "ls": 0,
+    "codex_note": "R1 Blocker是正で新設。C-013過剰boundの是正根拠",
+    "expected": "【実機裁定・確定期待にしない】インライン編集のeditCalendarFormはBaseInfoオプションを渡さない(CalendarController.php:87。新規側=56-59との対比)。既定'BaseInfo'=>nullがPOST_SUBMITのc.baseInfo=:baseInfoへ束縛され、SQL三値論理でNULL比較は常にUNKNOWN/false=重複カウントが常に0になり更新側の重複日付拒否が無効化される可能性がある。読みA(設計書意図どおり拒否される)/読みB(拒否が働かず保存されてしまう=実装バグ候補)のいずれが真かはDoctrineのnullパラメータ束縛の実際の変換結果に依存し静的推論では確定できない",
+    "source": "CalendarController.php:87 / CalendarType.php:98-104,126-129 / m10-12md:113",
+    "formal_spec_cross_reference": {
+      "codex_note": "R2是正・正式ファイルは無変更（_drafts隔離規律）。相互参照の記録のみ",
+      "path": "e2e/spec/admin/m10/m10_12_admin_base_setting_setting_shop_calendar.spec.ts:353-358",
+      "conflict": "既存test.fixme(E2E-M10-12-033)は本BC-DRAFT発見以前の旧断定（読みAのみ前提=同日重複は常にエラー）であり、読みB（BaseInfo未渡しにより重複チェックが無効化され保存されうる）と矛盾する",
+      "resolution": "整合はD6/D8のBC裁定（実機実行でどちらの読みが真か確定した時点）で取る。候補フェーズでは正式spec側を改変せず、旧断定を候補側の確定期待として引き継がない（C-013は両論併記のまま）"
+    }
+  }
+}
