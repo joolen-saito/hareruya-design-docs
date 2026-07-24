@@ -1,0 +1,312 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "B0候補（D6前・O5未確定・source_class暫定=standard-src+design/fid_kubun.tsv D1）。正式解決器はこの_drafts/を読んではならない（CFP §7隔離）。期待値の正はL1オラクルID（三段参照）。fixture_versionは@TBD-D5。bindは母集合の期待テキスト実内容で判定（観点・前提/入力ラベルはノイズ）。本jsonはmd §1から手動導出（機械導出器はM0成果物・未実装）。本機能はカスタマイズ区分=標準・決済プラグインSlnPayment42（外部決済代行=ソニーペイメント相当）が正典。**改訂1（codex R1敵対レビュー是正・2026-07-24）**: (a)プラグイン固有の文言（validation messages等）はEN資源なしだがコアEC-CUBEキー`front.mypage.title`は`messages.en.yaml:509`に`My Account`が実在しapp_locales=ja|en（services.yaml:14）＝完全ja固定は誤りでL1-004を訂正・LS=1のclaim1件追加。(b)Util::changeMemCard のKaiinStatus 2/3分岐で`MemChg`が失敗すると救済`MemInval`が呼ばれ、これが成功すると`plg_sln_mem_card_history`が書込まれる（Util.php:220-234・Mem.php:208-211）＝「登録・変更は書込ゼロ」は誤りでL1-025を条件化し新規L1-041（救済経路の書込）を追加。外部決済代行への実通信結果（会員照会の実表示・実登録・実削除・トークン生成JS・救済経路の書込成否）はE2E単独で観測不能=要実機（該当claimはexternal_dependency=trueで明示。値そのものを期待の正にしない）。破壊系はplg_sln_mem_card_history 1系統のみ（削除成功時、および登録・変更のKaiinStatus 2/3救済成功時のみ書込。既存会員枠を持たない新規会員のMemAdd経路は救済機構自体を持たず書込ゼロ＝L1-F0619-025の限定条件下でのみ実証）。",
+    "source": "integration_test/e2e/exec/_drafts/f06-19_front_member_mypage_credit_card_executable_draft.md §1",
+    "baseline": {
+      "design_md_path": "functions/ec-cube-enterprise/f06-19_front_member_mypage_credit_card.md",
+      "ee_plugin_path": "app/Plugin/SlnPayment42/",
+      "all_it_cases_row_count": 76,
+      "fid_kubun": "F06-19=標準 standard-src+design（暫定付与・確定はD6。挙動・DBともSlnPayment42実装を正とする=design md:15,48）"
+    }
+  },
+  "L1-F0619-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "IS_AUTHENTICATED_FULLYでない場合、GET/POST /{_locale}{_shop}/mypage/sln_edit_card はカード編集画面を描画せずroute 'mypage'（マイページ入口）へredirectToRouteする",
+    "source": "MypageController.php:47-49 / f06-19md:75,100,131,299,334"
+  },
+  "L1-F0619-002": {
+    "claim_type": "config_guard",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "PluginConfig.getMemberRegist()がarrMemberRegist['無し']=2のとき、editCardはNotFoundHttpException(404)をthrowする（未検出として扱う。専用の利用者向け文言なし）",
+    "source": "MypageController.php:54-57 / services.yaml:121-124(arrMemberRegist 有り=1/無し=2) / f06-19md:76,101,132,185,302,335"
+  },
+  "L1-F0619-003": {
+    "claim_type": "http_status",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "route sln_edit_card = GET/POST /{_locale}{_shop}/mypage/sln_edit_card（controller MypageController::editCard）。登録・削除は同一URLへのPOSTでトークン欄の値により分岐する",
+    "source": "routes.yaml:23-31 / f06-19md:72-74,78"
+  },
+  "L1-F0619-004": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "expected_ja": "マイページ/登録済クレジットカード",
+    "expected_en": "My Account/登録済クレジットカード",
+    "expected": "画面見出し=front.mypage.title(コアEC-CUBEの翻訳キー。ja「マイページ」/en「My Account」)+twig側にハードコードされた固定文字列「/登録済クレジットカード」（この部分に対応するtransキー・EN資源は無い）を連結した文字列。app_locales=ja|en（フロントの/en/配下アクセスが可能）のため、en localeでは「My Account/登録済クレジットカード」という日英混在の見出しが描画される。訂正: 当初「本プラグインに英語ロケール資源なし＝全claim ja固定」としたのは誤り（front.mypage.titleはEC-CUBE本体messages.en.yamlのキーでありプラグイン資源ではない。プラグイン固有の文言（validation messages・flash等）にはEN資源が無いのは事実だが、本claimのように本体キーを流用する箇所は例外）",
+    "source": "sln_edit_card.twig:434 / messages.ja.yaml:629 / messages.en.yaml:509 / app/config/eccube/services.yaml:14(app_locales: 'ja|en') / f06-19md:148"
+  },
+  "L1-F0619-005": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "GET表示時、MemRefの応答KaiinStatus==0のときのみ $OldCard がセットされ、「カード番号:」+OldCard.CardNo+「有効期限:」+OldYear+「年 」+OldMon+「月」+カード情報削除ボタンを表示する。KaiinStatus!=0または例外時はOldCard=nullでこのブロックは表示されない。判定条件の分岐構造自体はソース確認でbound可能だが、実画面でこのブロックの表示/非表示を観測するには決済代行から実際にKaiinStatus値を含む応答を受け取る必要がある",
+    "external_dependency": true,
+    "source": "MypageController.php:117-141 / sln_edit_card.twig:466-487 / f06-19md:103,149,220"
+  },
+  "L1-F0619-006": {
+    "claim_type": "masking_algo",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "Member::getCardNo() = CardNo ? '**********'.substr(CardNo,-4) : CardNo（原番号の長さに関わらずアスタリスク10文字固定+末尾4桁。原番号が空ならそのまま空）。この算式自体はソース確認でbound可能（実行不要）だが、実画面に表示される実際のマスク文字列（末尾4桁の値を含む）を観測するには、決済代行に登録済みのカードを持つ実会員枠が必要",
+    "external_dependency": true,
+    "source": "app/Plugin/SlnPayment42/Service/SlnContent/Credit/Member.php:199-202 / f06-19md:62,149,225"
+  },
+  "L1-F0619-007": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "editCardで使うCardTypeフォームインスタンスはAddMem/PayType/BillingFirstName/BillingLastName/BillingEmailをremove()済み。画面のフォーム項目はCardNo・CardExpMonth・CardExpYear・KanaSei・KanaMei(条件)・SecCd(条件)・BirthDay(条件)・TelNo(条件)・Token(hidden)のみ",
+    "source": "MypageController.php:59-64 / CardType.php:243-271 / f06-19md:86,102"
+  },
+  "L1-F0619-008": {
+    "claim_type": "display_cond",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "KanaSei/KanaMei欄は 'KanaSei' in config.AttestationAssistance のときのみ表示。SecCd欄は config.SecCd==1 のときのみ表示。BirthDay欄は 'BirthDay' in config.AttestationAssistance のときのみ表示。TelNo欄は 'TelNo' in config.AttestationAssistance のときのみ表示",
+    "source": "sln_edit_card.twig:513,532,551,567 / services.yaml:110-119(arrAssistance/arrSecurityCode) / f06-19md:90,150,214"
+  },
+  "L1-F0619-009": {
+    "claim_type": "message",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "checkCardNo(): 未入力→「カード番号を入力してください」／数字以外(isNaN)→「ハイフンは間に入れず、番号のみを入力してください」／16桁超または14桁未満→「正しいカードを入力してください」。カード番号欄直下(#card_no_error)に表示し枠を赤くする",
+    "source": "sln_edit_card.twig:225-250 / f06-19md:88,156"
+  },
+  "L1-F0619-010": {
+    "claim_type": "message",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "checkCardExp(): 月未選択→「カード有効期限/月を入力してください」（#card_exp_month_error）／年未選択→「カード有効期限/年を入力してください」（#card_exp_year_error）",
+    "source": "sln_edit_card.twig:252-281 / f06-19md:88,157"
+  },
+  "L1-F0619-011": {
+    "claim_type": "message",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "checkKana(): 姓/名 未入力→「カード名義/姓(名)を入力してください」／カタカナ(\\u30A0-\\u30FF)以外→「カード名義/姓(名)をカタカナを入力してください」。#kana_sei_error/#kana_mei_error直下に表示",
+    "source": "sln_edit_card.twig:283-324 / f06-19md:88,158"
+  },
+  "L1-F0619-012": {
+    "claim_type": "message",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "checkSecCd(): 未入力→「セキュリティコードを入力してください」／数字以外(isNaN)→「セキュリティコードは数字のみを入力してください」／3文字未満→「セキュリティコードは3文字以上数字を入力してください」（#sec_cd_error）",
+    "source": "sln_edit_card.twig:326-349 / f06-19md:88,159"
+  },
+  "L1-F0619-013": {
+    "claim_type": "message",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "checkBirthDay(): 未入力→「生月日を入力してください」／数字以外(isNaN)→「生月日は数字のみを入力してください」／4文字でない→「生月日は4文字を入力してください」（#birth_day_error）",
+    "source": "sln_edit_card.twig:351-374 / f06-19md:88,160"
+  },
+  "L1-F0619-014": {
+    "claim_type": "message",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "checkTelNo(): 未入力→「電話番号を入力してください」／数字以外(isNaN)→「電話番号は数字のみを入力してください」／4文字でない→「電話番号は下4桁をご記入下さい」（#tel_no_error）",
+    "source": "sln_edit_card.twig:376-399 / f06-19md:88,161"
+  },
+  "L1-F0619-015": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "getToken(): checkCardNo→checkCardExp→checkKana→checkSecCd→checkBirthDay→checkTelNoを順に実行し、いずれか1つでも失敗するとalert「入力項目を再度ご確認ください」を出しreturn false（フォーム送信・外部通信いずれも発生しない）。全て通過すると各入力欄をクリアし#detail_box__bodyを隠し#pay_statusを表示してからSpsvApi.spsvCreateTokenを呼ぶ",
+    "source": "sln_edit_card.twig:138-223 / f06-19md:87,164"
+  },
+  "L1-F0619-016": {
+    "claim_type": "message",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "getToken()内のtry/catchでSpsvApi.spsvCreateToken呼出し時に例外が出た場合、alert「現在決済通信障害が発生しております。後ほどお試しください。」+errを表示し、window.location.hrefをurl('mypage')へ遷移させる。分岐構造(try/catch)自体はソース確認でbound可能だが、実際にこの例外を誘発するには決済代行提供のトークン生成スクリプト自体の失敗が必要（提供元仕様=設計書がスコープ外と明記=f06-19md:38）",
+    "external_dependency": true,
+    "source": "sln_edit_card.twig:215-221 / f06-19md:87,165,318"
+  },
+  "L1-F0619-017": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "cardDelete(): 隠しToken欄に固定文字列'del'を入れてform#add_card_formをsubmitする。isDelSendフラグにより、送信開始後に再度カード情報削除ボタンが押されるとalert「カード情報削除処理中ため少々お待ちください。」を出しreturn falseする（二重送信防止・削除は事前のフォーム検証を経ない）",
+    "source": "sln_edit_card.twig:409-422 / f06-19md:89,167"
+  },
+  "L1-F0619-018": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "POST受信時、Token=='del'ならフォーム検証を経ず即MemInval（削除）を実行→成功時flash「カード情報を更新しました」+redirect sln_edit_card。del以外はhandleRequest→isSubmitted&&isValidのときのみ、Tokenに値があればchangeMemCard（登録・差し替え）を実行して同flash+redirect。isValidでなければflash「入力項目をご確認ください。」（redirectなし・同POSTレスポンスとして編集画面を再描画）",
+    "source": "MypageController.php:66-92 / f06-19md:110-115,120-123,127-136"
+  },
+  "L1-F0619-019": {
+    "claim_type": "validation_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "unit": "characters",
+    "expected": "editCard使用フィールドはすべてrequired=>false（サーバ側NotBlankなし）。CardNo: Length(max16)+Regex(半角数字)。CardExpYear: Regex(半角数字)+Length(max4)。CardExpMonth: Regex(半角数字)+Length(max2)。KanaSei/KanaMei: Length(max10)+Regex(半角/全角カタカナ)。SecCd: Length(max4)+Regex(半角数字)。BirthDay: Length(min4,max4)+Regex(半角数字)。TelNo: Length(min4,max4)+Regex(半角数字)。Token: NotBlank制約はあるがrequired=>false",
+    "source": "CardType.php:59-224"
+  },
+  "L1-F0619-020": {
+    "claim_type": "message",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "サーバ側Regex違反時の共通文言「半角数字で入力してください。」（CardNo・CardExpYear・CardExpMonth・SecCd・BirthDay・TelNoの各Regex制約に付与）",
+    "source": "CardType.php:68,83,101,180,196,212 / f06-19md:162,281-291"
+  },
+  "L1-F0619-021": {
+    "claim_type": "validation_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "CardTypeのPOST_SUBMITリスナ: BirthDayが4桁ありsubstr(0,2)<=12かつsubstr(-2)<=31を満たさない場合、BirthDay欄へFormError「生月日を正しく入力ください。」。CardExpYearとCardExpMonthがともに値を持ち、CardExpYear<現在年ならCardExpYear欄へ、CardExpYear==現在年かつCardExpMonth<現在月ならCardExpMonth欄へ、それぞれFormError「正しく入力ください。」",
+    "source": "CardType.php:272-292 / f06-19md:163,206,282-283"
+  },
+  "L1-F0619-022": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "Util::changeMemCard: MemRef取得失敗(例外)または会員未存在→MemAdd。KaiinStatus 0(有効)/1(カード無効)→MemChg。KaiinStatus 2(ログイン回数無効)/3(会員無効)→MemUnInval+sleep(5)+MemChg（MemChgが例外ならMemInvalを実行してから例外を再送出）。KaiinStatus 4(会員削除)→MemAdd",
+    "source": "Util.php:205-245 / f06-19md:111,138"
+  },
+  "L1-F0619-023": {
+    "claim_type": "error_handling",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "SlnShoppingException捕捉時: flash $e->getMessage()（namespace sln_mypage_card）＋log_error＋addCardNotice。checkSystemError()がtrueならaddErrorLog＋管理者宛sendErrorMail。redirectToRoute('sln_edit_card')。業務エラーの文言テンプレは処理別に固定接頭辞を持つ: MemAdd失敗='クレジットカードの登録に失敗しました:'／MemChg失敗='会員の更新に失敗しました:'／MemInval失敗='会員情報の削除が失敗しました:'／MemRef系失敗='会員情報の参照が失敗しました:'（接頭辞に続けて決済代行の応答コードから復号した文言を連結）",
+    "external_dependency": true,
+    "source": "MypageController.php:93-106 / Mem.php:111-115,173-177,236-240,296-299,358-361 / f06-19md:114,178"
+  },
+  "L1-F0619-024": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "plg_sln_mem_card_historyへの書込はMemCardIdRepository::nextMemId()のpersist+flushのみが発生源。customer_id行が既存なら mem_id=mem_id+1 に更新、なければ customer_id/mem_id=1 で新規作成。この呼出はMem::MemInval内で、外部HTTP応答がtruthyかつDeCodeMemInvalResponseが例外を投げない(ResponseCd=='OK')場合にのみ実行される（Util::delKaiin経由）",
+    "external_dependency": true,
+    "source": "Mem.php:208-211 / Util.php:181-184 / MemCardIdRepository.php:54-69 / f06-19md:121,196,236"
+  },
+  "L1-F0619-025": {
+    "claim_type": "db_noeffect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "【改訂1・条件化＝codex R1 Blocker②是正】訂正前は『登録・変更は全分岐でDB書込ゼロ』としたが誤り。正しくは: (a) MemAdd呼出し自体（決済代行に既存会員枠が無い/KaiinStatus=4のケース）はplg_sln_mem_card_historyへpersist/flushを一切呼ばない。(b) changeMemCardのKaiinStatus 0/1分岐（MemChgのみ呼出し）も、MemChg単体の成功時はpersist/flushを呼ばない。(c) 【例外】changeMemCardのKaiinStatus 2/3分岐は、MemUnInval実行後にMemChgを試行し、MemChgが失敗（SlnShoppingExceptionまたは任意の\\Exception）すると救済として$mem->MemInval()を呼ぶ（Util.php:224-232）。この救済MemInvalが成功（HTTP応答truthy かつ ResponseCd=='OK'）すると、L1-F0619-024と同一の書込機構（Util::delKaiin→MemCardIdRepository::nextMemId）によりplg_sln_mem_card_historyが書込まれる（＝L1-F0619-041）。この場合、利用者に見えるflashは元のMemChg失敗の文言（業務エラーまたは通信エラー）であり「カード情報を更新しました」という成功文言ではない点に注意。(d) いずれの経路でもgetMemId()による読取（KaiinId組立用）は常に発生する。結論: 『登録・変更はDB書込ゼロ』が成立するのは(a)(b)の経路（＝対象会員が決済代行側でKaiinStatus 2/3の既存会員枠を持たない場合）に限られ、無条件の普遍事実ではない",
+    "source": "Mem.php:69-154,255-339,379-401 / Util.php:176-194,205-245（KaiinStatus 0/1/4分岐にpersist/flush不出現=grep実測） / Util.php:220-234（KaiinStatus 2/3の救済MemInval呼出し） / f06-19md:121,194"
+  },
+  "L1-F0619-026": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "MemCardId.update_dateはEC-CUBE共通のDoctrineイベントリスナSaveEventSubscriber（prePersist/preUpdateでmethod_exists($entity,'setUpdateDate')ならnew \\DateTime()をセット。HasLifecycleCallbacks・interface・trait不要のダックタイピング）により自動設定される。MemCardIdRepository::nextMemId()自体はsetUpdateDate()を明示的に呼んでいない",
+    "source": "src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:26-27,37-57,62-76 / app/config/eccube/services.yaml:42,214-217（autoconfigure・Doctrine/EventSubscriber除外なし） / MemCardIdRepository.php:54-69"
+  },
+  "L1-F0619-027": {
+    "claim_type": "derived_value",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "KaiinId = sprintf('%03d', 500+mem_id) . sprintf('%010d', customer_id)。KaiinPass = substr(preg_replace('/[^0-9a-zA-Z]/','',md5(customer_id.eccube_auth_magic)),0,12)。原値は画面・ログ・設計書に出さない",
+    "source": "Util.php:186-194 / f06-19md:194,363"
+  },
+  "L1-F0619-028": {
+    "claim_type": "message",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "「カード情報を更新しました」（namespace eccube.sln_mypage_card.warning）は登録・差し替え成功時と削除成功時の両方でflashに積まれ、カード編集画面上部に1度だけ表示される。分岐構造（成功時にこの文言を積む箇所）はソース確認でbound可能だが、実際にこのflashを画面上で観測するには決済代行が当該操作に成功応答を返す必要がある",
+    "external_dependency": true,
+    "source": "MypageController.php:75,77,87,89 / sln_edit_card.twig:441-447 / f06-19md:112,122,175"
+  },
+  "L1-F0619-029": {
+    "claim_type": "message",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "「入力項目をご確認ください。」はサーバ側フォーム検証(isValid()==false)のときにflashへ積まれる",
+    "source": "MypageController.php:91 / f06-19md:113,176,336"
+  },
+  "L1-F0619-030": {
+    "claim_type": "message",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "「通信エラーが発生しました、後ほどお試しください。」はSlnShoppingException以外の\\Exception捕捉時（HttpSend通信失敗・HTTPステータス200以外・空応答など）にflashへ積まれる",
+    "source": "MypageController.php:107-112 / HttpSend.php:104-156 / f06-19md:115,177,338"
+  },
+  "L1-F0619-031": {
+    "claim_type": "display_cond",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "GET表示時のMemRef呼出しはtry/catchで囲まれ、例外時はlog_errorのみでOldCardはnullのまま（登録済みカードブロック非表示・フォームは通常どおり描画される）",
+    "external_dependency": true,
+    "source": "MypageController.php:119-130 / f06-19md:103,222,339"
+  },
+  "L1-F0619-032": {
+    "claim_type": "display_dead",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "サーバ側変数$isErrorはeditCard内で常にfalseに初期化され、以降このファイル内で再代入されていない（単一のローカル変数のため他ファイルからの上書きは構造的に不可能）。したがってtwigの{% if isError %}分岐（サーバレンダーの「現在決済通信障害が発生しております。後ほどお試しください。」）はサーバ側から到達不能。同文言のクライアント側ダイアログ表示(L1-F0619-016)とは独立した経路",
+    "source": "MypageController.php:45,138 / sln_edit_card.twig:449-452"
+  },
+  "L1-F0619-033": {
+    "claim_type": "form_scope",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "editCardで生成するCardTypeフォームからAddMem・PayType・BillingFirstName・BillingLastName・BillingEmailの5項目をremove()で除去する（購入時専用項目の除去）",
+    "source": "MypageController.php:59-64 / f06-19md:102"
+  },
+  "L1-F0619-034": {
+    "claim_type": "log_masking",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "HttpSend::sendData()の送信ログ(send_data)はKaiinPass/MerchantPass/CardNo/CardExp/SecCd/KanaSei/KanaMei/BirthDay/TelNoを'****'へ置換してから記録し、応答ログ(re_body)はCardExp=数字をCardExp=****へ正規表現置換してから記録する",
+    "source": "HttpSend.php:52-98,158 / f06-19md:353,359-364"
+  },
+  "L1-F0619-035": {
+    "claim_type": "schema",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "plg_sln_mem_card_historyの列はcustomer_id(PK・int・not null)・mem_id(int・not null)・update_date(datetime・not null)のみ。カード原番号・有効期限・名義・トークン・セキュリティコードの列は存在しない",
+    "source": "MemCardId.php:22-34 / f06-19md:197,204-212,234,269-273"
+  },
+  "L1-F0619-036": {
+    "claim_type": "db_noeffect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "plg_sln_mem_card_historyに対しDELETE文を発行する経路は本機能に存在しない（MemCardIdRepositoryにdeleteメソッド自体が無い。findによる読取とnextMemIdによるUPSERTのみ）。カード「削除」は決済代行側の会員枠無効化と自社側mem_idの前進で表現され、自社DB行の物理削除ではない",
+    "source": "MemCardIdRepository.php（全文・deleteメソッド不出現） / Util.php:181-184,247-267 / f06-19md:196,236"
+  },
+  "L1-F0619-037": {
+    "claim_type": "external_dependency",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "MemAdd/MemChg/MemInval/MemRef/MemRefM/MemUnInval/MemDelはいずれもconfig.getCreditConnectionPlace2()（外部ホスト。既定destination=1のときhttps://www.test.e-scott.jp/online/crp/OCRP005.do、destination=2のときhttps://www.e-scott.jp/online/crp/OCRP005.do）へGuzzle ClientでPOSTする",
+    "external_dependency": true,
+    "source": "Mem.php各メソッド送信部 / HttpSend.php:43-121 / services.yaml:199-207(arrCreditConnectionDestination)"
+  },
+  "L1-F0619-038": {
+    "claim_type": "external_dependency",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "業務エラーの文言は決済代行の応答コード(ResponseCd)をerrors.yml(arrErrors)で解決した3要素文字列（内部詳細|利用者向け文言|管理者向け文言）から組み立てる。例: K40〜K44(認証アシスト項目アンマッチ)の利用者向け文言は「こちらのカードはご利用できません。入力内容に誤りがなければ、お問合せください。」。実際にどのコードが返るかは決済代行の実応答に依存する",
+    "external_dependency": true,
+    "source": "errors.yml:1-40 / Util.php:109-144"
+  },
+  "L1-F0619-039": {
+    "claim_type": "db_noeffect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "GET表示時のMemRef呼出し(L1-F0619-031)はplg_sln_mem_card_historyに対し読取(getMemId経由)のみを行い、nextMemIdを呼ばない。画面表示だけでは自社DBを更新しない",
+    "source": "MypageController.php:119-130 / Mem.php:255-277 / Util.php:176-184"
+  },
+  "L1-F0619-040": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "sln_edit_card.twig全文にBootstrapモーダル(class=\"modal\"相当)・data-bs-toggle=\"modal\"の出現は0件（本画面固有の専用モーダルを持たない）",
+    "source": "sln_edit_card.twig（全文grep実測） / f06-19md:91,56"
+  },
+  "L1-F0619-041": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "【新設・codex R1 Blocker①②是正】Util::changeMemCardのKaiinStatus 2/3分岐: MemUnInval実行→sleep(5)→MemChg試行。MemChgが失敗（SlnShoppingExceptionまたは任意の\\Exception）すると、catch節内で救済として$mem->MemInval()を呼ぶ（Util.php:224-232）。この救済MemInvalの内部処理はL1-F0619-024と同一（HTTP応答truthy かつ ResponseCd=='OK'なら Util::delKaiin→MemCardIdRepository::nextMemId が plg_sln_mem_card_history を書込む）。救済MemInvalが成功すると、その後 `throw new SlnShoppingException($e->getMessage())` または `throw new \\Exception($e->getMessage())` により元のMemChg失敗メッセージが再送出され、MypageControllerの外側catchで業務エラーflash（L1-F0619-023）または通信エラーflash（L1-F0619-030）が表示される＝利用者からは『失敗』に見えるが、内部ではDB書込が発生している場合がある。救済MemInval自体が失敗（例外を投げる）した場合は、その新しい例外が元のMemChg失敗メッセージへの再送出より先に伝播し、DB書込は発生しない。この経路全体はKaiinStatus 2または3の既存決済代行会員枠が対象顧客に存在する場合にのみ到達し、新規会員（MemAdd経路）には存在しない",
+    "external_dependency": true,
+    "source": "Util.php:214-234（switch文220-221行目case 2/3開始・222行目MemUnInval・223行目sleep(5)・224行目内側try・225行目MemChg試行・226行目catch SlnShoppingException→227行目救済MemInval→228行目rethrow・229行目catch\\Exception→230行目救済MemInval→231行目rethrow） / Mem.php:192-217（MemInval本体・208-211行目でHTTP応答truthyかつDeCodeMemInvalResponse成功時にdelKaiin呼出し） / f06-19md:121,138,196"
+  }
+}

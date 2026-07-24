@@ -1,0 +1,213 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "B0候補（D6前・O5未確定・source_class暫定=standard-src+design/fid_kubun.tsv D1:343）。正式解決器はこの_drafts/を読んではならない（CFP §7隔離）。期待値の正はL1オラクルID（三段参照）。fixture_versionは@TBD-D5。bindは母集合の期待テキスト実内容で判定（観点・前提/入力ラベルはノイズ）。本jsonはmd §1から手動導出（機械導出器はM0成果物・未実装）。codex R1レビュー反映（改訂1）: (1)破壊系DB編集機能（mtb_*マスタの新規・更新・削除）。編集対象マスタはee自身のPHPUnit既定値Eccube-Entity-Master-Sex（mtb_sex）を採用（MasterdataControllerTest.php:70）。既存4行（id1-4）は全候補ケースで送信順序・値とも一切変更しない（R1 Blocker A1是正=旧設計は既存行を一時的に書き換えてから戻すS0違反だった）。 (2)DB段差（本機能固有の新発見）: Form層Length(max=eccube_int_len=9桁)に対しORM静的定義＋執筆時点のpsqlワンショット照会（再現性はD5実装時に再確認）でsmallint（範囲-32768〜32767・unsignedオプションはPostgreSQLで無効・CHECK制約0件）を確認。5〜9桁の値はForm検証を通過するがDB書込でflush例外になり得る（L1-M1105-018）。 (3)拡張イベントは6箇所dispatchされる（EccubeEvents.php:381-388）が設計書md:312-316の列挙は5項目。「マスタ選択フォーム生成直前」がindex()のINDEX_INITIALIZEとedit()のEDIT_FORM_INITIALIZEの2識別子に対応する可能性があるが乖離は断定しない（未解決の中立記録・L1-M1105-023=補完専用）。 (4)partial区分（md §8・067）: 保存ループがid/name/sort_noのみをセットすることは静的に確認済み（MasterdataController.php:150-167実測）。選択可能な候補マスタ集合には追加列を持つ具象クラスとしてAuthority（mtb_authority・role_key/is_viewable追加。除外5クラスに含まれず選択可能）が実在するが、Authority::SYSTEM_ID等のコード上の定数が全コードから参照される認可の根幹実装であるため（mtb_authorityの実データ行数は本書では未照会）本書は破壊的編集の実証対象に採用しない（安全上不採用）。 (5)参照整合性（母集合069）はTBDへ降格（R1 Blocker B2是正=削除自体はC-011で実証済みだが「参照先残存で例外化」側の実機観測には追加SEED（dtb_customer/dtb_order）が必要で本書のSEED設計単独では閉じないため、救済先なきboundを避けた）。 (6)L1-M1105-021/C-014（R1 Major C1・最重要是正）: 旧版は「無効なマスタキーはMappingExceptionを握り潰す」と断定していたが捏造だった。実際はChoiceType選択肢外の値が$form['masterdata']->isValid()の時点でTransformationFailedException経由のinvalid_messageエラーとなり、getRepository()（およびcatch(MappingException)ブロック）自体に到達しない（vendor/symfony/form/Extension/Core/Type/ChoiceType.php実測）。観測できる事実（HTTP200・編集テーブル非表示・選択肢エラー表示）のみを主張し、設計書md:169の記述との相違はDOC-DRAFTとして両論併記する。 (7)旧C-017（除外クラスOrderStatusのdtb_order_statusへ直接POST）はmtb_sexのSEED帯統治の外側を破壊するためR1 Blocker A2是正で候補ケースから削除し要実機残へ格下げ（L1-M1105-020は静的根拠として維持するが実行を主張しない）。 (8)母集合017・058・066は読み替えbindの救済先が実質不一致と判明しexcluded（EX-B）へ移設（R1 Major B3是正）。",
+    "source": "integration_test/e2e/exec/_drafts/m11-05_admin_system_setting_setting_system_masterdata_executable_draft.md §1",
+    "baseline": {
+      "design_md_commit": "ec17cd0e419824c2741804abe6f649ed71df0216",
+      "ee_commit": "9dbc4dd12080ac6a3d58a97f67e23e4a4a6e4f51",
+      "vendor_validator_version": "symfony/validator v7.4.3",
+      "all_it_cases_sha256_prefix": "7911f190d273",
+      "fid_kubun": "M11-05=標準 standard-src+design（暫定付与・確定はD6・fid_kubun.tsv:343）"
+    }
+  },
+  "L1-M1105-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "未認証でGET /%eccube_admin_route%/setting/system/masterdataへアクセスすると、admin firewall（pattern ^/%eccube_admin_route%/）のform_loginエントリポイントによりログイン画面（route admin_login）へ誘導され本機能を利用できない",
+    "source": "m11-05md:75,230 / security.yaml:40-46"
+  },
+  "L1-M1105-002": {
+    "claim_type": "http_status",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "入口URL3系統: GET/POST /%eccube_admin_route%/setting/system/masterdata（route admin_setting_system_masterdata）とGET/POST .../masterdata/{entity}/edit（route admin_setting_system_masterdata_view）はいずれも同一index()で処理・GET/POST .../masterdata/edit（route admin_setting_system_masterdata_edit）はedit()で処理",
+    "source": "MasterdataController.php:35-37,119"
+  },
+  "L1-M1105-003": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "マスタキー=プルダウンおよびhidden項目に用いる、FQCNをハイフン区切りにした識別子（例Eccube-Entity-Master-Sex）。保存時はバックスラッシュへ戻す。マスタ選択selectはChoiceType・choicesはメタデータ走査結果の反転配列・NotBlank制約",
+    "source": "m11-05md:59 / MasterdataType.php:68,73-81"
+  },
+  "L1-M1105-004": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "編集コレクション=保存用フォームのdata配列（CollectionType・entry_type=MasterdataDataType・allow_add/allow_delete/prototypeいずれも有効）。1要素が1行に対応しidとnameを持つ",
+    "source": "m11-05md:60 / MasterdataEditType.php:34-40"
+  },
+  "L1-M1105-005": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "行キー=編集コレクションの配列キー。一覧初期表示ではエンティティの主キーと一致（$data['data'][$value['id']]）。新規追加行は末尾採番。削除相当の処理ではこのキーでfindする",
+    "source": "m11-05md:61 / MasterdataController.php:86-87,162"
+  },
+  "L1-M1105-006": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "マスタ未選択GET（entity=null）→ $data=[]のままbuilder2が構築され、form2.dataは空。twigは{% if form2.data is not empty %}が偽となり編集テーブルを出さない。第1カードのマスタ選択select・tooltip見出しは常に表示",
+    "source": "m11-05md:70 / masterdata.twig:45"
+  },
+  "L1-M1105-007": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "マスタ選択POST検証成功 → redirectToRoute('admin_setting_system_masterdata_view', ['entity' => $form['masterdata']->getData()])",
+    "source": "MasterdataController.php:69-71 / m11-05md:71"
+  },
+  "L1-M1105-008": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "既にentityが選ばれた状態のGET（{entity}パス引数が有効なマスタキー）→ 当該エンティティのリポジトリでsort_no昇順findBy・各行を行キー=主キーで格納・配列末尾にID/名称とも空の1行を追加。マスタ選択欄には当該entityが選択済みで表示",
+    "source": "MasterdataController.php:79-92 / m11-05md:72"
+  },
+  "L1-M1105-009": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "編集テーブル保存POST検証成功 → 永続化処理（L1-M1105-015）実行後、選択中マスタの一覧表示入口（admin_setting_system_masterdata_view）へリダイレクト",
+    "source": "MasterdataController.php:189-191 / m11-05md:73"
+  },
+  "L1-M1105-010": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected": "保存成功時: admin.common.save_complete ja「保存しました」/en \"Saved\"。flush失敗時: admin.common.save_error ja「保存に失敗しました」/en \"Failed to save\"",
+    "source": "MasterdataController.php:183,186 / messages.ja.yaml:1591-1592 / messages.en.yaml:1636-1637 / m11-05md M11-05-MSG-001/002"
+  },
+  "L1-M1105-011": {
+    "claim_type": "validation_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "マスタ選択selectはNotBlank。未選択でPOSTすると検証失敗",
+    "source": "MasterdataType.php:78-80 / m11-05md:219"
+  },
+  "L1-M1105-012": {
+    "claim_type": "validation_rule",
+    "ls": 0,
+    "reason": "non-translated",
+    "unit": "digits",
+    "max_length": 9,
+    "pattern": "/^\\d+$/u",
+    "expected": "行IDはrequired=>false（任意）・Assert\\Length(max: eccube_int_len=9)・Assert\\Regex('/^\\d+$/u', message:'form_error.numeric_only')。数字以外はja「数字で入力してください。」/en \"Entry must be numbers.\"（=M11-05-MSG-003）。超過はSymfony既定カタログのLength超過文言（limit=9解決後）",
+    "source": "MasterdataDataType.php:45-57 / eccube.yaml:111 / validators.ja.yaml:37 / validators.en.yaml:32 / m11-05md:220,M11-05-MSG-003"
+  },
+  "L1-M1105-013": {
+    "claim_type": "validation_rule",
+    "ls": 1,
+    "expected": "行名称はrequired=>false（フォーム上は長さ制約なし）。POST_SUBMITでisset(id)かつstrlen(name)==0ならname欄へtrans('This value should not be blank.',[],'validators')エラー付与。ja「入力されていません。」/en \"No value found.\"（=M11-05-MSG-004。アプリのvalidators.en.yaml:17がvendor既定と別に独自定義した原文）",
+    "source": "MasterdataDataType.php:61-67 / validators.ja.yaml:17 / validators.en.yaml:17 / m11-05md:221,M11-05-MSG-004"
+  },
+  "L1-M1105-014": {
+    "claim_type": "validation_rule",
+    "ls": 1,
+    "expected": "POST_SUBMITで送信中のID値（isset($value['id'])の行）を集計し、同一ID値が2件以上ある場合は該当する全行のID欄へtrans('admin.setting.system.master_data.duplicate_id') ja「重複したIDを登録することはできません。」/en \"You are not allowed to register duplicated IDs.\"（=M11-05-MSG-005）",
+    "source": "MasterdataEditType.php:54-67 / messages.ja.yaml:3339 / messages.en.yaml:2953 / m11-05md:222,M11-05-MSG-005"
+  },
+  "L1-M1105-015": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "保存ループ（検証成功後）: 各行につきid!==null && name!==nullならrepository->find(id)し無ければnew $entityName()、setId・setNameのあとループの0起算連番でsetSortNo・persist。id/nameのいずれかが欠ける行のうち行キーが「送信中の非空ID一覧」に含まれないものはfind(key)し在ればremove",
+    "source": "MasterdataController.php:143-167 / m11-05md:151"
+  },
+  "L1-M1105-016": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "flush成功時: 保存完了イベント(ADMIN_SETTING_SYSTEM_MASTERDATA_EDIT_COMPLETE)をdispatchし成功フラッシュ。flush例外時(catch(\\Exception)・コメント上は外部キー制約等): 例外を握り潰しエラーフラッシュ。いずれもL1-M1105-009のリダイレクトへ進む",
+    "source": "MasterdataController.php:169-187 / m11-05md:168"
+  },
+  "L1-M1105-017": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "unit": "characters",
+    "expected": "保存対象列は選択中マスタに対応するテーブルのid・name・sort_noのみ（AbstractMasterEntity）。ORM静的定義: id=Types::SMALLINT（GeneratedValue: NONE＝アプリ指定）・name=Types::STRING(length:255)・sort_no=Types::SMALLINT。他の列は保存ループで変更しない",
+    "source": "AbstractMasterEntity.php:32-41 / m11-05md:171 / 執筆時点のpsql照会(information_schema.columns table_name='mtb_sex'・再現性はD5で再確認)"
+  },
+  "L1-M1105-018": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "unit": "digits",
+    "form_max": 9,
+    "db_smallint_max": 32767,
+    "expected": "Form層Length(max=9桁)はDBのsmallint範囲（-32768〜32767）より広い。5〜9桁の値（例32768〜999999999）はForm検証を通過するがsmallint範囲外のINSERT/UPDATEはPostgreSQLが数値オーバーフローエラーを返しflushが例外化（L1-M1105-016のcatch経路）→保存されずエラーフラッシュ。32767は境界内で成功する",
+    "source": "eccube.yaml:111 / AbstractMasterEntity.php:33 / 執筆時点のpsql照会(information_schema.columns / pg_constraint・再現性はD5で再確認)"
+  },
+  "L1-M1105-019": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "マスタ候補条件: 具象クラス（抽象クラス除外）・ルートエンティティ名にMasterを含む・id/name/sort_noフィールドを持つメタデータ。除外クラス5つ（OrderStatus・OrderStatusColor・CustomerOrderStatus・MtbColorSequence・Country）は候補から外れる",
+    "source": "MasterdataType.php:53-67 / m11-05md:147,62"
+  },
+  "L1-M1105-020": {
+    "claim_type": "status_transition",
+    "ls": null,
+    "supplement_only": true,
+    "expected": "【本書では未実行・静的根拠のみ・要実機】保存処理は編集フォームのhidden masterdata_name文字列をstr_replace('-','\\\\',...)で解釈するだけであり、マスタ選択フォームの検証・除外クラス判定を経由しない、という静的な読み。プルダウンには出ない除外クラス（例OrderStatus）でも、hidden値を直接構築してPOSTすれば当該クラスを対象に保存され得る、という静的解析上の帰結。dtb_order_statusはmtb_sexのSEED帯統治の外側にあるため候補ケースとしては実行しない（codex R1 Blocker A2是正で旧C-017を削除）",
+    "source": "m11-05md:170 / MasterdataController.php:141"
+  },
+  "L1-M1105-021": {
+    "claim_type": "status_transition",
+    "ls": null,
+    "doc_draft": "DOC-DRAFT（改訂1でメカニズム記述を捏造から是正）",
+    "expected": "GET /masterdata/{entity}/editで{entity}がMasterdataTypeの候補choicesに含まれない値の場合、$form->submit(['masterdata' => $entity])の時点でChoiceTypeの未知値検出がTransformationFailedExceptionを投げ、Symfonyがこれをinvalid_message（既定'The selected choice is invalid.'）に基づくフィールドエラーへ変換する（$form['masterdata']->isValid()が偽になる）。この結果if ($form['masterdata']->isValid())の分岐に入らず、getRepository()呼出し（およびcatch (MappingException)ブロック自体）に到達しない。$dataは初期値[]のままでform2.dataは空→編集テーブルは表示されない。HTTP200で応答。ja「選択した値は無効です。」/en \"The selected choice is invalid.\"がselect欄のエラーとして表示され得る。設計書md:169「マッピング例外を握り潰し」という記述は、このGET/{entity}/editエントリポイントの到達可能な経路とは異なるメカニズムを指しているように読める（この経路ではMappingExceptionは到達しない、というのが静的解析上の結論）。設計書側の記述の正確性は未確定のため断定せず、DOC-DRAFTとして両論併記する（旧版は「MappingExceptionを握り潰す」と断定していたが捏造だったため是正）",
+    "source": "vendor/symfony/form/Extension/Core/Type/ChoiceType.php:161-163,379 / vendor/symfony/form/Resources/translations/validators.ja.xlf:25-28（trans-unit id=101） / validators.en.xlf同id / MasterdataController.php:73-96 / m11-05md:169"
+  },
+  "L1-M1105-022": {
+    "claim_type": "concurrency",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "行バージョン・楽観ロックは持たない（AbstractMasterEntityに#[ORM\\Version]列なし・保存経路はpersist→flushのみでロック取得呼出なし）。同一行への複数管理セッションの連続保存は最後のflushが残る（後勝ち）",
+    "source": "m11-05md:181,304 / AbstractMasterEntity.php（全文実測）"
+  },
+  "L1-M1105-023": {
+    "claim_type": "request_contract",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "supplement_only": true,
+    "expected": "拡張イベントは6箇所dispatchされる: INDEX_INITIALIZE（マスタ選択ビルダ生成直前・index()）/INDEX_FORM2_INITIALIZE（編集ビルダ生成直前・一覧表示フロー）/INDEX_COMPLETE（マスタ選択POST検証成功直後）/EDIT_INITIALIZE（編集ビルダ生成直前・保存アクション）/EDIT_FORM_INITIALIZE（マスタ選択ビルダ生成直前・edit()内の再構成）/EDIT_COMPLETE（保存flush成功直後）。設計書md:312-316は5つの意味段階として列挙するが「マスタ選択フォーム生成直前」はコード上2識別子（INDEX_INITIALIZEとEDIT_FORM_INITIALIZE）に対応する可能性があり乖離は断定しない（未解決の中立記録・母集合に直接対応するtest_idなし・補完S-001専用）",
+    "source": "EccubeEvents.php:381-388 / MasterdataController.php:44-50,63,100-106,125-131,172-180,197-203 / m11-05md:308-316"
+  },
+  "L1-M1105-024": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "reason": "non-translated",
+    "expected": "フロント: 第1カードはマスタ選択select＋「選択」ボタン（admin.setting.system.master_data.select）・カード見出しにdata-bs-toggle=\"tooltip\"。第2カードはform2.dataが空でなければ表示・カード見出し下に説明文（nl2br）・列見出し「ID」「Name」・各行にID/名称のテキスト入力",
+    "source": "masterdata.twig:33-38,45,52,59-64 / m11-05md:84"
+  },
+  "L1-M1105-025": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected": "説明文（description）: ja「マスターデータの値を設定できます。重複したIDを登録することはできません。空のIDを登録すると、値は削除されます。設定値によってはサイトが機能しなくなる場合もありますので、十分ご注意下さい。」/en \"You can set the value to the master data. You are not allowed to register duplicated IDs. If you leave the ID empty, the value will be deleted. Warning: Your store may not work depending on the value you set.\"",
+    "source": "messages.ja.yaml:3332-3336 / messages.en.yaml:2946-2950 / m11-05md:152"
+  },
+  "L1-M1105-026": {
+    "claim_type": "message",
+    "ls": 1,
+    "expected": "カード見出し=admin.setting.system.master_data_management ja「マスタデータ管理」/en \"Master Data\"＋tooltip=tooltip.setting.system.master_data_management ja「各種マスターデータを管理します。」/en \"Manage all Master Data here.\"",
+    "source": "masterdata.twig:16,27-28 / messages.ja.yaml:2995,3695 / messages.en.yaml:2681,3307"
+  },
+  "L1-M1105-027": {
+    "claim_type": "http_status",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "店舗側権種（確認テストではtenant_owner）でログインしGET /%eccube_admin_route%/setting/system/masterdataを送るとResponse::HTTP_FORBIDDEN（403）。ee PHPUnit #[Group('Enterprise_Mall')] testTenantCannotAccessMasterdata()で確認済み",
+    "source": "MasterdataControllerTest.php:496-507 / AbstractAdminWebTestCase.php:57-69 / m11-05md:232"
+  },
+  "L1-M1105-028": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "reason": "non-ui-observable",
+    "expected": "主キー0は整数として有効な値であり、ee自身のPHPUnit（testZeroEdit/testZeroRemove）が「名称を伴う0の保存」および「ID0行の削除」を確認している実装挙動",
+    "source": "MasterdataControllerTest.php:334-421 / m11-05md:167"
+  }
+}
