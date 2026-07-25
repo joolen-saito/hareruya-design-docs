@@ -122,7 +122,7 @@
 
 | 条件 | 挙動 |
 |------|------|
-| `ids` パラメータ無し / 空配列 / 0以下のみ（有効ID0件） | `responseNoStockHistoryIdError()`：`addError('eccube.admin.error', trans('admin.stock_history.not_select'))` を実行し、`admin_stock_history_page`（セッション `eccube.admin.stock_history.search.page_no` の現在ページ、既定1）へリダイレクト。※第2引数=namespace 誤用によりフラッシュは `eccube.admin.stock_history.not_select.error` バッグへ格納され、`alert.twig` が購読するバッグではないため画面には表示されないと推定（要実機確認。M04-20-MSG-005 参照）。 |
+| `ids` パラメータ無し / 空配列 / 0以下のみ（有効ID0件） | `responseNoStockHistoryIdError()`：`addError('eccube.admin.error', trans('admin.stock_history.not_select'))` を実行し、`admin_stock_history_page`（セッション `eccube.admin.stock_history.search.page_no` の現在ページ、既定1）へリダイレクト。※第2引数=namespace 誤用によりフラッシュは `eccube.admin.stock_history.not_select.error` バッグへ格納され、`alert.twig` が購読するバッグではないため画面には表示されないと推定（要実機確認。M04-20-MSG-002 参照）。 |
 | 指定IDに該当する在庫履歴が存在しない / 変換結果が空 | `StockHistoryDisposalCsv::exportCsv()` が `RuntimeException` を送出。コントローラが `addError($e->getMessage(), 'admin')` でメッセージ表示し、リファラがあればリファラへ、無ければ `admin_stock_history` へリダイレクト。 |
 | 正常 | `StreamedResponse`（HTTP 200、`text/csv`、`attachment`）を返す。 |
 
@@ -150,9 +150,9 @@
 
 | メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
 |--------------|----------|--------------|----------|----------|----------|
-| M04-20-MSG-004 | 管理画面上部 | 存在しない在庫履歴IDが含まれています。 ／ 在庫履歴データが存在しないためエクスポートできません。 | （英訳なし） | 選択した在庫履歴IDに該当する履歴がない、またはCSV出力対象データがない状態で欠品履歴CSVを出力したとき | エラーメッセージを表示し、遷移元の画面へ戻る。遷移元がない場合は在庫履歴一覧画面に遷移する |
-| M04-20-MSG-005 | 管理画面上部 | eccube.admin.error | eccube.admin.error | 欠品履歴CSVを出力するとき、出力対象が選ばれていないとき | 欠品履歴検索/一覧画面に遷移する |
-| M04-20-MSG-007 | 当該入力欄直下 | 不正な日付です。 | Invalid DateTime. | 欠品履歴を検索するとき、1900年1月1日より前の日付を指定したとき | 欠品履歴検索/一覧画面に留まる |
+| M04-20-MSG-001 | 管理画面上部 | 存在しない在庫履歴IDが含まれています。 ／ 在庫履歴データが存在しないためエクスポートできません。 | （英訳なし） | 選択した在庫履歴IDに該当する履歴がない、またはCSV出力対象データがない状態で欠品履歴CSVを出力したとき | エラーメッセージを表示し、遷移元の画面へ戻る。遷移元がない場合は在庫履歴一覧画面に遷移する |
+| M04-20-MSG-002 | 管理画面上部 | eccube.admin.error | eccube.admin.error | 欠品履歴CSVを出力するとき、出力対象が選ばれていないとき | 欠品履歴検索/一覧画面に遷移する |
+| M04-20-MSG-003 | 当該入力欄直下 | 不正な日付です。 | Invalid DateTime. | 欠品履歴を検索するとき、1900年1月1日より前の日付を指定したとき | 欠品履歴検索/一覧画面に留まる |
 
 > 注: 同一コントローラ／同一画面（`history.twig`）に属するが本CSV出力機能（M04-20）本体のトリガーではないメッセージ（欠品理由編集・在庫履歴CSV出力・在庫変動理由の非同期編集・検索フォーム由来）は、codex+fable5 の批判レビューにより M04-17/M04-18/M04-19 側の各機能へ再割当済み。
 

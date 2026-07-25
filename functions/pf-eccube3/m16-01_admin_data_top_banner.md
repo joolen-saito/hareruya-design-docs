@@ -244,12 +244,12 @@ HareruyaEc プラグインが管理画面「データ管理」配下に提供す
 | M16-01-MSG-014 | 入力項目直下 | 並び順が空の項目があります。 | Some items have an empty sort order. | 並び順が未入力のまま保存したとき | トップバナー管理画面に留まる |
 | M16-01-MSG-015 | 入力項目直下 | 並び順が重複しています。 | Sort order values are duplicated. | 同じ並び順を複数のバナーに指定して保存したとき | トップバナー管理画面に留まる |
 | M16-01-MSG-016 | 確認ダイアログ | 一度削除したデータは元に戻せません。削除してもよろしいですか？ | Once deleted, the data cannot be restored. Do you want to delete it? | バナーを削除しようとしたとき（送信前確認） | 削除確認ダイアログを表示する |
-| M16-01-MSG-018 | 確認ダイアログ | 一度削除したデータは元に戻せません。削除してもよろしいですか？ | Once deleted, the data cannot be restored. Do you want to delete it? | バナーを削除しようとしたとき（送信前確認） | 削除確認ダイアログを表示する |
-| M16-01-MSG-019 | 入力項目直下 | 「admin.hareruyamtg.com」は指定できません。 | "admin.hareruyamtg.com" is not allowed. | 指定できないドメインを含む画像URLを入力して保存したとき | トップバナー管理画面に留まる |
-| M16-01-MSG-020 | 入力項目直下/フォーム上部 | 並び順が空の項目があります。 | Some items have an empty sort order. | 並び順が未入力のまま保存したとき | トップバナー管理画面に留まる |
-| M16-01-MSG-021 | 入力項目直下/フォーム上部 | 並び順が重複しています。 | Sort order values are duplicated. | 同じ並び順を複数のバナーに指定して保存したとき | トップバナー管理画面に留まる |
-| M16-01-MSG-022 | 入力項目直下 | 店舗が選択されていません。 | （英訳なし） | 店舗を選ばずに画像をアップロードしたとき | トップバナー管理画面に留まる |
-| M16-01-MSG-023 | 入力項目直下 | 画像ファイルを選択してください。 | Please select an image file. | 画像ファイルを選ばずにアップロードしたとき | トップバナー管理画面に留まる |
+| M16-01-MSG-017 | 確認ダイアログ | 一度削除したデータは元に戻せません。削除してもよろしいですか？ | Once deleted, the data cannot be restored. Do you want to delete it? | バナーを削除しようとしたとき（送信前確認） | 削除確認ダイアログを表示する |
+| M16-01-MSG-018 | 入力項目直下 | 「admin.hareruyamtg.com」は指定できません。 | "admin.hareruyamtg.com" is not allowed. | 指定できないドメインを含む画像URLを入力して保存したとき | トップバナー管理画面に留まる |
+| M16-01-MSG-019 | 入力項目直下/フォーム上部 | 並び順が空の項目があります。 | Some items have an empty sort order. | 並び順が未入力のまま保存したとき | トップバナー管理画面に留まる |
+| M16-01-MSG-020 | 入力項目直下/フォーム上部 | 並び順が重複しています。 | Sort order values are duplicated. | 同じ並び順を複数のバナーに指定して保存したとき | トップバナー管理画面に留まる |
+| M16-01-MSG-021 | 入力項目直下 | 店舗が選択されていません。 | （英訳なし） | 店舗を選ばずに画像をアップロードしたとき | トップバナー管理画面に留まる |
+| M16-01-MSG-022 | 入力項目直下 | 画像ファイルを選択してください。 | Please select an image file. | 画像ファイルを選ばずにアップロードしたとき | トップバナー管理画面に留まる |
 
 ---
 

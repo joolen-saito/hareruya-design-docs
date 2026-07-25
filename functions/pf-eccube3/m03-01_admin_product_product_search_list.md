@@ -110,8 +110,8 @@
 | M03-01-MSG-004 | 画面中央(モーダル) | 商品の削除処理が完了しました | Product has been deleted successfully. | 選択した商品の一括削除処理が完了したとき | モーダルを閉じて商品検索・一覧画面を再読み込みする |
 | M03-01-MSG-005 | 管理画面上部 | 削除しました | Deleted | 商品を削除したとき | 商品検索・一覧画面に遷移する |
 | M03-01-MSG-006 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした ／ 削除に失敗しました | Sorry, we are unable to delete %name%, because it has related data. ／ Failed to delete | 商品を完全に削除したとき、関連するデータがある場合、または削除できない場合 | エラーを削除確認モーダル内に表示し、完了操作後に商品一覧画面へ遷移する |
-| M03-01-MSG-008 | 管理画面上部 | %status%: %count%件が正常に適用されました | %status%: %count% item(s) is/are successfully applied. | 選択した商品の状態変更が1件以上完了したとき | 商品検索・一覧画面に遷移する |
-| M03-01-MSG-010 | 管理画面上部 | 既に削除されています | No data to delete | 削除しようとした商品がすでに削除されていたとき | 商品検索・一覧画面に遷移する |
+| M03-01-MSG-007 | 管理画面上部 | %status%: %count%件が正常に適用されました | %status%: %count% item(s) is/are successfully applied. | 選択した商品の状態変更が1件以上完了したとき | 商品検索・一覧画面に遷移する |
+| M03-01-MSG-008 | 管理画面上部 | 既に削除されています | No data to delete | 削除しようとした商品がすでに削除されていたとき | 商品検索・一覧画面に遷移する |
 
 ## 業務ルール・計算
 

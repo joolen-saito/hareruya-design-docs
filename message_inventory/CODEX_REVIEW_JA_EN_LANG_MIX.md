@@ -32,7 +32,7 @@
 - **JA列に未解決キー（yaml非在）**
   `F08-02-MSG-001/002`: JA=EN=`front.otcbuy.error.assessment_only` 等。`| trans` 呼出はあるが messages.ja/en・validators.ja/en の4カタログに**定義0件**。
   - `Block/js/OtcBuy/otc_buy_register_customer_js.twig:24,39`
-  `M04-13-MSG-017/018`: JA=`admin.stock.split_join.not_found`。4カタログ非在。
+  `M04-13-MSG-016/018`: JA=`admin.stock.split_join.not_found`。4カタログ非在。
   - `Admin/Stock/StockSplitController.php:408,415`
   - JA列18種のキーは**全て4カタログで定義0件**＝「解決漏れ」ではなく「非在」。JA/ENとも「要ソース確認」にすべき。
 - **コメントアウト行から抽出**
@@ -68,9 +68,9 @@
 - 単一候補: codex 特定の実キーで en を引き直し（**36件是正**）。
 - ハードコード英語 alert（en 空欄）: en=ja を補完（**6件**）。
 - codex 再レビュー（全24機能）の真の指摘を是正:
-  - `M07-03-MSG-004/005/010`・`M04-08-MSG-014`（ハードコード日本語で英訳キー非在）: 捏造英語を除去し **「（英訳なし）」** へ。
+  - `M07-03-MSG-004/005/010`・`M04-08-MSG-012`（ハードコード日本語で英訳キー非在）: 捏造英語を除去し **「（英訳なし）」** へ。
   - `M07-03-MSG-015` 候補: `The field is empty.`→`No value found.`（誤キー form.type.select.notselect）、`Please enter with numbers.`→`Entry must be numbers.`（form_error.numeric_only）。
-  - `M10-04-MSG-016`: `The field is empty.`→`No value found.`（NotBlank）。
+  - `M10-04-MSG-010`: `The field is empty.`→`No value found.`（NotBlank）。
 - `sync_doc_tables.py` に英語列分岐（`if "英語" in h: return "メッセージ内容(英語)"`）を追加し、設計書表への ja 誤流入を防止。
 
 ### 最終検証（全成果物）

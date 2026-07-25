@@ -145,7 +145,7 @@
 | F06-20-MSG-001 | 画面中央(ダイアログ/モーダル) | %name01%　%name02%様の情報をアドレス帳から削除しますか？ | Remove %name01% %name02% from your address book? | 配送先一覧で配送先を削除しようとしたとき（削除前の確認） | OKでモーダルを閉じて配送先一覧画面に遷移、キャンセルでモーダルを閉じる |
 | F06-20-MSG-002 | 画面上部 | お届け先登録の上限の%count%件に達しています。お届け先を入力したい場合は、削除か変更を行ってください。 | You already have max number of addresses (%count% items). If you want to add a new one, please delete or overwrite the item(s) you have on the list. | お届け先一覧または購入手続きのお届け先選択画面を表示したとき、登録済みお届け先が上限に達している | 新規お届け先登録を選べないまま、表示中の一覧またはお届け先選択画面にとどまる |
 | F06-20-MSG-003 | 入力項目付近 | 国を選択してください | Please select a country | 国を選択せずに入力欄を変更または送信したとき | 入力エラーを表示し、お届け先登録・編集画面に留まる |
-| F06-20-MSG-005 | 入力項目付近 | 配送先名称を入力してください | Please enter the delivery address name | 配送先名称を空欄のまま入力内容を確認するとき | 配送先編集画面に留まり、配送先名称の入力を求める |
+| F06-20-MSG-004 | 入力項目付近 | 配送先名称を入力してください | Please enter the delivery address name | 配送先名称を空欄のまま入力内容を確認するとき | 配送先編集画面に留まり、配送先名称の入力を求める |
 
 ## 業務ルール・計算
 

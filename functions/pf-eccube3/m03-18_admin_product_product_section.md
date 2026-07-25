@@ -122,7 +122,7 @@ DB関連の正典は ec-cube-enterprise とする。挙動は現行リポ pf-ecc
 | M03-18-MSG-009 | 管理画面上部 | 削除に失敗しました | Failed to delete | 部門削除の処理でエラーが発生したとき | 一覧画面に遷移する |
 | M03-18-MSG-011 | 管理画面上部 | CSVのフォーマットが一致しません | Unmatched CSV format | 部門CSVを登録するとき、CSVファイルが選択されていないとき | 部門マスタCSVアップロード画面に遷移する |
 | M03-18-MSG-012 | 管理画面上部 | %maxRecord% 行を超えるCSVファイルは登録できません。 | （英訳なし） | 部門CSVを登録するとき、5,010行以上のCSVファイルを指定したとき | 部門マスタCSVアップロード画面に遷移する |
-| M03-18-MSG-014 | 管理画面上部 | 登録が完了しました。 | Registration completed. | 部門CSVを登録し、エラーなく完了したとき | 部門マスタCSVアップロード画面に遷移する |
+| M03-18-MSG-013 | 管理画面上部 | 登録が完了しました。 | Registration completed. | 部門CSVを登録し、エラーなく完了したとき | 部門マスタCSVアップロード画面に遷移する |
 | M03-18-MSG-010 | 管理画面上部 | CSRFトークンが無効です、再送信してください。 ／ アップロードされたファイルが大きすぎます。小さなファイルで再度アップロードしてください。 ／ フィールドグループに追加のフィールドを含んではなりません。 | The CSRF token is invalid. Please try to resubmit the form. ／ The uploaded file was too large. Please try to upload a smaller file. ／ This form should not contain extra fields. | CSVアップロード実行時、入力またはアップロードファイルが受け付けられないとき | 部門マスタCSV取込画面へ戻る |
 
 ## 業務ルール・計算

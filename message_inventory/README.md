@@ -74,7 +74,7 @@ Workflow({ scriptPath: ".codex/message_inventory.js", args: { fids: ["m04-31", "
 ## メッセージID体系
 
 ```
-<機能ID>-MSG-<3桁>    例: M04-31-MSG-001, F06-14-MSG-003  … 設計書へ埋め込む
+<機能ID>-MSG-<3桁>    例: M04-31-MSG-001, F06-14-MSG-002  … 設計書へ埋め込む
 EE-<クラス名>-MSG-<3桁> 例: EE-JS-MSG-020, EE-BLOCK-MSG-002 … 機能未割当（codex が確定後に再採番）
 ```
 

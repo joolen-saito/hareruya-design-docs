@@ -119,7 +119,7 @@ DB関連の記述は ec-cube-enterprise の実装を正とする。売上分析�
 |--------------|----------|--------------|----------|----------|----------|
 | M03-29-MSG-001 | 管理画面上部 | アップロードされたファイルが大きすぎます。小さなファイルで再度アップロードしてください。 ／ CSRFトークンが無効です、再送信してください。 ／ フィールドグループに追加のフィールドを含んではなりません。 | The uploaded file was too large. Please try to upload a smaller file. ／ The CSRF token is invalid. Please try to resubmit the form. ／ This form should not contain extra fields. | CSV取込フォームの入力が無効なとき | CSV取込画面に遷移する |
 | M03-29-MSG-002 | 管理画面上部 | CSVのフォーマットが一致しません | Unmatched CSV format | 登録したCSVファイルを読み込めなかったとき | エラーを表示し、管理画面_商品管理_売上分析タグ更新CSV登録画面に遷移する |
-| M03-29-MSG-005 | 管理画面上部 | 登録が完了しました。 | Registration completed. | CSVの登録が正常に完了したとき | 完了メッセージを表示し、管理画面_商品管理_売上分析タグ更新CSV登録画面に遷移する |
+| M03-29-MSG-003 | 管理画面上部 | 登録が完了しました。 | Registration completed. | CSVの登録が正常に完了したとき | 完了メッセージを表示し、管理画面_商品管理_売上分析タグ更新CSV登録画面に遷移する |
 
 ## 業務ルール・計算
 

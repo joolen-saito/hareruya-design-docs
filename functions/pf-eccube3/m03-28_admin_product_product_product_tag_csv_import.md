@@ -233,7 +233,7 @@ DB関連の記述は ec-cube-enterprise の実装を正とする。商品タグ�
 |--------------|----------|--------------|----------|----------|----------|
 | M03-28-MSG-002 | 管理画面上部 | CSVのフォーマットが一致しません | Unmatched CSV format | CSVファイルを選択せずに登録したとき | 商品タグ更新CSV登録画面に遷移する |
 | M03-28-MSG-003 | 管理画面上部 | %maxRecord% 行を超えるCSVファイルは登録できません。 | （英訳なし） | 行数が上限以上のCSVファイルを登録したとき | 商品タグ更新CSV登録画面に遷移する |
-| M03-28-MSG-005 | 管理画面上部 | 登録が完了しました。 | Registration completed. | 商品タグ更新CSVの登録が完了したとき | 商品タグ更新CSV登録画面に遷移する |
+| M03-28-MSG-004 | 管理画面上部 | 登録が完了しました。 | Registration completed. | 商品タグ更新CSVの登録が完了したとき | 商品タグ更新CSV登録画面に遷移する |
 | M03-28-MSG-001 | 管理画面上部 | アップロードされたファイルが大きすぎます。小さなファイルで再度アップロードしてください。 ／ CSRFトークンが無効です、再送信してください。 ／ フィールドグループに追加のフィールドを含んではなりません。 | The uploaded file was too large. Please try to upload a smaller file. ／ The CSRF token is invalid. Please try to resubmit the form. ／ This form should not contain extra fields. | 上限サイズを超えるファイルでCSVアップロードを実行したとき | エラーを表示して、商品タグ更新CSV登録画面に戻る |
 
 ---

@@ -123,7 +123,7 @@ ec-cube-enterprise のコア管理画面におけるルート `admin_product_sto
 | 項目名 | 必須／任意 | 最大長 | 初期値 | 保存先・扱い |
 |--------|------------|--------|--------|----------------|
 | 名称 | 必須 | フォーム型にSymfony `Length` 制約無し。永続先列はDoctrineで文字列長確認値255 | 新規は未入力状態でウィジェットだけ描画される。編集は `mtb_storage_code.name`。 | Symfony `NotBlank`。キー `storage_code[name]`。列 `mtb_storage_code.name`。 |
-| 並び順 | 必須 | 整数入力。検証として `Range` 最小0最大32767。`notInRangeMessage` は StorageCodeType.php:51 の直書きリテラル `並び順は {{ min }} から {{ max }} の間で入力してください。`（翻訳キーではない。M03-14-MSG-011）。 | 編集時は現在のランク。 | キー `storage_code[rank]`。列 `mtb_storage_code.rank`（マッピング上は名前付きランクカラム）。 Symfony `IntegerType` と `NotBlank`。 |
+| 並び順 | 必須 | 整数入力。検証として `Range` 最小0最大32767。`notInRangeMessage` は StorageCodeType.php:51 の直書きリテラル `並び順は {{ min }} から {{ max }} の間で入力してください。`（翻訳キーではない。M03-14-MSG-010）。 | 編集時は現在のランク。 | キー `storage_code[rank]`。列 `mtb_storage_code.rank`（マッピング上は名前付きランクカラム）。 Symfony `IntegerType` と `NotBlank`。 |
 | アルファベット順ソートフラグ | 任意 | チェックオンオフ論理値 | `false`。編集は列の現在値。 | キー `storage_code[alphabetSortFlg]`。列 `mtb_storage_code.alphabet_sort_flg`。チェックオンで真、送信に含まれずならSymfonyチェック種の既定により偽側と解釈される。|
 
 ### エッジケース
@@ -243,10 +243,10 @@ ec-cube-enterprise のコア管理画面におけるルート `admin_product_sto
 | M03-14-MSG-005 | 管理画面上部 | 入力されていません。 | No value found. | CSVファイルを選択せずにインポートを実行したとき | 処理を中止し、CSV登録画面に遷移する |
 | M03-14-MSG-006 | 管理画面上部 | CSVのフォーマットが一致しません | Unmatched CSV format | CSVファイルを指定せずにインポートしたとき | 略称タグCSVアップロード画面に遷移する |
 | M03-14-MSG-007 | 管理画面上部 | CSVのフォーマットが一致しません | Unmatched CSV format | 形式が正しくないCSVファイルをインポートしたとき | 略称タグCSVアップロード画面に遷移する |
-| M03-14-MSG-009 | 管理画面上部 | 登録が完了しました。 | Registration completed. | CSVファイルのインポートが完了したとき | 略称タグCSVアップロード画面に遷移する |
-| M03-14-MSG-010 | ブラウザ確認ダイアログ（window.confirm） | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | You can not revert this action. Are you sure to delete %name%? | 略称タグの削除ボタンを押したとき（送信前確認） | 送信せず現在の画面に留まる |
-| M03-14-MSG-011 | 入力項目付近 | 並び順は {{ min }} から {{ max }} の間で入力してください。 | （英訳なし） | 並び順に指定できる範囲外の値を入力して保存したとき | 登録・更新処理を中止し、略称タグ一覧・編集・新規作成画面に遷移する |
-| M03-14-MSG-012 | 画面中央(ダイアログ/モーダル) | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | You can not revert this action. Are you sure to delete %name%? | 略称タグ一覧の削除ボタンを押したとき（送信前確認） | キャンセルでモーダルを閉じる |
+| M03-14-MSG-008 | 管理画面上部 | 登録が完了しました。 | Registration completed. | CSVファイルのインポートが完了したとき | 略称タグCSVアップロード画面に遷移する |
+| M03-14-MSG-009 | ブラウザ確認ダイアログ（window.confirm） | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | You can not revert this action. Are you sure to delete %name%? | 略称タグの削除ボタンを押したとき（送信前確認） | 送信せず現在の画面に留まる |
+| M03-14-MSG-010 | 入力項目付近 | 並び順は {{ min }} から {{ max }} の間で入力してください。 | （英訳なし） | 並び順に指定できる範囲外の値を入力して保存したとき | 登録・更新処理を中止し、略称タグ一覧・編集・新規作成画面に遷移する |
+| M03-14-MSG-011 | 画面中央(ダイアログ/モーダル) | この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？ | You can not revert this action. Are you sure to delete %name%? | 略称タグ一覧の削除ボタンを押したとき（送信前確認） | キャンセルでモーダルを閉じる |
 
 ---
 
