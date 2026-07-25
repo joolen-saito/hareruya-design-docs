@@ -134,6 +134,10 @@ DB関連は ec-cube-enterprise を正とする。会員と選手情報は現行�
 
 ---
 
+| メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
+|---|---|---|---|---|---|
+| F06-02-MSG-001 | 完了画面本文 | 会員登録が完了いたしました。<br>大会の事前受付、デッキのオンライン登録など、引き続きご利用ください。 | Your registration is now complete.<br>Please continue to use our services, including pre-registration for tournaments and online deck registration. | 仮会員登録完了メールのURLから本会員登録が完了したとき | 本会員登録を完了し、自動ログイン後に本登録完了画面を表示する |
+
 ## 業務ルール・計算
 
 | 項目 | 内容 |

@@ -144,6 +144,7 @@
 | メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
 |---|---|---|----------|---|---|
 | F06-22-MSG-001 | 画面中央(ダイアログ) | 必須項目が入力されていません。 | Required fields are missing. | イベントキャンセルに関するお問い合わせで、必須項目が未入力のまま送信したとき | 送信せず現在の画面に留まる |
+| F06-22-MSG-002 | 完了画面本文 | お問い合わせが完了いたしました。<br>ご利用ありがとうございました。 | Thank you very much for your time.<br>We have successfully received your inquiry.<br>A representative from the shop will be in touch with you shortly. | お問い合わせを送信して保存が完了したとき | お問い合わせ完了画面へ遷移して本文を表示する。 |
 
 ## 業務ルール・計算
 

@@ -134,6 +134,7 @@
 |---|---|---|----------|---|---|
 | F06-14-MSG-002 | 管理画面上部 | プレイヤーID %player_id% が見つかりません。 ／ admin.event.entry.paying_member_customer_not_registered | （英訳なし） ／ admin.event.entry.paying_member_customer_not_registered | 申込登録時、指定したプレイヤーIDのプレイヤーが存在しないとき | 申込登録画面に留まる |
 | F06-14-MSG-003 | 管理画面上部 | 保存に失敗しました | Failed to save | 大会申込の登録時にエラーが起きたとき | イベント申込新規画面に留まる |
+| F06-14-MSG-004 | 画面上部 | 予約済みの大会はありません。 | You have no reserved tournaments. | 大会予約履歴を表示したとき、予約済みの大会がない場合 | 大会予約履歴画面に留まる |
 
 ## 業務ルール・計算
 
