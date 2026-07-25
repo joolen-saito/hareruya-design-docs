@@ -107,9 +107,12 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--area-re", default=r"F0\d",
+                    help="埋込対象メッセージIDエリアの正規表現（既定=フロント。管理画面は 'M\\d'）")
     args = ap.parse_args()
     if not (args.apply or args.dry_run):
         ap.error("--apply か --dry-run")
+    area_re = re.compile(args.area_re)
 
     lines = TSV.read_text(encoding="utf-8").splitlines()
     ic = {h: i for i, h in enumerate(lines[0].split("\t"))}
@@ -123,7 +126,7 @@ def main() -> None:
     todo: dict[str, list] = defaultdict(list)
     for r in rows:
         mid = r[0]
-        if not re.match(r"F0\d", mid) or mid in present:
+        if not area_re.match(mid) or mid in present:
             continue
         fid = mid.rpartition("-MSG-")[0].lower()
         todo[fid].append(r)

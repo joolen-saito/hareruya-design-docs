@@ -312,6 +312,11 @@
 
 ---
 
+| メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
+|---|---|---|---|---|---|
+| M08-04-MSG-006 | 入力項目付近 | お届け先登録の上限の%eccube_deliv_addr_max%件に達しています。お届け先を入力したい場合は、削除か変更を行ってください。 | You have already reached the max number (%eccube_deliv_addr_max%) of delivery addresses. If you want to add more, either delete or overwrite a registered address. | 会員編集画面で登録済みお届け先数が上限に達したとき | お届け先を追加できず、会員編集画面に留まる |
+| M08-04-MSG-007 | 購入履歴欄 | この会員の購入履歴がありません | No purchase history is found for this customer | 会員登録・編集画面で、表示対象の会員の購入履歴が0件のとき | 会員登録・編集画面に購入履歴なしとして表示したまま留まる |
+
 ## ログ・監査
 
 | タイミング | 記録内容 |

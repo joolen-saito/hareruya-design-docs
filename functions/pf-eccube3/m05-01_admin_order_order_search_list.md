@@ -250,6 +250,7 @@ DB関連の記述は ec-cube-enterprise を正とする。検索パターンの�
 | M05-01-MSG-020 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | キャンセル日の開始日が終了日より後の状態で検索したとき | 注文一覧画面に留まる（詳細検索枠を開いてエラー表示） |
 | M05-01-MSG-021 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 売上確定日の開始日が終了日より後の状態で検索したとき | 注文一覧画面に留まる（詳細検索枠を開いてエラー表示） |
 | M05-01-MSG-022 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 店頭予約日の開始日が終了日より後の状態で検索したとき | 注文一覧画面に留まる（詳細検索枠を開いてエラー表示） |
+| M05-01-MSG-023 | 画面中央(ダイアログ) | 注文情報を削除してよろしいですか？ | Are you sure to delete the order information? | 受注一覧で選択した受注の一括削除を実行しようとしたとき | 確認後に選択受注の削除処理を実行し、受注一覧へ戻る |
 
 ---
 

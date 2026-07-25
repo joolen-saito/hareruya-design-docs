@@ -316,6 +316,10 @@ Symfony フォーム制約に加え、POST_SUBMIT で以下を行う。
 | M05-11-MSG-028 | 入力項目直下/フォーム上部 | 商品が追加されていません | No item is found | 商品を追加せずに受注を登録・編集したとき | 受注情報編集画面に留まる |
 | M05-11-MSG-029 | 管理画面上部 | 出荷IDが指定されていません | Shipping ID is not specified | 出荷書類を出力するとき、対象の出荷を選択していないとき | 受注情報検索一覧画面に遷移する |
 | M05-11-MSG-030 | 管理画面上部 | admin.order.export.pdf.download.failure | admin.order.export.pdf.download.failure | 出荷書類の作成に失敗したとき | 納品書のPDF作成に失敗した場合、納品書出力画面に留まる |
+| M05-11-MSG-031 | 画面中央(ダイアログ) | 明細は注文から削除されます。「%name%」を削除してよろしいですか？ | The item will be deleted from the order. Are you sure to delete %name%? | 受注編集または出荷編集で商品明細の削除を確定しようとしたとき | 確認後に対象明細を画面上のフォームから削除し、保存時に削除を反映する |
+| M05-11-MSG-032 | 画面中央(ダイアログ) | 出荷お知らせメールを送信します。メールの文面を確認してから［送信］ボタンを押してください。この操作は取り消すことができません。ご注意ください。 | Sending the shipping notice. Please review the contents before pressing [Send]. Note that you will not able to revert this action. | 出荷お知らせメールの送信を開始しようとしたとき | 確認後に対象出荷へのメール送信処理を実行し、ダイアログ内に進捗・結果を表示する |
+| M05-11-MSG-033 | 画面中央(ダイアログ) | 出荷お知らせメールを送信します | Send shipping notice. | 出荷お知らせメールの送信を開始しようとしたとき | 確認後に対象出荷へのメール送信処理を実行し、ダイアログ内に進捗・結果を表示する |
+| M05-11-MSG-034 | 画面中央(ダイアログ) | 出荷情報を出荷済みにします。同時におこなう操作を選択してから［実行］ボタンを押してください。この操作は取り消すことができません。ご注意ください。 | Updating the shipping info to 'Shipped'. Please select other actions together then press [Submit]. Note that you will not be able to revert this action. | 出荷情報を出荷済みに変更しようとしたとき | 確認後に出荷済み更新を実行し、選択時は出荷お知らせメールも送信してダイアログ内に進捗・結果を表示する |
 
 ---
 

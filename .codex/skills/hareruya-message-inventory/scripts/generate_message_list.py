@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+"""正本 message_inventory.tsv から MESSAGE_LIST.tsv / MESSAGE_LIST.md を再生成する。
+
+規則: MESSAGE_LIST = 正本から EE-* 行を除いた確定メッセージ。文言・メタは正本逐語。
+- 機能名は既存 MESSAGE_LIST.tsv の (機能ID→機能名) を踏襲（既存170機能の表記を保持）。
+  新規機能は設計書H1タイトルから日本語名を導出。
+- doc パスは functions/**/<fid>_*.md を探索。
+- .tsv: 10列 RFC4180(CRLF)。 .md: 機能別グルーピング(7列 ja/en 表)。
+
+使い方: python3 generate_message_list.py
+"""
+from __future__ import annotations
+
+import csv
+import io
+import re
+from collections import defaultdict
+from pathlib import Path
+
+import lib_messages as L
+
+ROOT = L.DOC_ROOT
+MASTER = ROOT / "message_inventory" / "message_inventory.tsv"
+OUT_TSV = ROOT / "message_inventory" / "MESSAGE_LIST.tsv"
+OUT_MD = ROOT / "message_inventory" / "MESSAGE_LIST.md"
+FUNCTIONS = ROOT / "functions"
+
+TSV_COLS = ["メッセージID", "機能ID", "機能名", "種別", "表示位置", "画面上の文言",
+            "画面上の文言(英語)", "表示条件", "後続処理", "根拠(file:line)"]
+
+
+def existing_names() -> dict[str, str]:
+    out = {}
+    if OUT_TSV.exists():
+        with open(OUT_TSV, encoding="utf-8", newline="") as f:
+            for r in list(csv.reader(f, delimiter="\t"))[1:]:
+                if r and len(r) >= 3:
+                    out[r[1]] = r[2]
+    return out
+
+
+def doc_for(fid: str) -> Path | None:
+    hits = sorted(FUNCTIONS.rglob(f"{fid.lower()}_*.md"))
+    return hits[0] if hits else None
+
+
+def derive_name(fid: str) -> str:
+    """設計書H1から日本語機能名を導出（フォールバック用）。"""
+    p = doc_for(fid)
+    if p:
+        for line in p.read_text(encoding="utf-8").splitlines():
+            if line.startswith("# "):
+                t = line[2:].strip()
+                # "mXX-..._slug（日本語）" → 日本語 / "大分類 — 名" → そのまま
+                m = re.search(r"（(.+)）\s*$", t)
+                if m:
+                    return m.group(1).replace("_", " — ")
+                t = re.sub(r"^[mMfF]\d[\w-]*\s*", "", t)
+                return t or fid.upper()
+    return fid.upper()
+
+
+def cell_md(s: str) -> str:
+    return s.replace("|", "\\|").replace("\\n", "<br>").replace("\n", "<br>").strip() or "—"
+
+
+def main() -> None:
+    lines = MASTER.read_text(encoding="utf-8").splitlines()
+    ic = {h: i for i, h in enumerate(lines[0].split("\t"))}
+    rows = [l.split("\t") for l in lines[1:] if l.strip()]
+
+    names = existing_names()
+
+    def area(mid: str) -> str:
+        return re.sub(r"-MSG-.*", "", mid)
+
+    def name_of(fid: str) -> str:
+        if fid not in names:
+            names[fid] = derive_name(fid)
+        return names[fid]
+
+    # 非EE行を (機能ID, MSG番号) で整列
+    data = [r for r in rows if not r[0].startswith("EE-")]
+
+    def sort_key(r):
+        mid = r[0]
+        a = area(mid)
+        n = mid.split("-MSG-")[-1]
+        return (a, int(n) if n.isdigit() else 0)
+
+    data.sort(key=sort_key)
+
+    # --- TSV (RFC4180, CRLF) ---
+    buf = io.StringIO()
+    w = csv.writer(buf, delimiter="\t", lineterminator="\r\n", quoting=csv.QUOTE_MINIMAL)
+    w.writerow(TSV_COLS)
+    for r in data:
+        fid = area(r[0])
+        w.writerow([
+            r[0], fid, name_of(fid), r[ic["種別"]], r[ic["どこに"]],
+            r[ic["メッセージ内容"]].replace("\\n", "\n"),
+            r[ic["メッセージ内容(英語)"]].replace("\\n", "\n"),
+            r[ic["トリガー（条件）"]].replace("\\n", "\n"),
+            r[ic["後続処理"]].replace("\\n", "\n"), r[ic["根拠(file:line)"]],
+        ])
+    OUT_TSV.write_text(buf.getvalue(), encoding="utf-8")
+
+    # --- MD (機能別) ---
+    by_fid: dict[str, list] = defaultdict(list)
+    for r in data:
+        by_fid[area(r[0])].append(r)
+    en_count = sum(1 for r in data if r[ic["メッセージ内容(英語)"]] not in ("", "（英訳なし）"))
+
+    out = []
+    out.append("# メッセージ一覧（設計書反映済み・機能別・ja/en対訳）\n")
+    out.append("ec-cube-enterprise 実装のUIメッセージを機能へ割当て、設計書『表示メッセージ』表へ"
+               "埋め込んだ**確定**メッセージの一覧。**捏造ゼロ**（全列で要ソース確認なし、逐語のみ）。\n")
+    out.append(f"- 総確定メッセージ: **{len(data)}件** / 機能数: **{len(by_fid)}** / 英訳あり: {en_count}件")
+    out.append("- フロント/管理画面ともに twig `|trans` 直描画メッセージを追補"
+               "（codex判定でメッセージのみ収録・content/label除外、codexレビューで是正済み）。")
+    out.append("- 例外由来で単一に絞れない文言は「候補A ／ 候補B …」と全列挙（各候補はソース逐語）。")
+    out.append("- ロケール ja/en 対訳。機能名は「大分類 — 機能名」で統一。\n")
+    out.append("---\n")
+    for fid in sorted(by_fid):
+        out.append(f"## {fid} {name_of(fid)}")
+        dp = doc_for(fid)
+        if dp:
+            out.append(f"`{dp.relative_to(ROOT)}`\n")
+        out.append("| メッセージID | 種別 | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |")
+        out.append("|---|---|---|---|---|---|---|")
+        for r in sorted(by_fid[fid], key=sort_key):
+            out.append("| " + " | ".join([
+                r[0], cell_md(r[ic["種別"]]), cell_md(r[ic["どこに"]]),
+                cell_md(r[ic["メッセージ内容"]]), cell_md(r[ic["メッセージ内容(英語)"]]),
+                cell_md(r[ic["トリガー（条件）"]]), cell_md(r[ic["後続処理"]]),
+            ]) + " |")
+        out.append("")
+    OUT_MD.write_text("\n".join(out) + "\n", encoding="utf-8")
+    print(f"MESSAGE_LIST 再生成: {len(data)}件 / {len(by_fid)}機能 / 英訳{en_count}")
+
+
+if __name__ == "__main__":
+    main()
