@@ -86,6 +86,14 @@
 
 ---
 
+## 表示メッセージ
+
+| メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
+|---|---|---|---|---|---|
+| A07-03-MSG-001 | 要ソース確認 | コメントを入力してください | （英訳なし） | PUT /{eccube_api_v1_route}/admin/buyOrder/{id}/freeComment.json で free_comment が未指定（null） | APIはエラーJSONを返して終了 |
+| A07-03-MSG-002 | 要ソース確認 | 買取情報が見つかりません | （英訳なし） | PUT /{eccube_api_v1_route}/admin/buyOrder/{id}/freeComment.json で指定IDのDtbBuyOrderが存在しない | APIはエラーJSONを返して終了 |
+| A07-03-MSG-003 | 要ソース確認 | 認証エラー | （英訳なし） | コメント更新処理でgetUser()の結果がMemberではない | APIはエラーJSONを返して終了 |
+
 ## 業務ルール・計算
 
 | 項目 | 内容 |

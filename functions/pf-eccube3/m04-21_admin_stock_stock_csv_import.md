@@ -312,6 +312,7 @@ CSVの本文は次の2列で、いずれも必須である。
 | メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
 |---|---|---|----------|---|---|
 | M04-21-MSG-001 | 管理画面上部 | 入力されていません。 ／ 長すぎます。この値は{{ limit }}文字以下で入力してください。 ／ 要素は{{ limit }}個以上でなければなりません。 ／ 選択した値は無効です。 ／ 有効な値ではありません。 ／ 有効なファイルを選択してください。 ／ ファイルのサイズが大きすぎます。許可されている最大サイズは{{ limit }} {{ suffix }}です。 ／ ファイルのサイズが大きすぎます。 ／ ファイルをアップロードできませんでした。 ／ フィールドグループに追加のフィールドを含んではなりません。 | The field is empty. ／ This value is too long. It should have {{ limit }} character or less.\|This value is too long. It should have {{ limit }} characters or less. ／ This collection should contain {{ limit }} element or more.\|This collection should contain {{ limit }} elements or more. ／ The selected choice is invalid. ／ This value is not valid. ／ Please select a valid file. ／ The file is too large. Allowed maximum size is {{ limit }} {{ suffix }}. ／ The file is too large. ／ The file could not be uploaded. ／ This form should not contain extra fields. | 必要項目が未入力、または在庫変更理由が規定文字数を超過した状態で一括登録ボタンを押下したとき | エラーをフラッシュメッセージとして設定し、在庫変更CSV画面へ遷移する |
+| M04-21-MSG-002 | 画面上部（CSV検証エラー領域） | CSVにエラーがあります。内容を確認してください。 | （英訳なし） | CSV登録ボタン押下後、クライアント側CSV検証または`admin_stock_change_csv_pre_validate`のJSONエラーが1件以上あるとき | アップロード送信を中止し、同画面でエラー一覧とともに表示する |
 
 ## ログ・監査
 
