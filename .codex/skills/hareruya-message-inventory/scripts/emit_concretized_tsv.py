@@ -54,7 +54,8 @@ def split_expectation(text: str) -> tuple[str, str]:
     db_only = re.search(r"(dtb_|行数・値が不変|テーブルも行数|COUNT[^。]*不変|update_date|レコードが追加|に格納|永続化)", text)
     screen_verb = re.search(r"(表示|非表示|遷移|リダイレクト先|メッセージ|画面|含まれ|一覧に|ボタン|欄|プレビュー|チェック)", text)
     if db_only and not screen_verb:
-        return "（画面上の目立った変化なし。DB/内部の検証のみ）", text
+        # 著者が画面期待を書くべき(Gate B11)。プレースホルダは生成せず、内部のみ・画面は要記述として残す。
+        return "（要・画面確認内容の記述）", text
     return text, "—"
 
 
