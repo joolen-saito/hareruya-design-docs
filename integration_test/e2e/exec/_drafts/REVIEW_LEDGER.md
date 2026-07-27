@@ -36,6 +36,16 @@
 | B0 | m11-05_admin_system_setting_setting_system_masterdata | 標準(破壊系DB・mtb_*編集) | 88 | 37/1/21（読替28・partial1・TBD1） | R1要修正(Blocker3=S0規律違反C-018既存行書換/行数会計虚偽/069過剰bound・Major3=067残存捏造/L1-021 MappingException捏造/読替3件過剰・DB実測誇張)→R2全項目閉(S0再設計=既存行不変・使い捨て帯限定/会計37+28+1+1+21=88) | **妥当（候補確定）** | codex_b0_m1105_output/…_r2_ |
 | B0 | f06-19_front_member_mypage_credit_card | 標準(決済プラグイン/外部決済代行) | 76 | 41/0/6（直接28+読替13・要実機29） | R1要修正(Blocker3=「登録変更DB書込ゼロ」前提誤り〔rescue MemInval→nextMemId〕→excluded13再判定/C-018条件化/S0 update_date・Major3=外部依存bound算入6件/ja固定/-049)→R2(C-018外部状態依存bound)→R2残(C-018→要実機/§4.2件数)→R3妥当。ja/en(front.mypage.title) | **妥当（候補確定）** | codex_b0_f0619_output/…_r2_/…_r3_ |
 
+| B1 | f04-04_front_cart_shopping_complete | 現行踏襲(excel-primary/T2) | 76 | bound成功44(直接10+読替34)/TBD4/excluded11（EEドリフト8・partial7・要実機2） | R0要修正(Major6=破壊系≠要実機の偽陰性40→2/bound読替誤り/T2オラクル汚染C-003/EN汚染/S0未具体化/-011他excluded)→R1改訂→R2要修正(Major3=checkout系bound外部遮断未実装/S0復元SQL不正/C-08-10観測点誤り)→R3要修正(Major3=外部遮断過剰主張/S0 SQL/partialドリフト枝誤記)→R4要修正(Major2=§6 sync整合/S0実行形)→R5要修正(Major1=§4.4 DO$$再掲)→当方is1語整合→R6**妥当**。B1量産テンプレ確立(破壊系≠要実機/外部隔離ハーネス前提/EEドリフト分類/S0実行可能復元/オラクル独立性) | **妥当（候補確定）** | codex_r0〜r6_f0404（scratchpad） |
+
+| B1 | f04-03_front_cart_shopping_delivery_edit | 現行踏襲(excel-primary/T2) | 63 | bound成功33/excluded2（EEドリフト28） | ワークフロー3巡(needs_more)→当方是正(-020 excluded→bound/境界値max±1・min±1表fixture固定/S0実装待ちbound設計・列固定パラメータ化・pg_constraint照会)→独立codex確認**妥当**。EEドリフト28=ee会員フローに既存お届け先読込/更新経路が無い(codex反証grepで独立確認) | **妥当（候補確定）** | codex_r1〜r3+confirm_f0403（scratchpad/t2batch） |
+
+| B1 | f04-02_front_cart_shopping_order_method | 現行踏襲(excel-primary/T2) | 67 | bound成功42(直接6+読替36)/TBD7/excluded9（EEドリフト9） | ワークフロー3巡(needs_more・自己判定で正当指摘を見解相違扱い)→**当方裁定**(codex正当3点=S0 FK孫→子→親順/C-08スコープF04-04委譲/C-09 URL契約ドリフト分離C-DR6 を是正・維持2点=会計バケット非強制/C-04-05オラクル分離 はcodexも妥当と再確認)→C-08を§7/§4.3へ伝播→独立codex**妥当** | **妥当（候補確定）** | codex_r1〜r3+confirm1/2_f0402（scratchpad/t2batch） |
+
+| B1 | f04-01_front_cart_cart_index | 現行踏襲(excel-primary/T2) | 75 | bound成功33(直接11+読替22)/TBD22/excluded8（EEドリフト10・partial2） | ワークフロー3巡(needs_more・cartDB永続の偽陽性見落とし)→当方是正(cart永続=ee`CartService::save()`がdtb_cart/dtb_cart_item永続化を見落とし→S0拡張・C-NW/C-DBW偽陽性廃/IT-26汎用21件は書込先3系統で対象特定不能=TBD〔codex偽陰性なしと確認〕/-006-046ロック原子=partial/-049操作矛盾=TBD/-035データ誤り是正)→独立codex**妥当** | **妥当（候補確定）** | codex_r1〜r3+confirm1/2/3_f0401（scratchpad/t2batch） |
+
+| P1 | m03-01_admin_product_product_search_list | カスタマイズ(excel-primary+pf-fallback/T2) | 69 | bound60/TBD7/excluded2・L1 74(pf-fallback56+excel18) | codex**8周(R1-R8)**: R1=スコープ越境bound(パスワード変更C-053/一括削除C-055〜061)6件+必発強化+無根拠ID対応付け→改訂1でExcel優先(販売価格)是正→R2-R5で**bound_overreachの振り子**(母集合が『〜し得る/条件付き』を要求するのに一次資料が可能性のみ=-017/067/036/068/069を段階的にTBD化・R5で網羅スイープ)→R6=oracle source_class来歴不一致(8claim同期)→R7=§7実行対象にTBD化済み残存(除去)→**R8=none収束** | **妥当（候補確定）** | /tmp/m0301_review_r1〜r8.out |
+
 ## 判定の意味（三段会計での位置）
 - 「妥当（候補確定）」＝**候補グレードとして採用可**（D6前・O5未確定）。**承認済み草案への昇格・正式化はM0機械（D5/D6/D14/lineage_gate）完成後**（`CONCRETIZATION_FIRST_PLAN.md`）。
 - ＝現時点で「codex承認済み**候補**」は**29本**（W0-W2の4＋B0の25）。B0内訳: M01系2・M02系6・M05系5・M09系6・M10系2・M11系3・f06-19＝**完了25**。「承認済み草案」「具体化完了（正式）」は0本（M0前のため）。※**B0完遂＝標準残25機能すべて候補確定（25/25=100%）**。M05系5/5・M09系6/6・M10系2/2・M11系3/3・F06系1/1。B0対象の未着手ゼロ。
@@ -53,3 +63,6 @@
 4. func_scope_check（機能スコープ自己検査・正式O6でない）差分0。
 5. 候補規律（O5非主張・source_class暫定・@TBD-D5・_drafts隔離）。
 6. カスタマイズはee実ソースをL1出典にしない（照合補助のみ）。Excel空欄制約はpf現行回帰の踏襲値でbound（ユーザー方針A）。
+7. **【M03-01で確立・bound充足検証ゲート】** 母集合test_idの期待が「〜になり得る/可能性」または「条件成立時のみの正例（環境/プラグイン/特定データ依存）」で、**1回の実行でpass/failを一意判定できない**ものは、いかなる言い換え・別副次事実への差し替えでも**boundにできない＝無条件TBD**。著者は**codexレビュー前に全bound行を母集合期待テキスト×一次資料で自己監査**し該当を一掃する（M03-01ではこのゲート未実施のためbound_overreachがR2-R5・R7に分散噴出し8周要した＝以降の機能はこの自己ゲートで周回を圧縮する）。検索/一覧・分析系はこのパターンが多い。
+8. **【M03-01で確立・スコープ境界】** 一覧画面から起動する一括/単体削除・状態変更等は、**一覧側のJS/モーダル/メッセージ/遷移＝当機能bound／実際のPOST処理・DB副作用＝別導線DELEG(excluded)** に分離する（一律excludedは偽陰性）。パスワード変更等**着地先が別画面**のものは当機能excluded。
+9. **【運用】** codex呼び出しは `</dev/null` でstdin遮断（付けないと「Reading additional input from stdin...」でハングする事象を確認）。1レビュー=`timeout 900`＋bg。
