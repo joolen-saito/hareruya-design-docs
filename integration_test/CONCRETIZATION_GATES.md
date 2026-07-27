@@ -33,6 +33,14 @@ Gate A(G1-G5 PASS)＋Gate B自己監査済みを前提に:
 3. **実質的Blocker/Majorが再発したときのみ、もう1パス**（＝**codex上限2パス**）。それでも実質Blocker/Majorが残る場合はユーザーへエスカレーション（機能固有の難所）。
 - Minorは記録のみ（確定を止めない）。
 
+## Gate D｜concretized.tsv 出力（候補確定後・母集合テンプレートの派生ビュー）
+候補確定（Gate C通過）後、**母集合 `all_it_cases.tsv` と同一11列テンプレート**の具体化TSVを出力する:
+`python3 .codex/skills/hareruya-message-inventory/scripts/emit_concretized_tsv.py --fid <fid>`
+→ `integration_test/e2e/exec/tsv/<fid>_<slug>_concretized.tsv`（LF・タブ・列＝機能名/テストID/I/FID/観点/優先度/項目名/前提条件/入力/操作手順/期待結果／レスポンス/実行方法）。
+- 各母集合行（テストID=`IT-<FID>-…-NNN` を保持）に、§8会計で bound の行は§4具体ケースの前提/入力/手順/期待＋`[L1:..]`を差し込み、実行方法を精緻化（db.ts照会→`Playwright+DB確認`）。**TBD行**は期待に`【TBD】理由`・実行方法`保留(TBD)`、**excluded/DELEG行**は`【対象外(...)】理由`・実行方法`対象外(...)`。
+- これは**人が母集合と直接diff/比較できる読取ビュー**（`_drafts/`の候補md/oracleが正・concretized.tsvは派生。手編集しない＝mdを直して再生成）。
+- Gate A の `_drafts隔離(G4)` は fixtures/oracle 直下のみ検査し、この `exec/tsv/*_concretized.tsv` は対象外（意図的出力）。
+
 ## 役割・独立性（不変）
 著者＝sonnet subagent／レビュー＝codex／戦略・オーケストレーション＝main。**著者≠レビュアー**を維持。
 fable5は上限のため不使用（[[role-assignment-after-fable5-limit]]）。

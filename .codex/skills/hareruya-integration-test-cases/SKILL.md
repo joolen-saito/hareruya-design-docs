@@ -149,3 +149,17 @@ Promotion safeguards:
 - `scripts/triage_unexpanded_it_candidates.py`: classifies remaining unexpanded candidates as promote, review, or integration-test-unneeded candidates.
 - `scripts/decide_unexpanded_it_candidates.py`: makes final adoption / rejection decisions from the triage result.
 - `scripts/format_tsv.py`: TSV normalizer and validator inherited from the existing Cursor skill.
+
+## 実行可能グレード具体化と concretized.tsv 出力（2026-07-27 追加）
+
+母集合 `integration_test/all_it_cases.tsv`（汎用テンプレ・凍結）を実行可能グレードへ具体化する
+下流工程。統治＝`integration_test/CONCRETIZATION_GATES.md`（Gate A機械／B著者自己監査／C codex上限2パス／D concretized.tsv出力）。
+
+- 候補は `integration_test/e2e/exec/_drafts/<fid>_..._executable_draft.md`（§0-§10。§4=14列具体ケース／§1=L1オラクル）
+  ＋ `e2e/fixtures/oracle/_drafts/<fid>_..._oracle_draft.json`。**`_drafts/`隔離**（正式化はM0機械後）。
+- **Gate A（codex前必須・exit1）**: `.codex/skills/hareruya-message-inventory/scripts/gate_concretize_candidate.py --fid <fid>`。
+- **Gate D（候補確定後）**: `.codex/skills/hareruya-message-inventory/scripts/emit_concretized_tsv.py --fid <fid>`
+  → `integration_test/e2e/exec/tsv/<fid>_..._concretized.tsv`＝**母集合 all_it_cases.tsv と同一11列テンプレート**の
+  具体化ビュー（各母集合テストIDを保持し、bound行に前提/入力/手順/期待の具体値＋`[L1:..]`＋実行方法を反映。
+  TBD/excluded行は`【TBD】`/`【対象外】`で明示）。派生ビューなので手編集せず、mdを直して再生成する。
+- 役割: 著者=sonnet subagent／レビュー=codex／独立性維持（[[role-assignment-after-fable5-limit]]）。

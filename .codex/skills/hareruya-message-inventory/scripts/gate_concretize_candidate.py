@@ -105,11 +105,11 @@ def main() -> int:
         if mism:
             fails.append(f"G3 source_class文字列不一致 {len(mism)}件: {mism[:2]}")
 
-    # G4 _drafts隔離(正式パスに当fidの成果物が無い)
+    # G4 _drafts隔離(正式オラクルパスに当fidの成果物が無い)
+    # ※ exec/tsv/<fid>_*_concretized.tsv は all_it_cases テンプレートの派生読取ビュー(意図的出力)なので対象外。
     formal = glob.glob(str(ROOT / f"e2e/fixtures/oracle/{fid.lower()}_*.json"))
-    formal += glob.glob(str(ROOT / f"integration_test/e2e/exec/tsv/{fid.lower()}_*.tsv"))
     if formal:
-        fails.append(f"G4 正式パス混入: {formal[:2]}")
+        fails.append(f"G4 正式オラクルパス混入: {formal[:2]}")
 
     # G5 母集合会計
     N = population_n(fid)
