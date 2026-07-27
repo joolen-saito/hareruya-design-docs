@@ -122,7 +122,8 @@ def main() -> int:
         b, t, e = map(int, m.groups())
         if b + t + e != N:
             fails.append(f"G5 会計合計≠母集合: bound{b}+TBD{t}+excluded{e}={b+t+e} != N={N}")
-    refs = set(re.findall(r"-(\d{3})\b", dtext))
+    # 参照形式は2通り: 本文の -NNN と §8会計表の行頭 | NNN |
+    refs = set(re.findall(r"-(\d{3})\b", dtext)) | set(re.findall(r"^\|\s*(\d{3})\s*\|", dtext, re.M))
     missing = [f"{i:03d}" for i in range(1, N + 1) if f"{i:03d}" not in refs]
     if missing:
         fails.append(f"G5 母集合欠番(本文未言及) {len(missing)}件: {missing[:8]}")

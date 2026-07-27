@@ -46,6 +46,8 @@
 
 | P1 | m03-01_admin_product_product_search_list | カスタマイズ(excel-primary+pf-fallback/T2) | 69 | bound60/TBD7/excluded2・L1 74(pf-fallback56+excel18) | codex**8周(R1-R8)**: R1=スコープ越境bound(パスワード変更C-053/一括削除C-055〜061)6件+必発強化+無根拠ID対応付け→改訂1でExcel優先(販売価格)是正→R2-R5で**bound_overreachの振り子**(母集合が『〜し得る/条件付き』を要求するのに一次資料が可能性のみ=-017/067/036/068/069を段階的にTBD化・R5で網羅スイープ)→R6=oracle source_class来歴不一致(8claim同期)→R7=§7実行対象にTBD化済み残存(除去)→**R8=none収束** | **妥当（候補確定）** | /tmp/m0301_review_r1〜r8.out |
 
+| P2 | m03-02_admin_product_product_edit | カスタマイズ(excel-primary+pf-fallback/T2) | 88 | bound67/TBD3/excluded18・L1 59(pf-fallback51+excel8) | **品質ゲート体制初適用(Gate A機械+B自己監査+C codex上限2パス)**。著者がGate B前段実施でTBD0草案→**Gate A PASS**→codex R1=Major3(観測不能な支店通知/ログをbound=#B1(c)違反→-073/074/078をTBD／スマレジ=支店の未検証推論をbind根拠から除去・§10隔離／削除ワークフローL1-044/049/050をDELEG分離)→改訂1→Gate A再PASS→**codex R2=none収束**。**M03-01の8周→2パスに圧縮＝体制の効果実証** | **妥当（候補確定）** | /tmp/m0302_review_r1〜r2.out |
+
 ## 判定の意味（三段会計での位置）
 - 「妥当（候補確定）」＝**候補グレードとして採用可**（D6前・O5未確定）。**承認済み草案への昇格・正式化はM0機械（D5/D6/D14/lineage_gate）完成後**（`CONCRETIZATION_FIRST_PLAN.md`）。
 - ＝現時点で「codex承認済み**候補**」は**29本**（W0-W2の4＋B0の25）。B0内訳: M01系2・M02系6・M05系5・M09系6・M10系2・M11系3・f06-19＝**完了25**。「承認済み草案」「具体化完了（正式）」は0本（M0前のため）。※**B0完遂＝標準残25機能すべて候補確定（25/25=100%）**。M05系5/5・M09系6/6・M10系2/2・M11系3/3・F06系1/1。B0対象の未着手ゼロ。
