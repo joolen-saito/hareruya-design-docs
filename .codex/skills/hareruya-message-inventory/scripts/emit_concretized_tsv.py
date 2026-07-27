@@ -29,6 +29,33 @@ OUT_DIR = ROOT / "integration_test/e2e/exec/tsv"
 ALL_IT = ROOT / "integration_test/all_it_cases.tsv"
 COLS = ["機能名", "テストID", "I/FID", "テスト観点", "優先度", "テスト項目名",
         "前提条件", "入力データ/リクエスト内容", "操作手順/実行方法", "期待結果／レスポンス", "実行方法"]
+# 出力は母集合11列に「自動検証（内部）」を期待結果と実行方法の間へ挿入した12列。
+OUT_COLS = COLS[:10] + ["自動検証（内部: session/DB/URL）"] + [COLS[10]]
+
+# 目視できない内部状態の手掛かり（この語を含む句は「自動検証(内部)」列へ寄せる）
+INTERNAL_HINT = re.compile(
+    r"(session|セッション|page_count|eccube\.admin|に保存|へ保存|保存され|リダイレクト|302|"
+    r"クエリ|sort_no|dtb_|COUNT|レコードが追加|レコードを|更新される（時刻|update_date|"
+    r"フラグ|キーに|に格納|永続|DB(上|の|へ|で)|テーブル)")
+
+
+def split_expectation(text: str) -> tuple[str, str]:
+    """期待テキストを (画面で目視できる, 自動検証(内部)) に分割。
+    明示マーカー『自動検証(内部):』があればそこで分割。無ければ句(、／。)単位で内部語を含む句を内部側へ。"""
+    if not text or text == "—":
+        return text, "—"
+    m = re.search(r"／?\s*自動検証\s*[（(]?内部[^:：]*[)）]?\s*[:：]\s*(.+)$", text)
+    if m:
+        obs = text[:m.start()].rstrip("／ 。").strip()
+        return (obs or "（画面上の目立った変化なし）"), m.group(1).strip()
+    # 明示マーカーが無い場合:
+    # (1) 全文がDB/内部のみの主張(画面動詞なし)なら丸ごと内部へ寄せる。
+    # (2) それ以外(融合文/純画面)は保守的に全文を画面側へ残す（機械分割で意味を壊さない）。
+    db_only = re.search(r"(dtb_|行数・値が不変|テーブルも行数|COUNT[^。]*不変|update_date|レコードが追加|に格納|永続化)", text)
+    screen_verb = re.search(r"(表示|非表示|遷移|リダイレクト先|メッセージ|画面|含まれ|一覧に|ボタン|欄|プレビュー|チェック)", text)
+    if db_only and not screen_verb:
+        return "（画面上の目立った変化なし。DB/内部の検証のみ）", text
+    return text, "—"
 
 
 def load_all_it(fid: str):
@@ -195,6 +222,7 @@ def main() -> int:
         row = list(pop[nnn])  # 11列(母集合原本)
         d = disp.get(nnn)
         is_exec = False
+        internal = "—"
         if d is None:
             n_raw += 1
         else:
@@ -206,7 +234,8 @@ def main() -> int:
                     row[6] = humanize(c["前提"], seedmap)
                     row[7] = humanize(c["入力"], seedmap)
                     row[8] = humanize(c["操作"], seedmap)
-                    row[9] = humanize(c["期待"], seedmap)
+                    obs, internal = split_expectation(humanize(c["期待"], seedmap))
+                    row[9] = obs
                     row[10] = c["method"]
                 else:
                     row[9] = yoshi_h  # §4対応が引けない(shared) → 要旨
@@ -227,9 +256,11 @@ def main() -> int:
                 row[8] = "—"
                 row[9] = f"【{tag}】{act}（該当観点: {row[3]}）"
                 row[10] = "対象外"; n_excl += 1
-        all_rows.append(row)
+        # 11列 → 12列（期待結果と実行方法の間へ「自動検証（内部）」を挿入）
+        out_row = row[:10] + [internal] + [row[10]]
+        all_rows.append(out_row)
         if is_exec:
-            exec_rows.append(row)
+            exec_rows.append(out_row)
 
     # ★1:1 不変条件（ハードゲート）: concretized の テストID集合＝母集合と完全一致
     tid_i = COLS.index("テストID")
@@ -252,7 +283,7 @@ def main() -> int:
     def write(path, rows):
         with path.open("w", encoding="utf-8", newline="") as fh:
             w = csv.writer(fh, delimiter="\t", lineterminator="\n")
-            w.writerow(COLS)
+            w.writerow(OUT_COLS)
             w.writerows(rows)
 
     full = OUT_DIR / f"{slug}_concretized.tsv"
