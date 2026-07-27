@@ -8,10 +8,36 @@
 - Exclude Ph2 (phase-2 and later) whole-function features. Their Excel design docs carry a shape/textbox note such as `…はPh2で対応するため、Ph1では実装しない` / `Ph2で対応` / `フェーズ2以降で設計予定`. Do not create or keep `e2e_cases.md`, `e2e/spec`, or `e2e/pages` for them (not even as `test.fixme`). Current set: M03-43, M04-06, M04-07, M06-13, M08-11, M08-15, M08-16, A06-14, B01-02, B01-03, F02-05. The generator drivers (`.codex/e2e_workflow.js` / `e2e_review.js` / `e2e_audit.js`) skip these via their `EXCLUDED_STEMS` set.
 - Keep the first TSV fence in every `integration_test/e2e/*_e2e_cases.md` at 14 columns: the existing 10 case-definition columns plus `実施者`, `実施日`, `結果`, `失敗理由`. The execution-management cells start empty.
 
+## Screen Reachability (integration tests must traverse transitions)
+
+Full rules: [TRANSITION_RULES.md](TRANSITION_RULES.md). Summary:
+
+- The reachability class of every screen path comes from `e2e/config/screen-reachability.tsv`
+  (evidence `file:line` required). Never infer a class; unregistered paths are undecided.
+- `transition-only` screens (confirm / complete / wizard steps / order-context screens) must be
+  reached with `reachVia()` from their entry screen. Opening them with `page.goto()` is a defect:
+  it skips the transition under test and trips the design-documented guard instead.
+- `action-endpoint` paths (POST/PUT/PATCH/DELETE only) are not screens. Never `page.goto()` them;
+  trigger them through on-screen actions.
+- Import `test` from `e2e/fixtures/reachability.fixture.ts` and reach screens through
+  `e2e/helpers/navigation.ts` (`enter` / `reachVia` / `step` / `directAccess`) instead of raw
+  `page.goto()`. The fixture replaces `page.goto` itself, so a forgotten helper still fails at
+  runtime; the helpers enforce the contract (no `goto` inside a transition action, no
+  `directAccess` on an entry screen).
+- `要確認` means the design doc does not settle direct access for that screen. Do not upgrade it to
+  `transition-only` or `entry-direct` to make the audit quiet; settle it with evidence first.
+- Direct access is allowed only when direct access itself is the viewpoint (unauthenticated access,
+  missing-state guard, URL contract). Declare it with `directAccess(page, path, reason)`, or with an
+  `@direct-access: <reason>` comment within 8 lines above a raw `page.goto()`.
+- Do not treat the mother-set `テスト観点` column (e.g. 「未認証」) as evidence of a direct-access
+  case; it is generator noise. The intent must appear verbatim in the steps.
+
 ## Spec Pattern
 
-- Start with unauthenticated direct-access tests when the screen is admin-only.
-- Add authenticated display/navigation tests guarded by credentials.
+- Start with unauthenticated direct-access tests when the screen is admin-only, and write them with
+  `directAccess()` so the intent is declared (this is the direct-access viewpoint, not a shortcut).
+- Add authenticated display/navigation tests guarded by credentials. Reach `transition-only` screens
+  with `reachVia()`; never shortcut them with `page.goto()`.
 - Add mutation tests only when rollback or a dedicated seed is available.
 - Add `test.fixme` for planned automation blocked by seed, environment setting, external service, or destructive shared-state risk.
 - For seed-backed cases, add the seed set to `e2e/seed/manifest.json`, apply it with `e2e/seed/lib/apply.sh`, export its env contract via `e2e/seed/lib/seed-env.sh`, and import values from `e2e/config/seed.config.ts` in the spec.
@@ -22,6 +48,8 @@
 
 - Keep one class per function page where possible.
 - Store route URLs in the Page Object using `ECCUBE_ADMIN_ROUTE`.
+- Do not add a `gotoX()` method that navigates straight to a `transition-only` screen. Expose the
+  on-screen commands (click / submit) instead and let the spec compose the path with `reachVia()`.
 - Expose locators for stable screen regions and commands.
 - Put design/Twig/message provenance in comments only where it prevents future oracle drift.
 
@@ -31,7 +59,11 @@ Run these before finishing a rollout slice:
 
 ```bash
 python3 .codex/skills/hareruya-playwright-standard-tests/scripts/audit_standard_playwright.py --repo .
+python3 .codex/skills/hareruya-playwright-standard-tests/scripts/extract_screen_transitions.py --selftest
+python3 .codex/skills/hareruya-playwright-standard-tests/scripts/extract_screen_transitions.py --repo .
+python3 .codex/skills/hareruya-playwright-standard-tests/scripts/audit_transition_paths.py --repo . --scope <target fids> --strict
 e2e/seed/lib/apply.sh <needed SEED ids>
 eval "$(e2e/seed/lib/seed-env.sh)"
+cd e2e && npx playwright test spec/_harness/navigation.selfcheck.spec.ts
 cd e2e && npx playwright test --list
 ```

@@ -1,0 +1,229 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1887",
+  "issueId": 43509370,
+  "summary": "【未実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集のデッキ登録処理で、デッキを構築するカード情報（デッキカード）が保存されない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:52Z",
+  "updated": "2026-07-14T01:16:52Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1887",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "大会デッキ登録編集",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【未実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集のデッキ登録処理で、デッキを構築するカード情報（デッキカード）が保存されない",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：大会デッキ登録編集\n課題カテゴリ：不具合（バグ）\n課題：【未実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集のデッキ登録処理で、デッキを構築するカード情報（デッキカード）が保存されない\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- 設計書では、デッキリスト提出時にデッキへプレイヤー名・大会情報・デッキリストの内容テキスト・フォーマット・公開設定・デッキタイプを設定して保存するとともに、デッキを構築するカード情報を保存することとしている。",
+    "現在の挙動": "- フロントのデッキ登録処理 DeckEntryAction::handle() は DtbDeck に textMain / textSide などを設定して persist / flush するのみで、DtbDeckCard を1件も生成・保存していない。\n- デッキリストのテキストを解析して DtbDeckCard を登録する CardListParserService::setDeckCards() は実装されているが、呼び出しているのは管理画面側の Admin\\Deck\\DeckStoreAction のみで、フロントの大会デッキ登録からは呼ばれていない。\n- DtbDeck の persist に対してデッキカードを生成する Doctrine イベントリスナ等も存在しないため、大会デッキ登録編集から登録したデッキにはカード情報（dtb_deck_card）が一切作られない。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:855-857 「エラーがなければデッキにプレイヤー名、大会情報、デッキリストの内容テキスト、フォーマット、公開設定(非公開)、デッキタイプ(イベント)を設定して保存する」「デッキを構築するカード情報を保存する」\n\n▼実装該当箇所\nsrc/Eccube/Service/Front/Mypage/DeckEntryAction.php:36-82 （handle() が DtbDeck のみを保存し DtbDeckCard を生成しない）\nsrc/Eccube/Service/Deck/CardListParserService.php:102-111 （DtbDeckCard 登録処理は存在する）\nsrc/Eccube/Service/Admin/Deck/DeckStoreAction.php:133-135 （setDeckCards() の呼び出しは管理画面側のみ）\n\n▼備考\nDtbDeckCard を参照する全ファイルを grep（src配下14ファイル）した結果、フロントの大会デッキ登録経路（DeckEntryController → DeckEntryAction）からは生成されない。EventListener / Doctrine リスナにも DtbDeck 起点のカード生成処理は無い。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "大会デッキ登録編集",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Service/Front/Mypage/DeckEntryAction.php",
+      "start": 36,
+      "end": 82,
+      "fileLines": 108,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "     */\n    public function handle(DeckEntryInput $input): DtbDeck\n    {\n        $now = new \\DateTime();\n\n        $Deck = $this->deckRepository->findOneBy([\n            'Player' => $input->Player,\n            'EventDetail' => $input->EventDetail,\n            'Format' => $input->Format,\n        ]);\n\n        if ($Deck !== null) {\n            $Deck\n                ->setTextMain($input->textMain)\n                ->setTextSide($input->textSide)\n                ->setUpdateDate($now);\n        } else {\n            /** @var MtbDisp $Disp */\n            $Disp = $this->entityManager->find(MtbDisp::class, MtbDisp::DISPLAY_HIDE);\n            /** @var MtbDeckType $DeckType */\n            $DeckType = $this->entityManager->find(MtbDeckType::class, MtbDeckType::EVENT_ID);\n\n            $Deck = (new DtbDeck("
+    },
+    {
+      "path": "src/Eccube/Service/Deck/CardListParserService.php",
+      "start": 102,
+      "end": 111,
+      "fileLines": 163,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function setDeckCards(array $cardArray, DtbDeck $Deck, int $boardId): void\n    {\n        $Board = $this->entityManager->getReference(MtbBoard::class, $boardId);\n\n        foreach ($cardArray as $card) {\n            if ($card['cardId'] === self::UNKNOWN_NAME) {\n                continue;\n            }\n\n            $DeckCard = new DtbDeckCard();"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Deck/DeckStoreAction.php",
+      "start": 133,
+      "end": 135,
+      "fileLines": 150,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            $this->cardListParserService->setDeckCards($commandCards, $Deck, MtbBoard::BOARD_ID_COMMAND);\n            $this->cardListParserService->setDeckCards($mainCards, $Deck, MtbBoard::BOARD_ID_MAIN);\n            $this->cardListParserService->setDeckCards($sideCards, $Deck, MtbBoard::BOARD_ID_SIDE);"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 855,
+      "end": 857,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "エラーがなければデッキにプレイヤー名、大会情報、デッキリストの内容テキスト、フォーマット、公開設定(非公開)、\nデッキタイプ(イベント)を設定して保存する\nデッキを構築するカード情報を保存する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Service/Front/Mypage/DeckEntryAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Deck/CardListParserService.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Deck/DeckStoreAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:51+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

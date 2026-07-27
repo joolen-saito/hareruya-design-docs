@@ -1,0 +1,402 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2012",
+  "issueId": 43509534,
+  "summary": "【実装乖離】在庫管理_在庫分割 登録編集_在庫分割 登録編集にて、分割先商品の仕入総価格（買取金額比率での按分）が承認申請時ではなく承認時に計算され、分割先商品情報に保存されない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:54Z",
+  "updated": "2026-07-22T01:26:48Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2012",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "在庫分割 登録編集",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】在庫管理_在庫分割 登録編集_在庫分割 登録編集にて、分割先商品の仕入総価格（買取金額比率での按分）が承認申請時ではなく承認時に計算され、分割先商品情報に保存されない",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：在庫分割 登録編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_在庫分割 登録編集_在庫分割 登録編集にて、分割先商品の仕入総価格（買取金額比率での按分）が承認申請時ではなく承認時に計算され、分割先商品情報に保存されない\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- 承認申請時に、基本情報の更新・分割先商品の仕入総価格の計算・ステータス変更履歴の更新・承認通知先へのメール送信を行い、計算した仕入総価格を分割先商品情報に登録すること（分割先が確定＝編集不可となる承認申請時に計算する）。\n- 分割先商品の仕入総価格は分割先商品の買取金額比率で按分し、合計が分割元商品の移動総原価と一致しない場合は端数分を「最も買取金額（単価）が高い分割先商品」に割り当てること。",
+    "現在の挙動": "- 承認申請（StockSplitApplyApprovalAction）は、分割先明細の作成・ステータスの分割承認待ちへの変更・承認申請一覧への登録のみを行い、仕入総価格の按分計算は一切行っていない。\n- 分割先明細（DtbStockSplitJoinDetail）には仕入総価格を保持するカラム自体が無く（standardPrice / costPrice / totalCost / stock / splitJoinQuantity / missingQuantity のみ）、承認申請時点の仕入総価格は保存されない。\n- 買取金額比率での按分と端数調整は承認処理（StockSplitApprovalApproveAction）で都度計算されており、承認時点の買取価格・分割元総原価で計算されるため、申請時から値が変動した場合に設計と異なる金額になる。\n- 端数の割当先は「買取価格×数量（買取金額小計）が最大の分割先」であり、設計の「最も買取金額（単価）が高い分割先商品」とは、単価は低いが数量が多い商品が存在するケースで一致しない。\n- 承認通知先（メンバー）の必須チェックと承認通知メール送信、ステータスの分割承認待ちへの遷移は実装されている。",
+    "補足情報": "▼設計書該当箇所\nM04_stock_management_basedesign.md:2176 の逐語引用「6-5.承認申請時、基本情報の更新と、分割先商品の仕入総価格の計算、ステータス変更履歴の更新、承認通知先へのメール送信を行う」\nM04_stock_management_basedesign.md:2183 の逐語引用「6-7.分割先商品の仕入総価格（1商品について数量分の仕入価格）を計算し、分割先商品情報に登録する」\nM04_stock_management_basedesign.md:5050-5052 の逐語引用「* 分割は、分割先の商品の買取金額比率で按分を行い仕入総価格とする / * 分割先商品の仕入総価格の合計＝分割元商品の移動総価格とならない場合は / 端数分を最も買取金額（単価）が高い分割先商品に割り当てる（金額が高くなっても安くなっても端数の割り当てを行う）」\n\n▼実装該当箇所\nsrc/Eccube/Service/Admin/Stock/StockSplitApplyApprovalAction.php:87-118 （承認申請処理。明細作成とステータス変更のみで按分計算・仕入総価格保存が無い）\nsrc/Eccube/Entity/DtbStockSplitJoinDetail.php:55-75 （明細のカラム。仕入総価格に相当するフィールドが存在しない）\nsrc/Eccube/Service/Admin/Stock/StockSplitApprovalApproveAction.php:118-185 （承認時に買取金額比率で按分し端数調整を行っている）\nsrc/Eccube/Service/Admin/Stock/StockSplitApprovalApproveAction.php:170-173 （端数の割当先を「買取価格×数量」が最大の行としている）\nsrc/Eccube/Controller/Admin/Stock/StockSplitController.php:295-300 （承認通知先メンバー必須チェック：実装済み）\nsrc/Eccube/Controller/Admin/Stock/StockSplitController.php:327-331 （承認通知メール送信：実装済み）\n\n▼備考\n承認通知先必須・メール送信・分割承認待ちへの遷移は設計どおり。乖離は (1) 仕入総価格の按分計算タイミングが承認申請時ではなく承認時であり、分割先商品情報に保存されない点、(2) 端数の割当先が『買取単価が最も高い商品』ではなく『買取金額小計（単価×数量）が最大の商品』である点。買取価格が承認までに変動すると申請時点の想定金額と乖離する。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "在庫分割 登録編集",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockSplitApplyApprovalAction.php",
+      "start": 87,
+      "end": 118,
+      "fileLines": 189,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        // 分割先データから DtbStockSplitJoinDetail を新規作成する\n        /** @var list<DtbStockSplitJoinDetail> $Destinations */\n        $Destinations = [];\n        foreach ($input->sessionDestinations as $productStockId => $data) {\n            $DestPs = $this->productStockRepository->find((int) $productStockId);\n            if (!$DestPs instanceof ProductStock) {\n                continue;\n            }\n            $quantity = \\max(0, (int) $data['quantity']);\n            $Destinations[] = $this->detailEntityManager->save(\n                Detail: null,\n                StockSplitJoin: $StockSplitJoin,\n                SubjectProductStock: $DestPs,\n                splitJoinQuantity: $quantity,\n                stockSnapshot: (int) ($DestPs->getStock() ?? 0),\n                totalCost: $DestPs->getTotalCost"
+    },
+    {
+      "path": "src/Eccube/Entity/DtbStockSplitJoinDetail.php",
+      "start": 55,
+      "end": 75,
+      "fileLines": 288,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private string $standardPrice;\n\n    /** 原価単価 */\n    #[ORM\\Column(name: 'cost_price', type: Types::DECIMAL, precision: 12, scale: 2, nullable: true, options: ['comment' => '原価単価'])]\n    private ?string $costPrice = null;\n\n    /** 総原価 */\n    #[ORM\\Column(name: 'total_cost', type: Types::DECIMAL, precision: 12, scale: 2, nullable: true, options: ['comment' => '総原価'])]\n    private ?string $totalCost = null;\n\n    /** 在庫数 */\n    #[ORM\\Column(name: 'stock', type: Types::DECIMAL, precision: 12, scale: 2, nullable: true, options: ['comment' => '在庫数'])]\n    private ?string $stock = null;\n\n    /** 分割・結合数 */\n    #[ORM\\Column(name: 'split_join_quantity', type: Types::INTEGER, nullable: false, options: ['comment' => '分割・結合数'])]\n    private int $splitJoinQuantity;\n\n    /** 欠品点数 */\n    #[ORM\\Column(na"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockSplitApprovalApproveAction.php",
+      "start": 118,
+      "end": 185,
+      "fileLines": 265,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            // 全分割先の買取金額合計（個数×買取価格の合計）・個数合計を事前集計\n            $totalBuySubtotal = '0';\n            $totalDestinationQty = '0';\n            foreach ($Destinations as $Detail) {\n                if ($Detail->getSplitJoinQuantity() <= 0) {\n                    continue;\n                }\n                $buyPriceForSum = (string) ($Detail->getSubjectProductStock()->getProductClass()->getBuyPrice() ?? 0);\n                $totalBuySubtotal = bcadd($totalBuySubtotal, bcmul($buyPriceForSum, (string) $Detail->getSplitJoinQuantity(), 2), 2);\n                $totalDestinationQty = bcadd($totalDestinationQty, (string) $Detail->getSplitJoinQuantity(), 0);\n            }\n\n            // 各分割先の配分額を先に計算してスナップショットを保持する（端数調整のため）\n            $allocations = [];\n            $maxNumerator = '-1';\n            $maxNu"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockSplitApprovalApproveAction.php",
+      "start": 170,
+      "end": 173,
+      "fileLines": 265,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                if (bccomp($numerator, $maxNumerator, 2) >= 0) {\n                    $maxNumerator = $numerator;\n                    $maxNumeratorIdx = $idx;\n                }"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockSplitController.php",
+      "start": 295,
+      "end": 300,
+      "fileLines": 740,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $postedIds = array_map('intval', (array) ($request->request->all()['approval_notification_target_members'] ?? []));\n        if ($postedIds === []) {\n            $this->addError('admin.stock.move.approval_notification_target_required', 'admin');\n\n            return $this->redirectToRoute('admin_stock_split_edit', ['id' => $joinId]);\n        }"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockSplitController.php",
+      "start": 327,
+      "end": 331,
+      "fileLines": 740,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $approvalUrl = $this->generateUrl('admin_stock_split_join_list', [], UrlGeneratorInterface::ABSOLUTE_URL);\n        foreach ($postedIds as $approvalMemberId) {\n            $approvalMember = $this->entityManager->getReference(Member::class, $approvalMemberId);\n            $this->mailService->sendStockApprovalAlertMail($approvalMember, $approvalUrl);\n        }"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 2176,
+      "end": 2176,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "6-5.承認申請時、基本情報の更新と、分割先商品の仕入総価格の計算、ステータス変更履歴の更新、承認通知先へのメール送信を行う"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 2183,
+      "end": 2183,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "6-7.分割先商品の仕入総価格（1商品について数量分の仕入価格）を計算し、分割先商品情報に登録する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 5050,
+      "end": 5052,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 分割は、分割先の商品の買取金額比率で按分を行い仕入総価格とする\n* 分割先商品の仕入総価格の合計＝分割元商品の移動総価格とならない場合は\n端数分を最も買取金額（単価）が高い分割先商品に割り当てる（金額が高くなっても安くなっても端数の割り当てを行う）"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockSplitApplyApprovalAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbStockSplitJoinDetail.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockSplitApprovalApproveAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockSplitController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990914,
+      "created": "2026-07-22T01:26:48Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:15+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}

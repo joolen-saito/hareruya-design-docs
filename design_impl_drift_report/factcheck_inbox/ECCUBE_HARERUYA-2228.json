@@ -1,0 +1,285 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2228",
+  "issueId": 43509813,
+  "summary": "【一部実装】イベント管理_イベント申込一覧(検索入力/検索結果)_イベント申込一覧のイベント情報検索モーダルにて、「イベント名、略称」の最大50字の入力制限が実装されていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:43Z",
+  "updated": "2026-07-14T01:19:43Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2228",
+  "basicInfo": {
+    "分類": "イベント管理",
+    "機能": "イベント申込一覧(検索入力/検索結果)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】イベント管理_イベント申込一覧(検索入力/検索結果)_イベント申込一覧のイベント情報検索モーダルにて、「イベント名、略称」の最大50字の入力制限が実装されていない",
+    "設計書": "0214_基本設計仕様書(イベント管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：イベント管理\n機能：イベント申込一覧(検索入力/検索結果)\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】イベント管理_イベント申込一覧(検索入力/検索結果)_イベント申込一覧のイベント情報検索モーダルにて、「イベント名、略称」の最大50字の入力制限が実装されていない\n設計書：0214_基本設計仕様書(イベント管理).xlsx",
+    "期待される挙動": "- イベント情報を検索モーダルの識別ID:1-1「イベント名、略称」は最大50字まで入力でき、部分一致で検索すること。\n- 店舗は単一選択でデフォルト表示の店舗を初期値とし、開催日(From)は3か月前を初期表示すること。\n- オンライン受付ありの日程のみを検索対象とし、1ページに最大10件、イベントID降順→日程ID降順で表示し、「決定」でイベント名・店舗・開始時間From/Toを検索フォームに反映すること。",
+    "現在の挙動": "- SearchEntryEventModalType の event_name は TextType で 'required' => false のみ指定されており Length 制約が無く、テンプレート側でも maxlength 属性を出力していないため、51字以上でも入力できる。\n- 店舗の単一選択（multiple: false）とデフォルト店舗の初期値、開催日(From)の3か月前初期値、From>Toのエラーチェックは実装済みである。\n- オンライン受付ありの日程のみを対象とする絞り込みは DtbEventRepository::getQueryBuilderByEntryRegistrationSearchData の join（ed.entryFlg = true）で実装済みである。\n- 1ページ10件（MODAL_EVENT_SEARCH_PER_PAGE = 10）、イベントID降順（orderBy e.id DESC）、日程ID降順（EntryRegistrationScheduleRowBuilder の usort）、「決定」による検索フォームへの反映（イベント名・開始時間From/To・店舗）もすべて実装済みである。",
+    "補足情報": "▼設計書該当箇所\nM13_event_management_basedesign.md:535 「2025-01-01 イベント名、略称 テキスト - 50 - 部分一致」（イベント情報を検索モーダル 識別ID:1-1）\nM13_event_management_basedesign.md:525-527 「* オンライン受付ありの日程のみ検索対象とする。 / * 1ページに日程を最大10件表示。 / * 表示順はイベントID（降順）→日程ID（降順）」\nM13_event_management_basedesign.md:530 「* 「決定」ボタンで日程を選択するとイベント申込検索フォームの イベント名、店舗、開始時間From・To にデータを反映する。」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/SearchEntryEventModalType.php:37-40 （event_name に constraints の指定が無い）\nsrc/Eccube/Resource/template/admin/Event/Entry/index.twig:499 （form_widget の attr は class と placeholder のみで maxlength 無し）\nsrc/Eccube/Form/Type/Admin/SearchEntryEventModalType.php:41-58 （店舗単一選択・デフォルト店舗・開催日From 3か月前は実装済み）\nsrc/Eccube/Repository/DtbEventRepository.php:151-155 （オンライン受付ありの日程のみを対象とする join）\nsrc/Eccube/Controller/Admin/Event/EntryController.php:61 （MODAL_EVENT_SEARCH_PER_PAGE = 10）\nsrc/Eccube/Service/Admin/Event/EntryRegistrationScheduleRowBuilder.php:57 （日程IDの降順ソート）\nsrc/Eccube/Resource/template/admin/Event/Entry/index.twig:199-213 （決定時の検索フォームへの反映）\n\n▼備考\nモーダルの仕様（単一選択店舗・3か月前初期値・オンライン受付のみ・10件・ID降順→日程降順・決定反映）はいずれも実装済みで、乖離は「イベント名、略称」の最大50字制限のみ。"
+  },
+  "designBook": "0214_基本設計仕様書(イベント管理).xlsx",
+  "feature": "イベント申込一覧(検索入力/検索結果)",
+  "classification": "イベント管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchEntryEventModalType.php",
+      "start": 37,
+      "end": 40,
+      "fileLines": 114,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('event_name', TextType::class, [\n                'label' => 'admin.event.name',\n                'required' => false,\n            ])"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/Entry/index.twig",
+      "start": 499,
+      "end": 499,
+      "fileLines": 557,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                            {{ form_widget(eventModalForm.event_name, { 'attr': { 'class': 'form-control', 'placeholder': 'admin.event.entry.event_name_placeholder'|trans } }) }}"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchEntryEventModalType.php",
+      "start": 41,
+      "end": 58,
+      "fileLines": 114,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('base_info', EntityType::class, [\n                'class' => BaseInfo::class,\n                'label' => 'admin.event.base_info',\n                'required' => false,\n                'multiple' => false,\n                'expanded' => false,\n                'placeholder' => 'common.select__unspecified',\n                'choice_label' => 'shopName',\n                'data' => $options['base_info_default'][0] ?? null,\n                'query_builder' => fn (EntityRepository $er) => $er->createQueryBuilder('b')\n                    ->orderBy('b.id', 'ASC'),\n            ])\n            ->add('start_date_from', DateType::class, [\n                'label' => 'admin.event.start_date_from',\n                'required' => false,\n                'input' => 'datetime',\n                'wid"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbEventRepository.php",
+      "start": 151,
+      "end": 155,
+      "fileLines": 345,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function getQueryBuilderByEntryRegistrationSearchData(array $searchData): QueryBuilder\n    {\n        $qb = $this->createQueryBuilder('e')\n            ->distinct()\n            ->join('e.Details', 'ed', 'WITH', 'ed.entryFlg = true');"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/EntryController.php",
+      "start": 61,
+      "end": 61,
+      "fileLines": 538,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private const MODAL_EVENT_SEARCH_PER_PAGE = 10;"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Event/EntryRegistrationScheduleRowBuilder.php",
+      "start": 57,
+      "end": 57,
+      "fileLines": 122,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            usort($details, fn ($a, $b) => $b->getId() <=> $a->getId());"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/Entry/index.twig",
+      "start": 199,
+      "end": 213,
+      "fileLines": 557,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                    $('#admin_search_event_event_name').val(data.name);\n                    const searchMode = $('#search_form input[name=\"' + searchModeRadioName + '\"]:checked').val();\n                    const isDeckRegistrationSearch = searchMode === 'deck_registration';\n                    $('#admin_search_event_event_detail_id').val(\n                        isDeckRegistrationSearch ? ($btn.attr('data-detail') || '') : ''\n                    );\n                    $('#admin_search_event_start_date_from').val(data.from || '').trigger('change').trigger('input');\n                    $('#admin_search_event_start_date_to').val(data.to || '').trigger('change').trigger('input');\n                    const $baseInfoField = $('#admin_search_event_base_info');\n                    const baseInfoId"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 535,
+      "end": 535,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "2025-01-01 イベント名、略称 テキスト - 50 - 部分一致"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 525,
+      "end": 527,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* オンライン受付ありの日程のみ検索対象とする。\n* 1ページに日程を最大10件表示。\n* 表示順はイベントID（降順）→日程ID（降順）"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 530,
+      "end": 530,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 「決定」ボタンで日程を選択するとイベント申込検索フォームの イベント名、店舗、開始時間From・To にデータを反映する。"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchEntryEventModalType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/Entry/index.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/DtbEventRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/EntryController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Event/EntryRegistrationScheduleRowBuilder.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:49+09:00",
+  "designResolution": {
+    "requested": "0214_基本設計仕様書(イベント管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html",
+    "sheetCount": 22,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "イベント一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "繰返日程追加"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "イベント申込一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "イベント申込一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "イベント申込一括編集"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "デッキ表示"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "CSVダウンロード"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "イベント申込登録(検索入力)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "イベント申込登録(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "イベント新規申込登録"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "イベント一括登録CSV"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "バナー設定"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定"
+      }
+    ]
+  }
+}

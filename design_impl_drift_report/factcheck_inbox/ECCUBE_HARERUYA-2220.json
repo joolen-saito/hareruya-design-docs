@@ -1,0 +1,281 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2220",
+  "issueId": 43509803,
+  "summary": "【一部実装】イベント管理_日程登録_日程登録・日程編集のサーバ側処理に店舗権限のチェックが無く、編集権限のない店舗のイベントにも日程を追加・更新できる",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:39Z",
+  "updated": "2026-07-14T01:19:39Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2220",
+  "basicInfo": {
+    "分類": "イベント管理",
+    "機能": "日程登録",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】イベント管理_日程登録_日程登録・日程編集のサーバ側処理に店舗権限のチェックが無く、編集権限のない店舗のイベントにも日程を追加・更新できる",
+    "設計書": "0214_基本設計仕様書(イベント管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：イベント管理\n機能：日程登録\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】イベント管理_日程登録_日程登録・日程編集のサーバ側処理に店舗権限のチェックが無く、編集権限のない店舗のイベントにも日程を追加・更新できる\n設計書：0214_基本設計仕様書(イベント管理).xlsx",
+    "期待される挙動": "- メンバーが権限を保持している店舗のイベントに対してのみ、日程の追加（登録）および更新が可能であること。\n- 識別ID:3-3「日程追加」・識別ID:3-4「繰返日程追加」は編集権限のある店舗のイベントのみ表示すること。",
+    "現在の挙動": "- ScheduleController::create および ScheduleController::edit には店舗権限のガードが無く、フォーム送信を受け取るとそのまま ScheduleStoreAction / ScheduleUpdateAction を呼び出して保存する。isEditableBaseInfo は画面表示用に計算されるだけで、書き込み処理の前提条件になっていない。\n- ScheduleStoreAction・ScheduleUpdateAction・EventDetailEntityManager にも isEditableShop による権限チェックは無く、Member は登録者情報としてのみ使用されている。\n- そのため編集権限のない店舗のイベントに対して /event/{eventId}/schedule/create へ直接 POST すると、日程が登録できてしまう。\n- 画面側では Event/edit.twig で日程追加・繰返日程追加ボタンを isEditableBaseInfo で出し分け、Schedule/edit.twig でも保存ボタンに disabled を付与しており、UI 上の制御のみ実装されている。なお繰返日程追加（RepeatScheduleController::create）と日程削除（ScheduleController::delete / bulkDelete）にはサーバ側の権限ガードが実装されている。",
+    "補足情報": "▼設計書該当箇所\nM13_event_management_basedesign.md:275 「* メンバーが権限を保持している店舗のイベントのみ日程追加が可能にする」（M13-03 日程登録 ★権限による制御）\nM13_event_management_basedesign.md:206-211 「3-3 日程追加 ボタン …メンバーが権限を保持している店舗のイベントのみ表示 / 3-4 繰返日程追加 ボタン …メンバーが権限を保持している店舗のイベントのみ表示」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Event/ScheduleController.php:47-80 （create。フォーム処理前に isEditableShop のガードが無い）\nsrc/Eccube/Controller/Admin/Event/ScheduleController.php:89-124 （edit。同様にガードが無い）\nsrc/Eccube/Service/Admin/Event/ScheduleStoreAction.php:33-65 （権限チェック無しで保存）\nsrc/Eccube/Controller/Admin/Event/RepeatScheduleController.php:47-53 （比較対象: 繰返日程追加にはサーバ側ガードあり）\nsrc/Eccube/Controller/Admin/Event/ScheduleController.php:132-137 （比較対象: 日程削除にはサーバ側ガードあり）\nsrc/Eccube/Resource/template/admin/Event/edit.twig:489-493 （UI 側は isEditableBaseInfo でボタンを出し分け）\n\n▼備考\n画面側の表示制御は実装済みだが、書き込みパス（日程登録・日程更新）にサーバ側の権限ガードが存在しないため権限バイパスが可能である。同じ ScheduleController 内の delete / bulkDelete と RepeatScheduleController::create には isEditableShop のガードが実装されており、create / edit のみ抜けている。セキュリティ影響のある指摘のため優先度は高い。"
+  },
+  "designBook": "0214_基本設計仕様書(イベント管理).xlsx",
+  "feature": "日程登録",
+  "classification": "イベント管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Event/edit.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "Schedule/edit.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/ScheduleController.php",
+      "start": 47,
+      "end": 80,
+      "fileLines": 211,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function create(Request $request, #[MapEntity(id: 'eventId')] DtbEvent $Event): RedirectResponse|array\n    {\n        $EventDetail = new DtbEventDetail($Event);\n\n        $builder = $this->formFactory->createBuilder(ScheduleType::class, $EventDetail, ['event' => $Event, 'is_new' => true]);\n        $form = $builder->getForm();\n        $form->handleRequest($request);\n\n        if ($form->isSubmitted() && $form->isValid()) {\n            /** @var DtbEventDetail $FormEventDetail */\n            $FormEventDetail = $form->getData();\n            $input = new ScheduleStoreInput($Event, $FormEventDetail, $this->getMember());\n\n            try {\n                $EventDetail = $this->scheduleStoreAction->handle($input);\n                $this->addSuccess('admin.common.save_complete', 'admin');\n\n "
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/ScheduleController.php",
+      "start": 89,
+      "end": 124,
+      "fileLines": 211,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function edit(Request $request, #[MapEntity(id: 'eventId')] DtbEvent $Event, #[MapEntity(id: 'eventDetailId')] DtbEventDetail $EventDetail): RedirectResponse|array\n    {\n        if ($EventDetail->getEvent()->getId() !== $Event->getId()) {\n            $this->addError('admin.common.error_invalid_request', 'admin');\n\n            return $this->redirectToRoute('admin_event_edit', ['id' => $Event->getId()]);\n        }\n\n        $builder = $this->formFactory->createBuilder(ScheduleType::class, $EventDetail, ['event' => $Event, 'is_new' => false]);\n        $form = $builder->getForm();\n        $form->handleRequest($request);\n\n        if ($form->isSubmitted() && $form->isValid()) {\n            /** @var DtbEventDetail $EventDetail */\n            $EventDetail = $form->getData();\n            "
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Event/ScheduleStoreAction.php",
+      "start": 33,
+      "end": 65,
+      "fileLines": 66,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function handle(ScheduleStoreInput $input): DtbEventDetail\n    {\n        $EventDetail = $input->EventDetail;\n\n        $EventDetail = $this->eventDetailEntityManager->save(\n            EventDetail: null,\n            Event: $input->Event,\n            startDate: $EventDetail->getStartDate(),\n            endDate: $EventDetail->getEndDate(),\n            Disp: $EventDetail->getDisp(),\n            Member: $input->Member,\n            deadlineFlg: $EventDetail->getDeadlineFlg(),\n            deckRegistFlg: $EventDetail->getDeckRegistFlg(),\n            entryFlg: $EventDetail->getEntryFlg(),\n            holidayFlg: $this->mtbHolidayRepository->isHoliday($EventDetail->getStartDate()),\n            entryStartDate: $EventDetail->getEntryStartDate(),\n            entryEndDate: $EventDetail->getEn"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/RepeatScheduleController.php",
+      "start": 47,
+      "end": 53,
+      "fileLines": 79,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $Member = $this->getMember();\n        $isEditableBaseInfo = $Event->getBaseInfo() !== null && $Member->isEditableShop($Event->getBaseInfo());\n        if (!$isEditableBaseInfo) {\n            $this->addError('admin.common.error_invalid_request', 'admin');\n\n            return $this->redirectToRoute('admin_repeat_schedule_create', ['eventId' => $Event->getId()]);\n        }"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/ScheduleController.php",
+      "start": 132,
+      "end": 137,
+      "fileLines": 211,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $isEditableShop = $this->getMember()->isEditableShop($Event->getBaseInfo());\n        if (!$isEditableShop) {\n            $this->addError('admin.common.error_invalid_request', 'admin');\n\n            return $this->redirectToRoute('admin_event_edit', ['id' => $Event->getId()]);\n        }"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/edit.twig",
+      "start": 489,
+      "end": 493,
+      "fileLines": 592,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                            {% if isEditableBaseInfo %}\n                            <div class=\"col-auto d-flex flex-wrap gap-2\">\n                                {% if not isNew %}\n                                <a class=\"btn btn-ec-conversion px-4\" href=\"{{ url('admin_schedule_create', {eventId: Event.id}) }}\">{{ 'admin.event.schedule.add'|trans }}</a>\n                                <a class=\"btn btn-ec-conversion px-4\" href=\"{{ url('admin_repeat_schedule_create', {eventId: Event.id}) }}\">{{ 'admin.event.repeat_schedule'|trans }}</a>"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 275,
+      "end": 275,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* メンバーが権限を保持している店舗のイベントのみ日程追加が可能にする"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 206,
+      "end": 211,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "3-3 日程追加 ボタン - - - 日程追加画面へ遷移\n登録時は非表示\nメンバーが権限を保持している店舗のイベントのみ表示\n3-4 繰返日程追加 ボタン - - - 繰返日程追加画面へ遷移\n登録時は非表示\nメンバーが権限を保持している店舗のイベントのみ表示"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Admin/Event/ScheduleController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Event/ScheduleStoreAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/RepeatScheduleController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/edit.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:47+09:00",
+  "designResolution": {
+    "requested": "0214_基本設計仕様書(イベント管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html",
+    "sheetCount": 22,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "イベント一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "繰返日程追加"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "イベント申込一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "イベント申込一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "イベント申込一括編集"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "デッキ表示"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "CSVダウンロード"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "イベント申込登録(検索入力)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "イベント申込登録(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "イベント新規申込登録"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "イベント一括登録CSV"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "バナー設定"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定"
+      }
+    ]
+  }
+}

@@ -1,0 +1,263 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2236",
+  "issueId": 43509822,
+  "summary": "【実装乖離】イベント管理_画像設定_画像設定のS3アップロード先フォルダが、設計書の /banner/{店舗識別子} ではなく banner/event/{店舗識別子} になっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:47Z",
+  "updated": "2026-07-14T01:19:47Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2236",
+  "basicInfo": {
+    "分類": "イベント管理",
+    "機能": "画像設定",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】イベント管理_画像設定_画像設定のS3アップロード先フォルダが、設計書の /banner/{店舗識別子} ではなく banner/event/{店舗識別子} になっている",
+    "設計書": "0214_基本設計仕様書(イベント管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：イベント管理\n機能：画像設定\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_画像設定_画像設定のS3アップロード先フォルダが、設計書の /banner/{店舗識別子} ではなく banner/event/{店舗識別子} になっている\n設計書：0214_基本設計仕様書(イベント管理).xlsx",
+    "期待される挙動": "- 画像設定でアップロードするイベントバナー画像の保存先は /banner/{選択店舗の識別子（tc など）} のフォルダであること。\n- イベントバナーの参照先・アップロード先は、TOPバナー用フォルダとは別のイベントバナー用フォルダであること。",
+    "現在の挙動": "- EventBannerStorageService の S3 プレフィックスは 'banner/event/' と定義されており、アップロード先ディレクトリは banner/event/{BaseInfo.htmlClassName}/ となる（設計書の /banner/{店舗識別子} に対し event/ が1階層余分）。\n- ファイル一覧の取得（loadSortedFileList / resolveListPrefix）、削除キーの検証（normalizeObjectKey / isObjectKeyUnderNarrowShop）もすべて同じ banner/event/ プレフィックスを前提としており、参照先とアップロード先は一貫している。\n- S3AccessService::putFile はセットされたディレクトリ文字列をそのままキーの先頭に付与するため、実際の S3 オブジェクトキーは banner/event/{店舗識別子}/{ファイル名} となる。\n- TOPバナーの保存先は 'banner/top/'（TopBannerUploadAction 等）であり、イベントバナー用フォルダと分離されているという要件自体は満たされている。",
+    "補足情報": "▼設計書該当箇所\nM13_event_management_basedesign.md:1174 「* アップロード先は /banner/{選択店舗の識別子（tc など）} のフォルダ」\nM13_event_management_basedesign.md:1171 「* S3のイベントバナー画像参照先、アップロード先をイベントバナー用フォルダに変更する（TOPバナー用フォルダとは別）」\nM13_event_management_basedesign.md:1159 「* S3のイベントバナー画像参照先を、イベントバナー用フォルダに変更する」\n\n▼実装該当箇所\nsrc/Eccube/Service/Admin/Event/EventBannerStorageService.php:26 （private const S3_BANNER_PREFIX = 'banner/event/';）\nsrc/Eccube/Service/Admin/Event/EventBannerStorageService.php:92 （アップロード先は S3_BANNER_PREFIX + htmlClassName + '/'）\nsrc/Eccube/Service/Admin/Event/EventBannerStorageService.php:128-146 （一覧・削除も同一プレフィックスを前提）\nsrc/Eccube/Service/S3AccessService.php:49-52 （setS3Directory の値をキーの先頭に付与）\nsrc/Eccube/Service/Admin/Data/TopBannerUploadAction.php:25 （TOPバナーは 'banner/top'）\n\n▼備考\n「TOPバナー用フォルダ（banner/top/）とは別のイベントバナー用フォルダに保存する」「店舗識別子ごとのフォルダに分ける」という要件は満たされており、参照・アップロード・削除で同一プレフィックスを使うため機能的な不具合は生じない。乖離は設計書が明記するパス /banner/{店舗識別子} に対して event/ が1階層挟まる点のみであり、設計書の記載が実装より後に整理されていない可能性もあるため confidence は medium とした。運用上は既存 S3 オブジェクトの配置とも関わるため、設計書側の追記で解消するのが妥当と考えられる。"
+  },
+  "designBook": "0214_基本設計仕様書(イベント管理).xlsx",
+  "feature": "画像設定",
+  "classification": "イベント管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Service/Admin/Event/EventBannerStorageService.php",
+      "start": 26,
+      "end": 26,
+      "fileLines": 243,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private const S3_BANNER_PREFIX = 'banner/event/';"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Event/EventBannerStorageService.php",
+      "start": 92,
+      "end": 92,
+      "fileLines": 243,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            $uploadDirectory = self::S3_BANNER_PREFIX.$BaseInfo->getHtmlClassName().'/';"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Event/EventBannerStorageService.php",
+      "start": 128,
+      "end": 146,
+      "fileLines": 243,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        if (!str_starts_with($selectFile, self::S3_BANNER_PREFIX)) {\n            return null;\n        }\n\n        return $selectFile;\n    }\n\n    /**\n     * 店舗ナロー時、キーが当該店舗のバナー prefix 配下か。\n     */\n    public function isObjectKeyUnderNarrowShop(?BaseInfo $narrowBaseInfo, string $key): bool\n    {\n        if ($narrowBaseInfo === null) {\n            return true;\n        }\n\n        $expectedPrefix = self::S3_BANNER_PREFIX.$narrowBaseInfo->getHtmlClassName().'/';\n\n        return str_starts_with($key, $expectedPrefix);"
+    },
+    {
+      "path": "src/Eccube/Service/S3AccessService.php",
+      "start": 49,
+      "end": 52,
+      "fileLines": 211,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function putFile(array $fileInfo, string $suffix = ''): string\n    {\n        do {\n            $fileName = $this->s3Directory.uniqid().rand(100, 999).$suffix.'.'.strtolower($fileInfo['extension']);"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Data/TopBannerUploadAction.php",
+      "start": 25,
+      "end": 25,
+      "fileLines": 83,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private const TOP_BANNER_S3_DIRECTORY = 'banner/top';"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 1174,
+      "end": 1174,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* アップロード先は /banner/{選択店舗の識別子（tc など）} のフォルダ"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 1171,
+      "end": 1171,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* S3のイベントバナー画像参照先、アップロード先をイベントバナー用フォルダに変更する（TOPバナー用フォルダとは別）"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 1159,
+      "end": 1159,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* S3のイベントバナー画像参照先を、イベントバナー用フォルダに変更する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Service/Admin/Event/EventBannerStorageService.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/S3AccessService.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Data/TopBannerUploadAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:51+09:00",
+  "designResolution": {
+    "requested": "0214_基本設計仕様書(イベント管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html",
+    "sheetCount": 22,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "イベント一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "繰返日程追加"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "イベント申込一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "イベント申込一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "イベント申込一括編集"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "デッキ表示"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "CSVダウンロード"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "イベント申込登録(検索入力)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "イベント申込登録(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "イベント新規申込登録"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "イベント一括登録CSV"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "バナー設定"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定"
+      }
+    ]
+  }
+}

@@ -1,0 +1,201 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2189",
+  "issueId": 43509768,
+  "summary": "【実装乖離】基本情報設定_追加システム設定_追加システム設定画面にて、「入荷通知メールの許可」が設計書の自由入力（全角・半角）・任意ではなく、必須の2択セレクトボックスで実装されている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:22Z",
+  "updated": "2026-07-14T01:19:22Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2189",
+  "basicInfo": {
+    "分類": "基本情報設定",
+    "機能": "追加システム設定",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】基本情報設定_追加システム設定_追加システム設定画面にて、「入荷通知メールの許可」が設計書の自由入力（全角・半角）・任意ではなく、必須の2択セレクトボックスで実装されている",
+    "設計書": "0209_基本設計仕様書(基本情報設定).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：基本情報設定\n機能：追加システム設定\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_追加システム設定_追加システム設定画面にて、「入荷通知メールの許可」が設計書の自由入力（全角・半角）・任意ではなく、必須の2択セレクトボックスで実装されている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx",
+    "期待される挙動": "- 追加システム設定画面（M10-16）の識別ID:9「入荷通知メールの許可」は、書式が全角・半角（自由入力）であること。\n- 必須項目ではない（任意入力）こと。",
+    "現在の挙動": "- AdditionalSystemFormType では Option::SEND_NOTIFICATION_ARRIVAL_MAIL が ChoiceType で定義され、選択肢は「送る」(=1) と「送らない」(=0) の2択セレクトボックスとなっている。自由入力ではない。\n- 'required' => true かつ Assert\\NotBlank が付与されており、設計の「必須:-（任意）」と異なる（ただし ChoiceType に placeholder が無いため常に値が選択され、実運用上は未入力にできない）。\n- 画面テンプレート additional_system.twig にはラベル「入荷通知メールの許可」と当該ウィジェットが描画されており、項目自体は存在し設定・保存も可能である。\n- 自由入力または任意入力へ補正する実装（別フォーム／Controller／EventListener／CSS/JS）は存在しない。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:543（「9 入荷通知メールの許可 全角・半角 - 変更なし - -」＝書式は全角・半角、必須は「-」）\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:521-522（処理概要／現行の追加システム設定をベースにする）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:116-125（SEND_NOTIFICATION_ARRIVAL_MAIL を ChoiceType、required=true、NotBlank、choices は common.send / common.not_send の2択で定義）\nsrc/Eccube/Entity/Master/MtbOption.php:76-78（SEND_NOTIFICATION_ARRIVAL_MAIL / SEND=1 / NOT_SEND=0）\nsrc/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:121-128（ラベルとウィジェットの描画）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\n両者とも実装事実は一致している（src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:116-125 の ChoiceType＋required=true＋NotBlank）。割れたのは設計書の「書式:全角・半角／必須:-」という記載を要件として扱うかどうかの評価軸だけである。\nClaude は「入荷通知メールの送信可否フラグという項目性質から見て設計書側の記載（全角・半角）であり、選択式実装は乖離ではない」として FALSE_POSITIVE と判断した。しかしこれは設計書の記載を実装に合わせて読み替えるものであり、.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:543 の書式・必須の2列がいずれも実装と食い違うという事実自体は否定できない。\ncodex は同:543 をそのまま要件として突き合わせ、書式（自由入力 vs 2択セレクト）と必須（任意 vs 必須）の両方で相違があるとして FACT とした。本監査は設計書の項目表を突き合わせ基準としており、他項目（例: :535 の「数値（整数）, 0以上」など）も同基準で判定しているため、codex の扱いが一貫する。\nなお NotBlank は値 0（送らない）を違反としない（NotBlankValidator の empty($value) && '0' != $value 判定により 0 は通過する）ため、Claude の「送らない設定も保存可能」という指摘自体は正しく、機能不全はない。実害は小さいため、起票時は「設計書の書式・必須欄の記載が正しいか（選択式が正なら設計書修正）」の確認を含めること。"
+  },
+  "designBook": "0209_基本設計仕様書(基本情報設定).xlsx",
+  "feature": "追加システム設定",
+  "classification": "基本情報設定",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 543,
+      "end": 543,
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "9 入荷通知メールの許可 全角・半角 - 変更なし - - 2025/12/08 田所"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 521,
+      "end": 522,
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "### 処理概要\n現行の追加システム設定をベースにする"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php",
+      "start": 116,
+      "end": 125,
+      "fileLines": 254,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add(Option::SEND_NOTIFICATION_ARRIVAL_MAIL, ChoiceType::class, [\n                'required' => true,\n                'constraints' => [\n                    new NotBlank(),\n                ],\n                'choices' => [\n                    'common.send' => Option::SEND_NOTIFICATION_ARRIVAL_MAIL_SEND,\n                    'common.not_send' => Option::SEND_NOTIFICATION_ARRIVAL_MAIL_NOT_SEND,\n                ],\n            ])"
+    },
+    {
+      "path": "src/Eccube/Entity/Master/MtbOption.php",
+      "start": 76,
+      "end": 78,
+      "fileLines": 196,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public const SEND_NOTIFICATION_ARRIVAL_MAIL = 'send_notification_arrival_mail';\n    public const SEND_NOTIFICATION_ARRIVAL_MAIL_SEND = 1;\n    public const SEND_NOTIFICATION_ARRIVAL_MAIL_NOT_SEND = 0;"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig",
+      "start": 121,
+      "end": 128,
+      "fileLines": 281,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                </div>\n                                <div class=\"col-3\">\n                                    {{ form_widget(form.send_notification_arrival_mail) }}\n                                    {{ form_errors(form.send_notification_arrival_mail) }}\n                                </div>\n                            </div>\n                            <div class=\"row mb-2\">\n                                <div class=\"col-3\">"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/Master/MtbOption.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:40+09:00",
+  "designResolution": {
+    "requested": "0209_基本設計仕様書(基本情報設定).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html",
+    "sheetCount": 14,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-14",
+        "title": "追加システム設定",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "基本設定(旧ショップマスター)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "特定商取引に関する法律"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "利用規約管理"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "支払い方法　手数料設定"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "配送方法設定"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "税率設定"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "自動送信メール"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "メール設定"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "カスタムCSV出力設定"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "店舗登録"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "追加システム設定"
+      }
+    ]
+  }
+}

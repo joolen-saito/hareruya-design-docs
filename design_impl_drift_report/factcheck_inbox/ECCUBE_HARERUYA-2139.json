@@ -1,0 +1,217 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2139",
+  "issueId": 43509699,
+  "summary": "【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)にて、設計で任意項目とされている「住所」（郵便番号・都道府県・住所1・住所2）が必須入力になっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:59Z",
+  "updated": "2026-07-14T01:18:59Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2139",
+  "basicInfo": {
+    "分類": "基本情報設定",
+    "機能": "基本設定(旧ショップマスター)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)にて、設計で任意項目とされている「住所」（郵便番号・都道府県・住所1・住所2）が必須入力になっている",
+    "設計書": "0209_基本設計仕様書(基本情報設定).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：基本情報設定\n機能：基本設定(旧ショップマスター)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)にて、設計で任意項目とされている「住所」（郵便番号・都道府県・住所1・住所2）が必須入力になっている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx",
+    "期待される挙動": "- 基本設定(旧ショップマスター)画面の識別ID 1-6「住所」は、書式が全角・半角で、必須欄が「-」（＝任意入力）である。\n- 郵便番号・都道府県・住所を未入力のままでも基本設定を登録できる。",
+    "現在の挙動": "- ShopMasterType では postal_code（PostalType）と address（AddressType）がいずれも 'required' => true で定義されている。\n- PostalType は required=true のとき NotBlank 制約を自動付与するため、郵便番号が未入力だとバリデーションエラーになる。\n- AddressType も required=true のとき addr01・addr02 に NotBlank 制約を自動付与するため、住所が未入力だとバリデーションエラーになる。\n- shop_master.twig でも「住所」の見出しに必須バッジが表示されており、画面上も必須項目として扱われている。",
+    "補足情報": "▼設計書該当箇所\nM10_base_info_setting_basedesign.md:40 の逐語引用: 「1-6 住所 全角・半角 - - - -」（必須列が「-」＝任意）\nM10_base_info_setting_basedesign.md:21-23 の逐語引用: 「* カスタマイズ要件\\nなし\\n* カスタマイズ要件に記載の内容以外は現行踏襲とする。」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/ShopMasterType.php:88-97 （postal_code / address をいずれも required=true で追加）\nsrc/Eccube/Form/Type/PostalType.php:57-59 （required=true のとき NotBlank を追加）\nsrc/Eccube/Form/Type/AddressType.php:50-60 （required=true のとき addr01/addr02 に NotBlank を追加）\nsrc/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:88-89 （住所の見出しに必須バッジを表示）\n\n▼備考\nEC-CUBE標準の ShopMasterType では postal_code / address は required=false（任意）であり、設計書の必須列「-」と一致する。本フォークで required=true に変更されている点が乖離。"
+  },
+  "designBook": "0209_基本設計仕様書(基本情報設定).xlsx",
+  "feature": "基本設定(旧ショップマスター)",
+  "classification": "基本情報設定",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/ShopMasterType.php",
+      "start": 88,
+      "end": 97,
+      "fileLines": 267,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('postal_code', PostalType::class, [\n                'required' => false,\n            ])\n            ->add('address', AddressType::class, [\n                'required' => false,\n            ])\n            ->add('phone_number', PhoneNumberType::class, [\n                'required' => false,\n            ])\n            ->add('business_hour', TextType::class, ["
+    },
+    {
+      "path": "src/Eccube/Form/Type/PostalType.php",
+      "start": 57,
+      "end": 59,
+      "fileLines": 101,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $resolver->setNormalizer('constraints', function($options, $value) {\n            $constraints = [];\n            // requiredがtrueに指定されている場合, NotBlankを追加"
+    },
+    {
+      "path": "src/Eccube/Form/Type/AddressType.php",
+      "start": 50,
+      "end": 60,
+      "fileLines": 134,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $options['pref_options']['required'] = $options['required'];\n        $options['addr01_options']['required'] = $options['required'];\n        $options['addr02_options']['required'] = $options['required'];\n\n        // required の場合は NotBlank も追加する\n        if ($options['required']) {\n            $options['pref_options']['constraints'] = array_merge([\n                new Assert\\NotBlank([]),\n            ], $options['pref_options']['constraints']);\n\n            $options['addr01_options']['constraints'] = array_merge(["
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig",
+      "start": 88,
+      "end": 89,
+      "fileLines": 371,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                            </div>\n                                        </div>"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 40,
+      "end": 40,
+      "resolvedFrom": "M10_base_info_setting_basedesign.md",
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "1-6 住所 全角・半角 - - - -"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 21,
+      "end": 23,
+      "resolvedFrom": "M10_base_info_setting_basedesign.md",
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* カスタマイズ要件\nなし\n* カスタマイズ要件に記載の内容以外は現行踏襲とする。"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/ShopMasterType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/PostalType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/AddressType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:30+09:00",
+  "designResolution": {
+    "requested": "0209_基本設計仕様書(基本情報設定).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html",
+    "sheetCount": 14,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "基本設定(旧ショップマスター)",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "基本設定(旧ショップマスター)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "特定商取引に関する法律"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "利用規約管理"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "支払い方法　手数料設定"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "配送方法設定"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "税率設定"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "自動送信メール"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "メール設定"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "カスタムCSV出力設定"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "店舗登録"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "追加システム設定"
+      }
+    ]
+  }
+}

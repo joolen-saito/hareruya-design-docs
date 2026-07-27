@@ -44,9 +44,10 @@ export class FrontShoppingCompletePage {
     this.errorArea = page.locator(".ec-alert-warning, .alert, .error, [class*='error'], [class*='alert']");
   }
 
-  async gotoComplete() {
-    await this.page.goto(this.completeUrl);
-  }
+  // 購入完了画面は到達クラス transition-only（e2e/config/screen-reachability.tsv・
+  // 根拠 functions/pf-eccube3/f04-04_front_cart_shopping_complete.md:68,70,247,248）。
+  // 直接開く到達メソッドは置かない。正規到達は spec 側で reachVia()、
+  // 直アクセスそのものが観点のときは directAccess(page, completeUrl, 理由) を使う。
 
   /** 完了状態が無い直接アクセスはトップへ戻る（受注IDなし）。期待は処理フロー/画面遷移由来。 */
   async seeRedirectedToTop() {

@@ -170,12 +170,12 @@
 
 | メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
 |--------------|----------|--------------|----------|----------|----------|
-| F04-02-MSG-001 | 画面上部 | 購入処理で予期しないエラーが発生しました。恐れ入りますがお問い合わせページよりご連絡ください。 | Sorry, we have faced an unexpected error during the checkout process. Please contact us from the inquiry form. We are sorry for the inconvenience. | 注文を確定するときに、予期しない問題が起きたとき | 購入エラー画面に遷移する |
-| F04-02-MSG-002 | 画面上部 | 購入処理でエラーが発生しました。 | An error occurred during the checkout process. | プレオーダーの注文手続きで、購入処理中の注文情報を取得できないとき | 購入エラー画面に遷移する |
+| F04-02-MSG-001 | 購入エラー画面本文 | 購入処理で予期しないエラーが発生しました。恐れ入りますがお問い合わせページよりご連絡ください。 | Sorry, we have faced an unexpected error during the checkout process. Please contact us from the inquiry form. We are sorry for the inconvenience. | 注文を確定するときに、予期しない問題が起きたとき | 購入エラー画面に遷移する |
+| F04-02-MSG-002 | 本文中 | 購入処理でエラーが発生しました。 | An error occurred during the checkout process. | プレオーダーの注文手続きで、購入処理中の注文情報を取得できないとき | 購入エラー画面に遷移する |
 | F04-02-MSG-003 | 入力項目直下 | 数字で入力してください。 | Entry must be numbers. | ログインしてポイントを利用する注文で、使用ポイントに数字以外を入力して送信したとき | ご注文方法指定画面に留まる |
 | F04-02-MSG-004 | 画面上部 | お届け先を指定してください | Please select a delivery address. | お届け先を選択せずに送信したとき | 配送先は変更されず、同じお届け先選択画面に留まる。 |
 
-MSG-001/002/004 は決済モジュールや例外が返す文字列をそのまま表示するため、固定リテラルが実ソースに存在せず `要ソース確認`。MSG-003 はキー `front.shopping.system_error`（`messages.ja.yaml:1557`）の逐語値。
+MSG-001〜004 はいずれもロケールキー解決による逐語文言。MSG-001＝`front.shopping.system_error`（`messages.ja.yaml:1557`／`ShoppingController.php:553`）、MSG-002＝`front.shopping.order_error`（`messages.ja.yaml:1556`／`NonMemberShoppingController.php:145`）、MSG-003＝`form_error.numeric_only`（`validators.ja.yaml:37`／`OrderType.php:126` の `Regex` 制約）、MSG-004＝`front.shopping.shipping_unselected`（`messages.ja.yaml:1530`／`Shopping/shipping.twig:39-46`）。決済モジュールや例外が返す可変文字列は単一の逐語文言に確定できないため本表に収録しない（除外分は `message_inventory/unconfirmed_messages.tsv` に監査用として退避済み）。
 
 ---
 

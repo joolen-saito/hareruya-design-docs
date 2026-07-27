@@ -144,11 +144,11 @@ ec-cube-enterprise は英語ロケール資源（`messages.en.yaml`／`validator
 
 | メッセージID | 表示文言（日本語） | 画面上の文言(英語) | 表示文言（英語） | 表示条件（利用者視点） | 表示位置 | 備考 | 後続処理 |
 | --- | -------------------- |----------| ------------------ | ------------------------ | ---------- | ------ |----------|
-| M10-12-MSG-001 | 保存しました | Saved | Saved | 定休日を新規登録して保存したとき | 管理画面上部 | ロケールキー `admin.common.save_complete`（`CalendarController.php:71`）。 | 管理画面ホームに遷移する |
-| M10-12-MSG-002 | 保存しました | Saved | Saved | 登録済みの定休日を編集して保存したとき | 管理画面上部 | ロケールキー `admin.common.save_complete`（`CalendarController.php:105`）。 | 管理画面ホームに遷移する |
-| M10-12-MSG-003 | 削除しました | Deleted | Deleted | 定休日を削除したとき | 管理画面上部 | ロケールキー `admin.common.delete_complete`（`CalendarController.php:137`）。 | カレンダーを削除し、成功結果を返す |
+| M10-12-MSG-001 | 保存しました | （英訳なし） | （英訳なし） | 定休日を新規登録して保存したとき | 管理画面上部 | ロケールキー `admin.common.save_complete`（`CalendarController.php:71`）。 | 管理画面ホームに遷移する |
+| M10-12-MSG-002 | 保存しました | （英訳なし） | （英訳なし） | 登録済みの定休日を編集して保存したとき | 管理画面上部 | ロケールキー `admin.common.save_complete`（`CalendarController.php:105`）。 | 管理画面ホームに遷移する |
+| M10-12-MSG-003 | 削除しました | （英訳なし） | （英訳なし） | 定休日を削除したとき | 表示なし（JSON応答） | ロケールキー `admin.common.delete_complete`（`CalendarController.php:137`）。 | カレンダーを削除し、JSON {"success":true} を返す |
 | — | 同日の定休日が既に存在しているため、設定できません。 | — | Date is already existed. | 同一店舗・同一日付の別行が既に存在する状態で送信した | 日付入力欄下のエラー表示 | ロケールキー `admin.setting.shop.calendar.holiday.available_error`。 | — |
-| M10-12-MSG-004 | 同日の定休日が既に存在しているため、設定できません。 | Date is already existed. | Date is already existed. | 定休日の登録・編集で、同じ店舗の同じ日付がすでに登録されているとき | 入力項目直下/フォーム上部 |  | 定休日カレンダー設定画面に留まる |
+| M10-12-MSG-004 | 同日の定休日が既に存在しているため、設定できません。 | （英訳なし） | （英訳なし） | 定休日の登録で、同じ店舗の同じ日付がすでに登録されているとき | 入力項目直下/フォーム上部 |  | 定休日カレンダー設定画面に留まる |
 
 ---
 

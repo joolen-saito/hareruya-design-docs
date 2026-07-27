@@ -8,7 +8,7 @@
  * test.fixme（理由付き）で保留し、全量はケース表（付帯表）で管理する。
  * live は空カート状態（フレッシュな context = 商品未投入）で観測できる非破壊ケースのみ。
  */
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../../../fixtures/reachability.fixture";
 import { FrontCartPage } from "../../../pages/front/f04/f04_01_front_cart_cart_index.page";
 
 test.describe("フロント > 買い物かご > カート", { tag: ["@front", "@cart"] }, () => {

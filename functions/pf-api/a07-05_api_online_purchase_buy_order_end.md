@@ -103,7 +103,7 @@
 
 | メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
 |---|---|---|---|---|---|
-| A07-05-MSG-001 | 要ソース確認 | 買取情報が見つかりません | （英訳なし） | PUT /{eccube_api_v1_route}/admin/buyOrder/{id}.json で指定IDのDtbBuyOrderが存在しない | APIはエラーJSONを返して終了 |
+| A07-05-MSG-001 | API応答JSON（errors配列） | 買取情報が見つかりません | （英訳なし） | PUT /{eccube_api_v1_route}/admin/buyOrder/{id}.json で指定IDのDtbBuyOrderが存在しない | APIはエラーJSONを返して終了 |
 
 ## 業務ルール・計算
 

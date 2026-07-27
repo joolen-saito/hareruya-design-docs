@@ -1,0 +1,311 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2078",
+  "issueId": 43509622,
+  "summary": "【一部実装】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_手動メール通知(確認画面)のメール一括送信にて、送信失敗時のメッセージ表示が実装されていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:28Z",
+  "updated": "2026-07-25T11:02:45Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2078",
+  "basicInfo": {
+    "分類": "受注管理",
+    "機能": "メール一括送信 / 【新規】手動メール通知(確認画面)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_手動メール通知(確認画面)のメール一括送信にて、送信失敗時のメッセージ表示が実装されていない",
+    "設計書": "0203_基本設計仕様書(受注管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：受注管理\n機能：メール一括送信 / 【新規】手動メール通知(確認画面)\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_手動メール通知(確認画面)のメール一括送信にて、送信失敗時のメッセージ表示が実装されていない\n設計書：0203_基本設計仕様書(受注管理機能).xlsx",
+    "期待される挙動": "- 手動メール通知(確認画面)で送信ボタンを押下すると確認ダイアログを表示し、OKなら送信を実行すること。\n- 送信の成功／失敗に応じて、当該画面に対応するメッセージを表示すること（失敗時は失敗した旨のメッセージを表示すること）。",
+    "現在の挙動": "- 確認ダイアログは manual_mail.js の #send_mail クリックハンドラで confirm() により実装済み。\n- 送信成功時は MailController::manualMailAll() の complete モードで addSuccess('admin.order.mail_send_complete') により成功メッセージが表示される。\n- 一方、失敗時のメッセージ表示処理が存在しない。complete モードでフォームが不正、またはメールテンプレートが取得できない場合は switch を break して manual_mail_all.twig（入力画面）を再描画するだけで、addError 等の失敗メッセージを一切出さない（利用者には何が起きたか分からない）。\n- MailService::sendManualMailForBulk() の $this->mailer->send() は try/catch されておらず、送信例外は捕捉されない。SMTP障害等では共通の ExceptionListener による「システムエラーが発生しました」の500エラー画面となり、当該画面上の失敗メッセージにはならない。また複数件をループ送信しているため、途中で例外が発生すると何件目まで送信済みかが利用者に伝わらない。\n- 同じ MailController 内では addError による失敗メッセージが他の箇所（テンプレート未取得時・配送ID不正時）で使われており、一括送信の失敗系だけが欠落している。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M05_order_management_basedesign.md:769 （M05-06 【新規】手動メール通知(確認画面)「送信ボタンを押下すると確認のダイアログを表示し、OKなら送信を実行する。」）\n.cursor/docs/MDfile/M05_order_management_basedesign.md:770 （同「成功/失敗に応じてメッセージを表示する」）\n.cursor/docs/MDfile/M05_order_management_basedesign.md:778-780 （画面部品 識別ID:7「送信」ボタン）\n\n▼実装該当箇所\nhtml/template/admin/assets/js/manual_mail.js:3-7 （#send_mail の confirm() ダイアログ。実装済み）\nsrc/Eccube/Resource/template/admin/Order/manual_mail_all_confirm.twig:161-168 （送信ボタン id=\"send_mail\" / name=\"mode\" value=\"complete\"）\nsrc/Eccube/Controller/Admin/Order/MailController.php:389-402 （complete モード。送信ループ後に addSuccess のみ。フォーム不正・テンプレート未取得時は break して入力画面を再描画するだけで addError が無い）\nsrc/Eccube/Controller/Admin/Order/MailController.php:200,319-323 （比較対象。同一コントローラ内の他の失敗系では addError を使用している）\nsrc/Eccube/Service/MailService.php:2092-2110 （sendManualMailForBulk。mailer->send() に try/catch が無く例外を捕捉しない）\nsrc/Eccube/EventListener/ExceptionListener.php:36-40 （例外時は共通の「システムエラーが発生しました」500画面を返す）\n\n▼AIレビューで判定が割れた理由\nClaude は「乖離あり」、codex は「実装済み」と判定し、第三者による再検証で Claude の判定を採用した。\ncodex は ExceptionListener.php:36 の共通エラー画面をもって「失敗時もメッセージは表示される」と読み、誤検知と判定した。しかし ExceptionListener は全機能共通の500エラー画面であり、「成功/失敗に応じてメッセージを表示する」（M05_order_management_basedesign.md:770）という当該画面の要件を満たすものではない。設計は成功時と対になる失敗メッセージを求めている。\nさらに codex は失敗経路を mailer の例外だけに限定して評価している。MailController.php:389-402 の complete モードは、フォームが不正またはテンプレートが取得できない場合には例外を投げずに break し、manual_mail_all.twig を無言で再描画する。この経路では ExceptionListener すら通らず、利用者には成功・失敗のいずれのメッセージも表示されない。\nClaude は MailController.php:391-402 に addError が無いこと、MailService.php:2092-2110 に try/catch が無いことを正しく指摘しており、FACT 判定が正しい。加えて同一コントローラの MailController.php:200,319-323 では失敗時に addError を用いており、一括送信の失敗系のみ実装が欠落していることが確認できる。\n確認ダイアログ（manual_mail.js:3-7）と成功メッセージ（MailController.php:398）は実装済みであるため、category は「一部実装」とする。対応としては complete モードの送信ループを try/catch し、失敗時に addError を登録すること（および途中失敗時の送信済み件数の提示）が必要。"
+  },
+  "designBook": "0203_基本設計仕様書(受注管理機能).xlsx",
+  "feature": "メール一括送信 / 【新規】手動メール通知(確認画面)",
+  "classification": "受注管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "start": 769,
+      "end": 769,
+      "fileLines": 2167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 送信ボタンを押下すると確認のダイアログを表示し、OKなら送信を実行する。"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "start": 770,
+      "end": 770,
+      "fileLines": 2167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 成功/失敗に応じてメッセージを表示する"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "start": 778,
+      "end": 780,
+      "fileLines": 2167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 6 | 手動メール通知画面に戻る | リンク | - | - | - |\n| 7 | 送信 | ボタン | - | - | - |\n"
+    },
+    {
+      "path": "html/template/admin/assets/js/manual_mail.js",
+      "start": 3,
+      "end": 7,
+      "fileLines": 15,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    $('#send_mail').on('click', function (event) {\n        if (!confirm('お客様にメールを送信します。よろしいですか？')) {\n            event.preventDefault();\n        }\n    });"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Order/manual_mail_all_confirm.twig",
+      "start": 161,
+      "end": 168,
+      "fileLines": 176,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                            <div class=\"col-auto\">\n                                <button type=\"submit\"\n                                        id=\"send_mail\"\n                                        class=\"btn btn-ec-conversion px-5\"\n                                        name=\"mode\"\n                                        value=\"complete\">\n                                        {{ 'admin.order.mail_send'|trans }}\n                                </button>"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Order/MailController.php",
+      "start": 389,
+      "end": 402,
+      "fileLines": 201,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Order/MailController.php",
+      "start": 200,
+      "end": 200,
+      "fileLines": 201,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    }"
+    },
+    {
+      "path": "src/Eccube/Service/MailService.php",
+      "start": 2092,
+      "end": 2110,
+      "fileLines": 898,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/EventListener/ExceptionListener.php",
+      "start": 36,
+      "end": 40,
+      "fileLines": 135,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "     * ExceptionListener constructor.\n     */\n    public function __construct(\\Twig\\Environment $twig, Context $requestContext)\n    {\n        $this->twig = $twig;"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "html/template/admin/assets/js/manual_mail.js",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Order/manual_mail_all_confirm.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Order/MailController.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/MailService.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/EventListener/ExceptionListener.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 273471044,
+      "created": "2026-07-25T11:02:45Z",
+      "createdUser": "彩　田中",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:23+09:00",
+  "designResolution": {
+    "requested": "0203_基本設計仕様書(受注管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [
+        "ec-cube-enterprise/.cursor/design/html/excel/0203_受注管理機能"
+      ],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html",
+    "sheetCount": 27,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-9",
+        "title": "メール一括送信",
+        "score": 60
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "【新規】手動メール通知(確認画面)",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "受注情報検索 一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "受注情報検索 一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "受注一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "受注一覧カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "受注詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "受注詳細カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "メール一括送信"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "【新規】手動メール通知(確認画面)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "スタック用紙印刷"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "納品書印刷（日本語）"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "納品書印刷（英語）"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "受注情報編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "【新規】受注情報履歴"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "出荷指示リスト生成"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "出荷指示リスト検索"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "出荷指示リスト編集"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "出荷指示ー納品書印刷（日本語）"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "出荷指示ー納品書印刷（英語）"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "出荷実績入力用CSV出力"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "出荷実績インポート登録"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "出荷実績登録CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "店頭注文番号札管理"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "別添資料_スマレジ決済後返品処理について"
+      }
+    ]
+  }
+}

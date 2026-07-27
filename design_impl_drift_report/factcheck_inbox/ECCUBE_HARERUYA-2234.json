@@ -1,0 +1,244 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2234",
+  "issueId": 43509820,
+  "summary": "【一部実装】イベント管理_画像設定_画像設定のアップロード先「店舗」の初期値に、メンバーのデフォルト表示の店舗が設定されない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:46Z",
+  "updated": "2026-07-14T01:19:46Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2234",
+  "basicInfo": {
+    "分類": "イベント管理",
+    "機能": "画像設定",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】イベント管理_画像設定_画像設定のアップロード先「店舗」の初期値に、メンバーのデフォルト表示の店舗が設定されない",
+    "設計書": "0214_基本設計仕様書(イベント管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：イベント管理\n機能：画像設定\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】イベント管理_画像設定_画像設定のアップロード先「店舗」の初期値に、メンバーのデフォルト表示の店舗が設定されない\n設計書：0214_基本設計仕様書(イベント管理).xlsx",
+    "期待される挙動": "- 画像設定の識別ID:1「店舗」は単一選択の必須項目であり、初期値にメンバーのデフォルト表示の店舗を設定すること。\n- 編集権限のある店舗のみを選択肢として表示し、編集権限のない店舗が選択された場合はエラーとすること。",
+    "現在の挙動": "- BannerController は Member::getDefaultSearchBaseInfo()（デフォルト表示の店舗）を一切参照しておらず、アップロードフォームの店舗の初期値には「絞り込み中の店舗（htmlClass で指定された店舗）」が編集可能な場合のみ設定される。\n- そのため、店舗で絞り込んでいない全体表示（admin_event_banner）では店舗が未選択の状態でフォームが表示され、設計書の「初期値：デフォルト表示の店舗」を満たしていない。\n- 単一選択（multiple: false）・必須（required: true + NotBlank）・編集権限のある店舗のみ選択肢に表示（filterBaseInfosEditableByMember）・権限外店舗のエラー（EventBannerStorageService::processUpload での isEditableShop チェック）は実装済みである。",
+    "補足情報": "▼設計書該当箇所\nM13_event_management_basedesign.md:1178 「| 1 | 店舗 | 単一選択 | 〇 | - | デフォルト表示の店舗 | 編集権限のある店舗のみ表示<br>編集権限のない店舗が選択された場合エラー |」\nM13_event_management_basedesign.md:1167 「* 識別ID:1 「店舗」はメンバーが権限を保持している店舗のみ表示する」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Event/BannerController.php:174-194 （初期値は selectedBaseInfo のみ。getDefaultSearchBaseInfo は未使用）\nsrc/Eccube/Controller/Admin/Event/BannerController.php:267-272 （createUploadForm に初期店舗を渡す）\nsrc/Eccube/Form/Type/Admin/Event/EventBannerUploadType.php:42-54 （単一選択・必須・choices を編集可能店舗に限定）\nsrc/Eccube/Service/Admin/Event/EventBannerStorageService.php:71-73 （権限外店舗へのアップロードはエラー）\n\n▼備考\n要件のうち「単一選択・必須・編集権限のある店舗のみ表示・権限外エラー」は実装済みで、乖離は初期値のみ。他画面（イベント一覧・イベント登録・イベント申込一覧）では Member::getDefaultSearchBaseInfo() を用いてデフォルト店舗を初期表示しており、画像設定のみ未対応である。"
+  },
+  "designBook": "0214_基本設計仕様書(イベント管理).xlsx",
+  "feature": "画像設定",
+  "classification": "イベント管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Controller/Admin/Event/BannerController.php",
+      "start": 174,
+      "end": 194,
+      "fileLines": 395,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private function createFreshBannerPageState(?string $htmlClass): array\n    {\n        $bannerSettingSlots = array_values($this->bannerRepository->findBy([], ['id' => 'ASC']));\n        $baseInfos = $this->getAllBaseInfosOrdered();\n        $selectedBaseInfo = $this->resolveSelectedBaseInfo($htmlClass);\n        $Member = $this->getMember();\n        $uploadChoiceBaseInfos = $this->filterBaseInfosEditableByMember($Member, $baseInfos);\n        $initialUploadShop = null;\n        if ($selectedBaseInfo !== null && $Member->isEditableShop($selectedBaseInfo)) {\n            $initialUploadShop = $selectedBaseInfo;\n        }\n\n        return [\n            'bannerSettingSlots' => $bannerSettingSlots,\n            'baseInfos' => $baseInfos,\n            'selectedBaseInfo' => $selectedBaseInfo,\n           "
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/BannerController.php",
+      "start": 267,
+      "end": 272,
+      "fileLines": 395,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private function createUploadForm(?BaseInfo $initialBaseInfo, array $baseInfos): FormInterface\n    {\n        return $this->formFactory->createNamed(\n            'event_banner_upload',\n            EventBannerUploadType::class,\n            ['baseInfos' => $initialBaseInfo],"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/Event/EventBannerUploadType.php",
+      "start": 42,
+      "end": 54,
+      "fileLines": 65,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('baseInfos', EntityType::class, [\n                'class' => BaseInfo::class,\n                'choices' => $baseInfos,\n                'choice_label' => static fn (BaseInfo $BaseInfo): string => $BaseInfo->getShopName() ?? $BaseInfo->getShortNameJp(),\n                'multiple' => false,\n                'expanded' => false,\n                'required' => true,\n                'placeholder' => false,\n                'label' => 'admin.event.banner.upload_shops',\n                'constraints' => [\n                    new NotBlank(message: 'admin.event.banner.upload_shops_required'),\n                ],\n            ]);"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Event/EventBannerStorageService.php",
+      "start": 71,
+      "end": 73,
+      "fileLines": 243,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        foreach ($targetShops as $BaseInfo) {\n            if (!$Member->isEditableShop($BaseInfo)) {\n                return ['message' => 'admin.event.banner.upload_shop_not_permitted'];"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 1178,
+      "end": 1178,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1 | 店舗 | 単一選択 | 〇 | - | デフォルト表示の店舗 | 編集権限のある店舗のみ表示<br>編集権限のない店舗が選択された場合エラー |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 1167,
+      "end": 1167,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 識別ID:1 「店舗」はメンバーが権限を保持している店舗のみ表示する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Admin/Event/BannerController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/Event/EventBannerUploadType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Event/EventBannerStorageService.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:50+09:00",
+  "designResolution": {
+    "requested": "0214_基本設計仕様書(イベント管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html",
+    "sheetCount": 22,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "イベント一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "繰返日程追加"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "イベント申込一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "イベント申込一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "イベント申込一括編集"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "デッキ表示"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "CSVダウンロード"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "イベント申込登録(検索入力)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "イベント申込登録(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "イベント新規申込登録"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "イベント一括登録CSV"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "バナー設定"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定"
+      }
+    ]
+  }
+}

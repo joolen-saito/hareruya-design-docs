@@ -1,0 +1,408 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2016",
+  "issueId": 43509538,
+  "summary": "【一部実装】在庫管理_在庫履歴検索一覧_在庫履歴検索一覧にて、欠品検索チェック時のフォーム連動（在庫変動理由区分の固定・非活性化、対象外項目の非活性化、欠品理由の活性制御）が実装されていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:56Z",
+  "updated": "2026-07-22T01:26:49Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2016",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "在庫履歴検索一覧",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】在庫管理_在庫履歴検索一覧_在庫履歴検索一覧にて、欠品検索チェック時のフォーム連動（在庫変動理由区分の固定・非活性化、対象外項目の非活性化、欠品理由の活性制御）が実装されていない",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：在庫履歴検索一覧\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】在庫管理_在庫履歴検索一覧_在庫履歴検索一覧にて、欠品検索チェック時のフォーム連動（在庫変動理由区分の固定・非活性化、対象外項目の非活性化、欠品理由の活性制御）が実装されていない\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- 「欠品検索」がチェックされた場合、在庫変動理由区分を「欠品/欠品減算（受注）」「欠品/欠品減算(移動)」に変更し、選択できないよう非活性にすること。\n- 「欠品検索」がチェックされた場合、検索対象項目のうち欠品履歴で対象外（\"－\"）の項目は中身を空にして非活性にし、欠品理由（識別ID2-37）は活性化して入力できるようにすること。チェックされていない場合は欠品理由のみ中身を空にして非活性にし、チェックが解除された場合は在庫変動理由区分の内容を空にすること。\n- 「欠品検索」がチェックされた場合、検索結果として欠品履歴検索一覧を表示すること。",
+    "現在の挙動": "- 欠品検索のチェックボックス（disposal_search）と、チェック状態（has_search_disposal）による検索結果一覧（在庫履歴一覧／欠品履歴一覧）の表示切り替えは実装されている。\n- 検索フォームの JavaScript には欠品検索チェックボックスの change ハンドラが存在せず、在庫変動理由区分（stock_change_type_detail）の値の固定・非活性化、欠品履歴で対象外となる項目のクリア・非活性化、欠品理由入力欄の活性/非活性制御、チェック解除時の在庫変動理由区分クリアのいずれも行われない（history.twig の script ブロック、および admin 側の JS/CSS 資産のどこにも disposal_search を参照する処理が無い）。\n- サーバ側では、欠品検索がチェックされた場合に在庫変動区分「廃棄」（MtbStockChangeType::DISPOSAL＝ID:6）配下の子区分のみに絞り込み、チェックされていない場合は同区分を除外する処理のみが行われている。設計が指定する「欠品」親区分（OUT_OF_STOCK＝ID:7、子区分は欠品減算(受注)等）は絞り込み対象に含まれていない。",
+    "補足情報": "▼設計書該当箇所\nM04_stock_management_basedesign.md:2866-2877 の逐語引用「2-4 欠品検索 チェックボックス - - - 選択肢：欠品履歴一覧を表示 / 選択された場合 / ・識別ID:2-3在庫変更理由区分を「欠品/欠品減算（受注）」・「欠品/欠品減算(移動)」に変更し選択できないよう非活性にする / ・検索対象項目の欠品履歴の内”－”としている項目は中身を空にし非活性にする / ・識別ID2-37欠品理由は活性化し入力できるようにする / ・検索結果として欠品履歴検索一覧を表示する / 選択されていない場合 / ・識別ID2-37欠品理由のみ中身を空にし非活性にする / ・チェックされていた状態から解除された場合、識別ID2-3在庫変動理由区分の内容を空にする / ・検索結果として在庫履歴検索一覧を表示する」\nM04_stock_management_basedesign.md:2834-2836 の逐語引用「検索に使用できる項目は「欠品検索」のチェック有無によって分岐する。 / チェックありの場合：検索対象項目のうち欠品履歴に○となっている項目のみ使用可能となる / チェックなしの場合：検索対象項目のうち在庫変動履歴に○となっている項目のみ使用可能となる」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/StockHistoryType.php:108-115 （欠品検索チェックボックス disposal_search の定義）\nsrc/Eccube/Resource/template/admin/Stock/history.twig:259-262 （欠品検索の描画。連動用の JS ハンドラは存在しない）\nsrc/Eccube/Resource/template/admin/Stock/history.twig:179-183, 597-728 （has_search_disposal による結果一覧の切り替え：実装済み）\nsrc/Eccube/Controller/Admin/Stock/StockHistoryController.php:120, 215 （$hasSearchDisposal の判定）\nsrc/Eccube/Repository/DtbStockHistoryRepository.php:143-155 （欠品検索時は MtbStockChangeType::DISPOSAL＝廃棄 の子区分のみに絞り込み）\napp/DoctrineMigrations/Version20251125165619.php:84-90 （マスタ：id=6 は「廃棄」、id=7 が「欠品」）\n\n▼備考\nチェックボックスと結果一覧の切り替えは実装済み。未実装は画面上の連動制御（在庫変動理由区分の固定・非活性、対象外項目のクリア・非活性、欠品理由の活性制御、チェック解除時のクリア）で、history.twig の JS・admin の JS/CSS 資産のいずれにも該当処理が存在しない。加えて、欠品検索時の絞り込み区分が「廃棄」(id=6) のみで、設計が挙げる「欠品減算（受注）」等（欠品 id=7 配下）が含まれていない点も要確認（M04-19 側の設計 3223行は「廃棄（親区分）＋欠品減算（受注）・（移動）」を対象としており、実装は前者のみ）。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "在庫履歴検索一覧",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/StockHistoryType.php",
+      "start": 108,
+      "end": 115,
+      "fileLines": 584,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('disposal_search', ChoiceType::class, [\n                'label' => 'admin.stock.history.disposal_search',\n                'required' => false,\n                'expanded' => true,\n                'multiple' => true,\n                'choices' => ['admin.stock.history.disposal_search_select' => true],\n                'placeholder' => 'common.select__unspecified',\n            ])"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/history.twig",
+      "start": 259,
+      "end": 262,
+      "fileLines": 765,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                <label class=\"fw mb-3\">{{ 'admin.stock.history.disposal_search'|trans }}</label>\n                                <span class=\"badge bg-primary ms-1\"></span>\n                                {{ form_widget(form.disposal_search) }}\n                                {{ form_errors(form.disposal_search) }}"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/history.twig",
+      "start": 179,
+      "end": 183,
+      "fileLines": 765,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    {% if has_search_disposal == false %}\n        <link rel=\"stylesheet\" href=\"{{ asset('assets/css/stock-history.css', 'admin') }}\">\n    {% else %}\n        <link rel=\"stylesheet\" href=\"{{ asset('assets/css/stock-history-disposal.css', 'admin') }}\">\n    {% endif %}"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockHistoryController.php",
+      "start": 120,
+      "end": 120,
+      "fileLines": 482,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            $hasSearchDisposal = !empty($searchForm['disposal_search']) ? true : false;"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbStockHistoryRepository.php",
+      "start": 143,
+      "end": 155,
+      "fileLines": 487,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        // disposal_search 欠品検索\n        $DisposalTypeIds = $this->stockChangeTypeDetailRepository->getQueryBuilderByStockChangeTypeIds(\n            [MtbStockChangeType::DISPOSAL]\n        )->getQuery()->getResult();\n        if (isset($searchData['disposal_search']) && StringUtil::isNotBlank($searchData['disposal_search'])) {\n            $qb\n                ->andWhere($qb->expr()->in('sh.StockChangeTypeDetail', ':stock_change_type_detail'))\n                ->setParameter('stock_change_type_detail', $DisposalTypeIds);\n        } elseif (!empty($DisposalTypeIds)) {\n            $qb\n                ->andWhere($qb->expr()->notIn('sh.StockChangeTypeDetail', ':disposal_change_type_detail'))\n                ->setParameter('disposal_change_type_detail', $DisposalTypeIds);\n        }"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20251125165619.php",
+      "start": 84,
+      "end": 90,
+      "fileLines": 113,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                'id' => 6,\n                'name' => '廃棄',\n            ],\n            [\n                'id' => 7,\n                'name' => '欠品',\n            ],"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 2866,
+      "end": 2877,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "2-4 欠品検索 チェックボックス - - - 選択肢：欠品履歴一覧を表示\n\n選択された場合\n・識別ID:2-3在庫変更理由区分を「欠品/欠品減算（受注）」・「欠品/欠品減算(移動)」に変更し選択できないよう非活性にする\n・検索対象項目の欠品履歴の内”－”としている項目は中身を空にし非活性にする\n・識別ID2-37欠品理由は活性化し入力できるようにする\n・検索結果として欠品履歴検索一覧を表示する\n\n選択されていない場合\n・識別ID2-37欠品理由のみ中身を空にし非活性にする\n・チェックされていた状態から解除された場合、識別ID2-3在庫変動理由区分の内容を空にする\n・検索結果として在庫履歴検索一覧を表示する - ○"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 2834,
+      "end": 2836,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "検索に使用できる項目は「欠品検索」のチェック有無によって分岐する。\nチェックありの場合：検索対象項目のうち欠品履歴に○となっている項目のみ使用可能となる\nチェックなしの場合：検索対象項目のうち在庫変動履歴に○となっている項目のみ使用可能となる"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/StockHistoryType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/history.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockHistoryController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/DtbStockHistoryRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20251125165619.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990923,
+      "created": "2026-07-22T01:26:49Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:16+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)",
+        "score": 60
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}

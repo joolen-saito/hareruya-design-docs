@@ -1,0 +1,245 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2231",
+  "issueId": 43509817,
+  "summary": "【一部実装】イベント管理_イベント申込登録(検索入力/検索結果)_イベント申込登録（検索結果）の「新規登録」ボタンが、編集権限のない店舗のイベントに対しても表示される",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:44Z",
+  "updated": "2026-07-14T01:19:44Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2231",
+  "basicInfo": {
+    "分類": "イベント管理",
+    "機能": "イベント申込登録(検索入力/検索結果)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】イベント管理_イベント申込登録(検索入力/検索結果)_イベント申込登録（検索結果）の「新規登録」ボタンが、編集権限のない店舗のイベントに対しても表示される",
+    "設計書": "0214_基本設計仕様書(イベント管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：イベント管理\n機能：イベント申込登録(検索入力/検索結果)\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】イベント管理_イベント申込登録(検索入力/検索結果)_イベント申込登録（検索結果）の「新規登録」ボタンが、編集権限のない店舗のイベントに対しても表示される\n設計書：0214_基本設計仕様書(イベント管理).xlsx",
+    "期待される挙動": "- イベント申込登録（検索結果）の識別ID:4「新規登録」ボタンは、メンバーが権限を保持している店舗のイベントのみ表示すること。",
+    "現在の挙動": "- テンプレート Event/EntryRegistration/index.twig では、検索結果の各行に対して権限判定を行わずに「新規登録」ボタン（admin_entry_new へのリンク）を無条件で出力している。\n- 一覧の検索クエリ DtbEventRepository::getQueryBuilderByEntryRegistrationSearchData にも編集可能店舗による絞り込みが無く、EntryRegistrationController::index も権限フィルタを掛けていないため、権限のない店舗のイベント日程も一覧に表示される。\n- 権限チェックは遷移先の EntryRegistrationController::create（admin_entry_new）で行われており、編集権限が無い場合は 404（createNotFoundException）となる。つまり押下してから初めてエラーになる。\n- 参考として、イベント申込一覧のイベント検索モーダル（EntryController::entryEventHtml）では編集可能店舗による絞り込みが実装されており、こちらの一覧のみ未対応である。",
+    "補足情報": "▼設計書該当箇所\nM13_event_management_basedesign.md:933 「* 識別ID:4「新規登録」ボタンは権限を保持している店舗のイベントのみ表示する」\nM13_event_management_basedesign.md:945 「| 4 | 新規登録 | ボタン | - | - | - | イベント新規申込登録画面へ遷移<br>権限を保持している店舗のイベントのみ表示 |」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/admin/Event/EntryRegistration/index.twig:109-111 （新規登録ボタンを無条件で出力）\nsrc/Eccube/Controller/Admin/Event/EntryRegistrationController.php:117-134 （一覧検索。編集可能店舗による絞り込みが無い）\nsrc/Eccube/Controller/Admin/Event/EntryRegistrationController.php:152-155 （遷移後に isEditableShop で 404 を返す）\nsrc/Eccube/Controller/Admin/Event/EntryController.php:435-438 （比較対象: イベント検索モーダルでは編集可能店舗で絞り込んでいる）\n\n▼備考\n登録処理自体は権限ガードにより保護されている（不正登録は不可）ため、セキュリティ上の穴ではなく UI 上の表示制御漏れである。ボタン押下 → 404 という分かりにくい挙動になる。"
+  },
+  "designBook": "0214_基本設計仕様書(イベント管理).xlsx",
+  "feature": "イベント申込登録(検索入力/検索結果)",
+  "classification": "イベント管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Event/EntryRegistration/index.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/EntryRegistration/index.twig",
+      "start": 109,
+      "end": 111,
+      "fileLines": 134,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                        <td class=\"align-middle pe-3 py-2\">\n                                            <a class=\"btn btn-ec-conversion px-3\" href=\"{{ url('admin_entry_new', {eventDetailId: data.eventDetailId}) }}\">{{ 'admin.event.entry.register'|trans }}</a>\n                                        </td>"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/EntryRegistrationController.php",
+      "start": 117,
+      "end": 134,
+      "fileLines": 291,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        if ($shouldSearch) {\n            $eventsQueryBuilder = $this->eventRepository->getQueryBuilderByEntryRegistrationSearchData(\n                $searchData\n            );\n            $events = $eventsQueryBuilder->getQuery()->getResult();\n\n            $allDatas = $this->entryRegistrationScheduleRowBuilder->expandScheduleRows(\n                $events,\n                !empty($searchData['start_date_from']) ? $searchData['start_date_from'] : null,\n                !empty($searchData['start_date_to']) ? $searchData['start_date_to'] : null,\n            );\n            [$pagination, $datas] = $this->entryRegistrationScheduleRowBuilder->paginateWithRowSpanByEvent(\n                $paginator,\n                $allDatas,\n                $pageNo,\n                self::SCHEDULES_PER_PAGE\n          "
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/EntryRegistrationController.php",
+      "start": 152,
+      "end": 155,
+      "fileLines": 291,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $baseInfo = $eventDetail->getEvent()->getBaseInfo();\n        if ($baseInfo === null || !$this->getMember()->isEditableShop($baseInfo)) {\n            throw $this->createNotFoundException();\n        }"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/EntryController.php",
+      "start": 435,
+      "end": 438,
+      "fileLines": 538,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            if ($allowedBases === []) {\n                $qb->andWhere('IDENTITY(e.BaseInfo) IN (:entryModalEditableBaseInfoIds)')\n                    ->setParameter('entryModalEditableBaseInfoIds', $editableBaseInfoIds);\n            }"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 933,
+      "end": 933,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 識別ID:4「新規登録」ボタンは権限を保持している店舗のイベントのみ表示する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 945,
+      "end": 945,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 4 | 新規登録 | ボタン | - | - | - | イベント新規申込登録画面へ遷移<br>権限を保持している店舗のイベントのみ表示 |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/EntryRegistration/index.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/EntryRegistrationController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/EntryController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:50+09:00",
+  "designResolution": {
+    "requested": "0214_基本設計仕様書(イベント管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html",
+    "sheetCount": 22,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "イベント一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "繰返日程追加"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "イベント申込一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "イベント申込一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "イベント申込一括編集"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "デッキ表示"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "CSVダウンロード"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "イベント申込登録(検索入力)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "イベント申込登録(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "イベント新規申込登録"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "イベント一括登録CSV"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "バナー設定"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定"
+      }
+    ]
+  }
+}

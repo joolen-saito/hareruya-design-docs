@@ -1,0 +1,259 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2258",
+  "issueId": 43509850,
+  "summary": "【実装乖離】デッキ管理_デッキ一覧(検索入力/検索結果)_デッキ一覧の検索条件にて、デッキID・デッキ名・イベント名・成績・プレイヤー名の最大文字数が設計の50文字ではなく255文字になっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:59Z",
+  "updated": "2026-07-14T01:19:59Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2258",
+  "basicInfo": {
+    "分類": "デッキ管理",
+    "機能": "デッキ一覧(検索入力/検索結果)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】デッキ管理_デッキ一覧(検索入力/検索結果)_デッキ一覧の検索条件にて、デッキID・デッキ名・イベント名・成績・プレイヤー名の最大文字数が設計の50文字ではなく255文字になっている",
+    "設計書": "0212_基本設計仕様書(デッキ管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：デッキ管理\n機能：デッキ一覧(検索入力/検索結果)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】デッキ管理_デッキ一覧(検索入力/検索結果)_デッキ一覧の検索条件にて、デッキID・デッキ名・イベント名・成績・プレイヤー名の最大文字数が設計の50文字ではなく255文字になっている\n設計書：0212_基本設計仕様書(デッキ管理).xlsx",
+    "期待される挙動": "- デッキ一覧(検索入力)の識別ID 3「デッキID」、12「イベント名」、16「成績」、23「デッキ名」、25「プレイヤー名」はいずれも最大50文字とする。",
+    "現在の挙動": "- SearchDeckType では deck_id / deck_name / event_name / result / player_name のいずれも Assert\\Length の max に eccube_stext_len を指定している。\n- eccube_stext_len は eccube.yaml で 255 と定義されているため、実際に効く上限は255文字であり、設計の50文字を大きく超える入力が許容される。",
+    "補足情報": "▼設計書該当箇所\nM15_deck_management_basedesign.md:54 「| 3 | デッキID | 数値、スペース、カンマ | - | 50文字 |」\nM15_deck_management_basedesign.md:63 「| 12 | イベント名 | 文字列 | - | 50文字 |」\nM15_deck_management_basedesign.md:67 「| 16 | 成績 | 文字列 | - | 50文字 | - |」\nM15_deck_management_basedesign.md:74 「| 23 | デッキ名 | 文字列 | - | 50文字 |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/SearchDeckType.php:47-54 （deck_id。max=eccube_stext_len）\nsrc/Eccube/Form/Type/Admin/SearchDeckType.php:55-61 （deck_name）\nsrc/Eccube/Form/Type/Admin/SearchDeckType.php:125-131 （event_name）\nsrc/Eccube/Form/Type/Admin/SearchDeckType.php:142-155 （result / player_name）\napp/config/eccube/packages/eccube.yaml:137 （eccube_stext_len: 255）\n\n▼備考\n反証として、テンプレート(src/Eccube/Resource/template/admin/Deck/index.twig)側に maxlength 属性やJSによる文字数制限が無いことを確認済み（検索フォームは form_widget 描画で、SearchDeckType の制約のみが効く）。25「プレイヤー名」は SearchDeckType.php:149-155 の player_name。設定値は app/config/eccube/packages/eccube.yaml が唯一の定義箇所で、上書き設定は存在しない。git log --since=\"2026-07-08\" -- src/Eccube/Form/Type/Admin/SearchDeckType.php は該当コミットなし。"
+  },
+  "designBook": "0212_基本設計仕様書(デッキ管理).xlsx",
+  "feature": "デッキ一覧(検索入力/検索結果)",
+  "classification": "デッキ管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchDeckType.php",
+      "start": 47,
+      "end": 54,
+      "fileLines": 218,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('deck_id', TextType::class, [\n                'label' => 'admin.deck.deck_id',\n                'required' => false,\n                'constraints' => [\n                    new Assert\\Length(['max' => $this->eccubeConfig['eccube_stext_len']]),\n                    new Assert\\Regex(['pattern' => '/^[\\d,\\s　]+$/']),\n                ],\n            ])"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchDeckType.php",
+      "start": 55,
+      "end": 61,
+      "fileLines": 218,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('deck_name', TextType::class, [\n                'label' => 'admin.deck.deck_name',\n                'required' => false,\n                'constraints' => [\n                    new Assert\\Length(['max' => $this->eccubeConfig['eccube_stext_len']]),\n                ],\n            ])"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchDeckType.php",
+      "start": 125,
+      "end": 131,
+      "fileLines": 218,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('event_name', TextType::class, [\n                'label' => 'admin.deck.event_name',\n                'required' => false,\n                'constraints' => [\n                    new Assert\\Length(['max' => $this->eccubeConfig['eccube_stext_len']]),\n                ],\n            ])"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchDeckType.php",
+      "start": 142,
+      "end": 155,
+      "fileLines": 218,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('result', TextType::class, [\n                'label' => 'admin.deck.result',\n                'required' => false,\n                'constraints' => [\n                    new Assert\\Length(['max' => $this->eccubeConfig['eccube_stext_len']]),\n                ],\n            ])\n            ->add('player_name', TextType::class, [\n                'label' => 'admin.deck.player_name',\n                'required' => false,\n                'constraints' => [\n                    new Assert\\Length(['max' => $this->eccubeConfig['eccube_stext_len']]),\n                ],\n            ])"
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "start": 137,
+      "end": 137,
+      "fileLines": 184,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    # {dd}: 日(01)"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Deck/index.twig",
+      "start": null,
+      "end": null,
+      "fileLines": 621,
+      "ok": true,
+      "reason": "file_exists_no_line"
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "start": null,
+      "end": null,
+      "fileLines": 184,
+      "ok": true,
+      "reason": "file_exists_no_line"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchDeckType.php",
+      "start": null,
+      "end": null,
+      "fileLines": 218,
+      "ok": true,
+      "reason": "file_exists_no_line"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+      "start": 54,
+      "end": 54,
+      "resolvedFrom": "M15_deck_management_basedesign.md",
+      "fileLines": 736,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 3 | デッキID | 数値、スペース、カンマ | - | 50文字 |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+      "start": 63,
+      "end": 63,
+      "resolvedFrom": "M15_deck_management_basedesign.md",
+      "fileLines": 736,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 12 | イベント名 | 文字列 | - | 50文字 |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+      "start": 67,
+      "end": 67,
+      "resolvedFrom": "M15_deck_management_basedesign.md",
+      "fileLines": 736,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 16 | 成績 | 文字列 | - | 50文字 | - |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+      "start": 74,
+      "end": 74,
+      "resolvedFrom": "M15_deck_management_basedesign.md",
+      "fileLines": 736,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 23 | デッキ名 | 文字列 | - | 50文字 |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchDeckType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Deck/index.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:52+09:00",
+  "designResolution": {
+    "requested": "0212_基本設計仕様書(デッキ管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html",
+    "sheetCount": 14,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "デッキ一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "デッキ一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "デッキ編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "デッキ登録CSVアップロード"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "デッキ登録CSV"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "デッキタグ一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "アーキタイプ管理(検索入力)"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "アーキタイプ管理(検索結果)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "アーキタイプ編集"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "アーキタイプ登録CSVアップロード"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "アーキタイプ登録CSV"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "直近の大会管理"
+      }
+    ]
+  }
+}

@@ -171,10 +171,12 @@ HTTP 200。
 
 ## 表示メッセージ
 
-| メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
-|--------------|----------|--------------|----------|----------|----------|
-| A02-05-MSG-002 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | Sorry, we are unable to delete %name%, because it has related data. | 規格CSV登録で、削除指定した規格が使用中で削除できないとき | 規格CSV登録画面に留まる |
-| A02-05-MSG-003 | 管理画面上部 | 関連するデータがあるため「%name%」を削除できませんでした | Sorry, we are unable to delete %name%, because it has related data. | 規格CSV登録で、削除指定した規格分類が使用中で削除できないとき | 規格分類CSV登録画面に留まる |
+本APIは画面を持たないため、画面表示メッセージは定義しない。
+
+> 是正記録: 旧版の本節には本機能ID接頭の MSG-002 / MSG-003 として管理画面のCSV取込フラッシュ
+> （`CsvImportController::csvClassName`:899 / `csvClassCategory`:1030）が誤って埋め込まれていた。
+> いずれも本APIとは無関係のため撤去し、`message_inventory` の未割当バケット `EE-CLASSCSV` へ
+> 退避した（規格CSV取込・規格分類CSV取込の正本設計書は未整備）。
 
 ## 業務ルール・計算
 

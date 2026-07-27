@@ -10,20 +10,26 @@
  * - fixme: 完了画面の各表示要素・エラー画面・ロケール遷移・完了後セッション初期化は注文確定を前提とするため保留（要: 注文確定/SEED-...）。
  * 手動/間接（在庫更新・受注作成・タグログ）はケース表で全量管理し spec には残さない。
  */
-import { test } from "@playwright/test";
+import { test } from "../../../fixtures/reachability.fixture";
+import { directAccess } from "../../../helpers/navigation";
 import { FrontShoppingCompletePage } from "../../../pages/front/f04/f04_04_front_cart_shopping_complete.page";
 
 test.describe("フロント > カート > 決済〜購入完了（ご注文完了）", { tag: ["@front", "@cart"] }, () => {
   // --- live: 完了状態なしの直接アクセス→トップ誘導（非破壊・シード不要） ---
   test("E2E-F04-04-021 完了状態が無いまま購入完了URLへ直接アクセスするとトップへ戻る", async ({ page }) => {
     const complete = new FrontShoppingCompletePage(page);
-    await complete.gotoComplete();
+    // 直アクセスそのものが観点のケース（台帳の「直アクセス時の期待」を検証する）。
+    await directAccess(
+      page,
+      complete.completeUrl,
+      "受注IDがセッションに無い状態での直接アクセス時にトップへ戻ることの検証"
+    );
     // 期待は処理フロー「購入を完了する #1（受注IDなしはトップへ）」＋画面遷移由来。
     await complete.seeRedirectedToTop();
   });
 
   // --- fixme: 注文確定/シードを要する自動化ケース（抜け漏れ可視化） ---
-  test.fixme("E2E-F04-04-006 購入完了画面に完了の各表示要素が表示される（要: 注文確定/SEED-F04-04-ORDER）", async () => {});
+  test.fixme("E2E-F04-04-006 購入完了画面に完了の各表示要素が表示される（要: SEED-F04-04-CHECKOUT／/cart→「購入手続きへ」→「注文する」で到達）", async () => {});
   test.fixme("E2E-F04-04-009 購入完了画面に完了見出し「ご注文完了」が表示される（要: 注文確定/SEED-F04-04-ORDER）", async () => {});
   test.fixme("E2E-F04-04-010 購入完了画面に御礼「ご注文ありがとうございました。」が表示される（要: 注文確定/SEED-F04-04-ORDER）", async () => {});
   test.fixme("E2E-F04-04-011 購入完了画面に注文番号が表示される（要: 注文確定/SEED-F04-04-ORDER）", async () => {});
@@ -35,7 +41,7 @@ test.describe("フロント > カート > 決済〜購入完了（ご注文完�
   test.fixme("E2E-F04-04-017 受注ステータス想定外のとき完了せずエラー画面へ遷移する（要: SEED-F04-04-STATUS-ABNORMAL）", async () => {});
   test.fixme("E2E-F04-04-013 SPLINKS決済記録なしのとき決済記録不整合エラー画面が表示される（要: SEED-F04-04-SLN-NORECORD/文言実機確認）", async () => {});
   test.fixme("E2E-F04-04-018 SPLINKS決済記録なしのとき受注を処理中へ戻しエラー画面へ遷移する（要: SEED-F04-04-SLN-NORECORD）", async () => {});
-  test.fixme("E2E-F04-04-014 購入完了後はセッション初期化され完了画面再訪でトップへ戻る（要: 注文確定/SEED-F04-04-ORDER）", async () => {});
+  test.fixme("E2E-F04-04-014 購入完了後はセッション初期化され完了画面再訪でトップへ戻る（要: SEED-F04-04-CHECKOUT／/cart→「購入手続きへ」→「注文する」で到達）", async () => {});
 
   // 参考: seeCompletionScreen / seeShoppingProcessError / seeNoSlnPaymentError は Page Object に実装済み。
   // 上記 fixme は注文確定(SEED)が整い次第 live 化する。手動/間接(020,074,007)はケース表で管理する。

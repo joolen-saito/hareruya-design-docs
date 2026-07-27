@@ -1,0 +1,223 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1791",
+  "issueId": 43509244,
+  "summary": "【実装乖離】フロントグローバルナビ_PC版ナビゲーション_フッターのサイトマップ／会社情報／お得な情報が、管理画面＞コンテンツ管理＞ブロック管理から編集できない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:02Z",
+  "updated": "2026-07-14T01:16:02Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1791",
+  "basicInfo": {
+    "分類": "フロントグローバルナビ",
+    "機能": "PC版ナビゲーション",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロントグローバルナビ_PC版ナビゲーション_フッターのサイトマップ／会社情報／お得な情報が、管理画面＞コンテンツ管理＞ブロック管理から編集できない",
+    "設計書": "0302_基本設計仕様書(フロント_グローバルナビ).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントグローバルナビ\n機能：PC版ナビゲーション\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロントグローバルナビ_PC版ナビゲーション_フッターのサイトマップ／会社情報／お得な情報が、管理画面＞コンテンツ管理＞ブロック管理から編集できない\n設計書：0302_基本設計仕様書(フロント_グローバルナビ).xlsx",
+    "期待される挙動": "- フッターの(24)サイトマップ・(25)会社情報・(26)お得な情報は、管理画面＞コンテンツ管理＞ブロック管理にて編集可能であること。",
+    "現在の挙動": "- Migration Version20260508120000 が footer_sitemap／footer_company／footer_promo を dtb_block に登録しているが、deletable を false で INSERT しているため、ブロック管理から編集できない。\n- ブロック管理一覧テンプレート(admin/Content/block.twig)は deletable が false のブロックについて編集リンク自体を描画せず、ブロック名がテキスト表示されるだけである。\n- 編集アクション admin_content_block_edit も、対象ブロックが deletable でない場合は NotFoundHttpException を投げるため、URL を直接叩いても編集できない。\n- 結果として、これら3ブロックの内容(リンク文言・URL)を変更するには src/Eccube/Resource/template/default/Block/*.twig をコード修正するしかない状態になっている。",
+    "補足情報": "▼設計書該当箇所\nF02_global_nav_basedesign.md:230 「* 管理画面＞コンテンツ管理＞ブロック管理にて編集可能」（サイトマップ）\nF02_global_nav_basedesign.md:252 「* 管理画面＞コンテンツ管理＞ブロック管理にて編集可能」（会社情報）\nF02_global_nav_basedesign.md:268 「* 管理画面＞コンテンツ管理＞ブロック管理にて編集可能」（お得な情報）\n\n▼実装該当箇所\napp/DoctrineMigrations/Version20260508120000.php:32-36 （footer_sitemap / footer_company / footer_promo を dtb_block に登録）\napp/DoctrineMigrations/Version20260508120000.php:59-60 （deletable を false で INSERT）\nsrc/Eccube/Controller/Admin/Content/BlockController.php:118-120 （deletable でないブロックの編集は 404）\nsrc/Eccube/Resource/template/admin/Content/block.twig:71-77 （deletable のときだけ編集リンクを表示）\nsrc/Eccube/Resource/template/default/Block/footer.twig:57-59 （3ブロックを include で静的に描画）\n\n▼備考\ndtb_block への登録自体は行われているため「ブロック未登録」ではなく、deletable=false により編集導線が塞がれている点が乖離。なお BlockController は編集時に 'Block/<file_name>.<locale>.twig'(例: footer_sitemap.ja.twig)を読み込む実装だが、現HEADに footer_sitemap.ja.twig 等は存在せず(あるのは footer_sitemap.twig)、仮に deletable を true にしても編集画面で LoaderError になる可能性がある。"
+  },
+  "designBook": "0302_基本設計仕様書(フロント_グローバルナビ).xlsx",
+  "feature": "PC版ナビゲーション",
+  "classification": "フロントグローバルナビ",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "admin/Content/block.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260508120000.php",
+      "start": 32,
+      "end": 36,
+      "fileLines": 146,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private const NEW_BLOCKS = [\n        ['file' => 'footer_sitemap',   'name' => 'フッター_サイトマップ',   'use_controller' => false],\n        ['file' => 'footer_company',   'name' => 'フッター_会社情報',       'use_controller' => false],\n        ['file' => 'footer_promo',     'name' => 'フッター_お得な情報',     'use_controller' => false],\n    ];"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260508120000.php",
+      "start": 59,
+      "end": 60,
+      "fileLines": 146,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                'INSERT INTO dtb_block (device_type_id, block_name, file_name, use_controller, deletable, create_date, update_date)\n                 VALUES (:device_type_id, :name, :file_name, :use_controller, false, NOW(), NOW())"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Content/BlockController.php",
+      "start": 118,
+      "end": 120,
+      "fileLines": 223,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\n        $event = new EventArgs(\n            ["
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Content/block.twig",
+      "start": 71,
+      "end": 77,
+      "fileLines": 131,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                                <a href=\"{{ url('admin_content_block_edit', {id: Block.id}) }}\">\n                                                    {{ Block.name }}\n                                                </a>\n                                            </div>\n                                            <div class=\"col-3 col-md-4 d-flex align-items-center\">\n                                                {{ Block.file_name }}.twig\n                                            </div>"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/footer.twig",
+      "start": 57,
+      "end": 59,
+      "fileLines": 34,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+      "start": 230,
+      "end": 230,
+      "resolvedFrom": "F02_global_nav_basedesign.md",
+      "fileLines": 1032,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 管理画面＞コンテンツ管理＞ブロック管理にて編集可能"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+      "start": 252,
+      "end": 252,
+      "resolvedFrom": "F02_global_nav_basedesign.md",
+      "fileLines": 1032,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 管理画面＞コンテンツ管理＞ブロック管理にて編集可能"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+      "start": 268,
+      "end": 268,
+      "resolvedFrom": "F02_global_nav_basedesign.md",
+      "fileLines": 1032,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 管理画面＞コンテンツ管理＞ブロック管理にて編集可能"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "app/DoctrineMigrations/Version20260508120000.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Content/BlockController.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Content/block.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/footer.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:31+09:00",
+  "designResolution": {
+    "requested": "0302_基本設計仕様書(フロント_グローバルナビ).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0302_基本設計仕様書(フロント_グローバルナビ).html",
+    "sheetCount": 8,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "PC版ナビゲーション",
+        "score": 100
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "支店PC版ナビゲーション",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "PC版ナビゲーション"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "スマホ版ナビゲーション"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "支店PC版ナビゲーション"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "支店スマホ版ナビゲーション"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "通知"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "別添資料_通知一覧"
+      }
+    ]
+  }
+}

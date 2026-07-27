@@ -1,0 +1,243 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1881",
+  "issueId": 43509361,
+  "summary": "【実装乖離】フロント会員_マイイベント・デッキ登録_マイイベント・デッキ登録のページネーションで、現在ページの前後4ページ分のリンクが表示されない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:49Z",
+  "updated": "2026-07-14T01:16:49Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1881",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "マイイベント・デッキ登録",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント会員_マイイベント・デッキ登録_マイイベント・デッキ登録のページネーションで、現在ページの前後4ページ分のリンクが表示されない",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：マイイベント・デッキ登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_マイイベント・デッキ登録_マイイベント・デッキ登録のページネーションで、現在ページの前後4ページ分のリンクが表示されない\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- 設計書では、ページネーションは現在ページの前後に4ページ分のリンクを表示することとしている（例：8ページ選択時は4〜12ページのリンクを表示する）。\n- 表示しきれないページが存在する場合、先頭方向に「＜最初」、末尾方向に「最後＞」のリンクを表示することとしている。",
+    "現在の挙動": "- EventHistoryController は KnpPaginator の paginate() をオプション指定なしで呼び出しており、page_range を指定していない。\n- KnpPaginatorBundle の page_range 既定値は 5、SlidingPagination の pageRange 初期値も 5 であり、プロジェクト側に knp_paginator の設定ファイルは存在しないため、実際に表示されるページ範囲は5ページ分（現在ページの前後2ページ）にとどまる。\n- pager.twig には先頭ページ・最終ページへのリンクと省略記号（…）はあるが、リンク文言はページ番号そのもので、「＜最初」「最後＞」のラベルにはなっていない。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:810 「| 10 | ページネーション | リンク | … ・前後に4ページ分のリンクを表示する<br>（例）8ページを選択している場合は4〜12ページのリンクを表示する<br><br>・表示しきれないページが存在する場合、先頭方向には「＜最初」、末尾方向には「最後＞」のリンクを表示する |」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Front/Mypage/EventHistoryController.php:99 （paginate() に page_range オプションを渡していない）\nvendor/knplabs/knp-paginator-bundle/src/DependencyInjection/Configuration.php:49-50 （page_range の既定値は 5）\nvendor/knplabs/knp-paginator-bundle/src/Pagination/SlidingPagination.php:19 （pageRange の初期値 5）\nsrc/Eccube/Resource/template/default/pager.twig:23-27, 52-56 （先頭/最終ページリンクはページ番号を出力しており「＜最初」「最後＞」ではない）\n\n▼備考\napp/config 配下に knp_paginator の設定は存在せず（grep -rn \"knp_paginator\" で該当なし）、src 配下にも setPageRange / page_range の指定は無い。したがって実効値は既定の5（前後2ページ）。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "マイイベント・デッキ登録",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Controller/Front/Mypage/EventHistoryController.php",
+      "start": 99,
+      "end": 99,
+      "fileLines": 109,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $pagination = $paginator->paginate($EventDetails, $pageNo, $dispNumber);"
+    },
+    {
+      "path": "vendor/knplabs/knp-paginator-bundle/src/DependencyInjection/Configuration.php",
+      "start": 49,
+      "end": 50,
+      "fileLines": 70,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                ->scalarNode('page_range')\n                ->defaultValue(5)"
+    },
+    {
+      "path": "vendor/knplabs/knp-paginator-bundle/src/Pagination/SlidingPagination.php",
+      "start": 19,
+      "end": 19,
+      "fileLines": 252,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private int $pageRange = 5;"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/pager.twig",
+      "start": 23,
+      "end": 27,
+      "fileLines": 68,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        {% if pages.previous is defined %}\n            <li class=\"ec-pager__item\">\n                <a href=\"{{ path(\n                app.request.attributes.get('_route'),\n                app.request.query.all|merge({'pageno': pages.previous})) }}\">{{ 'common.prev'|trans }}</a></li>"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 810,
+      "end": 810,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 10 | ページネーション | リンク | - | - | - | ・前後に4ページ分のリンクを表示する<br>（例）8ページを選択している場合は4〜12ページのリンクを表示する<br><br>・表示しきれないページが存在する場合、先頭方向には「＜最初」、末尾方向には「最後＞」のリンクを表示する |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Front/Mypage/EventHistoryController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "vendor/knplabs/knp-paginator-bundle/src/DependencyInjection/Configuration.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "vendor/knplabs/knp-paginator-bundle/src/Pagination/SlidingPagination.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/pager.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:48+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

@@ -1,0 +1,271 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2146",
+  "issueId": 43509716,
+  "summary": "【一部実装】基本情報設定_税率設定_税率設定にて、個別税率設定の「商品別税率機能」を切り替える画面部品がどの画面にも表示されておらず、機能の有効化ができない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:03Z",
+  "updated": "2026-07-14T01:19:03Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2146",
+  "basicInfo": {
+    "分類": "基本情報設定",
+    "機能": "税率設定",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】基本情報設定_税率設定_税率設定にて、個別税率設定の「商品別税率機能」を切り替える画面部品がどの画面にも表示されておらず、機能の有効化ができない",
+    "設計書": "0209_基本設計仕様書(基本情報設定).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：基本情報設定\n機能：税率設定\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】基本情報設定_税率設定_税率設定にて、個別税率設定の「商品別税率機能」を切り替える画面部品がどの画面にも表示されておらず、機能の有効化ができない\n設計書：0209_基本設計仕様書(基本情報設定).xlsx",
+    "期待される挙動": "- 税率設定（M10-07）画面の「個別税率設定」に、識別ID 1-1「商品別税率機能」が有効／無効の二択を単一選択する部品として表示され、初期値は「無効」である。\n- 管理者は画面上でこの部品を操作して商品別税率機能を有効／無効に切り替えられる。",
+    "現在の挙動": "- 税率設定画面（tax_rule.twig）には共通税率設定（消費税率・課税規則・適用日時）と税率一覧しか存在せず、個別税率設定の「商品別税率機能」を切り替える部品がない。\n- 商品別税率機能のフラグ option_product_tax_rule は ShopMasterType に ToggleSwitchType として追加されているが、shop_master.twig の税設定カードには適格請求書発行事業者登録番号しか描画されておらず、リポジトリ全体のTwigを grep しても option_product_tax_rule を描画している箇所は1件も存在しない。\n- そのため、いずれの管理画面からも商品別税率機能を有効化できない。さらに、未描画のチェックボックスは POST に含まれないため、基本設定画面で「登録」を押すたびに option_product_tax_rule が常に false（無効）で上書き保存される。\n- 初期値については dtb_base_info.option_product_tax_rule の default が false、マイグレーションの投入値も '0' であり、設計の初期値「無効」とは一致している。",
+    "補足情報": "▼設計書該当箇所\nM10_base_info_setting_basedesign.md:236-237 の逐語引用: 「個別税率設定」「1-1 商品別税率機能 単一選択(ラジオボタン) - - 無効 選択肢:有効　無効」\nM10_base_info_setting_basedesign.md:231 の逐語引用: 「* 個別税率設定、共通税率設定を登録する」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/ShopMasterType.php:279-280 （// 個別税率設定 のコメント付きで option_product_tax_rule を ToggleSwitchType で追加）\nsrc/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:426-439 （税設定カードは invoice_registration_number のみを描画。option_product_tax_rule の form_widget は無い）\nsrc/Eccube/Resource/template/admin/Setting/Shop/tax_rule.twig:53-214 （個別税率設定のセクション自体が存在しない）\nsrc/Eccube/Controller/Admin/Setting/Shop/ShopController.php:65-68 （ShopMasterType 全体を handleRequest するため、未描画のチェックボックスは false として保存される）\nsrc/Eccube/Entity/BaseInfo.php:129-130 （option_product_tax_rule の default は false ＝無効。設計の初期値とは一致）\nsrc/Eccube/Service/TaxRuleService.php:53 / src/Eccube/Repository/TaxRuleRepository.php:119 （フラグ自体は業務ロジックから参照されている）\n\n▼備考\n元レポートは「設定UIは店舗基本情報画面へ移設」としているが、grep -rn \"option_product_tax_rule\" --include=*.twig をリポジトリ全体（app/template のオーバーライドを含む）に対して実行した結果ヒット0件であり、基本情報画面にも描画されていない。ShopMasterType にフォーム項目が存在するだけで、EccubeFormTypeExtension の auto_render 既定値は false（src/Eccube/Form/Extension/DoctrineOrmExtension.php:91-92）のため自動描画もされない。初期値（無効）だけが要件を満たしているため「一部実装」とした。"
+  },
+  "designBook": "0209_基本設計仕様書(基本情報設定).xlsx",
+  "feature": "税率設定",
+  "classification": "基本情報設定",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/ShopMasterType.php",
+      "start": 279,
+      "end": 280,
+      "fileLines": 267,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig",
+      "start": 426,
+      "end": 439,
+      "fileLines": 371,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/tax_rule.twig",
+      "start": 53,
+      "end": 214,
+      "fileLines": 214,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "{% block main %}\n    <div class=\"c-contentsArea__cols\">\n        <div class=\"c-contentsArea__primaryCol\">\n            <div class=\"c-primaryCol\">\n                <div class=\"card rounded border-0 mb-4\">\n                    <div class=\"card-header\">\n                        <div class=\"d-inline-block\" data-bs-toggle=\"tooltip\" data-bs-placement=\"top\" title=\"{{ 'tooltip.setting.shop.tax_setting'|trans }}\">\n                            <span>{{ 'admin.setting.shop.tax_setting'|trans }}</span>\n                            <i class=\"fa fa-question-circle fa-lg ms-1\"></i>\n                        </div>\n                    </div>\n                    <div class=\"card-body p-0\">\n                        <table class=\"table tabel-sm\">\n                            <colgroup>\n                                <"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Setting/Shop/ShopController.php",
+      "start": 65,
+      "end": 68,
+      "fileLines": 113,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $builder = $this->formFactory\n            ->createBuilder(ShopMasterType::class, $BaseInfo);\n\n        $CloneInfo = clone $BaseInfo;"
+    },
+    {
+      "path": "src/Eccube/Entity/BaseInfo.php",
+      "start": 129,
+      "end": 130,
+      "fileLines": 1146,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        private $shop_kana;\n"
+    },
+    {
+      "path": "src/Eccube/Service/TaxRuleService.php",
+      "start": 53,
+      "end": 53,
+      "fileLines": 153,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "         * 商品別税率が有効で商品別税率が設定されている場合は商品別税率"
+    },
+    {
+      "path": "src/Eccube/Repository/TaxRuleRepository.php",
+      "start": 119,
+      "end": 119,
+      "fileLines": 295,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                $Pref = $Customer->getPref();"
+    },
+    {
+      "path": "src/Eccube/Form/Extension/DoctrineOrmExtension.php",
+      "start": 91,
+      "end": 92,
+      "fileLines": 133,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        );\n    }"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 236,
+      "end": 237,
+      "resolvedFrom": "M10_base_info_setting_basedesign.md",
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "個別税率設定\n1-1 商品別税率機能 単一選択(ラジオボタン) - - 無効 選択肢:有効　無効"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 231,
+      "end": 231,
+      "resolvedFrom": "M10_base_info_setting_basedesign.md",
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 個別税率設定、共通税率設定を登録する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/ShopMasterType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/tax_rule.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Setting/Shop/ShopController.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/BaseInfo.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/TaxRuleService.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/TaxRuleRepository.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Extension/DoctrineOrmExtension.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:32+09:00",
+  "designResolution": {
+    "requested": "0209_基本設計仕様書(基本情報設定).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html",
+    "sheetCount": 14,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-8",
+        "title": "税率設定",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "基本設定(旧ショップマスター)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "特定商取引に関する法律"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "利用規約管理"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "支払い方法　手数料設定"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "配送方法設定"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "税率設定"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "自動送信メール"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "メール設定"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "カスタムCSV出力設定"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "店舗登録"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "追加システム設定"
+      }
+    ]
+  }
+}

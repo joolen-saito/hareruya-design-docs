@@ -1,0 +1,196 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1785",
+  "issueId": 43509237,
+  "summary": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPのQRコード＆採用情報にて、採用情報バナー(9-2)がPC版のみ表示となっておらず、スマートフォン表示でも表示されている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:15:58Z",
+  "updated": "2026-07-14T01:15:58Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1785",
+  "basicInfo": {
+    "分類": "フロントトップ",
+    "機能": "支店ECTOP",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPのQRコード＆採用情報にて、採用情報バナー(9-2)がPC版のみ表示となっておらず、スマートフォン表示でも表示されている",
+    "設計書": "0301_基本設計仕様書(フロント_トップ).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントトップ\n機能：支店ECTOP\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロントトップ_支店ECTOP_支店ECTOPのQRコード＆採用情報にて、採用情報バナー(9-2)がPC版のみ表示となっておらず、スマートフォン表示でも表示されている\n設計書：0301_基本設計仕様書(フロント_トップ).xlsx",
+    "期待される挙動": "- 支店ECTOP(F01-02)の「QRコード & 採用情報」欄の(9-2)採用情報バナーは、PC版のみに表示されること。\n- 採用情報バナーを押下すると、ブラウザの新しいタブで https://corp.hareruyamtg.com/recruit の採用ページを開くこと。\n- (9-1)店舗のX公式アカウントQRコードは店舗登録の「X公式アカウントURL」から生成し、(9-3)ご自宅から簡単予約QRコードは顧客グループが「支店店内アカウント」の場合のみ支店ECTOPのURLから生成して表示し、支店店内アカウントでない場合はX公式アカウントQRコードがセンターに来るよう調整すること。",
+    "現在の挙動": "- 採用情報バナーは Block/shop_recruit.twig に実装されており、shop_top.twig:49 から無条件に include されているため、PC/スマートフォンの区別なく常に表示される。\n- shop_recruit.twig には表示条件(if/デバイス判定)が一切なく、バンドルCSS hareruya-top.css の .p-hareruya-branch-top__recruit / .p-hareruya-branch-top__recruit-banner にも display:none やメディアクエリによる非表示指定は存在しない（max-width:1023px のメディアクエリ内では padding の指定のみ）。\n- JS バンドル html/template/default/assets/hareruya/js/*.js にも recruit ブロックを制御するコードは存在しない（grep でヒット0件）。すなわちTwig・CSS・JSの3層いずれにもPC限定表示の制御が無い。\n- 一方で(9-1)X公式アカウントQRコード（Shop.xAccountUrl からQR生成）、(9-3)簡単予約QRコード（isBranchShopFront 時のみ・支店ECTOP URLからQR生成）、採用リンクの target=\"_blank\" による別タブ遷移、非支店店内アカウント時のX QRコードのセンター表示（PC時 grid の auto-fit + justify-content:center により1枚のカードが中央寄せになる）は実装済みで設計どおりである。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/F01_top_basedesign.md:915 「| 9-2 | 採用情報 | 画像 | - | - | - | ・PC版のみに表示される<br><br>・押下すると、以下URLの採用ページ遷移する<br>　https://corp.hareruyamtg.com/recruit |」\n.cursor/docs/MDfile/F01_top_basedesign.md:910 「★ 採用情報を押下すると、ブラウザの新しいタブで、以下URLの採用ページを開く」\n.cursor/docs/MDfile/F01_top_basedesign.md:902 「★ 支店店内アカウントでない場合は、最新情報はXでチェックのQRコードがセンターに来るよう調整する」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/shop_top.twig:49 （shop_recruit.twig を条件なしで include している）\nsrc/Eccube/Resource/template/default/Block/shop_recruit.twig:11-15 （採用情報バナー。表示条件・PC限定クラスが無い）\nhtml/template/default/assets/hareruya/css/hareruya-top.css:1 （.p-hareruya-branch-top__recruit 系ルールに display:none / 非表示メディアクエリが無い）\nsrc/Eccube/Resource/template/default/Block/shop_promo.twig:14-45 （9-1 X公式QR・9-3 簡単予約QRは設計どおり実装済み）\nsrc/Eccube/Controller/Shop/ShopTopController.php:97-121,177-189 （shopTopUrl/QRデータURI生成、isBranchShopFront 判定）\n\n▼備考\n調査範囲: default テンプレート配下に shop_top / shop_promo / shop_recruit の *.en.twig 版は存在せず（多言語は messages.ja.yaml:1281 / messages.en.yaml:1084 の trans キーで対応）、言語別の反映漏れは無い。バンドルCSS(hareruya-top.css は1行のminified)・JS(html/template/default/assets/hareruya/js)双方を grep したが recruit ブロックの非表示制御は皆無。git log --since=\"2026-07-08\" で shop_recruit.twig / shop_promo.twig / hareruya-top.css の該当コミットは無く、レポート作成後に解消された事実も無い。なお .p-hareruya-branch-top__promo-cards--center は CSS にルールが存在しない未使用クラスだが、PC時の grid(auto-fit + justify-content:center)により非支店店内アカウント時のX QRカードは中央寄せになるため、設計要件（902行目）自体は満たしている。"
+  },
+  "designBook": "0301_基本設計仕様書(フロント_トップ).xlsx",
+  "feature": "支店ECTOP",
+  "classification": "フロントトップ",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Block/shop_recruit.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 915,
+      "end": 915,
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 9-2 | 採用情報 | 画像 | - | - | - | ・PC版のみに表示される<br><br>・押下すると、以下URLの採用ページ遷移する<br>　https://corp.hareruyamtg.com/recruit |"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 910,
+      "end": 910,
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "**★ 採用情報を押下すると、ブラウザの新しいタブで、以下URLの採用ページを開く**"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 902,
+      "end": 902,
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "**★ 支店店内アカウントでない場合は、最新情報はXでチェックのQRコードがセンターに来るよう調整する**"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/shop_top.twig",
+      "start": 49,
+      "end": 49,
+      "fileLines": 64,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        {% include 'Block/shop_recruit.twig' %}"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/shop_recruit.twig",
+      "start": 11,
+      "end": 15,
+      "fileLines": 17,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "<div class=\"p-hareruya-branch-top__recruit\">\n  <div class=\"l-hareruya-container\">\n    <a class=\"p-hareruya-branch-top__recruit-banner\" href=\"https://corp.hareruyamtg.com/recruit\" target=\"_blank\" rel=\"noopener noreferrer\">\n      <img class=\"p-hareruya-branch-top__recruit-banner-img\" src=\"{{ asset('assets/hareruya/img/share/img_251217_hareruya_recruit.webp') }}\" alt=\"{{ 'shop_top.recruit.alt'|trans }}\" width=\"486\" height=\"165\" decoding=\"async\" loading=\"lazy\">\n    </a>"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/shop_promo.twig",
+      "start": 14,
+      "end": 45,
+      "fileLines": 48,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "      {% if Shop.xAccountUrl %}\n      <div class=\"p-hareruya-branch-top__promo-card\">\n        <div class=\"p-hareruya-branch-top__promo-card-content\">\n          <div class=\"p-hareruya-branch-top__promo-card-header\">\n            <div class=\"p-hareruya-branch-top__promo-card-icon\">\n              <img class=\"p-hareruya-branch-top__promo-card-icon-img\" src=\"{{ asset('assets/hareruya/img/share/icon-x.webp') }}\" alt=\"X\" width=\"32\" height=\"32\" decoding=\"async\" loading=\"lazy\">\n            </div>\n            <span class=\"p-hareruya-branch-top__promo-card-title\">{{ 'shop_top.promo.x_title'|trans }}</span>\n          </div>\n          <p class=\"p-hareruya-branch-top__promo-card-desc\">{{ 'shop_top.promo.x_desc'|trans({ '%shop_name%': app.request.locale == 'en' ? (Shop.shopNameEng ?? Shop.shopName) : Shop"
+    },
+    {
+      "path": "src/Eccube/Controller/Shop/ShopTopController.php",
+      "start": 97,
+      "end": 121,
+      "fileLines": 190,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $shopTopUrl = $this->urlGenerator->generate(\n            'shop_top',\n            ['_locale' => $locale, '_shop' => '/'.$shopSlug],\n            UrlGeneratorInterface::ABSOLUTE_URL,\n        );\n        $xAccountUrl = $Shop->getXAccountUrl();\n\n        $projectDir = $this->getParameter('kernel.project_dir');\n        $xQrLogoPath = $projectDir.'/'.self::X_QR_LOGO_RELATIVE;\n        $keepQrLogoPath = $projectDir.'/'.self::KEEP_QR_LOGO_RELATIVE;\n\n        return [\n            'Shop' => $Shop,\n            'isBranchShopFront' => $this->isBranchShopFrontCustomer(),\n            'BestSellerProductClasses' => $BestSellerProductClasses,\n            'SaleProductClasses' => $SaleProductClasses,\n            'tiles' => $tiles,\n            'banner' => $banner,\n            'bestSellerForms' => $bestSelle"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/F01_top_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/shop_top.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/shop_recruit.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/shop_promo.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Shop/ShopTopController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:30+09:00",
+  "designResolution": {
+    "requested": "0301_基本設計仕様書(フロント_トップ).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html",
+    "sheetCount": 4,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP",
+        "score": 100
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP"
+      }
+    ]
+  }
+}

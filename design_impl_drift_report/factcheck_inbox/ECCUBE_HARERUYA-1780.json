@@ -1,0 +1,196 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1780",
+  "issueId": 43509231,
+  "summary": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPにて、支店の公開ステータスが非公開でも支店トップ以外の支店サイト配下ページ（商品一覧・商品詳細・カート等）が閲覧できてしまい、支店サイト全体の非表示制御になっていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:15:56Z",
+  "updated": "2026-07-14T01:15:56Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1780",
+  "basicInfo": {
+    "分類": "フロントトップ",
+    "機能": "支店ECTOP",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPにて、支店の公開ステータスが非公開でも支店トップ以外の支店サイト配下ページ（商品一覧・商品詳細・カート等）が閲覧できてしまい、支店サイト全体の非表示制御になっていない",
+    "設計書": "0301_基本設計仕様書(フロント_トップ).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントトップ\n機能：支店ECTOP\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロントトップ_支店ECTOP_支店ECTOPにて、支店の公開ステータスが非公開でも支店トップ以外の支店サイト配下ページ（商品一覧・商品詳細・カート等）が閲覧できてしまい、支店サイト全体の非表示制御になっていない\n設計書：0301_基本設計仕様書(フロント_トップ).xlsx",
+    "期待される挙動": "- 管理画面＞モール設定＞店舗登録で登録されている支店の公開ステータス（is_open_shop）に応じて、支店サイトの表示/非表示を制御すること。\n- 支店の公開ステータスが「非公開」の場合、支店トップだけでなく当該支店サイト全体（/{locale}/{支店スラッグ}/ 配下の全ページ）が表示されないこと。",
+    "現在の挙動": "- 公開ステータスの判定は ShopTopController::index() の1箇所のみで、支店トップ（ルート shop_top）へのアクセス時に BaseInfo::getIsOpenShop() が false なら 404 を返す実装になっている。\n- 支店サイト配下の他ページはすべて routes.yaml の prefix /{_locale}{_shop} 経由で解決されるが、その妥当性チェックを行う InvalidShopRedirectListener は BaseInfoService::isValidShop() を呼ぶだけで、isValidShop() は html_class_name に一致する BaseInfo が存在するかどうかしか見ておらず、is_open_shop を参照していない。\n- ルート condition に使われる ShopRouteConditionService::isShopByPath() も findOneBy(['html_class_name' => $slug]) の存在確認のみで、公開ステータスを見ていない。\n- 結果として、非公開の支店でも /{locale}/{支店スラッグ}/products/... などの配下ページはそのまま表示され、支店サイト全体の非表示制御が成立していない。",
+    "補足情報": "▼設計書該当箇所\nF01_top_basedesign.md:619-620 「支店の公開と非公開の制御 / * 支店の公開ステータスを確認の上、支店サイトを表示、または非表示にする」（支店ECTOP カスタマイズ要件）\nF01_top_basedesign.md:665 「**★ 管理画面＞モール設定＞店舗登録で登録されている支店の公開ステータスに応じて、支店サイトの表示/非表示を制御する**」（支店ECTOP 処理概要）\n\n▼実装該当箇所\nsrc/Eccube/Controller/Shop/ShopTopController.php:69-71 （支店トップのみ getIsOpenShop() で404）\nsrc/Eccube/Service/BaseInfoService.php:63-77 （isValidShop() は存在確認のみ。is_open_shop 未参照）\nsrc/Eccube/EventListener/InvalidShopRedirectListener.php:87-90 （フロント全リクエストの支店妥当性チェックだが isValidShop() のみ）\nsrc/Eccube/Service/ShopRouteConditionService.php:29-37 （ルートcondition。html_class_name の存在確認のみ）\napp/config/eccube/routes.yaml:20,42 （フロント全ルートが /{_locale}{_shop} プレフィクス配下）\n\n▼備考\nsrc/Eccube 配下でフロント側が getIsOpenShop()／isOpenShop を参照しているのは ShopTopController:69 の1箇所のみ（他のヒットはすべて管理画面フォーム・帳票・集計系）。よって「支店サイト全体」の非表示制御は未達成で、支店トップのみ実装済みという一部実装。"
+  },
+  "designBook": "0301_基本設計仕様書(フロント_トップ).xlsx",
+  "feature": "支店ECTOP",
+  "classification": "フロントトップ",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Controller/Shop/ShopTopController.php",
+      "start": 69,
+      "end": 71,
+      "fileLines": 190,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        if (!$Shop instanceof BaseInfo || !$Shop->getIsOpenShop()) {\n            throw $this->createNotFoundException();\n        }"
+    },
+    {
+      "path": "src/Eccube/Service/BaseInfoService.php",
+      "start": 63,
+      "end": 77,
+      "fileLines": 92,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function isValidShop(): bool\n    {\n        $shop = $this->getShopFromRequestAttributes();\n\n        // 空の場合は本店の為、有効判定とする\n        if ($shop === '') {\n            return true;\n        }\n\n        $BaseInfo = $this->baseInfoRepository->findByHtmlClassName($shop);\n\n        return $BaseInfo !== null\n            ? true\n            : false;\n    }"
+    },
+    {
+      "path": "src/Eccube/EventListener/InvalidShopRedirectListener.php",
+      "start": 87,
+      "end": 90,
+      "fileLines": 92,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        if (!$this->baseInfoService->isValidShop()) {\n            // 店舗が見つからない場合は本店のデフォルトロケールにリダイレクト\n            $event->setResponse(new RedirectResponse('/'.$this->defaultLocale.'/', Response::HTTP_MOVED_PERMANENTLY));\n        }"
+    },
+    {
+      "path": "src/Eccube/Service/ShopRouteConditionService.php",
+      "start": 29,
+      "end": 37,
+      "fileLines": 38,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function isShopByPath(?string $shopPath): bool\n    {\n        $slug = ltrim((string) $shopPath, '/');\n        if ($slug === '') {\n            return false;\n        }\n\n        return $this->baseInfoRepository->findOneBy(['html_class_name' => $slug]) instanceof BaseInfo;\n    }"
+    },
+    {
+      "path": "app/config/eccube/routes.yaml",
+      "start": 20,
+      "end": 20,
+      "fileLines": 42,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "customize_controllers_admin:"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 619,
+      "end": 620,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "支店の公開と非公開の制御\n* 支店の公開ステータスを確認の上、支店サイトを表示、または非表示にする"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 665,
+      "end": 665,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "**★ 管理画面＞モール設定＞店舗登録で登録されている支店の公開ステータスに応じて、支店サイトの表示/非表示を制御する**"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Shop/ShopTopController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/BaseInfoService.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/EventListener/InvalidShopRedirectListener.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/ShopRouteConditionService.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/config/eccube/routes.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:28+09:00",
+  "designResolution": {
+    "requested": "0301_基本設計仕様書(フロント_トップ).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html",
+    "sheetCount": 4,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP",
+        "score": 100
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP"
+      }
+    ]
+  }
+}

@@ -1,0 +1,264 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1869",
+  "issueId": 43509337,
+  "summary": "【未実装】フロント会員_パスワード再発行_パスワード再発行にて、E-1. リセットキー書式エラー画面と E-2. ユーザー存在チェックエラー画面が実装されておらず、いずれも汎用の404エラーページになる",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:42Z",
+  "updated": "2026-07-14T01:16:42Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1869",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "パスワード再発行",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【未実装】フロント会員_パスワード再発行_パスワード再発行にて、E-1. リセットキー書式エラー画面と E-2. ユーザー存在チェックエラー画面が実装されておらず、いずれも汎用の404エラーページになる",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：パスワード再発行\n課題カテゴリ：不具合（バグ）\n課題：【未実装】フロント会員_パスワード再発行_パスワード再発行にて、E-1. リセットキー書式エラー画面と E-2. ユーザー存在チェックエラー画面が実装されておらず、いずれも汎用の404エラーページになる\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- パスワード再設定URLのリセットキーが未指定・英数字以外を含む場合は、E-1. リセットキー書式エラー画面(「トップページへ」ボタンを持つ専用画面)を表示すること。\n- リセットキーで検索して有効期限内の本会員が存在しない場合は、E-2. ユーザー存在チェックエラー画面(「トップページへ」ボタンを持つ専用画面)を表示すること。",
+    "現在の挙動": "- ForgotController::reset はリセットキーの書式チェックに失敗すると NotFoundHttpException を投げており、専用のエラー画面を描画していない。\n- リセットキーから会員データが取得できない場合も同様に NotFoundHttpException を投げている。\n- その結果、ExceptionListener が汎用エラーテンプレート(error.twig)を HTTP 404 で描画するだけで、E-1/E-2 の区別も無く、本会員登録側で用意されているようなデザイン適用済みエラー画面(Entry/activate_error.twig)も存在しない。\n- Forgot 配下のテンプレートは index/complete/reset/reset_complete の4種のみで、エラー画面用テンプレートは存在しない。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:382-383 「1の条件でエラーになった場合、E-1. リセットキー書式エラー画面を表示」「2の条件でエラーになった場合、E-2.ユーザー存在チェックエラー画面を表示」\nF06_customer_basedesign.md:423-426 「リセットキーに英数文字以外の文字が混じっている場合に表示する」「| 5-1 | トップページへ | ボタン | ... ・押下すると、ECTOP画面へ遷移する |」\nF06_customer_basedesign.md:436-439 「リセットキーでユーザーを検索し、リセットキーの有効期限内の本会員が存在しなかった場合に表示」「| 6-1 | トップページへ | ボタン | ... ・押下すると、ECTOP画面へ遷移する |」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Front/ForgotController.php:184-187 （リセットキー書式異常時に NotFoundHttpException）\nsrc/Eccube/Controller/Front/ForgotController.php:192-195 （リセットキーから会員が取得できない場合も NotFoundHttpException）\nsrc/Eccube/EventListener/ExceptionListener.php:170-174,196-205 （404 は汎用の error.twig を描画）\nsrc/Eccube/Resource/template/default/error.twig:30-32 （EC-CUBE標準デザインの汎用エラーページ）\nsrc/Eccube/Resource/template/default/Forgot/ （index/complete/reset/reset_complete のみでエラー画面テンプレートが無い）\n\n▼備考\n反証として Forgot 配下の全テンプレート・ExceptionListener・error.twig・翻訳キーを確認した。404 の汎用エラーページ(error.twig)には「トップページへ」リンクが存在するため画面から復帰は可能だが、これは EC-CUBE 標準デザイン(ec-layoutRole/style.css)の汎用404ページであり、設計が定める E-1/E-2 の専用画面ではない。本会員登録側(F06-02)には Entry/activate_error.twig というデザイン適用済みのエラー画面が用意されているのと対照的である。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "パスワード再発行",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Entry/activate_error.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/ForgotController.php",
+      "start": 184,
+      "end": 187,
+      "fileLines": 241,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        if (count($errors) > 0) {\n            // リセットキーに異常がある場合\n            throw new HttpException\\NotFoundHttpException();\n        }"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/ForgotController.php",
+      "start": 192,
+      "end": 195,
+      "fileLines": 241,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        if (null === $Customer) {\n            // リセットキーから会員データが取得できない場合\n            throw new HttpException\\NotFoundHttpException();\n        }"
+    },
+    {
+      "path": "src/Eccube/EventListener/ExceptionListener.php",
+      "start": 170,
+      "end": 174,
+      "fileLines": 135,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/error.twig",
+      "start": 30,
+      "end": 32,
+      "fileLines": 38,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                <p class=\"ec-404Role__title ec-reportHeading\">{{ error_title }}</p>\n                <p class=\"ec-404Role__description ec-reportDescription\">{{ error_message }}</p>\n                <a class=\"ec-blockBtn--cancel\" href=\"{{ app.request.basePath ~ '/' }}\">{{ 'common.go_to_top'|trans }}</a>"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 382,
+      "end": 383,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 1の条件でエラーになった場合、E-1. リセットキー書式エラー画面を表示\n* 2の条件でエラーになった場合、E-2.ユーザー存在チェックエラー画面を表示"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 423,
+      "end": 426,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* リセットキーに英数文字以外の文字が混じっている場合に表示する\n| 識別ID | ラベル | 書式・制限 | 必須 | 最大文字数<br>または最大値 | 初期値 | 画面部品の説明 |\n| --- | --- | --- | --- | --- | --- | --- |\n| 5-1 | トップページへ | ボタン | - | - | - | ・押下すると、ECTOP画面へ遷移する |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 436,
+      "end": 439,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* リセットキーでユーザーを検索し、リセットキーの有効期限内の本会員が存在しなかった場合に表示\n| 識別ID | ラベル | 書式・制限 | 必須 | 最大文字数<br>または最大値 | 初期値 | 画面部品の説明 |\n| --- | --- | --- | --- | --- | --- | --- |\n| 6-1 | トップページへ | ボタン | - | - | - | ・押下すると、ECTOP画面へ遷移する |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Front/ForgotController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/EventListener/ExceptionListener.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/error.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:42+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

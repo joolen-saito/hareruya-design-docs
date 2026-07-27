@@ -1,0 +1,280 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1898",
+  "issueId": 43509390,
+  "summary": "【実装乖離】フロント会員_お問い合わせ_お問い合わせ確認画面の「送信をする」で、店舗ごとに設定された問い合わせ受付メールアドレスではなく、件名マスタのメールアドレス（未設定時は本店の受付アドレス）宛に送信している",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:57Z",
+  "updated": "2026-07-14T01:16:57Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1898",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "お問い合わせ",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント会員_お問い合わせ_お問い合わせ確認画面の「送信をする」で、店舗ごとに設定された問い合わせ受付メールアドレスではなく、件名マスタのメールアドレス（未設定時は本店の受付アドレス）宛に送信している",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：お問い合わせ\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_お問い合わせ_お問い合わせ確認画面の「送信をする」で、店舗ごとに設定された問い合わせ受付メールアドレスではなく、件名マスタのメールアドレス（未設定時は本店の受付アドレス）宛に送信している\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- お問い合わせ確認画面の「送信をする」(識別ID 6-6)を押下すると、店舗ごとに設定している問い合わせ受付メールアドレス宛にメールを送信し、お問い合わせ完了画面へ遷移すること。",
+    "現在の挙動": "- MailService::sendContactMail() は、送信先(bcc / replyTo / from)のアドレスを、件名マスタ MtbContactSubject の email 列から取得し、空の場合のみ BaseInfo の email02（問い合わせ受付メールアドレス）にフォールバックしている。\n- フォールバック先の BaseInfo は MailService のコンストラクタで BaseInfoRepository::get()（フロントでは id=1 の本店/モール）から取得しており、支店の BaseInfo は参照されない。\n- お問い合わせフォームで選択した店舗（識別ID 4-2 お問い合わせ店舗選択 / 4-5 イベント実施店舗）は DtbContact への保存に使われるのみで、メール送信先の決定には使用されていない。\n- 結果として、店舗を選択する「店舗でのお買い物・イベントに関するお問い合わせ」でも、送信先は件名マスタに設定された共通アドレス（初期投入値: shop_info@hareruyamtg.com）となる。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:1400 「6-6 送信をする ボタン - - - ・押下すると、店舗ごとに設定している問い合わせ受付メールアドレス当てにメールを送信し、お問い合わせ完了画面へ遷移する」\nF06_customer_basedesign.md:1369-1371 「4-2 お問い合わせ店舗選択 単一選択(セレクトボックス) … ・管理画面＞店舗設定＞店舗登録に登録されている店舗 ・閉店または非公開の店舗を除く」\n\n▼実装該当箇所\nsrc/Eccube/Service/MailService.php:336-352 （送信先アドレスを件名マスタの email、なければ BaseInfo->getEmail02() から決定）\nsrc/Eccube/Service/MailService.php:355-361 （to は問い合わせ者、bcc / replyTo / from に上記アドレスを設定）\nsrc/Eccube/Service/MailService.php:100 （BaseInfo は BaseInfoRepository::get() で取得。フロントでは id=1）\nsrc/Eccube/Repository/BaseInfoRepository.php:65-87 （get() は管理画面のテナントセッションがない限り id=1 を返す）\nsrc/Eccube/Service/Front/Mypage/ContactCreateAction.php:44-62 （選択店舗 BaseInfo は DtbContact の保存にのみ使用）\napp/DoctrineMigrations/Version20251125141030.php:82-89 （件名「店舗でのお買い物・イベントに関するお問い合わせ」の email は shop_info@hareruyamtg.com 固定）\n\n▼備考\nBaseInfo（店舗）には店舗ごとの email02（問い合わせ受付メールアドレス）が存在し、管理画面の店舗登録(ShopMasterType / MallTenantShopType)から設定可能だが、フロントのお問い合わせ送信では参照されていない。「店舗ごとに設定している問い合わせ受付メールアドレス」を『選択された店舗の受付アドレス』と解釈した場合は明確な乖離。『アクセスした店舗サイトの受付アドレス』と解釈した場合でも、MailService は id=1 の BaseInfo 固定であり支店サイトからの問い合わせでも本店アドレスになる。設計意図の確認が必要なため confidence は medium。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "お問い合わせ",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Service/MailService.php",
+      "start": 336,
+      "end": 352,
+      "fileLines": 898,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            null\n        );\n        $this->eventDispatcher->dispatch($event, EccubeEvents::MAIL_CONTACT);\n\n        try {\n            $this->mailer->send($message);\n            log_info('お問い合わせ受付メール送信完了');\n        } catch (TransportExceptionInterface $e) {\n            log_critical($e->getMessage());\n        }\n    }\n\n    /**\n     * Send order mail.\n     *\n     * @param \\Eccube\\Entity\\Order $Order 受注情報\n     *"
+    },
+    {
+      "path": "src/Eccube/Service/MailService.php",
+      "start": 355,
+      "end": 361,
+      "fileLines": 898,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function sendOrderMail(Order $Order)\n    {\n        log_info('受注メール送信開始');\n\n        $MailTemplate = $this->mailTemplateRepository->find($this->eccubeConfig['eccube_order_mail_template_id']);\n\n        $body = $this->twig->render($MailTemplate->getFileName(), ["
+    },
+    {
+      "path": "src/Eccube/Service/MailService.php",
+      "start": 100,
+      "end": 100,
+      "fileLines": 898,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        EccubeConfig $eccubeConfig,"
+    },
+    {
+      "path": "src/Eccube/Repository/BaseInfoRepository.php",
+      "start": 65,
+      "end": 87,
+      "fileLines": 52,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Service/Front/Mypage/ContactCreateAction.php",
+      "start": 44,
+      "end": 62,
+      "fileLines": 71,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            $ContactData = $input->ContactData;\n            $Customer = $input->Customer;\n            $BaseInfo = $input->BaseInfo;\n            $ContactSubject = $input->ContactSubject;\n            $phoneNumber = $this->context->isLocaleJa() ? $ContactData['tel01'].$ContactData['tel02'].$ContactData['tel03'] : $ContactData['telEn'];\n\n            $this->contactEntityManager->save(\n                null,\n                $ContactData['name01'],\n                $ContactData['name02'],\n                $phoneNumber,\n                $ContactData['email'],\n                $BaseInfo,\n                $Customer,\n                $ContactSubject,\n                (int) $ContactData['subSubject'],\n                $ContactData['attachedInfo'],\n                $ContactData['contents']\n            );"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20251125141030.php",
+      "start": 82,
+      "end": 89,
+      "fileLines": 128,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                'id' => 3,\n                'subject' => '店舗でのお買い物・イベントに関するお問い合わせ',\n                'subject_en' => 'About Hareruya Shop or Event',\n                'email' => 'shop_info@hareruyamtg.com',\n                'shop_flg' => 1,\n                'attached_info_name' => '',\n                'attached_info_name_en' => '',\n            ],"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 1400,
+      "end": 1400,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "6-6 送信をする ボタン - - - ・押下すると、店舗ごとに設定している問い合わせ受付メールアドレス当てにメールを送信し、お問い合わせ完了画面へ遷移する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 1369,
+      "end": 1371,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "4-2 お問い合わせ店舗選択 単一選択(セレクトボックス) - - - ・以下の条件の店舗を選択肢として表示する\n　　・管理画面＞店舗設定＞店舗登録に登録されている店舗\n　　・閉店または非公開の店舗を除く"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Service/MailService.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/BaseInfoRepository.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Front/Mypage/ContactCreateAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20251125141030.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:57+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ",
+        "score": 100
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴",
+        "score": 60
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

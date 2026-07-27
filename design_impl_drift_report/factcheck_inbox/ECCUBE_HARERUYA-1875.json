@@ -1,0 +1,222 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1875",
+  "issueId": 43509349,
+  "summary": "【実装乖離】フロント会員_ポイント履歴_ポイント履歴の並び順が、設計のポイント履歴ID降順ではなく発行日降順(第2キーがID降順)になっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:46Z",
+  "updated": "2026-07-14T01:16:46Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1875",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "ポイント履歴",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント会員_ポイント履歴_ポイント履歴の並び順が、設計のポイント履歴ID降順ではなく発行日降順(第2キーがID降順)になっている",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：ポイント履歴\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_ポイント履歴_ポイント履歴の並び順が、設計のポイント履歴ID降順ではなく発行日降順(第2キーがID降順)になっている\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- ポイント履歴(F06-10)の一覧は、ポイント履歴IDの降順で表示すること。",
+    "現在の挙動": "- ポイント履歴一覧のクエリ(DtbPointHistoryRepository::getQueryBuilderByCustomer)は、第1ソートキーが p.issueDate の降順、第2ソートキーが p.id の降順になっている。\n- 設計が指定するポイント履歴ID(p.id)は第2キーでしか効かないため、発行日(issueDate)がID順と一致しないデータ(スマレジ連携や移行取込などで後から過去日付のポイント履歴が作成されるケース)では、設計と異なる並び順で表示される。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:635 「* ポイント履歴は、ポイント履歴IDの降順で表示する」\n\n▼実装該当箇所\nsrc/Eccube/Repository/DtbPointHistoryRepository.php:83-90 （orderBy('p.issueDate', 'DESC')->addOrderBy('p.id', 'DESC')）\nsrc/Eccube/Controller/Front/Mypage/MypageController.php:400-409 （getQueryBuilderByCustomer の結果をそのままページネートしており、並び替えの上書きは無い）\n\n▼備考\nテンプレート(Mypage/point_history.twig)側でも並び替えは行っていないため、表示順はこのクエリで確定する。ポイント履歴が常にID順＝発行日順で作成されるデータであれば見た目の順序は一致するが、実装のソートキーは設計(ID降順)と異なる。設計意図が「新しい順」であれば実装の方が妥当な可能性もあるため、設計側の意図確認が望ましい。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "ポイント履歴",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Repository/DtbPointHistoryRepository.php",
+      "start": 83,
+      "end": 90,
+      "fileLines": 414,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function getQueryBuilderByCustomer(Customer $customer): QueryBuilder\n    {\n        return $this->createQueryBuilder('p')\n            ->where('p.Customer = :customer')\n            ->setParameter('customer', $customer)\n            ->orderBy('p.issueDate', 'DESC')\n            ->addOrderBy('p.id', 'DESC');\n    }"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/Mypage/MypageController.php",
+      "start": 400,
+      "end": 409,
+      "fileLines": 545,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\n        $qb = $this->pointHistoryRepository->getQueryBuilderByCustomer($Customer);\n\n        $pageCount = max(1, (int) $request->get('page_count', 10));\n\n        $pagination = $paginator->paginate(\n            $qb,\n            max(1, (int) $request->get('pageno', 1)),\n            $pageCount,\n            ['wrap-queries' => true]"
+    },
+    {
+      "path": "Mypage/point_history.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 635,
+      "end": 635,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* ポイント履歴は、ポイント履歴IDの降順で表示する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Repository/DtbPointHistoryRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Front/Mypage/MypageController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:45+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

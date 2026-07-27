@@ -1,0 +1,188 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1938",
+  "issueId": 43509446,
+  "summary": "【実装乖離】フロント店頭買取_会員登録フォーム_店頭買取の会員登録フォームにて、パスワードの文字数チェックが設計の8〜32文字ではなく12〜50文字になっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:18Z",
+  "updated": "2026-07-14T01:17:18Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1938",
+  "basicInfo": {
+    "分類": "フロント店頭買取",
+    "機能": "会員登録フォーム",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント店頭買取_会員登録フォーム_店頭買取の会員登録フォームにて、パスワードの文字数チェックが設計の8〜32文字ではなく12〜50文字になっている",
+    "設計書": "0308_基本設計仕様書(フロント_店頭買取).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント店頭買取\n機能：会員登録フォーム\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント店頭買取_会員登録フォーム_店頭買取の会員登録フォームにて、パスワードの文字数チェックが設計の8〜32文字ではなく12〜50文字になっている\n設計書：0308_基本設計仕様書(フロント_店頭買取).xlsx",
+    "期待される挙動": "- 会員登録フォーム画面（F08-04）のパスワード（項目4）およびパスワード（確認用）（項目5）は、最大文字数32文字であること。\n- パスワードは8〜32文字であるかのチェックを行うこと。",
+    "現在の挙動": "- パスワード欄は OtcBuyRepeatedPasswordType が使われており、Assert\\Length の min に eccube_password_min_len（12）、max に eccube_password_max_len（50）が設定されている。\n- そのため 8〜11 文字のパスワードは設計上は許容されるのにエラーとなり、逆に 33〜50 文字のパスワードは設計上は不可のはずが登録できてしまう。\n- 入力欄に maxlength 属性は付与されておらず、32文字を超える入力を抑止する仕組みもない。",
+    "補足情報": "▼設計書該当箇所\nF08_otc_buy_basedesign.md:187 「| 4 | パスワード | ボタン | ◯ | 32 | - | 8～32文字であるかチェックを行う |」\nF08_otc_buy_basedesign.md:188 「| 5 | パスワード(確認用) | ボタン | ◯ | 32 | - | パスワードと同一かチェックを行う |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Front/OtcBuy/OtcBuyRepeatedPasswordType.php:44-55 （Assert\\Length に min=eccube_password_min_len, max=eccube_password_max_len）\napp/config/eccube/packages/eccube.yaml:195-196 （eccube_password_min_len: 12 / eccube_password_max_len: 50）\nsrc/Eccube/Form/Type/Front/OtcBuy/OtcBuyOrderType.php:255-257 （password フィールドに OtcBuyRepeatedPasswordType を適用）\nsrc/Eccube/Resource/template/default/OtcBuy/register_customer.twig:55,69 （パスワード／確認用の入力欄。maxlength 指定なし）\n\n▼備考\neccube_password_min_len / eccube_password_max_len はサイト共通のパラメータであり、店頭買取の会員登録フォームだけを 8〜32 に変えるには FormType 側で値を上書きする必要がある。なお設計の下限8文字は現行のパスワードポリシー（12文字以上）より弱いため、修正方針は業務側との調整が必要。"
+  },
+  "designBook": "0308_基本設計仕様書(フロント_店頭買取).xlsx",
+  "feature": "会員登録フォーム",
+  "classification": "フロント店頭買取",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Front/OtcBuy/OtcBuyRepeatedPasswordType.php",
+      "start": 44,
+      "end": 55,
+      "fileLines": 86,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            'options' => [\n                'constraints' => [\n                    new Assert\\Length([\n                        'min' => $this->eccubeConfig['eccube_password_min_len'],\n                        'max' => $this->eccubeConfig['eccube_password_max_len'],\n                    ]),\n                    new Assert\\Regex([\n                        'pattern' => '/^[[:graph:][:space:]]+$/i',\n                        'message' => 'form.type.graph.invalid',\n                    ]),\n                ],\n            ],"
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "start": 195,
+      "end": 196,
+      "fileLines": 184,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Front/OtcBuy/OtcBuyOrderType.php",
+      "start": 255,
+      "end": 257,
+      "fileLines": 294,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('password', OtcBuyRepeatedPasswordType::class, [\n                'mapped' => false,\n            ])"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/OtcBuy/register_customer.twig",
+      "start": 55,
+      "end": 55,
+      "fileLines": 137,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                    {{ form_widget(form.password.first, { type : 'password' , 'attr':{'placeholder': '(例)password'}}) }}"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+      "start": 187,
+      "end": 187,
+      "resolvedFrom": "F08_otc_buy_basedesign.md",
+      "fileLines": 252,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 4 | パスワード | ボタン | ◯ | 32 | - | 8～32文字であるかチェックを行う |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+      "start": 188,
+      "end": 188,
+      "resolvedFrom": "F08_otc_buy_basedesign.md",
+      "fileLines": 252,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 5 | パスワード(確認用) | ボタン | ◯ | 32 | - | パスワードと同一かチェックを行う |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Front/OtcBuy/OtcBuyRepeatedPasswordType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Front/OtcBuy/OtcBuyOrderType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/OtcBuy/register_customer.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:09+09:00",
+  "designResolution": {
+    "requested": "0308_基本設計仕様書(フロント_店頭買取).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html",
+    "sheetCount": 7,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-6",
+        "title": "会員登録フォーム",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "店頭買取査定申込前ログイン"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "店頭買取査定申込情報入力"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "店頭買取査定申込登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "会員登録フォーム"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "店頭買取査定申込確認"
+      }
+    ]
+  }
+}

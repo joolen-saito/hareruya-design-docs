@@ -1,0 +1,242 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2187",
+  "issueId": 43509766,
+  "summary": "【一部実装】基本情報設定_店舗登録_店舗登録画面にて、編集権限を保持していないメンバーに対する登録ボタンの押下不可制御が実装されていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:22Z",
+  "updated": "2026-07-14T01:19:22Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2187",
+  "basicInfo": {
+    "分類": "基本情報設定",
+    "機能": "店舗登録",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】基本情報設定_店舗登録_店舗登録画面にて、編集権限を保持していないメンバーに対する登録ボタンの押下不可制御が実装されていない",
+    "設計書": "0209_基本設計仕様書(基本情報設定).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：基本情報設定\n機能：店舗登録\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】基本情報設定_店舗登録_店舗登録画面にて、編集権限を保持していないメンバーに対する登録ボタンの押下不可制御が実装されていない\n設計書：0209_基本設計仕様書(基本情報設定).xlsx",
+    "期待される挙動": "- 店舗登録画面（M10-15）は、編集権限を保持しているメンバーのみが登録・編集を行えること。\n- 編集権限を保持していないメンバーは、登録ボタンを押すことができないこと（＝画面は表示されるが登録ボタンが非活性等で押下不可であること）。",
+    "現在の挙動": "- 店舗登録・編集を行う TenantController の create／detail ルートには #[IsGranted] 等の権限属性が一切付与されていない。\n- 画面テンプレート @admin/mall/tenant/detail.twig には is_granted によるガードも disabled 属性も 0 件で、登録ボタン（687行付近の submit ボタン）は常に活性状態で描画される。HTML属性・画面内CSS・JS・バンドルCSS/JS のいずれにも非活性化処理はない。\n- 本フォークには店舗単位の編集権限（Member::isEditableShop()、dtb_member_base_info 由来）が存在するが、TenantController・MallTenantShopType・detail.twig のいずれからも呼ばれていない。そのため権限のない店舗に対しても登録・編集が可能である。\n- 唯一効いている権限機構は AuthorityVoter による「拒否URLの前方一致でアクセス自体を拒否する」方式で、初期データでは権限ID=4（Tenant Owner）と5（Tenant Operator）に /mall/tenant が拒否登録されている。これは画面の参照ごと拒否する制御であり、「画面は見えるが登録ボタンが押せない」という設計要件とは異なる。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:417-419（権限について／編集権限を保持しているメンバーのみ登録、編集が可能／編集権限を保持していないメンバーは登録ボタンを押すことが不可能）\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:495（6-1 登録 ボタン）\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Mall/TenantController.php:206-208（店舗登録／編集ルート。IsGranted 属性なし、GET/POST 同一URL）\nsrc/Eccube/Resource/template/admin/mall/tenant/detail.twig:679（登録ボタン。is_granted / disabled による制御なし）\nsrc/Eccube/Entity/Member.php:78-91（isEditableShop による店舗単位の編集権限判定。TenantController からは未使用）\nsrc/Eccube/Security/Voter/AuthorityVoter.php:52-61（メンバー権限の拒否URLを取得し、現在URLと前方一致した場合に ACCESS_DENIED）\nsrc/Eccube/Resource/doctrine/import_csv/ja/dtb_authority_role.csv:30-31（権限ID 4/5 に /mall/tenant の拒否URLを投入）\n\n▼AIレビューで判定が割れた理由\nClaude は「乖離あり」、codex は「実装済み」と判定し、第三者による再検証で Claude の判定を採用した。\ncodex は src/Eccube/Security/Voter/AuthorityVoter.php:52-61 と src/Eccube/Resource/doctrine/import_csv/ja/dtb_authority_role.csv:30-31 を根拠に「権限非保持メンバーは画面へ到達できないので登録ボタンも押せない＝要件充足」として FALSE_POSITIVE と判定した。しかしこれは設計が言う「編集権限」（店舗単位の編集権限）と、AuthorityVoter が扱う「権限（Authority）ごとの拒否URL」を取り違えている。\n実際に AuthorityVoter が拒否するのは src/Eccube/Resource/doctrine/import_csv/priority/ja/mtb_authority.csv の id=4 Tenant Owner / id=5 Tenant Operator だけであり、id=1 System Admin・id=2 Mall Owner・id=3 Mall Operator は /mall/tenant を拒否URLに持たない（dtb_authority_role.csv:28-29 の拒否URLは /mall/tenant ではなく /tenant であり、AuthorityVoter.php:60 の正規表現 ^(/{adminRoute}/tenant) には /admin/mall/tenant はマッチしない）。したがってこれらのメンバーは、店舗編集権限（Member::isEditableShop）を持たない店舗であっても登録ボタンを押して更新できる。\nClaude は src/Eccube/Controller/Admin/Mall/TenantController.php:206-208 と src/Eccube/Resource/template/admin/mall/tenant/detail.twig:679 に権限ガードが 0 件であること、および AuthorityVoter.php:60 が URL 前方一致による全面拒否しか行えず GET（参照）と POST（更新）を区別できないことを正しく指摘しており、こちらが正しい。\n設計 :419「編集権限を保持していないメンバーは登録ボタンを押すことが不可能」は、画面自体は参照できることを前提とした表現であり、codex の言う「URL ごと拒否」では要件を満たさない。粗い権限（Authority 単位のURL拒否）だけは存在するため、category は 一部実装 とする。"
+  },
+  "designBook": "0209_基本設計仕様書(基本情報設定).xlsx",
+  "feature": "店舗登録",
+  "classification": "基本情報設定",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "admin/mall/tenant/detail.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 417,
+      "end": 419,
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "権限について\n* 編集権限を保持しているメンバーのみ登録、編集が可能\n* 編集権限を保持していないメンバーは登録ボタンを押すことが不可能"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 495,
+      "end": 495,
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "6-1 登録 ボタン - - - 入力されたフォームの値で編集"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Mall/TenantController.php",
+      "start": 206,
+      "end": 208,
+      "fileLines": 568,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[Route(path: '/%eccube_admin_route%/mall/tenant/create', name: 'admin_mall_tenant_create', methods: ['GET', 'POST'])]\n    #[Route(path: '/%eccube_admin_route%/mall/tenant/detail/{id}', name: 'admin_mall_tenant_detail', methods: ['GET', 'POST'])]\n    #[Template(template: '@admin/mall/tenant/detail.twig')]"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/mall/tenant/detail.twig",
+      "start": 679,
+      "end": 679,
+      "fileLines": 687,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                <button class=\"btn btn-ec-conversion px-5\" type=\"submit\">{{ 'admin.common.registration'|trans }}</button>"
+    },
+    {
+      "path": "src/Eccube/Entity/Member.php",
+      "start": 78,
+      "end": 91,
+      "fileLines": 604,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "         * @ORM\\GeneratedValue(strategy=\"IDENTITY\")\n         */\n        private $id;\n\n        /**\n         * @var string|null\n         *\n         * @ORM\\Column(name=\"name\", type=\"string\", length=255, nullable=true)\n         */\n        private $name;\n\n        /**\n         * @var string|null\n         *"
+    },
+    {
+      "path": "src/Eccube/Security/Voter/AuthorityVoter.php",
+      "start": 52,
+      "end": 61,
+      "fileLines": 91,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $path = null;\n\n        try {\n            $request = $this->requestStack->getMainRequest();\n        } catch (\\RuntimeException $e) {\n            // requestが取得できない場合、棄権する(テストプログラムで不要なため)\n            return VoterInterface::ACCESS_ABSTAIN;\n        }\n\n        if (is_object($request)) {"
+    },
+    {
+      "path": "src/Eccube/Resource/doctrine/import_csv/ja/dtb_authority_role.csv",
+      "start": 30,
+      "end": 31,
+      "fileLines": 1,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/doctrine/import_csv/priority/ja/mtb_authority.csv",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Mall/TenantController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/mall/tenant/detail.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/Member.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Security/Voter/AuthorityVoter.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/doctrine/import_csv/ja/dtb_authority_role.csv",
+      "repo": "ec-cube",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:39+09:00",
+  "designResolution": {
+    "requested": "0209_基本設計仕様書(基本情報設定).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html",
+    "sheetCount": 14,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-13",
+        "title": "店舗登録",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "基本設定(旧ショップマスター)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "特定商取引に関する法律"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "利用規約管理"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "支払い方法　手数料設定"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "配送方法設定"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "税率設定"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "自動送信メール"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "メール設定"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "カスタムCSV出力設定"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "店舗登録"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "追加システム設定"
+      }
+    ]
+  }
+}

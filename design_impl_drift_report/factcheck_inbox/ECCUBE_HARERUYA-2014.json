@@ -1,0 +1,416 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2014",
+  "issueId": 43509536,
+  "summary": "【一部実装】在庫管理_在庫結合 登録編集_在庫結合 登録編集にて、結合元商品CSVの10,000件上限と結合元商品一覧の20件ページングが未実装で、結合元在庫数に0を入力しても商品行が即時削除されない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:55Z",
+  "updated": "2026-07-22T01:26:49Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2014",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "在庫結合 登録編集",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】在庫管理_在庫結合 登録編集_在庫結合 登録編集にて、結合元商品CSVの10,000件上限と結合元商品一覧の20件ページングが未実装で、結合元在庫数に0を入力しても商品行が即時削除されない",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：在庫結合 登録編集\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】在庫管理_在庫結合 登録編集_在庫結合 登録編集にて、結合元商品CSVの10,000件上限と結合元商品一覧の20件ページングが未実装で、結合元在庫数に0を入力しても商品行が即時削除されない\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- 結合元商品CSV登録は10,000件を登録上限とし、入力チェックはエラーが20件に到達するまで行い、最大20件のエラーを固定文言付きで表示すること。\n- 結合元商品が多い場合はページングを行い、1ページ20件とすること。\n- 結合元在庫数は0を許容し、0が入力された場合は結合元商品の行を削除すること。また在庫区分を変更した場合は原価単価・総原価・在庫数を区分に応じた値に変更し総原価合計を再計算すること。",
+    "現在の挙動": "- 結合元CSV取込（StockJoinEditReplaceSourcesImportHandler）には行数上限の定数・判定が存在せず、10,000件を超えるCSVでもエラーにならない（分割先CSV側には MAX_ROWS = 2000 がある）。\n- エラー20件打ち切りと固定文言（admin.stock.csv.error_limit_notice）の先頭付与、既存結合元の全置換は実装されている。\n- 結合元商品一覧はセッション／明細を全件そのまま描画しており、ページング処理は存在しない（stock_join_edit.twig 内のページャは商品検索モーダル用の #product_pagination のみ）。\n- 結合元在庫数に0を入力してもサーバ側（updateSourceStock / updateSourceQuantity）は数量0をセッションに保持するだけで行を削除せず、画面JSが期待するレスポンス details_were_removed を返すPHPコードはリポジトリ内に存在しないため、行の即時削除・再読み込みは動作しない（0の行は「結合元商品登録」実行時にDB登録対象から除外されるのみ）。\n- 在庫区分変更時の原価単価・総原価・在庫数の再計算は StockJoinUpdateSourceStockLocationAction と編集画面JSで実装されている。",
+    "補足情報": "▼設計書該当箇所\nM04_stock_management_basedesign.md:2461 の逐語引用「* 結合元商品が多い場合はページングを行う（1ページ20件とする）」\nM04_stock_management_basedesign.md:2463-2466 の逐語引用「* CSVは10,000件を登録上限とする / * CSV登録では、入力チェックはエラーが20件に到達するまでチェックを行う / * エラーがある場合、登録処理を終了し行番号と商品コード、商品名（該当商品があれば）をセットにしたエラーメッセージを最大20件まで画面上に表示する / * エラーメッセージには固定で、エラーを最大20件まで表示しています、とエラーメッセージの上に表示する」\nM04_stock_management_basedesign.md:2531-2533 の逐語引用「7-14 結合元在庫数 数値 ○ 0～99999999 - 結合元商品の出庫を行う在庫数を記入するフォーム / ・在庫数を超える数値が入力された場合はエラーとする / ・0を許容し、0が入力された場合は商品行を削除する」\n\n▼実装該当箇所\nsrc/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php:44-46 （定数は COLUMN_* と MAX_ERROR_COUNT=20 のみで、行数上限の定数が無い）\nsrc/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php:206-255 （CSV走査ループ。行数上限判定が無い）\nsrc/Eccube/Service/Csv/Importer/Event/StockSplitEditReplaceDestinationsImportHandler.php:44 （比較対象：分割先CSVは MAX_ROWS = 2000 を持つ）\nsrc/Eccube/Controller/Admin/Stock/StockJoinController.php:304-340 （buildEditViewModel。結合元を全件返しページングが無い）\nsrc/Eccube/Controller/Admin/Stock/StockJoinController.php:1069-1082 （結合元在庫数のセッション更新。0でも行を保持し details_were_removed も返さない）\nsrc/Eccube/Resource/template/admin/Stock/stock_join_edit.twig:733 （JSは data.details_were_removed を期待するが、返却するPHPは存在しない）\nsrc/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php:187-189 （結合元商品登録時に数量0の行をDB登録対象から除外）\n\n▼備考\n在庫区分変更時の再計算（設計2480-2482行）とエラー20件打ち切り・固定文言・既存全削除は実装済み。未実装は (1) CSV 10,000件上限、(2) 結合元商品一覧の20件/ページのページング、(3) 結合元在庫数0入力時の商品行の即時削除（0の行は画面に残り、結合元商品登録実行時に初めて除外される）。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "在庫結合 登録編集",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php",
+      "start": 44,
+      "end": 46,
+      "fileLines": 297,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private const COLUMN_PRODUCT_CODE = '商品コード';\n    private const COLUMN_SOURCE_QTY = '結合元在庫数';\n    private const MAX_ERROR_COUNT = 20;"
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php",
+      "start": 206,
+      "end": 255,
+      "fileLines": 297,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        foreach ($importService as $rowIndex => $rowData) {\n            $lineNum = $rowIndex + 1;\n\n            if (!isset($rowData[self::COLUMN_PRODUCT_CODE], $rowData[self::COLUMN_SOURCE_QTY])) {\n                return ['ok' => false, 'errors' => ['1行目の列名を確認してください（'.self::COLUMN_PRODUCT_CODE.'、'.self::COLUMN_SOURCE_QTY.'）。']];\n            }\n\n            $code = trim($rowData[self::COLUMN_PRODUCT_CODE]);\n            if ($code === '') {\n                $errors[] = \"{$lineNum}行目: 商品コードが空です。\";\n                if (count($errors) >= self::MAX_ERROR_COUNT) {\n                    break;\n                }\n                continue;\n            }\n\n            $qtyRaw = trim($rowData[self::COLUMN_SOURCE_QTY]);\n            if ($qtyRaw === '' || !ctype_digit($qtyRaw) || (int) $qtyRaw < 1) {\n            "
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/StockSplitEditReplaceDestinationsImportHandler.php",
+      "start": 44,
+      "end": 44,
+      "fileLines": 344,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public const MAX_ROWS = 2000;"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockJoinController.php",
+      "start": 304,
+      "end": 340,
+      "fileLines": 1242,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private function buildEditViewModel(DtbStockSplitJoin $StockSplitJoin, bool $isShortageEntryPage = false, ?Request $request = null): array\n    {\n        $ProductStock = $StockSplitJoin->getProductStock();\n        $statusHistoryList = $this->stockSplitJoinStatusHistoryRepository->findByStockSplitJoinOrderByCreateDateDesc($StockSplitJoin);\n        $statusId = $StockSplitJoin->getStockSplitJoinStatus()->getId();\n\n        if ($statusId === MtbStockSplitJoinStatus::NEW && $request !== null) {\n            // Sessionから結合元を構築（DB未登録）\n            $session = $request->getSession();\n            $sessionKey = sprintf('stock_join_edit_sources_%d', $StockSplitJoin->getId());\n            /** @var array<int, array{quantity: int}> $sessionData */\n            $sessionData = $session->get($sessionKey, [])"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockJoinController.php",
+      "start": 1069,
+      "end": 1082,
+      "fileLines": 1242,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $sourceStocks = $request->request->all('source_stock');\n        $session = $request->getSession();\n        $sessionKey = sprintf('stock_join_edit_sources_%d', $joinId);\n        /** @var array<int, array{quantity: int}> $sources */\n        $sources = $session->get($sessionKey, []);\n        foreach ($sourceStocks as $psIdKey => $value) {\n            $psId = (int) $psIdKey;\n            if ($psId > 0 && isset($sources[$psId])) {\n                $sources[$psId]['quantity'] = \\max(0, (int) $value);\n            }\n        }\n        $session->set($sessionKey, $sources);\n\n        return $this->json(['ok' => true]);"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/stock_join_edit.twig",
+      "start": 733,
+      "end": 733,
+      "fileLines": 1393,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                      if (data && data.details_were_removed && !skipReloadOnRemoval) {"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php",
+      "start": 187,
+      "end": 189,
+      "fileLines": 286,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                $quantity = \\min(\\max(0, $data['quantity']), (int) ($SrcPs->getStock() ?? 0));\n                if ($quantity <= 0) {\n                    continue;"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 2461,
+      "end": 2461,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 結合元商品が多い場合はページングを行う（1ページ20件とする）"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 2463,
+      "end": 2466,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* CSVは10,000件を登録上限とする\n* CSV登録では、入力チェックはエラーが20件に到達するまでチェックを行う\n* エラーがある場合、登録処理を終了し行番号と商品コード、商品名（該当商品があれば）をセットにしたエラーメッセージを最大20件まで画面上に表示する\n* エラーメッセージには固定で、エラーを最大20件まで表示しています、とエラーメッセージの上に表示する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 2531,
+      "end": 2533,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "7-14 結合元在庫数 数値 ○ 0～99999999 - 結合元商品の出庫を行う在庫数を記入するフォーム\n・在庫数を超える数値が入力された場合はエラーとする\n・0を許容し、0が入力された場合は商品行を削除する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/StockSplitEditReplaceDestinationsImportHandler.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockJoinController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/stock_join_edit.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990920,
+      "created": "2026-07-22T01:26:49Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:16+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}

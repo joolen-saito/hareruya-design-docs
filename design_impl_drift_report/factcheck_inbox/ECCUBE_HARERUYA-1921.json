@@ -1,0 +1,141 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1921",
+  "issueId": 43509428,
+  "summary": "【実装乖離】フロントイベント_イベント大会TOP_イベント大会TOPの「日別で探す」タブにて、現在日を含む期間を表示中でも前日側取得ボタンが非表示にならず、過去期間へ移動できてしまう",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:09Z",
+  "updated": "2026-07-14T01:17:09Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1921",
+  "basicInfo": {
+    "分類": "フロントイベント",
+    "機能": "イベント大会TOP",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロントイベント_イベント大会TOP_イベント大会TOPの「日別で探す」タブにて、現在日を含む期間を表示中でも前日側取得ボタンが非表示にならず、過去期間へ移動できてしまう",
+    "設計書": "0307_基本設計仕様書(フロント_イベント).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントイベント\n機能：イベント大会TOP\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロントイベント_イベント大会TOP_イベント大会TOPの「日別で探す」タブにて、現在日を含む期間を表示中でも前日側取得ボタンが非表示にならず、過去期間へ移動できてしまう\n設計書：0307_基本設計仕様書(フロント_イベント).xlsx",
+    "期待される挙動": "- 「日別で探す」タブで現在表示している表示期間が現在日を含む場合は、前10日間取得(4-16)ボタンを非表示にすること。\n- その結果、現在日を含む期間を表示している状態から過去方向へは遷移できないこと。",
+    "現在の挙動": "- 前日側ナビゲーションボタンは非表示にならず、updateNavigationButtons() で currentPeriodIndex が -2 以下のときにのみ disabled 属性が付与される実装になっている。\n- 初期表示（currentPeriodIndex = 0、現在日を含む期間）ではボタンは活性のままであり、押下すると changePeriod(-1) が実行され過去の期間へ移動する。\n- changePeriod() のガードは (currentPeriodIndex + e) < -2 || > 2 であるため、過去方向に2期間（実装上14日×2＝28日分）まで遡って表示できる。\n- CSSにも display:none や pointer-events:none の指定はなく、.p-hareruya-event-top__daily-date-nav-btn:disabled は矢印アイコンを白色にするだけでボタン自体は表示され続ける。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/F07_event_basedesign.md:231 の逐語引用「現在表示している表示期間が現在日を含む場合は、前10日間取得(4-16)を非表示にする」\n.cursor/docs/MDfile/F07_event_basedesign.md:234 の逐語引用「| 4-16 | 前10日間取得 | ボタン | - | - | - | 現在表示している10日間より前のイベントリストを取得する |」\n\n▼実装該当箇所\nhtml/template/default/assets/hareruya/js/hareruya-event.js:1 （日別タブの updateNavigationButtons が prevButton.disabled = currentPeriodIndex <= -2 のみ。非表示制御なし）\nhtml/template/default/assets/hareruya/js/hareruya-event.js:1 （changePeriod のガードが -2〜2 のため過去2期間まで移動可能）\nhtml/template/default/assets/hareruya/css/hareruya-event.css:1 （.p-hareruya-event-top__daily-date-nav-btn:disabled i{color:#fff} のみで display:none / pointer-events は未定義）\n\n▼備考\nHTML属性(disabled)・CSS(display/pointer-events)・JSハンドラの3層すべてを確認した。非表示(display:none)にする実装は3層のいずれにも存在しない。またdisabledになる条件が「現在日を含む期間」ではなく「2期間以上過去」であるため、設計が禁じている過去方向への移動が可能。CSSファイルもminified（1行）。"
+  },
+  "designBook": "0307_基本設計仕様書(フロント_イベント).xlsx",
+  "feature": "イベント大会TOP",
+  "classification": "フロントイベント",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 231,
+      "end": 231,
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "現在表示している表示期間が現在日を含む場合は、前10日間取得(4-16)を非表示にする"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 234,
+      "end": 234,
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 4-16 | 前10日間取得 | ボタン | - | - | - | 現在表示している10日間より前のイベントリストを取得する |"
+    },
+    {
+      "path": "html/template/default/assets/hareruya/js/hareruya-event.js",
+      "start": 1,
+      "end": 1,
+      "fileLines": 2,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "(()=>{\"use strict\";var e={},t={};function r(a){var n=t[a];if(void 0!==n)return n.exports;var i=t[a]={exports:{}};return e[a](i,i.exports,r),i.exports}function a(e,t,r,a,n,i,o){try{var l=e[i](o),s=l.value}catch(e){r(e);return}l.done?t(s):Promise.resolve(s).then(a,n)}r.rv=()=>\"1.7.5\",r.ruid=\"bundler=rspack@1.7.5\";function n(e,t,r){return t in e?Object.defineProperty(e,t,{value:r,enumerable:!0,configurable:!0,writable:!0}):e[t]=r,e}var i=function(){var e;function t(e){if(!(this instanceof t))throw TypeError(\"Cannot call a class as a function\");n(this,\"container\",void 0),n(this,\"buttonsContainer\",void 0),n(this,\"prevBtn\",void 0),n(this,\"nextBtn\",void 0),n(this,\"startDate\",void 0),n(this,\"selectedDate\",null),this.container=e,this.buttonsContainer=e.querySelector(\"[data-daily-date-buttons]\"),thi"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "html/template/default/assets/hareruya/js/hareruya-event.js",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:06+09:00",
+  "designResolution": {
+    "requested": "0307_基本設計仕様書(フロント_イベント).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html",
+    "sheetCount": 6,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント大会TOP",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント大会TOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "大会詳細検索"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "大会詳細"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "大会申込～完了"
+      }
+    ]
+  }
+}

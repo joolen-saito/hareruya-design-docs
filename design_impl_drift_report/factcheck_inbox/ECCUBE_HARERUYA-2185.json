@@ -1,0 +1,277 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2185",
+  "issueId": 43509764,
+  "summary": "【一部実装】基本情報設定_利用規約管理_利用規約管理（M10-03）にて、遷移先のページ編集画面のコードエディタがデフォルトページのため読み取り専用となり、利用規約の本文を入力・登録できない。",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:21Z",
+  "updated": "2026-07-14T01:19:21Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2185",
+  "basicInfo": {
+    "分類": "基本情報設定",
+    "機能": "利用規約管理",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】基本情報設定_利用規約管理_利用規約管理（M10-03）にて、遷移先のページ編集画面のコードエディタがデフォルトページのため読み取り専用となり、利用規約の本文を入力・登録できない。",
+    "設計書": "0209_基本設計仕様書(基本情報設定).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：基本情報設定\n機能：利用規約管理\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】基本情報設定_利用規約管理_利用規約管理（M10-03）にて、遷移先のページ編集画面のコードエディタがデフォルトページのため読み取り専用となり、利用規約の本文を入力・登録できない。\n設計書：0209_基本設計仕様書(基本情報設定).xlsx",
+    "期待される挙動": "- 基本情報設定 > 利用規約設定から利用規約の本文を入力し、「登録（設定）」ボタン押下で入力された値を登録できること（設計書 M10-03 識別ID 1「利用規約」全角・半角／任意、識別ID 2「設定」ボタン）。\n- 設計書 M10-03 は「カスタマイズ要件なし／現行踏襲」であり、EC-CUBE標準どおり管理者が利用規約を編集できること。",
+    "現在の挙動": "- 管理画面メニュー「基本情報設定 > 利用規約設定」は admin_content_page_edit（ページ管理の編集画面）へ Page::AGREEMENT_PAGE_ID（=19）を指定して遷移する。\n- ページID 19（ご利用規約 / Help/agreement）の edit_type は 2（EDIT_TYPE_DEFAULT）であるため、PageController::edit で $isUserDataPage = false と判定される。\n- page_edit.twig の JavaScript が is_user_data_page=false のとき ACEエディタを setReadOnly(true) にし、opacity 0.7 / cursor not-allowed を付与する。実入力用の textarea は display:none の div 内に描画され、submit 時に ACE の値をコピーするだけであるため、通常操作では利用規約の本文を一切変更できない。\n- 「登録」ボタンは表示・押下できるが、コード欄が読み取り専用のため内容は変更されない。\n- 入力欄は利用規約本文用の単純なテキストエリアではなく、Twigテンプレートのソースを編集するACEコードエディタ（twigモード）であり、tpl_data には NotBlank と TwigLint の制約が付く（設計の「任意／全角・半角」と一致しない）。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:119-124 （M10-03 処理概要「利用規約を登録する」、識別ID 1 利用規約＝全角・半角／必須「-」、識別ID 2 設定ボタン＝入力されたフォームの値で登録）\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:114-117 （M10-03 は「カスタマイズ要件なし／現行踏襲」）\n\n▼実装該当箇所\napp/config/eccube/packages/eccube_nav.yaml:217-220 （shop_agreement メニューが admin_content_page_edit へ Page::AGREEMENT_PAGE_ID を指定して遷移）\nsrc/Eccube/Entity/Page.php:39,46 （EDIT_TYPE_DEFAULT = 2 / AGREEMENT_PAGE_ID = 19）\nsrc/Eccube/Resource/doctrine/import_csv/ja/dtb_page.csv:34 （id=19「ご利用規約」Help/agreement の edit_type は 2）\nsrc/Eccube/Controller/Admin/Content/PageController.php:113 （$isUserDataPage = !($id && $Page->getEditType() >= Page::EDIT_TYPE_DEFAULT) → ページ19では false）\nsrc/Eccube/Controller/Admin/Content/PageController.php:331 （is_user_data_page をテンプレートへ渡す）\nsrc/Eccube/Resource/template/admin/Content/page_edit.twig:57-61 （not is_user_data_page のとき editor.setReadOnly(true) / opacity 0.7 / cursor not-allowed）\nsrc/Eccube/Resource/template/admin/Content/page_edit.twig:205-206 （ACE用 div と display:none の form.tpl_data テキストエリア）\nsrc/Eccube/Resource/template/admin/Content/page_edit.twig:69-71 （submit 時に editor.getValue() を hidden textarea へ複写）\nsrc/Eccube/Form/Type/Admin/MainEditType.php:83-91 （tpl_data は TextareaType だが NotBlank + TwigLint 制約付き）\nコミット 21c38deaed（2026-03-13）「/user_dataではないページの場合、コード欄も編集できないように」＝当リポジトリ固有の変更\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\nClaude は src/Eccube/Form/Type/Admin/MainEditType.php:83-91（tpl_data が TextareaType）と src/Eccube/Resource/template/admin/Content/page_edit.twig:205-207・366（テキストエリアと登録ボタンの存在）というサーバ側・HTML側だけを見て「入力した値で登録できる」と判断したが、同じ page_edit.twig:57-61 の JavaScript 層 `{% if not is_user_data_page %} editor.setReadOnly(true) ...` を見落としている。ページID 19 は dtb_page.csv:34 で edit_type=2 のため PageController.php:113 で is_user_data_page=false となり、この読み取り専用化が必ず効く。\ncodex はこの JS 層（page_edit.twig:57-61）と display:none の textarea（page_edit.twig:206）まで確認しており、判定・根拠とも正しい。実際に submit 時の page_edit.twig:69-71 は ACE の値をそのまま hidden textarea に複写するだけなので、読み取り専用の ACE を経由する限り本文は変更されない。\n読み取り専用化は当フォーク固有のコミット 21c38deaed（2026-03-13「/user_dataではないページの場合、コード欄も編集できないように」）で追加されたもので、EC-CUBE標準（＝設計書の言う現行踏襲）には存在しない挙動である。2026-07-08 以降に page_edit.twig / PageController.php を修正するコミットは無く、未解消である。\nなお PageController.php:191-215 はサーバ側では default ページでも tpl_data をフロントテンプレートへ書き出す実装になっており、画面（JS）側だけが編集を封じている状態。したがって「画面遷移・登録ボタンは存在するが本文入力ができない」という一部実装と判定した。"
+  },
+  "designBook": "0209_基本設計仕様書(基本情報設定).xlsx",
+  "feature": "利用規約管理",
+  "classification": "基本情報設定",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 119,
+      "end": 124,
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "### 処理概要\n* 利用規約を登録する\n| 識別ID | ラベル | 書式・制限 | 必須 | 最大値 | 初期値 | 画面部品の説明 |\n| --- | --- | --- | --- | --- | --- | --- |\n| 1 | 利用規約 | 全角・半角 | - | - | - | - |\n| 2 | 設定 | ボタン | - | - | - | 入力されたフォームの値で登録 |"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 114,
+      "end": 117,
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "### カスタマイズ説明\n* カスタマイズ要件\nなし\n* カスタマイズ要件に記載の内容以外は現行踏襲とする。"
+    },
+    {
+      "path": "app/config/eccube/packages/eccube_nav.yaml",
+      "start": 217,
+      "end": 220,
+      "fileLines": 129,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Entity/Page.php",
+      "start": 39,
+      "end": 39,
+      "fileLines": 526,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        // ご利用規約ページID"
+    },
+    {
+      "path": "src/Eccube/Resource/doctrine/import_csv/ja/dtb_page.csv",
+      "start": 34,
+      "end": 34,
+      "fileLines": 44,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\"19\",\"ご利用規約\",\"help_agreement\",\"Help/agreement\",\"2\",,,,\"2017-03-07 10:14:52\",\"2017-03-07 10:14:52\",,,\"page\","
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Content/PageController.php",
+      "start": 113,
+      "end": 113,
+      "fileLines": 302,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ],"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Content/PageController.php",
+      "start": 331,
+      "end": 331,
+      "fileLines": 302,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Content/page_edit.twig",
+      "start": 57,
+      "end": 61,
+      "fileLines": 307,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            $('#main_edit_tpl_data').val(editor.getValue());\n        });\n    </script>\n{% endblock %}\n"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Content/page_edit.twig",
+      "start": 205,
+      "end": 206,
+      "fileLines": 307,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                        <div class=\"col-2\"><span>{{ 'admin.content.page_mobile'|trans }}</span></div>\n                                        <div class=\"col-10\">"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Content/page_edit.twig",
+      "start": 69,
+      "end": 71,
+      "fileLines": 307,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                <div class=\"c-primaryCol\">\n                    <!-- ページ設定 -->\n                    <div class=\"card rounded border-0 mb-4\">"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/MainEditType.php",
+      "start": 83,
+      "end": 91,
+      "fileLines": 300,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ])\n            ->add('url', TextType::class, [\n                'required' => true,\n                'constraints' => [\n                    new Assert\\NotBlank(),\n                    new Assert\\Length([\n                        'max' => $this->eccubeConfig['eccube_stext_len'],\n                    ]),\n                    new Assert\\Regex(["
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Content/page_edit.twig",
+      "start": 205,
+      "end": 207,
+      "fileLines": 307,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                        <div class=\"col-2\"><span>{{ 'admin.content.page_mobile'|trans }}</span></div>\n                                        <div class=\"col-10\">\n                                            {{ form_widget(form.SpLayout) }}"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/config/eccube/packages/eccube_nav.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/Page.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/doctrine/import_csv/ja/dtb_page.csv",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Content/PageController.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Content/page_edit.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/MainEditType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:39+09:00",
+  "designResolution": {
+    "requested": "0209_基本設計仕様書(基本情報設定).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html",
+    "sheetCount": 14,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-5",
+        "title": "利用規約管理",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "基本設定(旧ショップマスター)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "特定商取引に関する法律"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "利用規約管理"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "支払い方法　手数料設定"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "配送方法設定"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "税率設定"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "自動送信メール"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "メール設定"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "カスタムCSV出力設定"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "店舗登録"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "追加システム設定"
+      }
+    ]
+  }
+}

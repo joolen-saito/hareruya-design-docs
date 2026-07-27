@@ -1,0 +1,275 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2106",
+  "issueId": 43509656,
+  "summary": "【実装乖離】会員管理_会員検索一覧(検索入力/検索結果)_会員検索一覧(検索結果)にて、CSVダウンロードが「CSV出力」チェック対象に限定されず、未チェックでもエラーにならない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:43Z",
+  "updated": "2026-07-14T01:18:43Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2106",
+  "basicInfo": {
+    "分類": "会員管理",
+    "機能": "会員検索一覧(検索入力/検索結果)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】会員管理_会員検索一覧(検索入力/検索結果)_会員検索一覧(検索結果)にて、CSVダウンロードが「CSV出力」チェック対象に限定されず、未チェックでもエラーにならない",
+    "設計書": "0207_基本設計仕様書(会員管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：会員管理\n機能：会員検索一覧(検索入力/検索結果)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_会員検索一覧(検索入力/検索結果)_会員検索一覧(検索結果)にて、CSVダウンロードが「CSV出力」チェック対象に限定されず、未チェックでもエラーにならない\n設計書：0207_基本設計仕様書(会員管理機能).xlsx",
+    "期待される挙動": "- CSVダウンロードボタン押下時、識別ID:5(表では識別ID:8)「CSV出力」がチェックされている会員のデータのみをCSV出力する。\n- CSV出力にチェックを入れない状態でCSVダウンロードのリンクを押下するとエラーとなる。",
+    "現在の挙動": "- 検索結果一覧のCSVダウンロードリンクは admin_customer_export への単なるリンクであり、チェック必須を示す target-action クラスが付与されていないため、未チェックでも押下でき、エラーメッセージも表示されない。\n- CustomerController::export は CsvExportService::getCustomerQueryBuilder でセッション上の検索条件のみからクエリを組み立てており、チェックされた会員ID(ids[])を一切参照しないため、検索結果全件がCSV出力される。\n- 同一画面の「その他 > メール一括送信」リンクには target-action が付いており、未選択時に「チェックボックスが選択されていません」というエラーが出る実装になっているため、CSVダウンロードだけがチェック必須になっていない。",
+    "補足情報": "▼設計書該当箇所\nM08_customer_management_basedesign.md:151 「CSVダウンロードボタン押下時、識別ID:5 CSV出力がチェックされている会員のデータをCSV出力する」\nM08_customer_management_basedesign.md:182 「| 6 | CSVダウンロード | リンク | … CSV出力にチェックを入れない状態でボタンをリンクを押下するとエラーとなる」\nM08_customer_management_basedesign.md:184 「| 8 | CSV出力 | 複数選択(チェックボックス) | … チェックを付けた会員情報がCSVダウンロード、メール送信一括対象となる」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/admin/Customer/index.twig:415 （CSVダウンロードリンクに target-action クラスが無く、チェック必須判定の対象外）\nsrc/Eccube/Resource/template/admin/Customer/index.twig:427 （メール一括送信リンクにのみ target-action が付与されている）\nhtml/template/admin/assets/js/function.js:221-236 （target-action 付きリンクだけがチェックボックス選択必須のバリデーション対象）\nsrc/Eccube/Controller/Admin/Customer/CustomerController.php:281-350 （export はセッションの検索条件のみでCSVを生成し、選択された ids[] を参照しない）\nsrc/Eccube/Service/CsvExportService.php:324-339 （getCustomerQueryBuilder は eccube.admin.customer.search の検索条件のみからクエリビルダを構築）\n\n▼備考\n検索結果行のチェックボックス(name=\"ids[]\")は存在するが、CSV出力処理では使用されていない。エラー表示・出力対象の絞り込みの両方が未対応。"
+  },
+  "designBook": "0207_基本設計仕様書(会員管理機能).xlsx",
+  "feature": "会員検索一覧(検索入力/検索結果)",
+  "classification": "会員管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Resource/template/admin/Customer/index.twig",
+      "start": 415,
+      "end": 415,
+      "fileLines": 375,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Customer/index.twig",
+      "start": 427,
+      "end": 427,
+      "fileLines": 375,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "html/template/admin/assets/js/function.js",
+      "start": 221,
+      "end": 236,
+      "fileLines": 264,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "};\n\n// 一覧ページのソート機能\n$(function() {\n    if ($('.js-listSort').length < 1) {\n        return;\n    }\n\n    // 現在のソート状況をボタン表示に反映\n    const sortkey = $('.js-listSort-key').val();\n    const target = $('.js-listSort').filter('[data-sortkey=\"' + sortkey + '\"]');\n    if (target.length === 1) {\n        target.addClass('listSort-current');\n        if ($('.js-listSort-type').val() === 'd') {\n            target.find('.fa').addClass('fa-arrow-down').removeClass('fa-arrow-up');\n        }"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Customer/CustomerController.php",
+      "start": 281,
+      "end": 350,
+      "fileLines": 346,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Service/CsvExportService.php",
+      "start": 324,
+      "end": 339,
+      "fileLines": 473,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            return null;\n        }\n\n        // カラム名がエンティティに存在するかどうかをチェック.\n        if (!$entity->offsetExists($Csv->getFieldName())) {\n            return null;\n        }\n\n        // データを取得.\n        $data = $entity->offsetGet($Csv->getFieldName());\n\n        // one to one の場合は, dtb_csv.reference_field_name, 合致する結果を取得する.\n        if ($data instanceof \\Eccube\\Entity\\AbstractEntity) {\n            return $data->offsetGet($Csv->getReferenceFieldName());\n        } elseif ($data instanceof \\Doctrine\\Common\\Collections\\Collection) {\n            // one to manyの場合は, カンマ区切りに変換する."
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+      "start": 151,
+      "end": 151,
+      "resolvedFrom": "M08_customer_management_basedesign.md",
+      "fileLines": 1097,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* CSVダウンロードボタン押下時、識別ID:5 CSV出力がチェックされている会員のデータをCSV出力する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+      "start": 182,
+      "end": 182,
+      "resolvedFrom": "M08_customer_management_basedesign.md",
+      "fileLines": 1097,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 6 | CSVダウンロード | リンク | - | - | - | <html><b>※カスタマイズ対応、項目を追加する</b><br>選択肢:CSVダウンロード、会員顧客分析タグダウンロード、出力項目設定<br>CSV出力にチェックを入れない状態でボタンをリンクを押下するとエラーとなる<br><br>※顧客分析タグ登録はPh2で対応するため、Ph1では実装しない</html> |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+      "start": 184,
+      "end": 184,
+      "resolvedFrom": "M08_customer_management_basedesign.md",
+      "fileLines": 1097,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 8 | CSV出力 | 複数選択(チェックボックス) | - | - | - | チェックを付けた会員情報がCSVダウンロード、メール送信一括対象となる |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/admin/Customer/index.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "html/template/admin/assets/js/function.js",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Customer/CustomerController.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/CsvExportService.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:24+09:00",
+  "designResolution": {
+    "requested": "0207_基本設計仕様書(会員管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html",
+    "sheetCount": 26,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "会員検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "会員検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "メール一括送信"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "メール一括送信確認"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "メール一括送信完了"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "顧客情報CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "会員登録編集"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント付与"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "ポイント付与（キャンペーン、特別対応）"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "ポイント付与（余剰入金へのご返金、注文金額変更によるご返金"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "ポイント履歴確認"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "メール配信履歴"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "手動メール通知(入力画面)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "【新規】手動メール通知(確認画面)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "配送先編集"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "【新規】顧客分析タグ"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "顧客グループ管理"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "ブラックリスト管理"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "会員登録仮登録完了メール再送"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】顧客分析タグ登録CSV入力項目設定"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "【新規】会員顧客分析タグ情報CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "配送先情報CSV登録"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "配送先情報登録CSV入力項目設定"
+      }
+    ]
+  }
+}

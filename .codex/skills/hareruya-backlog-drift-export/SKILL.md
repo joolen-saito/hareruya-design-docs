@@ -7,6 +7,8 @@ description: Verify Hareruya design-vs-implementation drift findings one by one 
 
 Use this skill after or alongside `design-impl-drift-audit` when the task is to turn confirmed drift findings into Backlog issue Markdown.
 
+For the opposite direction — taking an already-filed Backlog issue and verifying whether it is a false positive — use `hareruya-backlog-factcheck`.
+
 ## Rule
 
 Do not export candidates directly from `design_impl_drift_report/findings/*.json`. Export only items that have been rechecked and recorded as `status: "verified"` under `design_impl_drift_report/backlog_verified_items/`.

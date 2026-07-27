@@ -1,0 +1,196 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1781",
+  "issueId": 43509232,
+  "summary": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(2)SALE中の商品にて、支店の商品公開ステータス（is_branch_published）による絞り込みが行われておらず、支店非公開の商品も表示される",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:15:56Z",
+  "updated": "2026-07-14T01:15:56Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1781",
+  "basicInfo": {
+    "分類": "フロントトップ",
+    "機能": "支店ECTOP",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(2)SALE中の商品にて、支店の商品公開ステータス（is_branch_published）による絞り込みが行われておらず、支店非公開の商品も表示される",
+    "設計書": "0301_基本設計仕様書(フロント_トップ).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントトップ\n機能：支店ECTOP\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(2)SALE中の商品にて、支店の商品公開ステータス（is_branch_published）による絞り込みが行われておらず、支店非公開の商品も表示される\n設計書：0301_基本設計仕様書(フロント_トップ).xlsx",
+    "期待される挙動": "- 支店ECTOPの「SALE中の商品」では、条件1として「支店の商品公開ステータスが『公開』であること」で商品を絞り込むこと。\n- 併せて、システム廃止していない商品・表示店舗の在庫1以上・セールタグ・セールフラグ1・販売価格1円以上・状態が最も良いもの・ランダム順・最大30件・0件なら非表示、の各条件を満たすこと。",
+    "現在の挙動": "- ProductRepository::findTopSaleProductsByBaseInfo() の抽出SQLは dtb_product.product_status_id（本店の商品公開ステータス）しか見ておらず、支店の商品公開ステータスを保持する dtb_product.is_branch_published 列を WHERE 条件に含めていない。\n- 後段の ProductClass 絞り込みDQL（同メソッド内）にも p.isBranchPublished の条件が無い。\n- 同リポジトリの findPublicByIds() は支店（root 以外の base_info）の場合に p.isBranchPublished = true を追加しており、支店公開フィルタの実装パターン自体は存在するため、SALE中の商品クエリにだけ適用漏れがある。\n- 支店の商品公開ステータス以外の条件（廃止除外・店舗在庫1以上・セールタグ・sale_flg・price02>=1・カード状態最良の選出・ORDER BY RANDOM()・LIMIT 30・0件時のブロック非表示）はいずれも実装されている。",
+    "補足情報": "▼設計書該当箇所\nF01_top_basedesign.md:701-703 「**★ 「SALE中の商品」では、以下1~10の条件で商品を表示する** / * **1**: 支店の商品公開ステータスが「公開」であること / * **※**: カスタマイズ要件より追加」\nF01_top_basedesign.md:683-684 「支店商品の公開と非公開の制御 / * 「M03-02商品登録/編集」機能の商品公開ステータスに応じて、商品を表示、または非表示にする」（今週の売れ筋商品 & SALE中の商品 カスタマイズ要件）\n\n▼実装該当箇所\nsrc/Eccube/Repository/ProductRepository.php:397-425 （SALE中の商品の抽出SQL。product_status_id のみで is_branch_published 条件なし）\nsrc/Eccube/Repository/ProductRepository.php:433-450 （後段のProductClass絞り込みDQL。isBranchPublished 条件なし）\nsrc/Eccube/Repository/ProductRepository.php:717-719 （findPublicByIds では支店時に p.isBranchPublished = true を付与。実装パターンの反証）\nsrc/Eccube/Entity/Product.php:1274-1275 （is_branch_published 列。コメント「支店の商品公開ステータス」）\nsrc/Eccube/Controller/Shop/ShopTopController.php:81-85 （支店IDを渡して findTopSaleProductsByBaseInfo を呼び出し）\nsrc/Eccube/Resource/template/default/Block/shop_sale.twig:11 （0件時はブロックごと非表示）\n\n▼備考\n設計書の10条件のうち条件1（支店の商品公開ステータス）のみが未実装で、他9条件は充足しているため「一部実装」。なお findTopSaleProductsByBaseInfo のDocコメント（ProductRepository.php:383-392）は設計条件1を「商品公開ステータス『公開』」と読み替えており、支店公開ステータスの観点が抜け落ちている。"
+  },
+  "designBook": "0301_基本設計仕様書(フロント_トップ).xlsx",
+  "feature": "支店ECTOP",
+  "classification": "フロントトップ",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Repository/ProductRepository.php",
+      "start": 397,
+      "end": 425,
+      "fileLines": 415,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Repository/ProductRepository.php",
+      "start": 433,
+      "end": 450,
+      "fileLines": 415,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Repository/ProductRepository.php",
+      "start": 717,
+      "end": 719,
+      "fileLines": 415,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Entity/Product.php",
+      "start": 1274,
+      "end": 1275,
+      "fileLines": 1077,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Controller/Shop/ShopTopController.php",
+      "start": 81,
+      "end": 85,
+      "fileLines": 190,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $SaleProductClasses = $this->productRepository->findTopSaleProductsByBaseInfo(\n            $Shop->getId(),\n            $locale,\n            self::SALE_PRODUCT_LIMIT,\n        );"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/shop_sale.twig",
+      "start": 11,
+      "end": 11,
+      "fileLines": 43,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "{% if ProductClasses|length > 0 %}"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 701,
+      "end": 703,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "**★ 「SALE中の商品」では、以下1~10の条件で商品を表示する**\n* **1**: 支店の商品公開ステータスが「公開」であること\n* **※**: カスタマイズ要件より追加"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 683,
+      "end": 684,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "支店商品の公開と非公開の制御\n* 「M03-02商品登録/編集」機能の商品公開ステータスに応じて、商品を表示、または非表示にする"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Repository/ProductRepository.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/Product.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Shop/ShopTopController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/shop_sale.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:29+09:00",
+  "designResolution": {
+    "requested": "0301_基本設計仕様書(フロント_トップ).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html",
+    "sheetCount": 4,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP",
+        "score": 100
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP"
+      }
+    ]
+  }
+}

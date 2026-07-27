@@ -1,0 +1,241 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1895",
+  "issueId": 43509384,
+  "summary": "【実装乖離】フロント会員_退会_退会手続き画面のパスワード入力欄の最大文字数が、設計の32文字ではなく50文字になっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:56Z",
+  "updated": "2026-07-14T01:16:56Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1895",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "退会",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント会員_退会_退会手続き画面のパスワード入力欄の最大文字数が、設計の32文字ではなく50文字になっている",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：退会\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_退会_退会手続き画面のパスワード入力欄の最大文字数が、設計の32文字ではなく50文字になっている\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- 退会手続き画面の「パスワード」(識別ID 2-3)は必須入力で、最大文字数32文字であること。",
+    "現在の挙動": "- 退会フォーム(Eccube\\Form\\Type\\Front\\WithdrawType)のパスワード欄は maxlength 属性に設定値 eccube_password_max_len を指定しており、その実値は 50 である。\n- サーバ側にも文字数制約(Assert\\Length)は設定されておらず、入力値は既存パスワードとの照合(isPasswordValid)のみで判定される。\n- 画面(withdraw_confirm.twig / withdraw_confirm.en.twig)は form_widget の attr に class と autocomplete のみを追加しており、maxlength は FormType 側の 50 がそのまま出力される。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:1261 「| 2-3 | パスワード | 半角 | ◯ | 32 | - | ・未入力、登録パスワード不一致の場合、(2-5)「退会する」ボタンを押下した場合はエラーメッセージを表示する |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Front/WithdrawType.php:37-43 （password 欄の maxlength に eccube_password_max_len を指定）\napp/config/eccube/packages/eccube.yaml:196 （eccube_password_max_len: 50）\nsrc/Eccube/Controller/Front/Mypage/WithdrawController.php:96-98 （既存パスワードとの一致判定のみ実施）\nsrc/Eccube/Resource/template/default/Mypage/withdraw_confirm.twig:52-55 （form_widget の attr 指定に maxlength の上書きなし）\n\n▼備考\n同一設計書の F06-27【新規】パスワード設定(2026-04-16 作成)では、パスワードの最大文字数を50・最小12と定義しており(F06_customer_basedesign.md:1637)、リニューアル後のパスワードポリシー上は50桁のパスワードが登録され得る。退会画面は既存パスワードの照合用であるため、32桁に制限すると50桁のパスワードを入力できなくなる。設計書内で値が不整合を起こしている可能性が高く、設計側の見直し要否も含めて確認が必要（コード上の実値は50で確定）。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "退会",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Front/WithdrawType.php",
+      "start": 37,
+      "end": 43,
+      "fileLines": 54,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $builder->add('password', PasswordType::class, [\n            'required' => false,\n            'mapped' => false,\n            'attr' => [\n                'maxlength' => $this->eccubeConfig['eccube_password_max_len'],\n            ],\n        ]);"
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "start": 196,
+      "end": 196,
+      "fileLines": 184,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/Mypage/WithdrawController.php",
+      "start": 96,
+      "end": 98,
+      "fileLines": 175,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                    $password = (string) $form->get('password')->getData();\n                    if ($password === '' || !$this->passwordHasher->isPasswordValid($Customer, $password)) {\n                        $form->get('password')->addError(new FormError(trans('front.mypage.withdraw_error__password_mismatch')));"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/withdraw_confirm.twig",
+      "start": 52,
+      "end": 55,
+      "fileLines": 53,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 1261,
+      "end": 1261,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 2-3 | パスワード | 半角 | ◯ | 32 | - | ・未入力、登録パスワード不一致の場合、(2-5)「退会する」ボタンを押下した場合はエラーメッセージを表示する |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Front/WithdrawType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Front/Mypage/WithdrawController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/withdraw_confirm.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:55+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-17",
+        "title": "退会",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1918",
+  "issueId": 43509423,
+  "summary": "【一部実装】フロントイベント_イベント大会TOP_イベント大会TOPの前14日選択(4-2)にて、現在日を含む表示期間でも前14日ボタンが非表示にならず過去の期間へ移動でき、また読込み済み期間を超える未来のデータが追加取得されない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:08Z",
+  "updated": "2026-07-14T01:17:08Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1918",
+  "basicInfo": {
+    "分類": "フロントイベント",
+    "機能": "イベント大会TOP",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロントイベント_イベント大会TOP_イベント大会TOPの前14日選択(4-2)にて、現在日を含む表示期間でも前14日ボタンが非表示にならず過去の期間へ移動でき、また読込み済み期間を超える未来のデータが追加取得されない",
+    "設計書": "0307_基本設計仕様書(フロント_イベント).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントイベント\n機能：イベント大会TOP\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロントイベント_イベント大会TOP_イベント大会TOPの前14日選択(4-2)にて、現在日を含む表示期間でも前14日ボタンが非表示にならず過去の期間へ移動でき、また読込み済み期間を超える未来のデータが追加取得されない\n設計書：0307_基本設計仕様書(フロント_イベント).xlsx",
+    "期待される挙動": "- 前14日選択(4-2)・後14日選択(4-4)押下時、読込み済みのイベント日付の範囲内なら読込み済みデータから表示を更新すること。\n- 読込み済みのイベント日付より未来になる場合は、非同期で次の1ヶ月分のデータをサーバから読み込んで表示を更新すること。\n- 現在表示している表示期間が現在日を含む場合は、前14日選択(4-2)を非表示にすること。",
+    "現在の挙動": "- 期間ボタンの活性制御は currentPeriodIndex <= -2 のときのみ前ボタンを disabled にする実装で、現在日を含む期間（currentPeriodIndex = 0）でも前14日ボタンは表示・押下可能であり、過去方向へ2期間（最大28日前）まで移動できる。\n- changePeriod は移動後の index が -2 未満または 2 超のとき即 return するため、後14日ボタンも +2 期間で頭打ちになる。\n- 一括取得データ（loadFullRangeInBackground → 当日 -28日〜+28日）を取得済みの場合、changePeriod はそのデータを filterEventsForCurrentPeriod で絞り込むだけで、読込み済み範囲を超える未来分をサーバから追加取得しない（index=2 の表示期間は当日+28日〜+41日で、+29日以降のデータが存在しない）。\n- 読込み済み範囲内での再抽出（filterEventsForCurrentPeriod）と、未取得時のサーバ取得（loadEvents）自体は実装されている。",
+    "補足情報": "▼設計書該当箇所\nF07_event_basedesign.md:190 「* **読込み済みのイベントの日付の範囲内だった場合**: 読込み済みのデータの中から範囲内の日付のイベントデータで表示を更新する」\nF07_event_basedesign.md:191 「* **読込み済みのイベントの日付分より未来になる場合**: 非同期で次の1ヶ月分のデータをサーバから読み込み表示を更新する」\nF07_event_basedesign.md:192 「* 現在表示している表示期間が現在日を含む場合は、前14日選択(4-2)を非表示にする」\n\n▼実装該当箇所\nhtml/template/default/assets/hareruya/js/hareruya-event.js:1 （updateNavigationButtons。prev は currentPeriodIndex<=-2、next は >=2 のときのみ disabled）\nhtml/template/default/assets/hareruya/js/hareruya-event.js:1 （changePeriod。移動後 index を -2〜2 にクランプし、取得済みなら filterEventsForCurrentPeriod で絞り込むのみ）\nhtml/template/default/assets/hareruya/js/hareruya-event.js:1 （N()。一括取得範囲は当日 -28日〜+28日）\nhtml/template/default/assets/hareruya/css/hareruya-event.css （.p-hareruya-event-top__period-btn:disabled は color:#fff のみで、index=0 では disabled にならないため前ボタンは通常表示のまま）\n\n▼備考\n日別タブの前後ボタン（4-16/4-19 相当）も同一ロジック（clamp -2〜2、disabled は index<=-2 のみ）で、同じく現在日を含む期間で前ボタンが非表示にならない。CSS の :disabled は色を白にするだけで、index=0 では disabled 自体が付かないため非表示にもグレーアウトにもならない。"
+  },
+  "designBook": "0307_基本設計仕様書(フロント_イベント).xlsx",
+  "feature": "イベント大会TOP",
+  "classification": "フロントイベント",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "html/template/default/assets/hareruya/js/hareruya-event.js",
+      "start": 1,
+      "end": 1,
+      "fileLines": 2,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "(()=>{\"use strict\";var e={},t={};function r(a){var n=t[a];if(void 0!==n)return n.exports;var i=t[a]={exports:{}};return e[a](i,i.exports,r),i.exports}function a(e,t,r,a,n,i,o){try{var l=e[i](o),s=l.value}catch(e){r(e);return}l.done?t(s):Promise.resolve(s).then(a,n)}r.rv=()=>\"1.7.5\",r.ruid=\"bundler=rspack@1.7.5\";function n(e,t,r){return t in e?Object.defineProperty(e,t,{value:r,enumerable:!0,configurable:!0,writable:!0}):e[t]=r,e}var i=function(){var e;function t(e){if(!(this instanceof t))throw TypeError(\"Cannot call a class as a function\");n(this,\"container\",void 0),n(this,\"buttonsContainer\",void 0),n(this,\"prevBtn\",void 0),n(this,\"nextBtn\",void 0),n(this,\"startDate\",void 0),n(this,\"selectedDate\",null),this.container=e,this.buttonsContainer=e.querySelector(\"[data-daily-date-buttons]\"),thi"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 190,
+      "end": 190,
+      "resolvedFrom": "F07_event_basedesign.md",
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* **読込み済みのイベントの日付の範囲内だった場合**: 読込み済みのデータの中から範囲内の日付のイベントデータで表示を更新する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 191,
+      "end": 191,
+      "resolvedFrom": "F07_event_basedesign.md",
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* **読込み済みのイベントの日付分より未来になる場合**: 非同期で次の1ヶ月分のデータをサーバから読み込み表示を更新する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 192,
+      "end": 192,
+      "resolvedFrom": "F07_event_basedesign.md",
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 現在表示している表示期間が現在日を含む場合は、前14日選択(4-2)を非表示にする"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "html/template/default/assets/hareruya/js/hareruya-event.js",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:04+09:00",
+  "designResolution": {
+    "requested": "0307_基本設計仕様書(フロント_イベント).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html",
+    "sheetCount": 6,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント大会TOP",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント大会TOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "大会詳細検索"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "大会詳細"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "大会申込～完了"
+      }
+    ]
+  }
+}

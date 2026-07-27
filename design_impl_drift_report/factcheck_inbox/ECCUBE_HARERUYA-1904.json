@@ -1,0 +1,280 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1904",
+  "issueId": 43509406,
+  "summary": "【一部実装】フロント会員_本会員登録_本会員登録のE-1.秘密鍵書式エラー画面が専用画面として用意されておらず、E-2.ユーザー存在チェックエラーと同一のerror_type=forbiddenのテンプレート・同一文言を共用している。",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:00Z",
+  "updated": "2026-07-14T01:17:00Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1904",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "本会員登録",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロント会員_本会員登録_本会員登録のE-1.秘密鍵書式エラー画面が専用画面として用意されておらず、E-2.ユーザー存在チェックエラーと同一のerror_type=forbiddenのテンプレート・同一文言を共用している。",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：本会員登録\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロント会員_本会員登録_本会員登録のE-1.秘密鍵書式エラー画面が専用画面として用意されておらず、E-2.ユーザー存在チェックエラーと同一のerror_type=forbiddenのテンプレート・同一文言を共用している。\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- 設計書 F06-02 の処理概要では、条件1（秘密鍵文字列がパラメータとして存在する／英数字のみで構成されている）でエラーになった場合は E-1. 秘密鍵書式エラー画面を表示する。\n- 設計書 F06-02 の処理概要では、条件2（秘密鍵に該当する仮会員ユーザーが存在する）および条件3（既にスマレジIDを持っていない）でエラーになった場合は E-2. ユーザー存在チェックエラー画面を表示する。\n- E-1 と E-2 は別々のエラー画面として定義されており（E-1は識別ID 2-1、E-2は識別ID 3-1の「トップページへ」ボタンを持つ独立した画面）、エラー原因に応じて表示を出し分ける。",
+    "現在の挙動": "- EntryController::activate は秘密鍵に Assert\\NotBlank + Assert\\Regex('/^[a-zA-Z0-9]+$/') を適用し、書式エラー時に Entry/activate_error.twig を error_type='forbidden' で描画する。エラー画面自体（トップページへボタン付き）は表示されるため完全な未実装ではない。\n- しかし、仮会員が存在しない場合（EntryInvalidSecretKeyException）も同じ error_type='forbidden' で描画されるため、E-1（書式エラー）と E-2（ユーザー存在チェックエラー）で全く同じタイトル「アクセスできません」・同じ本文「このURLは無効です。」が表示され、エラー原因を区別できない。\n- 実装のエラー種別は forbidden / already_activated / activate_failed の3種で、設計の E-1 / E-2 / E-3 とは対応が取れていない。設計で E-2 に含まれる『既にスマレジIDを持っている』ケースだけが already_activated として別文言になっている。\n- ルート定義 /entry/activate/{secret_key} は secret_key を必須パラメータとして要求するため、秘密鍵パラメータが存在しないURLではController内のNotBlank検証にもE-1画面にも到達せず、404となる。設計の条件1「秘密鍵の文字列がパラメータとして存在する」を画面へ振り分ける経路が無い。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/F06_customer_basedesign.md:196-206（条件1でエラー→E-1.秘密鍵書式エラー画面、条件2,3でエラー→E-2.ユーザー存在チェックエラー画面）\n.cursor/docs/MDfile/F06_customer_basedesign.md:221-232（E-1.秘密鍵書式エラー画面。識別ID 2-1「トップページへ」）\n.cursor/docs/MDfile/F06_customer_basedesign.md:235-246（E-2.ユーザー存在チェックエラー画面。識別ID 3-1「トップページへ」）\n\n▼実装該当箇所\nsrc/Eccube/Controller/Front/EntryController.php:218（ルート /entry/activate/{secret_key}。secret_key は必須のため未指定時は404になる）\nsrc/Eccube/Controller/Front/EntryController.php:222-232（Assert\\NotBlank + 英数字のみの Assert\\Regex による書式チェック）\nsrc/Eccube/Controller/Front/EntryController.php:253（仮会員が存在しない場合＝設計のE-2条件 → error_type='forbidden'）\nsrc/Eccube/Controller/Front/EntryController.php:259（書式エラー＝設計のE-1条件 → 同じ error_type='forbidden'）\nsrc/Eccube/Resource/template/default/Entry/activate_error.twig:22-27（error_type ごとのタイトル・本文と「トップページへ」ボタン。テンプレートは共通）\nsrc/Eccube/Resource/locale/messages.ja.yaml:451-452（front.entry.activate_error.forbidden.title/message。E-1とE-2で同一の文言が出る）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\nClaude は EntryController.php:222-231 の書式チェックと :259 の error_type='forbidden' 描画、activate_error.twig:22-27 の「トップページへ」ボタンを確認し、『E-1に相当するエラー画面は表示されるので要件を満たす』として誤検知と結論した。しかし同じファイルの :253（EntryInvalidSecretKeyException → forbidden）も :259 とまったく同じ error_type を渡していることを踏まえれば、設計が別画面として定義した E-1（:221-232）と E-2（:235-246）が実装では1つの表示に潰れていることになり、設計との対応が取れていない。\ncodex は EntryController.php:253 と :259 が同じ forbidden を使う点、および :218 のルートが secret_key を必須にしているため『パラメータ欠落』ケース（設計 :197 の条件）が E-1 に到達せず404になる点を正しく指摘している。判定(FACT)は codex が正しい。\n自分で確認したところ、実装のエラー種別は forbidden / already_activated / activate_failed の3種（EntryController.php:251,253,255,259）だが、設計の E-1 / E-2 / E-3 とは1対1に対応していない。設計 E-2 の2条件（仮会員不在／スマレジID保有）が実装では forbidden と already_activated に分かれ、逆に設計 E-1 と E-2 の仮会員不在ケースが forbidden に統合されている。\nエラー画面の枠（トップページへボタン付き）自体は存在するため『未実装』ではなく『一部実装』とした。修正としては、書式エラー専用の error_type（例: invalid_format）を追加して E-1 と E-2 の文言を出し分けることが必要。activate_error.en.twig は存在せず日英とも共通テンプレート＋翻訳で描画されるため、英語版のみの未反映ではない（exclude=false）。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "本会員登録",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Entry/activate_error.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 196,
+      "end": 206,
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* **1**: アクセスしてきたアクティベート用のURLに含まれる秘密鍵文字列の書式の確認\n* 秘密鍵の文字列がパラメータとして存在する\n* 英数字のみで構成されている\n* **2**: 秘密鍵文字列でユーザー情報を検索し、以下の条件でユーザーが存在するか確認\n* URLに含まれる秘密鍵情報を持ったユーザーが存在する\n* 存在したユーザーが「仮会員」である\n* **3**: 2のチェックで存在したユーザーがすでにスマレジIDを持っていないかを確認\n* スマレジIDを持っていたら、すでに会員登録済みとみなしエラーとする\n条件適合確認で問題があった場合\n* 1の条件でエラーになった場合、E-1. 秘密鍵書式エラー画面を表示\n* 2,3の条件でエラーになった場合、E-2.ユーザー存在チェックエラー画面を表示"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 221,
+      "end": 232,
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "### E-1. 秘密鍵書式エラー画面 レイアウト図\n共通(PC/SP)\n\n### カスタマイズ説明\n* カスタマイズ要件はなし\n\n### 処理概要（★はカスタマイズ項目）\n* アクセスしてきたアクティベート用のURLに含まれる秘密鍵文字列の書式の確認し\nエラーがあった場合に表示する\n| 識別ID | ラベル | 書式・制限 | 必須 | 最大文字数<br>または最大値 | 初期値 | 画面部品の説明 |\n| --- | --- | --- | --- | --- | --- | --- |\n| 2-1 | トップページへ | ボタン | - | - | - | ・押下すると、ECTOP画面へ遷移する |"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 235,
+      "end": 246,
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "### E-2. ユーザー存在チェックエラー画面 レイアウト図\n共通(PC/SP)\n\n### カスタマイズ説明\n* カスタマイズ要件はなし\n\n### 処理概要（★はカスタマイズ項目）\n* 秘密鍵文字列でユーザー情報を検索し、仮会員のユーザーが存在しない\nもしくは、既にスマレジIDを持っているユーザーの場合に表示する\n| 識別ID | ラベル | 書式・制限 | 必須 | 最大文字数<br>または最大値 | 初期値 | 画面部品の説明 |\n| --- | --- | --- | --- | --- | --- | --- |\n| 3-1 | トップページへ | ボタン | - | - | - | ・押下すると、ECTOP画面へ遷移する |"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/EntryController.php",
+      "start": 218,
+      "end": 218,
+      "fileLines": 427,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[Route(path: '/entry/activate/{secret_key}/{qtyInCart}', name: 'entry_activate', methods: ['GET'])]"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/EntryController.php",
+      "start": 222,
+      "end": 232,
+      "fileLines": 427,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $errors = $this->recursiveValidator->validate(\n            $secret_key,\n            [\n                new Assert\\NotBlank(),\n                new Assert\\Regex(\n                    [\n                        'pattern' => '/^[a-zA-Z0-9]+$/',\n                    ]\n                ),\n            ]\n        );"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/EntryController.php",
+      "start": 253,
+      "end": 253,
+      "fileLines": 427,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                return $this->render('Entry/activate_error.twig', ['error_type' => 'forbidden']);"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/EntryController.php",
+      "start": 259,
+      "end": 259,
+      "fileLines": 427,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        return $this->render('Entry/activate_error.twig', ['error_type' => 'forbidden']);"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Entry/activate_error.twig",
+      "start": 22,
+      "end": 27,
+      "fileLines": 30,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                <h2 class=\"c-hareruya-heading--lev1\">{{ ('front.entry.activate_error.' ~ error_type ~ '.title')|trans }}</h2>\n                <p class=\"c-hareruya-text u-hareruya-mt10\">{{ ('front.entry.activate_error.' ~ error_type ~ '.message')|trans }}</p>\n            </div>\n            <div class=\"p-hareruya-error__actions\">\n                <a class=\"c-hareruya-btn c-hareruya-btn--lg u-hareruya-w-full\" href=\"{{ url('homepage') }}\">{{ 'common.go_to_top'|trans }}</a>\n            </div>"
+    },
+    {
+      "path": "src/Eccube/Resource/locale/messages.ja.yaml",
+      "start": 451,
+      "end": 452,
+      "fileLines": 1841,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\n# 汎用ラベル, メッセージ"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Front/EntryController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Entry/activate_error.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/locale/messages.ja.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:59+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

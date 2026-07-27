@@ -1,0 +1,239 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2200",
+  "issueId": 43509780,
+  "summary": "【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、買取関連の集計が買取ステータス「買取成立」に限定されていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:28Z",
+  "updated": "2026-07-14T01:19:28Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2200",
+  "basicInfo": {
+    "分類": "分析・集計管理",
+    "機能": "日別・月別集計 集計一覧（検索項目/検索結果）",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、買取関連の集計が買取ステータス「買取成立」に限定されていない",
+    "設計書": "0211_基本設計仕様書(分析・集計管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：分析・集計管理\n機能：日別・月別集計 集計一覧（検索項目/検索結果）\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、買取関連の集計が買取ステータス「買取成立」に限定されていない\n設計書：0211_基本設計仕様書(分析・集計管理機能).xlsx",
+    "期待される挙動": "- 日別・月別集計の買取関連の集計（買取件数・買取金額）は、買取データの買取ステータスが「買取成立」のもののみを計上し、それ以外の買取ステータスは計上しないこと。",
+    "現在の挙動": "- ネット買取(dtb_buy_order)は「auto_approval_flg = TRUE」（自動承認フラグ）と申込日の範囲のみで抽出しており、買取ステータス(mtb_buy_order_status)による絞り込みを行っていない。\n- 店頭買取(dtb_otc_buy_order)は「cancel_date IS NULL」（キャンセル日が未設定）と申込日の範囲のみで抽出しており、買取ステータス(mtb_otc_buy_order_status)による絞り込みを行っていない。そのため査定中・査定保留などキャンセルされていない未成立データも計上される。\n- 店頭買取には「買取成立(STATUS_COMPLETE=1)」を含む集計対象ステータス定数 MtbOtcBuyOrderStatus::SUMMARY_STATUSES が定義されているが、日別・月別集計の買取集計SQLからは参照されていない（別機能の店舗×部門別買取集計でのみ使用）。",
+    "補足情報": "▼設計書該当箇所\nM12_analysis_management_basedesign.md:157 の逐語引用: 「* 買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しない」\nM12_analysis_management_basedesign.md:221 の逐語引用: 「* 買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しない」\n\n▼実装該当箇所\nsrc/Eccube/Repository/DtbDailySummaryRepository.php:132 （ネット買取は auto_approval_flg = TRUE のみで抽出）\nsrc/Eccube/Repository/DtbDailySummaryRepository.php:146 （店頭買取は cancel_date IS NULL のみで抽出）\nsrc/Eccube/Repository/DtbDailySummaryRepository.php:83 （aggregatePurchaseSummaryByBaseInfo）\nsrc/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:66 （買取集計データ対象ステータス SUMMARY_STATUSES。日別集計では未使用）\nsrc/Eccube/Entity/DtbBuyOrder.php:133 （dtb_buy_order は BuyOrderStatus を保持しているが集計SQLで未参照）\n\n▼備考\n反証として MtbOtcBuyOrderStatus::SUMMARY_STATUSES の利用箇所を grep したが、参照しているのは DtbOtcBuyOrderRepository::getSectionSummary（店舗×部門単位の買取集計、別機能）と RecalculateSummaryAction のみで、M12-01 の日別・月別集計バッチからは参照されていない。買取ステータスによる絞り込みは日別・月別集計には存在しない。"
+  },
+  "designBook": "0211_基本設計仕様書(分析・集計管理機能).xlsx",
+  "feature": "日別・月別集計 集計一覧（検索項目/検索結果）",
+  "classification": "分析・集計管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Repository/DtbDailySummaryRepository.php",
+      "start": 132,
+      "end": 132,
+      "fileLines": 344,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        bo.auto_approval_flg = TRUE"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbDailySummaryRepository.php",
+      "start": 146,
+      "end": 146,
+      "fileLines": 344,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        AND obo.cancel_date IS NULL"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbDailySummaryRepository.php",
+      "start": 83,
+      "end": 83,
+      "fileLines": 344,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function aggregatePurchaseSummaryByBaseInfo(int $rootBaseInfoId, \\DateTimeInterface $from, \\DateTimeInterface $to): array"
+    },
+    {
+      "path": "src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php",
+      "start": 66,
+      "end": 66,
+      "fileLines": 168,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public const SUMMARY_STATUSES = ["
+    },
+    {
+      "path": "src/Eccube/Entity/DtbBuyOrder.php",
+      "start": 133,
+      "end": 133,
+      "fileLines": 1052,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private MtbBuyOrderStatus $BuyOrderStatus;"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+      "start": 157,
+      "end": 157,
+      "resolvedFrom": "M12_analysis_management_basedesign.md",
+      "fileLines": 979,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しない"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+      "start": 221,
+      "end": 221,
+      "resolvedFrom": "M12_analysis_management_basedesign.md",
+      "fileLines": 979,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 買取関連の集計は買取データの買取ステータスが「買取成立」のみ計上し、それ以外の買取ステータスは計上しない"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Repository/DtbDailySummaryRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbBuyOrder.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:43+09:00",
+  "designResolution": {
+    "requested": "0211_基本設計仕様書(分析・集計管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+    "sheetCount": 20,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "日別・月別集計 集計一覧(検索項目-日別)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "日別・月別集計 集計一覧(検索項目-月別)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "日別・月別集計 集計一覧(検索結果-日別)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "日別・月別集計 集計一覧(検索結果-月別)"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日別・月別集計 CSV出力"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "受注売上分析 集計一覧(検索項目)"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "受注売上分析 集計一覧(検索結果-集計単位 商品)"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "受注売上分析 集計一覧(検索結果-集計単位 カテゴリ )"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "受注売上分析 CSV出力(商品)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "受注売上分析 CSV出力(カテゴリ)"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "入荷通知依頼 一覧表示(検索項目)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "入荷通知依頼 一覧表示(検索結果)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "入荷通知依頼 CSV出力"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "フォーマット売上分析 集計一覧(検索項目)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "フォーマット売上分析 集計一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "フォーマット売上分析 CSV出力"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "特集タグ編集CSVダウンロード(検索項目)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "特集タグ編集CSVダウンロード CSV出力"
+      }
+    ]
+  }
+}

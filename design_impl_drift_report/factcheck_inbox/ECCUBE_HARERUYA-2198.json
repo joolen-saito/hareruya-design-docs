@@ -1,0 +1,187 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2198",
+  "issueId": 43509778,
+  "summary": "【実装乖離】システム設定_権限管理_権限管理画面にて、複製操作が設計書指定の「リンク」ではなく通常ボタン（button要素）で実装されている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:27Z",
+  "updated": "2026-07-14T01:19:27Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2198",
+  "basicInfo": {
+    "分類": "システム設定",
+    "機能": "権限管理",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】システム設定_権限管理_権限管理画面にて、複製操作が設計書指定の「リンク」ではなく通常ボタン（button要素）で実装されている",
+    "設計書": "0201_基本設計仕様書(システム設定).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：システム設定\n機能：権限管理\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】システム設定_権限管理_権限管理画面にて、複製操作が設計書指定の「リンク」ではなく通常ボタン（button要素）で実装されている\n設計書：0201_基本設計仕様書(システム設定).xlsx",
+    "期待される挙動": "- 権限管理画面（M11-03）の識別ID:1-9「複製リンク」は、画面部品としてリンクであること。\n- クリック時に該当行と同権限の複製行（1-10）を追加し、複製行には権限名入力（1-11、必須・重複不可）を設けること。",
+    "現在の挙動": "- 複製操作は <button type=\"button\" class=\"btn btn-ec-regular btn-copy\"> として描画されており、アンカー（a要素）のリンクではなく通常ボタン表示である。管理画面Twig・バンドルCSS/JS のいずれにも、このボタンをリンク表示へ変換する実装は存在しない。\n- 機能面では、handleCopyClick() が対象行を cloneNode して権限チェック状態を引き継いだ複製行を tbody 末尾に追加し（1-9/1-10 充足）、複製行の先頭セルに required 付きの権限名テキスト入力を動的生成する。\n- 権限名の重複は AuthorityIndexAction で、同一リクエスト内の重複および既存 mtb_authority の同名レコードを検出して例外送出により拒否している（1-11 の重複不可は充足）。\n- ただし権限名の必須チェックはクライアント側の required 属性のみで、サーバ側に NotBlank 相当のチェックがなく、空文字を直接POSTした場合は空名の権限が作成され得る。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M11_system_setting_basedesign.md:220（1-9 複製リンク リンク - - - クリック時、該当の行と同権限の複製行を追加する）\n.cursor/docs/MDfile/M11_system_setting_basedesign.md:221-222（1-10 複製行／1-11 権限名入力 テキスト ○ 権限名の重複は不可能）\n.cursor/docs/MDfile/M11_system_setting_basedesign.md:185-189（複製について／権限名は必須かつ重複は不可とする）\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/admin/Setting/System/authority.twig:329-331（複製操作を button 要素（btn-copy）で描画）\nsrc/Eccube/Resource/template/admin/Setting/System/authority.twig:165-208（handleCopyClick。cloneNode による行複製と tbody への追加）\nsrc/Eccube/Resource/template/admin/Setting/System/authority.twig:182（複製行に required 付きの権限名テキスト入力を生成）\nsrc/Eccube/Service/Admin/Setting/System/AuthorityIndexAction.php:73-75（同一リクエスト内および既存権限名との重複を検出し例外送出）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\n両者とも同一の事実（src/Eccube/Resource/template/admin/Setting/System/authority.twig:329 が a要素ではなく button 要素であること、複製・必須・重複不可の機能は実装済みであること）を確認しており、事実認定に相違はない。割れたのは「画面部品の種類の相違を乖離とするか」の評価軸のみである。\nClaude は「機能・挙動は満たしているため部品種別の相違は乖離としない」として FALSE_POSITIVE、codex は .cursor/docs/MDfile/M11_system_setting_basedesign.md:220 が明示的に「リンク」と指定している点を根拠に FACT とした。\n裁定としては codex を採る。同設計書の同じ表で 2-1 登録は「ボタン」（:224）と書き分けられており、1-9 の「リンク」は意図的な部品指定と解される。本監査は他項目でも部品種別の相違（例: ADJ_07 の M10-07 課税規則）を乖離として計上しており、一貫性の観点からも本項目のみを免除する理由がない。\nあわせて、権限名の必須検証がクライアント側 required 属性のみで、src/Eccube/Service/Admin/Setting/System/AuthorityIndexAction.php:73-75 には重複チェックしかなく NotBlank 相当のサーバ側検証が無い点（空名の権限が作成され得る）は、両者とも設計 :188「権限名は必須」に対する残課題として扱っていない。起票時に併記すること。"
+  },
+  "designBook": "0201_基本設計仕様書(システム設定).xlsx",
+  "feature": "権限管理",
+  "classification": "システム設定",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+      "start": 220,
+      "end": 220,
+      "fileLines": 370,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "1-9 複製リンク リンク - - - クリック時、該当の行と同権限の複製行を追加する"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+      "start": 221,
+      "end": 222,
+      "fileLines": 370,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "1-10 複製行 - - - - -\n1-11 権限名入力 テキスト ○ - - 権限名の重複は不可能"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+      "start": 185,
+      "end": 189,
+      "fileLines": 370,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "複製について\n* 複製を選択した行と同権限の行を作成する\n* 権限名を入力し画面下部の登録ボタンを押して登録する\n* 権限名は必須かつ重複は不可とする\n* 権限を新規作成し登録する"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/System/authority.twig",
+      "start": 329,
+      "end": 331,
+      "fileLines": 106,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/System/authority.twig",
+      "start": 165,
+      "end": 208,
+      "fileLines": 106,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/System/authority.twig",
+      "start": 182,
+      "end": 182,
+      "fileLines": 106,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Setting/System/AuthorityIndexAction.php",
+      "start": 73,
+      "end": 75,
+      "fileLines": 147,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                foreach ($newAuthorityNames as $uniqueId => $newAuthorityName) {\n                    if (in_array($newAuthorityName, $seenNames, true) || $this->authorityRepository->findOneBy(['name' => $newAuthorityName])) {\n                        throw new \\Exception($this->translator->trans('admin.setting.system.authority.exists_already_name'));"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/System/authority.twig",
+      "start": 329,
+      "end": 329,
+      "fileLines": 106,
+      "ok": false,
+      "reason": "line_out_of_range"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/System/authority.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Setting/System/AuthorityIndexAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:42+09:00",
+  "designResolution": {
+    "requested": "0201_基本設計仕様書(システム設定).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html",
+    "sheetCount": 6,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-5",
+        "title": "権限管理",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "メンバー管理一覧"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "メンバー管理"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "権限管理"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "権限制御"
+      }
+    ]
+  }
+}

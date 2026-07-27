@@ -1,0 +1,348 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1902",
+  "issueId": 43509397,
+  "summary": "【実装乖離】フロント会員_新規会員登録_新規会員登録画面のパスワード入力補助文が「8文字以上、32文字以内」と表示されるが、実際の入力チェックは12〜50文字であり、画面表示と実装のどちらもが設計書内で整合していない。",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:59Z",
+  "updated": "2026-07-14T01:16:59Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1902",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "新規会員登録",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント会員_新規会員登録_新規会員登録画面のパスワード入力補助文が「8文字以上、32文字以内」と表示されるが、実際の入力チェックは12〜50文字であり、画面表示と実装のどちらもが設計書内で整合していない。",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：新規会員登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_新規会員登録_新規会員登録画面のパスワード入力補助文が「8文字以上、32文字以内」と表示されるが、実際の入力チェックは12〜50文字であり、画面表示と実装のどちらもが設計書内で整合していない。\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- 設計書 F06-01 の画面項目表では、パスワード(1-12)およびパスワード(確認)(1-13)は必須で、最大文字数32・最低文字数8とする。\n- 設計書 F06-03 ログインの★カスタマイズでは「ECCUBE4のパスワードは半角英数記号12〜50文字、IDと同一は許可しない」と規定し、ポリシー非準拠のパスワードは専用のパスワード設定画面へ誘導するとしている。\n- 画面に表示するパスワードの入力補助文（案内文）は、実際にサーバ側で適用される文字数制限と一致していなければならない。\n- パスワードとパスワード(確認)の一致チェック、およびメールアドレスと同一のパスワードの禁止を行う。",
+    "現在の挙動": "- サーバ側の文字数チェックは Assert\\Length(min=eccube_password_min_len=12, max=eccube_password_max_len=50) で、設計書の画面項目表(最大32/最低8)とは一致しない。\n- 一方、新規会員登録画面に表示される案内文は「半角英数字記号 8文字以上、32文字以内で入力してください。」という固定文言のままで、実際に効く12〜50文字と矛盾している（英語版も \"Enter 8–32 characters ...\"）。利用者は8〜11文字のパスワードを入力できると誤認し、必ずエラーになる。\n- 同じ用途の案内文でも、パスワード再発行(Forgot/reset.twig:63)とパスワード変更(Mypage/change.twig:331)は eccube_password_min_len / eccube_password_max_len を埋め込む動的文言になっており、12〜50文字と正しく表示される。新規会員登録画面(Entry/index.twig:316)だけが古い固定文言のまま残っている。\n- パスワード(確認)との一致チェック（RepeatedPasswordType の invalid_message: form_error.same_password）と、メールアドレスと同一パスワードの禁止（EntryType の POST_SUBMIT リスナ）は実装済みである。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/F06_customer_basedesign.md:76（1-12 パスワード：必須・最大32・最低文字数8）\n.cursor/docs/MDfile/F06_customer_basedesign.md:77（1-13 パスワード(確認)：必須・最大32・最低文字数8・メールアドレスと同じ入力かチェック）\n.cursor/docs/MDfile/F06_customer_basedesign.md:298（F06-03 ログイン ★「ECCUBE4のパスワードは半角英数記号12〜50文字、IDと同一は許可しない」）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/RepeatedPasswordType.php:44-56（invalid_message による一致チェック、Assert\\Length(min/max)、Assert\\Regex）\napp/config/eccube/packages/eccube.yaml:195-196（eccube_password_min_len: 12 / eccube_password_max_len: 50 が実効値。mtb_* マスタや Migration による上書きは無い）\nsrc/Eccube/Resource/template/default/Entry/index.twig:306,316（data-minlength は 12 だが、直後の補助文は front.entry.password.note を固定文言で表示）\nsrc/Eccube/Resource/locale/messages.ja.yaml:462（front.entry.password.note: 「半角英数字記号 8文字以上、32文字以内で入力してください。」）\nsrc/Eccube/Resource/locale/messages.en.yaml:354（英語版も \"Enter 8–32 characters ...\"）\nsrc/Eccube/Resource/template/default/Forgot/reset.twig:63 / src/Eccube/Resource/template/default/Mypage/change.twig:331（同種の補助文は eccube_password_min_len/max_len を埋め込んで12〜50を表示している対比実装）\nsrc/Eccube/Form/Type/Front/EntryType.php:190-192（メールアドレスと同一パスワードの禁止）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\nClaude は設計書の内部矛盾（F06_customer_basedesign.md:76-77 の「最大32・最低8」と :298 の「ECCUBE4は12〜50」）に着目し、実装(12〜50)が :298 に一致し PasswordPolicyListener / PasswordChangeController による強制変更フローも実在することから「項目表の8/32が旧記述の残存」＝誤検知と結論した。この設計解釈自体は妥当だが、画面に実際に描画される案内文（Entry/index.twig:316 → messages.ja.yaml:462）を確認しておらず、実装内部の不整合を見落とした。\ncodex は messages.ja.yaml:462 / messages.en.yaml:354 の案内文が「8〜32文字」のままで、Assert\\Length の実効値(12〜50)と食い違うことを突き止めている。判定(FACT)は codex が正しい。\n自分で追加検証したところ、Forgot/reset.twig:63 と Mypage/change.twig:331 は同種の補助文を eccube_config.eccube_password_min_len / eccube_password_max_len から動的に組み立てており12〜50を表示していた。つまり『12〜50が正』という実装意図は明確で、Entry/index.twig:316 が読む front.entry.password.note だけが固定文言のまま更新漏れしている実装バグである。\n対応としては、(a) messages.ja.yaml:462 / messages.en.yaml:354 の案内文を他画面と同様に min/max のプレースホルダ埋め込みへ直す、(b) 設計書 F06_customer_basedesign.md:76-77 の「最大32・最低8」を :298 のECCUBE4ポリシー(12〜50)へ統一する、の両方が必要。英語版のみの未反映ではなく日本語版でも誤表示されるため exclude=false とした。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "新規会員登録",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Forgot/reset.twig",
+      "start": 63,
+      "end": 63,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "Mypage/change.twig",
+      "start": 331,
+      "end": 331,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "Entry/index.twig",
+      "start": 316,
+      "end": 316,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 76,
+      "end": 76,
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1-12 | パスワード | 半角 | ◯ | 32 | - | ・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する<br><br>・最低文字数: 8 |"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 77,
+      "end": 77,
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1-13 | パスワード(確認) | 半角 | ◯ | 32 | - | ・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する<br><br>・(1-26)同意するを押下すると、(1-10)メールアドレスと同じ入力かチェックを行う<br><br>・最低文字数: 8 |"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 298,
+      "end": 298,
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* ECCUBE4のパスワードは半角英数記号12～50文字、IDと同一は許可しないが、ECCUBE4系のポリシーに合わないパスワードについては"
+    },
+    {
+      "path": "src/Eccube/Form/Type/RepeatedPasswordType.php",
+      "start": 44,
+      "end": 56,
+      "fileLines": 100,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\n    /**\n     * {@inheritdoc}\n     */\n    public function configureOptions(OptionsResolver $resolver)\n    {\n        $resolver->setDefaults([\n            'type' => TextType::class, // type password だと入力欄を空にされてしまうので、widgetで対応\n            'invalid_message' => 'form_error.same_password',\n            'required' => true,\n            'error_bubbling' => false,\n            'options' => [\n                'constraints' => ["
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "start": 195,
+      "end": 196,
+      "fileLines": 184,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Entry/index.twig",
+      "start": 306,
+      "end": 306,
+      "fileLines": 222,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/locale/messages.ja.yaml",
+      "start": 462,
+      "end": 462,
+      "fileLines": 1841,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "admin.common.select__unspecified: 指定なし"
+    },
+    {
+      "path": "src/Eccube/Resource/locale/messages.en.yaml",
+      "start": 354,
+      "end": 354,
+      "fileLines": 1840,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "front.shopping.shipping_title: Select a Delivery Address"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Forgot/reset.twig",
+      "start": 63,
+      "end": 63,
+      "fileLines": 73,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                            <div class=\"ec-off4Grid__cell\">"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/change.twig",
+      "start": 331,
+      "end": 331,
+      "fileLines": 225,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Front/EntryType.php",
+      "start": 190,
+      "end": 192,
+      "fileLines": 145,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 76,
+      "end": 77,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1-12 | パスワード | 半角 | ◯ | 32 | - | ・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する<br><br>・最低文字数: 8 |\n| 1-13 | パスワード(確認) | 半角 | ◯ | 32 | - | ・未入力で(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する<br><br>・(1-26)同意するを押下すると、(1-10)メールアドレスと同じ入力かチェックを行う<br><br>・最低文字数: 8 |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/RepeatedPasswordType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Entry/index.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/locale/messages.ja.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/locale/messages.en.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Forgot/reset.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/change.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Front/EntryType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:58+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

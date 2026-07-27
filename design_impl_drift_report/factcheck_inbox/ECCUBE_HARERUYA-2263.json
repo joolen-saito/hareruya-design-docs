@@ -1,0 +1,236 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2263",
+  "issueId": 43509857,
+  "summary": "【一部実装】デッキ管理_アーキタイプ登録CSVアップロード / アーキタイプ登録CSV_アーキタイプ登録CSVアップロードにて、拡張子TSVのファイルをエラーにする処理が実装されておらず、TSVファイルがそのまま取り込まれる",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:20:01Z",
+  "updated": "2026-07-14T01:20:01Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2263",
+  "basicInfo": {
+    "分類": "デッキ管理",
+    "機能": "アーキタイプ登録CSVアップロード / アーキタイプ登録CSV",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】デッキ管理_アーキタイプ登録CSVアップロード / アーキタイプ登録CSV_アーキタイプ登録CSVアップロードにて、拡張子TSVのファイルをエラーにする処理が実装されておらず、TSVファイルがそのまま取り込まれる",
+    "設計書": "0212_基本設計仕様書(デッキ管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：デッキ管理\n機能：アーキタイプ登録CSVアップロード / アーキタイプ登録CSV\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】デッキ管理_アーキタイプ登録CSVアップロード / アーキタイプ登録CSV_アーキタイプ登録CSVアップロードにて、拡張子TSVのファイルをエラーにする処理が実装されておらず、TSVファイルがそのまま取り込まれる\n設計書：0212_基本設計仕様書(デッキ管理).xlsx",
+    "期待される挙動": "- アーキタイプ登録CSVアップロードではTSVアップロードを廃止し、画面上の「TSV」表記を除去する。\n- CSVアップロード実行ロジックに、ファイル拡張子「TSV」をエラー扱いにする処理を追加する。",
+    "現在の挙動": "- ArchetypeCsvController::csv() にはアップロードファイルの拡張子チェックが存在せず、TSVファイルをアップロードしてもエラーにならない。\n- 取込処理の CsvImporter は拡張子が tsv の場合に区切り文字をタブに切り替える実装になっているため、TSVファイルは正常に取り込まれてしまう。\n- 画面テンプレートには accept=\"text/csv,.csv\" が指定されているのみで、これはOSのファイル選択ダイアログでの絞り込み（クライアント側のヒント）に過ぎず、サーバ側の防止策になっていない。\n- 同等機能のデッキ登録CSVアップロード(DeckCsvController::csv())では、拡張子が csv でない場合にエラーとする処理が実装されており、アーキタイプ側だけが未対応である。",
+    "補足情報": "▼設計書該当箇所\nM15_deck_management_basedesign.md:541 「* TSVアップロードを廃止」（アーキタイプ登録CSVアップロードのカスタマイズ要件）\nM15_deck_management_basedesign.md:556-557 「★画面の変更にあわせて、CSVアップロード実行ロジック内に記載されている * ファイル拡張子「TSV」をエラー扱いにする処理を追加」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php:49-109 （csv()。拡張子チェックが無い）\nsrc/Eccube/Service/Csv/Importer/CsvImporter.php:172-175 （拡張子 tsv の場合にタブ区切りとして取り込む）\nsrc/Eccube/Resource/template/admin/Archetype/csv_import.twig:84 （accept属性のみ）\nsrc/Eccube/Controller/Admin/Deck/DeckCsvController.php:90-93 （デッキ側は拡張子csv以外をエラーにしている。対比）\n\n▼備考\n反証としてフォーム型 CsvImportType(src/Eccube/Form/Type/Admin/CsvImportType.php:47-56)の import_file 制約を確認したが、NotBlank と File(maxSize) のみで拡張子・MIMEの制限は無い。画面の「TSV」表記除去は完了しており（csv_import.twig に TSV の文字列なし）、要件の一部のみ実装されている状態のため 一部実装 と分類した。git log --since=\"2026-07-08\" -- src/Eccube/Controller/Admin/Archetype/ は該当コミットなし。"
+  },
+  "designBook": "0212_基本設計仕様書(デッキ管理).xlsx",
+  "feature": "アーキタイプ登録CSVアップロード / アーキタイプ登録CSV",
+  "classification": "デッキ管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php",
+      "start": 49,
+      "end": 109,
+      "fileLines": 139,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function csv(Request $request): array|RedirectResponse\n    {\n        $form = $this->createForm(CsvImportType::class);\n        $headers = $this->getCsvHeader();\n\n        if (!$request->isMethod('POST')) {\n            return $this->renderWithErrors($form, $headers, []);\n        }\n\n        $form->handleRequest($request);\n\n        if (!$form->isSubmitted() || !$form->isValid()) {\n            return $this->renderWithErrors($form, $headers, []);\n        }\n\n        /** @var UploadedFile|null $formFile */\n        $formFile = $form->get('import_file')->getData();\n        if ($formFile === null) {\n            return $this->renderWithErrors($form, $headers, [trans('admin.common.csv_upload_error')]);\n        }\n\n        if ($this->countCsvRows($formFile) >= static::ADMIN_CSV_IMPORT_MAX_ROWS)"
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Importer/CsvImporter.php",
+      "start": 172,
+      "end": 175,
+      "fileLines": 312,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $fileExtension = $file->getClientOriginalExtension();\n        $delimiter = ($fileExtension === 'tsv') ? \"\\t\" : $this->eccubeConfig['eccube_csv_import_delimiter'];\n\n        return new CsvImportService($splFile, $delimiter, $this->eccubeConfig['eccube_csv_import_enclosure']);"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Archetype/csv_import.twig",
+      "start": 84,
+      "end": 84,
+      "fileLines": 119,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                        {{ form_widget(form.import_file, {'attr': {'accept': 'text/csv,.csv', 'class': 'd-none'}}) }}"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Deck/DeckCsvController.php",
+      "start": 90,
+      "end": 93,
+      "fileLines": 183,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $extension = strtolower($formFile->getClientOriginalExtension());\n        if ($extension !== 'csv') {\n            return $this->renderWithErrors($form, [$this->translator->trans('admin.common.csv_upload_error')]);\n        }"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/CsvImportType.php",
+      "start": 47,
+      "end": 56,
+      "fileLines": 77,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('import_file', FileType::class, [\n                'label' => false,\n                'mapped' => false,\n                'required' => true,\n                'constraints' => [\n                    new Assert\\NotBlank(),\n                    new Assert\\File([\n                        'maxSize' => $this->csvMaxSize.'M',\n                    ]),\n                ],"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+      "start": 541,
+      "end": 541,
+      "resolvedFrom": "M15_deck_management_basedesign.md",
+      "fileLines": 736,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* TSVアップロードを廃止"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+      "start": 556,
+      "end": 557,
+      "resolvedFrom": "M15_deck_management_basedesign.md",
+      "fileLines": 736,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "**★画面の変更にあわせて、CSVアップロード実行ロジック内に記載されている**\n* ファイル拡張子「TSV」をエラー扱いにする処理を追加"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Importer/CsvImporter.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Archetype/csv_import.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Deck/DeckCsvController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/CsvImportType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:54+09:00",
+  "designResolution": {
+    "requested": "0212_基本設計仕様書(デッキ管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html",
+    "sheetCount": 14,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-12",
+        "title": "アーキタイプ登録CSVアップロード",
+        "score": 60
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "アーキタイプ登録CSV",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "デッキ一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "デッキ一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "デッキ編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "デッキ登録CSVアップロード"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "デッキ登録CSV"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "デッキタグ一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "アーキタイプ管理(検索入力)"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "アーキタイプ管理(検索結果)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "アーキタイプ編集"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "アーキタイプ登録CSVアップロード"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "アーキタイプ登録CSV"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "直近の大会管理"
+      }
+    ]
+  }
+}

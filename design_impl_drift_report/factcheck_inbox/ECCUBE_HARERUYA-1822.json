@@ -1,0 +1,199 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1822",
+  "issueId": 43509277,
+  "summary": "【実装乖離】フロント注文_注文購入履歴一覧_注文購入履歴一覧にて、処理状態が別添資料の画像ではなく3色のテキストバッジで表示されている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:18Z",
+  "updated": "2026-07-14T01:16:18Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1822",
+  "basicInfo": {
+    "分類": "フロント注文",
+    "機能": "注文購入履歴一覧",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント注文_注文購入履歴一覧_注文購入履歴一覧にて、処理状態が別添資料の画像ではなく3色のテキストバッジで表示されている",
+    "設計書": "0304_基本設計仕様書(フロント_注文).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント注文\n機能：注文購入履歴一覧\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント注文_注文購入履歴一覧_注文購入履歴一覧にて、処理状態が別添資料の画像ではなく3色のテキストバッジで表示されている\n設計書：0304_基本設計仕様書(フロント_注文).xlsx",
+    "期待される挙動": "- 注文購入履歴一覧の「処理状態」は書式「画像」であり、注文ステータスと表示画像の紐付けは別添「注文ステータスと表示画像の紐付け」シートに従って表示する。\n- ステータス表示の画像は現行から変更し、BOステータスと注文種別（通常注文／スムーズ店頭受取／店舗受取注文／スマレジからのデータ／予約）の組み合わせで表示可否・表示画像を切り替える。",
+    "現在の挙動": "- Mypage/shopping_history.twig では OrderStatus の ID だけを見て completed / cancelled / pending の3種のCSS修飾子を決め、注文ステータス名をテキストのバッジ（span 要素）として表示している。\n- バンドルCSS（hareruya-common.css）の .c-hareruya-label--status-* は background-color のみを定義しており、背景画像やアイコン画像は一切設定されていない。\n- 注文種別（通常注文／スムーズ店頭受取／店舗受取注文／予約）による表示画像の切り替えは実装されておらず、スマレジ取引時に非表示とする制御のみが実装されている。",
+    "補足情報": "▼設計書該当箇所\nF04_order_basedesign.md:522 「* ステータス表示の画像を変更する」\nF04_order_basedesign.md:569 「| 13 | 処理状態 | 画像 | - | - | - | <html>スマレジの取引データの場合は処理状態を非表示とする<br>注文ステータスと表示画像の紐付けは<b>「注文ステータスと表示画像の紐付け」シート</b>を参照</html> |」\nF04_order_basedesign.md:763-772 「別添資料_注文ステータスと表示画像の紐付け（カテゴリ／BOステータス／フロント表示画像／通常注文／スムーズ店頭受取／店舗受取注文／スマレジからのデータ／予約）」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Mypage/shopping_history.twig:84-95 （OrderStatus ID から3種のCSS修飾子を決定）\nsrc/Eccube/Resource/template/default/Mypage/shopping_history.twig:194-201 （EC/店頭受取受注のみ、テキストのステータスバッジを出力）\nhtml/template/default/assets/hareruya/css/hareruya-common.css:1 （.c-hareruya-label--status-pending/completed/cancelled は background-color のみ。画像指定なし）\nhtml/template/default/assets/img/mypage/ （存在する svg は買取用の reception_completed / assessing / assessment_completed / transfer_pending / purchase_completed / canceled のみで、注文ステータス用画像は無い）\n\n▼備考\n「スマレジの取引データの場合は処理状態を非表示」の要件のみ実装済み（shopping_history.twig:194 の条件）。別添シートのBOステータス×注文種別の画像マップは未実装（uid F04_cart_order__04-3 と同根）。買取用の PurchaseHistoryStatusMapper（src/Eccube/Service/Front/Mypage/PurchaseHistory/PurchaseHistoryStatusMapper.php:95-127）は買取履歴専用で注文購入履歴では使用されていない。"
+  },
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "feature": "注文購入履歴一覧",
+  "classification": "フロント注文",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Mypage/shopping_history.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+      "start": 84,
+      "end": 95,
+      "fileLines": 227,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                        {% set statusId = Order.OrderStatus.id %}\n                        {% if statusId in [\n                            constant('Eccube\\\\Entity\\\\Master\\\\OrderStatus::DELIVERED'),\n                            constant('Eccube\\\\Entity\\\\Master\\\\OrderStatus::PAID'),\n                            constant('Eccube\\\\Entity\\\\Master\\\\OrderStatus::PASSED')\n                        ] %}\n                            {% set statusCssModifier = 'completed' %}\n                        {% elseif statusId == constant('Eccube\\\\Entity\\\\Master\\\\OrderStatus::CANCEL') %}\n                            {% set statusCssModifier = 'cancelled' %}\n                        {% else %}\n                            {% set statusCssModifier = 'pending' %}\n                        {% endif %}"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+      "start": 194,
+      "end": 201,
+      "fileLines": 227,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                {% if Order.isEcOrder or Order.isOtcAwaitingPickup %}\n                                <div class=\"p-hareruya-history-list__order-info-row\">\n                                    <dt>{{ 'front.mypage.shopping_history.col.status'|trans }}</dt>\n                                    <dd>\n                                        <span class=\"c-hareruya-label--status c-hareruya-label--status-{{ statusCssModifier }}\">{{ Order.OrderStatus.name }}</span>\n                                    </dd>\n                                </div>\n                                {% endif %}"
+    },
+    {
+      "path": "src/Eccube/Service/Front/Mypage/PurchaseHistory/PurchaseHistoryStatusMapper.php",
+      "start": 95,
+      "end": 127,
+      "fileLines": 139,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function resolveStatusIcon(string $mappedStatus): array\n    {\n        return match ($mappedStatus) {\n            self::MAPPED_STATUS_RECEPTION_COMPLETED => [\n                'iconPath' => 'assets/img/mypage/reception_completed.svg',\n                'alt' => '受付完了',\n            ],\n            self::MAPPED_STATUS_ASSESSING => [\n                'iconPath' => 'assets/img/mypage/assessing.svg',\n                'alt' => '査定中',\n            ],\n            self::MAPPED_STATUS_ASSESSMENT_COMPLETED => [\n                'iconPath' => 'assets/img/mypage/assessment_completed.svg',\n                'alt' => '査定完了',\n            ],\n            self::MAPPED_STATUS_TRANSFER_PENDING => [\n                'iconPath' => 'assets/img/mypage/transfer_pending.svg',\n                'alt' => '振込待ち',\n        "
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 522,
+      "end": 522,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* ステータス表示の画像を変更する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 569,
+      "end": 569,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 13 | 処理状態 | 画像 | - | - | - | <html>スマレジの取引データの場合は処理状態を非表示とする<br>注文ステータスと表示画像の紐付けは<b>「注文ステータスと表示画像の紐付け」シート</b>を参照</html> | ◯ | ◯ | × | × |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 763,
+      "end": 772,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "カテゴリ BOステータス フロント表示画像 通常注文 スムーズ店頭受取 店舗受取注文 スマレジからのデータ 予約\n購入履歴 ピック中 × × ◯ × ◯\n購入履歴 入金待ち ◯ × × × ◯\n購入履歴 入金済み ◯ × × × ×\n購入履歴 ピック完了 × ◯ ◯ × 予約専用文言\n購入履歴 出荷指示 ◯ ◯ × × ×\n購入履歴 店頭予約 × ◯ × × ◯\n購入履歴 出荷完了 ◯ × × × ◯\n購入履歴 購入済み × ◯ ◯ ◯ ×\n購入履歴 キャンセル ◯ ◯ × ◯（画像は表示しない） ◯"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Front/Mypage/PurchaseHistory/PurchaseHistoryStatusMapper.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:36+09:00",
+  "designResolution": {
+    "requested": "0304_基本設計仕様書(フロント_注文).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+    "sheetCount": 10,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-8",
+        "title": "注文購入履歴一覧",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "買い物かご"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "ご注文方法指定"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "配送先の新規登録_変更"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "配送先の新規登録_確認"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "決済~購入完了"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "注文購入履歴一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "注文購入履歴詳細"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "別添資料_注文ステータスと表示画像の紐付け"
+      }
+    ]
+  }
+}

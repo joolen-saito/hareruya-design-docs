@@ -1,0 +1,313 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2077",
+  "issueId": 43509621,
+  "summary": "【一部実装】受注管理_受注一覧CSV出力_受注一覧CSV出力にて、非会員（会員未紐付け）の受注の「お名前(姓)」を「非会員」と出力する変換処理が実装されておらず、受注一覧画面の表示と食い違う",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:27Z",
+  "updated": "2026-07-25T11:03:21Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2077",
+  "basicInfo": {
+    "分類": "受注管理",
+    "機能": "受注一覧CSV出力",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】受注管理_受注一覧CSV出力_受注一覧CSV出力にて、非会員（会員未紐付け）の受注の「お名前(姓)」を「非会員」と出力する変換処理が実装されておらず、受注一覧画面の表示と食い違う",
+    "設計書": "0203_基本設計仕様書(受注管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：受注管理\n機能：受注一覧CSV出力\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】受注管理_受注一覧CSV出力_受注一覧CSV出力にて、非会員（会員未紐付け）の受注の「お名前(姓)」を「非会員」と出力する変換処理が実装されておらず、受注一覧画面の表示と食い違う\n設計書：0203_基本設計仕様書(受注管理機能).xlsx",
+    "期待される挙動": "- 受注一覧CSV出力の識別ID:6「お名前(姓)」は、非会員の受注である場合に「非会員」と出力すること。\n- 非会員の判定は受注一覧画面と同一の基準（受注に会員が紐づいていない＝Order.Customer が null）とし、画面表示とCSV出力で結果が一致すること。",
+    "現在の挙動": "- 受注一覧CSV出力は CsvExportService の汎用処理で dtb_csv の定義に従い Order.name01 の値をそのまま出力しており、非会員かどうかを判定して「非会員」へ変換する処理が存在しない。\n- スマレジ（実店頭）の非会員取引については、取込時に SmaregiOrderFactory が Order.name01 に定数 '非会員' を設定しているため、結果としてCSVにも「非会員」と出力される（設計の注記「※スマレジでの非会員による取引データを考慮」は満たされている）。\n- 一方、受注一覧画面は Order.Customer が null かどうかで判定して「非会員」と表示しており、CSV側にはこの判定が無い。管理画面から会員を紐付けずに登録した受注（Admin/OrderType の Customer は HiddenType で必須制約なし）や、会員が紐づかない既存データでは、画面には「非会員」と表示される一方、CSVには入力された姓がそのまま出力され、画面とCSVで内容が食い違う。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M05_order_management_basedesign.md:247 （M05-02 受注一覧CSV出力 識別ID:6「お名前(姓)」…非会員である場合は非会員と表示する）\n.cursor/docs/MDfile/M05_order_management_basedesign.md:316-317 （M05-02 カスタマイズ説明「非会員である場合、非会員と表現する ※スマレジでの非会員による取引データを考慮」）\n.cursor/docs/MDfile/M05_order_management_basedesign.md:323 （M05-02 処理概要「★ 非会員である場合、識別ID:4「お名前(姓)」に非会員と表現する」）\n.cursor/docs/MDfile/M05_order_management_basedesign.md:221 （M05-01 受注一覧画面 識別ID:14「お名前」…非会員である場合は非会員と表示する。CSVと同一の要件文言）\n\n▼実装該当箇所\nsrc/Eccube/Service/CsvExportService.php:213-230 （getData。dtb_csv の entity_name / field_name を汎用的に解決するだけで、非会員判定による値の差し替えは無い）\nsrc/Eccube/Resource/template/admin/Order/index.twig:1218-1221 （受注一覧画面。{% if Order.Customer is null %}非会員{% else %}Order.name01 ~ Order.name02{% endif %} と、会員未紐付けを基準に「非会員」と表示している）\nsrc/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php:49,71-72,190-191 （スマレジ非会員取引は生成時に Order.name01 = '非会員' を設定）\nsrc/Eccube/Form/Type/Admin/OrderType.php:319-324 （管理画面の受注編集フォーム。Customer は HiddenType で必須制約が無く、会員未紐付けの受注を登録し得る）\nsrc/Eccube/Controller/Front/NonMemberShoppingController.php:51 （フロントのゲスト購入ルートはコメントアウトで無効化済み。commit c9b3e2b0b0 「ゲスト購入ルート（shopping_nonmember）を無効化」2026-06-18）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\nClaude は SmaregiOrderFactory.php:49,71-72 で Order.name01 に '非会員' が設定される点をもって「データ生成時点で要件を満たす」と判断し、誤検知とした。しかしこれは設計注記（M05_order_management_basedesign.md:317「※スマレジでの非会員による取引データを考慮」）を要件の全範囲と取り違えた読みであり、要件本文（:323「非会員である場合、識別ID:4「お名前(姓)」に非会員と表現する」）はスマレジに限定していない。\n決定的な反証は同一文言の要件（:221）を実装した受注一覧画面である。src/Eccube/Resource/template/admin/Order/index.twig:1218-1221 は Order.Customer が null であることをもって「非会員」と表示しており、本プロジェクトにおける「非会員」の判定基準が会員未紐付けであることを実装自身が示している。CSV側（CsvExportService.php:213-230）には同等の判定が無く、スマレジ以外の会員未紐付け受注では画面とCSVで出力が食い違う。\ncodex の FACT 判定が結論として正しい。ただし codex が根拠に挙げた「Web非会員（フロントのゲスト購入）」は、NonMemberShoppingController.php:51 でルート自体が無効化済み（2026-06-18 commit c9b3e2b0b0）のため現行では発生しない。実際に問題となるのは管理画面から会員を紐付けずに登録した受注（OrderType.php:319-324 の Customer は必須制約なし）および会員が紐づかない移行データである。\nスマレジ経由の非会員取引についてはデータ生成時点で「非会員」となっており要件を満たすため、category は「未実装」ではなく「一部実装」とする。恒久対応としては、受注一覧CSVの「お名前(姓)」出力時に Order.Customer が null なら '非会員' を出力する変換を入れ、画面表示と判定基準を揃える必要がある。"
+  },
+  "designBook": "0203_基本設計仕様書(受注管理機能).xlsx",
+  "feature": "受注一覧CSV出力",
+  "classification": "受注管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "start": 247,
+      "end": 247,
+      "fileLines": 2167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 6 | お名前(姓) | 非会員である場合は非会員と表示する |"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "start": 316,
+      "end": 317,
+      "fileLines": 2167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 非会員である場合、非会員と表現する\n※スマレジでの非会員による取引データを考慮"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "start": 323,
+      "end": 323,
+      "fileLines": 2167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "**★ 非会員である場合、識別ID:4「お名前(姓)」に非会員と表現する**"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "start": 221,
+      "end": 221,
+      "fileLines": 2167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 14 | お名前 | - | - | - | - | 非会員である場合は非会員と表示する |"
+    },
+    {
+      "path": "src/Eccube/Service/CsvExportService.php",
+      "start": 213,
+      "end": 230,
+      "fileLines": 473,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function getEntityManager()\n    {\n        return $this->entityManager;\n    }\n\n    /**\n     * @param QueryBuilder $qb\n     */\n    public function setExportQueryBuilder(QueryBuilder $qb)\n    {\n        $this->qb = $qb;\n    }\n\n    /**\n     * Csv種別からServiceの初期化を行う.\n     *\n     * @param $CsvType|integer\n     */"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Order/index.twig",
+      "start": 1218,
+      "end": 1221,
+      "fileLines": 678,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php",
+      "start": 49,
+      "end": 49,
+      "fileLines": 415,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private const GUEST_NAME01 = '非会員';"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/OrderType.php",
+      "start": 319,
+      "end": 324,
+      "fileLines": 493,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\n        $form = $event->getForm();\n        $form->add('OrderStatus', EntityType::class, [\n            'class' => OrderStatus::class,\n            'choices' => $OrderStatuses,\n            'choice_label' => 'name',"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/NonMemberShoppingController.php",
+      "start": 51,
+      "end": 51,
+      "fileLines": 315,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    // #[Route(path: '/shopping/nonmember', name: 'shopping_nonmember', methods: ['GET', 'POST'])]"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/CsvExportService.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Order/index.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/OrderType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Front/NonMemberShoppingController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 2,
+  "comments": [
+    {
+      "id": 273471038,
+      "created": "2026-07-25T11:02:21Z",
+      "createdUser": "彩　田中",
+      "content": null
+    },
+    {
+      "id": 273471057,
+      "created": "2026-07-25T11:03:21Z",
+      "createdUser": "彩　田中",
+      "content": "非会員の定義を再確認\n"
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:23+09:00",
+  "designResolution": {
+    "requested": "0203_基本設計仕様書(受注管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [
+        "ec-cube-enterprise/.cursor/design/html/excel/0203_受注管理機能"
+      ],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html",
+    "sheetCount": 27,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-5",
+        "title": "受注一覧CSV出力",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "受注情報検索 一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "受注情報検索 一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "受注一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "受注一覧カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "受注詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "受注詳細カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "メール一括送信"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "【新規】手動メール通知(確認画面)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "スタック用紙印刷"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "納品書印刷（日本語）"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "納品書印刷（英語）"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "受注情報編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "【新規】受注情報履歴"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "出荷指示リスト生成"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "出荷指示リスト検索"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "出荷指示リスト編集"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "出荷指示ー納品書印刷（日本語）"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "出荷指示ー納品書印刷（英語）"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "出荷実績入力用CSV出力"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "出荷実績インポート登録"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "出荷実績登録CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "店頭注文番号札管理"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "別添資料_スマレジ決済後返品処理について"
+      }
+    ]
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1789",
+  "issueId": 43509241,
+  "summary": "【実装乖離】フロントグローバルナビ_PC版ナビゲーション_カートのマウスオーバー一覧が「追加日時の昇順」ではなく CartItem.id 昇順で並べられており、数量を直接設定した明細が末尾へ移動する",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:00Z",
+  "updated": "2026-07-14T01:16:00Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1789",
+  "basicInfo": {
+    "分類": "フロントグローバルナビ",
+    "機能": "PC版ナビゲーション",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロントグローバルナビ_PC版ナビゲーション_カートのマウスオーバー一覧が「追加日時の昇順」ではなく CartItem.id 昇順で並べられており、数量を直接設定した明細が末尾へ移動する",
+    "設計書": "0302_基本設計仕様書(フロント_グローバルナビ).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントグローバルナビ\n機能：PC版ナビゲーション\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロントグローバルナビ_PC版ナビゲーション_カートのマウスオーバー一覧が「追加日時の昇順」ではなく CartItem.id 昇順で並べられており、数量を直接設定した明細が末尾へ移動する\n設計書：0302_基本設計仕様書(フロント_グローバルナビ).xlsx",
+    "期待される挙動": "- PC版ナビゲーションの(18-1)カートをマウスオーバーした際、カート内商品を「カートに商品を追加した日時の昇順」で一覧表示すること。",
+    "現在の挙動": "- カートポップアップの表示モデルを組み立てる CartHeaderViewService::buildItemViews は CartItem.id の昇順で並べ替えており、追加日時による並べ替えは行っていない。\n- CartItem エンティティ(dtb_cart_item)には追加日時を保持する create_date 相当のカラムが存在せず、追加日時での並べ替え自体が現状のデータ構造では不可能である。\n- カート数量の直接指定(cart_handle_item の operation=set)は CartService::setProductQuantity が removeProduct→addProduct を実行するため、該当明細が配列末尾に付け直され、さらに CartService::restoreCarts が全 CartItem を削除・再INSERTして id を採番し直す。その結果、数量を変更した商品が一覧の末尾に移動し、実際の追加日時の昇順にならない。",
+    "補足情報": "▼設計書該当箇所\nF02_global_nav_basedesign.md:172 「**★ カートに商品を追加した日時の昇順でカート内商品を一覧表示する**」\nF02_global_nav_basedesign.md:176 「| 18-1 | カート | リンク | ... ・マウスオーバーすると、カート内の商品を一覧表示する ... |」\n\n▼実装該当箇所\nsrc/Eccube/Service/Cart/CartHeaderViewService.php:40-41 （CartItem.id 昇順で usort）\nsrc/Eccube/Entity/CartItem.php:39-56 （id/price/quantity/ProductClass/Cart のみ。追加日時カラムなし）\nsrc/Eccube/Service/CartService.php:388-397 （setProductQuantity が removeProduct + addProduct）\nsrc/Eccube/Service/CartService.php:237-246 （restoreCarts が全 CartItem を remove してから再登録）\nsrc/Eccube/Controller/Front/CartController.php:326 （operation=set で setProductQuantity を呼び出す）\n\n▼備考\nカート明細を +/- で増減する経路(operation=up/down)は CartService::mergeCartItems が既存明細の数量を加算するため配列順が保たれるが、数量の直接指定(operation=set)では明細が作り直されて末尾に移動する。追加日時カラムを持たない構造上、厳密な「追加日時の昇順」は現状満たせないため実装乖離と判定した。"
+  },
+  "designBook": "0302_基本設計仕様書(フロント_グローバルナビ).xlsx",
+  "feature": "PC版ナビゲーション",
+  "classification": "フロントグローバルナビ",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Service/Cart/CartHeaderViewService.php",
+      "start": 40,
+      "end": 41,
+      "fileLines": 102,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $items = $Cart->getCartItems()->toArray();\n        usort($items, fn (CartItem $a, CartItem $b): int => ($a->getId() ?? 0) <=> ($b->getId() ?? 0));"
+    },
+    {
+      "path": "src/Eccube/Entity/CartItem.php",
+      "start": 39,
+      "end": 56,
+      "fileLines": 266,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        private $id;\n\n        /**\n         * @var string\n         *\n         * @ORM\\Column(name=\"price\", type=\"decimal\", precision=12, scale=2, options={\"default\":0})\n         */\n        private $price = 0;\n\n        /**\n         * @var string\n         *\n         * @ORM\\Column(name=\"quantity\", type=\"decimal\", precision=10, scale=0, options={\"default\":0})\n         */\n        private $quantity = 0;\n\n        /**\n         * @var \\Eccube\\Entity\\ProductClass"
+    },
+    {
+      "path": "src/Eccube/Service/CartService.php",
+      "start": 388,
+      "end": 397,
+      "fileLines": 537,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\n        array_splice($allCartItems, $foundIndex, 1);\n        $this->restoreCarts($allCartItems);\n\n        return true;\n    }\n\n    public function save()\n    {\n        $cartKeys = [];"
+    },
+    {
+      "path": "src/Eccube/Service/CartService.php",
+      "start": 237,
+      "end": 246,
+      "fileLines": 537,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "     * @param CartItem[] $cartItems\n     *\n     * @return CartItem[]\n     */\n    protected function mergeAllCartItems($cartItems = [])\n    {\n        /** @var CartItem[] $allCartItems */\n        $allCartItems = [];\n\n        foreach ($this->getCarts() as $Cart) {"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/CartController.php",
+      "start": 326,
+      "end": 326,
+      "fileLines": 503,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                $this->cartService->setProductQuantity($BaseInfo, $ProductClass, (string) $quantity);"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+      "start": 172,
+      "end": 172,
+      "resolvedFrom": "F02_global_nav_basedesign.md",
+      "fileLines": 1032,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "**★ カートに商品を追加した日時の昇順でカート内商品を一覧表示する**"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+      "start": 176,
+      "end": 176,
+      "resolvedFrom": "F02_global_nav_basedesign.md",
+      "fileLines": 1032,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 18-1 | カート | リンク | - | - | - | <html><b>※カスタマイズ対応、マウスオーバーで商品概要を表示する</b><br><br>・カート内に商品がある場合、カート内の商品数を表示する<br><br>・マウスオーバーすると、カート内の商品を一覧表示する<br><br>・押下すると、カート画面へ遷移する</html> |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Service/Cart/CartHeaderViewService.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/CartItem.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/CartService.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Front/CartController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:31+09:00",
+  "designResolution": {
+    "requested": "0302_基本設計仕様書(フロント_グローバルナビ).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0302_基本設計仕様書(フロント_グローバルナビ).html",
+    "sheetCount": 8,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "PC版ナビゲーション",
+        "score": 100
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "支店PC版ナビゲーション",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "PC版ナビゲーション"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "スマホ版ナビゲーション"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "支店PC版ナビゲーション"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "支店スマホ版ナビゲーション"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "通知"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "別添資料_通知一覧"
+      }
+    ]
+  }
+}

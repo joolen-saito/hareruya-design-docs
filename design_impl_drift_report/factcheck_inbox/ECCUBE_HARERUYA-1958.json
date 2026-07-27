@@ -1,0 +1,451 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1958",
+  "issueId": 43509467,
+  "summary": "【一部実装】商品管理_グッズ商品CSV登録/フォーマット_グッズ商品CSV登録にて、スマレジサーバへ照会したうえでの重複スマレジ商品コードのエラー判定が実装されていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:25Z",
+  "updated": "2026-07-21T06:59:53Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1958",
+  "basicInfo": {
+    "分類": "商品管理",
+    "機能": "グッズ商品CSV登録/フォーマット",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】商品管理_グッズ商品CSV登録/フォーマット_グッズ商品CSV登録にて、スマレジサーバへ照会したうえでの重複スマレジ商品コードのエラー判定が実装されていない",
+    "設計書": "0204_基本設計仕様書(商品管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：商品管理\n機能：グッズ商品CSV登録/フォーマット\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】商品管理_グッズ商品CSV登録/フォーマット_グッズ商品CSV登録にて、スマレジサーバへ照会したうえでの重複スマレジ商品コードのエラー判定が実装されていない\n設計書：0204_基本設計仕様書(商品管理).xlsx",
+    "期待される挙動": "- グッズ商品CSV登録では、登録・更新時にスマレジサーバに通信し、スマレジ商品コードの登録状況を確認すること。\n- 登録時、重複するスマレジ商品コードがある場合はエラー扱いとすること。",
+    "現在の挙動": "- 取込処理はスマレジサーバへ照会を行っておらず、dtb_product_class の部分ユニークインデックス(uniq_smaregi_product_code_partial)違反(UniqueConstraintViolationException)を捕捉して重複エラーメッセージを出力しているのみである。\n- したがって重複判定はEC-CUBEのDB内に同一コードが存在する場合に限られ、EC-CUBEに未登録でスマレジ側にのみ存在するコードは重複として検出されない。\n- スマレジ連携は取込完了後に SmaregiProductClassCsvImportUpsertCoordinator が非同期の upsert ジョブを投入する方式で、取込中にスマレジ商品の登録状況を照会する処理は存在しない。\n- 実装内にも『スマレジ連携状態の確認後、更新するか決める』旨のTODOコメントが残っている。",
+    "補足情報": "▼設計書該当箇所\nM03_product_management_basedesign.md:773-776 の逐語引用「**★ スマレジ商品コードの追加** / * CSVフォーマット識別ID 30:スマレジ商品コードを追加 / * 登録・更新時にスマレジサーバに通信し、スマレジ商品コードの登録状況を確認する / * 登録時、重複するスマレジ商品コードがある場合はエラー扱い」\n\n▼実装該当箇所\nsrc/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:658-666 （insert 時の重複検出はDBのユニーク制約違反の捕捉のみ）\nsrc/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:616-620 （スマレジ連携状態の確認は TODO のまま。取込中の照会なし）\nsrc/Eccube/Entity/ProductClass.php:36-40 （smaregi_product_code の部分ユニークインデックス定義）\nsrc/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:65-108 （取込完了後に非同期 upsert ジョブを投入するのみ。照会は行わない）\n\n▼備考\nEC-CUBE内での重複はDB一意制約でエラーになるため『重複時にエラーとする』要件の一部は満たすが、設計が求める『スマレジサーバに通信してスマレジ商品コードの登録状況を確認する』照会は未実装。スマレジ側にのみ存在する重複コードは検出できない。"
+  },
+  "designBook": "0204_基本設計仕様書(商品管理).xlsx",
+  "feature": "グッズ商品CSV登録/フォーマット",
+  "classification": "商品管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php",
+      "start": 658,
+      "end": 666,
+      "fileLines": 797,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            } catch (UniqueConstraintViolationException $e) {\n                $event->getMessageStore()\n                    ->addNewProductSmaregiProductCodeDuplicateError(\n                        $row->getRowNumber(),\n                        $smaregiProductCode\n                    );\n                $event->skipRow();\n                throw $e;\n            }"
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php",
+      "start": 616,
+      "end": 620,
+      "fileLines": 797,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            // TODO: スマレジ連携フラグが無効から有効に変更された場合、スマレジ連携のキューを作成する\n            // SmaregiProductClassEventService::dispatchUpsert() を呼び出す\n            // 既存のスマレジ連携フラグと比較して、無効から有効に変わった場合にキューを作成する必要がある\n            // TODO:スマレジ連携状態の確認後、更新するか決める（https://joolen.slack.com/archives/C086TQW7VTK/p1777341428022289）\n            $this->smaregiCsvImportUpsertCoordinator->deferIfEligible($productClassId, $smaregiAlignmentFlg, (string) $smaregiProductCode);"
+    },
+    {
+      "path": "src/Eccube/Entity/ProductClass.php",
+      "start": 36,
+      "end": 40,
+      "fileLines": 826,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "         *\n         * @return string\n         */\n        public function formattedProductName()\n        {"
+    },
+    {
+      "path": "src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php",
+      "start": 65,
+      "end": 108,
+      "fileLines": 110,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function afterCsvImportFinished(bool $importSuccessful): void\n    {\n        if (!$importSuccessful) {\n            $this->deferredProductClassIds = [];\n\n            return;\n        }\n\n        $dispatchFailed = false;\n        $firstFailure = null;\n\n        try {\n            foreach (array_keys($this->deferredProductClassIds) as $productClassId) {\n                $ProductClass = $this->productClassRepository->find($productClassId);\n                if ($ProductClass === null) {\n                    continue;\n                }\n                if (!$ProductClass->getSmaregiAlignmentFlg()) {\n                    continue;\n                }\n                $code = $ProductClass->getSmaregiProductCode();\n                if ($code === null || trim($code) === '') {\n                    contin"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+      "start": 773,
+      "end": 776,
+      "resolvedFrom": "M03_product_management_basedesign.md",
+      "fileLines": 3747,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "**★ スマレジ商品コードの追加**\n* CSVフォーマット識別ID 30:スマレジ商品コードを追加\n* 登録・更新時にスマレジサーバに通信し、スマレジ商品コードの登録状況を確認する\n* 登録時、重複するスマレジ商品コードがある場合はエラー扱い"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/ProductClass.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 5,
+  "comments": [
+    {
+      "id": 272577229,
+      "created": "2026-07-16T08:22:25Z",
+      "createdUser": "上水流　弘一",
+      "content": null
+    },
+    {
+      "id": 272828118,
+      "created": "2026-07-21T01:49:39Z",
+      "createdUser": "上水流　弘一",
+      "content": null
+    },
+    {
+      "id": 272828223,
+      "created": "2026-07-21T01:50:05Z",
+      "createdUser": "上水流　弘一",
+      "content": null
+    },
+    {
+      "id": 272829483,
+      "created": "2026-07-21T01:54:47Z",
+      "createdUser": "上水流　弘一",
+      "content": null
+    },
+    {
+      "id": 272901693,
+      "created": "2026-07-21T06:59:53Z",
+      "createdUser": "上水流　弘一",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:10+09:00",
+  "designResolution": {
+    "requested": "0204_基本設計仕様書(商品管理).xlsx",
+    "alternates": {
+      "splitSheets": [
+        "ec-cube-enterprise/.cursor/design/html/excel/0204_商品管理"
+      ],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html",
+    "sheetCount": 68,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-11",
+        "title": "グッズ商品CSV登録",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "商品マスター(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "商品マスター(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "商品登録編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "セール用価格変更CSV出力"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "商品情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "カード商品CSV登録"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "カード商品CSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "カード商品CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "グッズ商品CSV登録"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "グッズ商品CSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "グッズ商品CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "商品タグ更新CSV登録"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "商品タグ更新CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "売上分析タグ登録編集"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "売上分析タグ更新CSV登録"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "売上分析タグ更新CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "商品公開CSV登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "商品公開CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "商品規格一覧"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "商品規格登録編集"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "買取・基準価格一括編集"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "カテゴリ一覧"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "カテゴリ登録"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "カテゴリCSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "タグ登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "略称タグ登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "略称タグCSV出力"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "略称タグCSVアップロード"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "略称タグCSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "部門登録"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "部門CSV出力"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "部門登録CSVアップロード"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "部門登録CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "棚番登録 編集"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚番号CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "購入グループ管理"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "買取・販売価格履歴検索"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "買取 販売価格履歴情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "重複商品コード確認"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "基準価格変更CSVアップロード"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "基準価格変更CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "セール用価格変更CSVアップロード"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "セール用価格変更CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "低価格帯カード価格変更CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "低価格帯カード価格変更CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "高額商品価格変更CSVアップロード"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "高額商品価格変更CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "セール用高額商品価格変更CSVアップロード"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "セール用高額商品価格変更CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "部門更新CSV登録"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "部門更新CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-54",
+        "title": "略称タグ更新CSV登録"
+      },
+      {
+        "sheetId": "sheet-55",
+        "title": "略称タグ更新CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-56",
+        "title": "棚番号更新CSV登録"
+      },
+      {
+        "sheetId": "sheet-57",
+        "title": "棚番号更新CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-58",
+        "title": "カテゴリ登録CSVアップロード"
+      },
+      {
+        "sheetId": "sheet-59",
+        "title": "カテゴリ登録CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-60",
+        "title": "別添資料_カテゴリ子検索条件について"
+      },
+      {
+        "sheetId": "sheet-61",
+        "title": "別添資料_CSVアップロードによる基準価格と販売価格の更新"
+      },
+      {
+        "sheetId": "sheet-62",
+        "title": "別添資料__スマレジ連携機能一覧"
+      },
+      {
+        "sheetId": "sheet-63",
+        "title": "別添資料__スマレジ連携__商品連携項目"
+      },
+      {
+        "sheetId": "sheet-64",
+        "title": "別添資料__スマレジ部門連携項目"
+      },
+      {
+        "sheetId": "sheet-65",
+        "title": "別添資料__スマレジ連携対象商品"
+      },
+      {
+        "sheetId": "sheet-66",
+        "title": "別添資料__スマレジ連携__呼び出しAPIについて"
+      },
+      {
+        "sheetId": "sheet-67",
+        "title": "別添資料__一括更新系の処理結果について"
+      },
+      {
+        "sheetId": "sheet-68",
+        "title": "別添資料__スマレジ連携__機能改修一覧"
+      }
+    ]
+  }
+}

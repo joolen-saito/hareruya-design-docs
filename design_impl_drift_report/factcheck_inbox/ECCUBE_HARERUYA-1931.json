@@ -1,0 +1,241 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1931",
+  "issueId": 43509438,
+  "summary": "【要確認】フロントイベント_大会詳細_大会詳細の受付期間(1-7)に店頭受付時間を表示し、申込可否はオンライン受付期間で判定している点は、設計上の乖離ではない(誤検知)",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:14Z",
+  "updated": "2026-07-14T01:17:14Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1931",
+  "basicInfo": {
+    "分類": "フロントイベント",
+    "機能": "大会詳細",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【要確認】フロントイベント_大会詳細_大会詳細の受付期間(1-7)に店頭受付時間を表示し、申込可否はオンライン受付期間で判定している点は、設計上の乖離ではない(誤検知)",
+    "設計書": "0307_基本設計仕様書(フロント_イベント).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントイベント\n機能：大会詳細\n課題カテゴリ：不具合（バグ）\n課題：【要確認】フロントイベント_大会詳細_大会詳細の受付期間(1-7)に店頭受付時間を表示し、申込可否はオンライン受付期間で判定している点は、設計上の乖離ではない(誤検知)\n設計書：0307_基本設計仕様書(フロント_イベント).xlsx",
+    "期待される挙動": "- 大会詳細のページ最上段に受付期間(1-7)としてイベントの受付期間を表示する。\n- イベント申込み(4-1)ボタンは、定員が埋まっていないこと・予約可能期間であること・エントリーフラグがtrueであることを条件に表示する。\n- 管理画面(M13)では「受付時間(受付開始時間・受付終了時間、時刻)」と「オンライン受付時間(オンライン受付開始時間・終了時間、日付時刻)」を別項目として登録する。",
+    "現在の挙動": "- detail.twig は受付期間の行に Detail.entryStartDate ～ Detail.entryEndDate(dtb_event_detail.entry_start_date / entry_end_date = 管理画面の「受付開始/終了時間」)を表示している。\n- 申込みボタンの表示可否は EventDetailButtonStateResolver::isWithinEntryWindow() が online_entry_start_date / online_entry_end_date(管理画面の「オンライン受付開始/終了時間」)で判定している。\n- この2種類の項目は M13 設計でも別項目として定義されており、実装は設計どおりに両者を分離して保持・表示している。表示ラベルが「受付時間」(英語 Check-in)である点のみ設計の「受付期間」と字句が異なる。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/F07_event_basedesign.md:431 (1-7 受付期間 = 「イベントの申込受付期間」)\n.cursor/docs/MDfile/F07_event_basedesign.md:474-477 (イベント申込み(4-1)ボタンの表示条件は「予約可能期間であること」であり、1-7の表示値と同一ソースにする指定はない)\n.cursor/docs/MDfile/M13_event_management_basedesign.md:290-291 (識別ID 6〜8: 受付あり／受付開始時間／受付終了時間 = 時刻)\n.cursor/docs/MDfile/M13_event_management_basedesign.md:296-298 (識別ID 12〜14: オンライン受付あり／オンライン受付開始時間／終了時間 = 日付時刻)\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Event/detail.twig:105-114 (受付期間の行。Detail.entryStartDate ～ Detail.entryEndDate を表示)\nsrc/Eccube/Service/Front/Event/EventDetailButtonStateResolver.php:42-54 (isWithinEntryWindow は getOnlineEntryStartDate()/getOnlineEntryEndDate() で判定)\nsrc/Eccube/Form/Type/Admin/ScheduleType.php:109-130 (entryStartDate/entryEndDate は TimeType、onlineEntryStartDate/onlineEntryEndDate は DateTimeType で、M13設計の項目分離と一致)\nsrc/Eccube/Entity/DtbEventDetail.php:53-63 (entry_start_date / entry_end_date と online_entry_start_date / online_entry_end_date は別カラム)\n\n▼AIレビューで判定が割れた理由\nClaude は「乖離あり」、codex は「実装済み」と判定し、第三者による再検証で codex の判定を採用した。\nClaude は F07_event_basedesign.md:431 の「イベントの申込受付期間」という語をオンライン申込の受付期間と解釈し、detail.twig:105-114 が店頭受付時間(entry_*)を表示している一方で EventDetailButtonStateResolver.php:42-54 が online_entry_* で申込可否を判定していることを「表示と判定のソース不一致」として FACT と判定した。\nしかし M13_event_management_basedesign.md:290-291 と :296-298 は「受付(受付開始/終了時間)」と「オンライン受付(オンライン受付開始/終了時間)」を明確に別の登録項目として定義しており、ScheduleType.php:109-130 の実装はこの設計どおりである。F07 側も申込ボタンの条件を :474-477 で「予約可能期間」と別語で規定しており、1-7 の表示値と申込判定値を同一ソースにするという要件は設計上どこにも存在しない。\nしたがって codex の FALSE_POSITIVE が正しい。Claude が挙げた「表示された受付期間内でも申込みボタンが出ない場合がある」は、設計が受付(店頭)とオンライン受付を別概念として定義していることの帰結であり、乖離ではない。\n残る差異は表示ラベルのみで、設計の「受付期間」に対し実装は messages.ja.yaml:6587 front.event.detail.info.entry_period = 「受付時間」(英語は Check-in)である。これは字句の違いであり、本項目としては誤検知(該当なし)と裁定する。"
+  },
+  "designBook": "0307_基本設計仕様書(フロント_イベント).xlsx",
+  "feature": "大会詳細",
+  "classification": "フロントイベント",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 431,
+      "end": 431,
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1-7 | 受付期間 | ラベル | - | - | - | イベントの申込受付期間 |"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 474,
+      "end": 477,
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "### 機能説明\nイベント申込み可能な状況になっていれば、イベント申込み(4-1)ボタンを表示\n* 定員が埋まっていないこと\n* 予約可能期間であること"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 290,
+      "end": 291,
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 6 | 受付あり | チェックボックス | - | - | オン |\n| 7 | 受付開始時間 | 時刻 | △ | - | 00:00 | 受付ありの値に応じて表示/非表示を切り替える<br>受付ありの場合必須<br>受付開始時間 < 受付終了時間であること |"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 296,
+      "end": 298,
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 12 | オンライン受付あり | チェックボックス | - | - | - |\n| 13 | オンライン受付開始時間 | 日付時刻 | △ | - | - | オンライン受付ありの値に応じて表示/非表示を切り替える<br>オンライン受付ありの場合必須<br>オンライン受付開始時間 < オンライン受付終了時間であること |\n| 14 | オンライン受付終了時間 | 日付時刻 | △ | - | - | オンライン受付ありの値に応じて表示/非表示を切り替える<br>オンライン受付ありの場合必須<br>オンライン受付終了時間 < 開始時間であること |"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Event/detail.twig",
+      "start": 105,
+      "end": 114,
+      "fileLines": 171,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                {% if Detail.entryStartDate and Detail.entryEndDate %}\n                    <div class=\"p-hareruya-event-detail__info-row\">\n                        <dt class=\"p-hareruya-event-detail__info-label\">{{ 'front.event.detail.info.entry_period'|trans }}</dt>\n                        <dd class=\"p-hareruya-event-detail__info-value\">\n                            <time datetime=\"{{ Detail.entryStartDate|date('Y-m-d\\\\TH:i') }}\">{{ Detail.entryStartDate|date('Y/n/j H:i') }}</time>\n                            &nbsp;～&nbsp;\n                            <time datetime=\"{{ Detail.entryEndDate|date('Y-m-d\\\\TH:i') }}\">{{ Detail.entryEndDate|date('Y/n/j H:i') }}</time>\n                        </dd>\n                    </div>\n                {% endif %}"
+    },
+    {
+      "path": "src/Eccube/Service/Front/Event/EventDetailButtonStateResolver.php",
+      "start": 42,
+      "end": 54,
+      "fileLines": 55,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private function isWithinEntryWindow(DtbEventDetail $Detail, \\DateTimeImmutable $now): bool\n    {\n        $start = $Detail->getOnlineEntryStartDate();\n        $end = $Detail->getOnlineEntryEndDate();\n        if ($start === null || $end === null) {\n            return false;\n        }\n\n        $startImmutable = \\DateTimeImmutable::createFromInterface($start);\n        $endImmutable = \\DateTimeImmutable::createFromInterface($end);\n\n        return $now >= $startImmutable && $now <= $endImmutable;\n    }"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/ScheduleType.php",
+      "start": 109,
+      "end": 130,
+      "fileLines": 295,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('entryStartDate', TimeType::class, [\n                'label' => 'admin.event.schedule.entry_start_date',\n                'required' => false,\n                'widget' => 'single_text',\n            ])\n            ->add('entryEndDate', TimeType::class, [\n                'label' => 'admin.event.schedule.entry_end_date',\n                'required' => false,\n                'widget' => 'single_text',\n            ])\n            ->add('onlineEntryStartDate', DateTimeType::class, [\n                'label' => 'admin.event.schedule.online_entry_start_date',\n                'required' => false,\n                'widget' => 'single_text',\n                'input' => 'datetime',\n            ])\n            ->add('onlineEntryEndDate', DateTimeType::class, [\n                'label' => 'adm"
+    },
+    {
+      "path": "src/Eccube/Entity/DtbEventDetail.php",
+      "start": 53,
+      "end": 63,
+      "fileLines": 586,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[ORM\\Column(name: 'entry_start_date', type: Types::DATETIMETZ_MUTABLE, nullable: true, options: ['comment' => '申込開始日時'])]\n    private ?\\DateTime $entryStartDate = null;\n\n    #[ORM\\Column(name: 'entry_end_date', type: Types::DATETIMETZ_MUTABLE, nullable: true, options: ['comment' => '申込終了日時'])]\n    private ?\\DateTime $entryEndDate = null;\n\n    #[ORM\\Column(name: 'online_entry_start_date', type: Types::DATETIMETZ_MUTABLE, nullable: true, options: ['comment' => 'オンライン申込開始日時'])]\n    private ?\\DateTime $onlineEntryStartDate = null;\n\n    #[ORM\\Column(name: 'online_entry_end_date', type: Types::DATETIMETZ_MUTABLE, nullable: true, options: ['comment' => 'オンライン申込終了日時'])]\n    private ?\\DateTime $onlineEntryEndDate = null;"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 431,
+      "end": 431,
+      "resolvedFrom": "F07_event_basedesign.md",
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1-7 | 受付期間 | ラベル | - | - | - | イベントの申込受付期間 |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 290,
+      "end": 291,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 6 | 受付あり | チェックボックス | - | - | オン |\n| 7 | 受付開始時間 | 時刻 | △ | - | 00:00 | 受付ありの値に応じて表示/非表示を切り替える<br>受付ありの場合必須<br>受付開始時間 < 受付終了時間であること |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Event/detail.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Front/Event/EventDetailButtonStateResolver.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/ScheduleType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbEventDetail.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:09+09:00",
+  "designResolution": {
+    "requested": "0307_基本設計仕様書(フロント_イベント).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html",
+    "sheetCount": 6,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-5",
+        "title": "大会詳細",
+        "score": 100
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "大会詳細検索",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント大会TOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "大会詳細検索"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "大会詳細"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "大会申込～完了"
+      }
+    ]
+  }
+}

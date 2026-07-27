@@ -1,0 +1,167 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1912",
+  "issueId": 43509416,
+  "summary": "【実装乖離】フロントイベント_イベント大会TOP_イベント大会TOPの初期読込にて、現在月日から1ヶ月分ではなく14日分のイベントデータしか取得していない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:04Z",
+  "updated": "2026-07-14T01:17:04Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1912",
+  "basicInfo": {
+    "分類": "フロントイベント",
+    "機能": "イベント大会TOP",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロントイベント_イベント大会TOP_イベント大会TOPの初期読込にて、現在月日から1ヶ月分ではなく14日分のイベントデータしか取得していない",
+    "設計書": "0307_基本設計仕様書(フロント_イベント).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントイベント\n機能：イベント大会TOP\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロントイベント_イベント大会TOP_イベント大会TOPの初期読込にて、現在月日から1ヶ月分ではなく14日分のイベントデータしか取得していない\n設計書：0307_基本設計仕様書(フロント_イベント).xlsx",
+    "期待される挙動": "- ページの初期読込時に、店舗の表示対象イベントデータを現在月日より1ヶ月分すべて取得すること。\n- 翌月へ移る時・店舗選択時・ページ読込時も同じ挙動とし、デフォルトの絞り込みと日付絞り込みは取得済みデータに対して非同期で処理すること。",
+    "現在の挙動": "- イベント一覧タブ・日別タブの init() は loadEvents() のみを呼び、取得範囲は getDateRangeForPeriod() → H(基準日,14) すなわち当日から14日分に限定されている。\n- 1ヶ月規模のデータ取得にあたる loadFullRangeInBackground()（当日 -28日〜+28日を取得）は init() から呼ばれず、前14日/後14日ボタン押下時（changePeriod）に初めて実行されるため、初期読込では走らない。\n- 月別タブの初期読込は当月1日〜当月末日の範囲を別リクエストで取得しており、「現在月日より1ヶ月分」ではない。",
+    "補足情報": "▼設計書該当箇所\nF07_event_basedesign.md:58 「* 最初に店舗の表示対象のイベントデータを全て読み込む(初動が重くなる可能性については現時点では考慮しない)」\nF07_event_basedesign.md:59 「* 現在月日より1ヶ月分を全てデータ取得する」\nF07_event_basedesign.md:60 「* 翌月に移る時,店舗選択等、ページ読込時は全てこの挙動とする」\n\n▼実装該当箇所\nhtml/template/default/assets/hareruya/js/hareruya-event.js:1 （イベント一覧タブ init。loadEvents() と setupPeriodNavigation() のみ実行）\nhtml/template/default/assets/hareruya/js/hareruya-event.js:1 （getDateRangeForPeriod → H(e,14)。既定 14 日分の date_from/date_to を生成）\nhtml/template/default/assets/hareruya/js/hareruya-event.js:1 （loadFullRangeInBackground が呼ぶ N()。当日 -28日〜+28日を取得。呼び出し元は changePeriod のみ）\nsrc/Eccube/Controller/App/EventScheduleController.php:58 （/assets/data/events.json は date_from / date_to クエリで範囲取得する）\n\n▼備考\n「表示期間は現在月日から14日分」（:187, 4-A 初期表示）は表示側の仕様であり満たされているが、データ取得側の「現在月日より1ヶ月分を全て取得」（:59）は満たしていない。初期読込では list / daily が各14日分、monthly が当月1日〜末日を個別に fetch する3リクエスト構成になっており、1ヶ月分を一括で持つ設計になっていない。"
+  },
+  "designBook": "0307_基本設計仕様書(フロント_イベント).xlsx",
+  "feature": "イベント大会TOP",
+  "classification": "フロントイベント",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "html/template/default/assets/hareruya/js/hareruya-event.js",
+      "start": 1,
+      "end": 1,
+      "fileLines": 2,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "(()=>{\"use strict\";var e={},t={};function r(a){var n=t[a];if(void 0!==n)return n.exports;var i=t[a]={exports:{}};return e[a](i,i.exports,r),i.exports}function a(e,t,r,a,n,i,o){try{var l=e[i](o),s=l.value}catch(e){r(e);return}l.done?t(s):Promise.resolve(s).then(a,n)}r.rv=()=>\"1.7.5\",r.ruid=\"bundler=rspack@1.7.5\";function n(e,t,r){return t in e?Object.defineProperty(e,t,{value:r,enumerable:!0,configurable:!0,writable:!0}):e[t]=r,e}var i=function(){var e;function t(e){if(!(this instanceof t))throw TypeError(\"Cannot call a class as a function\");n(this,\"container\",void 0),n(this,\"buttonsContainer\",void 0),n(this,\"prevBtn\",void 0),n(this,\"nextBtn\",void 0),n(this,\"startDate\",void 0),n(this,\"selectedDate\",null),this.container=e,this.buttonsContainer=e.querySelector(\"[data-daily-date-buttons]\"),thi"
+    },
+    {
+      "path": "src/Eccube/Controller/App/EventScheduleController.php",
+      "start": 58,
+      "end": 58,
+      "fileLines": 128,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[Route(path: '/assets/data/events.json', name: 'app_event_schedule_range', methods: ['GET'])]"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 58,
+      "end": 58,
+      "resolvedFrom": "F07_event_basedesign.md",
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 最初に店舗の表示対象のイベントデータを全て読み込む(初動が重くなる可能性については現時点では考慮しない)"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 59,
+      "end": 59,
+      "resolvedFrom": "F07_event_basedesign.md",
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 現在月日より1ヶ月分を全てデータ取得する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 60,
+      "end": 60,
+      "resolvedFrom": "F07_event_basedesign.md",
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 翌月に移る時,店舗選択等、ページ読込時は全てこの挙動とする"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "html/template/default/assets/hareruya/js/hareruya-event.js",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/App/EventScheduleController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:02+09:00",
+  "designResolution": {
+    "requested": "0307_基本設計仕様書(フロント_イベント).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html",
+    "sheetCount": 6,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント大会TOP",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント大会TOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "大会詳細検索"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "大会詳細"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "大会申込～完了"
+      }
+    ]
+  }
+}

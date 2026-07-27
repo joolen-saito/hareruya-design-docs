@@ -1,0 +1,215 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2262",
+  "issueId": 43509856,
+  "summary": "【未実装】デッキ管理_デッキ登録CSVアップロード / デッキ登録CSV_デッキ登録CSVアップロードにて、メインリスト・サイドリストのカード枚数がフォーマット規定の上限・下限を外れてもエラーにならない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:20:01Z",
+  "updated": "2026-07-14T01:20:01Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2262",
+  "basicInfo": {
+    "分類": "デッキ管理",
+    "機能": "デッキ登録CSVアップロード / デッキ登録CSV",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【未実装】デッキ管理_デッキ登録CSVアップロード / デッキ登録CSV_デッキ登録CSVアップロードにて、メインリスト・サイドリストのカード枚数がフォーマット規定の上限・下限を外れてもエラーにならない",
+    "設計書": "0212_基本設計仕様書(デッキ管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：デッキ管理\n機能：デッキ登録CSVアップロード / デッキ登録CSV\n課題カテゴリ：不具合（バグ）\n課題：【未実装】デッキ管理_デッキ登録CSVアップロード / デッキ登録CSV_デッキ登録CSVアップロードにて、メインリスト・サイドリストのカード枚数がフォーマット規定の上限・下限を外れてもエラーにならない\n設計書：0212_基本設計仕様書(デッキ管理).xlsx",
+    "期待される挙動": "- デッキ登録CSVの取込時、メインリスト・サイドリストのカード枚数がフォーマットで規定されている最大数を超えるか最小数に満たない場合はエラーとする。",
+    "現在の挙動": "- DeckUpdateImportHandler::onValidateRow() には、メインリスト必須チェック・フォーマット存在チェック・アーキタイプ存在チェック・イベント詳細ID存在チェック・日付形式チェック・表示フラグ/非公開フラグの形式チェック・統率者チェック・デッキID存在チェックのみが実装されており、ボードごとのカード枚数の上下限検証が存在しない。\n- 枚数上下限の検証ロジック（MtbFormat の main_max/main_min/side_max/side_min を用いる DeckValidationService::validateBoardCounts()）は存在するが、呼び出し元は管理画面のデッキ登録(DeckStoreAction)とフロントのデッキ登録(DeckEntryController)のみで、CSV取込ハンドラからは呼ばれていない。\n- そのため、フォーマットの規定枚数を外れたデッキリストを含むCSVでもエラーにならずに登録される。",
+    "補足情報": "▼設計書該当箇所\nM15_deck_management_basedesign.md:341 「メインリスト、サイドリストのカード枚数がフォーマットで規定されている最大数を超えるか最小数に満たない場合はエラー。」\n\n▼実装該当箇所\nsrc/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:97-240 （onValidateRow。枚数上下限の検証が無い）\nsrc/Eccube/Service/Deck/DeckValidationService.php:271-334 （枚数上下限の検証ロジック。CSV取込からは未使用）\nsrc/Eccube/Service/Admin/Deck/DeckStoreAction.php:25,34 （DeckValidationService の利用箇所はデッキ登録画面）\nsrc/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:242-371 （onReadRow。デッキリストのデコード・保存のみで枚数検証なし）\n\n▼備考\n反証として getRowValidators() に追加のバリデータが登録されていないこと（空配列を返す:382行目）、および DeckValidationService の利用箇所を全文検索し CSV 取込経路に無いことを確認済み。統率者の必須・存在チェック(193-216行目)やメインリスト必須チェック(110行目)など、設計の他の取込チェックは実装されている。git log --since=\"2026-07-08\" -- src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php は該当コミットなし。"
+  },
+  "designBook": "0212_基本設計仕様書(デッキ管理).xlsx",
+  "feature": "デッキ登録CSVアップロード / デッキ登録CSV",
+  "classification": "デッキ管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php",
+      "start": 97,
+      "end": 240,
+      "fileLines": 661,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function onValidateRow(ReadCsvRowEvent $event): void\n    {\n        parent::onValidateRow($event);\n        if ($event->isBreakAll() || $event->isSkipRow()) {\n            return;\n        }\n\n        $row = $event->getRow();\n        $rowNumber = $row->getRowNumber();\n        $messageStore = $event->getMessageStore();\n\n        $privateFlg = trim((string) $this->columns['private_flg']->getValue($row));\n        $mainList = (string) $this->columns['main_list']->getValue($row);\n        if ($privateFlg === self::CSV_PRIVATE_SHOW && trim($mainList) === '') {\n            $messageStore->addRequireError($rowNumber, (string) $this->columns['main_list']->getLabel());\n            $event->breakAll();\n\n            return;\n        }\n\n        $formatName = trim((string) $this->columns['format']->get"
+    },
+    {
+      "path": "src/Eccube/Service/Deck/DeckValidationService.php",
+      "start": 271,
+      "end": 334,
+      "fileLines": 335,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private function validateBoardCounts(DtbDeck $Deck, array $boardCardLists): array\n    {\n        $Format = $Deck->getFormat();\n        if ($Format === null) {\n            return [];\n        }\n\n        $totals = [];\n        foreach ($boardCardLists as $boardId => $cards) {\n            $totals[$boardId] = array_sum(array_column($cards, 'count'));\n        }\n\n        $mainCount = $totals[MtbBoard::BOARD_ID_MAIN] ?? 0;\n        $sideCount = $totals[MtbBoard::BOARD_ID_SIDE] ?? 0;\n        $commandCount = $totals[MtbBoard::BOARD_ID_COMMAND] ?? 0;\n\n        if ($Format->isCommanderInMain()) {\n            $mainCount += $commandCount;\n        }\n\n        $warningsByBoard = [\n            MtbBoard::BOARD_ID_MAIN => $this->checkBoardRange(\n                $mainCount,\n                $Format->getMainMaxC"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Deck/DeckStoreAction.php",
+      "start": 25,
+      "end": 25,
+      "fileLines": 150,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "use Eccube\\Service\\Deck\\DeckValidationService;"
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php",
+      "start": 242,
+      "end": 371,
+      "fileLines": 661,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function onReadRow(ReadCsvRowEvent $event): bool\n    {\n        $row = $event->getRow();\n        $playerName = (string) $this->columns['player_name']->getValue($row);\n        $formatName = trim((string) $this->columns['format']->getValue($row));\n        $archetypeName = trim((string) $this->columns['archetype']->getValue($row));\n        $eventDetailId = trim((string) $this->columns['event_detail_id']->getValue($row));\n        $deckName = (string) $this->columns['deck_name']->getValue($row);\n        $ranking = (string) $this->columns['ranking']->getValue($row);\n        $result = (string) $this->columns['result']->getValue($row);\n        $tags = (string) $this->columns['tags']->getValue($row);\n        $eventNameEn = (string) $this->columns['event_name_en']->getValue($row);\n        "
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php",
+      "start": null,
+      "end": null,
+      "fileLines": 661,
+      "ok": true,
+      "reason": "file_exists_no_line"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+      "start": 341,
+      "end": 341,
+      "resolvedFrom": "M15_deck_management_basedesign.md",
+      "fileLines": 736,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "メインリスト、サイドリストのカード枚数がフォーマットで規定されている最大数を超えるか最小数に満たない場合はエラー。"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Deck/DeckValidationService.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Deck/DeckStoreAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:53+09:00",
+  "designResolution": {
+    "requested": "0212_基本設計仕様書(デッキ管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html",
+    "sheetCount": 14,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-6",
+        "title": "デッキ登録CSVアップロード",
+        "score": 60
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "デッキ登録CSV",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "デッキ一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "デッキ一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "デッキ編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "デッキ登録CSVアップロード"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "デッキ登録CSV"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "デッキタグ一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "アーキタイプ管理(検索入力)"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "アーキタイプ管理(検索結果)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "アーキタイプ編集"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "アーキタイプ登録CSVアップロード"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "アーキタイプ登録CSV"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "直近の大会管理"
+      }
+    ]
+  }
+}

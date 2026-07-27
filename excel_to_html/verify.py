@@ -295,12 +295,18 @@ def verify_workbook(xlsx: Path, html_path: Path) -> tuple[list[str], list[str]]:
         if cov < 99.5:
             failures.append(f"セル値カバレッジが低い: {cov:.2f}%（欠落 {missing_cells}）")
 
-    # 2.5) strikethrough coverage
+    # 2.5) strikethrough coverage — expectations come from the same OOXML
+    # direct-read model convert.py uses (run-level strike / cell inheritance /
+    # <strike val="0">=false), not openpyxl's font flag, so the XML-only path is
+    # actually guarded (run inheritance and val="0" regressions are detectable).
+    cell_style_models = convert.collect_cell_style_models(xlsx, sheet_titles=visible_titles)
     expected_strikes: Counter[str] = Counter()
     for ws in visible_sheets:
+        model = cell_style_models.get(ws.title, {})
         for row in ws.iter_rows():
             for cell in row:
-                for run in convert.cell_text_runs(cell):
+                xml_cell = model.get((cell.row, cell.column))
+                for run in convert.cell_text_runs(cell, xml_cell):
                     text = run["text"].strip()
                     if run.get("strike") and text:
                         expected_strikes[_norm(text)] += 1
@@ -544,6 +550,38 @@ def verify_workbook(xlsx: Path, html_path: Path) -> tuple[list[str], list[str]]:
                 "画面遷移図のSVG path数が一致しない: "
                 + ", ".join(connector_path_mismatches[:MAX_DIAGNOSTICS])
             )
+
+    # 3.6) unresolved connectors — recompute per diagram and require the HTML
+    # connector ledger to reflect them. A connector whose stCxn/endCxn references
+    # a shape absent from the drawing (state="hard") is genuinely 解決できない:
+    # spec §5/§188 require exit 1 if any exist. Soft-recorded connectors
+    # (decorative/self-loop/undirected/non-text endpoint) are inventory-only.
+    expected_hard = 0
+    expected_hard_ids: list[str] = []
+    for ws in visible_sheets:
+        diagram = diagrams_by.get(ws.title)
+        if not diagram or not diagram.get("connectors"):
+            continue
+        graph = convert.build_transition_graph(diagram)
+        for item in graph.get("unresolved", []):
+            if item.get("state") == "hard":
+                expected_hard += 1
+                expected_hard_ids.append(f"{ws.title}:connector={item.get('id')}")
+    rendered_hard = sum(
+        int(count)
+        for count in re.findall(r'data-connector-unresolved="([0-9]+)"', document)
+    )
+    notes.append(f"未解決connector(hard): 期待={expected_hard} HTML台帳={rendered_hard}")
+    if rendered_hard != expected_hard:
+        failures.append(
+            "コネクタ解決台帳の未解決数がHTMLと一致しない（握り潰し疑い）: "
+            f"期待={expected_hard} HTML={rendered_hard}"
+        )
+    if expected_hard:
+        failures.append(
+            f"未解決connectorが{expected_hard}件（推測遷移を正本にできない・spec §5 exit1）: "
+            f"{expected_hard_ids[:MAX_DIAGNOSTICS]}"
+        )
 
     # 4) callout linkage / dead links
     pin_targets = set(re.findall(r'href="#(item-sheet-[0-9]+-[0-9A-Za-z-]+)"', document))

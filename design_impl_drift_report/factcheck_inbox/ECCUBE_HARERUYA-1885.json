@@ -1,0 +1,245 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1885",
+  "issueId": 43509367,
+  "summary": "【一部実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集にて、カード名入力時のサジェスト候補が取得・表示されない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:51Z",
+  "updated": "2026-07-14T01:16:51Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1885",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "大会デッキ登録編集",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集にて、カード名入力時のサジェスト候補が取得・表示されない",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：大会デッキ登録編集\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集にて、カード名入力時のサジェスト候補が取得・表示されない\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- 設計書では、カード名を入力するとカード名が部分一致するカードがサジェスト表示され、サジェストを選択すると自動入力できることとしている。",
+    "現在の挙動": "- サジェスト候補を格納する ul（data-deckentry-card-suggest-list）はテンプレート上で常に空であり、サーバ側から候補を描画する処理も無い。\n- deck_entry_edit.twig のインラインJSは、入力有無に応じてサジェスト領域の aria-hidden を切り替えるのみで、カード名を検索して候補を取得する fetch/Ajax 処理を一切持たない。\n- DeckEntryController もカード検索用のデータをテンプレートへ渡しておらず、結果としてサジェストは常に空のまま表示されることがない（候補選択時の自動入力ハンドラのみ実装されている）。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:846-847 「* カード名(13)を入力すると、カード名が部分一致するカードがサジェスト表示される」「サジェスト表示されたものを選択して自動入力できるが、サジェストを無視して存在しないカード名を入力することもできる」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:235-238 （サジェストリストの ul が空のまま）\nsrc/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:71-73 （入力時に aria-hidden を切り替えるだけで候補取得処理が無い）\nsrc/Eccube/Controller/Front/Mypage/DeckEntryController.php:85-92 （カード候補データを渡していない）\n\n▼備考\nバンドルJS hareruya-event.js にも同名クラスのサジェスト表示/非表示処理があるが、候補取得の fetch は存在せず（同ファイル内の fetch は /assets/data/events.json のみ）、かつ hareruya-event.js は Event/index・list・entry でのみ読み込まれ、Mypage/deck_entry_edit.twig では読み込まれていない。カード検索APIは /api/cards（src/Eccube/Controller/App/DeckBuilder/CardController.php:71）に存在するが、本画面からは呼ばれていない。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "大会デッキ登録編集",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig",
+      "start": 235,
+      "end": 238,
+      "fileLines": 424,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                            <div class=\"p-hareruya-deckentry-edit__card-suggest\" data-deckentry-card-suggest aria-hidden=\"true\">\n                                <ul class=\"p-hareruya-deckentry-edit__card-suggest-list\" data-deckentry-card-suggest-list>\n                                </ul>\n                            </div>"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig",
+      "start": 71,
+      "end": 73,
+      "fileLines": 424,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    $('#cardNameInput').on('input', function() {\n        $('[data-deckentry-card-suggest]').attr('aria-hidden', $(this).val().trim().length === 0 ? 'true' : 'false');\n    });"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/Mypage/DeckEntryController.php",
+      "start": 85,
+      "end": 92,
+      "fileLines": 195,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        return [\n            'EventDetail' => $EventDetail,\n            'Player' => $Player,\n            'Customer' => $Customer,\n            'Formats' => $Formats,\n            'deckByFormats' => $deckByFormats,\n            'MyDecks' => $MyDecks,\n        ];"
+    },
+    {
+      "path": "Mypage/deck_entry_edit.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Controller/App/DeckBuilder/CardController.php",
+      "start": 71,
+      "end": 71,
+      "fileLines": 187,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[Route('/api/cards', name: 'api_deck_builder_cards_search', methods: ['GET', 'OPTIONS'])]"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 846,
+      "end": 847,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* カード名(13)を入力すると、カード名が部分一致するカードがサジェスト表示される\nサジェスト表示されたものを選択して自動入力できるが、サジェストを無視して存在しないカード名を入力することもできる"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Front/Mypage/DeckEntryController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/App/DeckBuilder/CardController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:50+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

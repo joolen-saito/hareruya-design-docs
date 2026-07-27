@@ -1,0 +1,212 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1783",
+  "issueId": 43509235,
+  "summary": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(6)アイテムを探すが、リンク先を持たないダミーの静的HTMLのままで、カテゴリ・通常盤以外のカードセットを押下しても商品一覧画面へ遷移しない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:15:57Z",
+  "updated": "2026-07-14T01:15:57Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1783",
+  "basicInfo": {
+    "分類": "フロントトップ",
+    "機能": "支店ECTOP",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(6)アイテムを探すが、リンク先を持たないダミーの静的HTMLのままで、カテゴリ・通常盤以外のカードセットを押下しても商品一覧画面へ遷移しない",
+    "設計書": "0301_基本設計仕様書(フロント_トップ).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントトップ\n機能：支店ECTOP\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(6)アイテムを探すが、リンク先を持たないダミーの静的HTMLのままで、カテゴリ・通常盤以外のカードセットを押下しても商品一覧画面へ遷移しない\n設計書：0301_基本設計仕様書(フロント_トップ).xlsx",
+    "期待される挙動": "- 支店ECTOPの「アイテムを探す」は、管理画面＞コンテンツ管理＞ブロック管理に設定されている編集可能なブロックとして表示し、本店と支店（支店は全て共通）で異なるブロックを表示すること。\n- (6-5)カテゴリを押下すると、押下したカテゴリで絞り込まれた商品一覧画面へ遷移すること。\n- (6-6)通常盤以外のカードセットを押下すると、押下したカードセットで絞り込まれた商品一覧画面へ遷移すること。",
+    "現在の挙動": "- 支店トップは Block/search_items.twig を直接 include しており、その内容は「ファイナルファンタジー 通常版」「霊気走破 通常版」等のダミー3枚が直書きされた静的HTMLになっている。\n- カテゴリ・カードセットのタグはいずれも <a class=\"c-hareruya-tag\" aria-disabled=\"true\"> で href 属性を一切持たず（search_items.twig／search_items.en.twig ともに href の出現数は0）、押下しても商品一覧画面へ遷移しない。遷移を担うJSハンドラも存在しない。\n- 表示しているブロックは本店トップと同一の search_items ブロック（dtb_block の file_name='search_items'）であり、設計が求める「本店と支店で異なるブロック」になっていない。\n- search_items ブロックは deletable=false で登録されているため、管理画面＞コンテンツ管理＞ブロック管理から編集することもできない（編集リンク非表示、編集画面は404）。",
+    "補足情報": "▼設計書該当箇所\nF01_top_basedesign.md:821-822 「**★ 管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集可能なブロックを表示する** / * **※**: 本店と支店（支店は全て共通）で異なるブロックを表示する」（支店ECTOP アイテムを探す 処理概要）\nF01_top_basedesign.md:826-828 「**★ (6-5)カテゴリを押下すると、押下したカテゴリで絞り込まれた商品一覧画面へ遷移する** / **★ (6-6)通常盤以外のカードセットを押下すると、押下したカードセットで絞り込まれた商品一覧画面へ遷移する**」\nF01_top_basedesign.md:835-836 「| 6-5 | カテゴリ | リンク | ... ・押下すると、押下したカテゴリで絞り込まれた商品一覧画面へ遷移する | / | 6-6 | 通常盤以外のカードセット | リンク | ... ・押下すると、押下したカードセットで絞り込まれた商品一覧画面へ遷移する |」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/shop_top.twig:45 （支店トップが Block/search_items.twig を直接 include。本店と同一ブロック）\nsrc/Eccube/Resource/template/default/Block/search_items.twig:22-34 （カテゴリ/カードセットのタグが aria-disabled、href なし）\nsrc/Eccube/Resource/template/default/Block/search_items.en.twig （英語版も同様に href 0件）\napp/DoctrineMigrations/Version20260424110000.php:33,50 （search_items ブロックを deletable=false で登録）\nsrc/Eccube/Controller/Admin/Content/BlockController.php:118 （deletable=false のブロックは編集画面404）\n\n▼備考\n3層確認: HTML属性=href無し・aria-disabled=\"true\"、CSS=.c-hareruya-tag に対する pointer-events 指定はバンドルCSSに存在しない（[aria-disabled=true] の pointer-events:none 指定は .c-hareruya-btn--primary 用のみ／html/template/default/assets/hareruya/css/common.css）、JS=当該タグへのクリックハンドラ無し。いずれにせよ href が無いため遷移しない。静的コンテンツであること自体は設計どおり（行824）だが、リンク遷移とブロック管理での編集可能性・本店/支店での出し分けが未達のため一部実装。"
+  },
+  "designBook": "0301_基本設計仕様書(フロント_トップ).xlsx",
+  "feature": "支店ECTOP",
+  "classification": "フロントトップ",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Block/search_items.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/shop_top.twig",
+      "start": 45,
+      "end": 45,
+      "fileLines": 64,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        {% include 'Block/search_items.twig' %}"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/search_items.twig",
+      "start": 22,
+      "end": 34,
+      "fileLines": 80,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                <div class=\"p-hareruya-feature-card__tags\"><a class=\"c-hareruya-tag\" aria-disabled=\"true\">すべて見る</a><a\n                    class=\"c-hareruya-tag\" aria-disabled=\"true\">神話レア&amp;レア</a><a class=\"c-hareruya-tag\" aria-disabled=\"true\">コモン</a><a\n                    class=\"c-hareruya-tag\" aria-disabled=\"true\">アンコモン</a><a class=\"c-hareruya-tag\" aria-disabled=\"true\">基本土地</a><a\n                    class=\"c-hareruya-tag\" aria-disabled=\"true\">Foil</a><a class=\"c-hareruya-tag\" aria-disabled=\"true\">パック・ボックス</a></div>\n                <div class=\"p-hareruya-feature-card__sub-tags\"><a class=\"c-hareruya-tag\" aria-disabled=\"true\">\n                    <div class=\"c-hareruya-category-tag__icon\"><img\n                        src=\"{{ asset('assets/hareruya/img/ectop/dammy-feature-icon-dammy02.webp')"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/search_items.en.twig",
+      "start": null,
+      "end": null,
+      "fileLines": 80,
+      "ok": true,
+      "reason": "file_exists_no_line"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260424110000.php",
+      "start": 33,
+      "end": 33,
+      "fileLines": 105,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        ['file' => 'search_items',  'name' => 'アイテムを探す', 'use_controller' => false, 'row' => 6],"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Content/BlockController.php",
+      "start": 118,
+      "end": 118,
+      "fileLines": 223,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": ""
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 821,
+      "end": 822,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "**★ 管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集可能なブロックを表示する**\n* **※**: 本店と支店（支店は全て共通）で異なるブロックを表示する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 826,
+      "end": 828,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "**★ (6-5)カテゴリを押下すると、押下したカテゴリで絞り込まれた商品一覧画面へ遷移する**\n\n**★ (6-6)通常盤以外のカードセットを押下すると、押下したカードセットで絞り込まれた商品一覧画面へ遷移する**"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 835,
+      "end": 836,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 6-5 | カテゴリ | リンク | - | - | - | ・押下すると、押下したカテゴリで絞り込まれた商品一覧画面へ遷移する |\n| 6-6 | 通常盤以外のカードセット | リンク | - | - | - | ・押下すると、押下したカードセットで絞り込まれた商品一覧画面へ遷移する |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/default/shop_top.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/search_items.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/search_items.en.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260424110000.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Content/BlockController.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:29+09:00",
+  "designResolution": {
+    "requested": "0301_基本設計仕様書(フロント_トップ).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html",
+    "sheetCount": 4,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP",
+        "score": 100
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP"
+      }
+    ]
+  }
+}

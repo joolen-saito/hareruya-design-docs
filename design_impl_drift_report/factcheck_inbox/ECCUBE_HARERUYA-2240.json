@@ -1,0 +1,276 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2240",
+  "issueId": 43509826,
+  "summary": "【実装乖離】イベント管理_イベント申込詳細・編集(＋プレイヤー検索)_イベント申込詳細・編集(M13-10)の「支払金額」が、設計指定の「ラベル(参照表示)」ではなく disabled 入力欄として描画されている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:49Z",
+  "updated": "2026-07-14T01:19:49Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2240",
+  "basicInfo": {
+    "分類": "イベント管理",
+    "機能": "イベント申込詳細・編集(＋プレイヤー検索)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】イベント管理_イベント申込詳細・編集(＋プレイヤー検索)_イベント申込詳細・編集(M13-10)の「支払金額」が、設計指定の「ラベル(参照表示)」ではなく disabled 入力欄として描画されている",
+    "設計書": "0214_基本設計仕様書(イベント管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：イベント管理\n機能：イベント申込詳細・編集(＋プレイヤー検索)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_イベント申込詳細・編集(＋プレイヤー検索)_イベント申込詳細・編集(M13-10)の「支払金額」が、設計指定の「ラベル(参照表示)」ではなく disabled 入力欄として描画されている\n設計書：0214_基本設計仕様書(イベント管理).xlsx",
+    "期待される挙動": "- 設計書(M13-10 識別ID 2025-01-09)では「支払金額」の画面部品は「ラベル」であり、参照専用のテキスト表示であること。\n- カスタマイズ要件「識別ID:1-9「支払金額」は参照のみのため操作不可」のとおり、編集不可であること。\n- 同一画面の他の参照専用項目（支払会員・支払番号など）と同じく、テキスト（col-form-plain）として表示されること。",
+    "現在の挙動": "- 支払金額は EventEntryDetailType で IntegerType の入力フィールドとして定義され（src/Eccube/Form/Type/Admin/EventEntryDetailType.php:109-116）、'disabled' => true が指定されている。\n- テンプレート src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:314-320 では form_widget(form.price) で描画されるため、画面上は「グレーアウトした入力ボックス」として表示される。\n- 同テンプレート内の参照専用項目（支払会員: edit.twig:291-299、支払番号: edit.twig:322-326）は col-form-plain のテキスト表示となっており、支払金額だけが表示形式で揃っていない。\n- 操作不可という機能要件自体は満たしている（Symfony の disabled フィールドはリクエスト値を無視するため改ざんによる更新も不可）。乖離は画面部品の表示形式に限定される。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M13_event_management_basedesign.md:835 （M13-10 識別ID 2025-01-09「支払金額 ラベル」）\n.cursor/docs/MDfile/M13_event_management_basedesign.md:811 （★入力項目の変更について「識別ID:1-9「支払金額」は参照のみのため操作不可」）\n.cursor/docs/MDfile/M13_event_management_basedesign.md:834 （比較: 識別ID 2025-01-08「支払方法 単一選択 … 操作不可」＝こちらは disabled のセレクトで正しい）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/EventEntryDetailType.php:109-116 （price を IntegerType + 'disabled' => true で定義）\nsrc/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:314-320 （form_widget(form.price) により disabled な入力欄として描画）\nsrc/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:291-299, 322-326 （支払会員・支払番号は col-form-plain のラベル表示。支払金額のみ形式が異なる）\nsrc/Eccube/Controller/Admin/Event/EntryController.php:260-268 （M13-10 は @admin/Event/EntryRegistration/edit.twig と EventEntryDetailType を使用）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\n両者とも事実認識は一致しており（src/Eccube/Form/Type/Admin/EventEntryDetailType.php:112 の disabled=true、src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:317 の form_widget 描画）、割れたのは「設計の画面部品指定『ラベル』を要件として扱うか否か」という解釈の違いである。\nClaude は設計の★注記（.cursor/docs/MDfile/M13_event_management_basedesign.md:811「参照のみのため操作不可」）だけを要件と読み、disabled 入力欄で充足すると判断したが、同設計の項目表 835 行目は画面部品を明確に「ラベル」と指定しており、この行を評価していない。\n設計は同じ画面の支払方法（同ファイル:834）を「単一選択 … 操作不可」と書き分けており、支払金額のみ「ラベル」と指定している。実装側でも支払会員・支払番号は col-form-plain のテキスト（edit.twig:291-299, 322-326）で描画されているため、支払金額だけが入力欄で表示形式が不統一である点を、Claude は見落としている。\ncodex の指摘どおり表示形式の乖離（軽微・機能影響なし）が実体であり、値の更新不可という機能要件は満たされている。3層（HTML: Symfony の disabled、CSS: bootstrap の disabled 外観、JS: price を再有効化する処理なし）を確認し、対象ファイルに2026-07-08以降のコミットがないことも確認済み。"
+  },
+  "designBook": "0214_基本設計仕様書(イベント管理).xlsx",
+  "feature": "イベント申込詳細・編集(＋プレイヤー検索)",
+  "classification": "イベント管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/EventEntryDetailType.php",
+      "start": 109,
+      "end": 116,
+      "fileLines": 167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('price', IntegerType::class, [\n                'label' => 'admin.event.entry.price',\n                'required' => false,\n                'disabled' => true,\n                'attr' => [\n                    'class' => 'form-control payment',\n                ],\n            ])"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig",
+      "start": 314,
+      "end": 320,
+      "fileLines": 388,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                            <div class=\"row mb-2\">\n                                <label class=\"col-sm-3 col-lg-2 col-form-label\" for=\"{{ form.price.vars.id }}\">{{ form.price.vars.label|trans }}</label>\n                                <div class=\"col-sm-9 col-lg-10\">\n                                    {{ form_widget(form.price) }}\n                                    {{ form_errors(form.price) }}\n                                </div>\n                            </div>"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 835,
+      "end": 835,
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "2025-01-09 支払金額 ラベル - - -"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 811,
+      "end": 811,
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 識別ID:1-9「支払金額」は参照のみのため操作不可"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 834,
+      "end": 834,
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "2025-01-08 支払方法 単一選択 - - - 操作不可"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig",
+      "start": 291,
+      "end": 299,
+      "fileLines": 388,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                <label class=\"col-sm-3 col-lg-2 col-form-label\">{{ 'admin.event.entry.paying_member'|trans }}</label>\n                                {% if eventEntry.id %}\n                                    <div id=\"paying_player_name_decided\" class=\"col-sm-9 col-lg-10 col-form-plain\">\n                                        {{ eventEntry.PayingCustomer.name01 }} {{ eventEntry.PayingCustomer.name02 }}\n                                    </div>\n                                {% else %}\n                                    <div id=\"paying_player_name\" class=\"col-sm-9 col-lg-10 col-form-plain\">{% if entryPlayer and entryPlayer.Player and entryPlayer.Player.Customer %}{{ entryPlayer.Player.Customer.name01 }} {{ entryPlayer.Player.Customer.name02 }}{% else %}－{% endif %}</div>"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/EntryController.php",
+      "start": 260,
+      "end": 268,
+      "fileLines": 538,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[Template(template: '@admin/Event/EntryRegistration/edit.twig')]\n    public function edit(Request $request, #[MapEntity(id: 'eventEntry')] DtbEventEntry $eventEntry): RedirectResponse|array\n    {\n        $baseInfo = $eventEntry->getEventDetail()->getEvent()->getBaseInfo();\n        if ($baseInfo === null || !$this->getMember()->isEditableShop($baseInfo)) {\n            throw $this->createNotFoundException();\n        }\n\n        $form = $this->formFactory->create(EventEntryDetailType::class, $eventEntry, ["
+    },
+    {
+      "path": "admin/Event/EntryRegistration/edit.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/EventEntryDetailType.php",
+      "start": 112,
+      "end": 112,
+      "fileLines": 167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                'disabled' => true,"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig",
+      "start": 317,
+      "end": 317,
+      "fileLines": 388,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                    {{ form_widget(form.price) }}"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/EventEntryDetailType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/EntryController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:51+09:00",
+  "designResolution": {
+    "requested": "0214_基本設計仕様書(イベント管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html",
+    "sheetCount": 22,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "イベント一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "繰返日程追加"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "イベント申込一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "イベント申込一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "イベント申込一括編集"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "デッキ表示"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "CSVダウンロード"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "イベント申込登録(検索入力)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "イベント申込登録(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "イベント新規申込登録"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "イベント一括登録CSV"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "バナー設定"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定"
+      }
+    ]
+  }
+}

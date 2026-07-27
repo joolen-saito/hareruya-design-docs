@@ -1,0 +1,241 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2216",
+  "issueId": 43509799,
+  "summary": "【一部実装】イベント管理_日程登録_日程登録の「デッキ登録締め切り」に、デッキ登録ありがオンの場合の必須チェックが実装されていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:37Z",
+  "updated": "2026-07-14T01:19:37Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2216",
+  "basicInfo": {
+    "分類": "イベント管理",
+    "機能": "日程登録",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】イベント管理_日程登録_日程登録の「デッキ登録締め切り」に、デッキ登録ありがオンの場合の必須チェックが実装されていない",
+    "設計書": "0214_基本設計仕様書(イベント管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：イベント管理\n機能：日程登録\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】イベント管理_日程登録_日程登録の「デッキ登録締め切り」に、デッキ登録ありがオンの場合の必須チェックが実装されていない\n設計書：0214_基本設計仕様書(イベント管理).xlsx",
+    "期待される挙動": "- 日程登録画面の識別ID:10「デッキ登録締め切り」は、デッキ登録あり（識別ID:9）がオンの場合は必須であること。\n- デッキ登録ありの値に応じて表示／非表示を切り替えること。",
+    "現在の挙動": "- ScheduleType の deckRegistDeadline は DateTimeType で 'required' => false のみ指定され、constraints が設定されていない。POST_SUBMIT にもデッキ登録ありオン時の必須チェックが無いため、デッキ登録ありのままデッキ登録締め切りを空で登録できる。\n- 表示／非表示の切り替えは Schedule/edit.twig の JavaScript（changeRegist）で実装されているが、受付時間の項目と異なり required プロパティの付与は行っておらず、disabled の切り替えのみである（クライアント側の必須制御も無い）。\n- 同 JS の setDeckRegisterLimit により、デッキ登録ありをオンにする／開始時間を入力した際に締め切りへ「開始日の23:59」を自動セットするため、通常操作では空になりにくいが、値を手動でクリアした場合は空のまま保存できる。",
+    "補足情報": "▼設計書該当箇所\nM13_event_management_basedesign.md:294 「| 10 | デッキ登録締め切り | 日付時刻 | △ | - | - | デッキ登録ありの値に応じて表示/非表示を切り替える<br>デッキ登録ありの場合必須 |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/ScheduleType.php:131-136 （deckRegistDeadline は required=false、constraints 無し）\nsrc/Eccube/Resource/template/admin/Event/Schedule/edit.twig:35-39 （changeRegist による表示切替。required の付与は無し）\nsrc/Eccube/Resource/template/admin/Event/Schedule/edit.twig:54-66 （setDeckRegisterLimit による 23:59 の自動セット）\nsrc/Eccube/Entity/DtbEventDetail.php:66 （deckRegistDeadline の初期値は null）\n\n▼備考\n元レポートは「JS/twig依存＝判定不可」としていたが、Schedule/edit.twig の JS を確認したところ deckRegistDeadline には required の付与が無く、サーバ側にも必須チェックが無いことを確認したため FACT と判定した。表示切替は実装済みのため「一部実装」。"
+  },
+  "designBook": "0214_基本設計仕様書(イベント管理).xlsx",
+  "feature": "日程登録",
+  "classification": "イベント管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Schedule/edit.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/ScheduleType.php",
+      "start": 131,
+      "end": 136,
+      "fileLines": 295,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('deckRegistDeadline', DateTimeType::class, [\n                'label' => 'admin.event.schedule.deck_deadline',\n                'required' => false,\n                'widget' => 'single_text',\n                'input' => 'datetime',\n            ])"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig",
+      "start": 35,
+      "end": 39,
+      "fileLines": 305,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        const changeRegist = () => {\n            const deckRegistFlg = $(id.deckRegistFlg).prop('checked');\n            $('.deckRegist').toggle(deckRegistFlg);\n            $(id.deckRegistDeadline).prop('disabled', !deckRegistFlg);\n        };"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig",
+      "start": 54,
+      "end": 66,
+      "fileLines": 305,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        const setDeckRegisterLimit = () => {\n            if (!$(id.deckRegistFlg).prop('checked')) {\n                $(id.deckRegistDeadline).val('');\n                return;\n            }\n            const startDate = $(id.startDate).val();\n            if (!startDate) {\n                $(id.deckRegistDeadline).val('');\n                return;\n            }\n            const formattedDate = moment(startDate).hours(23).minutes(59).format('YYYY-MM-DD HH:mm');\n            $(id.deckRegistDeadline).val(formattedDate);\n        };"
+    },
+    {
+      "path": "src/Eccube/Entity/DtbEventDetail.php",
+      "start": 66,
+      "end": 66,
+      "fileLines": 586,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private ?\\DateTime $deckRegistDeadline = null;"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 294,
+      "end": 294,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 10 | デッキ登録締め切り | 日付時刻 | △ | - | - | デッキ登録ありの値に応じて表示/非表示を切り替える<br>デッキ登録ありの場合必須 |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/ScheduleType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbEventDetail.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:46+09:00",
+  "designResolution": {
+    "requested": "0214_基本設計仕様書(イベント管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html",
+    "sheetCount": 22,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "イベント一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "繰返日程追加"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "イベント申込一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "イベント申込一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "イベント申込一括編集"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "デッキ表示"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "CSVダウンロード"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "イベント申込登録(検索入力)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "イベント申込登録(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "イベント新規申込登録"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "イベント一括登録CSV"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "バナー設定"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定"
+      }
+    ]
+  }
+}

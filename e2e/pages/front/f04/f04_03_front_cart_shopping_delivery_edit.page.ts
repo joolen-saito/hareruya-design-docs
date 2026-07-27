@@ -85,12 +85,15 @@ export class FrontShoppingDeliveryEditPage {
     this.errorArea = page.locator(".text-danger, .ec-errorMessage, .error, [class*='error']");
   }
 
-  async gotoNewEdit() {
-    await this.page.goto(this.newEditUrl);
-  }
+  // お届け先の新規登録／編集画面は到達クラス「要確認」（e2e/config/screen-reachability.tsv・
+  // 根拠 functions/pf-eccube3/f04-03_front_cart_shopping_delivery_edit.md:58,59,19）。
+  // 設計書は GET 入口を明記する一方、直アクセス可否を規定していない。
+  // 直接開く到達メソッドは置かない。URL直打ちが観点のときは spec 側で
+  // directAccess(page, <url>, 理由) を使い、未確定であることを記録に残す。
 
-  async gotoEdit(id: number | string) {
-    await this.page.goto(`${this.localePrefix}/shopping/delivery/${id}/edit`);
+  /** 既存お届け先の編集URL（到達は spec 側で directAccess / reachVia により組む）。 */
+  editUrl(id: number | string): string {
+    return `${this.localePrefix}/shopping/delivery/${id}/edit`;
   }
 
   /** お届け先編集画面（見出し・主要入力欄）が表示されていること。 */

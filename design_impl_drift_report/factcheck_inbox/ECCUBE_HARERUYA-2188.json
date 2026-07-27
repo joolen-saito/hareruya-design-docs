@@ -1,0 +1,218 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2188",
+  "issueId": 43509767,
+  "summary": "【一部実装】基本情報設定_店舗登録_店舗登録画面にて、「表示順」が半角数字に限定されておらず、全角数字や小数が入力できてしまう",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:22Z",
+  "updated": "2026-07-14T01:19:22Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2188",
+  "basicInfo": {
+    "分類": "基本情報設定",
+    "機能": "店舗登録",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】基本情報設定_店舗登録_店舗登録画面にて、「表示順」が半角数字に限定されておらず、全角数字や小数が入力できてしまう",
+    "設計書": "0209_基本設計仕様書(基本情報設定).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：基本情報設定\n機能：店舗登録\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】基本情報設定_店舗登録_店舗登録画面にて、「表示順」が半角数字に限定されておらず、全角数字や小数が入力できてしまう\n設計書：0209_基本設計仕様書(基本情報設定).xlsx",
+    "期待される挙動": "- 店舗登録画面（M10-15）の識別ID:1-33「表示順」は、書式が半角数字であること。\n- 必須項目であり、最大5文字であること。",
+    "現在の挙動": "- MallTenantShopType の rank は NumberType で定義され、required=true・NotBlank・Length(max=eccube_order_number_max_len=5) が設定されている。必須と最大5文字の要件は満たしている。\n- 半角数字に限定する Regex 制約が存在しない。同フォーム内の他の半角系項目（店名(英語表記)、ショップ名略称（英語表記）等）には Assert\\Regex が付与されているのに対し、rank にのみ付与されていない。\n- NumberType はロケール依存の数値変換（NumberToLocalizedStringTransformer）を用いるため、全角数字「１２３」が 123 として受理される（本リポジトリの vendor で実際に reverseTransform('１２３') が float(123) を返すことを確認した）。同様に「1.5」も float(1.5) として受理され、整数以外も通過する。\n- NumberType は html5 オプション未指定のため input type=\"text\" で描画されており、HTML属性・CSS・JS のいずれにも半角数字限定の制御はない。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:472（1-33 表示順 半角数字 〇 5文字 - 現行システムに準拠）\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:420-421（入力制限について／それぞれのシステムの標準に準拠する）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:331-340（rank を NumberType で定義。NotBlank と Length(max) のみで Regex なし）\napp/config/eccube/packages/eccube.yaml:205（eccube_order_number_max_len: 5）\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:325-328（比較対象。半角英数字項目には Assert\\Regex '/^[A-Za-z0-9 ]*$/' を付与）\nvendor/symfony/form/Extension/Core/DataTransformer/NumberToLocalizedStringTransformer.php:98（\\NumberFormatter::parse による解析。全角数字も数値として解釈される）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\nClaude は src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:331 の NumberType を見て「数値以外は変換エラーで弾かれるので半角数字も実質担保」と推論し FALSE_POSITIVE としたが、NumberType が使う変換器の実挙動を確認していない。\ncodex は vendor/symfony/form/Extension/Core/DataTransformer/NumberToLocalizedStringTransformer.php:98 まで追い、全角数字が受理されることを実証して FACT とした。裁定側でも本リポジトリの vendor を用いて reverseTransform('１２３') → float(123)、reverseTransform('1.5') → float(1.5) を実行確認しており、codex の主張が正しい。\n同じ MallTenantShopType.php 内の他の半角系項目（:325-328 等）には Assert\\Regex が付与されているのに rank だけ欠落しており、実装漏れと見るのが自然である。\nただし影響は「全角数字・小数を入力しても保存されうる」という軽微な入力検証漏れに留まる（Entity 側 setRank は int 型のため、格納値自体は整数として扱われる）。必須・最大5文字は満たすため category は 一部実装 とする。"
+  },
+  "designBook": "0209_基本設計仕様書(基本情報設定).xlsx",
+  "feature": "店舗登録",
+  "classification": "基本情報設定",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 472,
+      "end": 472,
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "1-33 表示順 半角数字 〇 5文字 - 現行システムに準拠"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 420,
+      "end": 421,
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "入力制限について\n* それぞれのシステムの標準に準拠する"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php",
+      "start": 331,
+      "end": 340,
+      "fileLines": 450,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('rank', NumberType::class, [\n                'required' => true,\n                'empty_data' => 0,\n                'constraints' => [\n                    new NotBlank(),\n                    new Length([\n                        'max' => $this->eccubeConfig['eccube_order_number_max_len'],\n                    ]),\n                ],\n            ])"
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "start": 205,
+      "end": 205,
+      "fileLines": 184,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php",
+      "start": 325,
+      "end": 328,
+      "fileLines": 450,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                    new Assert\\Regex([\n                        'pattern' => '/^[A-Za-z0-9 ]*$/',\n                        'message' => 'form_error.graph_only',\n                    ]),"
+    },
+    {
+      "path": "vendor/symfony/form/Extension/Core/DataTransformer/NumberToLocalizedStringTransformer.php",
+      "start": 98,
+      "end": 98,
+      "fileLines": 197,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        try {"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php",
+      "start": 331,
+      "end": 331,
+      "fileLines": 450,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('rank', NumberType::class, ["
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "vendor/symfony/form/Extension/Core/DataTransformer/NumberToLocalizedStringTransformer.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:40+09:00",
+  "designResolution": {
+    "requested": "0209_基本設計仕様書(基本情報設定).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html",
+    "sheetCount": 14,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-13",
+        "title": "店舗登録",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "基本設定(旧ショップマスター)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "特定商取引に関する法律"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "利用規約管理"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "支払い方法　手数料設定"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "配送方法設定"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "税率設定"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "自動送信メール"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "メール設定"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "カスタムCSV出力設定"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "店舗登録"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "追加システム設定"
+      }
+    ]
+  }
+}

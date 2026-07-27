@@ -1,0 +1,293 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2047",
+  "issueId": 43509579,
+  "summary": "【一部実装】受注管理_納品書印刷(日本語)_納品書印刷(日本語)のデータ取得クエリが会員(Customer/Player)を内部結合しているため、ゲスト(非会員)受注が納品書の対象から外れる",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:12Z",
+  "updated": "2026-07-25T11:03:13Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2047",
+  "basicInfo": {
+    "分類": "受注管理",
+    "機能": "納品書印刷(日本語)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】受注管理_納品書印刷(日本語)_納品書印刷(日本語)のデータ取得クエリが会員(Customer/Player)を内部結合しているため、ゲスト(非会員)受注が納品書の対象から外れる",
+    "設計書": "0203_基本設計仕様書(受注管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：受注管理\n機能：納品書印刷(日本語)\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】受注管理_納品書印刷(日本語)_納品書印刷(日本語)のデータ取得クエリが会員(Customer/Player)を内部結合しているため、ゲスト(非会員)受注が納品書の対象から外れる\n設計書：0203_基本設計仕様書(受注管理機能).xlsx",
+    "期待される挙動": "- 納品書印刷(日本語)の「送り主-会員番号」（識別ID 16）はゲストの場合に「非会員」と表示すること。\n- 本店のほか支店もスマレジも納品書の出力対象とすること（スマレジには非会員による取引データが存在する）。",
+    "現在の挙動": "- テンプレート delivery_slips.ja.twig には smaregi_id が無い場合に「非会員」と表示するフォールバックが実装されている。\n- 一方 DtbShippingStandbyRepository::generateDeliverySlips() の注文単位サマリ取得クエリは ->join('o.Customer', 'cus') および ->join('cus.Player', 'player') と内部結合しており、Order.Customer が null のゲスト受注（Order エンティティ上 Customer は nullable）はサマリ結果 $summary から欠落する。\n- 明細取得用の $qb2 は Customer 結合を追加する前の $qb を clone しているためゲスト受注も含まれる。その結果 foreach で $result[$key] = array_merge($summary[$key], $items[$key]) を行う際、ゲスト受注の $summary[$key] が未定義となり納品書を生成できない。\n- そのため「非会員」表示のフォールバックはゲスト受注に対して到達せず、スマレジの非会員取引の納品書が出力できない。",
+    "補足情報": "▼設計書該当箇所\nM05_order_management_basedesign.md:932 「| 16 | 送り主-会員番号 | ラベル | - | - | - | ゲストの場合は「非会員」と表示する |」\nM05_order_management_basedesign.md:899 「**★ 本店のほかに、支店もスマレジも出力対象とする**」\n\n▼実装該当箇所\nsrc/Eccube/Repository/DtbShippingStandbyRepository.php:303-304 （o.Customer と cus.Player を内部結合）\nsrc/Eccube/Repository/DtbShippingStandbyRepository.php:263 （$qb2 = clone $qb; Customer 結合の前に clone しているため明細側にはゲスト受注が含まれる）\nsrc/Eccube/Repository/DtbShippingStandbyRepository.php:343 （$result[$key] = array_merge($summary[$key], $items[$key]);）\nsrc/Eccube/Entity/Order.php:600 （private ?Customer $Customer = null; ゲスト受注は Customer を持たない）\nsrc/Eccube/Resource/template/admin/ShippingStandby/delivery_slips.ja.twig:86-92 （非会員フォールバックの表示）\n\n▼備考\n元レポートの懸念どおり、テンプレート側の「非会員」フォールバックは実装されているが、リポジトリ側の内部結合によりゲスト受注が抽出されない。o.Customer / cus.Player を leftJoin に変更する（OrderRepository::getQueryBuilderBySearchDataForAdmin:254 で行われているのと同じ対応）ことで解消できる。なお 2026-07-11 のコミット 7fa5a11a33 は「受注編集画面」の Customer null エラーを解消したもので、納品書側は未対応。"
+  },
+  "designBook": "0203_基本設計仕様書(受注管理機能).xlsx",
+  "feature": "納品書印刷(日本語)",
+  "classification": "受注管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Repository/DtbShippingStandbyRepository.php",
+      "start": 303,
+      "end": 304,
+      "fileLines": 373,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->join('o.Customer', 'cus')\n            ->join('cus.Player', 'player')"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbShippingStandbyRepository.php",
+      "start": 263,
+      "end": 263,
+      "fileLines": 373,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $qb2 = clone $qb;"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbShippingStandbyRepository.php",
+      "start": 343,
+      "end": 343,
+      "fileLines": 373,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            $result[$key] = array_merge($summary[$key], $items[$key]);"
+    },
+    {
+      "path": "src/Eccube/Entity/Order.php",
+      "start": 600,
+      "end": 600,
+      "fileLines": 1876,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        /**"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/ShippingStandby/delivery_slips.ja.twig",
+      "start": 86,
+      "end": 92,
+      "fileLines": 193,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                        {% if DeliverySlip.smaregi_id is defined and DeliverySlip.smaregi_id is not null %}\n                            {{ DeliverySlip.smaregi_id }}\n                        {% else %}\n                            {{ 'admin.delivery_slips_ja.non_member'|trans }}\n                        {% endif %}\n                        <br/>\n                    </div>"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "start": 932,
+      "end": 932,
+      "resolvedFrom": "M05_order_management_basedesign.md",
+      "fileLines": 2167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 16 | 送り主-会員番号 | ラベル | - | - | - | ゲストの場合は「非会員」と表示する |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "start": 899,
+      "end": 899,
+      "resolvedFrom": "M05_order_management_basedesign.md",
+      "fileLines": 2167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "**★ 本店のほかに、支店もスマレジも出力対象とする**"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Repository/DtbShippingStandbyRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/Order.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/ShippingStandby/delivery_slips.ja.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 2,
+  "comments": [
+    {
+      "id": 273471032,
+      "created": "2026-07-25T11:01:53Z",
+      "createdUser": "彩　田中",
+      "content": null
+    },
+    {
+      "id": 273471055,
+      "created": "2026-07-25T11:03:13Z",
+      "createdUser": "彩　田中",
+      "content": "非会員の定義を再確認\n\n "
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:23+09:00",
+  "designResolution": {
+    "requested": "0203_基本設計仕様書(受注管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [
+        "ec-cube-enterprise/.cursor/design/html/excel/0203_受注管理機能"
+      ],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html",
+    "sheetCount": 27,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-13",
+        "title": "納品書印刷（日本語）",
+        "score": 100
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "出荷指示ー納品書印刷（日本語）",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "受注情報検索 一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "受注情報検索 一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "受注一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "受注一覧カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "受注詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "受注詳細カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "メール一括送信"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "【新規】手動メール通知(確認画面)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "スタック用紙印刷"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "納品書印刷（日本語）"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "納品書印刷（英語）"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "受注情報編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "【新規】受注情報履歴"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "出荷指示リスト生成"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "出荷指示リスト検索"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "出荷指示リスト編集"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "出荷指示ー納品書印刷（日本語）"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "出荷指示ー納品書印刷（英語）"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "出荷実績入力用CSV出力"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "出荷実績インポート登録"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "出荷実績登録CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "店頭注文番号札管理"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "別添資料_スマレジ決済後返品処理について"
+      }
+    ]
+  }
+}

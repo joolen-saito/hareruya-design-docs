@@ -1,0 +1,268 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2039",
+  "issueId": 43509570,
+  "summary": "【実装乖離】受注管理_受注検索一覧(検索入力/検索結果)_受注検索一覧の「対応状況」チェックボックスに、設計書のチェック項目に無い「対応中」「返品」が選択肢として表示される",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:08Z",
+  "updated": "2026-07-14T01:18:08Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2039",
+  "basicInfo": {
+    "分類": "受注管理",
+    "機能": "受注検索一覧(検索入力/検索結果)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】受注管理_受注検索一覧(検索入力/検索結果)_受注検索一覧の「対応状況」チェックボックスに、設計書のチェック項目に無い「対応中」「返品」が選択肢として表示される",
+    "設計書": "0203_基本設計仕様書(受注管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：受注管理\n機能：受注検索一覧(検索入力/検索結果)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】受注管理_受注検索一覧(検索入力/検索結果)_受注検索一覧の「対応状況」チェックボックスに、設計書のチェック項目に無い「対応中」「返品」が選択肢として表示される\n設計書：0203_基本設計仕様書(受注管理機能).xlsx",
+    "期待される挙動": "- 受注検索一覧の対応状況（識別ID 2-3）は複数選択のチェックボックスであり、選択肢は「決済処理中、注文受領、入金待ち、入金済み、キャンセル、出荷指示、出荷完了、購入処理中、ピック中、ピック完了、店頭予約」の11項目であること。",
+    "現在の挙動": "- SearchOrderType の status フィールドは expanded=true / multiple=true のチェックボックスとして実装され、query_builder で mtb_order_status から OrderStatus::PASSED（引渡し済み、id=14）のみを除外している。\n- mtb_order_status には基本マスタ由来の id=4「対応中」と、マイグレーション Version20260220000001 で追加された id=15「返品」が残存しており、これらは除外されていないため、対応状況チェックボックスには設計書に無い「対応中」「返品」を含む13項目が表示される。\n- 設計書が列挙する11項目（決済処理中=7、注文受領=1、入金待ち=2、入金済み=6、キャンセル=3、出荷指示=9、出荷完了=5、購入処理中=8、ピック中=10、ピック完了=13、店頭予約=12）はすべて選択肢に含まれている。",
+    "補足情報": "▼設計書該当箇所\nM05_order_management_basedesign.md:71 「| 2-3 | 対応状況 | 複数選択(チェックボックス) | ... | <b>※カスタマイズ対応：選択肢追加</b><br>チェック項目：決済処理中、注文受領、入金待ち、入金済み、キャンセル、出荷指示、出荷完了、購入処理中、ピック中、ピック完了、店頭予約」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/SearchOrderType.php:141-156 （status フィールド。除外は OrderStatus::PASSED のみ）\nsrc/Eccube/Resource/doctrine/import_csv/ja/mtb_order_status.csv:4 （\"4\",\"対応中\",\"2\",\"1\" が基本マスタに存在し、以降のマイグレーションでも削除されていない）\napp/DoctrineMigrations/Version20260220000001.php:70-74 （id=15「返品」を追加）\nsrc/Eccube/Resource/template/admin/Order/index.twig:411-427 （statusForm.children を全件ループしてチェックボックス描画）\n\n▼備考\n元レポートの「決済処理中/購入処理中/引き渡し済みが選択肢から除外」は誤り。(1) 引渡し済み(PASSED)の除外は設計書のチェック項目に含まれていないため正しい挙動。(2) 決済処理中(PENDING=7)・購入処理中(PROCESSING=8)を除外する Doctrine フィルタ OrderStatusFilter は app/config/eccube/packages/doctrine.yaml:78-80 で enabled: false であり、管理画面の受注検索経路では有効化されていない（enableFilter の呼び出しは OrderRepository::getQueryBuilderByCustomer / MypageController / CustomerEditController のみ）ため、両ステータスは選択肢に表示される。実際の乖離は「対応中」「返品」という設計書に無い選択肢が余分に表示される点。DB 実データを確認していないため confidence=medium。"
+  },
+  "designBook": "0203_基本設計仕様書(受注管理機能).xlsx",
+  "feature": "受注検索一覧(検索入力/検索結果)",
+  "classification": "受注管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchOrderType.php",
+      "start": 141,
+      "end": 156,
+      "fileLines": 430,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                'input' => 'datetime',\n                'widget' => 'single_text',\n                'constraints' => [\n                    new Assert\\Range([\n                        'min'=> '0003-01-01',\n                        'minMessage' => 'form_error.out_of_range',\n                    ]),\n                ],\n                'attr' => [\n                    'class' => 'datetimepicker-input',\n                    'data-target' => '#'.$this->getBlockPrefix().'_order_datetime_start',\n                    'data-toggle' => 'datetimepicker',\n                ],\n            ])\n            ->add('order_date_end', DateType::class, [\n                'label' => 'admin.order.order_date__end',"
+    },
+    {
+      "path": "src/Eccube/Resource/doctrine/import_csv/ja/mtb_order_status.csv",
+      "start": 4,
+      "end": 4,
+      "fileLines": 9,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\"4\",\"対応中\",\"2\",\"1\",\"orderstatus\""
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260220000001.php",
+      "start": 70,
+      "end": 74,
+      "fileLines": 77,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            [\n                'id' => 15,\n                'name' => '返品',\n                'sort_no' => 15,\n            ],"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Order/index.twig",
+      "start": 411,
+      "end": 427,
+      "fileLines": 678,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                                {% for status in OrderStatuses %}\n                                                    <option value=\"{{ status.id }}\">{{ status.name }}</option>\n                                                {% endfor %}\n                                            </select>\n                                        </div>\n                                        <button type=\"button\" id=\"btn_bulk_status\" class=\"btn btn-ec-regular me-2 progressModal\" data-type=\"status\" data-bulk-update=\"true\" data-submit=\"bulk\">\n                                            {{ 'admin.common.decision'|trans }}\n                                        </button>\n                                    </div>\n                                </div>\n                            </div>\n      "
+    },
+    {
+      "path": "app/config/eccube/packages/doctrine.yaml",
+      "start": 78,
+      "end": 80,
+      "fileLines": 43,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "start": 71,
+      "end": 71,
+      "resolvedFrom": "M05_order_management_basedesign.md",
+      "fileLines": 2167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 2-3 | 対応状況 | 複数選択(チェックボックス) | - | - | - | <html><b>※カスタマイズ対応：選択肢追加</b><br>チェック項目：決済処理中、注文受領、入金待ち、入金済み、キャンセル、出荷指示、出荷完了、購入処理中、ピック中、ピック完了、店頭予約</html> |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchOrderType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/doctrine/import_csv/ja/mtb_order_status.csv",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260220000001.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Order/index.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "app/config/eccube/packages/doctrine.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:22+09:00",
+  "designResolution": {
+    "requested": "0203_基本設計仕様書(受注管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [
+        "ec-cube-enterprise/.cursor/design/html/excel/0203_受注管理機能"
+      ],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html",
+    "sheetCount": 27,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "受注情報検索 一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "受注情報検索 一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "受注一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "受注一覧カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "受注詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "受注詳細カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "メール一括送信"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "【新規】手動メール通知(確認画面)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "スタック用紙印刷"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "納品書印刷（日本語）"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "納品書印刷（英語）"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "受注情報編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "【新規】受注情報履歴"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "出荷指示リスト生成"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "出荷指示リスト検索"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "出荷指示リスト編集"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "出荷指示ー納品書印刷（日本語）"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "出荷指示ー納品書印刷（英語）"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "出荷実績入力用CSV出力"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "出荷実績インポート登録"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "出荷実績登録CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "店頭注文番号札管理"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "別添資料_スマレジ決済後返品処理について"
+      }
+    ]
+  }
+}

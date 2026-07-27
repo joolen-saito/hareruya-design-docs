@@ -1,0 +1,195 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1814",
+  "issueId": 43509269,
+  "summary": "【一部実装】フロント商品_商品詳細_商品詳細の英語版にて、「他のバージョンも見る」の並び替えが動作しない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:14Z",
+  "updated": "2026-07-14T01:16:14Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1814",
+  "basicInfo": {
+    "分類": "フロント商品",
+    "機能": "商品詳細",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロント商品_商品詳細_商品詳細の英語版にて、「他のバージョンも見る」の並び替えが動作しない",
+    "設計書": "0303_基本設計仕様書(フロント_商品).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント商品\n機能：商品詳細\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロント商品_商品詳細_商品詳細の英語版にて、「他のバージョンも見る」の並び替えが動作しない\n設計書：0303_基本設計仕様書(フロント_商品).xlsx",
+    "期待される挙動": "- 「他のバージョンも見る」の並び順は、選択すると選択した並び順で一覧を表示し、表示している並び順は太字にして押下不可とすること。",
+    "現在の挙動": "- 日本語版は現在の並び順が太字になり、同じ並び順を押下しても JS が早期 return するため再読込されない（設計を満たす）。\n- しかし英語版 detail.en.twig は旧マークアップ（sortButton / data-order）のままで、読み込まれる JS は same-name-sort / data-sort-key しか対象にしないため、クリックハンドラが結び付かず並び替えが一切動作しない。\n- さらに非・基本土地の場合、コントローラは UniSearch 経路になり sameNameProducts を空のまま返すため、英語版の「他のバージョンも見る」は一覧自体が空になる。",
+    "補足情報": "▼設計書該当箇所\nF03_product_basedesign.md:527（他のバージョンも見る 4-5 並び順）\n・選択すると、画面を読み込み、選択した並び順で商品一覧を表示する\n・表示している商品一覧の並び順を太字にし、押下不可とする\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Product/detail.en.twig:520-521 （旧クラス sortButton / data-order。対応するJSハンドラがリポジトリに存在しない）\nsrc/Eccube/Controller/Front/ProductController.php:632, 669-679 （非・基本土地は UniSearch 経路となり sameNameProducts は空）\n【正しく実装されている側】src/Eccube/Resource/template/default/Product/detail.twig:486-487\n【正しく実装されている側】src/Eccube/Resource/template/default/Block/js/product_detail_unisearch_same_name_js.twig:111-123 （同一キーなら早期 return）\n\n▼備考\n本項目は Claude が「誤検知（日本語版は実装済み）」、codex が「事実（英語版が未達）」と判定が割れたが、両者とも『日本語版は正常・英語版は不動作』という事実認識では一致している。英語版の不具合として起票する。"
+  },
+  "designBook": "0303_基本設計仕様書(フロント_商品).xlsx",
+  "feature": "商品詳細",
+  "classification": "フロント商品",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Resource/template/default/Product/detail.en.twig",
+      "start": 520,
+      "end": 521,
+      "fileLines": 679,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                    <a class=\"p-hareruya-toolbar__sort-link is-active sortButton selected\" href=\"javascript:void(0)\" data-order=\"asc\">{{ 'front.product.list_order_by.price_low'|trans }}</a>\n                                    <a class=\"p-hareruya-toolbar__sort-link sortButton\" href=\"javascript:void(0)\" data-order=\"desc\">{{ 'front.product.list_order_by.price_high'|trans }}</a>"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/ProductController.php",
+      "start": 632,
+      "end": 632,
+      "fileLines": 2311,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $useUnisearchSameName = false;"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Product/detail.twig",
+      "start": 486,
+      "end": 487,
+      "fileLines": 446,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/js/product_detail_unisearch_same_name_js.twig",
+      "start": 111,
+      "end": 123,
+      "fileLines": 127,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    $('.same-name-sort').on('click', function(event) {\n        event.preventDefault();\n        const sortKey = $(this).data('sort-key');\n        if (!sortKey || sortKey === activeSortKey) {\n            return false;\n        }\n\n        $('.same-name-sort').removeClass('is-active selected');\n        $('.same-name-sort[data-sort-key=\"' + sortKey + '\"]').addClass('is-active selected');\n        loadSameNameProducts(sortKey);\n\n        return false;\n    });"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+      "start": 527,
+      "end": 527,
+      "resolvedFrom": "F03_product_basedesign.md",
+      "fileLines": 936,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 4-5 | 並び順 | 単一選択 | - | - | - | ・選択肢:価格(低い順) 価格(高い順) <br><br>・選択すると、画面を読み込み、選択した並び順で商品一覧を表示する<br><br>・表示している商品一覧の並び順を太字にし、押下不可とする |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/default/Product/detail.en.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Front/ProductController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Product/detail.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/js/product_detail_unisearch_same_name_js.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:34+09:00",
+  "designResolution": {
+    "requested": "0303_基本設計仕様書(フロント_商品).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+    "sheetCount": 10,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-4",
+        "title": "商品詳細",
+        "score": 100
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "商品詳細検索",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "商品一覧"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "商品詳細"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "商品詳細検索"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "カテゴリ一覧"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "商品リコメンド"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "最近チェックした商品"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "入荷時通知"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "お気に入り"
+      }
+    ]
+  }
+}

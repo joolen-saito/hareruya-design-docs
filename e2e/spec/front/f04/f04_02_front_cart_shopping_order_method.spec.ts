@@ -9,7 +9,8 @@
  * 非破壊に走る live は「カート未投入で購入手続きURLへ直接アクセスした際の誘導」（021/011/007）のみ。
  * 要シード/要ログイン/要カート/破壊的（購入確定）のケースは test.fixme（理由付き）で保留し、全量はケース表で管理する。
  */
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../../../fixtures/reachability.fixture";
+import { directAccess } from "../../../helpers/navigation";
 import { FrontShoppingOrderMethodPage } from "../../../pages/front/f04/f04_02_front_cart_shopping_order_method.page";
 
 test.describe("フロント > カート > ご注文方法指定（注文情報の入力・確認・注文）", { tag: ["@front", "@cart"] }, () => {
@@ -17,21 +18,36 @@ test.describe("フロント > カート > ご注文方法指定（注文情報�
 
   test("E2E-F04-02-021 カート未投入で購入手続きURLへ直接アクセスすると買い物かごへ戻される", async ({ page }) => {
     const shopping = new FrontShoppingOrderMethodPage(page);
-    await shopping.gotoShopping();
+    // 直アクセスそのものが観点のケース（カート未投入での /shopping 直アクセス）。
+    await directAccess(
+      page,
+      shopping.shoppingUrl,
+      "カート未ロック・未投入の状態で購入手続きURLへ直接アクセスしたときの誘導の検証"
+    );
     // 処理フロー「カート未ロック・空は買い物かごへ戻す」。ご注文方法指定フォームを表示しない。
     await shopping.seeBackToCart();
   });
 
   test("E2E-F04-02-011 カート未投入で確認・注文（非POST）に到達しても買い物かごへ戻される", async ({ page }) => {
     const shopping = new FrontShoppingOrderMethodPage(page);
-    await shopping.gotoConfirm();
+    // 確認・注文は POST 専用（action-endpoint）。非POST到達時の扱いが観点。
+    await directAccess(
+      page,
+      shopping.shoppingConfirmUrl,
+      "POST専用の確認・注文へ非POSTで到達したときの誘導の検証"
+    );
     // 注文確定判定順序#1/#3（未ロック・非POSTは買い物かごへ戻す）。
     await shopping.seeBackToCart();
   });
 
   test("E2E-F04-02-007 受注情報が無い状態で注文エラー画面に到達すると入力フォームを表示しない", async ({ page }) => {
     const shopping = new FrontShoppingOrderMethodPage(page);
-    await shopping.gotoShoppingError();
+    // 注文エラー画面は到達クラス未確定（GET入口の明記と遷移先の両方がある）。
+    await directAccess(
+      page,
+      shopping.shoppingErrorUrl,
+      "受注情報が無い状態で注文エラー画面URLへ直接到達したときの表示の検証"
+    );
     // 受注情報なしの異常案内。ご注文方法指定の入力フォーム（合計(税込)を含む）は表示しない。
     await shopping.seeNoOrderMethodForm();
   });

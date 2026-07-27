@@ -1,0 +1,275 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1872",
+  "issueId": 43509342,
+  "summary": "【実装乖離】フロント会員_マイページ_マイページのバーコードが会員ごとのスマレジ会員コードではなく固定値でハードコードされており、店頭で読み取っても会員を特定できない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:44Z",
+  "updated": "2026-07-14T01:16:44Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1872",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "マイページ",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント会員_マイページ_マイページのバーコードが会員ごとのスマレジ会員コードではなく固定値でハードコードされており、店頭で読み取っても会員を特定できない",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：マイページ\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_マイページ_マイページのバーコードが会員ごとのスマレジ会員コードではなく固定値でハードコードされており、店頭で読み取っても会員を特定できない\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- マイページ(F06-05)の(5)バーコードは、店頭受取注文の際に店頭で読み取ることでスマレジと連携し、会員の注文履歴に登録され、ポイントも付与されること。\n- そのためバーコードは、ログインしている会員のスマレジ会員コードを表す値で描画されること。",
+    "現在の挙動": "- バーコード描画スクリプト(Block/js/point_barcode_js.twig)では、会員のスマレジ会員コードを渡す行 $(\"#js-ec_point_barcode\").barcode('{{ Customer.getSmaregiMemberCode }}', ...) が Twig コメント({# #})でコメントアウトされている。\n- 実際に実行されるのは固定値 '2900065596792' を EAN13 で描画する行であり、どの会員でログインしても同一のバーコードが表示される。\n- 会員コードを返す Customer::getSmaregiMemberCode() および DtbPlayer::getSmaregiMemberCode() は実装済みで存在しており、呼び出しを戻すだけで解消できる状態にある。\n- 5分間のタイマー(data-minutes-left=\"5\")と、タイマー満了後の「再表示する」リンクへの切り替えは実装されている。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:491 「| 5 | バーコード | バーコード | ... ・店頭受取注文の際にバーコードを店頭で読み取ると、スマレジと連携して会員の注文履歴に登録する<br>　※ポイントも付与される |」\nF06_customer_basedesign.md:475-479 「(4)バーコードについて」「5分間をカウントするタイマーを表示する」「店頭受取注文の際にバーコードを店頭で読み取ると、スマレジと連携して会員の注文履歴に登録する」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Block/js/point_barcode_js.twig:22-23 （実会員コードの行がコメントアウトされ、固定値でバーコードを描画）\nsrc/Eccube/Entity/Customer.php:1075 （getSmaregiMemberCode() は実装済み）\nsrc/Eccube/Entity/DtbPlayer.php:532 （getSmaregiMemberCode() は実装済み）\nsrc/Eccube/Resource/template/default/Mypage/index.twig:22 / index.en.twig:22 （日本語版・英語版とも point_barcode_js.twig を include）\n\n▼備考\n日本語版・英語版とも同じ Block/js/point_barcode_js.twig を include しているため、両言語で同じ固定バーコードが表示される。会員番号自体はマイページ上に {{ Customer.Player.smaregiId }} として表示されている(Mypage/index.twig:74)ため、バーコードだけが固定値になっている状態。git log --since=2026-07-08 -- src/Eccube/Resource/template/default/Block/js/point_barcode_js.twig に修正コミットは無い。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "マイページ",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Block/js/point_barcode_js.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/js/point_barcode_js.twig",
+      "start": 22,
+      "end": 23,
+      "fileLines": 26,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        {#$(\"#js-ec_point_barcode\").barcode('{{ Customer.getSmaregiMemberCode }}', \"ean13\", { barWidth:2, fontSize:14 });#}\n        $(\"#js-ec_point_barcode\").barcode('2900065596792', \"ean13\", { barWidth:2, fontSize:14 });"
+    },
+    {
+      "path": "src/Eccube/Entity/Customer.php",
+      "start": 1075,
+      "end": 1075,
+      "fileLines": 1222,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "         *"
+    },
+    {
+      "path": "src/Eccube/Entity/DtbPlayer.php",
+      "start": 532,
+      "end": 532,
+      "fileLines": 572,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function getSmaregiMemberCode(): string"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/index.twig",
+      "start": 22,
+      "end": 22,
+      "fileLines": 85,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            </div>"
+    },
+    {
+      "path": "Mypage/index.twig",
+      "start": 74,
+      "end": 74,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/js/point_barcode_js.twig",
+      "start": null,
+      "end": null,
+      "fileLines": 26,
+      "ok": true,
+      "reason": "file_exists_no_line"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 491,
+      "end": 491,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 5 | バーコード | バーコード | - | - | - | ・5分間をカウントするタイマーを表示する<br><br>・表示しているタイマーが0になると、「再表示する」のリンクに変更し、押下すると再度バーコードを5分間表示する<br><br>・店頭受取注文の際にバーコードを店頭で読み取ると、スマレジと連携して会員の注文履歴に登録する\t<br>　※ポイントも付与される |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 475,
+      "end": 479,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* (4)バーコードについて\n* 5分間をカウントするタイマーを表示する\n* 表示されているタイマーが0になると、以下のように「再表示する」のリンクに変更し、押下すると再度バーコードを5分間表示する\n* 店頭受取注文の際にバーコードを店頭で読み取ると、スマレジと連携して会員の注文履歴に登録する\n* **※**: ポイントも付与される"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/default/Block/js/point_barcode_js.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/Customer.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbPlayer.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/index.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:43+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

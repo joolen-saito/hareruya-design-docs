@@ -134,9 +134,9 @@ ec-cube-enterprise は英語ロケール資源（`messages.en.yaml`／`validator
 
 | メッセージID | 表示文言（日本語） | 画面上の文言(英語) | 表示文言（英語） | 表示条件（利用者視点） | 表示位置 | 備考 | 後続処理 |
 | --- | -------------------- |----------| ------------------ | ------------------------ | ---------- | ------ |----------|
-| M10-11-MSG-001 | 保存しました | Saved | Saved | 受注対応状況の設定を登録したとき | 管理画面上部 | ロケールキー `admin.common.save_complete`。 | 管理画面_店舗設定_受注対応状況設定画面に遷移する |
-| M10-11-MSG-002 | 入力されていません。 | No value found. | No value found. | 必須項目を未入力のまま登録したとき | 入力項目直下 | バリデーションキー「This value should not be blank.」（`NotBlank`）。`validators.ja.yaml:17` / `validators.en.yaml:17` で逐語確認済み。 | 管理画面_店舗設定_受注対応状況設定画面に留まる |
-| M10-11-MSG-003 | 長すぎます。この値は{{ limit }}文字以下で入力してください。 | This value is too long. It should have {{ limit }} character or less.\|This value is too long. It should have {{ limit }} characters or less. | This value is too long. It should have {{ limit }} character or less.\|This value is too long. It should have {{ limit }} characters or less. | 最大255文字を超えて入力し登録したとき | 入力項目直下 | Symfony `Length` 既定文言。日本語は `vendor/symfony/validator/Resources/translations/validators.ja.xlf:79` に逐語実在（ee 側 `validators.ja.yaml` に上書き無し）。`{{ limit }}` は原文プレースホルダのまま保持し実行時値へ置換しない。英語は同 `validators.en.xlf:79` が複数形分岐（`\|`）を含み単一表示文言を確定できないため要ソース確認。 | 管理画面_店舗設定_受注対応状況設定画面に留まる |
+| M10-11-MSG-001 | 保存しました | （英訳なし） | （英訳なし） | 受注対応状況の設定を登録したとき | 管理画面上部 | ロケールキー `admin.common.save_complete`。 | 管理画面_店舗設定_受注対応状況設定画面に遷移する |
+| M10-11-MSG-002 | 入力されていません。 | （英訳なし） | （英訳なし） | 必須項目を未入力のまま登録したとき | 入力項目直下 | バリデーションキー「This value should not be blank.」（`NotBlank`）。`validators.ja.yaml:17` / `validators.en.yaml:17` で逐語確認済み。 | 管理画面_店舗設定_受注対応状況設定画面に留まる |
+| M10-11-MSG-003 | 長すぎます。この値は{{ limit }}文字以下で入力してください。 | （英訳なし） | （英訳なし） | 最大255文字を超えて入力し登録したとき | 入力項目直下 | Symfony `Length` 既定文言。日本語は `vendor/symfony/validator/Resources/translations/validators.ja.xlf:79` に逐語実在（ee 側 `validators.ja.yaml` に上書き無し）。`{{ limit }}` は原文プレースホルダのまま保持し実行時値へ置換しない。英語は同 `validators.en.xlf:79` が複数形分岐を含むため、原文の両形を区切り子 `\|` のまま逐語併記する（実行時に `{{ limit }}` の値で単数形・複数形のいずれか一方のみが表示される）。 | 管理画面_店舗設定_受注対応状況設定画面に留まる |
 
 ---
 

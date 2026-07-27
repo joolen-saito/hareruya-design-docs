@@ -55,17 +55,12 @@ export class FrontShoppingOrderMethodPage {
       .first();
   }
 
-  async gotoShopping() {
-    await this.page.goto(this.shoppingUrl);
-  }
-
-  async gotoConfirm() {
-    await this.page.goto(this.shoppingConfirmUrl);
-  }
-
-  async gotoShoppingError() {
-    await this.page.goto(this.shoppingErrorUrl);
-  }
+  // 到達クラス（e2e/config/screen-reachability.tsv）:
+  //   /shopping                = transition-only（md:62,299-301。起点=/cart「購入手続きへ」）
+  //   /shopping/confirm        = action-endpoint（md:67。POSTのみで画面ではない）
+  //   /shopping/shopping_error = 要確認（md:68にGET入口／md:301に遷移先。直アクセス可否は未規定）
+  // いずれも直接開く到達メソッドは置かない。正規到達は spec 側で reachVia()、
+  // 直アクセスそのものが観点のときは directAccess(page, <url>, 理由) を使う。
 
   /** ログイン（要 ECCUBE_FRONT_USER/PASS）。会員前提ケースの準備で使用。 */
   async loginAsMember() {

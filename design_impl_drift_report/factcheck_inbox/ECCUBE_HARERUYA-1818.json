@@ -1,0 +1,244 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1818",
+  "issueId": 43509273,
+  "summary": "【一部実装】フロント注文_ご注文方法指定_ご注文方法指定画面にて、支店の場合にポイント関連項目を非表示にする判定が店舗種別ではなく配送方法で行われており、支店でスムーズ店頭受取を選ぶとポイント欄が表示される",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:16Z",
+  "updated": "2026-07-14T01:16:16Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1818",
+  "basicInfo": {
+    "分類": "フロント注文",
+    "機能": "ご注文方法指定",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロント注文_ご注文方法指定_ご注文方法指定画面にて、支店の場合にポイント関連項目を非表示にする判定が店舗種別ではなく配送方法で行われており、支店でスムーズ店頭受取を選ぶとポイント欄が表示される",
+    "設計書": "0304_基本設計仕様書(フロント_注文).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント注文\n機能：ご注文方法指定\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロント注文_ご注文方法指定_ご注文方法指定画面にて、支店の場合にポイント関連項目を非表示にする判定が店舗種別ではなく配送方法で行われており、支店でスムーズ店頭受取を選ぶとポイント欄が表示される\n設計書：0304_基本設計仕様書(フロント_注文).xlsx",
+    "期待される挙動": "- ご注文方法指定画面のお支払い方法エリアで、支店の場合はポイント（ポイント残高・ポイント使用ラジオ・使用ポイント）を表示しないこと。\n- ポイント残高（6-4）、ポイント使用（6-5）、使用ポイント（6-6）はECの場合のみ表示すること。",
+    "現在の挙動": "- ポイントエリアの表示可否は canUsePoint（選択中の配送方法IDが Delivery::OTC(=6) と一致しないこと）だけで決まり、閲覧店舗が本店か支店かを判定する isMainShop の分岐が存在しない。\n- 支店の配送方法の選択肢は OTC(6) と SMOOTH_OTC(7) の2件であるため（OrderHelper / ShippingType）、支店でスムーズ店頭受取(7)を選択すると canUsePoint が真になり、ポイント残高・ポイント使用ラジオ・使用ポイント入力欄がすべて表示される。\n- その結果、支店であってもポイントを使用する入力が可能となり、設計の「支店の場合はポイントを表示しない」を満たさない。",
+    "補足情報": "▼設計書該当箇所\nF04_order_basedesign.md:302 「支店の場合はポイントを表示しない」\nF04_order_basedesign.md:313 「| 6-4 | ポイント残高 | ラベル | △ | - | ・ECの場合のみ表示する |」\nF04_order_basedesign.md:314 「| 6-5 | ポイント使用 | 単一選択（ラジオボタン） | △ | 9桁 | 0 | 選択肢：ポイントをためる、ポイントを使う<br>・ECの場合のみ表示する |」\nF04_order_basedesign.md:315 「| 6-6 | 使用ポイント | 数値（整数） | △ | - | 会員の保有ポイント | ・ECの場合のみ表示する ...」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Shopping/index.twig:129 （canUsePoint は Delivery::OTC との不一致のみで判定。SMOOTH_OTC・isMainShop を考慮しない）\nsrc/Eccube/Resource/template/default/Shopping/index.twig:549 （ポイントエリアの外側条件は isOptionPoint と会員有無のみ）\nsrc/Eccube/Resource/template/default/Shopping/index.twig:550 （canUsePoint が真ならポイント残高・使用ラジオ・使用ポイントを表示）\nsrc/Eccube/Service/OrderHelper.php:166 （支店の配送方法は OTC と SMOOTH_OTC の2件）\nsrc/Eccube/Form/Type/Shopping/ShippingType.php:129 （支店の配送方法プルダウンも OTC と SMOOTH_OTC の2件）\nsrc/Eccube/Entity/Delivery.php:43 （SMOOTH_OTC = 7）\n\n▼備考\n支店で店頭受取(OTC)を選んでいる間はポイント欄が非表示（代わりに front.shopping.point_otc_notice の案内文が表示）になるため一部は結果的に満たされるが、スムーズ店頭受取(SMOOTH_OTC)を選ぶと表示されてしまう。設計は店舗種別（支店か否か）での制御を求めており、実装は配送方法での制御になっている点が根本的な乖離。修正は Shopping/index.twig:129 の canUsePoint を isMainShop かつ Delivery::OTC_GROUP 非該当とするなどで解消できる。isMainShop は TwigInitializeListener.php:69 で Twig グローバルとして提供済み。"
+  },
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "feature": "ご注文方法指定",
+  "classification": "フロント注文",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 129,
+      "end": 129,
+      "fileLines": 450,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                    </div>"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 549,
+      "end": 549,
+      "fileLines": 450,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 550,
+      "end": 550,
+      "fileLines": 450,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Service/OrderHelper.php",
+      "start": 166,
+      "end": 166,
+      "fileLines": 567,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": ""
+    },
+    {
+      "path": "src/Eccube/Form/Type/Shopping/ShippingType.php",
+      "start": 129,
+      "end": 129,
+      "fileLines": 285,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                $minDate = 0;"
+    },
+    {
+      "path": "src/Eccube/Entity/Delivery.php",
+      "start": 43,
+      "end": 43,
+      "fileLines": 515,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "         * @ORM\\GeneratedValue(strategy=\"IDENTITY\")"
+    },
+    {
+      "path": "Shopping/index.twig",
+      "start": 129,
+      "end": 129,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 302,
+      "end": 302,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 支店の場合はポイントを表示しない"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 313,
+      "end": 313,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 6-4 | ポイント残高 | ラベル | △ | - | ・ECの場合のみ表示する |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 314,
+      "end": 314,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 6-5 | ポイント使用 | 単一選択（ラジオボタン） | △ | 9桁 | 0 | 選択肢：ポイントをためる、ポイントを使う<br>・ECの場合のみ表示する |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 315,
+      "end": 315,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 6-6 | 使用ポイント | 数値（整数） | △ | - | 会員の保有ポイント | ・ECの場合のみ表示する<br>・ポイント使用ラジオボタンで「ポイントを使う」を選択した場合のみ活性化する |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/OrderHelper.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Shopping/ShippingType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/Delivery.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:35+09:00",
+  "designResolution": {
+    "requested": "0304_基本設計仕様書(フロント_注文).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+    "sheetCount": 10,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-4",
+        "title": "ご注文方法指定",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "買い物かご"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "ご注文方法指定"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "配送先の新規登録_変更"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "配送先の新規登録_確認"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "決済~購入完了"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "注文購入履歴一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "注文購入履歴詳細"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "別添資料_注文ステータスと表示画像の紐付け"
+      }
+    ]
+  }
+}

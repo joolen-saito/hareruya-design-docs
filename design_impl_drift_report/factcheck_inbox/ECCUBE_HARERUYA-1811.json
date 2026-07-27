@@ -1,0 +1,205 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1811",
+  "issueId": 43509266,
+  "summary": "【実装乖離】フロント商品_入荷時通知_商品一覧のSOLDOUT商品の入荷通知が、商品単位でなく規格単位で登録される",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:12Z",
+  "updated": "2026-07-14T01:16:12Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1811",
+  "basicInfo": {
+    "分類": "フロント商品",
+    "機能": "入荷時通知",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント商品_入荷時通知_商品一覧のSOLDOUT商品の入荷通知が、商品単位でなく規格単位で登録される",
+    "設計書": "0303_基本設計仕様書(フロント_商品).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント商品\n機能：入荷時通知\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント商品_入荷時通知_商品一覧のSOLDOUT商品の入荷通知が、商品単位でなく規格単位で登録される\n設計書：0303_基本設計仕様書(フロント_商品).xlsx",
+    "期待される挙動": "- 商品一覧画面でSOLDOUTとなっている商品に入荷通知を登録する場合、商品単位の入荷通知とすること。",
+    "現在の挙動": "- 一覧の通知ボタンは押下された product_class_id を1件だけ送信し、dtb_product_request を1行だけ作成する。SOLDOUT カードのメインボタンも代表規格（lead）の ID を送るだけで、商品全体の登録にならない。\n- 商品単位で全規格を登録するルート（push_all_receive）は存在するが、どのテンプレート・JS からも呼ばれていないデッドコードになっている。\n- UniSearch 経路も遅延読込後に同じ商品カードブロックを描画するため挙動は同一。",
+    "補足情報": "▼設計書該当箇所\nF03_product_basedesign.md:788, 810（入荷時通知）\n・一覧の場合はSOLDOUTとなっている場合、商品単位の通知とする\n★商品一覧画面でSOLDOUTとなっている商品に入荷通知を登録する場合、商品単位の入荷通知とする\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Block/product.twig:293-294 （data-productclass=\"{{ lead.id }}\"）\nsrc/Eccube/Resource/template/default/Block/product.en.twig:252-253 （英語版も同一）\nsrc/Eccube/Resource/template/default/Block/js/product_js.twig:70-88, 319-321 （product_class_id を1件だけ POST）\nsrc/Eccube/Controller/Front/CartController.php:436-437, 487-493 （1規格だけを登録）\nsrc/Eccube/Controller/Front/Mypage/NotifylistController.php:187, 248 （商品単位で全規格を登録する push_all_receive。未使用）\n\n▼備考\n既存の未使用ルート push_all_receive を活用するのが近道。"
+  },
+  "designBook": "0303_基本設計仕様書(フロント_商品).xlsx",
+  "feature": "入荷時通知",
+  "classification": "フロント商品",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Resource/template/default/Block/product.twig",
+      "start": 293,
+      "end": 294,
+      "fileLines": 400,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                    {% if _can_show_restock_notify and _restock_notify_eligible_by_class_id[lead.id] is defined %}\n                                    <button type=\"button\" class=\"p-hareruya-mail-btn p-hareruya-product-card__notify-btn c-hareruya-btn--sm js-product-list-notify js-product-list-main-notify{% if lead_notify_on %} is-selected{% endif %}\" data-productclass=\"{{ lead.id }}\">"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/product.en.twig",
+      "start": 252,
+      "end": 253,
+      "fileLines": 347,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                    {% if _can_show_restock_notify and _restock_notify_eligible_by_class_id[lead.id] is defined %}\n                                    <button type=\"button\" class=\"p-hareruya-mail-btn p-hareruya-product-card__notify-btn c-hareruya-btn--sm js-product-list-notify js-product-list-main-notify{% if lead_notify_on %} is-selected{% endif %}\" data-productclass=\"{{ lead.id }}\">"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/js/product_js.twig",
+      "start": 70,
+      "end": 88,
+      "fileLines": 458,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            function notifyRequest(self, isRestoring = false, suppressModal = false) {\n                const $btn = $(self);\n                const productClassId = $btn.attr('data-productclass') || $btn.attr('data-product-class-id');\n                const productName = $btn.attr('data-product-name') || '';\n                const token = getCsrfToken() || $btn.attr('data-token') || '';\n\n                if (!productClassId) {\n                    return;\n                }\n\n                const url = \"{{ url('cart_push_receive', {'_shop': app.request.get('_shop')}) }}\";\n\n                $.ajax({\n                    url: url,\n                    type: 'POST',\n                    data: {\n                        'product_class_id': productClassId,\n                        '_token': token\n         "
+    },
+    {
+      "path": "src/Eccube/Controller/Front/CartController.php",
+      "start": 436,
+      "end": 437,
+      "fileLines": 503,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $productClassId = $request->get('product_class_id');\n        $ProductClass = $productClassRepository->find($productClassId);"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/Mypage/NotifylistController.php",
+      "start": 187,
+      "end": 187,
+      "fileLines": 270,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[Route(path: '/notifylist/push_all_receive', name: 'push_all_receive', methods: ['POST'])]"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+      "start": 788,
+      "end": 788,
+      "resolvedFrom": "F03_product_basedesign.md",
+      "fileLines": 936,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 一覧の場合はSOLDOUTとなっている場合、商品単位の通知とする"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/default/Block/product.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/product.en.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/js/product_js.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Front/CartController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Front/Mypage/NotifylistController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:32+09:00",
+  "designResolution": {
+    "requested": "0303_基本設計仕様書(フロント_商品).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+    "sheetCount": 10,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-9",
+        "title": "入荷時通知",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "商品一覧"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "商品詳細"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "商品詳細検索"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "カテゴリ一覧"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "商品リコメンド"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "最近チェックした商品"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "入荷時通知"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "お気に入り"
+      }
+    ]
+  }
+}

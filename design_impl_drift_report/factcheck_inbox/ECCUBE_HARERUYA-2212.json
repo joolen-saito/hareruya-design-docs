@@ -1,0 +1,247 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2212",
+  "issueId": 43509794,
+  "summary": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント規模」は設計上は任意項目だが、実装では NotBlank により必須項目になっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:34Z",
+  "updated": "2026-07-14T01:19:34Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2212",
+  "basicInfo": {
+    "分類": "イベント管理",
+    "機能": "イベント編集 / イベント削除",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント規模」は設計上は任意項目だが、実装では NotBlank により必須項目になっている",
+    "設計書": "0214_基本設計仕様書(イベント管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：イベント管理\n機能：イベント編集 / イベント削除\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント規模」は設計上は任意項目だが、実装では NotBlank により必須項目になっている\n設計書：0214_基本設計仕様書(イベント管理).xlsx",
+    "期待される挙動": "- イベント編集画面の識別ID:1-8「イベント規模」は単一選択の任意項目であり、未選択のままでもイベントを登録・更新できること。\n- 選択肢は大型イベント・特別イベント・デイリーイベント・おすすめイベントであること。",
+    "現在の挙動": "- フォーム EventType の eventScale（EntityType）に NotBlank 制約が設定されており、未選択の場合はバリデーションエラーとなって保存できない。\n- テンプレート admin/Event/edit.twig でもイベント規模の項目に「必須」バッジが表示されている。\n- エンティティ DtbEvent の EventScale プロパティは nullable（?MtbEventScale $EventScale = null）で、DB上は NULL 許容であるにもかかわらず、フォームで必須化されている。",
+    "補足情報": "▼設計書該当箇所\nM13_event_management_basedesign.md:156 「2025-01-08 イベント規模 単一選択 - - - 選択肢:大型イベント 特別イベント デイリーイベント おすすめイベント」（必須列が「-」＝任意）\nM13_event_management_basedesign.md:135 「* 識別ID:1-8 「イベント規模」を追加する、おすすめイベント、デイリーイベント、特別イベント、大型イベントから選択」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/EventType.php:100-109 （eventScale に NotBlank 制約）\nsrc/Eccube/Resource/template/admin/Event/edit.twig:151-156 （イベント規模に必須バッジを表示）\nsrc/Eccube/Entity/DtbEvent.php:81-82 （EventScale は nullable）\n\n▼備考\n設計書の表では「必須」列が「-」であり、任意項目と読み取れる。実装は NotBlank により必須化しているため、イベント規模を設定しないイベント（通常イベント）が登録できない。既存データで event_scale_id が NULL のイベントは、編集画面で保存し直すとエラーになる点にも注意。"
+  },
+  "designBook": "0214_基本設計仕様書(イベント管理).xlsx",
+  "feature": "イベント編集 / イベント削除",
+  "classification": "イベント管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "admin/Event/edit.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/EventType.php",
+      "start": 100,
+      "end": 109,
+      "fileLines": 323,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('eventScale', EntityType::class, [\n                'class' => MtbEventScale::class,\n                'expanded' => false,\n                'multiple' => false,\n                'constraints' => [\n                    new NotBlank(),\n                ],\n                'query_builder' => fn (EntityRepository $er) => $er->createQueryBuilder('e')\n                    ->orderBy('e.id', 'ASC'),\n            ])"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/edit.twig",
+      "start": 151,
+      "end": 156,
+      "fileLines": 592,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                                <span>{{ 'admin.event.event_scale'|trans }}</span>\n                                                <span class=\"badge bg-primary ms-1\">{{ 'admin.common.required'|trans }}</span>\n                                            </div>\n                                            <div class=\"col-7\">\n                                                {{ form_widget(form.eventScale) }}\n                                                {{ form_errors(form.eventScale) }}"
+    },
+    {
+      "path": "src/Eccube/Entity/DtbEvent.php",
+      "start": 81,
+      "end": 82,
+      "fileLines": 646,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[ORM\\ManyToOne(targetEntity: MtbEventScale::class)]\n    private ?MtbEventScale $EventScale = null;"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 156,
+      "end": 156,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "2025-01-08 イベント規模 単一選択 - - - 選択肢:大型イベント 特別イベント デイリーイベント おすすめイベント"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 135,
+      "end": 135,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 識別ID:1-8 「イベント規模」を追加する、おすすめイベント、デイリーイベント、特別イベント、大型イベントから選択　　　　　　　　　　"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/EventType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/edit.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbEvent.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:45+09:00",
+  "designResolution": {
+    "requested": "0214_基本設計仕様書(イベント管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html",
+    "sheetCount": 22,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集",
+        "score": 60
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "イベント一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "繰返日程追加"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "イベント申込一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "イベント申込一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "イベント申込一括編集"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "デッキ表示"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "CSVダウンロード"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "イベント申込登録(検索入力)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "イベント申込登録(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "イベント新規申込登録"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "イベント一括登録CSV"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "バナー設定"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定"
+      }
+    ]
+  }
+}

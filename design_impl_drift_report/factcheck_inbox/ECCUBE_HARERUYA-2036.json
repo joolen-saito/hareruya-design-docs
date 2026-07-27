@@ -1,0 +1,387 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2036",
+  "issueId": 43509564,
+  "summary": "【要確認】在庫管理_在庫移動・振替一覧_在庫移動・振替一覧の表示順は、設計の「在庫移動振替ID降順」と実装の「登録日時降順→ID降順」が実質同一であり、乖離ではない（誤検知）",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:06Z",
+  "updated": "2026-07-22T01:26:50Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2036",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "在庫移動・振替一覧",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【要確認】在庫管理_在庫移動・振替一覧_在庫移動・振替一覧の表示順は、設計の「在庫移動振替ID降順」と実装の「登録日時降順→ID降順」が実質同一であり、乖離ではない（誤検知）",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：在庫移動・振替一覧\n課題カテゴリ：不具合（バグ）\n課題：【要確認】在庫管理_在庫移動・振替一覧_在庫移動・振替一覧の表示順は、設計の「在庫移動振替ID降順」と実装の「登録日時降順→ID降順」が実質同一であり、乖離ではない（誤検知）\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- 在庫移動・振替一覧の検索結果は、在庫移動振替IDの降順で表示されること。",
+    "現在の挙動": "- 実装は第1ソートキーが登録日時（createDate）の降順、第2ソートキーが在庫移動振替ID（id）の降順である。\n- createDate は Doctrine の prePersist リスナー（SaveEventSubscriber）が persist 時に必ず現在日時で上書きするため、IDENTITY 採番される id と単調増加の関係にある。同一日時の場合は id 降順でタイブレークされるため、画面上の表示順は「在庫移動振替ID降順」と完全に一致する。\n- 登録処理（StockMoveTransferEntityManager）側で createDate を任意の日時に設定している箇所は存在しない。\n- 結論として利用者から見える乖離はなく、元レポートの指摘は誤検知である。ただし将来 create_date を任意日時でSQL直接投入するデータ移行を行った場合は表示順がID降順と一致しなくなるため、厳密性を求めるならソート指定を id 単独に整理する余地はある。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M04_stock_management_basedesign.md:916 （M04-09 在庫移動振替一覧「一覧は在庫移動振替IDを降順として表示する」）\n.cursor/docs/MDfile/M04_stock_management_basedesign.md:1942 （M04-12 在庫分割結合一覧「一覧はID（実質は登録日）を降順として表示する」。設計書自身がID降順と登録日降順を同義として扱っている）\n\n▼実装該当箇所\nsrc/Eccube/Repository/DtbStockMoveTransferRepository.php:56-57 （一覧検索クエリ。orderBy('s.createDate','DESC') → addOrderBy('s.id','DESC')）\nsrc/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:41-42 （prePersist で setCreateDate(new \\DateTime()) を無条件に実行し、create_date を永続化時点の現在日時で確定させる）\nsrc/Eccube/Service/EntityManager/StockMoveTransferEntityManager.php:50-70 （在庫移動振替の登録処理。createDate を明示設定していない＝上記Subscriber任せ）\nsrc/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:195-196 （Repositoryの結果をそのままページャへ渡しており、他のソート指定はない）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で Claude の判定を採用した。\ncodex は DtbStockMoveTransferRepository.php:56-57 のソート指定だけを見て「第1ソートキーが設計と異なる」と FACT 判定したが、createDate がどう設定されるかを追っていない。src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:41-42 が prePersist で create_date を必ず現在日時に上書きしており、StockMoveTransferEntityManager.php:50-70 にも createDate の明示設定がないため、create_date は IDENTITY 採番の id と単調増加になる。したがって「createDate DESC → id DESC」は「id DESC」と同一の並びになる。\nClaude はこの点を正しく捉えたうえで、設計書 M04_stock_management_basedesign.md:1942 が同じ在庫管理機能の一覧について「ID（実質は登録日）を降順として表示する」と記載し、両者を同義と明言していることを根拠に誤検知と判断した。本裁定でも設計書原文を確認し、この記述の存在を確認した。\nなお codex の「登録日時とIDの順序が一致しないデータでは設計どおりにならない」という指摘自体は理論上正しいが、その状態はアプリケーション経由の登録では発生し得ない（prePersist で必ず上書きされるため）。現行実装で利用者に見える乖離は無いため category は「該当なし」とし、指摘は誤検知として起票する。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "在庫移動・振替一覧",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 916,
+      "end": 916,
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 一覧は在庫移動振替IDを降順として表示する"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 1942,
+      "end": 1942,
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 一覧はID（実質は登録日）を降順として表示する"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbStockMoveTransferRepository.php",
+      "start": 56,
+      "end": 57,
+      "fileLines": 475,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->orderBy('s.createDate', 'DESC')\n            ->addOrderBy('s.id', 'DESC');"
+    },
+    {
+      "path": "src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php",
+      "start": 41,
+      "end": 42,
+      "fileLines": 98,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $this->eccubeConfig = $eccubeConfig;\n    }"
+    },
+    {
+      "path": "src/Eccube/Service/EntityManager/StockMoveTransferEntityManager.php",
+      "start": 50,
+      "end": 70,
+      "fileLines": 72,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            $StockMoveTransfer = new DtbStockMoveTransfer();\n        }\n        $StockMoveTransfer->setMoveTransferType($moveTransferType);\n        $StockMoveTransfer->setMoveTransferStatus($MoveTransferStatus);\n        $StockMoveTransfer->setMoveFromBaseInfo($MoveFromBaseInfo);\n        $StockMoveTransfer->setMoveFromStockLocationId($moveFromStockLocationId);\n        $StockMoveTransfer->setMoveToBaseInfo($MoveToBaseInfo);\n        $StockMoveTransfer->setMoveToStockLocationId($moveToStockLocationId);\n        $StockMoveTransfer->setMemo($memo);\n        $StockMoveTransfer->setRegisteredMember($RegisteredMember);\n        $StockMoveTransfer->setUpdatedMember($UpdatedMember);\n        $StockMoveTransfer->setMoveFromApprovalMember($MoveFromApprovalMember);\n        $StockMoveTransfer->setMoveFromAppr"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php",
+      "start": 195,
+      "end": 196,
+      "fileLines": 716,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $qb = $this->stockMoveTransferRepository->getQueryBuilderBySearchData($searchData);\n        $pagination = $paginator->paginate($qb, (int) $page_no, $pageCount);"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 1942,
+      "end": 1942,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 一覧はID（実質は登録日）を降順として表示する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/DtbStockMoveTransferRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/EntityManager/StockMoveTransferEntityManager.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990945,
+      "created": "2026-07-22T01:26:50Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:21+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}

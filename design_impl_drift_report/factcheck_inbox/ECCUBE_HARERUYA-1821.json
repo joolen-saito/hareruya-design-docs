@@ -1,0 +1,192 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1821",
+  "issueId": 43509276,
+  "summary": "【一部実装】フロント注文_配送先の新規登録・変更／確認_配送先の新規登録・変更画面にて、会員の場合にご注文方法指定画面で選択した配送情報が項目に設定されない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:17Z",
+  "updated": "2026-07-14T01:16:17Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1821",
+  "basicInfo": {
+    "分類": "フロント注文",
+    "機能": "配送先の新規登録・変更／確認",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロント注文_配送先の新規登録・変更／確認_配送先の新規登録・変更画面にて、会員の場合にご注文方法指定画面で選択した配送情報が項目に設定されない",
+    "設計書": "0304_基本設計仕様書(フロント_注文).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント注文\n機能：配送先の新規登録・変更／確認\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロント注文_配送先の新規登録・変更／確認_配送先の新規登録・変更画面にて、会員の場合にご注文方法指定画面で選択した配送情報が項目に設定されない\n設計書：0304_基本設計仕様書(フロント_注文).xlsx",
+    "期待される挙動": "- 配送先の新規登録・変更画面（F04-03）の初期表示では、ご注文方法指定画面で選択していた配送情報を各項目に設定した状態で表示する。\n- ご注文方法指定画面の「お届け先情報を変更する」ボタン押下時は、選択している配送情報を設定した「配送先の新規登録・変更」画面へ遷移する。",
+    "現在の挙動": "- ShoppingController::shippingEdit() は、ログイン済み会員の場合は空の CustomerAddress を生成して setCustomer() のみを行うため、フォームは空欄で初期表示され、選択中の配送情報（Shipping）は反映されない。\n- 選択中の配送情報を反映する setFromShipping() は非会員（IS_AUTHENTICATED_FULLY でない場合）のみに適用されている。\n- ご注文方法指定画面の「お届け先情報を変更する」ボタンは shopping_shipping_edit ではなく shopping_shipping（お届け先選択画面 Shopping/shipping.twig）へ遷移しており、会員は「配送先の新規登録・変更」画面で既存配送先を編集する導線を持たない（同画面へは「新しいお届け先情報を登録する」ボタンからのみ到達する）。",
+    "補足情報": "▼設計書該当箇所\nF04_order_basedesign.md:364-365 「* 初期表示 / * ご注文方法指定画面で選択していた配送情報を項目に設定する」\nF04_order_basedesign.md:214 「| 3-9 | お届け先情報を変更するボタン | ボタン | - | - | - | クリックすると選択している配送情報を設定した「配送先の新規登録・変更」画面へ遷移する |」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Front/ShoppingController.php:814-829 （会員は new CustomerAddress + setCustomer のみ。非会員のみ setFromShipping で選択中の配送情報を反映）\nsrc/Eccube/Controller/Front/ShoppingController.php:912-921 （shippingEditComplete でも同様に会員は setCustomer のみ）\nsrc/Eccube/Resource/template/default/Shopping/index.twig:255 （「お届け先情報を変更する」ボタンの遷移先は shopping_shipping）\nsrc/Eccube/Resource/template/default/Shopping/index.twig:257 （「新しいお届け先情報を登録する」ボタンの遷移先が shopping_shipping_edit＝F04-03）\n\n▼備考\n非会員のみ setFromShipping で初期値が入るため「一部実装」。日本語版 shipping_edit.twig / 英語版 shipping_edit.en.twig いずれもフォーム値はコントローラ側の CustomerAddress に依存しており、テンプレート側で Shipping から補完する処理は無いことを確認済み。git log --since=2026-07-08 でも shipping_edit.twig / shipping.twig / 当該コントローラの該当処理に修正コミットは無い。"
+  },
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "feature": "配送先の新規登録・変更／確認",
+  "classification": "フロント注文",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Shopping/shipping.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/ShoppingController.php",
+      "start": 814,
+      "end": 829,
+      "fileLines": 1387,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $CustomerAddress = new CustomerAddress();\n        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {\n            /** @var Customer $Customer */\n            $Customer = $this->getUser();\n            // 配送先登録上限に達していたら処理を止めて 404 を返す\n            $addressCurrNum = count($Customer->getCustomerAddresses());\n            $addressMax = $this->eccubeConfig['eccube_deliv_addr_max'];\n            if ($addressCurrNum >= $addressMax) {\n                throw new NotFoundHttpException();\n            }\n\n            $CustomerAddress->setCustomer($Customer);\n        } else {\n            // 非会員時はお届け先をセット\n            $CustomerAddress->setFromShipping($Shipping);\n        }"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/ShoppingController.php",
+      "start": 912,
+      "end": 921,
+      "fileLines": 1387,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        // お届け先情報を取得\n        $CustomerAddress = new CustomerAddress();\n        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {\n            /** @var Customer $Customer */\n            $Customer = $this->getUser();\n            $CustomerAddress->setCustomer($Customer);\n        } else {\n            $CustomerAddress->setFromShipping($Shipping);\n        }\n"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 255,
+      "end": 255,
+      "fileLines": 450,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                </dt>"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 257,
+      "end": 257,
+      "fileLines": 450,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                    <div class=\"ec-input\">"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 364,
+      "end": 365,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 初期表示\n* ご注文方法指定画面で選択していた配送情報を項目に設定する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 214,
+      "end": 214,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 3-9 | お届け先情報を変更するボタン | ボタン | - | - | - | クリックすると選択している配送情報を設定した「配送先の新規登録・変更」画面へ遷移する |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Front/ShoppingController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:36+09:00",
+  "designResolution": {
+    "requested": "0304_基本設計仕様書(フロント_注文).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+    "sheetCount": 10,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "買い物かご"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "ご注文方法指定"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "配送先の新規登録_変更"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "配送先の新規登録_確認"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "決済~購入完了"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "注文購入履歴一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "注文購入履歴詳細"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "別添資料_注文ステータスと表示画像の紐付け"
+      }
+    ]
+  }
+}

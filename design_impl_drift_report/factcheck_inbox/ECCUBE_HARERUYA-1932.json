@@ -1,0 +1,203 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1932",
+  "issueId": 43509439,
+  "summary": "【実装乖離】フロント店頭買取_店頭買取査定申込前ログイン_店頭買取査定申込前ログインにて、メールアドレス入力欄の最大文字数が設計値320文字ではなく255文字になっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:14Z",
+  "updated": "2026-07-14T01:17:14Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1932",
+  "basicInfo": {
+    "分類": "フロント店頭買取",
+    "機能": "店頭買取査定申込前ログイン",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント店頭買取_店頭買取査定申込前ログイン_店頭買取査定申込前ログインにて、メールアドレス入力欄の最大文字数が設計値320文字ではなく255文字になっている",
+    "設計書": "0308_基本設計仕様書(フロント_店頭買取).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント店頭買取\n機能：店頭買取査定申込前ログイン\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント店頭買取_店頭買取査定申込前ログイン_店頭買取査定申込前ログインにて、メールアドレス入力欄の最大文字数が設計値320文字ではなく255文字になっている\n設計書：0308_基本設計仕様書(フロント_店頭買取).xlsx",
+    "期待される挙動": "- 店頭買取査定申込前ログイン画面（F08-01）のメールアドレス欄は、最大320文字まで入力できること。\n- 同画面のパスワード欄も最大320文字まで入力できること。",
+    "現在の挙動": "- ログインフォームは CustomerLoginType を利用しており、login_email・login_pass の maxlength 属性に eccube_stext_len が設定されている。\n- eccube_stext_len は 255 のため、メールアドレス欄・パスワード欄とも 255 文字を超える入力ができず、設計の 320 文字を満たしていない。",
+    "補足情報": "▼設計書該当箇所\nF08_otc_buy_basedesign.md:38 「| 2 | メールアドレス | 全角・半角 | △ | 320 | - | ・ログインをする場合は必須項目 |」\nF08_otc_buy_basedesign.md:39 「| 3 | パスワード | 全角・半角 | △ | 320 | - | ・ログインをする場合は必須項目 |」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Front/Purchase/OtcBuyController.php:225-227 （entry アクションが CustomerLoginType でログインフォームを生成）\nsrc/Eccube/Form/Type/Front/CustomerLoginType.php:39-56 （login_email / login_pass の maxlength に eccube_stext_len を設定）\napp/config/eccube/packages/eccube.yaml:137 （eccube_stext_len: 255）\nsrc/Eccube/Resource/template/default/OtcBuy/entry.twig:31-37 （form.login_email.vars.attr をマージしてそのまま出力）\nsrc/Eccube/Resource/template/default/OtcBuy/entry.en.twig:30-36 （英語版も同一）\n\n▼備考\nサーバ側には Assert\\Length による長さ制限はなく、制限はクライアント側 maxlength のみ。maxlength=255 のため 320 文字の入力そのものが不可能で、設計値と乖離する。日本語版・英語版テンプレートとも同じフォームを使っており差異はない。"
+  },
+  "designBook": "0308_基本設計仕様書(フロント_店頭買取).xlsx",
+  "feature": "店頭買取査定申込前ログイン",
+  "classification": "フロント店頭買取",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Controller/Front/Purchase/OtcBuyController.php",
+      "start": 225,
+      "end": 227,
+      "fileLines": 636,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $form = $this->formFactory\n            ->createNamedBuilder('', CustomerLoginType::class)\n            ->getForm();"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Front/CustomerLoginType.php",
+      "start": 39,
+      "end": 56,
+      "fileLines": 79,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    {\n        $this->authenticationUtils = $authenticationUtils;\n        $this->eccubeConfig = $eccubeConfig;\n    }\n\n    /**\n     * {@inheritdoc}\n     */\n    public function buildForm(FormBuilderInterface $builder, array $options)\n    {\n        $builder->add('login_email', EmailType::class, [\n            'attr' => [\n                'maxlength' => $this->eccubeConfig['eccube_stext_len'],\n            ],\n            'constraints' => [\n                new Assert\\NotBlank(),\n                new Email(null, null, $this->eccubeConfig['eccube_rfc_email_check'] ? 'strict' : null),\n            ],"
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "start": 137,
+      "end": 137,
+      "fileLines": 184,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    # {dd}: 日(01)"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/OtcBuy/entry.twig",
+      "start": 31,
+      "end": 37,
+      "fileLines": 80,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                {{ form_widget(form.login_email, {'attr': form.login_email.vars.attr|merge({\n                                    'class': 'c-hareruya-form-input__field',\n                                    'style': 'ime-mode: disabled;',\n                                    'placeholder': 'front.mypage.login.placeholder_mail'|trans,\n                                    'autofocus': true,\n                                    'autocomplete': 'email'\n                                })}) }}"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/OtcBuy/entry.en.twig",
+      "start": 30,
+      "end": 36,
+      "fileLines": 79,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                {{ form_widget(form.login_email, {'attr': form.login_email.vars.attr|merge({\n                                    'class': 'c-hareruya-form-input__field',\n                                    'style': 'ime-mode: disabled;',\n                                    'placeholder': 'front.mypage.login.placeholder_mail'|trans,\n                                    'autofocus': true,\n                                    'autocomplete': 'email'\n                                })}) }}"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+      "start": 38,
+      "end": 38,
+      "resolvedFrom": "F08_otc_buy_basedesign.md",
+      "fileLines": 252,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 2 | メールアドレス | 全角・半角 | △ | 320 | - | ・ログインをする場合は必須項目 |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+      "start": 39,
+      "end": 39,
+      "resolvedFrom": "F08_otc_buy_basedesign.md",
+      "fileLines": 252,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 3 | パスワード | 全角・半角 | △ | 320 | - | ・ログインをする場合は必須項目 |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Front/Purchase/OtcBuyController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Front/CustomerLoginType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/OtcBuy/entry.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/OtcBuy/entry.en.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:09+09:00",
+  "designResolution": {
+    "requested": "0308_基本設計仕様書(フロント_店頭買取).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html",
+    "sheetCount": 7,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "店頭買取査定申込前ログイン",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "店頭買取査定申込前ログイン"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "店頭買取査定申込情報入力"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "店頭買取査定申込登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "会員登録フォーム"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "店頭買取査定申込確認"
+      }
+    ]
+  }
+}

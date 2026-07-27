@@ -1,0 +1,251 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1865",
+  "issueId": 43509330,
+  "summary": "【未実装】フロント会員_本会員登録_本会員登録にて、仮会員が既にスマレジIDを保有している場合の「登録済みエラー」判定が実装されておらず、エラーにならずに本会員登録が完了してしまう",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:40Z",
+  "updated": "2026-07-14T01:16:40Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1865",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "本会員登録",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【未実装】フロント会員_本会員登録_本会員登録にて、仮会員が既にスマレジIDを保有している場合の「登録済みエラー」判定が実装されておらず、エラーにならずに本会員登録が完了してしまう",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：本会員登録\n課題カテゴリ：不具合（バグ）\n課題：【未実装】フロント会員_本会員登録_本会員登録にて、仮会員が既にスマレジIDを保有している場合の「登録済みエラー」判定が実装されておらず、エラーにならずに本会員登録が完了してしまう\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- 本会員登録(F06-02)では、秘密鍵で検索して存在した仮会員が既にスマレジIDを持っていないかを確認すること。\n- スマレジIDを持っていた場合は、すでに会員登録済みとみなしエラーとし、E-2. ユーザー存在チェックエラー画面を表示すること。",
+    "現在の挙動": "- EntryController::entryActivate は秘密鍵で仮会員を検索し、見つからない場合のみ「本会員済み(already_activated)」または「無効な秘密鍵(forbidden)」の例外を投げており、スマレジID保有有無のチェックは行っていない。\n- 仮会員がスマレジIDを保有していた場合、linkSmaregiCustomer は「既に連携済みなら何もしない (冪等)」として $Customer をそのまま返すため、エラーにならず本会員化・会員登録完了メール送信・自動ログインまで進んでしまう。\n- 会員ステータスの本会員(REGULAR)への更新はスマレジID確認より前に実行されている。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:202-203 「3: 2のチェックで存在したユーザーがすでにスマレジIDを持っていないかを確認 / スマレジIDを持っていたら、すでに会員登録済みとみなしエラーとする」\nF06_customer_basedesign.md:206 「2,3の条件でエラーになった場合、E-2.ユーザー存在チェックエラー画面を表示」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Front/EntryController.php:273-280 （仮会員の有無のみを判定。スマレジID保有チェックが無い）\nsrc/Eccube/Controller/Front/EntryController.php:348-352 （既にスマレジIDがある場合は「冪等」として何もせず正常終了する）\nsrc/Eccube/Repository/Views/RegisterCustomerViewRepository.php:128-134 （getProvisionalCustomerBySecretKey は secret_key と statusId のみで検索）\nsrc/Eccube/Repository/Views/RegisterCustomerViewRepository.php:113-119 （isAlreadyActivatedBySecretKey は本会員(REGULAR)かどうかのみ判定）\n\n▼備考\n反証として EntryController 全体・RegisterCustomerViewRepository・SmaregiCustomerService・Entry 配下の Twig を確認したが、スマレジID保有をエラーとする分岐は現HEADに存在しない。既に本会員(REGULAR)のケースのみ EntryAlreadyActivatedException で捕捉されるため、「本会員済み」は結果的にエラーになるが、設計が求める「仮会員かつスマレジID保有」の条件はエラー化されない。git log --since=2026-07-08 -- src/Eccube/Controller/Front/EntryController.php に該当修正コミットは無い。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "本会員登録",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Controller/Front/EntryController.php",
+      "start": 273,
+      "end": 280,
+      "fileLines": 427,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $Customer = $this->registerCustomerViewRepository->getProvisionalCustomerBySecretKey($secret_key);\n        if ($Customer === null) {\n            if ($this->registerCustomerViewRepository->isAlreadyActivatedBySecretKey($secret_key)) {\n                throw new EntryAlreadyActivatedException();\n            }\n\n            throw new EntryInvalidSecretKeyException();\n        }"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/EntryController.php",
+      "start": 348,
+      "end": 352,
+      "fileLines": 427,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        // 既に連携済みなら何もしない (冪等).\n        $smaregiId = $Player->getSmaregiId();\n        if ($smaregiId !== null && $smaregiId !== '') {\n            return $Customer;\n        }"
+    },
+    {
+      "path": "src/Eccube/Repository/Views/RegisterCustomerViewRepository.php",
+      "start": 128,
+      "end": 134,
+      "fileLines": 173,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function getProvisionalCustomerBySecretKey(string $secretKey): ?RegisterCustomerView\n    {\n        return $this->findOneBy([\n            'secret_key' => $secretKey,\n            'statusId' => CustomerStatus::PROVISIONAL,\n        ]);\n    }"
+    },
+    {
+      "path": "src/Eccube/Repository/Views/RegisterCustomerViewRepository.php",
+      "start": 113,
+      "end": 119,
+      "fileLines": 173,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function isAlreadyActivatedBySecretKey(string $secretKey): bool\n    {\n        return $this->findOneBy([\n            'secret_key' => $secretKey,\n            'statusId' => CustomerStatus::REGULAR,\n        ]) !== null;\n    }"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/EntryController.php",
+      "start": null,
+      "end": null,
+      "fileLines": 427,
+      "ok": true,
+      "reason": "file_exists_no_line"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 202,
+      "end": 203,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* **3**: 2のチェックで存在したユーザーがすでにスマレジIDを持っていないかを確認\n* スマレジIDを持っていたら、すでに会員登録済みとみなしエラーとする"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 206,
+      "end": 206,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 2,3の条件でエラーになった場合、E-2.ユーザー存在チェックエラー画面を表示"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Front/EntryController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/Views/RegisterCustomerViewRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:40+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

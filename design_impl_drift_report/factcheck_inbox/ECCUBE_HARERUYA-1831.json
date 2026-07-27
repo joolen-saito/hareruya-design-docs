@@ -1,0 +1,216 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1831",
+  "issueId": 43509286,
+  "summary": "【一部実装】フロント注文_ご注文方法指定_ご注文方法指定(F04-02)の注文サマリーにて、支店では「注文金額合計（税込）」のみを表示すべきところ、別項目である(10-6)内税も併記されている（元レポートの「サマリーが常時フル表示」自体は解消済み）。",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:23Z",
+  "updated": "2026-07-14T01:16:23Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1831",
+  "basicInfo": {
+    "分類": "フロント注文",
+    "機能": "ご注文方法指定",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロント注文_ご注文方法指定_ご注文方法指定(F04-02)の注文サマリーにて、支店では「注文金額合計（税込）」のみを表示すべきところ、別項目である(10-6)内税も併記されている（元レポートの「サマリーが常時フル表示」自体は解消済み）。",
+    "設計書": "0304_基本設計仕様書(フロント_注文).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント注文\n機能：ご注文方法指定\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロント注文_ご注文方法指定_ご注文方法指定(F04-02)の注文サマリーにて、支店では「注文金額合計（税込）」のみを表示すべきところ、別項目である(10-6)内税も併記されている（元レポートの「サマリーが常時フル表示」自体は解消済み）。\n設計書：0304_基本設計仕様書(フロント_注文).xlsx",
+    "期待される挙動": "- 支店の場合、ご注文内容の確認（注文サマリー）は「注文金額合計（税込）」(10-5)のみを表示すること（設計 F04_order_basedesign.md:328）。\n- (10-1)商品金額合計・(10-2)送料・(10-3)手数料・(10-4)ポイント使用（値引き）・(10-6)内税・(10-7)ポイント残高・(10-8)ポイント発生は、支店では表示しないこと。",
+    "現在の挙動": "- 2026-07-08 のコミット 0ed1b12853「[不具合修正] 確認用追従エリアについて、本支店で表示項目を制御する」により、サマリーは isMainShop かつ非店頭受取のときのみ商品金額合計・送料・手数料・値引き・ポイント残高・ポイント発生を含むフル表示となり、支店では else 節の簡略表示に切り替わる。元レポートの「サマリーが常時フル表示」は現HEADでは解消済みである。\n- ただし支店用の else 節では「注文金額合計（税込）」に加えて、設計上は別項目(10-6)である「内税」も税率ごとに併記されており、設計の「『注文金額合計（税込）』のみを表示する」を厳密には満たしていない（Shopping/index.twig:813-823）。\n- また else 節の条件は「isMainShop かつ 非店頭受取」の否定であるため、本店の店頭受取・スムーズ店頭受取の注文でも簡略サマリーになる。設計は簡略化を支店に限って規定しており、本店店頭受取での簡略化は設計に根拠がない。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/F04_order_basedesign.md:328 （「支店の場合は『注文金額合計（税込）』のみを表示する」）\n.cursor/docs/MDfile/F04_order_basedesign.md:333-340 （(10-1)商品金額合計〜(10-8)ポイント発生の識別ID一覧。(10-5)注文金額合計（税込）と(10-6)内税は別項目）\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Shopping/index.twig:757 （isMainShop かつ非店頭受取のときのみフルサマリーを表示）\nsrc/Eccube/Resource/template/default/Shopping/index.twig:813-823 （else 節＝支店／本店店頭受取。注文金額合計（税込）に加え、税率ごとの内税を併記）\nsrc/Eccube/Resource/template/default/Shopping/index.twig:828-829 （ポイントに関する注意文言も本店・非店頭受取のみ）\nsrc/Eccube/EventListener/TwigInitializeListener.php:68-69 （BaseInfo / isMainShop の Twig グローバル）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で 両者を部分的に採用した の判定を採用した。\n両者とも src/Eccube/Resource/template/default/Shopping/index.twig:757（フルサマリー）と :813（簡略分岐）という同じ実装を読んでおり、コミット 0ed1b12853 による本支店分岐の追加も双方が認識している。割れたのは『簡略分岐が設計の「注文金額合計（税込）のみ」を満たすか』の一点。\nclaude は else 節を「注文金額合計（税込）と内税のみ」と要約したうえで設計充足と判断し FALSE_POSITIVE としたが、設計 .cursor/docs/MDfile/F04_order_basedesign.md:333-340 では(10-5)注文金額合計（税込）と(10-6)内税が別の識別IDとして定義されており、:328 は(10-5)『のみ』を表示すると規定している。src/Eccube/Resource/template/default/Shopping/index.twig:822 で内税が出力され続ける点を過小評価したのが claude の誤り。\ncodex は :822 の内税出力を捉えて一部実装と判定した点で正しいが、判定を FACT とした結果、元レポートの主張（「サマリーが常時フル表示」）が現HEADでは既に成立しないことが埋もれている。残課題は内税の1項目のみであり、重大度は低い。\n両者とも見落としているのが分岐条件の副作用である。else 節の条件は「isMainShop かつ 非店頭受取」の否定（:757/:813）であるため、本店の店頭受取・スムーズ店頭受取の注文でも簡略サマリーとなる。設計 :328 は簡略化を支店に限定しており、本店店頭受取での商品金額合計・送料・手数料・ポイント行の非表示には設計上の根拠がない。起票時はこの点も併せて確認が必要。"
+  },
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "feature": "ご注文方法指定",
+  "classification": "フロント注文",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Shopping/index.twig",
+      "start": 813,
+      "end": 823,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 328,
+      "end": 328,
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 支店の場合は「注文金額合計（税込）」のみを表示する"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 333,
+      "end": 340,
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 10-1 | 商品金額合計 | ラベル | - | - | - |\n| 10-2 | 送料 | ラベル | - | - | - |\n| 10-3 | 手数料 | ラベル | - | - | - |\n| 10-4 | ポイント使用（値引き） | ラベル | - | - | - | 使用ポイントを更新すると反映される |\n| 10-5 | 注文金額合計（税込） | ラベル | - | - | - |\n| 10-6 | 内税 | ラベル | - | - | - |\n| 10-7 | ポイント残高 | ラベル | - | - | - |\n| 10-8 | ポイント発生 | ラベル | - | - | - |"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 757,
+      "end": 757,
+      "fileLines": 450,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 813,
+      "end": 823,
+      "fileLines": 450,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 828,
+      "end": 829,
+      "fileLines": 450,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/EventListener/TwigInitializeListener.php",
+      "start": 68,
+      "end": 69,
+      "fileLines": 314,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "     * @var PageLayoutRepository\n     */"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 822,
+      "end": 822,
+      "fileLines": 450,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 328,
+      "end": 328,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 支店の場合は「注文金額合計（税込）」のみを表示する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/F04_order_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/EventListener/TwigInitializeListener.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:38+09:00",
+  "designResolution": {
+    "requested": "0304_基本設計仕様書(フロント_注文).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+    "sheetCount": 10,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-4",
+        "title": "ご注文方法指定",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "買い物かご"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "ご注文方法指定"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "配送先の新規登録_変更"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "配送先の新規登録_確認"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "決済~購入完了"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "注文購入履歴一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "注文購入履歴詳細"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "別添資料_注文ステータスと表示画像の紐付け"
+      }
+    ]
+  }
+}

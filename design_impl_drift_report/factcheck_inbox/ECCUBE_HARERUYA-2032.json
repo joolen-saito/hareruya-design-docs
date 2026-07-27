@@ -1,0 +1,364 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2032",
+  "issueId": 43509558,
+  "summary": "【一部実装】在庫管理_棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）_棚卸在庫反映の実行処理にて、「在庫差異があり差異確認が行われていない商品が存在する」場合のエラーチェックが行われていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:04Z",
+  "updated": "2026-07-22T01:26:50Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2032",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】在庫管理_棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）_棚卸在庫反映の実行処理にて、「在庫差異があり差異確認が行われていない商品が存在する」場合のエラーチェックが行われていない",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】在庫管理_棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）_棚卸在庫反映の実行処理にて、「在庫差異があり差異確認が行われていない商品が存在する」場合のエラーチェックが行われていない\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- 棚卸在庫反映の登録処理では、「在庫差異」が存在しかつ「差異確認」が行われていない商品が存在する場合はエラーとし、在庫反映を実行しないこと。\n- 商品数が0、計上済み商品数が0、商品数と計上済み商品数が不一致、在庫反映済みの各条件も同様にエラーとすること。",
+    "現在の挙動": "- 在庫反映の実行エンドポイント InventoryPlanController::stockReflect() では、在庫反映済みチェックと商品数／計上済み商品数チェックのみを行っており、差異未確認商品の存在チェック（checkUnconfirmedStockDifferenceDetailExists）を呼び出していない。\n- 差異未確認チェックは在庫反映「確認画面」への遷移処理 stockReflectConfirm()（731行目）と、棚卸計画編集画面のボタン活性判定用の値（264行目）でのみ行われている。\n- そのため確認画面を経由せずに admin_stock_inventory_plan_stock_reflect へ直接POSTした場合、差異未確認商品が残っていても在庫反映が実行される。",
+    "補足情報": "▼設計書該当箇所\nM04_stock_management_basedesign.md:4360-4366 「登録処理について / * ○: エラー条件 / * 在庫反映済み / * 商品数が0 / * 計上済み商品数が0 / * 商品数と計上済み商品数が一致しない / * 「在庫差異」が存在し、かつ「差異確認」が行われていない商品が存在する」\nM04_stock_management_basedesign.md:4174-4178 「「棚卸結果の在庫反映」ボタンで棚卸結果在庫反映画面へ遷移する。ただし以下の場合は押下不可能。…「在庫差異」が存在し、かつ「差異確認」が行われていない商品が存在する」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Stock/InventoryPlanController.php:751-778 （在庫反映実行処理。差異未確認チェックが無い）\nsrc/Eccube/Controller/Admin/Stock/InventoryPlanController.php:730-735 （差異未確認チェックは在庫反映確認画面の遷移時のみ）\nsrc/Eccube/Controller/Admin/Stock/InventoryPlanController.php:264 （編集画面のボタン活性判定用に同チェックを実施）\nsrc/Eccube/Repository/DtbInventoryPlanDetailRepository.php:299-315 （差異未確認判定クエリ）\n\n▼備考\n通常のUI操作（編集画面→確認画面→実行）では確認画面遷移時にエラーとなるため画面上は防止されている。ただし設計書は在庫反映の「登録処理」のエラー条件として規定しており、実行エンドポイント自体には検証が無いため、確認画面を経由しない直接POSTでは素通りする。他4条件は実行エンドポイントにも実装済みであることから、この1条件のみ実装漏れと判断。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php",
+      "start": 751,
+      "end": 778,
+      "fileLines": 953,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function stockReflect(int $id): Response\n    {\n        if (!$InventoryPlan = $this->inventoryPlanRepository->find($id)) {\n            throw $this->createNotFoundException();\n        }\n\n        if (!$InventoryPlan->isEditableBy($this->getMember())) {\n            $this->addError('admin.inventory_plan_detail.not_editable_store', 'admin');\n\n            return $this->redirectToRoute('admin_stock_inventory_plan_edit', ['id' => $InventoryPlan->getId()]);\n        }\n\n        // 在庫反映済みチェック\n        if ($InventoryPlan->getStockReflectionedDate() !== null) {\n            $this->addError('admin.inventory_plan.update.already_reflected', 'admin');\n\n            return $this->redirectToRoute('admin_stock_inventory_plan_edit', ['id' => $InventoryPlan->getId()]);\n        }\n\n        // 計上済み商品数チェック\n  "
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php",
+      "start": 730,
+      "end": 735,
+      "fileLines": 953,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        // 差異未確認の詳細存在チェック\n        if ($this->inventoryPlanDetailRepository->checkUnconfirmedStockDifferenceDetailExists($InventoryPlan->getId())) {\n            $this->addError('admin.inventory_plan.stock_reflect.unconfirmed_stock_difference', 'admin');\n\n            return $this->redirectToRoute('admin_stock_inventory_plan_edit', ['id' => $InventoryPlan->getId()]);\n        }"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php",
+      "start": 264,
+      "end": 264,
+      "fileLines": 953,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            'hasUnconfirmedStockDifferenceDetail' => $this->inventoryPlanDetailRepository->checkUnconfirmedStockDifferenceDetailExists($id),"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbInventoryPlanDetailRepository.php",
+      "start": 299,
+      "end": 315,
+      "fileLines": 381,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function checkUnconfirmedStockDifferenceDetailExists(int $inventoryPlanId): bool\n    {\n        $query = $this->getEntityManager()\n            ->createQuery('\n                SELECT ipd FROM '.DtbInventoryPlanDetail::class.' ipd\n                WHERE ipd.inventoryPlanId = :id\n                AND ipd.stockDifferenceConfirmed != :confirmed\n                AND ipd.theoreticalStock != ipd.actualStock\n                ORDER BY ipd.id ASC\n            ')\n            ->setParameter('id', $inventoryPlanId)\n            ->setParameter('confirmed', true)\n            ->setFirstResult(0)\n            ->setMaxResults(1);\n\n        return count($query->getResult()) === 1;\n    }"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 4360,
+      "end": 4366,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "登録処理について\n* **○**: エラー条件\n* 在庫反映済み\n* 商品数が0\n* 計上済み商品数が0\n* 商品数と計上済み商品数が一致しない\n* 「在庫差異」が存在し、かつ「差異確認」が行われていない商品が存在する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 4174,
+      "end": 4178,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "「棚卸結果の在庫反映」ボタンで棚卸結果在庫反映画面へ遷移する。ただし以下の場合は押下不可能。\n* 商品数が0\n* 計上済み商品数が0\n* 商品数と計上済み商品数が一致しない\n* 「在庫差異」が存在し、かつ「差異確認」が行われていない商品が存在する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/DtbInventoryPlanDetailRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990944,
+      "created": "2026-07-22T01:26:50Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:21+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}

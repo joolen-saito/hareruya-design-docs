@@ -1,0 +1,251 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2120",
+  "issueId": 43509675,
+  "summary": "【実装乖離】会員管理_メール配信履歴_メール配信履歴にて、並び順が処理日(送信日)降順ではなくID降順になっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:50Z",
+  "updated": "2026-07-14T01:18:50Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2120",
+  "basicInfo": {
+    "分類": "会員管理",
+    "機能": "メール配信履歴",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】会員管理_メール配信履歴_メール配信履歴にて、並び順が処理日(送信日)降順ではなくID降順になっている",
+    "設計書": "0207_基本設計仕様書(会員管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：会員管理\n機能：メール配信履歴\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_メール配信履歴_メール配信履歴にて、並び順が処理日(送信日)降順ではなくID降順になっている\n設計書：0207_基本設計仕様書(会員管理機能).xlsx",
+    "期待される挙動": "- メール配信履歴は処理日降順で表示する。",
+    "現在の挙動": "- CustomerMailController::history では mailHistoryRepository->findBy($criteria, ['id' => 'DESC']) としており、ソートキーがメール履歴のIDになっている。\n- 画面(mail_history.twig)で「処理日」として表示しているのは MailHistory.send_date であり、ソートキー(id)と表示している日付項目(send_date)が一致していない。\n- send_date はメール履歴登録時に new \\DateTime() で設定されるため通常はID降順＝処理日降順となるが、send_date がずれるデータ(移行データ等)では設計どおりの並び順にならない。",
+    "補足情報": "▼設計書該当箇所\nM08_customer_management_basedesign.md:674 「メール配信履歴は処理日降順で表示する」\nM08_customer_management_basedesign.md:682 「| 2 | 処理日 | ラベル(yyyy/mm/dd) | - | - | - |」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Customer/CustomerMailController.php:135-138 （findBy の orderBy が ['id' => 'DESC']）\nsrc/Eccube/Resource/template/admin/Customer/mail_history.twig:62 （処理日として send_date を表示）\nsrc/Eccube/Service/EntityManager/MailHistoryEntityManager.php:44 （send_date は登録時刻を設定）\n\n▼備考\n通常運用ではID降順と処理日降順は一致するため実害は限定的だが、設計が指定するソートキー(処理日)とは異なる。修正は orderBy を ['send_date' => 'DESC'] にするだけで済む。"
+  },
+  "designBook": "0207_基本設計仕様書(会員管理機能).xlsx",
+  "feature": "メール配信履歴",
+  "classification": "会員管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php",
+      "start": 135,
+      "end": 138,
+      "fileLines": 216,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $MailHistories = $this->mailHistoryRepository->findBy(\n            $criteria,\n            ['id' => 'DESC']\n        );"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Customer/mail_history.twig",
+      "start": 62,
+      "end": 62,
+      "fileLines": 109,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                            {{ MailHistory.send_date|date('Y/m/d') }}"
+    },
+    {
+      "path": "src/Eccube/Service/EntityManager/MailHistoryEntityManager.php",
+      "start": 44,
+      "end": 44,
+      "fileLines": 69,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->setSendDate(new \\DateTime());"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+      "start": 674,
+      "end": 674,
+      "resolvedFrom": "M08_customer_management_basedesign.md",
+      "fileLines": 1097,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* メール配信履歴は処理日降順で表示する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+      "start": 682,
+      "end": 682,
+      "resolvedFrom": "M08_customer_management_basedesign.md",
+      "fileLines": 1097,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 2 | 処理日 | ラベル(yyyy/mm/dd) | - | - | - |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Customer/mail_history.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/EntityManager/MailHistoryEntityManager.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:27+09:00",
+  "designResolution": {
+    "requested": "0207_基本設計仕様書(会員管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html",
+    "sheetCount": 26,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-14",
+        "title": "メール配信履歴",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "会員検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "会員検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "メール一括送信"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "メール一括送信確認"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "メール一括送信完了"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "顧客情報CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "会員登録編集"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント付与"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "ポイント付与（キャンペーン、特別対応）"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "ポイント付与（余剰入金へのご返金、注文金額変更によるご返金"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "ポイント履歴確認"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "メール配信履歴"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "手動メール通知(入力画面)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "【新規】手動メール通知(確認画面)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "配送先編集"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "【新規】顧客分析タグ"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "顧客グループ管理"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "ブラックリスト管理"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "会員登録仮登録完了メール再送"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】顧客分析タグ登録CSV入力項目設定"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "【新規】会員顧客分析タグ情報CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "配送先情報CSV登録"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "配送先情報登録CSV入力項目設定"
+      }
+    ]
+  }
+}

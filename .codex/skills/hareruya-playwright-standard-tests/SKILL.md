@@ -1,6 +1,6 @@
 ---
 name: hareruya-playwright-standard-tests
-description: Implement and audit Playwright E2E test code for Hareruya functions whose functions/todo-list.md customization category is 標準. Use when Codex must convert integration_test/e2e case Markdown into e2e/spec and e2e/pages code, create or update the harness that checks coverage, or continue standard-function Playwright rollout without weakening test oracles to match a failing implementation.
+description: Implement and audit Playwright E2E test code for Hareruya functions whose functions/todo-list.md customization category is 標準. Use when Codex must convert integration_test/e2e case Markdown into e2e/spec and e2e/pages code, establish screen reachability so transition-only screens (confirm/complete/wizard) are reached by traversal rather than direct URL, create or update the harness that checks coverage, or continue standard-function Playwright rollout without weakening test oracles to match a failing implementation.
 ---
 
 # Hareruya Playwright Standard Tests
@@ -19,13 +19,35 @@ python3 .codex/skills/hareruya-playwright-standard-tests/scripts/audit_standard_
 ```
 
 3. Open `e2e/reports/standard-playwright-coverage.md` and prioritize rows with missing E2E cases, spec files, or Page Object files.
+
+3b. Establish screen reachability **before writing any spec for the function** (integration tests must
+    traverse transitions, not open single URLs). See `references/TRANSITION_RULES.md`.
+
+```bash
+python3 .codex/skills/hareruya-playwright-standard-tests/scripts/extract_screen_transitions.py --repo .
+python3 .codex/skills/hareruya-playwright-standard-tests/scripts/audit_transition_paths.py --repo .
+```
+
+   - Confirm the function's screen paths into `e2e/config/screen-reachability.tsv` with
+     `根拠(file:line)` taken from the design doc sections `## 利用者視点の入口` / `## 画面遷移` /
+     `### 遷移時に引き継ぐ状態`. The suggested-class output is a candidate list, never a decision.
+   - A function whose paths are still `A-未登録` in the audit is not ready for spec work. Run the
+     audit with `--scope <fid>` so unregistered paths inside the target are errors, not warnings.
+   - `error 0` alone does not mean clean: read the 到達台帳カバレッジ line, since unregistered paths
+     are simply not judged.
 4. For each function, read the matching files:
    - `functions/ec-cube-enterprise/<function-id>_*.md`
    - `integration_test/<normalized>_it_cases.md`
    - `integration_test/e2e/<normalized>_e2e_cases.md`
    - neighboring `e2e/spec/**/<normalized>.spec.ts` and `e2e/pages/**/<normalized>.page.ts` files
 5. Implement `e2e/pages/...page.ts` and `e2e/spec/...spec.ts` following the existing local pattern:
-   - Use `@playwright/test` directly.
+   - Import `test` / `expect` from `e2e/fixtures/reachability.fixture.ts` (a thin extension of
+     `@playwright/test`); use `@playwright/test` directly only for specs that never navigate.
+   - Reach screens through `e2e/helpers/navigation.ts` (`enter` / `reachVia` / `step` /
+     `directAccess`), not raw `page.goto()`. `transition-only` screens must be reached from their
+     entry screen through on-screen operations; direct access is allowed only when direct access is
+     itself the viewpoint, and then it must carry a reason. Import `test` from
+     `e2e/fixtures/reachability.fixture.ts` so a forgotten helper still fails at runtime.
    - Use `AdminLoginPage` and `ECCUBE_ADMIN_USER` / `ECCUBE_ADMIN_PASS` for admin authenticated cases.
    - When a matching seed exists in `e2e/seed/manifest.json`, apply it before execution and read its contract from `e2e/config/seed.config.ts` instead of leaving the case as `test.fixme`.
    - Run seed-backed specs with `eval "$(e2e/seed/lib/seed-env.sh)"` (from the repo root) or equivalent exported env vars so `M01_*`, `ORDER_ID`, and other manifest values are available.
@@ -37,8 +59,10 @@ python3 .codex/skills/hareruya-playwright-standard-tests/scripts/audit_standard_
 
 ```bash
 python3 .codex/skills/hareruya-playwright-standard-tests/scripts/audit_standard_playwright.py --repo .
+python3 .codex/skills/hareruya-playwright-standard-tests/scripts/audit_transition_paths.py --repo . --scope <target fids> --strict
 e2e/seed/lib/apply.sh <needed SEED ids>
 eval "$(e2e/seed/lib/seed-env.sh)"
+cd e2e && npx playwright test spec/_harness/navigation.selfcheck.spec.ts
 cd e2e && npx playwright test --list
 ```
 
@@ -62,7 +86,18 @@ cd e2e && npx playwright test --list
 ## Resources
 
 - `scripts/audit_standard_playwright.py`: coverage harness for standard functions.
+- `scripts/extract_screen_transitions.py`: deterministic extraction of screen-transition facts from
+  the design docs (`## 利用者視点の入口` / `## 画面遷移` / `### 遷移時に引き継ぐ状態`) plus a
+  candidate reachability list. Facts only — it never decides a class.
+- `scripts/audit_transition_paths.py`: transition-path audit over spec/page code and case TSVs.
 - `references/IMPLEMENTATION_RULES.md`: concise implementation checklist and naming rules.
+- `references/TRANSITION_RULES.md`: screen reachability rules (registry, `reachVia`, direct-access
+  declaration, audit severities).
+- `e2e/config/screen-reachability.tsv`: reachability registry (evidence `file:line` required).
+- `e2e/helpers/navigation.ts`: navigation helpers that enforce the registry at runtime.
+- `e2e/fixtures/reachability.fixture.ts`: `test` fixture that replaces `page.goto` so raw navigation
+  is checked against the registry even when the helpers are bypassed.
+- `e2e/spec/_harness/navigation.selfcheck.spec.ts`: harness self-check (runs without a live app).
 
 ## E2E Case TSV Format
 
@@ -70,3 +105,6 @@ cd e2e && npx playwright test --list
 - The first 10 columns match the integration-test case grain: `機能名`, `テストID`, `I/FID`, `テスト観点`, `優先度`, `テスト項目名`, `前提条件`, `入力データ/リクエスト内容`, `操作手順/実行方法`, `期待結果／レスポンス`.
 - The last 4 columns are execution-management fields: `実施者`, `実施日`, `結果`, `失敗理由`.
 - When creating or regenerating E2E case Markdown, include the last 4 columns and leave their data cells empty.
+- Rows targeting a `transition-only` screen must describe the whole path: `操作手順/実行方法` chains
+  from the entry screen with 「→」, and `入力データ/リクエスト内容` names the entry point and the
+  transition trigger, not just the final request. `audit_transition_paths.py` checks both.

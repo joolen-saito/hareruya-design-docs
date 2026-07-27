@@ -1,0 +1,225 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1787",
+  "issueId": 43509239,
+  "summary": "【実装乖離】フロントトップ_ECTOP（本店トップ）_本店ECTOP＞最新記事ブロック(13-2〜13-5)にて、設計で指定された「最新記事jsonファイル作成バッチが出力したjsonファイル」ではなく、別の外部API（ソース上のTODOで404と明記）を参照しているため、記事が1件も表示されない。",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:15:59Z",
+  "updated": "2026-07-24T01:15:29Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1787",
+  "basicInfo": {
+    "分類": "フロントトップ",
+    "機能": "ECTOP（本店トップ）",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロントトップ_ECTOP（本店トップ）_本店ECTOP＞最新記事ブロック(13-2〜13-5)にて、設計で指定された「最新記事jsonファイル作成バッチが出力したjsonファイル」ではなく、別の外部API（ソース上のTODOで404と明記）を参照しているため、記事が1件も表示されない。",
+    "設計書": "0301_基本設計仕様書(フロント_トップ).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントトップ\n機能：ECTOP（本店トップ）\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロントトップ_ECTOP（本店トップ）_本店ECTOP＞最新記事ブロック(13-2〜13-5)にて、設計で指定された「最新記事jsonファイル作成バッチが出力したjsonファイル」ではなく、別の外部API（ソース上のTODOで404と明記）を参照しているため、記事が1件も表示されない。\n設計書：0301_基本設計仕様書(フロント_トップ).xlsx",
+    "期待される挙動": "- 最新記事ブロックの(13-2)サムネイル画像・(13-3)カテゴリ・(13-4)タイトル・(13-5)著者は、最新記事jsonファイル作成バッチによって作成されたjsonファイルから動的に取得すること。\n    -  **【2026/7/24 石川追記】** 最新記事jsonはそれぞれのWEBサーバのローカルに配置されるため、ローカルの/user_data/list/latestArticleList.jsonを参照する。\n    - 詳しい動きは[こちら](https://joolen.slack.com/archives/C0B9FKNF04W/p1784802027663459)を参照。\n- 記事を4件表示し、押下すると当該記事の記事詳細画面へ遷移すること。",
+    "現在の挙動": "- 最新記事ブロックの payload は LatestArticlesBlockPayloadBuilder が外部URL https://api.corp.hareruyamtg.com/user_data/lp/json/latest_articles.json を Guzzle で取得して構築しており、バッチが生成した json ファイルを参照していない。\n- 最新記事jsonファイル作成バッチ（eccube:create:latest-article-list / CreateLatestArticleListAction）は WordPress API から取得した記事一覧を user_data 配下の list/latestArticleList.json として保存しており、ブロックが読む latest_articles.json とはファイル名も配置先も一致しない。\n- ソース上のTODOコメントに「正しい最新記事APIエンドポイントに差し替え（現在のURL latest_articles.json は404）」と明記されており、取得に失敗すると articles が空配列となり、latest_articles.twig:2 の `{% if articles|length > 0 %}` によりブロック自体が描画されない。\n- 表示件数の最大4件（MAX_ARTICLES = 4）、Redis キャッシュ（300秒）、記事詳細へのリンク（latest_articles.twig:10 以降）は実装済みである。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/F01_top_basedesign.md:562 （「(13-2)~(13-5)の記事情報について 最新記事jsonファイル作成バッチによって作成されたjsonファイルから動的に取得する」）\n.cursor/docs/MDfile/F01_top_basedesign.md:563-565 （4件表示／押下で記事詳細画面へ遷移／バッチは別紙「0417_基本設計仕様書(バッチ_その他)」参照）\n\n▼実装該当箇所\nsrc/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php:27-28 （TODOコメントと、取得先の外部APIエンドポイント latest_articles.json）\nsrc/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php:68-88 （外部APIから取得しRedisへキャッシュ、失敗時は空配列を返す）\nsrc/Eccube/Service/CreateLatestArticleListAction.php:25-29,101 （バッチは WordPress API の結果を user_data/list/latestArticleList.json として出力）\nsrc/Eccube/Resource/template/default/Block/latest_articles.twig:2 （articles が空ならブロックごと非表示）\n\n▼AIレビューで判定が割れた理由\nClaude は「乖離あり」、codex は「判定不可」と判定し、第三者による再検証で Claude の判定を採用した。\n割れた本質は「何を判定基準に置いたか」。codex は『外部URLが現在も404かどうか』をHEADのソースからは確定できないとして UNDETERMINABLE としたが（src/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php:27 のTODOを兆候どまりと扱った）、設計が要求しているのは「外部APIが生きているか」ではなく「最新記事jsonファイル作成バッチが出力した json を読むこと」である（.cursor/docs/MDfile/F01_top_basedesign.md:562）。\n取得元の不一致はネットワークに触れずソースだけで確定できる：バッチ側の出力は src/Eccube/Service/CreateLatestArticleListAction.php:25-29,101 の user_data/list/latestArticleList.json であるのに対し、ブロック側は src/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php:28 の外部URL latest_articles.json を読む。ファイル名・配置先ともに一致しないため、外部APIの生死に関わらず設計乖離は成立する。codex はこの突き合わせを行っていない。\nclaude はバッチ出力先とブロック参照先の不一致まで確認しており判定が正しい。なお設計 .cursor/docs/MDfile/F01_top_basedesign.md:588 では『晴れる屋チャンネル(14)』のみ同じ api.corp.hareruyamtg.com のURL直参照を許容しており、最新記事(13)にこのパターンを流用したことが取り違えの原因と推測される。\n4件表示・キャッシュ・記事リンクは実装済みのため、修正はデータ取得元の差し替え（latestArticleList.json の参照）と、twig 側フィールド（title/url/thumbnail/category/author）とWordPress形式とのマッピング調整が対象となる。"
+  },
+  "designBook": "0301_基本設計仕様書(フロント_トップ).xlsx",
+  "feature": "ECTOP（本店トップ）",
+  "classification": "フロントトップ",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "ローカルの/user_data/list/latestArticleList.json",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "list/latestArticleList.json",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 562,
+      "end": 562,
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 最新記事jsonファイル作成バッチによって作成されたjsonファイルから動的に取得する"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 563,
+      "end": 565,
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* **※**: 最新記事jsonファイル作成バッチは、別紙「0417_基本設計仕様書(バッチ_その他)」のシート「最新記事jsonファイル作成」を参照\n* 4件表示する\n* 押下すると、押下した記事情報の記事詳細画面へ遷移する"
+    },
+    {
+      "path": "src/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php",
+      "start": 27,
+      "end": 28,
+      "fileLines": 90,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    // TODO: ECCUBE_HARERUYA-126 正しい最新記事APIエンドポイントに差し替え（現在のURL latest_articles.json は404）\n    private const API_URL = 'https://api.corp.hareruyamtg.com/user_data/lp/json/latest_articles.json';"
+    },
+    {
+      "path": "src/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php",
+      "start": 68,
+      "end": 88,
+      "fileLines": 90,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        try {\n            $client = new Client(['timeout' => self::TIMEOUT, 'verify' => true]);\n            $response = $client->get(self::API_URL);\n            $data = json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);\n            $articles = array_slice($data['items'] ?? $data, 0, self::MAX_ARTICLES);\n\n            $encoded = json_encode($articles);\n            if ($encoded !== false) {\n                try {\n                    $this->redisService->set(self::CACHE_KEY, $encoded, self::CACHE_TTL_SECONDS);\n                } catch (\\Throwable $e) {\n                    $this->logger->warning('Failed to write latest articles cache: '.$e->getMessage());\n                }\n            }\n\n            return $articles;\n        } catch (\\Throwable $e) {\n            $th"
+    },
+    {
+      "path": "src/Eccube/Service/CreateLatestArticleListAction.php",
+      "start": 25,
+      "end": 29,
+      "fileLines": 103,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public const LIST_DIRECTORY = 'list';\n\n    public const LIST_FILENAME = 'latestArticleList.json';\n\n    public const WP_API_URL = 'https://article.hareruyamtg.com/article/wp-json/wp/v2/posts/?per_page=20';"
+    },
+    {
+      "path": "user_data/list/latestArticleList.json",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/latest_articles.twig",
+      "start": 2,
+      "end": 2,
+      "fileLines": 33,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "{% if articles|length > 0 %}"
+    },
+    {
+      "path": "src/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php",
+      "start": 27,
+      "end": 27,
+      "fileLines": 90,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    // TODO: ECCUBE_HARERUYA-126 正しい最新記事APIエンドポイントに差し替え（現在のURL latest_articles.json は404）"
+    },
+    {
+      "path": "src/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php",
+      "start": 28,
+      "end": 28,
+      "fileLines": 90,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private const API_URL = 'https://api.corp.hareruyamtg.com/user_data/lp/json/latest_articles.json';"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 588,
+      "end": 588,
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "https://api.corp.hareruyamtg.com/user_data/lp/json/latest_videos.json"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/F01_top_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/CreateLatestArticleListAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/latest_articles.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 273327435,
+      "created": "2026-07-24T01:15:29Z",
+      "createdUser": "石川今日子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:16:30+09:00",
+  "designResolution": {
+    "requested": "0301_基本設計仕様書(フロント_トップ).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html",
+    "sheetCount": 4,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP"
+      }
+    ]
+  }
+}

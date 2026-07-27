@@ -1,0 +1,185 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1914",
+  "issueId": 43509419,
+  "summary": "【一部実装】フロントイベント_イベント大会TOP_イベント大会TOPのバナースライダー(1-2)にて、開催日当日または開催前かつ公開状態のイベントに登録されたバナーという抽出条件が適用されていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:06Z",
+  "updated": "2026-07-14T01:17:06Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1914",
+  "basicInfo": {
+    "分類": "フロントイベント",
+    "機能": "イベント大会TOP",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロントイベント_イベント大会TOP_イベント大会TOPのバナースライダー(1-2)にて、開催日当日または開催前かつ公開状態のイベントに登録されたバナーという抽出条件が適用されていない",
+    "設計書": "0307_基本設計仕様書(フロント_イベント).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントイベント\n機能：イベント大会TOP\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロントイベント_イベント大会TOP_イベント大会TOPのバナースライダー(1-2)にて、開催日当日または開催前かつ公開状態のイベントに登録されたバナーという抽出条件が適用されていない\n設計書：0307_基本設計仕様書(フロント_イベント).xlsx",
+    "期待される挙動": "- バナー設定に登録されたイベントバナーのうち、店舗と表示タイプが「スライド」のものを検索して表示すること。\n- そのうち、開催日当日または開催前で、かつ公開状態のイベントに登録されているバナーのみを表示すること。",
+    "現在の挙動": "- EventTopController は MtbBannerRepository::findWhereUrlIsNotEmpty() を店舗ID・ロケール・上限8件・表示タイプ（スライド／スライド+特設）のみで呼び出しており、イベントとの紐付けや開催日・公開状態による絞り込みを行っていない。\n- MtbBannerRepository::findWhereUrlIsNotEmpty() のクエリ条件は店舗ID・言語ID・dispType・画像URLが空でないことの4つのみで、イベント（dtb_event）への JOIN も日付条件も存在しない。\n- MtbBanner エンティティは BaseInfos（店舗）と Languages（言語）への ManyToMany しか持たず、イベントとの関連付けを保持していない。管理画面のバナー設定フォーム（EventBannerSettingType）も画像URL・リンク・表示タイプ・alt・言語・表示順・店舗のみで、イベント指定項目が無い。",
+    "補足情報": "▼設計書該当箇所\nF07_event_basedesign.md:104 「バナー設定に設定されているイベントバナーから店舗と表示タイプが「スライド」で検索し表示する」\nF07_event_basedesign.md:105 「開催日当日または開催前で、かつ公開状態のイベントに登録されているバナーを表示する」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Front/EventTopController.php:55 （findWhereUrlIsNotEmpty に店舗ID・locale・上限・dispType のみを渡す）\nsrc/Eccube/Repository/Master/MtbBannerRepository.php:57 （クエリ条件は店舗ID・言語ID・dispType・imageUrl <> '' のみ）\nsrc/Eccube/Entity/Master/MtbBanner.php:64 （関連は BaseInfos と Languages のみ。イベントとの関連なし）\nsrc/Eccube/Form/Type/Admin/Event/EventBannerSettingType.php:75 （バナー設定の入力項目は image_url / link / disp_type / image_alt / language / sort_no / base_info）\n\n▼備考\n店舗＋表示タイプ「スライド」での抽出、最大8枚（BANNER_LIMIT = 8）は設計どおり実装済み。未実装なのはイベントへの紐付けと、開催日（当日または開催前）・公開状態による絞り込み。現状のデータモデル（mtb_banner）にイベントを指す外部キーが無いため、DB 設計の変更を伴う。"
+  },
+  "designBook": "0307_基本設計仕様書(フロント_イベント).xlsx",
+  "feature": "イベント大会TOP",
+  "classification": "フロントイベント",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Controller/Front/EventTopController.php",
+      "start": 55,
+      "end": 55,
+      "fileLines": 102,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $Banners = $this->bannerRepository->findWhereUrlIsNotEmpty("
+    },
+    {
+      "path": "src/Eccube/Repository/Master/MtbBannerRepository.php",
+      "start": 57,
+      "end": 57,
+      "fileLines": 72,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $qb = $this->createQueryBuilder('b');"
+    },
+    {
+      "path": "src/Eccube/Entity/Master/MtbBanner.php",
+      "start": 64,
+      "end": 64,
+      "fileLines": 172,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private Collection $BaseInfos;"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/Event/EventBannerSettingType.php",
+      "start": 75,
+      "end": 75,
+      "fileLines": 223,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            $image = 'image_url_'.$slot;"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 104,
+      "end": 104,
+      "resolvedFrom": "F07_event_basedesign.md",
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "バナー設定に設定されているイベントバナーから店舗と表示タイプが「スライド」で検索し表示する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 105,
+      "end": 105,
+      "resolvedFrom": "F07_event_basedesign.md",
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "開催日当日または開催前で、かつ公開状態のイベントに登録されているバナーを表示する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Front/EventTopController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/Master/MtbBannerRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/Master/MtbBanner.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/Event/EventBannerSettingType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:03+09:00",
+  "designResolution": {
+    "requested": "0307_基本設計仕様書(フロント_イベント).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html",
+    "sheetCount": 6,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント大会TOP",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント大会TOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "大会詳細検索"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "大会詳細"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "大会申込～完了"
+      }
+    ]
+  }
+}

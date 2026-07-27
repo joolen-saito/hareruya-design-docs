@@ -1,0 +1,219 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1870",
+  "issueId": 43509339,
+  "summary": "【一部実装】フロント会員_パスワード再発行_パスワード再設定完了にて、パスワードリセット完了のログ(ユーザーID・メールアドレス・グローバルIP)が保存されていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:43Z",
+  "updated": "2026-07-14T01:16:43Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1870",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "パスワード再発行",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロント会員_パスワード再発行_パスワード再設定完了にて、パスワードリセット完了のログ(ユーザーID・メールアドレス・グローバルIP)が保存されていない",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：パスワード再発行\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロント会員_パスワード再発行_パスワード再設定完了にて、パスワードリセット完了のログ(ユーザーID・メールアドレス・グローバルIP)が保存されていない\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- パスワード再設定完了(F06-04)では、入力されたパスワードを暗号化して登録し、リセットキーを削除すること。\n- パスワードリセット完了をログに保存すること。その際、ユーザーID・メールアドレス・アクセスしてきたグローバルIPもログに保存すること。\n- パスワード再設定完了画面を表示し、ログイン状態にはしないこと。",
+    "現在の挙動": "- ForgotController::reset の再設定成功時の処理は、パスワードのハッシュ化・UPDATE(reset_key = null)・イベントディスパッチ・完了画面へのリダイレクトのみで、ログ出力処理(log_info 等)が一切無い。\n- ForgotController 内のログ出力は index() のパスワード再発行メール送信時(103行目)とユーザー不在時(105行目)の2箇所だけで、再設定完了時には存在しない。\n- FRONT_FORGOT_RESET_COMPLETE イベントを購読してログを保存するリスナも現HEADには存在しない。\n- パスワードの暗号化・登録、リセットキーの削除(reset_key = null)、ログイン状態にしないこと、完了画面の表示は設計どおり実装されている。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:404-409 「入力されたパスワードを暗号化して、登録する」「リセットキーを削除する」「パスワードリセット完了をログに保存する」「※: この時、ユーザーID,メールアドレス,アクセスしてきたグローバルIPもログに保存する」「パスワード再設定完了画面を表示する」「ログイン状態にはしない」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Front/ForgotController.php:208-229 （パスワード更新・reset_key=null・完了画面へのリダイレクトのみでログ出力が無い）\nsrc/Eccube/Controller/Front/ForgotController.php:103 （ログ出力はメール送信時のみ。完了時には無い）\nsrc/Eccube/Controller/Front/ForgotController.php:227 （FRONT_FORGOT_RESET_COMPLETE を dispatch しているが、購読してログを保存するリスナは src 配下に存在しない）\n\n▼備考\nリセットキー削除(reset_key=null)・非ログイン・完了画面表示は実装済みで、欠けているのは「パスワードリセット完了のログ保存(ユーザーID/メールアドレス/グローバルIP付き)」のみのため一部実装と判定した。なお参考として、メール送信時のログ(103行目)もユーザーIDではなく secret_key を出力しており、設計の「ユーザーID」とは異なる。EccubeEvents::FRONT_FORGOT_RESET_COMPLETE を grep したが、購読側の実装は src/ 配下に存在しない。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "パスワード再発行",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Controller/Front/ForgotController.php",
+      "start": 208,
+      "end": 229,
+      "fileLines": 241,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            if ($Customer) {\n                // パスワードの発行・更新\n                $password = $this->passwordHasher->hashPassword($Customer, $form->get('password')->getData());\n\n                $this->entityManager->getConnection()->executeQuery(\n                    'UPDATE registration_view SET password = :password, reset_key = :reset_key WHERE secret_key = :secret_key',\n                    [\n                        'password' => $password,\n                        'secret_key' => $Customer->getSecretKey(),\n                        'reset_key' => null,\n                    ]\n                );\n\n                $event = new EventArgs(\n                    [\n                        'Customer' => $Customer,\n                    ],\n                    $request\n                );\n                $this->e"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/ForgotController.php",
+      "start": 103,
+      "end": 103,
+      "fileLines": 241,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                log_info('send reset password mail to:'.\"{$Customer->getSecretKey()} {$Customer->getEmail()} {$request->getClientIp()}\");"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/ForgotController.php",
+      "start": 227,
+      "end": 227,
+      "fileLines": 241,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                $this->eventDispatcher->dispatch($event, EccubeEvents::FRONT_FORGOT_RESET_COMPLETE);"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 404,
+      "end": 409,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 入力されたパスワードを暗号化して、登録する\n* リセットキーを削除する\n* パスワードリセット完了をログに保存する\n* **※**: この時、ユーザーID,メールアドレス,アクセスしてきたグローバルIPもログに保存する\n* パスワード再設定完了画面を表示する\n* ログイン状態にはしない"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Front/ForgotController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:42+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

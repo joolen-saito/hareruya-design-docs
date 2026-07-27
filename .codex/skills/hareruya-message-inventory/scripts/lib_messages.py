@@ -243,3 +243,24 @@ if __name__ == "__main__":
         print(f"  {probe} = {trans.get(probe)!r}")
     f2f, r2f, meta = load_function_map()
     print(f"file_to_fids: {len(f2f)} files, route_to_fids: {len(r2f)} routes, fids: {len(meta)}")
+
+
+def read_master_rows(path: Path | None = None) -> list[dict[str, str]]:
+    """正本 message_inventory.tsv を dict のリストで返す。
+
+    正本は `"\\t".join(cells)` で書かれた**生のタブ区切り**であり RFC4180 ではない。
+    `csv.DictReader` を使うと `"admin.hareruyamtg.com" is not allowed.` のように
+    `"` で始まる値の引用符が食われ、検証系が実データと違う文字列を見てしまう
+    （2026-07-27 に5セルで実害を確認）。必ず本関数で読むこと。
+    """
+    p = path or (DOC_ROOT / "message_inventory" / "message_inventory.tsv")
+    lines = p.read_text(encoding="utf-8").splitlines()
+    header = lines[0].split("\t")
+    out = []
+    for line in lines[1:]:
+        if not line.strip():
+            continue
+        cells = line.split("\t")
+        cells += [""] * (len(header) - len(cells))
+        out.append(dict(zip(header, cells)))
+    return out

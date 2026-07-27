@@ -1,0 +1,382 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2037",
+  "issueId": 43509565,
+  "summary": "【要確認】在庫管理_在庫分割結合一覧_在庫分割結合一覧の検索条件「ステータス」について、分割／結合のタイプ別に選択肢を出し分ける要件は設計書に存在せず、全6ステータス表示は設計の選択肢の和集合と一致する（誤検知）",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:07Z",
+  "updated": "2026-07-22T01:26:51Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2037",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "在庫分割結合一覧",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【要確認】在庫管理_在庫分割結合一覧_在庫分割結合一覧の検索条件「ステータス」について、分割／結合のタイプ別に選択肢を出し分ける要件は設計書に存在せず、全6ステータス表示は設計の選択肢の和集合と一致する（誤検知）",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：在庫分割結合一覧\n課題カテゴリ：不具合（バグ）\n課題：【要確認】在庫管理_在庫分割結合一覧_在庫分割結合一覧の検索条件「ステータス」について、分割／結合のタイプ別に選択肢を出し分ける要件は設計書に存在せず、全6ステータス表示は設計の選択肢の和集合と一致する（誤検知）\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- 在庫分割結合一覧の検索条件「ステータス」で、分割の取り得るステータス（新規登録、分割承認待ち、却下、入庫完了）と結合の取り得るステータス（新規登録、結合元登録、結合承認待ち、却下、入庫完了）を検索条件として選択できること。",
+    "現在の挙動": "- 検索フォームのステータスは mtb_stock_split_join_status を EntityType（expanded/multiple のチェックボックス）でID昇順に全件表示している。\n- マスタに投入されているのは 新規登録／結合元登録／分割承認待ち／結合承認待ち／入庫済み／却下 の6件で、これは設計が挙げる分割用4件と結合用5件の和集合（重複を除くと6件）と一致する。\n- 設計書には「タイプ（分割／結合）の選択に応じてステータス選択肢を動的に出し分ける」旨の記述は存在せず、選択肢の出所を分割・結合それぞれの登録編集画面の部品から引いていることを説明しているにすぎない。したがって全件表示は設計と矛盾せず、元レポートの指摘は誤検知である。\n- 参考: 設計書の表記は「入庫完了」だが、マスタ投入値は「入庫済み」であり文言が一致していない（本件の指摘対象外だが、名称統一の検討余地あり）。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M04_stock_management_basedesign.md:1966 （M04-12 検索条件 2-7 ステータス「選択肢（分割）：新規登録、分割承認待ち、却下、入庫完了」）\n.cursor/docs/MDfile/M04_stock_management_basedesign.md:1968 （同 2-7「選択肢（結合）：新規登録、結合元登録、結合承認待ち、却下、入庫完了」）\n.cursor/docs/MDfile/M04_stock_management_basedesign.md:1925-1947 （M04-12 処理概要。タイプ選択に連動した選択肢の出し分けに関する記述は無い）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/SearchStockSplitJoinType.php:147-159 （ステータス検索欄。MtbStockSplitJoinStatus を query_builder で無条件・ID昇順に全件取得しチェックボックス表示）\nsrc/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:168,177-196 （タイプ欄とステータス欄を独立に描画。出し分けロジック無し）\napp/DoctrineMigrations/Version20260519100000.php:65-71 （マスタ投入値：新規登録／結合元登録／分割承認待ち／結合承認待ち／入庫済み／却下 の6件）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で Claude の判定を採用した。\ncodex は SearchStockSplitJoinType.php:147,155 の query_builder が無条件であること、stock_split_join_index.twig:168,180 でタイプとステータスが独立描画であることを根拠に FACT と判定した。実装事実の把握は正確だが、比較対象である設計書の要件を誤読している。\n設計書 M04_stock_management_basedesign.md:1966,1968 の「選択肢（分割）：…／選択肢（結合）：…」は、1つの検索欄が分割・結合の双方のレコードを検索対象とすることを前提に、それぞれのタイプで発生し得るステータスを列挙しているに過ぎない。同節（:1925-1947）にタイプ連動で選択肢を切り替える旨の記述は一切なく、Claude の読みが正しい。\n実際に表示される6件（Version20260519100000.php:65-71）は設計の分割用4件・結合用5件の和集合そのものであり、設計が求める選択肢はすべて選択可能である。過不足がないため機能乖離はない。よって category は「該当なし」とし、誤検知として起票する。\nなお設計の文言「入庫完了」に対しマスタ投入値は「入庫済み」であり（Version20260519100000.php:69）、ラベルの表記ゆれが残っている。本uidの指摘（タイプ別出し分け）とは別論点のため、ここでは判定に含めない。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "在庫分割結合一覧",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 1966,
+      "end": 1966,
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "選択肢（分割）：新規登録、分割承認待ち、却下、入庫完了"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 1968,
+      "end": 1968,
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "選択肢（結合）：新規登録、結合元登録、結合承認待ち、却下、入庫完了 ○ ○"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 1925,
+      "end": 1947,
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "### 在庫分割結合一覧画面（検索・結果）概要\n* 在庫分割・結合の一覧として機能する\n* 在庫分割・結合についてCSVを利用してそれぞれ一括登録できる\n* 選択した一覧の分割・結合について、各種CSVを出力することができる\nCSVファイル登録\n* 在庫分割CSV登録ボタンを押下すると、在庫分割CSV登録モーダルが表示される\n* 在庫分割が登録されると、対象の在庫分割のステータスは分割承認待ちとなる\n* 機能ID: M04-23の在庫分割CSV登録のモーダルを表示\n* 在庫結合CSV登録ボタンを押下すると、在庫結合CSV登録モーダルが表示される\n* 在庫結合が登録されると、対象の在庫結合のステータスは結合元登録となる\n* 機能ID: M04-23の在庫振替CSV登録のモーダルを表示\nCSVファイル登録時のエラー挙動\n* CSVファイル登録時にエラーがあり登録が行われなかった場合、一覧画面上部のエラー表示エリアにエラー内容を表示\n* 検索項目および一覧の選択状態は失われない\n* 機能ID: M04-23の在庫分割CSV登録および在庫結合CSV登録モーダルの選択内容はリセットされる\n検索結果の表示\n* 検索ボタン押下後、検索が完了したらページを再描画し、検索結果の件数表示と、検索結果一覧を表示する\n* 一覧はID（実質は登録日）を降順として表示する\n各種出力について\n* 検索結果一覧テーブルで分割・結合をチェックした場合、各種出力ボタンが活性化する\n* 在庫分割結合CSV出力\n* 機能ID: M04-15のCSVを利用\n| 識別ID | ラベル | 書式・制限 | 必須 | 最大値 | 初期値 | 画面部品の説明 | 検索対象項目 |"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchStockSplitJoinType.php",
+      "start": 147,
+      "end": 159,
+      "fileLines": 315,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('stock_split_join_status', EntityType::class, [\n                'label' => 'admin.stock.split_join.status',\n                'class' => MtbStockSplitJoinStatus::class,\n                'choice_label' => 'name',\n                'choice_value' => 'id',\n                'required' => false,\n                'expanded' => true,\n                'multiple' => true,\n                'query_builder' => function (EntityRepository $er) {\n                    return $er->createQueryBuilder('s')\n                        ->orderBy('s.id', 'ASC');\n                },\n            ])"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig",
+      "start": 168,
+      "end": 168,
+      "fileLines": 537,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                        {% for child in searchForm.split_join_type %}"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260519100000.php",
+      "start": 65,
+      "end": 71,
+      "fileLines": 74,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        return [\n            ['id' => 1, 'name' => '新規登録'],\n            ['id' => 2, 'name' => '結合元登録'],\n            ['id' => 3, 'name' => '分割承認待ち'],\n            ['id' => 4, 'name' => '結合承認待ち'],\n            ['id' => 5, 'name' => '入庫済み'],\n            ['id' => 6, 'name' => '却下'],"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 1966,
+      "end": 1966,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "選択肢（分割）：新規登録、分割承認待ち、却下、入庫完了"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchStockSplitJoinType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260519100000.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990948,
+      "created": "2026-07-22T01:26:51Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:22+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}

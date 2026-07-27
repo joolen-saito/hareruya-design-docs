@@ -1,0 +1,240 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2227",
+  "issueId": 43509812,
+  "summary": "【未実装】イベント管理_イベント申込一覧(検索入力/検索結果)_イベント申込一覧の検索条件に「チームメンバー確認状況」が存在しない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:42Z",
+  "updated": "2026-07-14T01:19:42Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2227",
+  "basicInfo": {
+    "分類": "イベント管理",
+    "機能": "イベント申込一覧(検索入力/検索結果)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【未実装】イベント管理_イベント申込一覧(検索入力/検索結果)_イベント申込一覧の検索条件に「チームメンバー確認状況」が存在しない",
+    "設計書": "0214_基本設計仕様書(イベント管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：イベント管理\n機能：イベント申込一覧(検索入力/検索結果)\n課題カテゴリ：不具合（バグ）\n課題：【未実装】イベント管理_イベント申込一覧(検索入力/検索結果)_イベント申込一覧の検索条件に「チームメンバー確認状況」が存在しない\n設計書：0214_基本設計仕様書(イベント管理).xlsx",
+    "期待される挙動": "- イベント申込一覧（検索入力）の識別ID:1-9「チームメンバー確認状況」を複数選択で指定できること。\n- 選択肢は「有効（確認済み）」「無効（未確認）」であること。",
+    "現在の挙動": "- SearchEntryType にはチームメンバー確認状況に相当するフィールドが定義されていない（実装されている検索項目は event_name / base_info / entry_status / payment / payment_no / player_name / start_date_from / start_date_to / is_deck_registered / event_detail_id / searchMode のみ）。\n- 検索クエリ DtbEventEntryRepository にも確認フラグ（confirm_flg）による絞り込み条件は存在しない。\n- エンティティ側には DtbEntryPlayer::getConfirmFlg() と DtbEventEntry::areTeamMemberConfirmed() が存在するが、イベント申込一覧の検索条件としては利用されていない。\n- テンプレート Event/Entry/index.twig の検索フォームにも該当の入力欄は無い。",
+    "補足情報": "▼設計書該当箇所\nM13_event_management_basedesign.md:494 「2025-01-09 チームメンバー確認状況 複数選択 - - - 選択肢:有効（確認済み）無効（未確認）」（識別ID:1-9）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/SearchEntryType.php:63-169 （検索項目の一覧。チームメンバー確認状況は存在しない）\nsrc/Eccube/Repository/DtbEventEntryRepository.php:72-171 （検索条件の一覧。confirm_flg による絞り込みは無い）\nsrc/Eccube/Entity/DtbEventEntry.php:275 （areTeamMemberConfirmed は存在するが検索では未使用）\nsrc/Eccube/Entity/DtbEntryPlayer.php:47-48 （confirm_flg 列は存在する）\n\n▼備考\n設計書のイベント申込詳細・編集（M13-10）では「識別ID:4-3「チームメンバー確認済み」は削除する」（設計書816行）とされているが、これは詳細・編集画面の表示項目の話であり、イベント申込一覧の検索条件（識別ID:1-9）は削除項目として記載されていない。したがって検索条件としては未実装と判断した。廃止意図であれば設計書の更新が必要。"
+  },
+  "designBook": "0214_基本設計仕様書(イベント管理).xlsx",
+  "feature": "イベント申込一覧(検索入力/検索結果)",
+  "classification": "イベント管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Event/Entry/index.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchEntryType.php",
+      "start": 63,
+      "end": 169,
+      "fileLines": 199,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $builder\n            ->add('event_name', TextType::class, [\n                'label' => 'admin.event.name',\n                'required' => false,\n            ])\n            ->add('base_info', EntityType::class, [\n                'class' => BaseInfo::class,\n                'label' => 'admin.event.base_info',\n                'required' => false,\n                'multiple' => true,\n                'expanded' => false,\n                'placeholder' => 'common.select__unspecified',\n                'choice_label' => 'shopName',\n                'data' => $options['base_info_default'] ?? [],\n                'query_builder' => fn (EntityRepository $er) => $er->createQueryBuilder('b')\n                    ->orderBy('b.id', 'ASC'),\n            ])\n            ->add('entry_status', ChoiceType::cla"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbEventEntryRepository.php",
+      "start": 72,
+      "end": 171,
+      "fileLines": 422,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $eventName = $searchData['event_name'] ?? null;\n        if (StringUtil::isNotBlank($eventName)) {\n            $qb->andWhere('e.nameJp LIKE :eventName OR e.nameEn LIKE :eventName')\n                ->setParameter('eventName', '%'.trim($eventName).'%');\n        }\n\n        $baseInfos = array_values(array_filter((array) ($searchData['base_info'] ?? [])));\n        if ($baseInfos !== []) {\n            $baseInfoIds = array_values(array_unique(array_map(fn (BaseInfo $baseInfo) => $baseInfo->getId(), $baseInfos)));\n            $qb->andWhere('IDENTITY(e.BaseInfo) IN (:baseInfoIds)')\n                ->setParameter('baseInfoIds', $baseInfoIds);\n        }\n\n        $entryStatusIds = array_values(array_unique((array) ($searchData['entry_status'] ?? [])));\n        if ($entryStatusIds !== []) {\n    "
+    },
+    {
+      "path": "src/Eccube/Entity/DtbEventEntry.php",
+      "start": 275,
+      "end": 275,
+      "fileLines": 313,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function areTeamMemberConfirmed(): bool"
+    },
+    {
+      "path": "src/Eccube/Entity/DtbEntryPlayer.php",
+      "start": 47,
+      "end": 48,
+      "fileLines": 108,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[ORM\\Column(name: 'confirm_flg', type: Types::BOOLEAN, options: ['default' => 1, 'comment' => '確認フラグ'])]\n    private bool $confirmFlg = self::CONFIRMED;"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 494,
+      "end": 494,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "2025-01-09 チームメンバー確認状況 複数選択 - - - 選択肢:有効（確認済み）無効（未確認）"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/SearchEntryType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/DtbEventEntryRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbEventEntry.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbEntryPlayer.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:49+09:00",
+  "designResolution": {
+    "requested": "0214_基本設計仕様書(イベント管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html",
+    "sheetCount": 22,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "イベント一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "繰返日程追加"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "イベント申込一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "イベント申込一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "イベント申込一括編集"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "デッキ表示"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "CSVダウンロード"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "イベント申込登録(検索入力)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "イベント申込登録(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "イベント新規申込登録"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "イベント一括登録CSV"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "バナー設定"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定"
+      }
+    ]
+  }
+}

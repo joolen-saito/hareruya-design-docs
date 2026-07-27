@@ -128,7 +128,7 @@ POST更新時は `StockMoveInstructionDetailUpdateAction` が `updateDate`・`Up
 - **詳細/登録/削除の対象なし**: `find($id)` が null で `NotFoundHttpException`（404）。
 - **削除可否**: 送り状No.登録済み（`trackingNo` が非null・非空）の指示は削除不可。`StockMoveInstructionDeleteException` を捕捉し `admin.stock.move_instruction.delete_error_after_tracking` を表示、詳細へリダイレクト。削除可の場合は紐づく在庫移動の `moveInstructionId`・`trackingNo` を null にしてから指示を `remove`、`admin.common.delete_complete` を表示し一覧（`resume=1`）へ。
 - **CSV未選択/不正ファイル**: `csv_file` が未指定・`isValid()` false → `admin.stock.move_instruction.csv_tracking_file_invalid`、一覧へリダイレクト。
-- **CSV取込時の例外**: `Throwable` 捕捉時は `log_error` 出力のうえフラッシュ表示。controller は `RuntimeException` の message が `..._csv_tracking_header_invalid` / `..._csv_tracking_file_invalid` / `..._csv_tracking_temp_dir_invalid` に一致する場合のみ固有メッセージへ振り分けるが、これらの message を throw する実装は現行ソースに存在しない（防御的分岐・要実機確認。`grep` で throw 箇所なし）。実際のヘッダ不正は例外ではなく `StockMoveInstructionCsvImporter::validateBeforeImport`（StockMoveInstructionCsvImporter.php:57-68）が `getErrors()` に「CSVのフォーマットが一致しません。」を積む経路（（除外:要ソース確認））で表示される。上記キー以外の `RuntimeException`/`Throwable` は `..._csv_tracking_upload_error_detail`（`%detail%` 埋込）で表示。
+- **CSV取込時の例外**: `Throwable` 捕捉時は `log_error` 出力のうえフラッシュ表示。controller は `RuntimeException` の message が `..._csv_tracking_header_invalid` / `..._csv_tracking_file_invalid` / `..._csv_tracking_temp_dir_invalid` に一致する場合のみ固有メッセージへ振り分けるが、これらの message を throw する実装は現行ソースに存在しない（防御的分岐・要実機確認。`grep` で throw 箇所なし）。実際のヘッダ不正は例外ではなく `StockMoveInstructionCsvImporter::validateBeforeImport`（StockMoveInstructionCsvImporter.php:57-68）が `getErrors()` に「CSVのフォーマットが一致しません。」を積む経路（対応メッセージは単一の逐語文言に確定不能のため本表から除外済み）で表示される。上記キー以外の `RuntimeException`/`Throwable` は `..._csv_tracking_upload_error_detail`（`%detail%` 埋込）で表示。
 - **送り状CSV出力でID無し**: `ids` 空配列は404。
 
 ### 状態・データ更新
@@ -151,11 +151,11 @@ POST更新時は `StockMoveInstructionDetailUpdateAction` が `updateDate`・`Up
 | メッセージID | 表示位置 | 画面上の文言 | 画面上の文言(英語) | 表示条件 | 後続処理 |
 |--------------|----------|--------------|----------|----------|----------|
 | M04-24-MSG-001 | 送り状No.入力欄直下（インラインエラー） | 送り状番号を空に戻して発送状況を未に戻すことはできません。 | （英訳なし） | 送り状番号を登録済みの状態から空欄にして保存したとき | 在庫移動指示詳細画面に留まる |
-| M04-24-MSG-002 | 管理画面上部 | 保存しました | Saved | 在庫移動指示の内容を保存したとき | 在庫移動指示詳細画面に遷移する |
+| M04-24-MSG-002 | 管理画面上部 | 保存しました | （英訳なし） | 在庫移動指示の内容を保存したとき | 在庫移動指示詳細画面に遷移する |
 | M04-24-MSG-003 | 管理画面上部 | 送り状番号を空に戻して発送状況を未に戻すことはできません。 | （英訳なし） | 送り状番号を登録済みの状態から空欄にして登録したとき | 在庫移動指示リスト作成/検索画面に遷移する |
 | M04-24-MSG-004 | 管理画面上部 | 送り状No.を登録しました。 | （英訳なし） | 送り状番号を登録したとき | 在庫移動指示リスト作成/検索画面に遷移する |
 | M04-24-MSG-005 | 管理画面上部 | 送り状No.登録後は削除できません。 | （英訳なし） | 送り状番号を登録済みの在庫移動指示を削除しようとしたとき | 在庫移動指示詳細画面に遷移する |
-| M04-24-MSG-006 | 管理画面上部 | 削除しました | Deleted | 在庫移動指示を削除したとき | 在庫移動指示リスト作成/検索画面に遷移する |
+| M04-24-MSG-006 | 管理画面上部 | 削除しました | （英訳なし） | 在庫移動指示を削除したとき | 在庫移動指示リスト作成/検索画面に遷移する |
 | M04-24-MSG-007 | 管理画面上部 | ファイルが不正です。 | （英訳なし） | 不正なCSVファイルをアップロードしたとき | 在庫移動指示リスト作成/検索画面に遷移する |
 | M04-24-MSG-008 | 管理画面上部 | エラーは20件まで表示されます | （英訳なし） | CSV取込で21件以上のエラーが発生したとき | 在庫移動指示リスト作成/検索画面に遷移する |
 | M04-24-MSG-010 | 管理画面上部 | 送り状No.を一括登録しました。 | （英訳なし） | CSVから送り状番号を1件以上登録できたとき | 在庫移動指示リスト作成/検索画面に遷移する |
@@ -167,13 +167,13 @@ POST更新時は `StockMoveInstructionDetailUpdateAction` が `updateDate`・`Up
 | M04-24-MSG-016 | 管理画面上部 | アップロードに失敗しました。詳細：%detail% | （英訳なし） | CSV取込時に予期しないエラーが発生したとき | 在庫移動指示リスト作成/検索画面に遷移する |
 | M04-24-MSG-017 | ブラウザ標準ダイアログ（JSアラート） | 送り状CSVを出力する在庫移動指示にチェックを入れてください。 | （英訳なし） | 送り状CSVを出力する在庫移動指示を選択せずに出力したとき | 送信せず在庫移動指示リスト作成/検索画面に留まる |
 | M04-24-MSG-018 | 削除確認モーダル本文 | 在庫移動指示（ID：%id%）を削除してよろしいですか？ | （英訳なし） | 在庫移動指示の削除ボタンを押したとき（削除前確認） | 削除でモーダルを閉じて在庫移動指示一覧画面に遷移、キャンセルでモーダルを閉じる |
-| M04-24-MSG-019 | 登録日/更新日の日付入力欄の下（form_errors出力位置・インラインエラー） | 不正な日付です。 | Invalid DateTime. | 登録日または更新日に1900年1月1日より前の日付を指定したとき | 在庫移動指示リスト作成/検索画面に留まる |
-| M04-24-MSG-020 | 登録日/更新日の日付入力欄の下（form_errors出力位置・インラインエラー） | admin.product.date_range_error | admin.product.date_range_error | 在庫移動指示一覧で作成日または更新日の開始日が終了日より後になる条件で検索したとき | 一覧画面に留まる |
-| M04-24-MSG-021 | 送り状No.入力欄直下（インラインエラー） | 長すぎます。この値は{{ limit }}文字以下で入力してください。 | This value is too long. It should have {{ limit }} character or less.\|This value is too long. It should have {{ limit }} characters or less. | 在庫移動指示詳細で送り状Noに256文字以上を入力して保存したとき | 詳細画面に留まる |
-| M04-24-MSG-022 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 在庫移動指示一覧で作成日の開始日が終了日より後になる条件で検索したとき | 一覧画面に留まる |
-| M04-24-MSG-023 | 入力項目直下/フォーム上部 | admin.product.date_range_error | admin.product.date_range_error | 在庫移動指示一覧で更新日の開始日が終了日より後になる条件で検索したとき | 一覧画面に留まる |
+| M04-24-MSG-019 | 登録日/更新日の日付入力欄の下（form_errors出力位置・インラインエラー） | 不正な日付です。 | （英訳なし） | 登録日または更新日に1900年1月1日より前の日付を指定したとき | 在庫移動指示リスト作成/検索画面に留まる |
+| M04-24-MSG-020 | 登録日/更新日の日付入力欄の下（form_errors出力位置・インラインエラー） | admin.product.date_range_error | （英訳なし） | 在庫移動指示一覧で作成日または更新日の開始日が終了日より後になる条件で検索したとき | 一覧画面に留まる |
+| M04-24-MSG-021 | 送り状No.入力欄直下（インラインエラー） | 長すぎます。この値は{{ limit }}文字以下で入力してください。 | （英訳なし） | 在庫移動指示詳細で送り状Noに256文字以上を入力して保存したとき | 詳細画面に留まる |
+| M04-24-MSG-022 | 入力項目直下/フォーム上部 | admin.product.date_range_error | （英訳なし） | 在庫移動指示一覧で作成日の開始日が終了日より後になる条件で検索したとき | 一覧画面に留まる |
+| M04-24-MSG-023 | 入力項目直下/フォーム上部 | admin.product.date_range_error | （英訳なし） | 在庫移動指示一覧で更新日の開始日が終了日より後になる条件で検索したとき | 一覧画面に留まる |
 | M04-24-MSG-009 | 管理画面上部 | CSVのフォーマットが一致しません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ %d 行目の %s ではデータを取得できません。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %d 行目の %s は0以上の数値を設定してください。 ／ 移動指示が見つかりません ／ 出庫元店舗が一致しません ／ 入庫先店舗が一致しません ／ 送り状Noが空欄です | （英訳なし） | 在庫移動実績CSV登録で、ヘッダーが所定の項目と一致しない、またはデータ行の項目数がヘッダーと一致しないとき。 | 形式不一致の行は取り込まず、在庫移動指示一覧画面へ遷移する。 |
-| M04-24-MSG-024 | 画面上部 | 紐づく在庫移動はありません。 | （英訳なし） | 在庫移動指示詳細で紐づく在庫移動が0件のとき | 在庫移動なしの状態を表示し、在庫移動指示詳細画面に留まる |
+| M04-24-MSG-024 | 在庫移動一覧カード内 | 紐づく在庫移動はありません。 | （英訳なし） | 在庫移動指示詳細で紐づく在庫移動が0件のとき | 在庫移動なしの状態を表示し、在庫移動指示詳細画面に留まる |
 | M04-24-MSG-025 | 削除ボタン上 | 送り状No.登録後は削除できません | （英訳なし） | 在庫移動指示詳細を表示したとき、送り状No.が登録済みの場合 | 削除ボタンは無効のままとし、在庫移動指示詳細の閲覧・編集を継続できる |
 
 ## リニューアル移行時の扱い

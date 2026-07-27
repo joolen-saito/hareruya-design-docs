@@ -1,0 +1,247 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1890",
+  "issueId": 43509375,
+  "summary": "【実装乖離】フロント会員_会員情報変更_会員情報変更にて、メールアドレスの最大文字数が255ではなく254で、RFC準拠チェックも無効化されている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:53Z",
+  "updated": "2026-07-14T01:16:53Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1890",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "会員情報変更",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント会員_会員情報変更_会員情報変更にて、メールアドレスの最大文字数が255ではなく254で、RFC準拠チェックも無効化されている",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：会員情報変更\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_会員情報変更_会員情報変更にて、メールアドレスの最大文字数が255ではなく254で、RFC準拠チェックも無効化されている\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- 設計書では、会員情報変更のメールアドレス（1-10）およびメールアドレス（確認）（1-11）の最大文字数を255としている。\n- 設計書では、「変更する」押下時にRFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示することとしている。",
+    "現在の挙動": "- 会員情報変更は EntryType の email（RepeatedEmailType）を利用しており、最大文字数は eccube_email_len の値で制限される。eccube.yaml の設定値は 254 であり、設計値の255と一致しない。\n- RepeatedEmailType は eccube_rfc_email_check が true のときだけ Email 制約のモードを 'strict'（RFC準拠チェック）にするが、eccube.yaml の eccube_rfc_email_check は false であるため、RFC準拠チェックは行われない。\n- 設定ファイル上も「メールアドレスをRFC準拠でチェックするか true: チェックする、false: チェックしない」というコメントとともに false が指定されている。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:1036 「| 1-10 | メールアドレス | 半角 | ◯ | 255 | - | …・(1-27)変更するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する |」\nF06_customer_basedesign.md:1017-1018 「* (1-26)変更するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Front/EntryType.php:122-125 （会員情報変更フォームの email は RepeatedEmailType）\nsrc/Eccube/Form/Type/RepeatedEmailType.php:46 （eccube_rfc_email_check が false のときモード未指定＝RFC準拠チェックなし）\nsrc/Eccube/Form/Type/RepeatedEmailType.php:48 （Length の max に eccube_email_len を使用）\napp/config/eccube/packages/eccube.yaml:234-235 （eccube_rfc_email_check: false / eccube_email_len: 254）\n\n▼備考\n会員登録（F06-01）と同一のフォーム型（EntryType / RepeatedEmailType）を共有しているため、同種の乖離が会員登録側にも存在する。.env 等での上書きは無く、eccube.yaml のリテラル値が実効値。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "会員情報変更",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Front/EntryType.php",
+      "start": 122,
+      "end": 125,
+      "fileLines": 145,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                $form['plain_password']['first']->addError(new FormError(trans('common.password_eq_email')));\n            }\n        });\n    }"
+    },
+    {
+      "path": "src/Eccube/Form/Type/RepeatedEmailType.php",
+      "start": 46,
+      "end": 46,
+      "fileLines": 93,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    {"
+    },
+    {
+      "path": "src/Eccube/Form/Type/RepeatedEmailType.php",
+      "start": 48,
+      "end": 48,
+      "fileLines": 93,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            'entry_type' => EmailType::class,"
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "start": 234,
+      "end": 235,
+      "fileLines": 184,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 1036,
+      "end": 1036,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1-10 | メールアドレス | 半角 | ◯ | 255 | - | ・未入力、またはメールアドレス形式として不正な場合、(1-27)変更するを押下すると、動的に必須入力のエラーメッセージを表示する<br><br>・(1-27)変更するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 1017,
+      "end": 1018,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* (1-26)変更するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」と\nエラーメッセージを表示する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Front/EntryType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/RepeatedEmailType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:53+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

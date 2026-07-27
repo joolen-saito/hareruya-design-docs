@@ -8,7 +8,8 @@
  * 本機能は会員ログイン＋カート投入が前提の破壊的フロー中心のため、非破壊に走る誘導ガードのみ live 実装し、
  * 要ログイン/要カート/要シードのケースは test.fixme（理由付き）で保留。全量はケース表で管理する。
  */
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../../../fixtures/reachability.fixture";
+import { directAccess } from "../../../helpers/navigation";
 import { FrontShoppingDeliveryEditPage } from "../../../pages/front/f04/f04_03_front_cart_shopping_delivery_edit.page";
 import { ECCUBE_FRONT_PASS, ECCUBE_FRONT_USER } from "../../../config/default.config";
 
@@ -18,14 +19,23 @@ test.describe("フロント > 購入手続き > 注文時の配送先登録・�
   // --- live: シード/資格情報なしで観測できる誘導ガード（未ログイン/カート未投入） ---
   test("E2E-F04-03-021 未ログイン/カート未投入で新規お届け先編集URLへ直接アクセスすると編集画面へ到達しない", async ({ page }) => {
     const target = new FrontShoppingDeliveryEditPage(page);
-    await target.gotoNewEdit();
+    // 到達クラス未確定の画面へのURL直打ち＝直アクセス試験として宣言する。
+    await directAccess(
+      page,
+      target.newEditUrl,
+      "未ログイン/カート未投入で新規お届け先編集URLへ直接アクセスしたときの誘導の検証（到達クラスは設計書未規定＝要確認）"
+    );
     // 権限・認可: 購入手続きのログイン・受注情報の前提に従い、編集画面は表示されず誘導される。
     await target.seeNotOnEditScreen();
   });
 
   test("E2E-F04-03-002 未認証で既存お届け先編集URLへ直接アクセスすると編集画面へ到達しない", async ({ page }) => {
     const target = new FrontShoppingDeliveryEditPage(page);
-    await target.gotoEdit(1);
+    await directAccess(
+      page,
+      target.editUrl(1),
+      "未認証で既存お届け先編集URLへ直接アクセスしたときの誘導の検証（到達クラスは設計書未規定＝要確認）"
+    );
     await target.seeNotOnEditScreen();
   });
 
@@ -58,7 +68,11 @@ test.describe("フロント > 購入手続き > 注文時の配送先登録・�
     test.skip(!HAS_FRONT_CREDS, "ECCUBE_FRONT_USER/PASS 未設定（かつカート投入前提のため保留）");
     // カート投入・受注セッション確立は別途前提のため、ここでは編集URLの到達可否のみを確認する雛形。
     const target = new FrontShoppingDeliveryEditPage(page);
-    await target.gotoNewEdit();
+    await directAccess(
+      page,
+      target.newEditUrl,
+      "会員資格情報がある環境での編集URL到達可否の確認（到達クラスは設計書未規定＝要確認）"
+    );
     // 前提が整っていれば編集画面（見出し）を観測する。未整備環境では seeNotOnEditScreen 側で保留。
     await expect(page).toHaveURL(/\/shopping/);
   });

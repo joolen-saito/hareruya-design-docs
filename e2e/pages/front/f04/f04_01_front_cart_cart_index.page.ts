@@ -1,5 +1,6 @@
 import { Locator, Page, expect } from "@playwright/test";
 import { ECCUBE_FRONT_LOCALE, ECCUBE_FRONT_SHOP } from "../../../config/default.config";
+import { enter } from "../../../helpers/navigation";
 
 /**
  * フロント 買い物かご「カート」（F04-01）Page Object。
@@ -52,11 +53,11 @@ export class FrontCartPage {
   }
 
   async gotoCart() {
-    await this.page.goto(this.cartUrl);
+    await enter(this.page, this.cartUrl);
   }
 
   async gotoCartClear() {
-    await this.page.goto(this.cartClearUrl);
+    await enter(this.page, this.cartClearUrl);
   }
 
   /** 買い物かご画面の見出しが表示されていること。期待は設計書「表示メッセージ」節（見出し）由来。 */

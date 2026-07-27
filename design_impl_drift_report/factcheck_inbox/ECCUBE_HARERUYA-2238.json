@@ -1,0 +1,246 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2238",
+  "issueId": 43509824,
+  "summary": "【一部実装】イベント管理_複製新規_イベント複製新規・新規登録画面にて、「店舗」の選択肢が編集権限のある店舗に絞り込まれず全店舗が表示される",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:48Z",
+  "updated": "2026-07-14T01:19:48Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2238",
+  "basicInfo": {
+    "分類": "イベント管理",
+    "機能": "複製新規",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】イベント管理_複製新規_イベント複製新規・新規登録画面にて、「店舗」の選択肢が編集権限のある店舗に絞り込まれず全店舗が表示される",
+    "設計書": "0214_基本設計仕様書(イベント管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：イベント管理\n機能：複製新規\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】イベント管理_複製新規_イベント複製新規・新規登録画面にて、「店舗」の選択肢が編集権限のある店舗に絞り込まれず全店舗が表示される\n設計書：0214_基本設計仕様書(イベント管理).xlsx",
+    "期待される挙動": "- 複製新規（M13-05）の識別ID:1-3「店舗」は、編集権限のある店舗のみを選択肢として表示すること。\n- 編集権限のない店舗が選択された場合はエラーとすること。\n- 初期値はメンバーのデフォルト表示店舗とすること（ただし複製新規から表示した場合、入力項目は複製元イベントの値で入力済みとする）。",
+    "現在の挙動": "- EventType の baseInfo は EntityType で BaseInfo 全件を取得しており、query_builder は id 昇順に並べるだけで、ログインメンバーの編集可能店舗（Member::isEditableShop / dtb_member_base_info）による絞り込みを一切行っていない。そのため編集権限のない店舗も選択肢に表示される（設計 :379 / :399 の「編集権限のある店舗のみ表示する」が未実装）。\n- 編集権限のない店舗が選択された場合のエラー（form_error.event_not_editable）は EventType の POST_SUBMIT で実装済みであり、保存は拒否される（設計 :380 / :400 は充足）。\n- 新規登録（admin_event_create）では Member::getDefaultSearchBaseInfo() の店舗を初期値に設定しており、デフォルト店舗の初期化は実装済みである（設計 :381 は充足）。\n- 複製新規（admin_event_copy）は複製元イベントをそのままフォームにバインドするため店舗も複製元を引き継ぐが、設計 :392 が「入力項目は複製元のイベントのものを複製して入力済みで画面を表示する」と明記しているため、この挙動は設計どおりであり乖離ではない。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M13_event_management_basedesign.md:379-381（識別ID:1-3「店舗」は編集権限のある店舗のみ表示する／編集権限のない店舗が選択された場合エラーとする／初期値にメンバーのデフォルト表示の店舗を設定する）\n.cursor/docs/MDfile/M13_event_management_basedesign.md:399-400（2025-01-03 店舗 単一選択 〇 - デフォルト表示の店舗 編集権限のある店舗のみ表示／編集権限のない店舗が選択された場合エラー）\n.cursor/docs/MDfile/M13_event_management_basedesign.md:391-392（新規登録は複製新規と同仕様／複製新規は複製元の値で入力済み表示）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/EventType.php:88-92（baseInfo は EntityType で BaseInfo 全件。query_builder は id 昇順のみで権限フィルタなし）\nsrc/Eccube/Form/Type/Admin/EventType.php:292-297（編集権限のない店舗が選択された場合の FormError は実装済み）\nsrc/Eccube/Controller/Admin/Event/EventController.php:206-212（新規登録時のデフォルト店舗初期化）\nsrc/Eccube/Controller/Admin/Event/EventController.php:244-256（複製新規は admin_event_copy で edit() を再利用し、複製元の値をそのまま表示）\n\n▼AIレビューで判定が割れた理由\nClaude は「乖離あり」、codex は「実装済み」と判定し、第三者による再検証で Claude の判定を採用した。\ncodex は「『編集権限のある店舗のみ表示』は本uidの要約範囲外」として FALSE_POSITIVE とした。しかし本uidが対応する設計行は .cursor/docs/MDfile/M13_event_management_basedesign.md:399-400 の「店舗」行そのものであり、その画面部品の説明欄に「編集権限のある店舗のみ表示」が明記されている。突き合わせ基準は未検証レポートの要約文ではなく設計書原文であるため、codex はスコープを誤って狭めている。\nClaude は src/Eccube/Form/Type/Admin/EventType.php:88-92 の query_builder に権限フィルタが無く全 BaseInfo が選択肢になることを正しく指摘しており、こちらが正しい。裁定側でも同箇所を確認し、EntityType の query_builder が orderBy('b.id','ASC') のみであることを確認した。\n一方、レポート備考の「複製元店舗を継承／デフォルト店舗初期化は新規(create)のみ」を乖離とする見方は誤りで、設計 :392 が複製新規は複製元の値で入力済み表示すると明記しているため、複製元店舗の継承は設計どおりである。この点は codex の指摘（および Claude の補足）が正しい。\nしたがって残る乖離は「選択肢が編集権限のある店舗に絞られていない」の1点。権限外店舗を選択して送信した場合は EventType.php:292-297 のサーバ側エラーで保存は拒否されるため、実害は『選べてしまうが保存できない』というUI上の不整合に留まる。category は 一部実装 とする。"
+  },
+  "designBook": "0214_基本設計仕様書(イベント管理).xlsx",
+  "feature": "複製新規",
+  "classification": "イベント管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 379,
+      "end": 381,
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* **・識別ID:5「会場」にメンバーのデフォルト表示の店舗を設定する**: 識別ID:1-3 「店舗」は編集権限のある店舗のみ表示する\n* **・識別ID:5「会場」にメンバーのデフォルト表示の店舗を設定する**: 識別ID:1-3 「店舗」は編集権限のない店舗が選択された場合エラーとする\n* **・識別ID:5「会場」にメンバーのデフォルト表示の店舗を設定する**: 識別ID:1-3 「店舗」の初期値にメンバーのデフォルト表示の店舗を設定する"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 399,
+      "end": 400,
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "2025-01-03 店舗 単一選択 〇 - デフォルト表示の店舗 編集権限のある店舗のみ表示\n編集権限のない店舗が選択された場合エラー"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 391,
+      "end": 392,
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 新規登録は複製新規と同仕様\n* 「複製新規」から表示した場合、入力項目は複製元のイベントのものを複製して入力済みで画面を表示する。"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/EventType.php",
+      "start": 88,
+      "end": 92,
+      "fileLines": 323,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('baseInfo', EntityType::class, [\n                'class' => BaseInfo::class,\n                'query_builder' => fn (EntityRepository $er) => $er->createQueryBuilder('b')\n                    ->orderBy('b.id', 'ASC'),\n            ])"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/EventType.php",
+      "start": 292,
+      "end": 297,
+      "fileLines": 323,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                // ログインユーザー編集可能店舗のイベントのみ、登録可能\n                $BaseInfo = $Event->getBaseInfo();\n                if ($BaseInfo !== null && $Member !== null) {\n                    if (!$Member->isEditableShop($BaseInfo)) {\n                        $form->get('baseInfo')->addError(new FormError(trans('form_error.event_not_editable', [], 'validators')));\n                    }"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/EventController.php",
+      "start": 206,
+      "end": 212,
+      "fileLines": 341,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function create(Request $request): RedirectResponse|array\n    {\n        $Member = $this->getMember();\n        $Event = new DtbEvent();\n        $DefaultBaseInfo = $Member->getDefaultSearchBaseInfo();\n        if ($DefaultBaseInfo !== null) {\n            $Event->setBaseInfo($DefaultBaseInfo);"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/EventController.php",
+      "start": 244,
+      "end": 256,
+      "fileLines": 341,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[Route(path: '/%eccube_admin_route%/event/{id}/edit', name: 'admin_event_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]\n    #[Route(path: '/%eccube_admin_route%/event/{id}/copy', name: 'admin_event_copy', requirements: ['id' => '\\d+'], methods: ['GET'], defaults: ['isCopy' => true])]\n    #[Template(template: '@admin/Event/edit.twig')]\n    public function edit(Request $request, DtbEvent $Event, bool $isCopy = false): array\n    {\n        $Member = $this->getMember();\n        if ($isCopy) {\n            $Event->setDetails(new ArrayCollection());\n        }\n        $builder = $this->formFactory->createBuilder(EventType::class, $Event, ['Member' => $Member]);\n        $form = $builder->getForm();\n        $form->handleRequest($request);\n        $isEditableBaseInfo = $Member->"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/EventType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Event/EventController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:51+09:00",
+  "designResolution": {
+    "requested": "0214_基本設計仕様書(イベント管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html",
+    "sheetCount": 22,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "イベント一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "繰返日程追加"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "イベント申込一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "イベント申込一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "イベント申込一括編集"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "デッキ表示"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "CSVダウンロード"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "イベント申込登録(検索入力)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "イベント申込登録(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "イベント新規申込登録"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "イベント一括登録CSV"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "バナー設定"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定"
+      }
+    ]
+  }
+}

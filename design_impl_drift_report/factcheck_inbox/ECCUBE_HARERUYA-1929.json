@@ -1,0 +1,223 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1929",
+  "issueId": 43509436,
+  "summary": "【要確認】フロントイベント_イベント大会TOP_イベント大会TOPの月別カレンダーは、カレンダー表示・イベント有無表示・大型イベントアイコン表示・日付押下による絞り込みがすべて実装されており、設計書の詳細仕様（4-24 大型イベントアイコン）を満たしている（元レポートの誤検知）。",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:13Z",
+  "updated": "2026-07-14T01:17:13Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1929",
+  "basicInfo": {
+    "分類": "フロントイベント",
+    "機能": "イベント大会TOP",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【要確認】フロントイベント_イベント大会TOP_イベント大会TOPの月別カレンダーは、カレンダー表示・イベント有無表示・大型イベントアイコン表示・日付押下による絞り込みがすべて実装されており、設計書の詳細仕様（4-24 大型イベントアイコン）を満たしている（元レポートの誤検知）。",
+    "設計書": "0307_基本設計仕様書(フロント_イベント).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントイベント\n機能：イベント大会TOP\n課題カテゴリ：不具合（バグ）\n課題：【要確認】フロントイベント_イベント大会TOP_イベント大会TOPの月別カレンダーは、カレンダー表示・イベント有無表示・大型イベントアイコン表示・日付押下による絞り込みがすべて実装されており、設計書の詳細仕様（4-24 大型イベントアイコン）を満たしている（元レポートの誤検知）。\n設計書：0307_基本設計仕様書(フロント_イベント).xlsx",
+    "期待される挙動": "- イベント大会TOP(F07-01)の「C.月別で探す」で月別のカレンダーを表示する。\n- カレンダー日付単位でイベントの有無を表示する（イベントが0件の日はグレー表示・選択不可とする）。\n- その月日に大型イベントがあれば大型イベントアイコン（識別ID 4-24）を表示する。アイコンは「B.日別で探す」(4-18)と共通とする。\n- カレンダー日付を押下した場合、該当日付開催のイベントに絞り込んで表示する。",
+    "現在の挙動": "- 月別カレンダーの生成、当月・前月・翌月の切替、日付選択による絞り込みはいずれも実装されている（hareruya-event.js の月別 createDayCell / 日付選択ハンドラ、Event/index.twig:218,235 の月別タブとカレンダーグリッド）。\n- イベントが0件の日は is-closed クラス＋disabled 属性が付与され、グレー表示かつ押下不可になる（hareruya-event.css の is-closed 規則）。\n- 日付セルのアイコンは hasLargeEvent（bundle 側 event_scale_id === 1）が真のときにのみ付与される。サーバ側の EventScheduleJsonBuilder が DB の mtb_event_scale.id=4（大型イベント）を bundle 側の 1 へ変換して JSON を出力しているため、この判定は正しく『大型イベント』を指している。\n- したがって設計書の詳細仕様（機能説明 :253 および項目表 4-24「その月日に大型イベントがあれば表示する」）どおりに実装されており、乖離は無い。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/F07_event_basedesign.md:41-46（概要「月別のカレンダーを表示する／カレンダー日付単位でイベントの有無を表示する／カレンダー日付単位で特別イベントの有無を表示する／カレンダー日付を押下した場合に該当日付開催のイベントを絞り込み表示する」）\n.cursor/docs/MDfile/F07_event_basedesign.md:253（C.月別で探す 機能説明「その月日に大型イベントがあれば、大型イベントアイコンを表示する。アイコンは『B.日別で探す』と共通」「イベントが0件の日はグレーで表示し、選択不可」）\n.cursor/docs/MDfile/F07_event_basedesign.md:265（識別ID 4-24 大型イベントアイコン：その月日に大型イベントがあれば表示する）\n.cursor/docs/MDfile/F07_event_basedesign.md:167（「特別イベント」の定義：イベント規模が『特別イベント』または『大型イベント』）\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Event/index.twig:218,235（月別タブと月別カレンダーグリッド）\nhtml/template/default/assets/hareruya/js/hareruya-event.js:1（月別 createDayCell。hasLargeEvent(o) が真のときにのみアイコン div を付与）\nhtml/template/default/assets/hareruya/js/hareruya-event.js:1（hasLargeEvent の実体は 1===e.event_scale_id）\nsrc/Eccube/Service/Front/Event/EventScheduleJsonBuilder.php:35-43（SCALE_ID_DB_TO_BUNDLE。DBの 4=大型 → bundle 1、3=特別 → bundle 2、1=おすすめ → bundle 4 に変換する。bundle 側の 1 は『大型イベント』である）\napp/DoctrineMigrations/Version20260514110000.php:33-36（mtb_event_scale の投入値。1=おすすめイベント / 2=定番イベント / 3=特別イベント / 4=大型イベント）\nhtml/template/default/assets/hareruya/css/hareruya-event.css:1（is-closed / is-selected / アイコンの表示規則）\n\n▼AIレビューで判定が割れた理由\nClaude は「乖離あり」、codex は「実装済み」と判定し、第三者による再検証で codex の判定を採用した。\nClaude は F07_event_basedesign.md:44 の概要「カレンダー日付単位で特別イベントの有無を表示する」と :167 の定義（特別イベント＝規模『特別』または『大型』）を組み合わせ、実装が hasLargeEvent（大型のみ）でしかアイコンを出さないことを乖離と判定した。しかし同じ設計書の :253（C.月別で探すの機能説明）と :265（項目表 4-24）はいずれも『大型イベントアイコン：その月日に大型イベントがあれば表示する』と明記しており、画面固有の詳細記述が概要より具体的である。\ncodex は :253 と :265 の詳細記述を根拠に誤検知と判定しており、こちらが正しい。設計書は :199（4-5 特別イベントブロックの説明を『規模が特別イベントのイベント一覧』と書いており :167 の定義と食い違う）にも同様の用語の揺れがあり、:44 の『特別イベント』は厳密な規模区分ではなく口語的な表現と読むのが妥当である。「B.日別で探す」側の項目表 4-18（:236）も同じく『大型イベントアイコン』であり、:253 の『アイコンはB.日別で探すと共通』という記述とも整合する。\nなお両者とも hasLargeEvent の 1===event_scale_id を『大型イベント』と述べているが、その根拠は示していない。実際には mtb_event_scale の投入値（Version20260514110000.php:33-36）では id=1 が『おすすめイベント』、id=4 が『大型イベント』であり、DBのIDをそのまま見ると逆になる。EventScheduleJsonBuilder.php:35-43 に DB→bundle のID変換テーブル（4→1）が存在するため、bundle 側の 1 が大型イベントを指すことを確認した。結論として両者の前提は結果的に正しい。\n以上より本項目は誤検知（該当なし）。ただしルールに従い exclude=false とし、実装済みである事実を明記する。設計書 :44 の『特別イベントの有無』という表現は、:253/:265 に合わせて『大型イベントの有無』へ統一しておくと今後の誤読を防げる。"
+  },
+  "designBook": "0307_基本設計仕様書(フロント_イベント).xlsx",
+  "feature": "イベント大会TOP",
+  "classification": "フロントイベント",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Event/index.twig",
+      "start": 218,
+      "end": 218,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 41,
+      "end": 46,
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "月別イベント表示\n* 月別のカレンダーを表示する\n* カレンダー日付単位でイベントの有無を表示する\n* カレンダー日付単位で特別イベントの有無を表示する\n* カレンダー日付を押下した場合に該当日付開催のイベントを絞り込み表示する\nイベント絞り込み表示機能"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 253,
+      "end": 253,
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "その月日に大型イベントがあれば、大型イベントアイコンを表示する。アイコンは「B.日別で探す」と共通"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 265,
+      "end": 265,
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 4-24 | 大型イベントアイコン | 画像 | - | - | - | その月日に大型イベントがあれば表示する |"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 167,
+      "end": 167,
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* **特別イベント**: イベント規模が「特別イベント」または「大型イベント」"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Event/index.twig",
+      "start": 218,
+      "end": 218,
+      "fileLines": 406,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                    <div class=\"c-hareruya-tabs__content\" data-tab-content=\"event-contents\" data-tab-id=\"monthly\">"
+    },
+    {
+      "path": "html/template/default/assets/hareruya/js/hareruya-event.js",
+      "start": 1,
+      "end": 1,
+      "fileLines": 2,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "(()=>{\"use strict\";var e={},t={};function r(a){var n=t[a];if(void 0!==n)return n.exports;var i=t[a]={exports:{}};return e[a](i,i.exports,r),i.exports}function a(e,t,r,a,n,i,o){try{var l=e[i](o),s=l.value}catch(e){r(e);return}l.done?t(s):Promise.resolve(s).then(a,n)}r.rv=()=>\"1.7.5\",r.ruid=\"bundler=rspack@1.7.5\";function n(e,t,r){return t in e?Object.defineProperty(e,t,{value:r,enumerable:!0,configurable:!0,writable:!0}):e[t]=r,e}var i=function(){var e;function t(e){if(!(this instanceof t))throw TypeError(\"Cannot call a class as a function\");n(this,\"container\",void 0),n(this,\"buttonsContainer\",void 0),n(this,\"prevBtn\",void 0),n(this,\"nextBtn\",void 0),n(this,\"startDate\",void 0),n(this,\"selectedDate\",null),this.container=e,this.buttonsContainer=e.querySelector(\"[data-daily-date-buttons]\"),thi"
+    },
+    {
+      "path": "src/Eccube/Service/Front/Event/EventScheduleJsonBuilder.php",
+      "start": 35,
+      "end": 43,
+      "fileLines": 167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "     * DB の mtb_event_scale.id → デザイン bundle が想定する event_scale_id のマッピング。\n     * 設計書では 1=おすすめ / 2=定番 / 3=特別 / 4=大型 だが、bundle 側は 1=大型 / 2=特別 / 4=おすすめ / else=デイリー を前提とするため変換する。\n     */\n    private const SCALE_ID_DB_TO_BUNDLE = [\n        4 => 1, // 大型\n        3 => 2, // 特別\n        1 => 4, // おすすめ\n        // DB id=2 (定番) は bundle 側で else (= デイリー) 扱いになるため変換テーブルから除外\n    ];"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260514110000.php",
+      "start": 33,
+      "end": 36,
+      "fileLines": 66,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        ['id' => 1, 'name' => 'おすすめイベント', 'sort_no' => 1],\n        ['id' => 2, 'name' => '定番イベント', 'sort_no' => 2],\n        ['id' => 3, 'name' => '特別イベント', 'sort_no' => 3],\n        ['id' => 4, 'name' => '大型イベント', 'sort_no' => 4],"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 44,
+      "end": 44,
+      "resolvedFrom": "F07_event_basedesign.md",
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* カレンダー日付単位で特別イベントの有無を表示する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Event/index.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "html/template/default/assets/hareruya/js/hareruya-event.js",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Front/Event/EventScheduleJsonBuilder.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260514110000.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:08+09:00",
+  "designResolution": {
+    "requested": "0307_基本設計仕様書(フロント_イベント).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html",
+    "sheetCount": 6,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント大会TOP",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント大会TOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "大会詳細検索"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "大会詳細"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "大会申込～完了"
+      }
+    ]
+  }
+}

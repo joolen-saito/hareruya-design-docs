@@ -1,13 +1,16 @@
 export const meta = {
   name: 'message-inventory-resolve-review',
   description:
-    'メッセージ一覧(フラッシュ/Form/JS)を機能ごとに codex(読取専用)で実ソース確定し、fable5 と codex が独立にハルシネーション批判レビュー。確定後にメッセージIDを設計書『表示メッセージ』表へ埋め込む。',
+    'メッセージ一覧(フラッシュ/Form/JS/twig|trans/エラー系)を機能ごとに codex(読取専用)で実ソース確定し、敵対的監査→逆バイアス二次検証の二段で摘発・是正する。確定後にメッセージIDを設計書『表示メッセージ』表へ埋め込む。',
   phases: [
     { title: 'CodexResolve', detail: '機能ごとに codex で変数/連結の未解決文言を実ソース確定し、要素/トリガー/後続処理を埋め、IDを設計書へ埋め込む' },
-    { title: 'Fable5Review', detail: 'fable5 が確定結果を実ソースと独立照合し、捏造/過剰確定/抜け漏れを指摘・差し戻す', model: 'fable' },
-    { title: 'CodexReview', detail: 'codex(読取専用)が独立に再照合し、逐語非在/値差し替え/言い換え/過剰確定を摘発して差し戻す' },
+    { title: 'AdversarialAudit', detail: 'codex(読取専用)が「捏造を摘発せよ」の敵対バイアスで再照合し、逐語非在/値差し替え/言い換え/根拠不一致/英語取り違え/メタ齟齬を列挙する' },
+    { title: 'VerifyFixes', detail: 'codex(読取専用)が逆バイアス(既定=refuted)で監査結果を独立検証し、反証できなかった指摘だけを是正値つきで確定する' },
   ],
 }
+// 2026-07-21 ユーザー指示によりレビューは codex のみ（fable5 は使わない）。
+// 敵対バイアス1回だけでは偽陽性が大量に出る（実績: fabrication 2件中1件、wrong_en 37件中28件、
+// wrong_meta 187件中55件が偽陽性）。**必ず逆バイアスの二次検証を挟んでから適用する。**
 
 const REPO = '/home/y-saito/Developments/hareruya-design-docs'
 const EE = '/home/y-saito/Developments/ec-cube-enterprise'
@@ -29,18 +32,18 @@ const RESOLVE_SCHEMA = {
   },
 }
 
-const REVIEW_SCHEMA = {
+const VERIFY_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['fid', 'hallucinations', 'omissions', 'overclaims', 'revertedToTBD', 'high', 'medium', 'summary'],
+  required: ['fid', 'claims', 'confirmed', 'refuted', 'applied', 'rejectedByGuard', 'gatesOk', 'summary'],
   properties: {
     fid: { type: 'string' },
-    hallucinations: { type: 'integer', description: '実ソースに存在しない文言の混入指摘数' },
-    omissions: { type: 'integer', description: '拾えていない実装メッセージの数' },
-    overclaims: { type: 'integer', description: '根拠が弱いのに断定していた列の数' },
-    revertedToTBD: { type: 'integer', description: '根拠不足で 要ソース確認 へ差し戻した数' },
-    high: { type: 'integer' },
-    medium: { type: 'integer' },
+    claims: { type: 'integer', description: '監査段が挙げた指摘数' },
+    confirmed: { type: 'integer', description: '逆バイアス検証でも反証できず確定した指摘数' },
+    refuted: { type: 'integer', description: '反証できた＝偽陽性だった指摘数' },
+    applied: { type: 'integer', description: '実際に正本へ適用したセル数' },
+    rejectedByGuard: { type: 'integer', description: '却下ガード(内部用語/多候補の狭め)で適用しなかった数' },
+    gatesOk: { type: 'boolean', description: '4ゲート(validate/literal_strict/en_pairing/evidence_anchor)が通ったか' },
     summary: { type: 'string' },
   },
 }
@@ -102,25 +105,52 @@ cd ${REPO} && python3 ${S}/validate_messages.py
 返り値は RESOLVE_SCHEMA（embedded=doc へ埋めたID数、validateOk=捏造ゼロ確認結果）。`
 }
 
-function reviewPrompt(fid) {
-  return `あなたは独立レビュア(fable5)です。機能 **${fid}** の確定済みメッセージ一覧を、鵜呑みにせず ${EE} 実ソースで再照合し、ハルシネーションと過剰確定を摘発します。
+function verifyPrompt(fid) {
+  const slug = fid.toUpperCase().replace(/_/g, '-')
+  return `あなたは**二次検証**の担当です。機能 **${fid}** について、直前の敵対的監査が挙げた指摘を
+**反証する側**として ${EE} 実ソースで検証し、反証できなかったものだけを是正します。
 
-対象: ${REPO}/message_inventory/slices/${fid.toUpperCase().replace(/_/g, '-')}.resolved.tsv と、埋め込み済み設計書。
-基準: ${REPO}/.codex/skills/hareruya-message-inventory/references/CHECKLIST.md の A/B/C/D/E/F。
+## なぜ二次検証が要るか
+監査段は「捏造を摘発せよ」という強いバイアスで走らせるため**指摘が過剰に出る**。
+実績: fabrication 2件中1件、wrong_en 37件中28件、wrong_meta 187件中55件が偽陽性だった。
+無検証で適用すると**正しい行を壊す**。
+
+## 立場
+**既定は refuted（指摘は誤り）。** 実ソースを読んで指摘が動かしがたく正しいと確認できた場合に限り
+confirmed とし、そのときだけ列ごとの是正値を出す。**判断がつかない場合も refuted。**
 
 ## 手順
-1. resolved.tsv を読み、無作為＋全「確定変数」行について、メッセージ内容が根拠(file:line)のソースに逐語で実在するか自分で grep 確認する。
-2. 実在しない文言（言い換え/敬体化/要約/創作/散文説明/実行時値の差し替え）を **捏造** として列挙し、当該セルを「要ソース確認」へ差し戻す（ファイル編集）。
-3. controller/テンプレを読み、拾えていない add*/Form制約/confirm・alert（抜け漏れ）を列挙。
-4. 要素/トリガー/後続処理で根拠が弱いのに断定している列（過剰確定）を「要ソース確認」へ差し戻す。
-5. 差し戻しは resolved.tsv と doc を直接編集する（**master への merge はしない**＝競合回避）。最後に \`cd ${REPO} && python3 ${S}/validate_messages.py\` で捏造ゼロを確認。
+1. 監査結果に対し、機能 ${fid} の分を codex(読み取り専用)で反証検証する:
+\`\`\`bash
+cd ${REPO} && timeout 560 codex exec --sandbox read-only - <<'PROMPT'
+（監査が挙げた各指摘について、既定 refuted で反証検証せよ。confirmed のときだけ
+ {"id":..,"verdict":"confirmed|refuted","fix":{"kind":..,"where":..,"disp":..,"cond":..,"next":..},"detail":".."} を返す）
+PROMPT
+\`\`\`
+2. **却下ガードを必ず適用**してから反映する（confirmed でも適用しない）:
+   - **内部用語の混入** — 「セッションの有効期限が切れているとき」→「CSRFトークンが無効なとき」等。
+     設計書は利用者視点で書く規約なので改悪。ただし**その語が当該行の文言に実際に出る**なら許可。
+   - **多候補行の条件の狭め** — 文言が「候補A ／ 候補B」形式の行は条件が全候補を覆う必要がある。
+     列挙を含まない一般化への置換は却下。
+   - **文言(ja/en)の変更提案は常に却下**（監査対象外の列）。
+3. 反映は resolved.tsv と doc を直接編集する（**master への merge はしない**＝競合回避）。
+4. 4ゲートを通す:
+\`\`\`bash
+cd ${REPO} && python3 ${S}/validate_messages.py --check-embed \\
+  && python3 ${S}/check_literal_strict.py \\
+  && python3 ${S}/check_en_pairing.py \\
+  && python3 ${S}/check_evidence_anchor.py
+\`\`\`
 
-創作は絶対にしない。根拠が取れないものは確定せず「要ソース確認」。返り値は REVIEW_SCHEMA。`
+対象: ${REPO}/message_inventory/slices/${slug}.resolved.tsv と埋め込み済み設計書。
+創作は絶対にしない。返り値は VERIFY_SCHEMA。`
 }
 
 function codexReviewPrompt(fid) {
   const slug = fid.toUpperCase().replace(/_/g, '-')
-  return `あなたは第二の独立レビュア(codex統括)です。機能 **${fid}** の確定+fable5レビュー済みメッセージ一覧を、**codex(読み取り専用)** で実ソースに再照合し、逐語非在・値差し替え・言い換え・過剰確定を機械的に摘発して差し戻します。fable5 の判断も鵜呑みにしない。
+  return `あなたは**敵対的監査**の担当(codex)です。機能 **${fid}** の確定済みメッセージ一覧を
+**codex(読み取り専用)** で実ソースに再照合し、**捏造を摘発する立場**で問題を列挙します。
+目的は正しさの確認ではなく摘発。迷ったら違反側に倒す（過剰検出は次段の二次検証で落とす）。
 
 対象: ${REPO}/message_inventory/slices/${slug}.resolved.tsv と、埋め込み済み設計書。
 基準: 捏造ゼロ。\`メッセージ内容\` は「実ソースに逐語存在する固定リテラル」か「要ソース確認」の二択のみ。散文説明・要約・敬体化・変数への実行時値差し替えは全て違反。
@@ -132,11 +162,23 @@ cd ${REPO} && timeout 560 codex exec --sandbox read-only - <<'PROMPT'
 読み取り専用で ${REPO}/message_inventory/slices/${slug}.tsv と ${slug}.resolved.tsv を比較し、resolved.tsv の各行の「メッセージ内容」列を ${EE} 実ソース(messages.ja.yaml/validators.ja.yaml/生文字列/Twig/JS)へ照合してください。創作・推測禁止。
 各行について判定JSONL: {"id":"...","verbatim_ok":true/false,"issue":"none|non_verbatim|value_substitution|paraphrase|prose_note|overclaim","should_be":"逐語literal or 要ソース確認","evidence":"file:line or 非在"}
 - non_verbatim: 内容が実ソースに逐語で存在しない。
+- fragment: **より長い正しい文言の断片**になっている（切り詰め破損）。grep は部分一致で通るため見逃しやすい。
+  実例: `admin.event.entry.paying_mem`（実キーは `...paying_member_customer_not_registered`）。
 - value_substitution: %maxRecord% 等の変数へ実行時値(例 5010)を差し替えている。→ should_be は原文プレースホルダ入りリテラル or 要ソース確認。
 - paraphrase: 敬体化/語尾変更/要約で原文と不一致。
 - prose_note: 「例外由来の可変文言」等の散文説明が メッセージ内容 に入っている。→ should_be=要ソース確認。
+- wrong_evidence: 文言は実在するが、根拠 file:line が指す箇所には無い（別箇所からの流用/生成元でない）。
+- wrong_en: 英語列が当該日本語の対訳でない（**別キーの英語の流用**）。ja が複数キーに一致する行で起きやすい。
 - overclaim: 要素/トリガー/後続処理/種別を根拠なく断定。
 問題なしは issue=none。
+
+## 偽陽性ガード（これらを違反にしたら誤り）
+- yaml 未定義でも、根拠ソース(.php/.twig/.js/.en.twig)に逐語あれば捏造ではない。
+- 文言がロケールキー文字列そのものの行は、そのキーが locale **未定義**なら正しい（Symfony はキーをそのまま描画）。
+- vendor/symfony の同梱翻訳(xlf の source/target)も実表示される正当なソース。
+- `%name%` `{{ limit }}` `%s` の**保持は正**。置換していたら value_substitution。
+- 「候補A ／ 候補B」の併記は実行時可変行の規約。各候補が逐語実在すれば正。
+- ja/en を切り詰めて判定するな（「途切れ＝捏造」の誤判定になる）。
 PROMPT
 \`\`\`
 2. codex出力に従い resolved.tsv を修正する:
@@ -145,9 +187,13 @@ PROMPT
 3. 埋め込み済み設計書 doc の当該行も同じ内容へ揃える（doc とTSVの文言不一致を残さない）。逐語literalへ直せた行は doc も更新。
 4. 検証（**master へ merge しない**＝競合回避）:
 \`\`\`bash
-cd ${REPO} && python3 ${S}/validate_messages.py
+cd ${REPO} && python3 ${S}/validate_messages.py --check-embed \\
+  && python3 ${S}/check_literal_strict.py \\
+  && python3 ${S}/check_en_pairing.py \\
+  && python3 ${S}/check_evidence_anchor.py
 \`\`\`
-   自機能 resolved.tsv と doc について、捏造ゼロ（逐語存在 or 要ソース確認）を grep で自分でも確認。NG は是正。
+   `validate_messages.py` の捏造検証は **grep の部分一致**なので断片を通す。
+   `check_literal_strict.py`（境界付き一致）まで通して初めて捏造ゼロと言える。
 
 創作は絶対にしない。返り値は CODEX_REVIEW_SCHEMA。`
 }
@@ -179,7 +225,7 @@ function parseArgs(a) {
   return a
 }
 const ARGS = parseArgs(args)
-// mode: 'full'(既定=resolve+fable5+codexreview) / 'review'(既存resolved.tsvに対しfable5+codexreviewのみ) / 'codexonly'(codexreviewのみ)
+// mode: 'full'(既定=resolve+audit+verify) / 'review'(既存resolved.tsvに対し audit+verify) / 'auditonly'(監査のみ・是正しない)
 const MODE = (ARGS && typeof ARGS === 'object' && !Array.isArray(ARGS) && ARGS.mode) || 'full'
 const DEFAULT_PILOT = ['m04-31', 'm11-01', 'm08-04', 'm13-02', 'm09-10']
 const requested = parseFids(ARGS)
@@ -187,32 +233,35 @@ const FIDS = requested.length ? requested : DEFAULT_PILOT
 
 log(`メッセージ一覧 mode=${MODE} ${FIDS.length}機能: ${FIDS.join(', ')}`)
 
+// 監査(敵対バイアス)→二次検証(逆バイアス)は必ずこの順で対にする。
+// 監査だけを適用すると偽陽性で正しい行を壊す（meta.js 冒頭のコメント参照）。
 let results
-if (MODE === 'codexonly') {
+if (MODE === 'auditonly') {
+  // 摘発のみ。是正はしない（人手で二次検証したいとき用）。
   results = await parallel(
     FIDS.map((fid) => () =>
-      agent(codexReviewPrompt(fid), { label: `codexrev:${fid}`, phase: 'CodexReview', schema: CODEX_REVIEW_SCHEMA })
-        .then((cr) => ({ fid, codexReview: cr })),
+      agent(codexReviewPrompt(fid), { label: `audit:${fid}`, phase: 'AdversarialAudit', schema: CODEX_REVIEW_SCHEMA })
+        .then((cr) => ({ fid, audit: cr })),
     ),
   )
 } else if (MODE === 'review') {
   results = await pipeline(
     FIDS,
-    (fid) => agent(reviewPrompt(fid), { label: `fable5:${fid}`, phase: 'Fable5Review', model: 'fable', schema: REVIEW_SCHEMA }),
-    (rev, fid) =>
-      agent(codexReviewPrompt(fid), { label: `codexrev:${fid}`, phase: 'CodexReview', schema: CODEX_REVIEW_SCHEMA })
-        .then((cr) => ({ fid, review: rev, codexReview: cr })),
+    (fid) => agent(codexReviewPrompt(fid), { label: `audit:${fid}`, phase: 'AdversarialAudit', schema: CODEX_REVIEW_SCHEMA }),
+    (audit, fid) =>
+      agent(verifyPrompt(fid), { label: `verify:${fid}`, phase: 'VerifyFixes', schema: VERIFY_SCHEMA })
+        .then((v) => ({ fid, audit, verify: v })),
   )
 } else {
   results = await pipeline(
     FIDS,
     (fid) => agent(resolvePrompt(fid), { label: `resolve:${fid}`, phase: 'CodexResolve', schema: RESOLVE_SCHEMA }),
     (resolved, fid) =>
-      agent(reviewPrompt(fid), { label: `fable5:${fid}`, phase: 'Fable5Review', model: 'fable', schema: REVIEW_SCHEMA })
-        .then((rev) => ({ resolve: resolved, review: rev, fid })),
+      agent(codexReviewPrompt(fid), { label: `audit:${fid}`, phase: 'AdversarialAudit', schema: CODEX_REVIEW_SCHEMA })
+        .then((audit) => ({ resolve: resolved, audit, fid })),
     (prev, fid) =>
-      agent(codexReviewPrompt(fid), { label: `codexrev:${fid}`, phase: 'CodexReview', schema: CODEX_REVIEW_SCHEMA })
-        .then((cr) => ({ ...prev, codexReview: cr })),
+      agent(verifyPrompt(fid), { label: `verify:${fid}`, phase: 'VerifyFixes', schema: VERIFY_SCHEMA })
+        .then((v) => ({ ...prev, verify: v })),
   )
 }
 

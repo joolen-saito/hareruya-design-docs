@@ -1,0 +1,160 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1774",
+  "issueId": 43509223,
+  "summary": "【実装乖離】フロントトップ_ECTOP（本店トップ）_デッキ採用枚数ランキングの(10-9)週間販売数が、過去1週間の販売数が0でも「0点」と表示される",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:15:53Z",
+  "updated": "2026-07-14T01:15:53Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1774",
+  "basicInfo": {
+    "分類": "フロントトップ",
+    "機能": "ECTOP（本店トップ）",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロントトップ_ECTOP（本店トップ）_デッキ採用枚数ランキングの(10-9)週間販売数が、過去1週間の販売数が0でも「0点」と表示される",
+    "設計書": "0301_基本設計仕様書(フロント_トップ).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントトップ\n機能：ECTOP（本店トップ）\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロントトップ_ECTOP（本店トップ）_デッキ採用枚数ランキングの(10-9)週間販売数が、過去1週間の販売数が0でも「0点」と表示される\n設計書：0301_基本設計仕様書(フロント_トップ).xlsx",
+    "期待される挙動": "- (10-9)週間販売数は、期間別販売数集計バッチで出力された過去1週間の本店サイト注文数を表示すること。\n- 過去1週間のうちに本店サイトで注文されていない場合（週間販売数が0の場合）は、週間販売数のラベル自体を非表示にすること。",
+    "現在の挙動": "- ranking.twig のデッキ採用枚数ランキング部では、週間販売数のラベルが条件分岐なしで常に出力され、値がない場合は `card.weeklySales ?? 0` により「0」が表示される。\n- 取得SQLも `COALESCE(SUM(sq.sales_quantity_04), 0)` で0を返すため、1週間の販売実績がない商品でも週間販売数「0」が描画される。\n- 同じ週間販売数を表示する Block/_product_card.twig・_product_card_simple.twig では `{% if weeklySales > 0 %}` で0件時に非表示としており、ranking.twig だけこのガードが欠けている。\n- バンドルCSS/JSにも値0のときに当該要素を隠す処理はない。",
+    "補足情報": "▼設計書該当箇所\nF01_top_basedesign.md:491 「| 10-9 | 週間販売数 | ラベル | - | - | - | ・期間別販売数集計バッチで出力された過去1週間のうちに本店サイトで注文された商品数を表示する…・過去1週間のうちに本店サイトで注文されていない場合、非表示にする |」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Block/ranking.twig:69 （週間販売数を無条件描画、未設定時は0）\nsrc/Eccube/Repository/DtbDeckCardRepository.php:292 （weekly_sales を COALESCE で0埋め）\nsrc/Eccube/Resource/template/default/Block/_product_card.twig:94 （他ブロックでは0件時に非表示にしている正しい実装）\n\n▼備考\nデッキ採用枚数ランキングは「デッキでの採用枚数」順で商品を抽出するため、週間販売数が0の商品が上位に並ぶことは十分あり得る。修正は ranking.twig:69 を `{% if (card.weeklySales ?? 0) > 0 %}` で囲むだけでよい。"
+  },
+  "designBook": "0301_基本設計仕様書(フロント_トップ).xlsx",
+  "feature": "ECTOP（本店トップ）",
+  "classification": "フロントトップ",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Block/_product_card.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/ranking.twig",
+      "start": 69,
+      "end": 69,
+      "fileLines": 144,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                      <p class=\"p-hareruya-product-card__sales\">{{ 'front.top.product_card.weekly_sales_prefix'|trans }}<span class=\"p-hareruya-product-card__sales-number\">{{ (card.weeklySales ?? 0)|number_format }}</span>{{ 'front.top.product_card.weekly_sales_suffix'|trans }}</p>"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbDeckCardRepository.php",
+      "start": 292,
+      "end": 292,
+      "fileLines": 342,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                   (SELECT COALESCE(SUM(sq.sales_quantity_04), 0)::int"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/_product_card.twig",
+      "start": 94,
+      "end": 94,
+      "fileLines": 99,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    {% if weeklySales > 0 %}"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 491,
+      "end": 491,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 10-9 | 週間販売数 | ラベル | - | - | - | ・期間別販売数集計バッチで出力された過去1週間のうちに本店サイトで注文された商品数を表示する<br>※期間別販売数集計バッチについては、別紙「0404_基本設計仕様書(バッチ_商品管理)」のシート「期間別販売数集計」を参照<br><br>・過去1週間のうちに本店サイトで注文されていない場合、非表示にする |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/default/Block/ranking.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/DtbDeckCardRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/_product_card.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:26+09:00",
+  "designResolution": {
+    "requested": "0301_基本設計仕様書(フロント_トップ).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html",
+    "sheetCount": 4,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP"
+      }
+    ]
+  }
+}

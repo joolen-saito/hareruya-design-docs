@@ -1,0 +1,407 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2015",
+  "issueId": 43509537,
+  "summary": "【実装乖離】在庫管理_在庫結合 登録編集_在庫結合の承認処理にて、承認後のステータスが「結合計画承認済み」ではなく「入庫済み」になり、却下時の在庫戻し原価が「移動総原価の按分」ではなく「原価単価×数量」で計算されている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:55Z",
+  "updated": "2026-07-22T01:26:49Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2015",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "在庫結合 登録編集",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】在庫管理_在庫結合 登録編集_在庫結合の承認処理にて、承認後のステータスが「結合計画承認済み」ではなく「入庫済み」になり、却下時の在庫戻し原価が「移動総原価の按分」ではなく「原価単価×数量」で計算されている",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：在庫結合 登録編集\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_在庫結合 登録編集_在庫結合の承認処理にて、承認後のステータスが「結合計画承認済み」ではなく「入庫済み」になり、却下時の在庫戻し原価が「移動総原価の按分」ではなく「原価単価×数量」で計算されている\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- 結合計画承認画面で承認した場合、ステータスは「結合計画承認済み」となり、結合完了承認申請画面へ遷移すること（却下時は「却下」）。\n- 却下時は結合元商品の在庫を移動点数だけ戻し、欠品登録を行った商品については欠品点数分を除くこと。戻す仕入総価格は結合元商品それぞれの移動総原価とし、欠品がある場合は「結合元総原価 ×（（移動数 - 欠品数）/ 移動数）」とすること。\n- 却下処理確認モーダルで却下するボタンを押下した際、却下理由（最大65535byte）の入力がない場合はエラーとすること。",
+    "現在の挙動": "- 却下理由の必須チェックは実装されている（rejectedMemo が空文字ならエラー admin.stock.join.approval_reject_reason_required）。却下メモは TEXT カラムに保存される。\n- 承認処理（StockJoinApprovalApproveAction）はステータスを RECEIPT_COMPLETED（入庫済み）に更新しており、「結合計画承認済み」ステータスは存在しない（マスタは6件のみで二段階承認が無い）。\n- 却下処理（StockJoinApprovalRejectAction）は結合元の戻し数量を「結合元在庫数 - 欠品点数」で算出しており、欠品分を除く点は設計どおりである。\n- 却下時に戻す総原価は「明細に保存された原価単価（costPrice）× 戻し数量」で計算されており、出庫時に減算した移動総原価（ProductStock::getMovementTotalCost() ＝ 総原価 ×（数量 ÷ 在庫数））の按分ではないため、端数分の誤差が生じ、設計の計算式と一致しない。",
+    "補足情報": "▼設計書該当箇所\nM04_stock_management_basedesign.md:2654-2657 の逐語引用「* 承認処理 / * 承認ボタン押下時、承認確認モーダルを表示する / * 承認するボタン押下時、基本情報、結合先商品と結合元商品の承認を行う / * ステータスは結合計画承認済みとする」\nM04_stock_management_basedesign.md:2672-2677 の逐語引用「却下時になった際の原価の扱い（減算した在庫の戻し） / * 結合元商品 / * 在庫数： 結合元在庫数 / * 欠品登録を行った商品については欠品点数分を除く / * 仕入総価格：結合元商品のそれぞれの移動総原価 / * 欠品がある場合  結合元総原価 × （（移動数 - 欠品数）/ 移動数）とする」\nM04_stock_management_basedesign.md:2689 の逐語引用「8-1 却下理由 全角・半角 - 65535byte - 却下処理をこなう場合は必須」\n\n▼実装該当箇所\nsrc/Eccube/Service/Admin/Stock/StockJoinApprovalSubmitAction.php:60-67 （却下理由の必須チェック：実装済み）\nsrc/Eccube/Service/Admin/Stock/StockJoinApprovalApproveAction.php:58 （承認でステータスを RECEIPT_COMPLETED＝入庫済みに設定）\nsrc/Eccube/Service/Admin/Stock/StockJoinApprovalRejectAction.php:178-181 （戻し数量＝結合元在庫数−欠品点数）\nsrc/Eccube/Service/Admin/Stock/StockJoinApprovalRejectAction.php:101-106 （戻し原価＝原価単価 × 戻し数量）\nsrc/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php:211-213 （出庫時の減算は getMovementTotalCost() による移動総原価。戻しと計算方式が非対称）\nsrc/Eccube/Entity/Master/MtbStockSplitJoinStatus.php:27-38 （結合計画承認済み・結合完了承認待ちのステータスが存在しない）\n\n▼備考\n却下理由必須は実装済み（65535byteの上限チェックは明示的には無いが、rejected_memo は TEXT 型のため実質許容される）。乖離は (1) 承認後ステータスが「結合計画承認済み」ではなく「入庫済み」（結合が単一承認フローで実装されているため。M04-12 一覧シート（2026-02-04更新）の結合ステータス5種とは整合するので、設計書内で記述が矛盾している点に注意）、(2) 却下時の戻し原価が「原価単価×数量」で、出庫時に減算した移動総原価（総原価×数量÷在庫数）と非対称であり、別添資料の計算方針（原価単価×数量としない）に反する点。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "在庫結合 登録編集",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockJoinApprovalSubmitAction.php",
+      "start": 60,
+      "end": 67,
+      "fileLines": 108,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        if ($input->approvalMode === 'reject') {\n            if ($input->rejectedMemo === '') {\n                return [\n                    'route' => 'admin_stock_join_approval',\n                    'params' => ['id' => $id],\n                    'errorMessage' => 'admin.stock.join.approval_reject_reason_required',\n                ];\n            }"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockJoinApprovalApproveAction.php",
+      "start": 58,
+      "end": 58,
+      "fileLines": 195,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $StatusCompleted = $this->mtbStockSplitJoinStatusRepository->find(MtbStockSplitJoinStatus::RECEIPT_COMPLETED);"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockJoinApprovalRejectAction.php",
+      "start": 178,
+      "end": 181,
+      "fileLines": 182,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private function effectiveJoinQuantity(\\Eccube\\Entity\\DtbStockSplitJoinDetail $Detail): int\n    {\n        return \\max(0, $Detail->getSplitJoinQuantity() - $Detail->getShortageQuantity());\n    }"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockJoinApprovalRejectAction.php",
+      "start": 101,
+      "end": 106,
+      "fileLines": 182,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                $costPrice = $Detail->getCostPrice() ?? '0';\n                $restoredCost = \\bcmul($costPrice, $effQtyStr, 2);\n                $currentStock = $SourcePs->getStock() ?? '0';\n                $currentTotalCost = $SourcePs->getTotalCost();\n                $afterStock = \\bcadd($currentStock, $effQtyStr, 0);\n                $afterTotalCost = \\bcadd($currentTotalCost, $restoredCost, 2);"
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php",
+      "start": 211,
+      "end": 213,
+      "fileLines": 286,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                $movementTotalCost = $SrcPs->getMovementTotalCost($qtyStr);\n                $newStock = (string) \\max(0, (int) \\bcsub($currentStock, $qtyStr, 0));\n                $newTotalCost = \\bcsub($currentTotalCost, $movementTotalCost, 2);"
+    },
+    {
+      "path": "src/Eccube/Entity/Master/MtbStockSplitJoinStatus.php",
+      "start": 27,
+      "end": 38,
+      "fileLines": 70,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    /** 新規登録 */\n    public const NEW = 1;\n    /** 結合元登録 */\n    public const JOIN_SOURCE_REGISTERED = 2;\n    /** 分割承認待ち */\n    public const SPLIT_APPROVAL_WAITING = 3;\n    /** 結合承認待ち */\n    public const JOIN_APPROVAL_WAITING = 4;\n    /** 入庫済み */\n    public const RECEIPT_COMPLETED = 5;\n    /** 却下 */\n    public const REJECTED = 6;"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 2654,
+      "end": 2657,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 承認処理\n* 承認ボタン押下時、承認確認モーダルを表示する\n* 承認するボタン押下時、基本情報、結合先商品と結合元商品の承認を行う\n* ステータスは結合計画承認済みとする"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 2672,
+      "end": 2677,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "却下時になった際の原価の扱い（減算した在庫の戻し）\n* 結合元商品\n* 在庫数： 結合元在庫数\n* 欠品登録を行った商品については欠品点数分を除く\n* 仕入総価格：結合元商品のそれぞれの移動総原価\n* 欠品がある場合  結合元総原価 × （（移動数 - 欠品数）/ 移動数）とする"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 2689,
+      "end": 2689,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "8-1 却下理由 全角・半角 - 65535byte - 却下処理をこなう場合は必須"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockJoinApprovalSubmitAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockJoinApprovalApproveAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockJoinApprovalRejectAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/Master/MtbStockSplitJoinStatus.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990921,
+      "created": "2026-07-22T01:26:49Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:16+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}

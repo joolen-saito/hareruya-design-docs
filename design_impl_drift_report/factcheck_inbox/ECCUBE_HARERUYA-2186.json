@@ -1,0 +1,238 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2186",
+  "issueId": 43509765,
+  "summary": "【実装乖離】基本情報設定_税率設定_税率設定画面にて、共通税率の「課税規則」が設計書指定のラジオボタンではなくセレクトボックス（プルダウン）で描画されている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:22Z",
+  "updated": "2026-07-14T01:19:22Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2186",
+  "basicInfo": {
+    "分類": "基本情報設定",
+    "機能": "税率設定",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】基本情報設定_税率設定_税率設定画面にて、共通税率の「課税規則」が設計書指定のラジオボタンではなくセレクトボックス（プルダウン）で描画されている",
+    "設計書": "0209_基本設計仕様書(基本情報設定).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：基本情報設定\n機能：税率設定\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_税率設定_税率設定画面にて、共通税率の「課税規則」が設計書指定のラジオボタンではなくセレクトボックス（プルダウン）で描画されている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx",
+    "期待される挙動": "- 税率設定画面（M10-07）の共通税率設定において、識別ID:2-2「課税規則」は単一選択（ラジオボタン）として表示されること。\n- 選択肢は「四捨五入」「切り捨て」「切り上げ」の3種類であること。",
+    "現在の挙動": "- 課税規則は RoundingTypeType（MasterType 継承）で定義されており、configureOptions で 'expanded' => false が指定されているため、ラジオボタンではなくセレクトボックス（<select>）として描画される。\n- 選択肢と表示順（四捨五入=id1／切り捨て=id2／切り上げ=id3、sort_no 0→1→2）および単一選択であることは設計どおりで、TaxRuleService 側の丸め処理も3種類とも実装済みである。\n- したがって値・順序・機能面の乖離はなく、画面部品の種類（ラジオボタン／セレクトボックス）のみが設計と相違している。\n- 管理画面テンプレート・バンドルCSS/JS のいずれにも、このセレクトボックスをラジオボタン表示へ変換する実装は存在しない。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:241（「2-2 課税規則 単一選択(ラジオボタン) - - - 選択肢:四捨五入　切り捨て　切り上げ」）\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:225-228（カスタマイズ要件なし／記載内容以外は現行踏襲）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/TaxRuleType.php:58-60（rounding_type を RoundingTypeType、required=true で定義）\nsrc/Eccube/Form/Type/Master/RoundingTypeType.php:29-32（'class' => RoundingType::class, 'expanded' => false）\nsrc/Eccube/Resource/doctrine/import_csv/priority/ja/mtb_rounding_type.csv:2-4（四捨五入／切り捨て／切り上げ）\nsrc/Eccube/Resource/template/admin/Setting/Shop/tax_rule.twig:98,135（新規登録行・行内編集行の双方で form_widget(rounding_type) を描画）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\n両者とも事実認定は完全に一致している（src/Eccube/Form/Type/Master/RoundingTypeType.php:31 の expanded=false によりセレクトボックスで描画される／選択肢と順序は mtb_rounding_type.csv:2-4 のとおり設計と一致）。割れたのは「画面部品の種類の相違を乖離と数えるか」という評価軸のみである。\nClaude は .cursor/docs/MDfile/M10_base_info_setting_basedesign.md:225-228 の「カスタマイズ要件なし／現行踏襲」を根拠に、セレクトボックスはEC-CUBE標準（＝現行）であるから乖離ではないとして FALSE_POSITIVE とした。一方 codex は同ファイル:241 の項目表が「単一選択(ラジオボタン)」と明記している点を優先して FACT とした。\n裁定としては codex を採る。同設計書は M10-08 の 1-3 テンプレ選択（:272）で「単一選択(セレクトボックス)」と書き分けており、ラジオボタンとセレクトボックスを意図的に区別している。また本監査は同種の部品相違（例: 基本設定 2-3/2-4 のラジオ指定に対する ToggleSwitchType 実装、src/Eccube/Form/Type/Admin/ShopMasterType.php:258-259）を一貫して乖離として計上しており、本項目だけを免除する根拠がない。\nただし影響は表示形態のみで機能・値には影響しないため、重大度は低い。設計書側の記載誤り（現行EC-CUBE標準がセレクトボックス）である可能性もあるため、起票時に「実装をラジオへ変更するのか、設計書の部品種別記載を修正するのか」の確認を含めること。"
+  },
+  "designBook": "0209_基本設計仕様書(基本情報設定).xlsx",
+  "feature": "税率設定",
+  "classification": "基本情報設定",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 241,
+      "end": 241,
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "2-2 課税規則 単一選択(ラジオボタン) - - - 選択肢:四捨五入　切り捨て　切り上げ"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 225,
+      "end": 228,
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "### カスタマイズ説明\n* カスタマイズ要件\nなし\n* カスタマイズ要件に記載の内容以外は現行踏襲とする。"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/TaxRuleType.php",
+      "start": 58,
+      "end": 60,
+      "fileLines": 113,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('rounding_type', RoundingTypeType::class, [\n                'required' => true,\n            ])"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Master/RoundingTypeType.php",
+      "start": 29,
+      "end": 32,
+      "fileLines": 39,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\n    public function getParent()\n    {\n        return MasterType::class;"
+    },
+    {
+      "path": "src/Eccube/Resource/doctrine/import_csv/priority/ja/mtb_rounding_type.csv",
+      "start": 2,
+      "end": 4,
+      "fileLines": 4,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\"1\",\"四捨五入\",\"0\"\n\"2\",\"切り捨て\",\"1\"\n\"3\",\"切り上げ\",\"2\""
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/tax_rule.twig",
+      "start": 98,
+      "end": 98,
+      "fileLines": 214,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                        {{ form_widget(form.rounding_type) }}"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Master/RoundingTypeType.php",
+      "start": 31,
+      "end": 31,
+      "fileLines": 39,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    {"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/ShopMasterType.php",
+      "start": 258,
+      "end": 259,
+      "fileLines": 267,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    }\n"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/TaxRuleType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Master/RoundingTypeType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/doctrine/import_csv/priority/ja/mtb_rounding_type.csv",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/tax_rule.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/ShopMasterType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:39+09:00",
+  "designResolution": {
+    "requested": "0209_基本設計仕様書(基本情報設定).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html",
+    "sheetCount": 14,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-8",
+        "title": "税率設定",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "基本設定(旧ショップマスター)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "特定商取引に関する法律"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "利用規約管理"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "支払い方法　手数料設定"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "配送方法設定"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "税率設定"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "自動送信メール"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "メール設定"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "カスタムCSV出力設定"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "店舗登録"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "追加システム設定"
+      }
+    ]
+  }
+}

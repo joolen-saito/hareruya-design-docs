@@ -1,0 +1,361 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2022",
+  "issueId": 43509546,
+  "summary": "【実装乖離】在庫管理_在庫移動指示検索_在庫移動指示検索にて、在庫移動実績入力用CSVダウンロードが選択行を出力せず、常時活性のヘッダーのみのテンプレート出力になっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:59Z",
+  "updated": "2026-07-22T01:26:49Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2022",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "在庫移動指示検索",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】在庫管理_在庫移動指示検索_在庫移動指示検索にて、在庫移動実績入力用CSVダウンロードが選択行を出力せず、常時活性のヘッダーのみのテンプレート出力になっている",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：在庫移動指示検索\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_在庫移動指示検索_在庫移動指示検索にて、在庫移動実績入力用CSVダウンロードが選択行を出力せず、常時活性のヘッダーのみのテンプレート出力になっている\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- 在庫移動指示一覧で各行のチェックボックスにより移動指示を選択している場合のみ、在庫移動実績入力用CSVダウンロードボタンが活性状態になること。\n- 在庫移動実績入力用CSVダウンロードボタンを押下すると、選択している移動指示リストの内容が在庫移動実績入力用CSV（機能No.M04-27）として出力されること。",
+    "現在の挙動": "- 在庫移動実績入力用CSVダウンロードは a タグのリンクとして常に活性状態で描画されており、チェックボックスの選択状態による活性・非活性の制御が行われていない。\n- リンク先の admin_stock_move_instruction_csv_download_record は GET かつ移動指示IDを受け取らないルートであり、CSVには「移動指示ID, 出庫元店舗(名称), 入庫先店舗(名称), 送り状No.」のヘッダー行のみが書き出され、選択した移動指示のデータ行は一切出力されない。",
+    "補足情報": "▼設計書該当箇所\nM04_stock_management_basedesign.md:3783 の逐語引用「3-2 在庫移動実績入力用CSVダウンロード ボタン - - - 在庫移動選択時のみ活性状態」\nM04_stock_management_basedesign.md:3752-3754 の逐語引用「* 在庫移動実績入力CSVダウンロードボタン / * 選択している移動指示リストについて、在庫移動実績入力用CSVを出力する / * 在庫移動実績入力用CSV（機能No.: M04-27）」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:160 （常時活性のリンクとして描画。disabled 制御・チェックボックス連動のJSなし）\nsrc/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:334-363 （csvTemplateDownload。IDを受け取らずヘッダー行のみ出力）\nsrc/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:405-426 （選択行のIDをPOSTするJSは送り状CSV（#stockMoveInstructionLabelsExport）にのみ実装されている）\n\n▼備考\n送り状CSVダウンロード（M04-28）は #stockMoveInstructionLabelsExport で選択行のIDをPOSTしており、選択行の反映自体は実現できている。実績入力用CSV側のみ雛形（ヘッダーのみ）ダウンロードの実装にとどまる。git log で 2026-07-01 以降の当該ファイル変更なし。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "在庫移動指示検索",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig",
+      "start": 160,
+      "end": 160,
+      "fileLines": 429,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                    <a href=\"{{ url('admin_stock_move_instruction_csv_download_record') }}\" class=\"btn btn-ec-conversion\">{{ 'admin.stock.move_instruction.csv_download_record'|trans }}</a>"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php",
+      "start": 334,
+      "end": 363,
+      "fileLines": 459,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[Route(path: '/%eccube_admin_route%/product/stock/move-instruction/csv-template', name: 'admin_stock_move_instruction_csv_download_record', methods: ['GET'])]\n    public function csvTemplateDownload(Request $request): StreamedResponse\n    {\n        set_time_limit(0);\n\n        $columns = ['移動指示ID', '出庫元店舗(名称)', '入庫先店舗(名称)', '送り状No.'];\n        $filename = 'stock_move_instruction_record_template_'.(new \\DateTime())->format('YmdHis').'.csv';\n\n        $encoding = $this->eccubeConfig['eccube_csv_export_encoding'] ?? 'SJIS-win';\n        $response = new StreamedResponse();\n        $response->setCallback(function () use ($columns, $encoding): void {\n            $fp = fopen('php://output', 'w');\n            // ExcelでUTF-8を正しく認識させるためBOMを出力\n            if (strtoupper((string) $encoding) === 'UTF-"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig",
+      "start": 405,
+      "end": 426,
+      "fileLines": 429,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            $('#stockMoveInstructionLabelsExport').on('click', function(event) {\n                event.preventDefault();\n\n                const ids = $('.row-check:checked').map(function() { return $(this).val(); }).get();\n\n                if (ids.length === 0) {\n                    alert(\"{{ 'admin.stock.move_instruction.csv_invoice_select_rows'|trans|e('js') }}\");\n\n                    return false;\n                }\n\n                const $form = $('#form_stock_move_instruction_label_csv');\n\n                $form.find('input[name=\"ids[]\"]').remove();\n                ids.forEach(function(id) {\n                    $form.append($('<input>', { type: 'hidden', name: 'ids[]', value: id }));\n                });\n\n                $form.submit();\n\n                return false;\n            });"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 3783,
+      "end": 3783,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "3-2 在庫移動実績入力用CSVダウンロード ボタン - - - 在庫移動選択時のみ活性状態"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 3752,
+      "end": 3754,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 在庫移動実績入力CSVダウンロードボタン\n* 選択している移動指示リストについて、在庫移動実績入力用CSVを出力する\n* 在庫移動実績入力用CSV（機能No.: M04-27）"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990932,
+      "created": "2026-07-22T01:26:49Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:18+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}

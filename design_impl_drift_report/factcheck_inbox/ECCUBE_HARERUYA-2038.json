@@ -1,0 +1,438 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2038",
+  "issueId": 43509567,
+  "summary": "【要確認】在庫管理_ピッキングリスト印刷_ピッキングリスト印刷における「棚番号なし／略称タグなしは非表示」は行の除外ではなく該当項目の非表示を指す要件であり、実装済みである（誤検知）",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:07Z",
+  "updated": "2026-07-22T01:26:51Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2038",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "ピッキングリスト印刷",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【要確認】在庫管理_ピッキングリスト印刷_ピッキングリスト印刷における「棚番号なし／略称タグなしは非表示」は行の除外ではなく該当項目の非表示を指す要件であり、実装済みである（誤検知）",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：ピッキングリスト印刷\n課題カテゴリ：不具合（バグ）\n課題：【要確認】在庫管理_ピッキングリスト印刷_ピッキングリスト印刷における「棚番号なし／略称タグなしは非表示」は行の除外ではなく該当項目の非表示を指す要件であり、実装済みである（誤検知）\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- ピック表において、商品に棚番号が紐づかない場合は棚番号欄を表示しないこと。\n- 商品名内に[略称タグ]が含まれない場合は、商品名から角括弧表記（[〜]）を取り除いて表示すること。\n- 出庫処理が行われる商品のみを対象とし、欠品数を差し引いた実際の移動点数が0枚の商品は行ごと出力対象外とすること。",
+    "現在の挙動": "- 棚番号は、棚番号が紐づかない商品および支店（本店以外）の場合に空文字となり、ピック表の棚番欄が空欄で描画される（＝実装済み）。\n- 略称は、略称タグマスタが紐づかない商品およびサプライ品の場合に空文字となり、略称欄が空欄で描画される（＝実装済み）。\n- 商品名の整形処理では、商品名内に[略称タグ]が含まれない場合に角括弧表記を除去している（＝実装済み）。\n- 移動点数0の商品は HAVING SUM(...) > 0 により行ごと出力対象外としている（＝実装済み）。\n- 元レポートおよび codex が前提とした「棚番なし・略称タグなしの商品を行ごと除外するWHEREが必要」という解釈は設計と整合しないため、乖離は存在しない。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M04_stock_management_basedesign.md:3924-3925 （M04-39 商品表示「商品に棚番号が含まれない場合は非表示とする」「商品名内に[略称タグ]が含まれない場合は非表示とする」）\n.cursor/docs/MDfile/M04_stock_management_basedesign.md:4789 （同系統のピッキングリスト仕様。「商品名内に[略称タグ]が含まれない場合は[～]（[]内にある文字を[]ごと）を削除」と、上記「非表示」の具体的な意味を明記）\n.cursor/docs/MDfile/M04_stock_management_basedesign.md:3947,4762 （「シングルカード以外は色情報は非表示」「略称はサプライ品の場合は表示しない」。行ではなく項目単位の非表示を指す用例）\n.cursor/docs/MDfile/M04_stock_management_basedesign.md:3918 （行ごとの除外要件は「欠品数や実際の移動点数が0枚の商品は表示されない」のみ）\n.cursor/docs/MDfile/M04_stock_management_basedesign.md:3929 （並び順「棚番（昇順、支店の場合は棚番のソートは行わない）」＝棚番を持たない支店の商品も出力される前提）\n\n▼実装該当箇所\nsrc/Eccube/Service/Csv/Exporter/RestockListCsvRowFormatter.php:95 （shelfNumber。本店以外または棚番号なしの場合は空文字＝棚番欄の非表示）\nsrc/Eccube/Service/Csv/Exporter/RestockListCsvRowFormatter.php:83 （storageCode。サプライ品・略称タグなしの場合は空文字＝略称欄の非表示）\nsrc/Eccube/Service/Csv/Exporter/RestockListCsvRowFormatter.php:164-167 （商品名に[略称タグ]が含まれない場合は preg_replace('/\\[.+?\\]/','') で角括弧表記を除去）\nsrc/Eccube/Repository/DtbStockMoveTransferRepository.php:187 （HAVING SUM(...) > 0 により移動点数0の商品を行ごと除外）\nsrc/Eccube/Resource/template/admin/Stock/MoveTransfer/pick_list.twig:51,53 （棚番・略称セルは空文字ならそのまま空欄で描画）\nsrc/Eccube/Controller/Admin/Order/ShippingStandbyController.php:349-356 （受注側ピッキングリストの同一ロジック。コメント「商品名内に[略称タグ]が含まれない場合は[～]を削除」が設計文言の解釈を裏付ける）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で Claude の判定を採用した。\ncodex は DtbStockMoveTransferRepository.php:264,270-271 の LEFT JOIN と WHERE 条件だけを見て「棚番号・略称タグが無い行が除外されていない」ため FACT と判定した。しかしこれは設計の「非表示」を行単位の除外と解釈した誤読である。\n設計書 M04_stock_management_basedesign.md:4789 は同系統ピッキングリストについて「商品名内に[略称タグ]が含まれない場合は[～]（[]内にある文字を[]ごと）を削除」と明記しており、:3925 の「非表示とする」が商品名内の角括弧表記の除去を指すことが確定する。実装 RestockListCsvRowFormatter.php:164-167 はこの通りに動作している。\nまた同設計書は :3947「シングルカード以外は色情報は非表示」、:4762「略称はサプライ品の場合は表示しない」のように、行は出力したうえで項目のみ非表示にする用法で「非表示」を用いており、行ごとの除外は :3918「移動点数が0枚の商品は表示されない」でのみ規定される。この除外は Repository:187 の HAVING SUM(...) > 0 で実装済みである。\nさらに codex の解釈では、棚番号を持たない支店の商品やサプライ品がピック表に一切出力されなくなり、設計 :3929「支店の場合は棚番のソートは行わない」および サプライ区分の出力（:4759）と矛盾する。よって Claude の FALSE_POSITIVE 判定が正しく、category は「該当なし」とする。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "ピッキングリスト印刷",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 3924,
+      "end": 3925,
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 商品に棚番号が含まれない場合は非表示とする\n* 商品名内に[略称タグ]が含まれない場合は非表示とする"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 4789,
+      "end": 4789,
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 商品名内に[略称タグ]が含まれない場合は[～]（[]内にある文字を[]ごと）を削除"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 3947,
+      "end": 3947,
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 9 | 色 / R | ラベル | - | - | - | 商品情報から取り出した色とレアリティを出力（例: 赤R）する<br>シングルカード以外は色に該当するデータがないため、色情報は非表示とする |"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 3918,
+      "end": 3918,
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 出庫処理が行われる商品のみを対象とするため、欠品数や実際の移動点数が0枚の商品は表示されない"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 3929,
+      "end": 3929,
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 言語（日→英→他言語）"
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Exporter/RestockListCsvRowFormatter.php",
+      "start": 95,
+      "end": 95,
+      "fileLines": 189,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            'shelfNumber' => $isMainStore ? (string) ($row['shelfNumberName'] ?? '') : '',"
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Exporter/RestockListCsvRowFormatter.php",
+      "start": 83,
+      "end": 83,
+      "fileLines": 189,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            'storageCode' => $isSupply ? '' : $storageCodeName,"
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Exporter/RestockListCsvRowFormatter.php",
+      "start": 164,
+      "end": 167,
+      "fileLines": 189,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        if ($storageCodeName !== '' && preg_match('/\\['.preg_quote($storageCodeName, '/').'\\]/', $name, $matched)) {\n            $name = str_replace($matched[0], '', $name);\n        } else {\n            $name = (string) preg_replace('/\\[.+?\\]/', '', $name);"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbStockMoveTransferRepository.php",
+      "start": 187,
+      "end": 187,
+      "fileLines": 475,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            $havingClause = 'HAVING SUM('.$quantityExpression.') > 0';"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/MoveTransfer/pick_list.twig",
+      "start": 51,
+      "end": 51,
+      "fileLines": 92,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                <td class=\"shelf_number_\"><div class=\"shelf_number_\">{{ item.shelfNumber }}</div></td>"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php",
+      "start": 349,
+      "end": 356,
+      "fileLines": 444,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                if (preg_match('/\\['.$item['cardsetName'].'\\]/', $productName, $matchedSetName)) {\n                    $productName = str_replace($matchedSetName[0], '', $productName);\n                } else {\n                    // 商品名内に[略称タグ]が含まれない場合は[～]を削除\n                    $productName = preg_replace('/\\[.+?\\]/', '', $productName);\n                }\n                $productName = str_replace('【'.$item['languageCode'].'/'.$item['conditionCode'].'】', '', $productName);\n"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 4789,
+      "end": 4789,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 商品名内に[略称タグ]が含まれない場合は[～]（[]内にある文字を[]ごと）を削除"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Exporter/RestockListCsvRowFormatter.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/DtbStockMoveTransferRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/MoveTransfer/pick_list.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990949,
+      "created": "2026-07-22T01:26:51Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:22+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}

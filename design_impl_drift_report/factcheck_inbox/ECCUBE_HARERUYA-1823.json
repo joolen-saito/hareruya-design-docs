@@ -1,0 +1,187 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1823",
+  "issueId": 43509278,
+  "summary": "【実装乖離】フロント注文_注文購入履歴一覧_注文購入履歴一覧の購入日にて、店頭受取受注→スマレジ取引で複数取引した場合に最も新しい注文日が表示される（設計は一番若い＝最古の注文日）",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:18Z",
+  "updated": "2026-07-14T01:16:18Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1823",
+  "basicInfo": {
+    "分類": "フロント注文",
+    "機能": "注文購入履歴一覧",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント注文_注文購入履歴一覧_注文購入履歴一覧の購入日にて、店頭受取受注→スマレジ取引で複数取引した場合に最も新しい注文日が表示される（設計は一番若い＝最古の注文日）",
+    "設計書": "0304_基本設計仕様書(フロント_注文).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント注文\n機能：注文購入履歴一覧\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント注文_注文購入履歴一覧_注文購入履歴一覧の購入日にて、店頭受取受注→スマレジ取引で複数取引した場合に最も新しい注文日が表示される（設計は一番若い＝最古の注文日）\n設計書：0304_基本設計仕様書(フロント_注文).xlsx",
+    "期待される挙動": "- 「店頭受取受注→スマレジ取引」の注文データの場合、購入日には店頭受取したデータの注文日を表示する。\n- 複数取引した場合は一番若い（＝最も古い）注文日を表示する。",
+    "現在の挙動": "- OrderRepository::findNewestOtcOrderDatesByNextOrderIds() は MAX(o.order_date) で統合グループ内の最も新しい注文日を取得しており、メソッド名・PHPDoc も「order_date の最大値（最も新しい日付）」と明記されている。\n- 取得した最新日付が Order::setOtcSmaregiLinkedPurchaseDate() に設定され、Mypage/shopping_history.twig の購入日にそのまま表示される。\n- 統合受注自身の order_date には統合元受注の最古日が入っている（OrderRepository.php:2159 のコメント）が、購入日表示にはあえて使わない実装になっている。",
+    "補足情報": "▼設計書該当箇所\nF04_order_basedesign.md:561 「| 5 | 購入日 | ラベル | - | - | - | ・「店頭受取受注→スマレジ取引」の注文データの場合は店頭受取したデータの注文日を表示し、複数取引した場合は一番若い注文日を表示する |」\nF04_order_basedesign.md:539 「* 注文日を購入日に変更」\n\n▼実装該当箇所\nsrc/Eccube/Repository/OrderRepository.php:2247-2261 （findNewestOtcOrderDatesByNextOrderIds。MAX(o.order_date) で最新日を取得）\nsrc/Eccube/Repository/OrderRepository.php:2216-2218 （取得した最新日を otcSmaregiLinkedPurchaseDate へ設定）\nsrc/Eccube/Resource/template/default/Mypage/shopping_history.twig:102-104 （購入日として otcSmaregiLinkedPurchaseDate を表示）\n\n▼備考\n「一番若い注文日」を日本語の通例どおり「最も古い（最小の）注文日」と解釈した場合、実装（MAX＝最新）は設計と逆になる。実装側は最古日をあえて避けて MAX を採用しており（OrderRepository.php:2159 のコメント）、設計の解釈が分かれている可能性があるため確信度は medium。仕様確認が必要。"
+  },
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "feature": "注文購入履歴一覧",
+  "classification": "フロント注文",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Mypage/shopping_history.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Repository/OrderRepository.php",
+      "start": 2247,
+      "end": 2261,
+      "fileLines": 485,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Repository/OrderRepository.php",
+      "start": 2216,
+      "end": 2218,
+      "fileLines": 485,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+      "start": 102,
+      "end": 104,
+      "fileLines": 227,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                    {% if Order.isOtcSmaregiLinkedOrder %}\n                                        <dt>{{ 'front.mypage.shopping_history.col.buy_date'|trans }}</dt>\n                                        <dd>{{ (Order.otcSmaregiLinkedPurchaseDate ?? Order.order_date)|date('Y/n/j') }}</dd>"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 561,
+      "end": 561,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 5 | 購入日 | ラベル | - | - | - | ・「店頭受取受注→スマレジ取引」の注文データの場合は店頭受取したデータの注文日を表示し、複数取引した場合は一番若い注文日を表示する | × | × | ◯ | ◯ |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 539,
+      "end": 539,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 注文日を購入日に変更"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Repository/OrderRepository.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:36+09:00",
+  "designResolution": {
+    "requested": "0304_基本設計仕様書(フロント_注文).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+    "sheetCount": 10,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-8",
+        "title": "注文購入履歴一覧",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "買い物かご"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "ご注文方法指定"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "配送先の新規登録_変更"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "配送先の新規登録_確認"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "決済~購入完了"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "注文購入履歴一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "注文購入履歴詳細"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "別添資料_注文ステータスと表示画像の紐付け"
+      }
+    ]
+  }
+}

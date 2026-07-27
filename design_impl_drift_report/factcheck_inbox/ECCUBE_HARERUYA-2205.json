@@ -1,0 +1,260 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2205",
+  "issueId": 43509787,
+  "summary": "【一部実装】分析・集計管理_入荷通知依頼 CSV出力_入荷通知依頼CSV出力にて、項目「通知済み/削除」が「削除」件数のみとなっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:31Z",
+  "updated": "2026-07-14T01:19:31Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2205",
+  "basicInfo": {
+    "分類": "分析・集計管理",
+    "機能": "入荷通知依頼 CSV出力",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】分析・集計管理_入荷通知依頼 CSV出力_入荷通知依頼CSV出力にて、項目「通知済み/削除」が「削除」件数のみとなっている",
+    "設計書": "0211_基本設計仕様書(分析・集計管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：分析・集計管理\n機能：入荷通知依頼 CSV出力\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】分析・集計管理_入荷通知依頼 CSV出力_入荷通知依頼CSV出力にて、項目「通知済み/削除」が「削除」件数のみとなっている\n設計書：0211_基本設計仕様書(分析・集計管理機能).xlsx",
+    "期待される挙動": "- 入荷通知依頼CSV出力の識別ID5は項目名「通知済み/削除」とし、検索条件に該当する商品ごとの「通知済み」もしくは「ユーザー自身が通知取り消しを行った」件数を取得すること。\n- 商品規格ごとに設定されている場合、異なる規格であっても同じ商品で登録している場合は1カウントとし、規格ごとにカウントしないこと。",
+    "現在の挙動": "- CSVヘッダーの5列目は「通知済み/削除」ではなく「削除」となっている（ProductRequestCsvExportService::CSV_HEADER の deleted_count => '削除'）。\n- 出力値は getAnalysisSummary が返す deleted_count（グループ内の全リクエストが論理削除済みのユーザー数）のみで、「通知済み」の件数は含まれていない。\n- 入荷通知メール送信処理(RestockNotificationMailSender)は送信後に通知済みを示すフラグや日時を記録しておらず、dtb_product_request にも通知済みを表すカラムが存在しないため、そもそも通知済み件数を集計できるデータが保持されていない。\n- 同一ユーザーの重複を排除する COUNT(DISTINCT pr.player_id) は実装されているため、「異なる規格でも1カウント」の要件は満たしている。",
+    "補足情報": "▼設計書該当箇所\nM12_analysis_management_basedesign.md:645 の逐語引用: 「| 5 | 通知済み/削除 | ※カスタマイズ対応 |」\nM12_analysis_management_basedesign.md:668 の逐語引用: 「* 識別ID 5:「通知済み/削除」の追加」\nM12_analysis_management_basedesign.md:669 の逐語引用: 「検索項目で指定した条件に該当する商品ごとの通知済みもしくはユーザー自身が通知取り消しを行った件数を取得」\n\n▼実装該当箇所\nsrc/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:29 （CSVヘッダーが 'deleted_count' => '削除'）\nsrc/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:43 （出力データは getAnalysisSummary の結果のみ）\nsrc/Eccube/Repository/DtbProductRequestRepository.php:327 （deleted_count の算出式。通知済みを含まない）\nsrc/Eccube/Entity/DtbProductRequest.php:45 （dtb_product_request は deleted_at のみ保持。通知済みを表す項目なし）\nsrc/Eccube/Service/Stock/RestockNotificationMailSender.php:114 （メール送信後に通知済みを記録する処理がない）\n\n▼備考\n反証として Entity / Repository / Service / Controller / Twig を横断確認したが、入荷通知の「通知済み」状態を保持する項目・テーブルは存在せず、RestockNotificationMailSender もメール送信後に何も更新していない。ユーザー自身による取り消しは CartController の entityManager->remove() と Gedmo SoftDeleteable により deleted_at が設定される。したがって「削除」件数のみが実装済みで「通知済み」は集計不能な状態（一部実装）。git log --since=2026-07-08 で当該ファイルに変更なし。"
+  },
+  "designBook": "0211_基本設計仕様書(分析・集計管理機能).xlsx",
+  "feature": "入荷通知依頼 CSV出力",
+  "classification": "分析・集計管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php",
+      "start": 29,
+      "end": 29,
+      "fileLines": 68,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        'deleted_count' => '削除',"
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php",
+      "start": 43,
+      "end": 43,
+      "fileLines": 68,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $rows = $this->productRequestRepository->getAnalysisSummary($searchData);"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbProductRequestRepository.php",
+      "start": 327,
+      "end": 327,
+      "fileLines": 525,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                '(COUNT(DISTINCT pr.player_id) - COUNT(DISTINCT CASE WHEN pr.deleted_at IS NULL THEN pr.player_id ELSE NULL END)) AS deleted_count',"
+    },
+    {
+      "path": "src/Eccube/Entity/DtbProductRequest.php",
+      "start": 45,
+      "end": 45,
+      "fileLines": 100,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[ORM\\Column(name: 'deleted_at', type: Types::DATETIMETZ_MUTABLE, nullable: true, options: ['comment' => '削除日時'])]"
+    },
+    {
+      "path": "src/Eccube/Service/Stock/RestockNotificationMailSender.php",
+      "start": 114,
+      "end": 114,
+      "fileLines": 126,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private function sendMail(DtbProductRequest $ProductRequest): void"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+      "start": 645,
+      "end": 645,
+      "resolvedFrom": "M12_analysis_management_basedesign.md",
+      "fileLines": 979,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 5 | 通知済み/削除 | ※カスタマイズ対応 |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+      "start": 668,
+      "end": 668,
+      "resolvedFrom": "M12_analysis_management_basedesign.md",
+      "fileLines": 979,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 識別ID 5:「通知済み/削除」の追加"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+      "start": 669,
+      "end": 669,
+      "resolvedFrom": "M12_analysis_management_basedesign.md",
+      "fileLines": 979,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "検索項目で指定した条件に該当する商品ごとの通知済みもしくはユーザー自身が通知取り消しを行った件数を取得"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/DtbProductRequestRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbProductRequest.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Stock/RestockNotificationMailSender.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:44+09:00",
+  "designResolution": {
+    "requested": "0211_基本設計仕様書(分析・集計管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+    "sheetCount": 20,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-15",
+        "title": "入荷通知依頼 CSV出力",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "日別・月別集計 集計一覧(検索項目-日別)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "日別・月別集計 集計一覧(検索項目-月別)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "日別・月別集計 集計一覧(検索結果-日別)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "日別・月別集計 集計一覧(検索結果-月別)"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日別・月別集計 CSV出力"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "受注売上分析 集計一覧(検索項目)"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "受注売上分析 集計一覧(検索結果-集計単位 商品)"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "受注売上分析 集計一覧(検索結果-集計単位 カテゴリ )"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "受注売上分析 CSV出力(商品)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "受注売上分析 CSV出力(カテゴリ)"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "入荷通知依頼 一覧表示(検索項目)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "入荷通知依頼 一覧表示(検索結果)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "入荷通知依頼 CSV出力"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "フォーマット売上分析 集計一覧(検索項目)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "フォーマット売上分析 集計一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "フォーマット売上分析 CSV出力"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "特集タグ編集CSVダウンロード(検索項目)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "特集タグ編集CSVダウンロード CSV出力"
+      }
+    ]
+  }
+}

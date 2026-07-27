@@ -1,0 +1,384 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2021",
+  "issueId": 43509545,
+  "summary": "【実装乖離】在庫管理_在庫移動指示検索_在庫移動実績CSV登録にて、設計の2列（移動指示ID・送り状No.）ではなく4列（店舗名2列を含む）のCSVを要求している",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:58Z",
+  "updated": "2026-07-22T01:26:49Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2021",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "在庫移動指示検索",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】在庫管理_在庫移動指示検索_在庫移動実績CSV登録にて、設計の2列（移動指示ID・送り状No.）ではなく4列（店舗名2列を含む）のCSVを要求している",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：在庫移動指示検索\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_在庫移動指示検索_在庫移動実績CSV登録にて、設計の2列（移動指示ID・送り状No.）ではなく4列（店舗名2列を含む）のCSVを要求している\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- 在庫移動実績CSV登録のCSVは「移動指示ID」「送り状No.」の2列とし、1行目のカラム名が一致しない場合はフォーマット不一致エラーとすること。\n- 移動指示ID・送り状No.はいずれも必須とし、指定された移動指示IDが存在することを検証すること。",
+    "現在の挙動": "- 取込ハンドラは「移動指示ID」「出庫元店舗(名称)」「入庫先店舗(名称)」「送り状No.」の4列を定義し、行の列数が定義数と一致しない場合は列数不正エラーとするため、設計どおりの2列CSVは取り込めない。\n- 雛形ダウンロード（csvTrackingDownload 相当の csvTemplateDownload）も4列のヘッダを出力しており、モーダル内のフォーマット説明も4項目を提示している。\n- 移動指示IDの必須・数値チェック、存在チェック、送り状No.の必須チェックは実装されている。\n- 出庫元店舗(名称)・入庫先店舗(名称)は任意入力扱いだが、値がある場合は移動指示の店舗名と一致しないとエラーになる。",
+    "補足情報": "▼設計書該当箇所\nM04_stock_management_basedesign.md:3811-3815 の逐語引用「商品登録を押下時に下記の場合エラーとなる / ・アップロードされたファイルがcsv以外のファイルの場合 / ・CSVファイルが下記のカラム名以外の場合（フォーマット不一致エラー） / 移動指示ID、送り状No. / ※CSV1行目のカラム名の一致チェックを行う」\nM04_stock_management_basedesign.md:3819-3820 の逐語引用「| 2-1 | 移動指示ID | ○ | 数値 | ○ | 1～99999999 | 1234 | 送り状No.を登録したい移動指示IDを指定 | / | 2-2 | 送り状No. | 文字列 | ○ | 65535byte | 1234-5678,1234-1234 | 形式のチェックは行わない、カンマ区切りで複数登録可能 |」\n\n▼実装該当箇所\nsrc/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:37-40 （4列のカラム定義）\nsrc/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:79-84 （列数が定義と一致しない行は列数不正エラー）\nsrc/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:199-210 （移動指示ID：必須＋数値、送り状No.：必須）\nsrc/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:339 （雛形CSVのヘッダも4列）\nsrc/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:312-330 （モーダルのフォーマット説明も4項目）\n\n▼備考\n存在チェック・必須チェックは実装済み。乖離はCSVのカラム構成（設計は2列、実装は店舗名2列を含む4列を必須の列構成として要求）。なお在庫移動実績入力用CSV（M04-27）の列定義シートは本設計書MDに含まれていないため、M04-27側で4列が定義されている可能性は排除できない（confidence: medium）。ただしM04-24シートの登録CSVレイアウトおよびフォーマット不一致エラーの記述は2列を明示している。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "在庫移動指示検索",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php",
+      "start": 37,
+      "end": 40,
+      "fileLines": 248,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private const COL_INSTRUCTION_ID = '移動指示ID';\n    private const COL_MOVE_FROM_SHOP = '出庫元店舗(名称)';\n    private const COL_MOVE_TO_SHOP = '入庫先店舗(名称)';\n    private const COL_TRACKING_NO = '送り状No.';"
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php",
+      "start": 79,
+      "end": 84,
+      "fileLines": 248,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        if (count($row) !== count($columns)) {\n            $messageStore->addInvalidColumnCountError($row->getRowNumber());\n            $event->skipRow();\n\n            return;\n        }"
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php",
+      "start": 199,
+      "end": 210,
+      "fileLines": 248,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private function initializeColumnDefinitions(): void\n    {\n        $this->instructionIdColumn = (new BaseCsvColumn(self::COL_INSTRUCTION_ID, self::COL_INSTRUCTION_ID))\n            ->setRequired(true)\n            ->setConverter(new IntConverter())\n            ->addValidator(new NumericValidator());\n        $this->moveFromShopColumn = new BaseCsvColumn(self::COL_MOVE_FROM_SHOP, self::COL_MOVE_FROM_SHOP);\n        $this->moveToShopColumn = new BaseCsvColumn(self::COL_MOVE_TO_SHOP, self::COL_MOVE_TO_SHOP);\n        $this->trackingNoColumn = (new BaseCsvColumn(self::COL_TRACKING_NO, self::COL_TRACKING_NO))\n            ->setRequired(true)\n            ->addValidator(new RequiredValidator());\n    }"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php",
+      "start": 339,
+      "end": 339,
+      "fileLines": 459,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $columns = ['移動指示ID', '出庫元店舗(名称)', '入庫先店舗(名称)', '送り状No.'];"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig",
+      "start": 312,
+      "end": 330,
+      "fileLines": 429,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                                <tbody>\n                                                    <tr>\n                                                        <td class=\"table-light fw-bold\"><span class=\"badge bg-primary me-1\">{{ 'admin.common.required'|trans }}</span>{{ 'admin.stock.move_instruction.csv_format_instruction_id'|trans }}</td>\n                                                        <td>{{ 'admin.stock.move_instruction.csv_format_instruction_id_desc'|trans }}</td>\n                                                    </tr>\n                                                    <tr>\n                                                        <td class=\"table-light fw-bold\">{{ 'admin.stock.move_instruction.csv_format_move_from_shop'|trans }}</td>\n                               "
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 3811,
+      "end": 3815,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "商品登録を押下時に下記の場合エラーとなる\n・アップロードされたファイルがcsv以外のファイルの場合\n・CSVファイルが下記のカラム名以外の場合（フォーマット不一致エラー）\n移動指示ID、送り状No.\n※CSV1行目のカラム名の一致チェックを行う"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 3819,
+      "end": 3820,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 2-1 | 移動指示ID | ○ | 数値 | ○ | 1～99999999 | 1234 | 送り状No.を登録したい移動指示IDを指定 |\n| 2-2 | 送り状No. | 文字列 | ○ | 65535byte | 1234-5678,1234-1234 | 形式のチェックは行わない、カンマ区切りで複数登録可能 |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990931,
+      "created": "2026-07-22T01:26:49Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:18+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}

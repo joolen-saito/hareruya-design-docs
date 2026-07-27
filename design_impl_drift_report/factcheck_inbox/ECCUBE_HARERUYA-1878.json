@@ -1,0 +1,253 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1878",
+  "issueId": 43509353,
+  "summary": "【実装乖離】フロント会員_オンライン本人確認_オンライン本人確認の「撮影する身分証明書の種類」に、設計で除外された「住民基本台帳カード」「健康保険被保険者証」が選択肢として残っている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:47Z",
+  "updated": "2026-07-14T01:16:47Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1878",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "オンライン本人確認",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント会員_オンライン本人確認_オンライン本人確認の「撮影する身分証明書の種類」に、設計で除外された「住民基本台帳カード」「健康保険被保険者証」が選択肢として残っている",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：オンライン本人確認\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_オンライン本人確認_オンライン本人確認の「撮影する身分証明書の種類」に、設計で除外された「住民基本台帳カード」「健康保険被保険者証」が選択肢として残っている\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- オンライン本人確認(F06-13)の(2-3)撮影する身分証明書の種類は、「自動車運転免許証」「パスポート」「外国人登録証明書」「学生証・社員証」「身体障害者手帳」「マイナンバーカード」の6種類から1つを選択できること。\n- 現行システムに含まれていた「住民基本台帳カード」は、2025/12/31で全カードの有効期限が切れるため選択肢から除外すること。",
+    "現在の挙動": "- 身分証明書の選択肢は mtb_identification マスタから取得しており、マイグレーション(Version20251125145015)が投入するレコードは8件で、設計に無い「健康保険被保険者証」(id=3)と、設計が明示的に除外した「住民基本台帳カード」(id=5)が含まれている。\n- 選択肢を構築する IdentificationType の query_builder は id 昇順で全件を取得するだけで、除外対象を絞り込むフィルタが無い。\n- そのため、オンライン本人確認の身分証明書セレクトボックスには8種類が表示され、「住民基本台帳カード」も選択できてしまう。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:704-707 「**★ (2-3)撮影する身分証の種類が表示され、提出したい証明書が選択できる。** 申請可能な身分証明書は「自動車運転免許証」「パスポート」「外国人登録証明書」「学生証・社員証」「身体障害者手帳」「マイナンバーカード」の6種類から1つ選択する」「※: 現行システムでは「住民基本台帳カード」が含まれていたが、2025/12/31で全カードの有効期限が切れるため除外」\nF06_customer_basedesign.md:713 「| 2-3 | 撮影する身分証明書の種類 | 単一選択(セレクトボックス) | 〇 | - | - | ・申請する身分証明書の種類を選択 |」\n\n▼実装該当箇所\napp/DoctrineMigrations/Version20251125145015.php:62-95 （mtb_identification に8件投入。id=3 健康保険被保険者証 / id=5 住民基本台帳カード を含む）\nsrc/Eccube/Form/Type/Master/IdentificationType.php:32-38 （MtbIdentification を id 昇順で全件取得。除外フィルタ無し）\nsrc/Eccube/Form/Type/Front/IdentificationSelectType.php:43-50 （Identification に IdentificationType をそのまま使用）\nsrc/Eccube/Resource/template/default/Mypage/online_identification.twig:64-69 （form_widget(form.Identification) でセレクトボックスを描画）\n\n▼備考\n反証として mtb_identification に対する DELETE/UPDATE を行う後続マイグレーションや、フロント側での選択肢絞り込み(choice_filter / query_builder の where)を grep したが、現HEADには存在しない。設計の6種類との差分は「健康保険被保険者証」と「住民基本台帳カード」の2件(いずれも設計の申請可能リストに無い)。マスタから物理削除するか、IdentificationType の query_builder で除外する対応が必要。なお設計の「学生証・社員証」はマスタ上「学生証、会社員証」(id=6)として存在する。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "オンライン本人確認",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "app/DoctrineMigrations/Version20251125145015.php",
+      "start": 62,
+      "end": 95,
+      "fileLines": 97,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        return [\n            [\n                'id' => 1,\n                'name' => '自動車運転免許証',\n            ],\n            [\n                'id' => 2,\n                'name' => 'パスポート',\n            ],\n            [\n                'id' => 3,\n                'name' => '健康保険被保険者証',\n            ],\n            [\n                'id' => 4,\n                'name' => '外国人登録証明書',\n            ],\n            [\n                'id' => 5,\n                'name' => '住民基本台帳カード',\n            ],\n            [\n                'id' => 6,\n                'name' => '学生証、会社員証',\n            ],\n            [\n                'id' => 7,\n                'name' => '身体障害者手帳',\n            ],\n            [\n                'id' => 8,\n                'name' => 'マイナンバーカード',\n            ],\n        ];"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Master/IdentificationType.php",
+      "start": 32,
+      "end": 38,
+      "fileLines": 58,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $resolver->setDefaults([\n            'class' => MtbIdentification::class,\n            'choice_label' => 'name',\n            'placeholder' => 'common.select',\n            'query_builder' => fn (EntityRepository $er) => $er->createQueryBuilder('m')\n                ->orderBy('m.id', 'ASC'),\n        ]);"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Front/IdentificationSelectType.php",
+      "start": 43,
+      "end": 50,
+      "fileLines": 61,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $builder\n            ->add('Identification', IdentificationType::class, [\n                'label' => 'admin.customer.customer_status',\n                'required' => true,\n                'expanded' => false,\n                'multiple' => false,\n                'placeholder' => 'common.select',\n            ]);"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/online_identification.twig",
+      "start": 64,
+      "end": 69,
+      "fileLines": 94,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                    <div class=\"c-hareruya-select\">\n                                        {{ form_label(form.Identification, 'front.mypage.identification.form.identification', { label_attr: { class: 'u-hareruya-dsp-visually-hidden' } }) }}\n                                        {{ form_widget(form.Identification, { attr: { class: 'c-hareruya-select__field' } }) }}\n                                        <i class=\"icon-hareruya-arrow-down c-hareruya-icon--xs\" aria-hidden=\"true\"></i>\n                                    </div>\n                                    {{ form_errors(form.Identification) }}"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 704,
+      "end": 707,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "**★ (2-3)撮影する身分証の種類が表示され、提出したい証明書が選択できる。**\n申請可能な身分証明書は「自動車運転免許証」「パスポート」「外国人登録証明書」\n「学生証・社員証」「身体障害者手帳」「マイナンバーカード」の6種類から1つ選択する\n* **※**: 現行システムでは「住民基本台帳カード」が含まれていたが、2025/12/31で全カードの有効期限が切れるため除外"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 713,
+      "end": 713,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 2-3 | 撮影する身分証明書の種類 | 単一選択(セレクトボックス) | 〇 | - | - | ・申請する身分証明書の種類を選択 |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "app/DoctrineMigrations/Version20251125145015.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Master/IdentificationType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Front/IdentificationSelectType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/online_identification.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:46+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

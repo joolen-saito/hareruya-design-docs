@@ -1,0 +1,211 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2150",
+  "issueId": 43509721,
+  "summary": "【実装乖離】基本情報設定_自動送信メール_自動送信メールにて、「本文上部」の最大文字数（32768文字）が検証されていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:05Z",
+  "updated": "2026-07-14T01:19:05Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2150",
+  "basicInfo": {
+    "分類": "基本情報設定",
+    "機能": "自動送信メール",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】基本情報設定_自動送信メール_自動送信メールにて、「本文上部」の最大文字数（32768文字）が検証されていない",
+    "設計書": "0209_基本設計仕様書(基本情報設定).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：基本情報設定\n機能：自動送信メール\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_自動送信メール_自動送信メールにて、「本文上部」の最大文字数（32768文字）が検証されていない\n設計書：0209_基本設計仕様書(基本情報設定).xlsx",
+    "期待される挙動": "- 自動送信メール（M10-08）画面の識別ID 1-6「本文上部」は全角・半角のテキスト入力で、最大値は32768文字である。\n- 32768文字を超える入力は登録時にエラーとなる。",
+    "現在の挙動": "- AutoMailType の header（本文上部）は TextareaType で required=false と attr.rows=5 のみが指定されており、Length などの文字数制約が一切付与されていない。\n- 同じフォームの name（テンプレ名称）や mail_subject（件名）には Length(max: eccube_stext_len=255) が付与されており、設計の最大値255文字が実装されているのと対照的である。\n- dtb_mail_template.header のカラム型は TEXT（長さ制限なし）であるため、DB側でも32768文字の上限は担保されない。\n- 結果として32768文字を超える本文上部を登録できてしまう。",
+    "補足情報": "▼設計書該当箇所\nM10_base_info_setting_basedesign.md:275 の逐語引用: 「| 1-6 | 本文上部 | 全角・半角 | - | 32768文字 | - | - |」\nM10_base_info_setting_basedesign.md:273-274 の逐語引用: 「| 1-4 | テンプレ名称 | 全角・半角 | - | 255文字 | - | - |」「| 1-5 | 件名 | 全角・半角 | - | 255文字 | - | - |」（同一表の最大値列は実装で Length として反映されている）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/AutoMailType.php:69-74 （header は TextareaType, required=false のみで Length 制約なし）\nsrc/Eccube/Form/Type/Admin/AutoMailType.php:56-68 （name / mail_subject には Length(max: eccube_stext_len) が付与されている）\nsrc/Eccube/Entity/MailTemplate.php:315-316 （header カラムは Types::TEXT で長さ制限なし）\nsrc/Eccube/Resource/template/admin/mall/AutoMail/detail.twig:109 （form.header を描画）\n\n▼備考\n同一フォームの 1-4 / 1-5 では設計の最大値列（255文字）が Length 制約として実装されており、最大値列が実装対象であることは明らか。1-6 のみ Length が欠落している。"
+  },
+  "designBook": "0209_基本設計仕様書(基本情報設定).xlsx",
+  "feature": "自動送信メール",
+  "classification": "基本情報設定",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/AutoMailType.php",
+      "start": 69,
+      "end": 74,
+      "fileLines": 108,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('header', TextareaType::class, [\n                'required' => false,\n                'attr' => [\n                    'rows' => 5,\n                ],\n            ])"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/AutoMailType.php",
+      "start": 56,
+      "end": 68,
+      "fileLines": 108,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('name', TextType::class, [\n                'constraints' => [\n                    new NotBlank(),\n                    new Length(['max' => $this->eccubeConfig['eccube_stext_len']]),\n                ],\n            ])\n            ->add('mail_subject', TextType::class, [\n                'required' => true,\n                'constraints' => [\n                    new NotBlank(),\n                    new Length(['max' => $this->eccubeConfig['eccube_stext_len']]),\n                ],\n            ])"
+    },
+    {
+      "path": "src/Eccube/Entity/MailTemplate.php",
+      "start": 315,
+      "end": 316,
+      "fileLines": 246,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig",
+      "start": 109,
+      "end": 109,
+      "fileLines": 178,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                    {{ form_widget(form.header) }}"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 275,
+      "end": 275,
+      "resolvedFrom": "M10_base_info_setting_basedesign.md",
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1-6 | 本文上部 | 全角・半角 | - | 32768文字 | - | - |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 273,
+      "end": 274,
+      "resolvedFrom": "M10_base_info_setting_basedesign.md",
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1-4 | テンプレ名称 | 全角・半角 | - | 255文字 | - | - |\n| 1-5 | 件名 | 全角・半角 | - | 255文字 | - | - |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/AutoMailType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/MailTemplate.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:32+09:00",
+  "designResolution": {
+    "requested": "0209_基本設計仕様書(基本情報設定).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html",
+    "sheetCount": 14,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-9",
+        "title": "自動送信メール",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "基本設定(旧ショップマスター)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "特定商取引に関する法律"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "利用規約管理"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "支払い方法　手数料設定"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "配送方法設定"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "税率設定"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "自動送信メール"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "メール設定"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "カスタムCSV出力設定"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "店舗登録"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "追加システム設定"
+      }
+    ]
+  }
+}

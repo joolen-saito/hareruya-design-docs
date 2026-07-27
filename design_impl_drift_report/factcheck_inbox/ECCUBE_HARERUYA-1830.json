@@ -1,0 +1,303 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1830",
+  "issueId": 43509285,
+  "summary": "【一部実装】フロント注文_ご注文方法指定_ご注文方法指定(F04-02)のポイントエリアにて、表示制御の条件が「購入グループ＝店内アカウント」ではなく「配送方法＝店頭受取(OTC)」となっているため、支店用店内アカウントでスムーズ店頭受取が選択された場合にポイント項目が表示されてしまう。",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:22Z",
+  "updated": "2026-07-14T01:16:22Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1830",
+  "basicInfo": {
+    "分類": "フロント注文",
+    "機能": "ご注文方法指定",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロント注文_ご注文方法指定_ご注文方法指定(F04-02)のポイントエリアにて、表示制御の条件が「購入グループ＝店内アカウント」ではなく「配送方法＝店頭受取(OTC)」となっているため、支店用店内アカウントでスムーズ店頭受取が選択された場合にポイント項目が表示されてしまう。",
+    "設計書": "0304_基本設計仕様書(フロント_注文).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント注文\n機能：ご注文方法指定\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロント注文_ご注文方法指定_ご注文方法指定(F04-02)のポイントエリアにて、表示制御の条件が「購入グループ＝店内アカウント」ではなく「配送方法＝店頭受取(OTC)」となっているため、支店用店内アカウントでスムーズ店頭受取が選択された場合にポイント項目が表示されてしまう。\n設計書：0304_基本設計仕様書(フロント_注文).xlsx",
+    "期待される挙動": "- 購入グループが「店内アカウント」の場合は、案内文言（「ポイントのご利用は、店頭にてお支払いいただく際にお申し付けください。」）を表示し、ポイント系の項目（(6-4)ポイント残高・(6-5)ポイント使用ラジオ・(6-6)使用ポイント入力）は非表示とすること（設計 F04_order_basedesign.md:305）。\n- (6-4)〜(6-6)のポイント系項目はECの場合のみ表示すること（設計 F04_order_basedesign.md:313-315）。",
+    "現在の挙動": "- 案内文言（front.shopping.point_otc_notice）の else 節自体は実装済みだが、その分岐条件 canUsePoint は「選択中の配送方法が Delivery::OTC(=6) でない」ことのみで判定しており、購入グループ（DtbCustomerGroup::OTC_GROUP ＝ 店内アカウント(3)/支店用店内アカウント(5)）の判定を一切行っていない（Shopping/index.twig:129,550,589）。\n- 支店では配送方法の選択肢が ShippingType により Delivery::OTC と Delivery::SMOOTH_OTC の2件にハードコードされ（顧客グループ×支払方法による絞り込みを経由しない）、さらに sort_no は スムーズ店頭受取=2 / 店頭受取=4 のため既定選択は スムーズ店頭受取(Delivery::SMOOTH_OTC=7) となる。\n- この結果、支店用店内アカウント（DtbCustomerGroup::OTC_SHITEN=5、isOtcGroup()=true）で支店から注文すると canUsePoint が真となり、案内文言ではなくポイント残高・ポイント使用ラジオ・使用ポイント入力欄が表示される（各支店の BaseInfo は option_point=1 で投入済み）。\n- 同テンプレート内の「当日中に受け取ります」チェックボックスでは app.user.Player.CustomerGroup.isOtcGroup() による購入グループ判定を行っており（Shopping/index.twig:397）、ポイントエリアにのみ購入グループ判定が欠けている。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/F04_order_basedesign.md:305 （「購入グループが店内アカウントの場合は文言を表示し、ポイント系の項目は非表示とする」）\n.cursor/docs/MDfile/F04_order_basedesign.md:313-315 （(6-4)ポイント残高／(6-5)ポイント使用／(6-6)使用ポイント：いずれも「ECの場合のみ表示する」）\n.cursor/docs/MDfile/F04_order_basedesign.md:302 （「支店の場合はポイントを表示しない」）\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Shopping/index.twig:129 （canUsePoint の定義。delivery.id != Delivery::OTC のみで判定し、購入グループを見ていない）\nsrc/Eccube/Resource/template/default/Shopping/index.twig:549-550,589-592 （BaseInfo.isOptionPoint かつ canUsePoint ならポイント項目、else なら案内文言 front.shopping.point_otc_notice）\nsrc/Eccube/Form/Type/Shopping/ShippingType.php:129-134 （支店では配送方法を [Delivery::OTC, Delivery::SMOOTH_OTC] に固定。DeliveryRepository::findDeliveriesForOrder の顧客グループ／支払方法絞り込みを経由しない）\nsrc/Eccube/Form/Type/Shopping/ShippingType.php:139-143 （選択中配送方法が候補外なら $Deliveries[0] を既定選択。sort_no 昇順のため支店の既定は スムーズ店頭受取）\napp/DoctrineMigrations/Version20260604000002.php:37-38 （店頭受取 sort_no=4 / スムーズ店頭受取 sort_no=2）\nsrc/Eccube/Entity/DtbCustomerGroup.php:29-37,231-237 （OTC_GROUP = [OTC(3), OTC_SHITEN(5)] と isOtcGroup()）\n\n▼AIレビューで判定が割れた理由\nClaude は「乖離あり」、codex は「実装済み」と判定し、第三者による再検証で Claude の判定を採用した。\n元レポートの「else節の案内文言なし」は両者とも誤りと認定しており、この点は一致（案内文言は src/Eccube/Resource/template/default/Shopping/index.twig:589-592、messages.ja.yaml:1432 / messages.en.yaml:1232 に実装済み）。割れたのは『購入グループ判定の欠落が実害に至るか』である。\ncodex は本店側の経路のみを追い、app/DoctrineMigrations/Version20260604000002.php:1247以降（customer_group 3 → payment 23、customer_group 5 → payment 16,23）と :1057以降（payment 23/16 は delivery 6=店頭受取にのみ紐付く）、および src/Eccube/Repository/DeliveryRepository.php:151-160 の顧客グループ結合から「店内アカウントは店頭受取しか選べない＝canUsePoint は常に偽」として FALSE_POSITIVE とした。この推論は本店（isMainShop）経路に限れば正しい。\nしかし codex は src/Eccube/Form/Type/Shopping/ShippingType.php:129-134 を見落としている。支店（isMainShop=false）では DeliveryRepository::findDeliveriesForOrder（顧客グループ×支払方法の絞り込み）を通らず、findForShopping で [Delivery::OTC, Delivery::SMOOTH_OTC] が無条件に候補となる。さらに :139-143 の既定選択は sort_no 昇順先頭＝スムーズ店頭受取（app/DoctrineMigrations/Version20260604000002.php:38、sort_no=2）であるため、支店用店内アカウント(DtbCustomerGroup::OTC_SHITEN=5) では canUsePoint が真となり、ポイント残高・ポイント使用ラジオ・使用ポイント入力が既定で露出する。\nclaude は「購入グループではなく配送方法で判定している」という核心を正しく捉えており（src/Eccube/Resource/template/default/Shopping/index.twig:129 と :397 の対比）、結論は claude が正しい。ただし claude が想定した『本店の店内アカウント＋スムーズ店頭受取』は master 上不到達で、実際に到達可能なのは上記の支店経路である。修正は canUsePoint に isOtcGroup() 判定（および設計 :302 の支店条件）を加えることが対象。"
+  },
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "feature": "ご注文方法指定",
+  "classification": "フロント注文",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Shopping/index.twig",
+      "start": 129,
+      "end": 129,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "Shopping/index.twig",
+      "start": 397,
+      "end": 397,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 305,
+      "end": 305,
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 購入グループが店内アカウントの場合は文言を表示し、ポイント系の項目は非表示とする"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 313,
+      "end": 315,
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 6-4 | ポイント残高 | ラベル | △ | - | ・ECの場合のみ表示する |\n| 6-5 | ポイント使用 | 単一選択（ラジオボタン） | △ | 9桁 | 0 | 選択肢：ポイントをためる、ポイントを使う<br>・ECの場合のみ表示する |\n| 6-6 | 使用ポイント | 数値（整数） | △ | - | 会員の保有ポイント | ・ECの場合のみ表示する<br>・ポイント使用ラジオボタンで「ポイントを使う」を選択した場合のみ活性化する |"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 302,
+      "end": 302,
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 支店の場合はポイントを表示しない"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 129,
+      "end": 129,
+      "fileLines": 450,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                    </div>"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 549,
+      "end": 550,
+      "fileLines": 450,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Shopping/ShippingType.php",
+      "start": 129,
+      "end": 134,
+      "fileLines": 285,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                $minDate = 0;\n                $deliveryDurationFlag = false;\n\n                // 配送時に最大となる商品日数を取得\n                foreach ($Shipping->getOrderItems() as $detail) {\n                    $ProductClass = $detail->getProductClass();"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Shopping/ShippingType.php",
+      "start": 139,
+      "end": 143,
+      "fileLines": 285,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                    if (is_null($deliveryDuration)) {\n                        continue;\n                    }\n                    if ($deliveryDuration->getDuration() < 0) {\n                        // 配送日数がマイナスの場合はお取り寄せなのでスキップする"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260604000002.php",
+      "start": 37,
+      "end": 38,
+      "fileLines": 1307,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "('6', '1', '1', '1', '店頭受取', '店頭受取', NULL, NULL, '4', 'true', '2018-11-29 17:40:10+00', '2026-01-15 00:58:43+00', 'In-Store Pickup', NULL, NULL, 'false', 'true'),\n('7', '1', '1', '1', 'スムーズ店頭受取', 'スムーズ店頭受取', NULL, NULL, '2', 'true', '2018-11-29 17:40:10+00', '2026-01-15 00:58:43+00', 'Prepaid Pickup', NULL, NULL, 'false', 'true'),"
+    },
+    {
+      "path": "src/Eccube/Entity/DtbCustomerGroup.php",
+      "start": 29,
+      "end": 37,
+      "fileLines": 239,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public const SCG = 2;\n    public const OTC = 3;\n    public const SEKAPPY = 4;\n    public const OTC_SHITEN = 5;\n\n    public const OTC_GROUP = [\n        self::OTC,\n        self::OTC_SHITEN,\n    ];"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 589,
+      "end": 592,
+      "fileLines": 450,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260604000002.php",
+      "start": 1247,
+      "end": 1247,
+      "fileLines": 1307,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "INSERT INTO dtb_customer_group_payment (customer_group_id, payment_id) VALUES"
+    },
+    {
+      "path": "src/Eccube/Repository/DeliveryRepository.php",
+      "start": 151,
+      "end": 160,
+      "fileLines": 84,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260604000002.php",
+      "start": 38,
+      "end": 38,
+      "fileLines": 1307,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "('7', '1', '1', '1', 'スムーズ店頭受取', 'スムーズ店頭受取', NULL, NULL, '2', 'true', '2018-11-29 17:40:10+00', '2026-01-15 00:58:43+00', 'Prepaid Pickup', NULL, NULL, 'false', 'true'),"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 305,
+      "end": 305,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 購入グループが店内アカウントの場合は文言を表示し、ポイント系の項目は非表示とする"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 313,
+      "end": 315,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 6-4 | ポイント残高 | ラベル | △ | - | ・ECの場合のみ表示する |\n| 6-5 | ポイント使用 | 単一選択（ラジオボタン） | △ | 9桁 | 0 | 選択肢：ポイントをためる、ポイントを使う<br>・ECの場合のみ表示する |\n| 6-6 | 使用ポイント | 数値（整数） | △ | - | 会員の保有ポイント | ・ECの場合のみ表示する<br>・ポイント使用ラジオボタンで「ポイントを使う」を選択した場合のみ活性化する |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/F04_order_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Shopping/ShippingType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260604000002.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbCustomerGroup.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/DeliveryRepository.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:38+09:00",
+  "designResolution": {
+    "requested": "0304_基本設計仕様書(フロント_注文).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+    "sheetCount": 10,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-4",
+        "title": "ご注文方法指定",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "買い物かご"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "ご注文方法指定"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "配送先の新規登録_変更"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "配送先の新規登録_確認"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "決済~購入完了"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "注文購入履歴一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "注文購入履歴詳細"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "別添資料_注文ステータスと表示画像の紐付け"
+      }
+    ]
+  }
+}

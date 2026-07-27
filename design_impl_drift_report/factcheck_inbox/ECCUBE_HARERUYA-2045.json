@@ -1,0 +1,314 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2045",
+  "issueId": 43509577,
+  "summary": "【実装乖離】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_メール一括送信のテンプレ選択が、メール管理で作成されたテンプレート一覧ではなく特定ベースファイル（sell_order / sell_order.en / no_base）のテンプレートのみに限定されている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:11Z",
+  "updated": "2026-07-25T11:03:57Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2045",
+  "basicInfo": {
+    "分類": "受注管理",
+    "機能": "メール一括送信 / 【新規】手動メール通知(確認画面)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_メール一括送信のテンプレ選択が、メール管理で作成されたテンプレート一覧ではなく特定ベースファイル（sell_order / sell_order.en / no_base）のテンプレートのみに限定されている",
+    "設計書": "0203_基本設計仕様書(受注管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：受注管理\n機能：メール一括送信 / 【新規】手動メール通知(確認画面)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_メール一括送信のテンプレ選択が、メール管理で作成されたテンプレート一覧ではなく特定ベースファイル（sell_order / sell_order.en / no_base）のテンプレートのみに限定されている\n設計書：0203_基本設計仕様書(受注管理機能).xlsx",
+    "期待される挙動": "- メール一括送信（M05-06）のテンプレ選択（識別ID 1）の選択肢は、ショップ設定＞メール管理で作成されているテンプレート一覧が表示されること。",
+    "現在の挙動": "- OrderManualMailAllType の template フィールドの query_builder は mt.file_name IN (:fileNames) で絞り込んでおり、MailController::manualMailAll() から渡される baseFiles は MailTemplate::BASE_SELL_ORDER / BASE_SELL_ORDER_EN / BASE_NO_BASE の3種のみである。\n- そのため選択肢は file_name が 'Mail/sell_order.twig' / 'Mail/sell_order.en.twig' / 'Mail/no_base.twig' のテンプレートに限定される。\n- ショップ設定＞メール管理（MailType）でテンプレートを新規作成すると file_name は 'Mail/Mall/<入力名>.twig' となるため、メール管理で新規作成したテンプレートはメール一括送信のテンプレ選択に一切表示されない。\n- また、メール管理の一覧は baseInfo と isAutoSend=false で絞り込んでいるのに対し、メール一括送信側はこれらの条件で絞り込んでいないため、両者の一覧は一致しない。",
+    "補足情報": "▼設計書該当箇所\nM05_order_management_basedesign.md:738 「| 1 | テンプレ選択 | 単一選択(セレクトボックス) | … | ・項目変更時に画面を更新<br>・選択肢はショップ設定＞メール管理で作成されているテンプレート一覧が表示される |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/OrderManualMailAllType.php:38-55 （template の query_builder が file_name IN (:fileNames) で絞り込み）\nsrc/Eccube/Controller/Admin/Order/MailController.php:345-354 （baseFiles に BASE_SELL_ORDER / BASE_SELL_ORDER_EN / BASE_NO_BASE のみを渡す）\nsrc/Eccube/Entity/MailTemplate.php:98-110 （BASE_FILES の定義）\nsrc/Eccube/Form/Type/Admin/MailType.php:49-57 （メール管理の一覧は baseInfo と isAutoSend=false で絞り込み）\nsrc/Eccube/Form/Type/Admin/MailType.php:118 （メール管理で新規作成したテンプレートの file_name は 'Mail/Mall/<name>.twig' になる）\n\n▼備考\n受注向けメールに限定する意図での実装と推測されるが、設計書は「メール管理で作成されているテンプレート一覧」と明記している。メール管理で新規作成したテンプレート（file_name='Mail/Mall/xxx.twig'）が一括送信の選択肢に出てこないため、運用上も実害が出る。ただし「メール管理で作成されているテンプレート一覧」の解釈幅があるため confidence=medium。"
+  },
+  "designBook": "0203_基本設計仕様書(受注管理機能).xlsx",
+  "feature": "メール一括送信 / 【新規】手動メール通知(確認画面)",
+  "classification": "受注管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Mail/sell_order.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "Mail/sell_order.en.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "Mail/no_base.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/OrderManualMailAllType.php",
+      "start": 38,
+      "end": 55,
+      "fileLines": 110,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $baseFileNames = array_values(array_intersect_key(\n            MailTemplate::BASE_FILES,\n            array_flip($options['baseFiles']),\n        ));\n\n        $builder\n            ->add('template', MailTemplateType::class, [\n                'label' => 'テンプレ選択',\n                'required' => true,\n                'mapped' => false,\n                'constraints' => [\n                    new Assert\\NotBlank(),\n                ],\n                'query_builder' => fn (EntityRepository $er) => $er->createQueryBuilder('mt')\n                    ->where('mt.file_name IN (:fileNames)')\n                    ->setParameter('fileNames', $baseFileNames)\n                    ->orderBy('mt.id', 'ASC'),\n            ])"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Order/MailController.php",
+      "start": 345,
+      "end": 354,
+      "fileLines": 201,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Entity/MailTemplate.php",
+      "start": 98,
+      "end": 110,
+      "fileLines": 246,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        {\n            return $this->id;\n        }\n\n        /**\n         * Set name.\n         *\n         * @param string|null $name\n         *\n         * @return MailTemplate\n         */\n        public function setName($name = null)\n        {"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/MailType.php",
+      "start": 49,
+      "end": 57,
+      "fileLines": 71,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                'constraints' => [\n                    new TwigLint(),\n                ],\n            ])\n            ->add('html_tpl_data', TextareaType::class, [\n                'label' => false,\n                'mapped' => false,\n                'required' => false,\n                'constraints' => ["
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/MailType.php",
+      "start": 118,
+      "end": 118,
+      "fileLines": 71,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "Mail/Mall/xxx.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "start": 738,
+      "end": 738,
+      "resolvedFrom": "M05_order_management_basedesign.md",
+      "fileLines": 2167,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1 | テンプレ選択 | 単一選択(セレクトボックス) | - | - | - | ・項目変更時に画面を更新<br>・選択肢はショップ設定＞メール管理で作成されているテンプレート一覧が表示される |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/OrderManualMailAllType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Order/MailController.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/MailTemplate.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/MailType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 2,
+  "comments": [
+    {
+      "id": 273471028,
+      "created": "2026-07-25T11:01:44Z",
+      "createdUser": "彩　田中",
+      "content": null
+    },
+    {
+      "id": 273471065,
+      "created": "2026-07-25T11:03:57Z",
+      "createdUser": "彩　田中",
+      "content": "認識不一致。念のため認識の確認を行う。"
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:22+09:00",
+  "designResolution": {
+    "requested": "0203_基本設計仕様書(受注管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [
+        "ec-cube-enterprise/.cursor/design/html/excel/0203_受注管理機能"
+      ],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html",
+    "sheetCount": 27,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-9",
+        "title": "メール一括送信",
+        "score": 60
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "【新規】手動メール通知(確認画面)",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "受注情報検索 一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "受注情報検索 一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "受注一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "受注一覧カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "受注詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "受注詳細カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "メール一括送信"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "【新規】手動メール通知(確認画面)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "スタック用紙印刷"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "納品書印刷（日本語）"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "納品書印刷（英語）"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "受注情報編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "【新規】受注情報履歴"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "出荷指示リスト生成"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "出荷指示リスト検索"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "出荷指示リスト編集"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "出荷指示ー納品書印刷（日本語）"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "出荷指示ー納品書印刷（英語）"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "出荷実績入力用CSV出力"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "出荷実績インポート登録"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "出荷実績登録CSVフォーマット"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "店頭注文番号札管理"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "別添資料_スマレジ決済後返品処理について"
+      }
+    ]
+  }
+}

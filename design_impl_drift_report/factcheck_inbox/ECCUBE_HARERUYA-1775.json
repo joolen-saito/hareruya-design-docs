@@ -1,0 +1,169 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1775",
+  "issueId": 43509225,
+  "summary": "【実装乖離】フロントトップ_ECTOP（本店トップ）_売れ筋アイテムランキングの(11-8)週間販売数が、週間販売数0のときも非表示にならず「0点」と表示され得る",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:15:53Z",
+  "updated": "2026-07-14T01:15:53Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1775",
+  "basicInfo": {
+    "分類": "フロントトップ",
+    "機能": "ECTOP（本店トップ）",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロントトップ_ECTOP（本店トップ）_売れ筋アイテムランキングの(11-8)週間販売数が、週間販売数0のときも非表示にならず「0点」と表示され得る",
+    "設計書": "0301_基本設計仕様書(フロント_トップ).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントトップ\n機能：ECTOP（本店トップ）\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロントトップ_ECTOP（本店トップ）_売れ筋アイテムランキングの(11-8)週間販売数が、週間販売数0のときも非表示にならず「0点」と表示され得る\n設計書：0301_基本設計仕様書(フロント_トップ).xlsx",
+    "期待される挙動": "- (11-8)週間販売数は、期間別販売数集計バッチで出力された過去1週間の本店サイト注文数を表示すること。\n- 過去1週間のうちに本店サイトで注文されていない場合（週間販売数が0の場合）は、週間販売数のラベル自体を非表示にすること。",
+    "現在の挙動": "- ranking.twig の売れ筋アイテムランキング部では、週間販売数のラベルを条件分岐なしで常に出力しており、`item.sum` が0でもそのまま「0」が表示される。\n- 取得元の DtbSalesQuantityRepository::getPopularProductRecommend() は SUM(sqs.sales_quantity_04) を降順に最大30件取得するだけで、HAVING などで0件を除外していない。\n- dtb_sales_quantity の集計行は過去366日以内に販売があった商品分が作られ、週間販売数(sales_quantity_04)は0になり得るため、週間販売実績のある商品が30件未満の場合は週間販売数0の商品がランキングに載り「0点」表示となる。\n- 同じ週間販売数を表示する Block/_product_card.twig:94 では `{% if weeklySales > 0 %}` で0件時に非表示としている。",
+    "補足情報": "▼設計書該当箇所\nF01_top_basedesign.md:529 「| 11-8 | 週間販売数 | ラベル | - | - | - | ・期間別販売数集計バッチで出力された過去1週間のうちに本店サイトで注文された商品数を表示する…・過去1週間のうちに本店サイトで注文されていない場合、非表示にする |」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Block/ranking.twig:127 （週間販売数を無条件描画）\nsrc/Eccube/Repository/DtbSalesQuantityRepository.php:210,226 （SUM(sales_quantity_04) を降順取得。0件除外なし）\nsrc/Eccube/Repository/DtbSalesQuantityRepository.php:441 （集計バッチは過去366日の受注から週間販売数を算出するため、行が存在しても週間販売数は0になり得る）\nsrc/Eccube/Resource/template/default/Block/_product_card.twig:94 （0件時に非表示にしている正しい実装）\n\n▼備考\n売れ筋ランキングは週間販売数の降順で並ぶため、週間販売実績のある商品が30件以上あれば0表示は起きない（confidence を medium とした理由）。ただしテンプレートに0件非表示のガードが無いこと自体が設計との乖離であり、週間販売実績が30件未満の支店/期間では「週間販売数 0点」が実際に表示される。"
+  },
+  "designBook": "0301_基本設計仕様書(フロント_トップ).xlsx",
+  "feature": "ECTOP（本店トップ）",
+  "classification": "フロントトップ",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Block/_product_card.twig",
+      "start": 94,
+      "end": 94,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/ranking.twig",
+      "start": 127,
+      "end": 127,
+      "fileLines": 144,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                  <p class=\"p-hareruya-product-card__sales\">{{ 'front.top.product_card.weekly_sales_prefix'|trans }}<span class=\"p-hareruya-product-card__sales-number\">{{ item.sum|number_format }}</span>{{ 'front.top.product_card.weekly_sales_suffix'|trans }}</p>"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbSalesQuantityRepository.php",
+      "start": 210,
+      "end": 210,
+      "fileLines": 548,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                'SUM(sqs.sales_quantity_04) AS sum',"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbSalesQuantityRepository.php",
+      "start": 441,
+      "end": 441,
+      "fileLines": 548,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                SUM(CASE WHEN o.order_date >= :order_date_ts::timestamptz - INTERVAL '7 days' THEN oi.quantity::int ELSE 0 END) AS sales_weekly,"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/_product_card.twig",
+      "start": 94,
+      "end": 94,
+      "fileLines": 99,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    {% if weeklySales > 0 %}"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 529,
+      "end": 529,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 11-8 | 週間販売数 | ラベル | - | - | - | ・期間別販売数集計バッチで出力された過去1週間のうちに本店サイトで注文された商品数を表示する<br>※期間別販売数集計バッチについては、別紙「0404_基本設計仕様書(バッチ_商品管理)」のシート「期間別販売数集計」を参照<br><br>・過去1週間のうちに本店サイトで注文されていない場合、非表示にする |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/default/Block/ranking.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/DtbSalesQuantityRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/_product_card.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:26+09:00",
+  "designResolution": {
+    "requested": "0301_基本設計仕様書(フロント_トップ).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html",
+    "sheetCount": 4,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP"
+      }
+    ]
+  }
+}

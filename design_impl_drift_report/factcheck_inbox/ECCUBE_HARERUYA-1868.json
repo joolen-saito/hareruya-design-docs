@@ -1,0 +1,275 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1868",
+  "issueId": 43509336,
+  "summary": "【実装乖離】フロント会員_パスワード再発行_パスワード再発行にて、リセットキーの有効期限が設計の24時間ではなく10分になっており、メール文面には「10時間」と表示される",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:42Z",
+  "updated": "2026-07-14T01:16:42Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1868",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "パスワード再発行",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント会員_パスワード再発行_パスワード再発行にて、リセットキーの有効期限が設計の24時間ではなく10分になっており、メール文面には「10時間」と表示される",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：パスワード再発行\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_パスワード再発行_パスワード再発行にて、リセットキーの有効期限が設計の24時間ではなく10分になっており、メール文面には「10時間」と表示される\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- パスワード再発行(F06-04)では、時間制限(有効時間:24時間)のリセットキーを発行し、ユーザー情報に保存すること。\n- リセットキーを含んだパスワード再発行用のURLをメールで送信し、その有効期限は24時間であること。",
+    "現在の挙動": "- ForgotController は reset_expire を「現在時刻 + eccube_customer_reset_expire 分」で計算しており、eccube_customer_reset_expire の設定値は 10 のため、有効期限は10分になっている(設計の24時間と乖離)。\n- 一方、パスワード再発行メールのテンプレートは同じ設定値を「時間」の単位で埋め込んでおり、「※URLの有効期限は、メール配信時刻から10時間になります。」と実際(10分)と異なる案内が表示される。\n- 英語版メールテンプレートも同様に「This URL will expire after 10 hours ...」と表示される。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:352 「時間制限(有効時間:24時間)のリセットキーを発行し、ユーザー情報に保存する」\nF06_customer_basedesign.md:353 「リセットキーを含んだパスワード再発行用のURLを発行し、ユーザーにメールを送信する」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Front/ForgotController.php:82 （'+'.eccube_customer_reset_expire.' min' で有効期限を算出）\napp/config/eccube/packages/eccube.yaml:150 （eccube_customer_reset_expire: 10）\nsrc/Eccube/Resource/template/default/Mail/Mall/forgot_mail.twig:2 （同じ値を「時間」として表示）\nsrc/Eccube/Resource/template/default/Mail/Mall/forgot_mail.en.twig:2 （同じ値を「hours」として表示）\nsrc/Eccube/Service/MailService.php:646,666 （メールへ expire を引き渡し）\n\n▼備考\n設定値・加算単位・メール文面の3箇所が食い違っている。設計の24時間に合わせるには、単位を統一した上で値を設定し直す必要がある(例: eccube_customer_reset_expire を 24 とし加算単位を hour に変更、またはメール文面を「分」に変更した上で 1440 を設定)。有効期限の判定側は RegisterCustomerViewRepository::getRegularCustomerByResetKey の reset_expire >= 現在日時 で行われている。git log --since=2026-07-08 -- src/Eccube/Controller/Front/ForgotController.php に修正コミットは無い。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "パスワード再発行",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Controller/Front/ForgotController.php",
+      "start": 82,
+      "end": 82,
+      "fileLines": 241,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                        'reset_expire' => (new \\DateTime('+'.$this->eccubeConfig['eccube_customer_reset_expire'].' min'))->format('Y-m-d H:i:s'),"
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "start": 150,
+      "end": 150,
+      "fileLines": 184,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    eccube_restrict_file_upload: '%env(ECCUBE_RESTRICT_FILE_UPLOAD)%' # ファイルアップロード可能な機能を制限する"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mail/Mall/forgot_mail.twig",
+      "start": 2,
+      "end": 2,
+      "fileLines": 9,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "※URLの有効期限は、メール配信時刻から{{ eccube_config.eccube_customer_reset_expire }}時間になります。"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mail/Mall/forgot_mail.en.twig",
+      "start": 2,
+      "end": 2,
+      "fileLines": 9,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "*This URL will expire after {{ eccube_config.eccube_customer_reset_expire }} hours from the delivery of this email."
+    },
+    {
+      "path": "src/Eccube/Service/MailService.php",
+      "start": 646,
+      "end": 646,
+      "fileLines": 898,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": ""
+    },
+    {
+      "path": "src/Eccube/Controller/Front/ForgotController.php",
+      "start": null,
+      "end": null,
+      "fileLines": 241,
+      "ok": true,
+      "reason": "file_exists_no_line"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 352,
+      "end": 352,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 時間制限(有効時間:24時間)のリセットキーを発行し、ユーザー情報に保存する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 353,
+      "end": 353,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* リセットキーを含んだパスワード再発行用のURLを発行し、ユーザーにメールを送信する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Front/ForgotController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mail/Mall/forgot_mail.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mail/Mall/forgot_mail.en.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/MailService.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:41+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

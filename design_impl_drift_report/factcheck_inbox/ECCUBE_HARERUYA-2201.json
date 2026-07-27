@@ -1,0 +1,221 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2201",
+  "issueId": 43509781,
+  "summary": "【一部実装】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計の検索結果にて、店舗名の「その他」区分が集計・出力されない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:29Z",
+  "updated": "2026-07-14T01:19:29Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2201",
+  "basicInfo": {
+    "分類": "分析・集計管理",
+    "機能": "日別・月別集計 集計一覧（検索項目/検索結果）",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計の検索結果にて、店舗名の「その他」区分が集計・出力されない",
+    "設計書": "0211_基本設計仕様書(分析・集計管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：分析・集計管理\n機能：日別・月別集計 集計一覧（検索項目/検索結果）\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計の検索結果にて、店舗名の「その他」区分が集計・出力されない\n設計書：0211_基本設計仕様書(分析・集計管理機能).xlsx",
+    "期待される挙動": "- 日別・月別集計の検索結果 識別ID2「店舗名」には、「通販」もしくは指定された「店舗名」または「その他」を出力すること。\n- 「その他」には通販・各店舗に該当しない売上を計上すること。",
+    "現在の挙動": "- 店舗名を決定する resolveStoreName() は、通販（root店舗かつ通販チェックON）の場合に「通販」、それ以外は店舗の short_name_jp もしくは shop_name を返すのみで、「その他」を返す分岐が存在しない。\n- 集計元の受注SQLが「o.base_info_id IS NOT NULL」で絞り込んでいるため、店舗が紐づかない（通販・各店舗に該当しない）売上はそもそも集計対象から除外され、どの行にも計上されない。\n- 集計結果は dtb_daily_summary / dtb_monthly_summary に base_info_id 単位で格納されるため、「その他」に相当する区分を保持する構造になっていない。\n- CSV出力(SummaryCsvExporterService)も同じ AnalysisSummaryBuilder を使うため、CSV側にも「その他」行は出力されない。",
+    "補足情報": "▼設計書該当箇所\nM12_analysis_management_basedesign.md:161 の逐語引用: 「* 識別ID 2: 「支店名」を追加。「通販」もしくは指定された「店舗名」または「その他」を出力」\nM12_analysis_management_basedesign.md:162 の逐語引用: 「※「その他」は通販・各店舗に該当しない売上を計上」\n\n▼実装該当箇所\nsrc/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:201 （resolveStoreName。通販/店舗名のみを返し「その他」の分岐なし）\nsrc/Eccube/Repository/DtbDailySummaryRepository.php:63 （base_info_id IS NOT NULL で店舗未紐づけの売上を除外）\nsrc/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:93 （CSVも同じ AnalysisSummaryBuilder を利用）\n\n▼備考\n「通販」と「店舗名」の出力は実装済みのため一部実装と判定。リポジトリ全体を「その他」で grep しても集計側に該当区分の実装は存在しない。"
+  },
+  "designBook": "0211_基本設計仕様書(分析・集計管理機能).xlsx",
+  "feature": "日別・月別集計 集計一覧（検索項目/検索結果）",
+  "classification": "分析・集計管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php",
+      "start": 201,
+      "end": 201,
+      "fileLines": 214,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private function resolveStoreName(int $baseInfoId, string $shortNameJp, string $shopName, bool $mailOrderEnabled): string"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbDailySummaryRepository.php",
+      "start": 63,
+      "end": 63,
+      "fileLines": 344,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    o.base_info_id IS NOT NULL"
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php",
+      "start": 93,
+      "end": 93,
+      "fileLines": 134,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $summaryData = $this->analysisSummaryBuilder->build("
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+      "start": 161,
+      "end": 161,
+      "resolvedFrom": "M12_analysis_management_basedesign.md",
+      "fileLines": 979,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 識別ID 2: 「支店名」を追加。「通販」もしくは指定された「店舗名」または「その他」を出力"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+      "start": 162,
+      "end": 162,
+      "resolvedFrom": "M12_analysis_management_basedesign.md",
+      "fileLines": 979,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "※「その他」は通販・各店舗に該当しない売上を計上"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/DtbDailySummaryRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:43+09:00",
+  "designResolution": {
+    "requested": "0211_基本設計仕様書(分析・集計管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+    "sheetCount": 20,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "日別・月別集計 集計一覧(検索項目-日別)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "日別・月別集計 集計一覧(検索項目-月別)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "日別・月別集計 集計一覧(検索結果-日別)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "日別・月別集計 集計一覧(検索結果-月別)"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日別・月別集計 CSV出力"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "受注売上分析 集計一覧(検索項目)"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "受注売上分析 集計一覧(検索結果-集計単位 商品)"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "受注売上分析 集計一覧(検索結果-集計単位 カテゴリ )"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "受注売上分析 CSV出力(商品)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "受注売上分析 CSV出力(カテゴリ)"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "入荷通知依頼 一覧表示(検索項目)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "入荷通知依頼 一覧表示(検索結果)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "入荷通知依頼 CSV出力"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "フォーマット売上分析 集計一覧(検索項目)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "フォーマット売上分析 集計一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "フォーマット売上分析 CSV出力"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "特集タグ編集CSVダウンロード(検索項目)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "特集タグ編集CSVダウンロード CSV出力"
+      }
+    ]
+  }
+}

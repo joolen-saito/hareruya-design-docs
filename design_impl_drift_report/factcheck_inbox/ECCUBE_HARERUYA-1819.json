@@ -1,0 +1,210 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1819",
+  "issueId": 43509274,
+  "summary": "【実装乖離】フロント注文_ご注文方法指定_ご注文方法指定画面の「使用ポイント」の初期値が、設計の「会員の保有ポイント」ではなく保有ポイントと支払上限の小さい方になっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:16Z",
+  "updated": "2026-07-14T01:16:16Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1819",
+  "basicInfo": {
+    "分類": "フロント注文",
+    "機能": "ご注文方法指定",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント注文_ご注文方法指定_ご注文方法指定画面の「使用ポイント」の初期値が、設計の「会員の保有ポイント」ではなく保有ポイントと支払上限の小さい方になっている",
+    "設計書": "0304_基本設計仕様書(フロント_注文).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント注文\n機能：ご注文方法指定\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント注文_ご注文方法指定_ご注文方法指定画面の「使用ポイント」の初期値が、設計の「会員の保有ポイント」ではなく保有ポイントと支払上限の小さい方になっている\n設計書：0304_基本設計仕様書(フロント_注文).xlsx",
+    "期待される挙動": "- ご注文方法指定画面の使用ポイント（識別ID 6-6）の初期値は、会員の保有ポイントとすること。\n- 使用ポイント入力欄は、ポイント使用ラジオボタンで「ポイントを使う」を選択した場合のみ活性化すること。",
+    "現在の挙動": "- OrderType::getDefaultUsePoint() が max(0, min(保有ポイント, 商品小計＋送料＋手数料)) を返すため、保有ポイントが支払総額を上回るケースでは初期値が保有ポイントではなく支払総額になる。\n- 設計が求める初期値「会員の保有ポイント」と、実装の初期値「保有ポイントと支払上限の小さい方」に差異がある。\n- 一方、「ポイントを使う」選択時のみ活性化する制御はバンドルJS（hareruya-checkout.js）が [data-point-use] / [data-point-save] の change を監視して [data-point-input] の readOnly を切り替えており、初期表示時にも実行されるため、こちらは設計どおり動作する。",
+    "補足情報": "▼設計書該当箇所\nF04_order_basedesign.md:315 「| 6-6 | 使用ポイント | 数値（整数） | △ | - | 会員の保有ポイント | ・ECの場合のみ表示する<br>・ポイント使用ラジオボタンで「ポイントを使う」を選択した場合のみ活性化する |」\nF04_order_basedesign.md:303 「使用ポイントに入力した値を「ご注文内容の確認」の（４）に反映する」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Shopping/OrderType.php:407 （初期値 = max(0, min(保有ポイント, 支払上限))）\nsrc/Eccube/Form/Type/Shopping/OrderType.php:410 （支払上限 = 商品小計＋送料＋手数料）\nsrc/Eccube/Form/Type/Shopping/OrderType.php:136 （use_point 未設定時に getDefaultUsePoint() を初期値として設定）\nsrc/Eccube/Resource/template/default/Shopping/index.twig:553 （max 属性も min(保有ポイント, 支払上限) で算出）\nsrc/Eccube/Resource/template/default/Shopping/index.twig:576 （使用ポイント入力欄。data-point-input）\nhtml/template/default/assets/hareruya/js/hareruya-checkout.js:1 （[data-point-use]/[data-point-save] の change で [data-point-input] の readOnly を切替。活性制御は実装済み）\n\n▼備考\n差異が顕在化するのは「会員の保有ポイント > 商品小計＋送料＋手数料」のケースのみで、それ以外は設計値と一致する。実装側の min() は OrderType::POST_SUBMIT の purchase_flow.over_payment_total バリデーション（OrderType.php:192-196）と整合させるための丸めと推測されるが、設計原文の初期値は「会員の保有ポイント」であるため実装乖離として計上した。活性/readonly 切替は hareruya-checkout.js に実装済みで設計を満たす（なお同ファイルには [data-js-point-save] 等を参照する別ブロックも存在するが、テンプレート側に該当属性がなくガードで抜けるだけの死んだコードであり、動作には影響しない）。"
+  },
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "feature": "ご注文方法指定",
+  "classification": "フロント注文",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Shopping/OrderType.php",
+      "start": 407,
+      "end": 407,
+      "fileLines": 311,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Shopping/OrderType.php",
+      "start": 410,
+      "end": 410,
+      "fileLines": 311,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Shopping/OrderType.php",
+      "start": 136,
+      "end": 136,
+      "fileLines": 311,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            // @see https://github.com/EC-CUBE/ec-cube/issues/4881"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 553,
+      "end": 553,
+      "fileLines": 450,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "start": 576,
+      "end": 576,
+      "fileLines": 450,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "html/template/default/assets/hareruya/js/hareruya-checkout.js",
+      "start": 1,
+      "end": 1,
+      "fileLines": 2,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "(()=>{\"use strict\";var e,t,n={},a={};function r(e){var t=a[e];if(void 0!==t)return t.exports;var i=a[e]={exports:{}};return n[e](i,i.exports,r),i.exports}r.rv=()=>\"1.7.5\",r.ruid=\"bundler=rspack@1.7.5\";var i=document.querySelector(\"[data-point-input]\"),o=document.querySelector(\"[data-point-use]\"),d=document.querySelector(\"[data-point-save]\");if(i&&o&&d){var c=function(){o.checked?(i.readOnly=!1,i.style.backgroundColor=\"\"):(i.readOnly=!0,i.style.backgroundColor=\"rgb(222, 222, 222)\")};i.addEventListener(\"click\",function(){i.readOnly&&(o.checked=!0,i.readOnly=!1,i.style.backgroundColor=\"\",i.focus())}),o.addEventListener(\"change\",c),d.addEventListener(\"change\",c),c()}!function(){var e,t=document.querySelector(\"[data-js-shipping-remarks]\"),n=document.querySelector(\"[data-js-shipping-summary-conf"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 315,
+      "end": 315,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 6-6 | 使用ポイント | 数値（整数） | △ | - | 会員の保有ポイント | ・ECの場合のみ表示する<br>・ポイント使用ラジオボタンで「ポイントを使う」を選択した場合のみ活性化する |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "start": 303,
+      "end": 303,
+      "resolvedFrom": "F04_order_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 使用ポイントに入力した値を「ご注文内容の確認」の（４）に反映する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Shopping/OrderType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Shopping/index.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "html/template/default/assets/hareruya/js/hareruya-checkout.js",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:35+09:00",
+  "designResolution": {
+    "requested": "0304_基本設計仕様書(フロント_注文).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+    "sheetCount": 10,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-4",
+        "title": "ご注文方法指定",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "買い物かご"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "ご注文方法指定"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "配送先の新規登録_変更"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "配送先の新規登録_確認"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "決済~購入完了"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "注文購入履歴一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "注文購入履歴詳細"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "別添資料_注文ステータスと表示画像の紐付け"
+      }
+    ]
+  }
+}

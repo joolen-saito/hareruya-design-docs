@@ -1,0 +1,381 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2027",
+  "issueId": 43509553,
+  "summary": "【実装乖離】在庫管理_ピッキングリスト印刷_在庫移動指示詳細画面にピッキングリスト作成ボタンがなく、ピック表は出庫承認申請画面からしか出力できない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:02Z",
+  "updated": "2026-07-22T01:26:50Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2027",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "ピッキングリスト印刷",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】在庫管理_ピッキングリスト印刷_在庫移動指示詳細画面にピッキングリスト作成ボタンがなく、ピック表は出庫承認申請画面からしか出力できない",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：ピッキングリスト印刷\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_ピッキングリスト印刷_在庫移動指示詳細画面にピッキングリスト作成ボタンがなく、ピック表は出庫承認申請画面からしか出力できない\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- 移動指示リスト詳細画面（M04-25）からピッキングリスト作成ボタンを押下して、ピッキングリスト（M04-39）のダイアログを表示できること。\n- 移動指示リスト詳細画面で選択した在庫移動に対して、実際に出庫される商品の情報がピッキングリストに表示されること。",
+    "現在の挙動": "- 在庫移動指示詳細画面のテンプレートにはピッキングリスト作成に相当するボタン・フォーム・JavaScriptが一切存在しない。\n- ピック表PDF出力は在庫移動の出庫承認申請画面（move_outbound_approval_request.twig）のボタンからのみ実行でき、ルートも在庫移動振替ID単位の admin_stock_move_outbound_approval_request_pick_list_pdf_export のみである。\n- 当該ルートは在庫移動のステータスが新規（STATUS_NEW）でない場合はエラーとするため、在庫移動指示作成後（出庫承認済み以降）に指示単位でピッキングリストを出力する導線が存在しない。",
+    "補足情報": "▼設計書該当箇所\nM04_stock_management_basedesign.md:3916 の逐語引用「* 移動指示リスト詳細画面から、ピッキングリスト作成ボタンを押下してダイアログを表示する」\nM04_stock_management_basedesign.md:3917 の逐語引用「* 移動指示リスト詳細画面で選択した在庫移動に対して実際に出庫される商品の情報を表示する」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:1-185 （画面全体にピッキングリスト作成ボタンが存在しない）\nsrc/Eccube/Resource/template/admin/Stock/move_outbound_approval_request.twig:375 （ピック表出力ボタンは出庫承認申請画面にのみ存在）\nsrc/Eccube/Controller/Admin/Stock/StockMoveController.php:437-481 （ピック表PDF出力ルートは在庫移動振替ID単位）\nsrc/Eccube/Controller/Admin/Stock/StockMoveController.php:447-451 （在庫移動のステータスが新規以外はエラー）\n\n▼備考\nピッキングリストの帳票自体（@admin/Stock/MoveTransfer/pick_list.twig と StockMoveTransferListPdfFormatter::buildPickListDataByStockMoveTransferIds）は実装済みで、欠けているのは在庫移動指示詳細（M04-25）からの作成導線と在庫移動指示単位での出力である。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "ピッキングリスト印刷",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig",
+      "start": 1,
+      "end": 185,
+      "fileLines": 184,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/move_outbound_approval_request.twig",
+      "start": 375,
+      "end": 375,
+      "fileLines": 619,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                    <button type=\"button\" class=\"btn btn-ec-conversion\" id=\"stockMovePickListPdfExport\">{{ 'admin.stock.move.pick_list_output'|trans }}</button>"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockMoveController.php",
+      "start": 437,
+      "end": 481,
+      "fileLines": 1139,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[Route(path: '/%eccube_admin_route%/product/stock/move/outbound_approval_request/{id}/pick-list-pdf-export', requirements: ['id' => '\\d+'], name: 'admin_stock_move_outbound_approval_request_pick_list_pdf_export', methods: ['POST'])]\n    public function outboundApprovalRequestPickListPdfExport(Request $request, #[MapEntity(id: 'id')] DtbStockMoveTransfer $StockMoveTransfer): JsonResponse\n    {\n        $redirectUrl = $this->generateUrl('admin_stock_move_outbound_approval_request', ['id' => $StockMoveTransfer->getId()]);\n\n        try {\n            $this->isTokenValid();\n        } catch (AccessDeniedHttpException) {\n            return $this->json(['success' => false, 'redirectUrl' => $redirectUrl], Response::HTTP_FORBIDDEN);\n        }\n\n        if ($StockMoveTransfer->getMoveTransferStatus"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockMoveController.php",
+      "start": 447,
+      "end": 451,
+      "fileLines": 1139,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\n        if ($StockMoveTransfer->getMoveTransferStatus()->getId() !== MtbStockMoveTransferStatus::STATUS_NEW) {\n            $this->addError('admin.stock.move.pick_list_export.invalid_status', 'admin');\n\n            return $this->json(['success' => false, 'redirectUrl' => $redirectUrl]);"
+    },
+    {
+      "path": "admin/Stock/MoveTransfer/pick_list.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 3916,
+      "end": 3916,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 移動指示リスト詳細画面から、ピッキングリスト作成ボタンを押下してダイアログを表示する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 3917,
+      "end": 3917,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 移動指示リスト詳細画面で選択した在庫移動に対して実際に出庫される商品の情報を表示する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/move_outbound_approval_request.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockMoveController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990939,
+      "created": "2026-07-22T01:26:50Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:20+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}

@@ -1,0 +1,223 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1815",
+  "issueId": 43509270,
+  "summary": "【未実装】フロント注文_買い物かご_買い物かご画面にて、支店を閲覧している場合でも送料無料までの残額表示を抑止するガードが実装されていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:14Z",
+  "updated": "2026-07-14T01:16:14Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1815",
+  "basicInfo": {
+    "分類": "フロント注文",
+    "機能": "買い物かご",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【未実装】フロント注文_買い物かご_買い物かご画面にて、支店を閲覧している場合でも送料無料までの残額表示を抑止するガードが実装されていない",
+    "設計書": "0304_基本設計仕様書(フロント_注文).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント注文\n機能：買い物かご\n課題カテゴリ：不具合（バグ）\n課題：【未実装】フロント注文_買い物かご_買い物かご画面にて、支店を閲覧している場合でも送料無料までの残額表示を抑止するガードが実装されていない\n設計書：0304_基本設計仕様書(フロント_注文).xlsx",
+    "期待される挙動": "- 支店は商品の配送方法が店舗受取のみで送料が存在しないため、買い物かご画面では支店の場合に送料に関する表示（送料無料までの残り金額）を行わないこと。",
+    "現在の挙動": "- Cart/index.twig の送料無料エリアは BaseInfo.delivery_free_amount が設定されているか否かだけで表示判定しており、閲覧店舗が本店か支店かを判定する isMainShop の分岐が存在しない。\n- CartController::buildCartSummary() も閲覧店舗の BaseInfo から delivery_free_amount / delivery_free_quantity を読むだけで、支店かどうかによる出し分けを行っていない。\n- 支店の BaseInfo にも管理画面（MallTenantShopType）で delivery_free_amount を設定でき、値が入ると支店のカート画面に「あと〇〇円で送料無料」が表示されてしまう。",
+    "補足情報": "▼設計書該当箇所\nF04_cart_basedesign.md:36 「支店は商品の配送方法が店舗受取のみで送料が存在しないため、支店では送料は表示しない」\nF04_cart_basedesign.md:49 「★ 送料の表示 / 支店は商品の配送方法が店舗受取のみで送料が存在しないため、支店では送料は表示しない」\nF04_cart_basedesign.md:64 「計算した内容を下記に反映する ... 送料無料までの残り金額表示」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/default/Cart/index.twig:280 （BaseInfo.delivery_free_amount の有無のみで送料無料エリアを表示。isMainShop 判定なし）\nsrc/Eccube/Controller/Front/CartController.php:156 （delivery_free_amount から least / isDeliveryFree を算出。支店判定なし）\nsrc/Eccube/Entity/BaseInfo.php:1643 （isMainShop() は存在するが、カート画面の送料表示では未使用）\nsrc/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:353 （支店(テナント)側でも delivery_free_amount を設定できる）\n\n▼備考\nCart/index.twig は日英共通の1ファイル（Cart/index.en.twig は存在しない）ため、英語版の反映漏れはない。Migration Version20251127154224 では全店舗（本店・各支店とも）delivery_free_amount が null で投入されるため、初期データのままでは支店で送料無料表示は出ない。ただし設計が要求する「支店では表示しない」というコード上のガードは存在せず、支店の管理画面から delivery_free_amount を設定すると表示され得るため、設定依存の未実装と判定した。"
+  },
+  "designBook": "0304_基本設計仕様書(フロント_注文).xlsx",
+  "feature": "買い物かご",
+  "classification": "フロント注文",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Cart/index.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Cart/index.twig",
+      "start": 280,
+      "end": 280,
+      "fileLines": 241,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/CartController.php",
+      "start": 156,
+      "end": 156,
+      "fileLines": 503,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            if ($BaseInfo->getDeliveryFreeAmount()) {"
+    },
+    {
+      "path": "src/Eccube/Entity/BaseInfo.php",
+      "start": 1643,
+      "end": 1643,
+      "fileLines": 1146,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php",
+      "start": 353,
+      "end": 353,
+      "fileLines": 450,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('delivery_free_amount', PriceType::class, ["
+    },
+    {
+      "path": "Cart/index.en.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+      "start": 36,
+      "end": 36,
+      "resolvedFrom": "F04_cart_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 支店は商品の配送方法が店舗受取のみで送料が存在しないため、支店では送料は表示しない"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+      "start": 49,
+      "end": 49,
+      "resolvedFrom": "F04_cart_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 支店は商品の配送方法が店舗受取のみで送料が存在しないため、支店では送料は表示しない"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+      "start": 64,
+      "end": 64,
+      "resolvedFrom": "F04_cart_basedesign.md",
+      "fileLines": 775,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 合計金額"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/default/Cart/index.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Front/CartController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/BaseInfo.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:34+09:00",
+  "designResolution": {
+    "requested": "0304_基本設計仕様書(フロント_注文).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html",
+    "sheetCount": 10,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "買い物かご",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "買い物かご"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "ご注文方法指定"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "配送先の新規登録_変更"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "配送先の新規登録_確認"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "決済~購入完了"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "注文購入履歴一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "注文購入履歴詳細"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "別添資料_注文ステータスと表示画像の紐付け"
+      }
+    ]
+  }
+}

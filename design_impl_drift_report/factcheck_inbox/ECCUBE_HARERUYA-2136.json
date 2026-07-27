@@ -1,0 +1,155 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2136",
+  "issueId": 43509695,
+  "summary": "【一部実装】コンテンツ管理_c ブロック管理(登録・編集)_ブロック管理(登録・編集)にて、ファイル名を変更して更新した際に日英2種類のtwigファイルが作成されない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:58Z",
+  "updated": "2026-07-14T01:18:58Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2136",
+  "basicInfo": {
+    "分類": "コンテンツ管理",
+    "機能": "c ブロック管理(登録・編集)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】コンテンツ管理_c ブロック管理(登録・編集)_ブロック管理(登録・編集)にて、ファイル名を変更して更新した際に日英2種類のtwigファイルが作成されない",
+    "設計書": "0210_基本設計仕様書(コンテンツ管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：コンテンツ管理\n機能：c ブロック管理(登録・編集)\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】コンテンツ管理_c ブロック管理(登録・編集)_ブロック管理(登録・編集)にて、ファイル名を変更して更新した際に日英2種類のtwigファイルが作成されない\n設計書：0210_基本設計仕様書(コンテンツ管理).xlsx",
+    "期待される挙動": "- ブロックを新規登録する場合、日英2種類のファイルを作成する。\n- 更新時は(1)言語で選択している言語の(6)ファイル名に該当するtwigファイルのみを更新する。\n- (6)ファイル名を変更して更新する場合、日英2種類のtwigファイルを作成する。",
+    "現在の挙動": "- 新規登録時($previousFileName === null)は、選択中ロケールに加えてもう一方のロケールのファイルも同じ内容で作成しており、設計どおりである。\n- 通常の更新時は選択中ロケールのファイルのみを dumpFile/upload しており、こちらも設計どおりである。\n- ただしファイル名を変更して更新した場合は、選択中ロケールのファイル1本のみが新ファイル名で作成され、もう一方の言語のファイルは新ファイル名で作成されない。旧ファイルも選択中ロケール分のみ削除されるため、もう一方の言語ファイルは旧ファイル名のまま残る。",
+    "補足情報": "▼設計書該当箇所\nM09_content_management_basedesign.md:240-244 「ブロック登録について / ブロックを新規登録する場合、日英2種類のファイルを作成する / ページ更新について / (1)言語で選択している言語の(6)ファイル名に該当するtwigファイルのみを更新する / (6)ファイル名を変更して更新する場合、日英2種類のtwigファイルを作成する」\n\n▼実装該当箇所\nsrc/Eccube/Controller/Admin/Content/BlockController.php:196-204 （もう一方のロケールのファイル作成は新規登録時のみ）\nsrc/Eccube/Controller/Admin/Content/BlockController.php:174-189 （更新時は選択中ロケールのファイルのみ dump/upload）\nsrc/Eccube/Controller/Admin/Content/BlockController.php:206-212 （ファイル名変更時に削除するのも選択中ロケールの旧ファイルのみ）\n\n▼備考\n新規登録時の日英2ファイル作成・更新時の選択言語のみ更新は設計どおり。乖離はファイル名変更を伴う更新時に、もう一方の言語のtwigファイルが新ファイル名で作成されない点のみ。なおブロック管理は日本語も '.ja' サフィックスを付与しており、ページ管理(日本語はサフィックスなし)とは実装方針が異なる。"
+  },
+  "designBook": "0210_基本設計仕様書(コンテンツ管理).xlsx",
+  "feature": "c ブロック管理(登録・編集)",
+  "classification": "コンテンツ管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Controller/Admin/Content/BlockController.php",
+      "start": 196,
+      "end": 204,
+      "fileLines": 223,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\n            $file = $dir.'/'.$Block->getFileName().'.twig';\n\n            if ($fs->exists($file)) {\n                $fs->remove($file);\n            }\n\n            $this->entityManager->remove($Block);\n            $this->entityManager->flush();"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Content/BlockController.php",
+      "start": 174,
+      "end": 189,
+      "fileLines": 223,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            return $this->redirectToRoute('admin_content_block_edit', ['id' => $Block->getId()]);\n        }\n\n        return [\n            'form' => $form->createView(),\n            'block_id' => $id,\n            'deletable' => $Block->isDeletable(),\n        ];\n    }\n\n    /**\n     * @Route(\"/%eccube_admin_route%/content/block/{id}/delete\", requirements={\"id\" = \"\\d+\"}, name=\"admin_content_block_delete\", methods={\"DELETE\"})\n     */\n    public function delete(Request $request, Block $Block, Filesystem $fs, CacheUtil $cacheUtil)\n    {\n        $this->isTokenValid();"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Content/BlockController.php",
+      "start": 206,
+      "end": 212,
+      "fileLines": 223,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            $event = new EventArgs(\n                [\n                    'Block' => $Block,\n                ],\n                $request\n            );\n            $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_CONTENT_BLOCK_DELETE_COMPLETE);"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+      "start": 240,
+      "end": 244,
+      "resolvedFrom": "M09_content_management_basedesign.md",
+      "fileLines": 369,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* ブロック登録について\n* ブロックを新規登録する場合、日英2種類のファイルを作成する\n* ページ更新について\n* (1)言語で選択している言語の(6)ファイル名に該当するtwigファイルのみを更新する\n* (6)ファイル名を変更して更新する場合、日英2種類のtwigファイルを作成する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Controller/Admin/Content/BlockController.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:29+09:00",
+  "designResolution": {
+    "requested": "0210_基本設計仕様書(コンテンツ管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html",
+    "sheetCount": 7,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-6",
+        "title": "ブロック管理(登録・編集)",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ページ管理(一覧)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "ページ管理(登録・編集)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ブロック管理(一覧)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "ブロック管理(登録・編集)"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "支店トップページ管理"
+      }
+    ]
+  }
+}

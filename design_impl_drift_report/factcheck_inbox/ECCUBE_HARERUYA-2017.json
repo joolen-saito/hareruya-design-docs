@@ -1,0 +1,370 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2017",
+  "issueId": 43509539,
+  "summary": "【実装乖離】在庫管理_在庫履歴検索一覧_在庫履歴検索一覧の並び順にて、第3ソートキーが「基準日時（登録日時と承認日時のうち後の日時）」ではなくレコードの作成日時（create_date）になっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:56Z",
+  "updated": "2026-07-22T01:26:49Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2017",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "在庫履歴検索一覧",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】在庫管理_在庫履歴検索一覧_在庫履歴検索一覧の並び順にて、第3ソートキーが「基準日時（登録日時と承認日時のうち後の日時）」ではなくレコードの作成日時（create_date）になっている",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：在庫履歴検索一覧\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_在庫履歴検索一覧_在庫履歴検索一覧の並び順にて、第3ソートキーが「基準日時（登録日時と承認日時のうち後の日時）」ではなくレコードの作成日時（create_date）になっている\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- 在庫履歴一覧は、第一ソートを商品コードの降順、第二ソートを店舗IDの降順とすること。\n- 第三ソートは各レコードの「登録日時」と「承認日時」のうち後の日時（基準日時）をソートキーとし、基準日時の降順（最新順）で表示すること。承認日時が未設定の場合は登録日時を基準日時とすること。",
+    "現在の挙動": "- 一覧の検索クエリ（getQueryBuilderBySearchDataForAdmin）は、商品コード降順・店舗（ps.baseInfo）降順までは設計どおりだが、第三ソートに sh.createDate（レコード作成日時）を用いている。\n- 在庫変動履歴エンティティは registeredAt（登録日時）と approvalAt（承認日時）を別カラムで保持しており、同リポジトリの findLatestByProductStockId() では COALESCE(approvalAt, registeredAt, createDate) を用いた基準日時ソートが実装されているが、一覧検索クエリではその方式が使われていない。\n- その結果、承認日時が登録日時より後になるレコード（承認を伴う在庫変動）が、設計で意図した基準日時順ではなく作成日時順で並ぶ。",
+    "補足情報": "▼設計書該当箇所\nM04_stock_management_basedesign.md:3003-3007 の逐語引用「1-2.在庫履歴情報の一覧は、下記ソート順とする / 1-2-1.第一ソートを商品コードの降順とする※現行踏襲 / 1-2-2.第二ソートを店舗のIDを降順とする※在庫区分でのソートは行わない / 1-2-3.第三ソートを各レコードの「登録日時」と「承認日時」のうち後の日時（以下「基準日時」）をソートキーとし、基準日時の降順（最新順）で表示する / 1-3.承認日時が未設定の場合は、登録日時を基準日時とする」\n\n▼実装該当箇所\nsrc/Eccube/Repository/DtbStockHistoryRepository.php:332-335 （一覧検索クエリの Order By。第3キーが sh.createDate）\nsrc/Eccube/Controller/Admin/Stock/StockHistoryController.php:207-209 （一覧は getQueryBuilderBySearchDataForAdmin の結果をページングして表示）\nsrc/Eccube/Repository/DtbStockHistoryRepository.php:358-360 （基準日時ソートの実装例。COALESCE(sh.approvalAt, sh.registeredAt, sh.createDate)）\nsrc/Eccube/Entity/DtbStockHistory.php:331, 362, 409 （approvalAt / registeredAt / createDate の各カラム）\n\n▼備考\n第1・第2ソートは設計どおり。第3ソートのみ基準日時（登録日時と承認日時の後の方）ではなく createDate を使用している。CSV出力用の getStockHistories()（411-413行）も同じ並びのため、修正時は両方の対応が必要。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "在庫履歴検索一覧",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Repository/DtbStockHistoryRepository.php",
+      "start": 332,
+      "end": 335,
+      "fileLines": 487,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        // Order By\n        $qb->addOrderBy('pc.code', 'DESC');\n        $qb->addOrderBy('ps.baseInfo', 'DESC');\n        $qb->addOrderBy('sh.createDate', 'DESC');"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockHistoryController.php",
+      "start": 207,
+      "end": 209,
+      "fileLines": 482,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $qb = $this->stockHistoryRepository->getQueryBuilderBySearchDataForAdmin($searchData);\n\n        $pagination = $paginator->paginate("
+    },
+    {
+      "path": "src/Eccube/Repository/DtbStockHistoryRepository.php",
+      "start": 358,
+      "end": 360,
+      "fileLines": 487,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->addSelect('COALESCE(sh.approvalAt, sh.registeredAt, sh.createDate) AS HIDDEN sortDate')\n            ->orderBy('sortDate', 'DESC')\n            ->addOrderBy('sh.registeredAt', 'DESC')"
+    },
+    {
+      "path": "src/Eccube/Entity/DtbStockHistory.php",
+      "start": 331,
+      "end": 331,
+      "fileLines": 437,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private ?\\DateTime $approvalAt = null;"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 3003,
+      "end": 3007,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "1-2.在庫履歴情報の一覧は、下記ソート順とする\n1-2-1.第一ソートを商品コードの降順とする※現行踏襲\n1-2-2.第二ソートを店舗のIDを降順とする※在庫区分でのソートは行わない\n1-2-3.第三ソートを各レコードの「登録日時」と「承認日時」のうち後の日時（以下「基準日時」）をソートキーとし、基準日時の降順（最新順）で表示する\n1-3.承認日時が未設定の場合は、登録日時を基準日時とする"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Repository/DtbStockHistoryRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/StockHistoryController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbStockHistory.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990924,
+      "created": "2026-07-22T01:26:49Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:16+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)",
+        "score": 60
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}

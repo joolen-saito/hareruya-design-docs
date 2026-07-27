@@ -1,0 +1,241 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2215",
+  "issueId": 43509797,
+  "summary": "【一部実装】イベント管理_日程登録_日程登録の「受付終了時間」に、サーバ側の条件必須チェックと初期値00:00が実装されていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:36Z",
+  "updated": "2026-07-14T01:19:36Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2215",
+  "basicInfo": {
+    "分類": "イベント管理",
+    "機能": "日程登録",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】イベント管理_日程登録_日程登録の「受付終了時間」に、サーバ側の条件必須チェックと初期値00:00が実装されていない",
+    "設計書": "0214_基本設計仕様書(イベント管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：イベント管理\n機能：日程登録\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】イベント管理_日程登録_日程登録の「受付終了時間」に、サーバ側の条件必須チェックと初期値00:00が実装されていない\n設計書：0214_基本設計仕様書(イベント管理).xlsx",
+    "期待される挙動": "- 日程登録画面の識別ID:8「受付終了時間」は、受付あり（識別ID:6）がオンの場合は必須であること。\n- 受付終了時間の初期値は 00:00 であること。\n- 受付ありの値に応じて表示／非表示を切り替えること。",
+    "現在の挙動": "- ScheduleType の entryEndDate は TimeType で 'required' => false のみ指定され、constraints が一切設定されていない。POST_SUBMIT リスナーにも受付ありオン時の必須チェックが無いため、空のまま登録できる。\n- 初期値の 'data' 指定が無く、DtbEventDetail の entryEndDate 初期値も null のため、新規日程画面では 00:00 ではなく空欄が表示される。\n- 表示／非表示の切り替えと required 属性の付与は Schedule/edit.twig の JavaScript（offlineRegist）でクライアント側のみ実装されている。\n- 受付終了時間 <= 開始時間 の相関チェックは ScheduleType の DATE_RELATION_RULES で実装済みである。",
+    "補足情報": "▼設計書該当箇所\nM13_event_management_basedesign.md:292 「| 8 | 受付終了時間 | 時刻 | △ | - | 00:00 | 受付ありの値に応じて表示/非表示を切り替える<br>受付ありの場合必須<br>受付終了時間 <= 開始時間であること |」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/ScheduleType.php:114-118 （entryEndDate は required=false、constraints・data ともに無し）\nsrc/Eccube/Form/Type/Admin/ScheduleType.php:50-59 （DATE_RELATION_RULES による相関チェックは実装済み）\nsrc/Eccube/Entity/DtbEventDetail.php:57 （entryEndDate の初期値は null）\nsrc/Eccube/Resource/template/admin/Event/Schedule/edit.twig:26-33 （JS による表示切替と required プロパティ付与）\n\n▼備考\n識別ID:7（受付開始時間）と同一の構造的な問題。表示切替と相関チェックは実装済みのため「一部実装」とした。"
+  },
+  "designBook": "0214_基本設計仕様書(イベント管理).xlsx",
+  "feature": "日程登録",
+  "classification": "イベント管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Schedule/edit.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/ScheduleType.php",
+      "start": 114,
+      "end": 118,
+      "fileLines": 295,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add('entryEndDate', TimeType::class, [\n                'label' => 'admin.event.schedule.entry_end_date',\n                'required' => false,\n                'widget' => 'single_text',\n            ])"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/ScheduleType.php",
+      "start": 50,
+      "end": 59,
+      "fileLines": 295,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private const DATE_RELATION_RULES = [\n        // 受付開始時間 < 受付終了時間\n        ['entryStartDate', 'entryEndDate', '<', 'form_error.schedule_date_before'],\n        // 受付終了時間 <= 開始時間\n        ['entryEndDate', 'startDate', '<=', 'form_error.schedule_date_before'],\n        // オンライン受付開始時間 < オンライン受付終了時間\n        ['onlineEntryStartDate', 'onlineEntryEndDate', '<', 'form_error.schedule_date_before'],\n        // オンライン受付終了時間 < 開始時間\n        ['onlineEntryEndDate', 'startDate', '<', 'form_error.schedule_date_before'],\n    ];"
+    },
+    {
+      "path": "src/Eccube/Entity/DtbEventDetail.php",
+      "start": 57,
+      "end": 57,
+      "fileLines": 586,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private ?\\DateTime $entryEndDate = null;"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig",
+      "start": 26,
+      "end": 33,
+      "fileLines": 305,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        const offlineRegist = () => {\n            const entryFlg = $(id.offlineEntryFlg).prop('checked');\n            $('.offlineEntryRegist').toggle(entryFlg);\n            $(id.entryStartDate + ', ' + id.entryEndDate).prop({\n                disabled: !entryFlg,\n                required: entryFlg\n            });\n        };"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 292,
+      "end": 292,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 8 | 受付終了時間 | 時刻 | △ | - | 00:00 | 受付ありの値に応じて表示/非表示を切り替える<br>受付ありの場合必須<br>受付終了時間 <= 開始時間であること |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/ScheduleType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbEventDetail.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:46+09:00",
+  "designResolution": {
+    "requested": "0214_基本設計仕様書(イベント管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html",
+    "sheetCount": 22,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "イベント一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "繰返日程追加"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "イベント申込一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "イベント申込一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "イベント申込一括編集"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "デッキ表示"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "CSVダウンロード"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "イベント申込登録(検索入力)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "イベント申込登録(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "イベント新規申込登録"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "イベント一括登録CSV"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "バナー設定"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定"
+      }
+    ]
+  }
+}

@@ -32,8 +32,7 @@ TODO_MARK = "要ソース確認"
 
 
 def load_rows() -> list[dict]:
-    with TSV.open(encoding="utf-8") as fh:
-        return list(csv.DictReader(fh, delimiter="\t"))
+    return L.read_master_rows(TSV)
 
 
 def _targets() -> list[str]:

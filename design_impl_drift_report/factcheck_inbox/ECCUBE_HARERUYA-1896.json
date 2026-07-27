@@ -1,0 +1,238 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1896",
+  "issueId": 43509385,
+  "summary": "【実装乖離】フロント会員_お問い合わせ_お問い合わせ画面の件名の選択肢マスタに「協賛関連」が投入されておらず、設計の8件に対して7件しか存在しない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:57Z",
+  "updated": "2026-07-14T01:16:57Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1896",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "お問い合わせ",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント会員_お問い合わせ_お問い合わせ画面の件名の選択肢マスタに「協賛関連」が投入されておらず、設計の8件に対して7件しか存在しない",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：お問い合わせ\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_お問い合わせ_お問い合わせ画面の件名の選択肢マスタに「協賛関連」が投入されておらず、設計の8件に対して7件しか存在しない\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- お問い合わせ画面の「件名（タイトル）」(識別ID 1-3)は、マスターデータから8つの選択肢（通販／ネット買取／店舗でのお買い物・イベント／委託販売／デッキ構築機能／記事・動画／その他／協賛関連）を取得して表示すること。",
+    "現在の挙動": "- 件名の選択肢は ContactType で MtbContactSubject（mtb_contact_subject マスタ）から動的に取得する実装になっており、選択肢の内容はマスタの登録内容に依存する。\n- マスタ投入マイグレーション Version20251125141030 が登録するレコードは id=1〜7 の7件のみで、「協賛関連」に相当するレコードは存在しない。リポジトリ内の他のマイグレーションにも「協賛関連」を投入する処理はない。\n- そのため初期状態では件名の選択肢は7件となり、「協賛関連」が表示されない。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:1326-1334 「1-3 件名（タイトル） 単一選択(セレクトボックス) ◯ - 通販に関するお問い合わせ ・マスターデータから選択肢を取得する。 1 通販に関するお問い合わせ … 7 その他のお問い合わせ 8 協賛関連」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Front/ContactType.php:88-102 （subject は MtbContactSubject を参照する EntityType）\napp/DoctrineMigrations/Version20251125141030.php:62-127 （mtb_contact_subject へ投入するレコードは7件のみ）\nsrc/Eccube/Controller/Admin/Data/MtgMasterDataController.php:240-254 （管理画面のマスタ管理「お問い合わせ件名」から追加可能。fixed_form_num は -1）\n\n▼備考\n画面側は完全にマスタ駆動のため、管理画面＞マスタ管理「お問い合わせ件名」から「協賛関連」を追加すれば選択肢に表示される（受付メールアドレスも同マスタの email 列で設定可能）。したがって本件は初期投入マスタ(マイグレーション)の不足であり、本番DBに運用で追加済みであれば解消している可能性がある。実DBの mtb_contact_subject の内容確認を推奨。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "お問い合わせ",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Front/ContactType.php",
+      "start": 88,
+      "end": 102,
+      "fileLines": 90,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20251125141030.php",
+      "start": 62,
+      "end": 127,
+      "fileLines": 128,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        return [\n            [\n                'id' => 1,\n                'subject' => '通販に関するお問い合わせ',\n                'subject_en' => 'About Hareruya Online Mail Orders',\n                'email' => '',\n                'shop_flg' => 0,\n                'attached_info_name' => '注文番号',\n                'attached_info_name_en' => 'Order ID',\n            ],\n            [\n                'id' => 2,\n                'subject' => 'ネット買取に関するお問い合わせ',\n                'subject_en' => '',\n                'email' => 'buying_contact@hareruyamtg.com',\n                'shop_flg' => 0,\n                'attached_info_name' => '買取番号',\n                'attached_info_name_en' => 'Order ID',\n            ],\n            [\n                'id' => 3,\n                'subject' => '店舗でのお買い物・イベントに関するお問い合わせ',\n            "
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Data/MtgMasterDataController.php",
+      "start": 240,
+      "end": 254,
+      "fileLines": 452,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            'contact_subject' => [\n                'class' => MtbContactSubject::class,\n                'label' => 'お問い合わせ件名',\n                'columns' => [\n                    ['field' => 'subject', 'label' => 'subject', 'type' => 'text', 'set_type' => 'string'],\n                    ['field' => 'subject_en', 'label' => 'subject_en', 'type' => 'text', 'set_type' => 'string'],\n                    ['field' => 'email', 'label' => 'email', 'type' => 'text', 'set_type' => 'nullable_string'],\n                    ['field' => 'shop_flg', 'label' => 'shop_flg', 'type' => 'text', 'set_type' => 'bool'],\n                    ['field' => 'attached_info_name', 'label' => 'attached_info_name', 'type' => 'text', 'set_type' => 'nullable_string'],\n                    ['field' => 'attached_info_name_en', 'la"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 1326,
+      "end": 1334,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "1-3 件名（タイトル） 単一選択(セレクトボックス) ◯ - 通販に関するお問い合わせ ・マスターデータから選択肢を取得する。\n　1 通販に関するお問い合わせ\n　2 ネット買取に関するお問い合わせ\n　3 店舗でのお買い物・イベントに関するお問い合わせ\n　4 委託販売に関するお問い合わせ\n　5 デッキ構築機能に関するお問い合わせ\n　6 記事・動画に関するお問い合わせ\n　7 その他のお問い合わせ\n　8 協賛関連"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Front/ContactType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20251125141030.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Data/MtgMasterDataController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:56+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ",
+        "score": 100
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴",
+        "score": 60
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

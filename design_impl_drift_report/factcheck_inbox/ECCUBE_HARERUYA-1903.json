@@ -1,0 +1,302 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1903",
+  "issueId": 43509403,
+  "summary": "【一部実装】フロント会員_新規会員登録_新規会員登録のMTG Campaign登録名(姓/名)は最大128文字がHTMLのmaxlength属性のみで制限されており、サーバ側の文字数バリデーションが無いため、129文字以上を送信するとバリデーションエラーではなくDBエラーになる。",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:00Z",
+  "updated": "2026-07-14T01:17:00Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1903",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "新規会員登録",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロント会員_新規会員登録_新規会員登録のMTG Campaign登録名(姓/名)は最大128文字がHTMLのmaxlength属性のみで制限されており、サーバ側の文字数バリデーションが無いため、129文字以上を送信するとバリデーションエラーではなくDBエラーになる。",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：新規会員登録\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロント会員_新規会員登録_新規会員登録のMTG Campaign登録名(姓/名)は最大128文字がHTMLのmaxlength属性のみで制限されており、サーバ側の文字数バリデーションが無いため、129文字以上を送信するとバリデーションエラーではなくDBエラーになる。\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- 設計書 F06-01 の画面項目表では、MTG Campaign 登録名(姓)(1-23)・MTG Campaign 登録名(名)(1-24) は任意項目で、最大文字数を128文字とする。\n- 最大文字数の制限は、他の画面項目（会社名・フリガナ等）と同様にサーバ側の入力チェックでも担保し、超過時は入力チェックエラーとして画面にエラーメッセージを表示する。",
+    "現在の挙動": "- MTG Campaign 登録名を構築する PlayerType では firstNameEn / lastNameEn ともに attr.maxlength=128 のみを付与しており、constraints（Assert\\Length 等）が一切定義されていない。\n- 会員登録確認画面では両項目が maxlength 属性の無い hidden として再POSTされるため、入力画面の maxlength は最終的な担保にならない。\n- エンティティ DtbPlayer の first_name_en / last_name_en は ORM の length=128（varchar(128)）のみで、129文字以上が渡ると入力チェックエラーではなくカラム長超過のDB例外（500エラー）になる。\n- 同じ会員登録フォームの他項目は、EntryType の company_name（Assert\\Length）や KanaType・NameType のように必ずサーバ側の Assert\\Length を持っており、PlayerType だけが例外になっている。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/F06_customer_basedesign.md:87（1-23 MTG Campaign 登録名(姓)：最大文字数128）\n.cursor/docs/MDfile/F06_customer_basedesign.md:88（1-24 MTG Campaign 登録名(名)：最大文字数128）\n.cursor/docs/MDfile/F06_customer_basedesign.md:1049-1050（会員情報変更画面でも同じ1-23/1-24を最大128としている）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Front/PlayerType.php:34-51（firstNameEn / lastNameEn は attr.maxlength=128 のみ。constraints の指定が無い）\nsrc/Eccube/Entity/DtbPlayer.php:57,63（first_name_en / last_name_en は ORM の length=128 のみ）\nsrc/Eccube/Resource/template/default/Entry/confirm.twig:244-246（確認画面で両項目が maxlength 属性の無い hidden として再POSTされる）\nsrc/Eccube/Resource/template/default/Entry/index.twig:619,623（入力欄の描画）\nsrc/Eccube/Form/Type/Front/EntryType.php:83-90（company_name は Assert\\Length でサーバ側の最大文字数を担保している対比実装）\n\n▼AIレビューで判定が割れた理由\nClaude は「乖離あり」、codex は「実装済み」と判定し、第三者による再検証で 両者を部分的に採用した の判定を採用した。\ncodex は PlayerType.php:39,47 の maxlength=128 と DtbPlayer.php:57,63 の length=128 だけを根拠に「HTML属性とDB列の双方が設計値128だから乖離にならない」と判断した。しかし Entry/confirm.twig:244-246 を見ておらず、確認画面では両項目が maxlength 属性の無い hidden input として再POSTされる（＝入力画面の maxlength を通らない経路がある）ことを見落としている。\nClaude は PlayerType.php:34-51 に constraints が一切無いことを正しく特定しており、この点は Claude が正しい。同一フォームの他項目（EntryType.php:83-90 の company_name は Assert\\Length、kana/name も同様）はすべてサーバ側 Assert\\Length を持つため、PlayerType だけが実装方針から外れている。\n一方で、設計書 F06_customer_basedesign.md:87-88 は「最大文字数 128」としか書いておらず、サーバ側バリデーション方式や専用エラー文言までは規定していない、という codex の指摘も部分的に正しい。通常の画面操作では128文字を超えて入力できるわけではないため「未実装」ではない。\n実害は、maxlength を回避した129文字以上の値がバリデーションを素通りして永続化処理へ渡り、varchar(128) 超過のDB例外（500エラー画面）になる点。したがって『画面上の128文字制限は実装済みだが、サーバ側の担保が欠落している』＝一部実装として起票する。git log --since=2026-07-08 -- src/Eccube/Form/Type/Front/PlayerType.php に修正コミットは無い。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "新規会員登録",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 87,
+      "end": 87,
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1-23 | MTG Campaign 登録名(姓) | 半角・全角 | - | 128 | - | - |"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 88,
+      "end": 88,
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1-24 | MTG Campaign 登録名(名) | 半角・全角 | - | 128 | - | - |"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 1049,
+      "end": 1050,
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1-23 | MTG Campaign 登録名(姓) | 半角・全角 | - | 128 | - | - |\n| 1-24 | MTG Campaign 登録名(名) | 半角・全角 | - | 128 | - | - |"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Front/PlayerType.php",
+      "start": 34,
+      "end": 51,
+      "fileLines": 70,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $builder\n            ->add('firstNameEn', TextType::class, [\n                'label' => 'form.event_account.dci_firstname.label',\n                'required' => false,\n                'attr' => [\n                    'maxlength' => 128,\n                    'placeholder' => 'admin.common.mtg_companion.dci_firstname.empty_value',\n                ],\n            ])\n            ->add('lastNameEn', TextType::class, [\n                'label' => 'form.event_account.dci_lastname.label',\n                'required' => false,\n                'attr' => [\n                    'maxlength' => 128,\n                    'placeholder' => 'admin.common.mtg_companion.dci_lastname.empty_value',\n                ],\n            ])\n        ;"
+    },
+    {
+      "path": "src/Eccube/Entity/DtbPlayer.php",
+      "start": 57,
+      "end": 57,
+      "fileLines": 572,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    #[ORM\\Column(name: 'first_name_en', type: Types::STRING, length: 128, nullable: true, options: ['comment' => '名前(英)'])]"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Entry/confirm.twig",
+      "start": 244,
+      "end": 246,
+      "fileLines": 166,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Entry/index.twig",
+      "start": 619,
+      "end": 619,
+      "fileLines": 222,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Front/EntryType.php",
+      "start": 83,
+      "end": 90,
+      "fileLines": 145,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                'years' => range(date('Y'), date('Y') - $this->eccubeConfig['eccube_birth_max']),\n                'widget' => 'choice',\n                'placeholder' => ['year' => '----', 'month' => '--', 'day' => '--'],\n                'constraints' => [\n                    new Assert\\LessThanOrEqual([\n                        'value' => date('Y-m-d', strtotime('-1 day')),\n                        'message' => 'form_error.select_is_future_or_now_date',\n                    ]),"
+    },
+    {
+      "path": "Entry/confirm.twig",
+      "start": 244,
+      "end": 246,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Front/PlayerType.php",
+      "start": null,
+      "end": null,
+      "fileLines": 70,
+      "ok": true,
+      "reason": "file_exists_no_line"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 87,
+      "end": 88,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1-23 | MTG Campaign 登録名(姓) | 半角・全角 | - | 128 | - | - |\n| 1-24 | MTG Campaign 登録名(名) | 半角・全角 | - | 128 | - | - |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Front/PlayerType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbPlayer.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Entry/confirm.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Entry/index.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Front/EntryType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:58+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

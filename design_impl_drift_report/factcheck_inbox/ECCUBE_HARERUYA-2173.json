@@ -1,0 +1,221 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2173",
+  "issueId": 43509748,
+  "summary": "【一部実装】基本情報設定_追加システム設定_追加システム設定(M10-16)にて、イベント決済確認エラー通知メールアドレスの入力欄が画面に存在せず、設定・保存ができない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:17Z",
+  "updated": "2026-07-14T01:19:17Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2173",
+  "basicInfo": {
+    "分類": "基本情報設定",
+    "機能": "追加システム設定",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】基本情報設定_追加システム設定_追加システム設定(M10-16)にて、イベント決済確認エラー通知メールアドレスの入力欄が画面に存在せず、設定・保存ができない",
+    "設計書": "0209_基本設計仕様書(基本情報設定).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：基本情報設定\n機能：追加システム設定\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】基本情報設定_追加システム設定_追加システム設定(M10-16)にて、イベント決済確認エラー通知メールアドレスの入力欄が画面に存在せず、設定・保存ができない\n設計書：0209_基本設計仕様書(基本情報設定).xlsx",
+    "期待される挙動": "- 追加システム設定の識別ID:17「イベント決済確認エラー通知メールアドレス」は、Eメール形式・最大255文字で画面から入力・登録できること。",
+    "現在の挙動": "- AdditionalSystemFormType には Option::ALERT_CHECK_PAYMENT_ERROR_MAIL_ADDRESS（保存キー 'check_payment_error_mail_address'）が Email + Length(max: 255) 付きで定義されている。\n- しかし画面テンプレート additional_system.twig には form.check_payment_error_mail_address の form_widget が存在せず（該当行はラベルのみが流用され、入力欄は購入処理エラー通知先メールアドレスの widget）、画面から値を入力・保存する手段がない。\n- AdditionalSystemController::update() は mtb_option の全レコードについて、フォームデータに同名キーがあれば値を上書きする実装であり、未描画のフィールドは null（空文字）として送信されるため、当該オプション（mtb_option id=30, 初期値 it_common@hareruyamtg.com）が保存操作のたびに空文字で上書きされる恐れがある。",
+    "補足情報": "▼設計書該当箇所\nM10_base_info_setting_basedesign.md:551 の逐語引用「17 イベント決済確認エラー通知メールアドレス Eメール形式で許容された文字 - 255文字 - - 2025/12/08 田所」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:174 （ALERT_CHECK_PAYMENT_ERROR_MAIL_ADDRESS のフォーム定義は存在する）\nsrc/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:187 （同ラベル行の widget は form.shopping_error_mail_address であり、check_payment_error_mail_address の widget は twig 内に存在しない）\nsrc/Eccube/Controller/Admin/Setting/Shop/AdditionalSystemController.php:92 （フォームデータのキーが存在すれば値を上書きする保存処理）\nsrc/Eccube/Entity/Master/MtbOption.php:92 （ALERT_CHECK_PAYMENT_ERROR_MAIL_ADDRESS = 'check_payment_error_mail_address'）\napp/DoctrineMigrations/Version20251125161057.php:268 （mtb_option に check_payment_error_mail_address を投入）\n\n▼備考\ntwig 内に 'check_payment_error' の記述はラベル（184行）の1箇所のみで、widget は存在しないことを grep で確認済み。フォーム定義とバリデーションは存在するため「一部実装」とした。"
+  },
+  "designBook": "0209_基本設計仕様書(基本情報設定).xlsx",
+  "feature": "追加システム設定",
+  "classification": "基本情報設定",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php",
+      "start": 174,
+      "end": 174,
+      "fileLines": 254,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            ->add(Option::ALERT_CHECK_PAYMENT_ERROR_MAIL_ADDRESS, TextType::class, ["
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig",
+      "start": 187,
+      "end": 187,
+      "fileLines": 281,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                    {{ form_widget(form.shopping_error_mail_address) }}"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Setting/Shop/AdditionalSystemController.php",
+      "start": 92,
+      "end": 92,
+      "fileLines": 107,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            if (array_key_exists($keyName, $formData) && (string) $formData[$keyName] !== (string) $Option->getOptionValue()) {"
+    },
+    {
+      "path": "src/Eccube/Entity/Master/MtbOption.php",
+      "start": 92,
+      "end": 92,
+      "fileLines": 196,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public const ALERT_CHECK_PAYMENT_ERROR_MAIL_ADDRESS = 'check_payment_error_mail_address';"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20251125161057.php",
+      "start": 268,
+      "end": 268,
+      "fileLines": 289,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                'option_key' => 'check_payment_error_mail_address',"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 551,
+      "end": 551,
+      "resolvedFrom": "M10_base_info_setting_basedesign.md",
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "17 イベント決済確認エラー通知メールアドレス Eメール形式で許容された文字 - 255文字 - - 2025/12/08 田所"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Setting/Shop/AdditionalSystemController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/Master/MtbOption.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20251125161057.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:38+09:00",
+  "designResolution": {
+    "requested": "0209_基本設計仕様書(基本情報設定).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html",
+    "sheetCount": 14,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-14",
+        "title": "追加システム設定",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "基本設定(旧ショップマスター)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "特定商取引に関する法律"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "利用規約管理"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "支払い方法　手数料設定"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "配送方法設定"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "税率設定"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "自動送信メール"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "メール設定"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "カスタムCSV出力設定"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "店舗登録"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "追加システム設定"
+      }
+    ]
+  }
+}

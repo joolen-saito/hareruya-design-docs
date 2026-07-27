@@ -1,0 +1,229 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2233",
+  "issueId": 43509819,
+  "summary": "【未実装】イベント管理_イベント一括登録(CSV)_イベント一括登録CSVで、親イベントにクレジットカード決済が無いのに日程がオンライン受付あり・参加費有料の場合のエラーチェックが実装されていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:45Z",
+  "updated": "2026-07-14T01:19:45Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2233",
+  "basicInfo": {
+    "分類": "イベント管理",
+    "機能": "イベント一括登録(CSV)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【未実装】イベント管理_イベント一括登録(CSV)_イベント一括登録CSVで、親イベントにクレジットカード決済が無いのに日程がオンライン受付あり・参加費有料の場合のエラーチェックが実装されていない",
+    "設計書": "0214_基本設計仕様書(イベント管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：イベント管理\n機能：イベント一括登録(CSV)\n課題カテゴリ：不具合（バグ）\n課題：【未実装】イベント管理_イベント一括登録(CSV)_イベント一括登録CSVで、親イベントにクレジットカード決済が無いのに日程がオンライン受付あり・参加費有料の場合のエラーチェックが実装されていない\n設計書：0214_基本設計仕様書(イベント管理).xlsx",
+    "期待される挙動": "- イベント一括登録CSVの取込時、親イベント情報に支払方法（クレジットカード決済）の設定が無いにもかかわらず、日程情報のオンライン受付が「あり」かつ参加費が有料である行はエラーとすること。",
+    "現在の挙動": "- EventBulkCsvImportHandler の行バリデーションでは、クレジットカード支払い列は「あり／なし」の選択値チェック（行290-291）のみ行われ、オンライン受付・参加費との相関チェックは行われていない。\n- オンライン受付が「あり」の場合の検証は、オンライン受付時間From/Toの必須・書式・前後関係・イベント開始時間との関係のみで、親イベントのクレジットカード決済設定を参照する処理が存在しない。\n- 翻訳ファイルにも該当のエラーメッセージキー（クレジットカード決済未設定に関するもの）が存在しない（admin.event.entry.bulk_csv.error.* に該当キー無し）。\n- なお同等の相関チェックは画面側では実装されており、イベント編集（EventType の POST_SUBMIT）および日程登録（ScheduleType の POST_SUBMIT、form_error.schedule_credit_payment_required）でエラーとしている。",
+    "補足情報": "▼設計書該当箇所\nM13_event_management_basedesign.md:1049 「* 親イベント情報に支払方法（クレジットカード決済）の設定がないのに日程情報のオンライン受付が「あり」かつ参加費が有料とされている場合はエラーとする。」\n\n▼実装該当箇所\nsrc/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:289-291 （クレジットカード列は選択値チェックのみ）\nsrc/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:364-400 （オンライン受付ありの場合の検証。クレジットカード設定を参照していない）\nsrc/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:453-455 （取込時にクレジットカード「あり」なら Payment::EC_CREDIT を設定するのみ）\nsrc/Eccube/Form/Type/Admin/ScheduleType.php:191-199 （比較対象: 画面側では同等の相関チェックを実装）\n\n▼備考\nCSV 一括登録経由では、クレジットカード決済が設定されていない親イベントに対して「オンライン受付あり・有料」の日程を登録できてしまい、フロントから決済不能な申込が発生し得る。画面側の実装（ScheduleType）と同等のチェックを取込時にも追加する必要がある。"
+  },
+  "designBook": "0214_基本設計仕様書(イベント管理).xlsx",
+  "feature": "イベント一括登録(CSV)",
+  "classification": "イベント管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php",
+      "start": 289,
+      "end": 291,
+      "fileLines": 1020,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $credit = $this->cellStr($row, $this->creditCardColumn);\n        if ($credit !== '' && !\\in_array($credit, [self::LABEL_OPTION_YES, self::LABEL_OPTION_NO], true)) {\n            $ms->addInvalidChoiceError($rn, $this->creditCardColumn->getLabel());"
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php",
+      "start": 364,
+      "end": 400,
+      "fileLines": 1020,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            $online = $this->cellStr($row, $this->onlineReceptionColumn);\n            if ($online === self::LABEL_OPTION_YES) {\n                $onFrom = $this->cellStr($row, $this->onlineReceptionTimeFromColumn);\n                $onTo = $this->cellStr($row, $this->onlineReceptionTimeToColumn);\n                if ($onFrom === '' || $onTo === '') {\n                    $ms->addRawMessage($this->transError('admin.event.entry.bulk_csv.error.online_reception_time_required', $rn));\n                    $event->breakAll();\n\n                    return;\n                }\n                $onlineFromDt = $this->parseReceptionWindowDateTime($onFrom);\n                if ($onlineFromDt === null) {\n                    $ms->addInvalidFormatError($rn, $this->onlineReceptionTimeFromColumn->getLabel());\n     "
+    },
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php",
+      "start": 453,
+      "end": 455,
+      "fileLines": 1020,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $payments = new ArrayCollection(\n            $this->cellStr($row, $this->creditCardColumn) === self::LABEL_OPTION_YES\n            && ($creditPayment = $this->paymentRepository->find(Payment::EC_CREDIT)) instanceof Payment"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/ScheduleType.php",
+      "start": 191,
+      "end": 199,
+      "fileLines": 295,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                // オンライン受付ありかつ参加費が有料の場合は、親イベントで支払方法の設定が必要\n                $entryFlg = $form->get('entryFlg')->getData();\n                $entryFee = $form->get('entryFee')->getData();\n                if ($entryFlg && (int) $entryFee > 0) {\n                    $hasPayment = !$Event->getPayments()->isEmpty();\n                    if (!$hasPayment) {\n                        $form->get('entryFee')->addError(new FormError(trans('form_error.schedule_credit_payment_required', [], 'validators')));\n                    }\n                }"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 1049,
+      "end": 1049,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 親イベント情報に支払方法（クレジットカード決済）の設定がないのに日程情報のオンライン受付が「あり」かつ参加費が有料とされている場合はエラーとする。"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/ScheduleType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:50+09:00",
+  "designResolution": {
+    "requested": "0214_基本設計仕様書(イベント管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html",
+    "sheetCount": 22,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "イベント一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "繰返日程追加"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "イベント申込一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "イベント申込一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "イベント申込一括編集"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "デッキ表示"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "CSVダウンロード"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "イベント申込登録(検索入力)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "イベント申込登録(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "イベント新規申込登録"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "イベント一括登録CSV"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "バナー設定"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定"
+      }
+    ]
+  }
+}

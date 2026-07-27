@@ -1,0 +1,193 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1782",
+  "issueId": 43509233,
+  "summary": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(4)タイルにて、商品ごとの支店の商品公開ステータス（is_branch_published）による公開/非公開制御が行われていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:15:57Z",
+  "updated": "2026-07-14T01:15:57Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1782",
+  "basicInfo": {
+    "分類": "フロントトップ",
+    "機能": "支店ECTOP",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(4)タイルにて、商品ごとの支店の商品公開ステータス（is_branch_published）による公開/非公開制御が行われていない",
+    "設計書": "0301_基本設計仕様書(フロント_トップ).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントトップ\n機能：支店ECTOP\n課題カテゴリ：不具合（バグ）\n課題：【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(4)タイルにて、商品ごとの支店の商品公開ステータス（is_branch_published）による公開/非公開制御が行われていない\n設計書：0301_基本設計仕様書(フロント_トップ).xlsx",
+    "期待される挙動": "- 支店ECTOPのタイルは管理画面＞コンテンツ管理＞トップページ管理の設定に従って表示し、(4-8)もっと見るから設定に応じた条件で絞り込まれた商品一覧へ遷移できること。\n- タイルに表示する商品は、商品ごとに支店の商品公開ステータスを取得し、公開/非公開を制御すること（「M03-02商品登録/編集」の商品公開ステータスに応じて表示・非表示にすること）。",
+    "現在の挙動": "- タイル自体はトップページ管理で登録された DtbTile を section 順に読み出して描画しており、各タイルに「もっと見る」リンク（PICKUP は商品一覧、その他はタグ絞り込み商品一覧）も実装されている。\n- しかしピックアップ商品タイルの取得メソッド ProductRepository::findTopPickUpProductsByBaseInfo() は pc.visible / p.Status / 支店在庫 / 地域制限しか条件に持たず、p.isBranchPublished を参照していない。\n- タグ紐付けタイルの取得メソッド ProductRepository::findTopPublicProductsByTag() が使う buildPublicProductClassesByTagQueryBuilder() にも p.isBranchPublished の条件が無く、支店IDは在庫の EXISTS 条件にしか使われていない。\n- その結果、支店で非公開に設定された商品もタイル内に表示されてしまい、設計の「商品ごとに支店の商品公開ステータスを取得し、公開/非公開を制御する」が満たされていない。",
+    "補足情報": "▼設計書該当箇所\nF01_top_basedesign.md:773 「**★ 商品ごとに支店の商品公開ステータスを取得し、公開/非公開を制御する**」（タイル 処理概要）\nF01_top_basedesign.md:761-762 「支店商品の公開と非公開の制御 / * 「M03-02商品登録/編集」機能の商品公開ステータスに応じて、商品を表示、または非表示にする」（タイル カスタマイズ要件）\nF01_top_basedesign.md:769 「* タイルは管理画面＞コンテンツ管理＞トップページ管理にて設定できる」\n\n▼実装該当箇所\nsrc/Eccube/Repository/ProductRepository.php:476-513 （ピックアップ商品タイル用クエリ。isBranchPublished 条件なし）\nsrc/Eccube/Repository/ProductRepository.php:559-585 （タグタイル用QueryBuilder。isBranchPublished 条件なし）\nsrc/Eccube/Controller/Shop/ShopTopController.php:127-162 （buildTiles。トップページ管理の DtbTile から生成）\nsrc/Eccube/Resource/template/default/Block/shop_item_list.twig:25-52 （タイル描画と「もっと見る」導線）\nsrc/Eccube/Repository/ProductRepository.php:717-719 （支店時に p.isBranchPublished = true を付与している既存実装。反証）\n\n▼備考\nタイルの設定読み出し（トップページ管理）と「もっと見る」導線は設計どおり実装済みのため「一部実装」。欠落しているのは商品ごとの支店公開制御（is_branch_published）のみ。ProductRepository::findPublicByIds() には同じ条件が実装済みであり、タイル系の2クエリへの適用漏れである。"
+  },
+  "designBook": "0301_基本設計仕様書(フロント_トップ).xlsx",
+  "feature": "支店ECTOP",
+  "classification": "フロントトップ",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Repository/ProductRepository.php",
+      "start": 476,
+      "end": 513,
+      "fileLines": 415,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Repository/ProductRepository.php",
+      "start": 559,
+      "end": 585,
+      "fileLines": 415,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Controller/Shop/ShopTopController.php",
+      "start": 127,
+      "end": 162,
+      "fileLines": 190,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private function buildTiles(BaseInfo $TileBaseInfo, int $shopId, string $locale): array\n    {\n        $Tiles = $TileBaseInfo->getTiles()->toArray();\n        usort($Tiles, static fn (DtbTile $a, DtbTile $b): int => $a->getSection() <=> $b->getSection());\n\n        $tiles = [];\n        foreach ($Tiles as $Tile) {\n            $tileTypeId = $Tile->getTileType()->getId();\n            $Tag = $Tile->getTag();\n\n            if ($tileTypeId === MtbTileType::PICKUP_PRODUCT) {\n                $ProductClasses = $this->productRepository->findTopPickUpProductsByBaseInfo($shopId, $locale, self::TILE_PRODUCT_LIMIT);\n                $tagId = null;\n                $tagName = '';\n            } elseif ($Tag !== null) {\n                $ProductClasses = $this->productRepository->findTopPublicProductsByTag($T"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/shop_item_list.twig",
+      "start": 25,
+      "end": 52,
+      "fileLines": 63,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "      {% for tile in tiles|default([]) %}\n      {% if tile.tile_type_id == constant('Eccube\\\\Entity\\\\Master\\\\MtbTileType::PICKUP_PRODUCT') %}\n        {% set tileTitle = 'shop_top.tile.pickup_title'|trans %}\n        {% set tileUrl = url('product_list') %}\n      {% elseif tile.tile_type_id == constant('Eccube\\\\Entity\\\\Master\\\\MtbTileType::NEW_PRODUCT') %}\n        {% set tileTitle = 'shop_top.tile.new_expansion_title'|trans %}\n        {% set tileUrl = url('product_list_tag', { tagId: tile.tag_id }) %}\n      {% else %}\n        {% set tileTitle = 'shop_top.tile.tag_card_title'|trans({'%name%': tile.tag_name}) %}\n        {% set tileUrl = url('product_list_tag', { tagId: tile.tag_id }) %}\n      {% endif %}\n      <div class=\"p-hareruya-feature-grid__item\">\n        <div class=\"p-hareruya-section__h"
+    },
+    {
+      "path": "src/Eccube/Repository/ProductRepository.php",
+      "start": 717,
+      "end": 719,
+      "fileLines": 415,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 773,
+      "end": 773,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "**★ 商品ごとに支店の商品公開ステータスを取得し、公開/非公開を制御する**"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 761,
+      "end": 762,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "支店商品の公開と非公開の制御\n* 「M03-02商品登録/編集」機能の商品公開ステータスに応じて、商品を表示、または非表示にする"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 769,
+      "end": 769,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* タイルは管理画面＞コンテンツ管理＞トップページ管理にて設定できる"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Repository/ProductRepository.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Shop/ShopTopController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/shop_item_list.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:29+09:00",
+  "designResolution": {
+    "requested": "0301_基本設計仕様書(フロント_トップ).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html",
+    "sheetCount": 4,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP",
+        "score": 100
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP"
+      }
+    ]
+  }
+}

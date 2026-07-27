@@ -1,0 +1,266 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2210",
+  "issueId": 43509792,
+  "summary": "【未実装】イベント管理_イベント編集 / イベント削除_イベント編集画面に、設計書で必須項目とされている「会場」の単一選択フィールドが存在しない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:33Z",
+  "updated": "2026-07-14T01:19:33Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2210",
+  "basicInfo": {
+    "分類": "イベント管理",
+    "機能": "イベント編集 / イベント削除",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【未実装】イベント管理_イベント編集 / イベント削除_イベント編集画面に、設計書で必須項目とされている「会場」の単一選択フィールドが存在しない",
+    "設計書": "0214_基本設計仕様書(イベント管理).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：イベント管理\n機能：イベント編集 / イベント削除\n課題カテゴリ：不具合（バグ）\n課題：【未実装】イベント管理_イベント編集 / イベント削除_イベント編集画面に、設計書で必須項目とされている「会場」の単一選択フィールドが存在しない\n設計書：0214_基本設計仕様書(イベント管理).xlsx",
+    "期待される挙動": "- イベント編集画面の識別ID:1-4「会場」は必須の単一選択項目であり、選択肢として全会場を選択できること。\n- イベント申込CSVの出力項目にも「会場ID」（識別ID:23）が含まれること。",
+    "現在の挙動": "- フォーム EventType には baseInfo（店舗）はあるが venue（会場）に相当するフィールドが一切定義されていない。\n- テンプレート admin/Event/edit.twig にも会場の入力欄は存在しない。\n- マイグレーション Version20260611000000 により dtb_event.venue_id 列と mtb_venue テーブルが削除され、イベント申込CSV定義（dtb_csv）からも venue_id が DELETE されている。\n- エンティティ DtbEvent にも Venue プロパティは存在せず、src/Eccube 配下に venue を扱うコードは残っていない。",
+    "補足情報": "▼設計書該当箇所\nM13_event_management_basedesign.md:150 「2025-01-04 会場 単一選択 〇 - - 選択肢:全会場」（識別ID:1-4、必須）\nM13_event_management_basedesign.md:746 「| 23 | 会場ID |」（イベント申込CSV項目）\nM13_event_management_basedesign.md:1070 「| 4 | 会場 | - | 文字型 | 〇 | - | TC 東京 |」（CSV取込項目、必須）\n\n▼実装該当箇所\napp/DoctrineMigrations/Version20260611000000.php:27 （getDescription: 「dtb_event.venue_id および mtb_venue テーブルを削除」）\napp/DoctrineMigrations/Version20260611000000.php:34-39 （dtb_csv からの venue_id 削除、venue_id 列削除、mtb_venue テーブル削除）\nsrc/Eccube/Form/Type/Admin/EventType.php:75-271 （会場に相当するフィールドが存在しない）\nsrc/Eccube/Resource/template/admin/Event/edit.twig:75-160 （イベント属性の入力欄に会場が存在しない）\n\n▼備考\n会場の削除はコミット b4bcd1eb3b「管理画面フロントとAPIからvenueを削除」および 5418a2113e「DtbEventEntityからvenueを削除」で意図的に行われているが、正となる設計書（更新日 2025-09-19）には識別ID:1-4「会場」が必須項目として残っており、CSV項目としても定義されている。設計書と実装の乖離として FACT とする。設計書側の更新漏れの可能性があるため、要件確認が必要。"
+  },
+  "designBook": "0214_基本設計仕様書(イベント管理).xlsx",
+  "feature": "イベント編集 / イベント削除",
+  "classification": "イベント管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "admin/Event/edit.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260611000000.php",
+      "start": 27,
+      "end": 27,
+      "fileLines": 66,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        return 'dtb_event.venue_id および mtb_venue テーブルを削除';"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260611000000.php",
+      "start": 34,
+      "end": 39,
+      "fileLines": 66,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $this->addSql(\"DELETE FROM dtb_csv WHERE entity_name = $entityName AND field_name = 'venue_id'\");\n\n        $this->addSql('ALTER TABLE dtb_event DROP CONSTRAINT IF EXISTS fk_d3e1413840a73eba');\n        $this->addSql('ALTER TABLE dtb_event DROP COLUMN IF EXISTS venue_id');\n\n        $this->addSql('DROP TABLE IF EXISTS mtb_venue');"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/EventType.php",
+      "start": 75,
+      "end": 271,
+      "fileLines": 323,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $builder\n            ->add('nameJp', TextType::class, [\n                'constraints' => [\n                    new NotBlank(),\n                    new Length(['max' => $this->eccubeConfig['eccube_stext_len']]),\n                ],\n            ])\n            ->add('nameEn', TextType::class, [\n                'constraints' => [\n                    new NotBlank(),\n                    new Length(['max' => $this->eccubeConfig['eccube_stext_len']]),\n                ],\n            ])\n            ->add('baseInfo', EntityType::class, [\n                'class' => BaseInfo::class,\n                'query_builder' => fn (EntityRepository $er) => $er->createQueryBuilder('b')\n                    ->orderBy('b.id', 'ASC'),\n            ])\n            ->add('formats', EntityType::class, [\n            "
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/edit.twig",
+      "start": 75,
+      "end": 160,
+      "fileLines": 592,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                <div class=\"row mb-2\">\n                                    <div class=\"col-2\">\n                                        <span>{{ 'admin.event.name_jp'|trans }}</span>\n                                        <span class=\"badge bg-primary ms-1\">{{ 'admin.common.required'|trans }}</span>\n                                    </div>\n                                    <div class=\"col\">\n                                        {{ form_widget(form.nameJp) }}\n                                        {{ form_errors(form.nameJp) }}\n                                    </div>\n                                </div>\n                                <div class=\"row mb-2\">\n                                    <div class=\"col-2\">\n                                        <span>{{ 'a"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 150,
+      "end": 150,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "2025-01-04 会場 単一選択 〇 - - 選択肢:全会場"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 746,
+      "end": 746,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 23 | 会場ID |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "start": 1070,
+      "end": 1070,
+      "resolvedFrom": "M13_event_management_basedesign.md",
+      "fileLines": 1308,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 4 | 会場 | - | 文字型 | 〇 | - | TC 東京 |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "app/DoctrineMigrations/Version20260611000000.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/EventType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Event/edit.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:45+09:00",
+  "designResolution": {
+    "requested": "0214_基本設計仕様書(イベント管理).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html",
+    "sheetCount": 22,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集",
+        "score": 60
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "イベント一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "イベント編集"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "イベント削除"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "日程登録"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "繰返日程追加"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "複製新規"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "イベント申込一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "イベント申込一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "イベント申込一括編集"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "デッキ表示"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "CSVダウンロード"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "イベント申込詳細・編集"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "イベント申込登録(検索入力)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "イベント申込登録(検索結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "イベント新規申込登録"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "イベント一括登録"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "イベント一括登録CSV"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "バナー設定"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "画像設定"
+      }
+    ]
+  }
+}

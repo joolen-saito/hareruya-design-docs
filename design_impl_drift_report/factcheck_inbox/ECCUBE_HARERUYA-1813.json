@@ -1,0 +1,205 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1813",
+  "issueId": 43509268,
+  "summary": "【実装乖離】フロント商品_入荷時通知_入荷通知の登録上限値・カウント単位・まとめて登録時のエラー表示が設計と相違している",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:13Z",
+  "updated": "2026-07-14T01:16:13Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1813",
+  "basicInfo": {
+    "分類": "フロント商品",
+    "機能": "入荷時通知",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント商品_入荷時通知_入荷通知の登録上限値・カウント単位・まとめて登録時のエラー表示が設計と相違している",
+    "設計書": "0303_基本設計仕様書(フロント_商品).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント商品\n機能：入荷時通知\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント商品_入荷時通知_入荷通知の登録上限値・カウント単位・まとめて登録時のエラー表示が設計と相違している\n設計書：0303_基本設計仕様書(フロント_商品).xlsx",
+    "期待される挙動": "- 登録上限は管理画面で設定されている入荷通知登録上限数（設計時点で20件）とすること。\n- 上限件数は「まとめて入荷通知」で登録している場合でも1件、商品規格単位でも1件としてカウントすること。\n- 登録上限数以上の登録をしようとした場合はエラーを表示すること。",
+    "現在の挙動": "- (1) 実際に効く上限値は mtb_option.arrival_alert_max の投入値25で、設計の20と異なる。定数 MtbOption::ARRIVAL_ALERT_MAX_DEFAULT = 5 は管理画面フォームの初期表示用のフォールバックにすぎず上限判定には使われない。なお mtb_option の該当行が無い場合は上限が一切効かない。\n- (2) dtb_product_request は ProductClass ごとに1行作られるため、「まとめて入荷通知」は規格数ぶん上限を消費する（規格が5件あれば5件消費）。設計の「まとめて登録でも1件」を満たさない。\n- (3) 「まとめて入荷通知」はモーダル抑止フラグ付きで個別リクエストを呼ぶため、上限超過の失敗メッセージが表示されず、最後に一律の成功ポップアップが出る（登録されていないのに登録済みの見た目になる）。規格単位ボタンでは超過エラーは表示される。",
+    "補足情報": "▼設計書該当箇所\nF03_product_basedesign.md:803-805（入荷時通知 処理概要）\n・登録上限は管理画面で設定されている入荷通知登録上限数(現在は20件)とする\n・上限件数は「まとめて入荷通知」で登録している場合でも1件、商品規格単位でも1件としてカウントする\n・登録上限数以上の登録をしようとした場合は、エラーを表示する\n\n▼実装該当箇所\napp/DoctrineMigrations/Version20251125161057.php:63-66 （'option_key' => 'arrival_alert_max', 'option_value' => '25'）\nsrc/Eccube/Entity/Master/MtbOption.php:49-50 （ARRIVAL_ALERT_MAX_DEFAULT = 5。管理画面の初期表示用）\nsrc/Eccube/Repository/DtbProductRequestRepository.php:504-524 （規格単位の行数と上限を比較。行が無ければ null＝無制限）\nsrc/Eccube/Controller/Front/CartController.php:479-485 （1リクエスト＝1規格ぶんの超過判定）\nsrc/Eccube/Resource/template/default/Block/js/product_js.twig:105-114, 328-346 （まとめて登録は suppressModal=true で失敗メッセージを抑止し、最後に一律の成功ポップアップ）"
+  },
+  "designBook": "0303_基本設計仕様書(フロント_商品).xlsx",
+  "feature": "入荷時通知",
+  "classification": "フロント商品",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "app/DoctrineMigrations/Version20251125161057.php",
+      "start": 63,
+      "end": 66,
+      "fileLines": 289,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            [\n                'id' => 1,\n                'option_key' => 'arrival_alert_max',\n                'option_value' => '25',"
+    },
+    {
+      "path": "src/Eccube/Entity/Master/MtbOption.php",
+      "start": 49,
+      "end": 50,
+      "fileLines": 196,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public const ARRIVAL_ALERT_MAX = 'arrival_alert_max';\n    public const ARRIVAL_ALERT_MAX_DEFAULT = 5;"
+    },
+    {
+      "path": "src/Eccube/Repository/DtbProductRequestRepository.php",
+      "start": 504,
+      "end": 524,
+      "fileLines": 525,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function compareRequestCountAndMax(int $playerId): ?array\n    {\n        $count = $this->createQueryBuilder('pr')\n            ->select('COUNT(pr.id)')\n            ->where('pr.Player = :playerId')\n            ->andWhere('pr.deletedAt IS NULL')\n            ->setParameter('playerId', $playerId)\n            ->getQuery()\n            ->getSingleScalarResult();\n\n        $em = $this->getEntityManager();\n        $maxValue = $em->getConnection()->fetchOne(\n            \"SELECT option_value FROM mtb_option WHERE option_key = 'arrival_alert_max'\"\n        );\n\n        if ($maxValue !== false && (int) $count >= (int) $maxValue) {\n            return ['max_value' => $maxValue];\n        }\n\n        return null;\n    }"
+    },
+    {
+      "path": "src/Eccube/Controller/Front/CartController.php",
+      "start": 479,
+      "end": 485,
+      "fileLines": 503,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $compare = $productRequestRepository->compareRequestCountAndMax($Player->getId());\n        if ($compare !== null) {\n            return $this->json([\n                'message' => sprintf(trans('front.cart.product.over_request_count.message'), $compare['max_value']),\n                'status' => 'fail',\n            ]);\n        }"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/js/product_js.twig",
+      "start": 105,
+      "end": 114,
+      "fileLines": 458,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                    if (data.status === 'success' || data.status === 'cancel') {\n                        setNotifyState($btn, data.status === 'success');\n                        if (!isRestoring && !suppressModal && typeof window.hareruyaShowCartPopup === 'function') {\n                            const baseMsg = String(data.message || '');\n                            window.hareruyaShowCartPopup(productName ? baseMsg + ': ' + productName : baseMsg, null, null, data.status === 'cancel');\n                        }\n                    } else if (!isRestoring && !suppressModal && typeof window.hareruyaShowCartPopup === 'function') {\n                        const baseMsg = String(data.message || '');\n                        window.hareruyaShowCartPopup(productName ? baseMsg + ': ' + productName"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+      "start": 803,
+      "end": 805,
+      "resolvedFrom": "F03_product_basedesign.md",
+      "fileLines": 936,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 登録上限は管理画面で設定されている入荷通知登録上限数(現在は20件)とする\n* **※**: 上限件数は「まとめて入荷通知」で登録している場合でも1件、商品規格単位でも1件としてカウントする\n* **※**: 登録上限数以上の登録をしようとした場合は、エラーを表示する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "app/DoctrineMigrations/Version20251125161057.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/Master/MtbOption.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Repository/DtbProductRequestRepository.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Front/CartController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/js/product_js.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:33+09:00",
+  "designResolution": {
+    "requested": "0303_基本設計仕様書(フロント_商品).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html",
+    "sheetCount": 10,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-9",
+        "title": "入荷時通知",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "商品一覧"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "商品詳細"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "商品詳細検索"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "カテゴリ一覧"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "商品リコメンド"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "最近チェックした商品"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "入荷時通知"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "お気に入り"
+      }
+    ]
+  }
+}

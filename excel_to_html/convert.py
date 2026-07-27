@@ -8,12 +8,13 @@ import base64
 import csv
 import html
 import math
+import os
 import posixpath
 import re
 import sys
 import xml.etree.ElementTree as ET
 import zipfile
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import date, datetime, time
 from pathlib import Path
 from typing import Any
@@ -23,7 +24,7 @@ try:
     from openpyxl import load_workbook
     from openpyxl.cell.cell import MergedCell
     from openpyxl.cell.rich_text import CellRichText, TextBlock
-    from openpyxl.utils import get_column_letter
+    from openpyxl.utils import column_index_from_string, get_column_letter
 except ImportError as exc:
     raise SystemExit(
         "openpyxl is required. Run this tool with: uv run python convert.py"
@@ -84,6 +85,192 @@ def slugify_id(text: str, fallback: str) -> str:
     return slug or fallback
 
 
+_UNSET = object()
+_CELL_ADDR_RE = re.compile(r"([A-Z]+)(\d+)")
+
+
+# --- OOXML direct-read strike/bold model (ported from excel_preprocess/ooxml.py).
+#     styles.xml / sharedStrings.xml / inlineStr の rPr strike を直接読み、run 単位・
+#     セル継承で取り消し線を堅牢に判定する。openpyxl の font.strike には依存しない。
+#     ooxml.py の parse_rich_text は <strike> 不在時に explicit=False を返す契約不一致が
+#     あるため、ここでは <strike> 要素の有無で None/True/False を区別する（None=セル継承）。
+
+
+def _ooxml_bool_val(el: Any) -> bool:
+    """Read an OOXML boolean element (`<b/>`, `<strike/>`) that is present.
+
+    `val` 省略なら真、`val="0"`/`val="false"` なら偽。要素の存在だけで真とはしない。
+    """
+    val = el.get("val")
+    if val is None:
+        return True
+    return val not in ("0", "false")
+
+
+def _ooxml_explicit(el: Any) -> bool | None:
+    """None when the element is absent (inherit), else its boolean value."""
+    if el is None:
+        return None
+    return _ooxml_bool_val(el)
+
+
+def _parse_ooxml_runs(container: Any) -> list[dict[str, Any]]:
+    """Return run dicts for an <si>/<is> element with explicit strike/bold (None=inherit)."""
+    runs: list[dict[str, Any]] = []
+    r_elements = container.findall(f"{{{NS_S}}}r")
+    if r_elements:
+        for r in r_elements:
+            t_el = r.find(f"{{{NS_S}}}t")
+            text = t_el.text if (t_el is not None and t_el.text is not None) else ""
+            rpr = r.find(f"{{{NS_S}}}rPr")
+            e_strike: bool | None = None
+            e_bold: bool | None = None
+            if rpr is not None:
+                e_strike = _ooxml_explicit(rpr.find(f"{{{NS_S}}}strike"))
+                e_bold = _ooxml_explicit(rpr.find(f"{{{NS_S}}}b"))
+            runs.append({"text": text, "e_strike": e_strike, "e_bold": e_bold})
+        return runs
+    t_el = container.find(f"{{{NS_S}}}t")
+    text = t_el.text if (t_el is not None and t_el.text is not None) else ""
+    runs.append({"text": text, "e_strike": None, "e_bold": None})
+    return runs
+
+
+def _parse_styles_font_flags(
+    styles_xml: bytes,
+) -> tuple[list[bool], list[bool], list[int]]:
+    """Return (font_strike[], font_bold[], cellxf_font_id[]) from styles.xml."""
+    root = ET.fromstring(styles_xml)
+    font_strike: list[bool] = []
+    font_bold: list[bool] = []
+    fonts_el = root.find(f"{{{NS_S}}}fonts")
+    if fonts_el is not None:
+        for font in fonts_el.findall(f"{{{NS_S}}}font"):
+            # font-level: absent element = no strike/bold (not inherited).
+            font_strike.append(_ooxml_explicit(font.find(f"{{{NS_S}}}strike")) or False)
+            font_bold.append(_ooxml_explicit(font.find(f"{{{NS_S}}}b")) or False)
+    cellxf_font: list[int] = []
+    cell_xfs_el = root.find(f"{{{NS_S}}}cellXfs")
+    if cell_xfs_el is not None:
+        for xf in cell_xfs_el.findall(f"{{{NS_S}}}xf"):
+            try:
+                cellxf_font.append(int(xf.get("fontId", 0)))
+            except (TypeError, ValueError):
+                cellxf_font.append(0)
+    return font_strike, font_bold, cellxf_font
+
+
+def _parse_sheet_cell_model(
+    sheet_xml: bytes,
+    shared: list[list[dict[str, Any]]],
+    font_strike: list[bool],
+    font_bold: list[bool],
+    cellxf_font: list[int],
+) -> dict[tuple[int, int], dict[str, Any]]:
+    """Return {(row,col): {runs, is_string, cell_strike, cell_bold, formula}} for a sheet."""
+    root = ET.fromstring(sheet_xml)
+    out: dict[tuple[int, int], dict[str, Any]] = {}
+    sheet_data = root.find(f"{{{NS_S}}}sheetData")
+    if sheet_data is None:
+        return out
+    for row_el in sheet_data.findall(f"{{{NS_S}}}row"):
+        for c in row_el.findall(f"{{{NS_S}}}c"):
+            addr = c.get("r") or ""
+            match = _CELL_ADDR_RE.match(addr)
+            if not match:
+                continue
+            col = column_index_from_string(match.group(1))
+            row = int(match.group(2))
+            type_attr = c.get("t")
+            style_idx = c.get("s")
+            font_id = 0
+            if style_idx is not None:
+                try:
+                    idx = int(style_idx)
+                    font_id = cellxf_font[idx] if idx < len(cellxf_font) else 0
+                except (TypeError, ValueError):
+                    font_id = 0
+            cell_strike = font_strike[font_id] if font_id < len(font_strike) else False
+            cell_bold = font_bold[font_id] if font_id < len(font_bold) else False
+
+            raw_runs: list[dict[str, Any]] | None = None
+            is_string = False
+            if type_attr == "s":
+                v_el = c.find(f"{{{NS_S}}}v")
+                if v_el is not None and v_el.text is not None:
+                    try:
+                        s_idx = int(v_el.text)
+                    except (TypeError, ValueError):
+                        s_idx = -1
+                    if 0 <= s_idx < len(shared):
+                        raw_runs = shared[s_idx]
+                        is_string = True
+            elif type_attr == "inlineStr":
+                is_el = c.find(f"{{{NS_S}}}is")
+                if is_el is not None:
+                    raw_runs = _parse_ooxml_runs(is_el)
+                    is_string = True
+
+            runs: list[dict[str, Any]] = []
+            if raw_runs is not None:
+                for rr in raw_runs:
+                    es = rr["e_strike"]
+                    eb = rr["e_bold"]
+                    runs.append(
+                        {
+                            "text": rr["text"],
+                            "strike": cell_strike if es is None else es,
+                            "bold": cell_bold if eb is None else eb,
+                        }
+                    )
+            f_el = c.find(f"{{{NS_S}}}f")
+            formula = f"={f_el.text}" if (f_el is not None and f_el.text) else None
+            out[(row, col)] = {
+                "runs": runs,
+                "is_string": is_string,
+                "cell_strike": cell_strike,
+                "cell_bold": cell_bold,
+                "formula": formula,
+            }
+    return out
+
+
+def collect_cell_style_models(
+    workbook_path: Path,
+    sheet_titles: set[str] | None = None,
+) -> dict[str, dict[tuple[int, int], dict[str, Any]]]:
+    """Return per-sheet OOXML cell models keyed by sheet title.
+
+    Reads styles.xml / sharedStrings.xml / each sheet XML directly so that
+    run-level strike (with `<strike val="0">` = false and cell-font inheritance)
+    is detected robustly, independent of openpyxl's font.strike.
+    """
+    models: dict[str, dict[tuple[int, int], dict[str, Any]]] = {}
+    with zipfile.ZipFile(workbook_path) as archive:
+        names = set(archive.namelist())
+        if "xl/styles.xml" in names:
+            font_strike, font_bold, cellxf_font = _parse_styles_font_flags(
+                archive.read("xl/styles.xml")
+            )
+        else:
+            font_strike, font_bold, cellxf_font = [], [], []
+        shared: list[list[dict[str, Any]]] = []
+        if "xl/sharedStrings.xml" in names:
+            ss_root = ET.fromstring(archive.read("xl/sharedStrings.xml"))
+            for si in ss_root.findall(f"{{{NS_S}}}si"):
+                shared.append(_parse_ooxml_runs(si))
+        title_to_part = _map_titles_to_sheet_parts(archive)
+        for title, part in title_to_part.items():
+            if sheet_titles is not None and title not in sheet_titles:
+                continue
+            if part not in names:
+                continue
+            models[title] = _parse_sheet_cell_model(
+                archive.read(part), shared, font_strike, font_bold, cellxf_font
+            )
+    return models
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Convert all Excel workbooks in a folder to readable tabbed HTML files."
@@ -136,10 +323,20 @@ def main() -> int:
     return 0
 
 
+def workbook_number(stem: str) -> str:
+    """Return the 4-digit workbook number that prefixes a filename stem."""
+    match = re.match(r"(\d{4})", stem)
+    return match.group(1) if match else stem[:4]
+
+
 def convert_workbook(workbook_path: Path, output_path: Path) -> list[dict[str, Any]]:
-    workbook = load_workbook(workbook_path, data_only=True, rich_text=True)
+    # data_only=False keeps formula bodies as the source spec; a second
+    # data_only=True load supplies cached display values for formula cells.
+    workbook = load_workbook(workbook_path, data_only=False, rich_text=True)
+    cached_workbook = load_workbook(workbook_path, data_only=True, rich_text=True)
     visible_sheets = visible_worksheets(workbook)
     visible_titles = {sheet.title for sheet in visible_sheets}
+    book_no = workbook_number(workbook_path.stem)
     warnings: list[str] = []
     sheets_html = []
 
@@ -152,13 +349,21 @@ def convert_workbook(workbook_path: Path, output_path: Path) -> list[dict[str, A
         shape_warnings,
     ) = collect_workbook_shapes(workbook_path, sheet_titles=visible_titles)
     warnings.extend(shape_warnings)
+    # Direct-XML cell style model (run-level strike / cell inheritance / formula).
+    cell_models = collect_cell_style_models(workbook_path, sheet_titles=visible_titles)
 
+    rendered_shape_keys: dict[str, set[tuple[int, str]]] = {}
     for index, worksheet in enumerate(visible_sheets):
         sheet_id = f"sheet-{index + 1}"
         shapes = shapes_by_title.get(worksheet.title, [])
         pins = pins_by_title.get(worksheet.title, [])
         images = images_by_title.get(worksheet.title, [])
         diagram = diagrams_by_title.get(worksheet.title)
+        cached_ws = (
+            cached_workbook[worksheet.title]
+            if worksheet.title in cached_workbook.sheetnames
+            else None
+        )
         sheet_result = render_sheet(
             worksheet,
             sheet_id,
@@ -166,12 +371,13 @@ def convert_workbook(workbook_path: Path, output_path: Path) -> list[dict[str, A
             pins,
             images,
             diagram,
-        )
-        sheet_result["html"] = apply_forced_strikes(
-            sheet_result["html"], workbook_path.stem, worksheet.title
+            book_no=book_no,
+            cell_model=cell_models.get(worksheet.title),
+            cached_ws=cached_ws,
         )
         sheets_html.append(sheet_result["html"])
         warnings.extend(sheet_result["warnings"])
+        rendered_shape_keys[worksheet.title] = sheet_result.get("rendered_shapes", set())
 
     document = render_document(
         title=workbook_path.stem,
@@ -180,22 +386,46 @@ def convert_workbook(workbook_path: Path, output_path: Path) -> list[dict[str, A
         warnings=warnings,
     )
     output_path.write_text(document, encoding="utf-8")
-    return shape_textbox_residual_rows(workbook_path.name, visible_sheets, shapes_by_title)
+    return shape_textbox_residual_rows(
+        workbook_path.name, visible_sheets, shapes_by_title, rendered_shape_keys
+    )
 
 
 def shape_textbox_residual_rows(
     file_name: str,
     visible_sheets: list[Any],
     shapes_by_title: dict[str, list[dict[str, Any]]],
+    rendered_shape_keys: dict[str, set[tuple[int, str]]] | None = None,
 ) -> list[dict[str, Any]]:
     """Return DrawingML shape/textbox entries not converted to HTML.
 
-    The renderer converts every non-empty shape text into the per-sheet
-    shape-block. This CSV is therefore a residual worklist: a successful
-    conversion leaves it with only the header row.
+    Actually diffs the collected DrawingML shapes against the shapes the
+    renderer emitted into each sheet's shape-block (tracked by 1-based order +
+    cell ref). A successful conversion renders every shape, so the CSV is left
+    with only the header row; any un-rendered shape is enumerated here so the
+    residual worklist reflects the real state instead of a hardcoded empty list.
     """
-    _ = file_name, visible_sheets, shapes_by_title
-    return []
+    rendered_shape_keys = rendered_shape_keys or {}
+    rows: list[dict[str, Any]] = []
+    for worksheet in visible_sheets:
+        title = getattr(worksheet, "title", "")
+        shapes = shapes_by_title.get(title, [])
+        rendered = rendered_shape_keys.get(title, set())
+        for index, shape in enumerate(shapes, start=1):
+            cellref = str(shape.get("cellref", ""))
+            if (index, cellref) in rendered:
+                continue
+            rows.append(
+                {
+                    "file_name": file_name,
+                    "sheet_name": title,
+                    "shape_index": index,
+                    "cellref": cellref,
+                    "text": str(shape.get("text", "")),
+                    "reason": "shape-blockへ未出力",
+                }
+            )
+    return rows
 
 
 def write_shape_textbox_residuals(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -218,9 +448,12 @@ def write_shape_textbox_residuals(path: Path, rows: list[dict[str, Any]]) -> Non
 def visible_worksheets(workbook: Any) -> list[Any]:
     """Return worksheets to render: Excel-visible, excluding 画面遷移図 sheets.
 
-    「画面遷移図」系シート（画面遷移図 / 主要画面遷移図 / 詳細画面遷移図 等、タイトルに
-    「画面遷移図」を含むもの）は基本設計仕様書HTMLから除去する方針のため出力しない。
-    convert と verify の双方が本関数を使うため、ここで一元的に除外して整合させる。
+    除外は Excel の表示状態で判定し（非表示/veryHidden は除外）、加えて「画面遷移図」を
+    含むシート名のみを唯一の名前例外として除外する（ユーザー決定 2026-07-25・skill/spec
+    改訂反映）。画面遷移図専用シートを取り込むと後続シートの序数(sheet-<N>)が全て +1 シフト
+    し、functions/superseded_specs.json の item-sheet-<N>-* ハードコード参照や既存相互リンクが
+    破綻するため。残置シート内に埋め込まれた図形ノード＋cxnSp 領域は従来どおり遷移図ステージ
+    化される。convert と verify の双方が本関数を使うため、ここで一元的に判定して整合させる。
     """
     return [
         worksheet
@@ -272,6 +505,7 @@ def render_document(
           </div>
         </details>
       </nav>
+      <button type="button" class="ref-toggle" id="ref-toggle" aria-pressed="false">参照ID表示</button>
     </aside>
     <main class="doc-content">
 {indent(chr(10).join(sheets_html), 6)}
@@ -483,6 +717,9 @@ def assign_pins_to_images(
         image.setdefault("overlay", [])
     boxed = [im for im in images if im.get("box") and im["box"][2] > 0 and im["box"][3] > 0]
     for pin in pins:
+        # Default annotation so the pin ledger can report every callout's fate.
+        pin.setdefault("assigned_image_order", None)
+        pin.setdefault("clamped", False)
         cx, cy = pin["center"]
         best = None
         best_dist = None
@@ -498,6 +735,8 @@ def assign_pins_to_images(
         x, y, w, h = best["box"]
         if best_dist > 0.5 * max(w, h):
             continue
+        pin["assigned_image_order"] = best.get("order")
+        pin["clamped"] = not (x <= cx <= x + w and y <= cy <= y + h)
         left = min(100.0, max(0.0, (cx - x) / w * 100))
         top = min(100.0, max(0.0, (cy - y) / h * 100))
         best["overlay"].append(
@@ -506,6 +745,7 @@ def assign_pins_to_images(
                 "no": normalize_pin_id(pin["text"]),
                 "left": left,
                 "top": top,
+                "from": pin.get("from"),
             }
         )
 
@@ -955,6 +1195,16 @@ def _connector_arrows(sp_pr: Any) -> dict[str, bool]:
 
 PIN_MATCH_RATIO = 0.6  # min share of pins that must match table No. to overlay
 
+# 幾何推定で端点を埋めたコネクタ（明示 stCxn/endCxn が片方欠落し、最近傍ノードで補完
+# したもの）の扱い。既定 False では geometry_inferred を soft 台帳記録＋遷移一覧に「推定」
+# フラグを付けて描画するのみで検証は失敗させない（正当な幾何配置遷移図を大量に赤化しない
+# ため）。True にすると geometry_inferred を hard へ格上げし exit 1 にできる。
+# codex 推奨は「端点欠落=hard」だが、生成器として不確実性を忠実表現しつつ既定は非破壊と
+# するコーディネータ判断。環境変数 STRICT_INFERRED_CONNECTORS=1/true で上書き可。
+STRICT_INFERRED_CONNECTORS = os.environ.get(
+    "STRICT_INFERRED_CONNECTORS", ""
+).strip().lower() in ("1", "true", "yes")
+
 
 def normalize_pin_id(text: str) -> str:
     """Reduce a pin/No. label to a comparable id: keep only [0-9A-Za-z-].
@@ -1034,8 +1284,23 @@ def _walk_drawing(
     diagram: dict[str, Any],
 ) -> None:
     """DFS an anchor subtree, accumulating absolute-EMU drawing geometry."""
+    all_ids: set[str] = diagram.setdefault("all_ids", set())
     for child in element:
         tag = child.tag.split("}")[-1]
+        # Record the DrawingML object id of every shape/connector/picture/group so
+        # a connector endpoint referencing any of them (e.g. an arrow into a pic or
+        # a grpSp) is recognised as existing — only a reference to an id absent from
+        # the whole drawing counts as a dangling (hard/unresolved) connector.
+        if tag in ("grpSp", "pic", "sp", "cxnSp"):
+            nv_tag = {
+                "grpSp": "nvGrpSpPr",
+                "pic": "nvPicPr",
+                "sp": "nvSpPr",
+                "cxnSp": "nvCxnSpPr",
+            }[tag]
+            oid, _oname = _shape_object_info(child, nv_tag)
+            if oid is not None:
+                all_ids.add(str(oid))
         if tag == "grpSp":
             g = _xfrm(child.find(f"{{{NS_XDR}}}grpSpPr"))
             _walk_drawing(
@@ -1127,7 +1392,12 @@ def _parse_drawing_geometry(
     root = ET.fromstring(data)
     pins: list[dict[str, Any]] = []
     images: list[dict[str, Any]] = []
-    diagram: dict[str, Any] = {"nodes": [], "connectors": [], "objects": []}
+    diagram: dict[str, Any] = {
+        "nodes": [],
+        "connectors": [],
+        "objects": [],
+        "all_ids": set(),
+    }
     for tag in ("twoCellAnchor", "oneCellAnchor", "absoluteAnchor"):
         for anchor in root.iter(f"{{{NS_XDR}}}{tag}"):
             anchor_from = _anchor_from_position(anchor)
@@ -1142,10 +1412,15 @@ def render_sheet(
     pins: list[dict[str, Any]] | None = None,
     images: list[dict[str, Any]] | None = None,
     diagram: dict[str, Any] | None = None,
+    book_no: str = "",
+    cell_model: dict[tuple[int, int], dict[str, Any]] | None = None,
+    cached_ws: Any = None,
 ) -> dict[str, Any]:
     warnings: list[str] = []
     pins = pins or []
     images = images or []
+    cell_model = cell_model or {}
+    sheet_title = worksheet.title
     if getattr(worksheet, "_charts", None):
         warnings.append(f"{worksheet.title}: グラフはHTMLへ変換していません。")
     if worksheet.conditional_formatting:
@@ -1185,17 +1460,54 @@ def render_sheet(
             cell = worksheet.cell(row=row_index, column=col_index)
             if isinstance(cell, MergedCell):
                 continue
-            runs = cell_text_runs(cell)
+            xml_cell = cell_model.get((row_index, col_index))
+            # Formula cells: keep the formula body (source spec) and display the
+            # cached value loaded separately with data_only=True.
+            value_override: Any = _UNSET
+            formula: str | None = None
+            if getattr(cell, "data_type", None) == "f":
+                formula = (
+                    cell.value
+                    if isinstance(cell.value, str)
+                    else (xml_cell.get("formula") if xml_cell else None)
+                )
+                cached_value = (
+                    cached_ws.cell(row=row_index, column=col_index).value
+                    if cached_ws is not None
+                    else None
+                )
+                # Preserve the formula spec even when the workbook was never
+                # recalculated (no cached value): fall back to the formula body as
+                # display text so the cell is never dropped and data-excel-formula
+                # is always emitted.
+                if cached_value not in (None, ""):
+                    value_override = cached_value
+                elif formula is not None:
+                    value_override = formula
+                else:
+                    value_override = cached_value
+            runs = cell_text_runs(cell, xml_cell, value_override)
             text = "".join(run["text"] for run in runs)
             if not text.strip():
                 continue
+            addr = f"{get_column_letter(col_index)}{row_index}"
             cells.append(
                 {
                     "col": col_index,
+                    "row": row_index,
+                    "addr": addr,
+                    "ref": f"{book_no}:{sheet_title}!{addr}",
+                    "book": book_no,
+                    "sheet": sheet_title,
+                    "formula": formula,
                     "text": text,
                     "runs": runs,
-                    "bold": bool(cell.font.bold)
-                    or any(run.get("bold") for run in runs),
+                    "bold": any(run.get("bold") for run in runs)
+                    or (
+                        bool(xml_cell.get("cell_bold"))
+                        if xml_cell
+                        else bool(cell.font.bold)
+                    ),
                     "strike": any(run.get("strike") for run in runs),
                     "fill": solid_fill(cell),
                 }
@@ -1230,15 +1542,23 @@ def render_sheet(
             tables_rows.setdefault(info["id"], []).append(row)
     valid_nos: set[str] = set()
     no_to_name: dict[str, str] = {}
+    # No. -> list of item-definition source refs. The *number of item candidates*
+    # (not the number of pins) decides matched/ambiguous in the pin ledger.
+    no_to_item_refs: dict[str, list[str]] = defaultdict(list)
     for table_id, rows_in_table in tables_rows.items():
         cols = table_map[rows_in_table[0]]["cols"]
         for row in rows_in_table[1:]:  # skip the header row
             if is_table_group_row(lines[row], cols):
                 continue
-            values = distribute_row(lines[row], cols)
+            buckets = distribute_row_cells(lines[row], cols)
+            values = [join_cell_text(bucket) for bucket in buckets]
             no = normalize_pin_id(values[0]) if values else ""
             if is_number_pin_id(no):
                 valid_nos.add(no)
+                item_ref = ""
+                if buckets and buckets[0]:
+                    item_ref = buckets[0][0].get("ref", "")
+                no_to_item_refs[no].append(item_ref)
                 if no not in no_to_name and len(values) >= 2 and values[1]:
                     no_to_name[no] = values[1]
 
@@ -1349,16 +1669,29 @@ def render_sheet(
             flush_table()
             parts.append(
                 render_image_block(
-                    image_render_rows[row_index], sheet_id, no_to_name, used_pin_ids
+                    image_render_rows[row_index],
+                    sheet_id,
+                    no_to_name,
+                    used_pin_ids,
+                    book_no=book_no,
+                    sheet_title=sheet_title,
                 )
             )
         if row_index in diagram_rows:
             flush_doc()
             flush_table()
-            parts.append(render_diagram_block(diagram_rows[row_index], sheet_id))
+            parts.append(
+                render_diagram_block(
+                    diagram_rows[row_index],
+                    sheet_id,
+                    book_no=book_no,
+                    sheet_title=sheet_title,
+                )
+            )
     flush_doc()
     flush_table()
 
+    rendered_shapes: set[tuple[int, str]] = set()
     if all_shapes and shape_anchor is not None:
         parts.append(
             render_shape_section(
@@ -1368,8 +1701,31 @@ def render_sheet(
                 callout_nos,
                 used_pin_ids,
                 diagram=diagram,
+                book_no=book_no,
+                sheet_title=sheet_title,
             )
         )
+        rendered_shapes = {
+            (index, str(shape.get("cellref", "")))
+            for index, shape in enumerate(all_shapes, start=1)
+        }
+
+    # 番号pin対応台帳: 60%閾値は可読表示の判定に留め、未一致・未割当を含む全pinを
+    # ここへ記録する（未対応を黙ってinventory外へ落とさない）。
+    pin_ledger = render_pin_ledger(
+        number_pins, no_to_item_refs, no_to_name, sheet_id, book_no, sheet_title
+    )
+    if pin_ledger:
+        parts.append(pin_ledger)
+
+    # コネクタ解決台帳: 図の表示可否と分離し、connectorが1本でもあれば必ず出力する
+    # （画像シートで diagram_should_render=False でも握り潰さない）。
+    if diagram and diagram.get("connectors"):
+        connector_ledger = render_connector_ledger(
+            build_transition_graph(diagram)["unresolved"], book_no, sheet_title
+        )
+        if connector_ledger:
+            parts.append(connector_ledger)
 
     if not parts:
         parts.append('<p class="doc-empty">（内容のある行はありません）</p>')
@@ -1386,35 +1742,88 @@ def render_sheet(
   </div>
 </section>""",
         "warnings": warnings,
+        "rendered_shapes": rendered_shapes,
     }
 
 
-def apply_forced_strikes(document: str, workbook_stem: str, sheet_title: str) -> str:
-    """Apply sheet-specific strike-through overrides needed for this workbook."""
-    if workbook_stem != "0202_基本設計仕様書(在庫管理機能)" or sheet_title != "共通処理":
-        return document
+def render_pin_ledger(
+    number_pins: list[dict[str, Any]],
+    no_to_item_refs: dict[str, list[str]],
+    no_to_name: dict[str, str],
+    sheet_id: str,
+    book_no: str,
+    sheet_title: str,
+) -> str:
+    """List every numbered callout with its anchor, image assignment and item status.
 
-    phrases = [
-        "1-3.スマレジ連携エラーがあった場合は、下記処理を実施する",
-        "1-3-1.スロットリングや不通などのエラーの場合、連携処理をロールバックし、EC-CUBE、スマレジともに在庫数の変更を行わず、数分後に再実行してもらうエラーを表示する",
-        "スマレジ連携は承認後の処理で行われるため、失敗した際は承認を押下しなおしてもらう",
-        "1-3-2.再実行する際は、連携済みとなったデータは再連携を行わず、失敗した連携処理から実施する　★リランする内容を記載",
-        "1-3-3.EC-CUBEとスマレジとの在庫数のズレによる不整合がある場合は、スマレジ在庫修正処理を実施する",
-        "またズレの是正中にスロットリングエラーなど発生した場合は、連携処理をロールバックし、EC-CUBE、スマレジともに在庫数の変更を行わず、数分後に再実行してもらうエラーを表示する",
-        "2.スマレジ在庫修正処理",
-        "2-1.在庫区分がスマレジの在庫を参照・更新しようとした際にスマレジの実在庫とEC-CUBEの在庫間で在庫差異があった場合は、下記の処理を実施する",
-        "2-1-1.「0501_基本設計仕様書(API_在庫管理).xlsx」の「スマレジwebhook連携エラー再連携」シートのAPIを実行し在庫修正処理を行う",
-        "上記処理を実施した結果、最終的に差異が残る場合はスマレジの在庫変動区分「02:取引」、「12:返品」以外がある場合はアラートメールをITチーム+登録者に送付する",
-        "EC-CUBEの在庫数を正として、スマレジの在庫数をEC-CUBEの在庫数に上書きする※メモ：自動で処理できるものについては在庫差異詰め更新をしたい。",
-        "在庫変動区分を「スマレジその他」とし、在庫変動理由を「スマレジ連携（調整）スマレジとの在庫差異に伴う修正」とする",
-    ]
-
-    for phrase in phrases:
-        document = document.replace(
-            f">{escape_text(phrase)}<",
-            f"><span class=\"cell-strike\">{escape_text(phrase)}</span><",
+    The PIN_MATCH_RATIO threshold only gates the readable overlay; here every pin
+    (matched / ambiguous / missing_item / unassigned) is recorded so no callout is
+    silently dropped from the inventory. `ambiguous` is decided by the number of
+    *item-definition candidates* for the No. (not by duplicate pins); duplicate
+    pins sharing one No. are reported separately in their own column.
+    """
+    if not number_pins:
+        return ""
+    pin_counts: Counter[str] = Counter()
+    for pin in number_pins:
+        pin_counts[normalize_pin_id(pin["text"])] += 1
+    rows: list[str] = []
+    for pin in number_pins:
+        no = normalize_pin_id(pin["text"])
+        source = pin.get("from") or (1, 1)
+        try:
+            anchor_ref = (
+                f"{book_no}:{sheet_title}!"
+                f"{get_column_letter(int(source[1]))}{int(source[0])}"
+            )
+        except (TypeError, ValueError, IndexError):
+            anchor_ref = f"{book_no}:{sheet_title}!?"
+        image_order = pin.get("assigned_image_order")
+        if image_order is None:
+            image_cell = "未割当"
+        else:
+            image_cell = f"image {image_order}" + (
+                "（枠外クランプ）" if pin.get("clamped") else ""
+            )
+        candidates = no_to_item_refs.get(no, [])
+        if len(candidates) > 1:
+            status = "ambiguous"
+        elif len(candidates) == 1:
+            status = "matched"
+        elif image_order is None:
+            status = "unassigned"
+        else:
+            status = "missing_item"
+        if candidates:
+            name = no_to_name.get(no, "")
+            item_cell = "; ".join(c for c in candidates if c) or f"No.{no} {name}".strip()
+        else:
+            item_cell = ""
+        dup = pin_counts[no]
+        dup_cell = f"×{dup}" if dup > 1 else ""
+        rows.append(
+            f'<tr data-excel-ref="{escape_attr(anchor_ref)}" data-pin-no="{escape_attr(no)}" '
+            f'data-pin-status="{escape_attr(status)}" '
+            f'data-item-candidates="{len(candidates)}" data-pin-duplicates="{dup}">'
+            f"<td>{escape_text(pin['text'])}</td>"
+            f"<td>{escape_text(anchor_ref)}</td>"
+            f"<td>{escape_text(image_cell)}</td>"
+            f"<td>{escape_text(status)}</td>"
+            f"<td>{escape_text(item_cell)}</td>"
+            f"<td>{escape_text(dup_cell)}</td></tr>"
         )
-    return document
+    body = "\n".join(rows)
+    return f"""<details class="pin-ledger" data-pin-count="{len(number_pins)}">
+  <summary>番号pin対応台帳（{len(number_pins)}件）</summary>
+  <div class="item-table-wrap">
+    <table class="item-table">
+      <thead><tr><th>pin</th><th>アンカー</th><th>画像割当</th><th>対応状態</th><th>項目定義候補</th><th>pin重複</th></tr></thead>
+      <tbody>
+{indent(body, 8)}
+      </tbody>
+    </table>
+  </div>
+</details>"""
 
 
 def solid_fill(cell: Any) -> str | None:
@@ -1873,6 +2282,8 @@ def render_shape_section(
     link_nos: set[str] | None = None,
     used_pin_ids: set[str] | None = None,
     diagram: dict[str, Any] | None = None,
+    book_no: str = "",
+    sheet_title: str = "",
 ) -> str:
     """Render textbox/shape text (dropped by openpyxl) as a labelled table.
 
@@ -1884,9 +2295,15 @@ def render_shape_section(
     used_pin_ids = used_pin_ids if used_pin_ids is not None else set()
 
     def render_row(index: int, shape: dict[str, Any]) -> str:
+        # data-shape-ref stays the plain cell address (verify/back-compat); the
+        # full book:sheet!cell citation is carried by data-excel-ref (skill L35).
+        excel_ref = f"{book_no}:{sheet_title}!{shape['cellref']}"
         row_attrs = (
             f'data-shape-index="{index}" '
-            f'data-shape-ref="{escape_attr(shape["cellref"])}"'
+            f'data-shape-ref="{escape_attr(shape["cellref"])}" '
+            f'data-excel-book="{escape_attr(book_no)}" '
+            f'data-excel-sheet="{escape_attr(sheet_title)}" '
+            f'data-excel-ref="{escape_attr(excel_ref)}"'
         )
         if is_object_shape_text(shape.get("text", "")):
             return render_object_shape(shape, diagram, row_attrs)
@@ -2037,11 +2454,34 @@ def image_anchor_position(image: Any) -> tuple[int, int]:
     return 1, 1
 
 
+def _image_excel_ref(image: dict[str, Any], book_no: str, sheet_title: str) -> str:
+    """Return the book:sheet!cell citation for a DrawingML image anchor."""
+    sheet = str(image.get("sheet") or sheet_title)
+    source = image.get("from") or (1, 1)
+    try:
+        return f"{book_no}:{sheet}!{get_column_letter(int(source[1]))}{int(source[0])}"
+    except (TypeError, ValueError, IndexError):
+        return f"{book_no}:{sheet}!?"
+
+
+def _image_ref_attrs(image: dict[str, Any], book_no: str, sheet_title: str) -> str:
+    """data-excel-ref / order attributes for an image figure."""
+    ref = _image_excel_ref(image, book_no, sheet_title)
+    order = _image_order(image)
+    return (
+        f' data-excel-book="{escape_attr(book_no)}"'
+        f' data-excel-sheet="{escape_attr(str(image.get("sheet") or sheet_title))}"'
+        f' data-excel-ref="{escape_attr(ref)}" data-image-order="{order}"'
+    )
+
+
 def render_image_block(
     images: list[dict[str, Any]],
     sheet_id: str | None = None,
     no_to_name: dict[str, str] | None = None,
     used_pin_ids: set[str] | None = None,
+    book_no: str = "",
+    sheet_title: str = "",
 ) -> str:
     no_to_name = no_to_name or {}
     figures = []
@@ -2051,11 +2491,12 @@ def render_image_block(
         if image.get("layers"):
             figures.append(
                 render_image_layer_figure(
-                    image, sheet_id, no_to_name, used_pin_ids
+                    image, sheet_id, no_to_name, used_pin_ids, book_no, sheet_title
                 )
             )
             continue
 
+        ref_attrs = _image_ref_attrs(image, book_no, sheet_title)
         # Width comes from the EMU box when available (openpyxl fallback supplies
         # pixel width/height instead); height stays auto to preserve aspect.
         box = image.get("box")
@@ -2071,9 +2512,11 @@ def render_image_block(
         )
         overlay = image.get("overlay") or []
         if overlay and sheet_id:
-            pins_html = render_image_pins(overlay, sheet_id, no_to_name, used_pin_ids)
+            pins_html = render_image_pins(
+                overlay, sheet_id, no_to_name, used_pin_ids, book_no, sheet_title
+            )
             figures.append(
-                f"""<figure class="sheet-image wf-frame">
+                f"""<figure class="sheet-image wf-frame"{ref_attrs}>
   <div class="wf-stage">
     {img_tag}
 {indent(pins_html, 4)}
@@ -2083,7 +2526,7 @@ def render_image_block(
             )
         else:
             figures.append(
-                f"""<figure class="sheet-image">
+                f"""<figure class="sheet-image"{ref_attrs}>
   {img_tag}
   <figcaption>{escape_text(image_alt)}</figcaption>
 </figure>"""
@@ -2126,6 +2569,8 @@ def render_image_layer_figure(
     sheet_id: str | None = None,
     no_to_name: dict[str, str] | None = None,
     used_pin_ids: set[str] | None = None,
+    book_no: str = "",
+    sheet_title: str = "",
 ) -> str:
     """Render overlapping Excel images as one responsive DrawingML stage."""
     no_to_name = no_to_name or {}
@@ -2133,6 +2578,7 @@ def render_image_layer_figure(
     box = item.get("box") or _union_image_box(layers)
     if not layers or box is None:
         return ""
+    ref_attrs = _image_ref_attrs(item, book_no, sheet_title)
 
     # 画像が「弱い重なりの縦並び（モーダル等を縦に並べたキャプチャ）」の場合、Excel座標で
     # 絶対配置すると互いに覆って読めない。ピンが無く相互の重なりが小さい群は、結合した枠の
@@ -2141,7 +2587,9 @@ def render_image_layer_figure(
     if _image_layers_are_stack(layers, box):
         stack_tags = [
             f'<img class="image-stack-img" src="{escape_attr(image["src"])}" '
-            f'alt="{escape_attr(image.get("caption", ""))}">'
+            f'alt="{escape_attr(image.get("caption", ""))}" '
+            f'data-excel-ref="{escape_attr(_image_excel_ref(image, book_no, sheet_title))}" '
+            f'data-image-order="{_image_order(image)}">'
             for image in layers
             if _image_box(image) is not None
         ]
@@ -2149,7 +2597,7 @@ def render_image_layer_figure(
             f"画像レイヤー（{len(layers)}枚）: "
             + " + ".join(str(image.get("caption", "")) for image in layers)
         )
-        return f"""<figure class="sheet-image wf-frame image-layer-frame" data-image-layer-count="{len(layers)}">
+        return f"""<figure class="sheet-image wf-frame image-layer-frame" data-image-layer-count="{len(layers)}"{ref_attrs}>
   <div class="image-stack">
 {indent(chr(10).join(stack_tags), 4)}
   </div>
@@ -2175,19 +2623,23 @@ def render_image_layer_figure(
         )
         layer_tags.append(
             f'<img class="image-layer-img" src="{escape_attr(image["src"])}" '
-            f'alt="{escape_attr(image["caption"])}" style="{style}">'
+            f'alt="{escape_attr(image["caption"])}" '
+            f'data-excel-ref="{escape_attr(_image_excel_ref(image, book_no, sheet_title))}" '
+            f'data-image-order="{_image_order(image)}" style="{style}">'
         )
 
     overlay = image_layer_overlay(layers, box)
     pins_html = ""
     if overlay and sheet_id:
-        pins_html = render_image_pins(overlay, sheet_id, no_to_name, used_pin_ids)
+        pins_html = render_image_pins(
+            overlay, sheet_id, no_to_name, used_pin_ids, book_no, sheet_title
+        )
     contents = "\n".join(layer_tags + ([pins_html] if pins_html else []))
     caption = (
         f"画像レイヤー（{len(layers)}枚）: "
         + " + ".join(str(image.get("caption", "")) for image in layers)
     )
-    return f"""<figure class="sheet-image wf-frame image-layer-frame" data-image-layer-count="{len(layers)}">
+    return f"""<figure class="sheet-image wf-frame image-layer-frame" data-image-layer-count="{len(layers)}"{ref_attrs}>
   <div class="wf-stage image-layer-stage" style="{escape_attr(stage_style)}">
 {indent(contents, 4)}
   </div>
@@ -2228,6 +2680,8 @@ def render_image_pins(
     sheet_id: str,
     no_to_name: dict[str, str],
     used_pin_ids: set[str] | None = None,
+    book_no: str = "",
+    sheet_title: str = "",
 ) -> str:
     """Absolutely-positioned numbered pins; linked ones jump to the table row.
 
@@ -2241,6 +2695,17 @@ def render_image_pins(
         no = pin["no"]
         style = f'style="left:{pin["left"]:.2f}%;top:{pin["top"]:.2f}%"'
         text = escape_text(pin["text"])
+        source = pin.get("from")
+        ref_attrs = f' data-pin-no="{escape_attr(no)}"'
+        if source:
+            try:
+                pin_ref = (
+                    f"{book_no}:{sheet_title}!"
+                    f"{get_column_letter(int(source[1]))}{int(source[0])}"
+                )
+                ref_attrs += f' data-excel-ref="{escape_attr(pin_ref)}"'
+            except (TypeError, ValueError, IndexError):
+                pass
         if pin.get("linked"):
             name = no_to_name.get(no, "")
             label = f"No.{no} {name}".strip()
@@ -2250,7 +2715,7 @@ def render_image_pins(
                 used_pin_ids.add(pin_id)
                 id_attr = f' id="{escape_attr(pin_id)}"'
             pins_html.append(
-                f'<a class="wf-pin"{id_attr} href="#item-{escape_attr(sheet_id)}-'
+                f'<a class="wf-pin"{id_attr}{ref_attrs} href="#item-{escape_attr(sheet_id)}-'
                 f'{escape_attr(no)}" {style} '
                 f'title="{escape_attr(label)}" aria-label="{escape_attr(label)}">'
                 f"{escape_text(no) or text}</a>"
@@ -2258,15 +2723,20 @@ def render_image_pins(
         else:
             label = escape_attr(pin["text"])
             pins_html.append(
-                f'<span class="wf-pin wf-pin-plain" {style} '
+                f'<span class="wf-pin wf-pin-plain"{ref_attrs} {style} '
                 f'title="{label}" aria-label="{label}">{escape_text(no) or text}</span>'
             )
     return "\n".join(pins_html)
 
 
-def render_diagram_block(diagrams: list[dict[str, Any]], sheet_id: str) -> str:
+def render_diagram_block(
+    diagrams: list[dict[str, Any]],
+    sheet_id: str,
+    book_no: str = "",
+    sheet_title: str = "",
+) -> str:
     figures = [
-        render_diagram_figure(diagram, sheet_id, index)
+        render_diagram_figure(diagram, sheet_id, index, book_no, sheet_title)
         for index, diagram in enumerate(diagrams, start=1)
     ]
     figures = [figure for figure in figures if figure]
@@ -2295,13 +2765,17 @@ def render_diagram_figure(
     diagram: dict[str, Any],
     sheet_id: str,
     index: int,
+    book_no: str = "",
+    sheet_title: str = "",
 ) -> str:
     graph = build_transition_graph(diagram)
     render_objects = diagram_render_objects(diagram)
     if not graph["nodes"] and not render_objects:
         return ""
     marker_id = f"diagram-arrow-{sheet_id}-{index}"
-    table = render_transition_table(graph["edges"], graph["nodes_by_id"])
+    table = render_transition_table(
+        graph["edges"], graph["nodes_by_id"], book_no, sheet_title
+    )
     connector_count = len(diagram.get("connectors", []))
     node_count = len(graph["nodes"])
     edge_count = len(graph["edges"])
@@ -2325,7 +2799,9 @@ def render_diagram_figure(
     # unreadably at 1:1 Excel coordinates; those are reconstructed from the
     # transition graph below so they stay human-readable.
     if excel_bounds is not None and not stage_is_degenerate(excel_bounds[2], excel_bounds[3]):
-        original_stage = render_original_diagram_stage(render_objects, connectors, marker_id)
+        original_stage = render_original_diagram_stage(
+            render_objects, connectors, marker_id, book_no, sheet_title
+        )
         if original_stage:
             figure = f"""<figure class="diagram-frame" data-diagram-layout="excel" data-diagram-connectors="{connector_count}" data-diagram-nodes="{node_count}" data-transition-edges="{edge_count}">
   <div class="diagram-viewport">
@@ -2334,14 +2810,19 @@ def render_diagram_figure(
   <figcaption>{escape_text(caption)}</figcaption>
 {indent(table, 2)}
 </figure>"""
-            compact_map = render_transition_map(graph, sheet_id, index)
+            compact_map = render_transition_map(
+                graph, sheet_id, index, book_no, sheet_title
+            )
             return figure + ("\n" + compact_map if compact_map else "")
 
     # Reconstruct from the transition graph. Used when the source geometry is
     # unavailable, or when the Excel layout is degenerate (extreme aspect ratio).
     layout = layout_transition_graph(graph)
     edges = "\n".join(render_transition_edge(edge, layout, marker_id) for edge in graph["edges"])
-    nodes = "\n".join(render_transition_node(node, layout["nodes"][node["id"]]) for node in graph["nodes"])
+    nodes = "\n".join(
+        render_transition_node(node, layout["nodes"][node["id"]], book_no, sheet_title)
+        for node in graph["nodes"]
+    )
     stage_style = f"width:{layout['width']}px;height:{layout['height']}px"
     fallback_caption = (
         f"画面遷移図を接続関係から再構成"
@@ -2366,6 +2847,56 @@ def render_diagram_figure(
 </figure>"""
 
 
+def hard_unresolved_count(unresolved: list[dict[str, Any]]) -> int:
+    """Number of genuinely unresolvable (dangling) connectors (verification exit 1)."""
+    return sum(1 for item in unresolved if item.get("state") == "hard")
+
+
+def render_connector_ledger(
+    unresolved: list[dict[str, Any]],
+    book_no: str = "",
+    sheet_title: str = "",
+) -> str:
+    """Inventory every cxnSp that did not become a directed transition edge.
+
+    連結不能コネクタを黙って遷移図から消さず、object id・アンカー・理由・状態を全件
+    記録する。`state="hard"`（stCxn/endCxn が存在しない図形を参照＝解決できない）は
+    data-connector-unresolved に数え、1件でも verify.py が非ゼロ終了する。`state="soft"`
+    （装飾線・自己ループ・無方向・非テキスト端点）は inventory へ残すが失敗にはしない。
+    """
+    if not unresolved:
+        return ""
+    hard = hard_unresolved_count(unresolved)
+
+    def row(item: dict[str, Any]) -> str:
+        # Full-form book:sheet!cell citation (bare A1 is not citable across books).
+        ref = _connector_excel_ref(item, book_no, sheet_title)
+        if not ref:
+            ref = f"{book_no}:{sheet_title}!{item.get('anchor') or '?'}"
+        ref_attr = f' data-excel-ref="{escape_attr(ref)}"' if ref else ""
+        return (
+            f'<tr data-connector-state="{escape_attr(item.get("state") or "")}"{ref_attr}>'
+            f"<td>{escape_text(item.get('id') or '?')}</td>"
+            f"<td>{escape_text(ref)}</td>"
+            f"<td>{escape_text(item.get('reason') or '')}</td>"
+            f"<td>{escape_text(item.get('state') or '')}</td>"
+            "</tr>"
+        )
+
+    rows = "\n".join(row(item) for item in unresolved)
+    return f"""<details class="connector-ledger" data-connector-unresolved="{hard}" data-connector-noted="{len(unresolved)}">
+  <summary>コネクタ解決台帳（記録 {len(unresolved)}件 / 未解決 {hard}件）</summary>
+  <div class="item-table-wrap">
+    <table class="item-table">
+      <thead><tr><th>connector id</th><th>アンカー</th><th>理由</th><th>状態</th></tr></thead>
+      <tbody>
+{indent(rows, 8)}
+      </tbody>
+    </table>
+  </div>
+</details>"""
+
+
 def diagram_render_objects(diagram: dict[str, Any]) -> list[dict[str, Any]]:
     """Return visible non-pin diagram objects in original DrawingML order."""
     objects: list[dict[str, Any]] = []
@@ -2383,6 +2914,8 @@ def render_original_diagram_stage(
     objects: list[dict[str, Any]],
     connectors: list[dict[str, Any]],
     marker_id: str,
+    book_no: str = "",
+    sheet_title: str = "",
 ) -> str:
     """Render a DrawingML diagram using the source Excel geometry."""
     objects_by_id = {
@@ -2396,7 +2929,8 @@ def render_original_diagram_stage(
         return ""
     stage_left, stage_top, width, height = bounds
     object_html = "\n".join(
-        render_diagram_node(item, stage_left, stage_top) for item in render_objects
+        render_diagram_node(item, stage_left, stage_top, book_no, sheet_title)
+        for item in render_objects
     )
     connector_routes = diagram_connector_routes(
         connectors,
@@ -2561,34 +3095,128 @@ def build_transition_graph(diagram: dict[str, Any]) -> dict[str, Any]:
             return _overlapping_text_node_id(box, nodes_by_id)
         return ""
 
+    # Complete DrawingML id inventory (sp/cxnSp/pic/grpSp) for the dangling test.
+    # Fall back to the sp-only objects list when the full set is unavailable.
+    all_object_ids: set[str] = set(diagram.get("all_ids") or set()) or {
+        str(obj.get("id"))
+        for obj in diagram.get("objects", [])
+        if obj.get("id") is not None
+    }
+
     edge_keys: set[tuple[str, str]] = set()
     edges: list[dict[str, str]] = []
+    # Full connector inventory of every cxnSp that did NOT become a directed
+    # transition edge, each with object id / anchor / reason. `state="hard"` marks
+    # a genuinely unresolvable connector (a stCxn/endCxn referencing a shape id
+    # that does not exist in the drawing = 解決できない → exit 1). `state="soft"`
+    # marks connectors that resolve to real shapes but form no transition
+    # (decorative line with no connection ids, self-loop, undirected, or an
+    # endpoint that lands on a non-text shape); these are recorded, never silently
+    # dropped, but do not by themselves fail verification.
+    unresolved: list[dict[str, Any]] = []
+
+    def record(connector: dict[str, Any], reason: str, state: str) -> None:
+        source = connector.get("from") or (1, 1)
+        try:
+            anchor = f"{get_column_letter(int(source[1]))}{int(source[0])}"
+        except (TypeError, ValueError, IndexError):
+            anchor = "?"
+        unresolved.append(
+            {
+                "id": connector.get("id"),
+                "anchor": anchor,
+                "from": connector.get("from"),
+                "reason": reason,
+                "state": state,
+                "connections": connector.get("connections") or {},
+            }
+        )
+
     for connector in diagram.get("connectors", []):
         con = connector.get("connections") or {}
-        start = resolve_endpoint(con.get("start_id"))
-        end = resolve_endpoint(con.get("end_id"))
-        if start not in nodes_by_id or end not in nodes_by_id:
-            fallback_start, fallback_end = connector_endpoint_node_ids(
-                connector, nodes_by_id
+        raw_start = con.get("start_id")
+        raw_end = con.get("end_id")
+        start = resolve_endpoint(raw_start)
+        end = resolve_endpoint(raw_end)
+        # Endpoints resolved purely from explicit stCxn/endCxn ids are facts.
+        explicit_resolved = start in nodes_by_id and end in nodes_by_id
+
+        # Fill only the missing side by nearest-node geometry. A near-tie (non
+        # unique) geometry guess is treated as ambiguous: no edge is inferred and
+        # the connector is recorded (never silently guessed into a fact).
+        inferred = False
+        if not explicit_resolved:
+            points = connector_points_emu(connector)
+            if len(points) >= 2:
+                if start not in nodes_by_id:
+                    gid, gambiguous = nearest_node_id_detail(points[0], nodes_by_id)
+                    if gid and gambiguous:
+                        record(connector, "ambiguous_geometry", "soft")
+                        continue
+                    if gid:
+                        start = gid
+                        inferred = True
+                if end not in nodes_by_id:
+                    gid, gambiguous = nearest_node_id_detail(points[-1], nodes_by_id)
+                    if gid and gambiguous:
+                        record(connector, "ambiguous_geometry", "soft")
+                        continue
+                    if gid:
+                        end = gid
+                        inferred = True
+
+        if start in nodes_by_id and end in nodes_by_id and start != end:
+            arrows = connector.get("arrows") or {}
+            if arrows.get("tail"):
+                source, target = start, end
+            elif arrows.get("head"):
+                source, target = end, start
+            else:
+                # Resolved endpoints but no arrowhead: undirected, recorded only.
+                record(connector, "undirected", "soft")
+                continue
+            key = (source, target)
+            if key in edge_keys:
+                continue
+            edge_keys.add(key)
+            resolution = "geometry_inferred" if inferred else "resolved"
+            edges.append(
+                {
+                    "source": source,
+                    "target": target,
+                    "connector": connector,
+                    "resolution": resolution,
+                    "inferred": inferred,
+                }
             )
-            if start not in nodes_by_id:
-                start = fallback_start
-            if end not in nodes_by_id:
-                end = fallback_end
-        if start not in nodes_by_id or end not in nodes_by_id or start == end:
+            # A geometry-inferred edge is still drawn (skill L37-38 permits
+            # geometry-placed arrows) but is NOT presented as a confirmed
+            # transition: it is flagged in the transition list and recorded in the
+            # connector ledger. STRICT_INFERRED_CONNECTORS escalates it to hard.
+            if inferred:
+                record(
+                    connector,
+                    "geometry_inferred",
+                    "hard" if STRICT_INFERRED_CONNECTORS else "soft",
+                )
             continue
-        arrows = connector.get("arrows") or {}
-        if arrows.get("tail"):
-            source, target = start, end
-        elif arrows.get("head"):
-            source, target = end, start
+
+        # Not a directed edge — classify why so nothing is silently dropped.
+        if raw_start is None and raw_end is None:
+            record(connector, "no_connection", "soft")
+        elif start in nodes_by_id and end in nodes_by_id and start == end:
+            record(connector, "self_loop", "soft")
         else:
-            continue
-        key = (source, target)
-        if key in edge_keys:
-            continue
-        edge_keys.add(key)
-        edges.append({"source": source, "target": target, "connector": connector})
+            dangling = (
+                raw_start is not None and str(raw_start) not in all_object_ids
+            ) or (raw_end is not None and str(raw_end) not in all_object_ids)
+            if dangling:
+                # A connection id points at a shape absent from the drawing:
+                # genuinely 解決できない → hard (verification exit 1).
+                record(connector, "dangling_reference", "hard")
+            else:
+                # Endpoint resolves to an existing but non-text/decorative shape.
+                record(connector, "non_text_endpoint", "soft")
 
     # Collapse duplicate screen boxes into one logical node. Excel diagrams often
     # draw a single screen as many overlapping/repeated shapes (e.g. 0202 では
@@ -2614,7 +3242,15 @@ def build_transition_graph(diagram: dict[str, Any]) -> dict[str, Any]:
         if key in collapsed_edge_keys:
             continue
         collapsed_edge_keys.add(key)
-        collapsed_edges.append({"source": source, "target": target, "connector": edge.get("connector")})
+        collapsed_edges.append(
+            {
+                "source": source,
+                "target": target,
+                "connector": edge.get("connector"),
+                "resolution": edge.get("resolution", "resolved"),
+                "inferred": edge.get("inferred", False),
+            }
+        )
 
     connected = {edge["source"] for edge in collapsed_edges} | {edge["target"] for edge in collapsed_edges}
     nodes = [
@@ -2623,7 +3259,12 @@ def build_transition_graph(diagram: dict[str, Any]) -> dict[str, Any]:
         if node["id"] in connected or not collapsed_edges
     ]
     nodes.sort(key=transition_node_sort_key)
-    return {"nodes": nodes, "nodes_by_id": collapsed_by_id, "edges": collapsed_edges}
+    return {
+        "nodes": nodes,
+        "nodes_by_id": collapsed_by_id,
+        "edges": collapsed_edges,
+        "unresolved": unresolved,
+    }
 
 
 def _collapse_text_key(text: str) -> str:
@@ -2678,9 +3319,23 @@ def nearest_node_id(
     point: tuple[float, float],
     nodes_by_id: dict[str, dict[str, Any]],
 ) -> str:
+    node_id, _ambiguous = nearest_node_id_detail(point, nodes_by_id)
+    return node_id
+
+
+def nearest_node_id_detail(
+    point: tuple[float, float],
+    nodes_by_id: dict[str, dict[str, Any]],
+) -> tuple[str, bool]:
+    """Return (nearest-node-id, ambiguous) for a point, within the box limit.
+
+    ambiguous is True when a second candidate lies at a near-identical distance
+    (a tie), so the geometry guess is not unique. Returns ("", False) when no node
+    falls inside the distance limit. Callers must not adopt an ambiguous guess as a
+    confirmed transition.
+    """
     px, py = point
-    best_id = ""
-    best_dist = None
+    scored: list[tuple[float, str]] = []
     for node_id, node in nodes_by_id.items():
         box = node.get("box")
         if not box:
@@ -2692,13 +3347,16 @@ def nearest_node_id(
         dx = max(x - px, 0.0, px - (x + w))
         dy = max(y - py, 0.0, py - (y + h))
         dist = (dx * dx + dy * dy) ** 0.5
-        limit = max(w, h) * 1.5
-        if dist > limit:
+        if dist > max(w, h) * 1.5:
             continue
-        if best_dist is None or dist < best_dist:
-            best_id = node_id
-            best_dist = dist
-    return best_id
+        scored.append((dist, node_id))
+    if not scored:
+        return "", False
+    scored.sort(key=lambda item: (item[0], item[1]))
+    best_dist, best_id = scored[0]
+    # Near-tie within 15% (plus a 1px slack for exact ties at distance 0).
+    ambiguous = len(scored) >= 2 and scored[1][0] <= best_dist * 1.15 + EMU_PER_PX
+    return best_id, ambiguous
 
 
 def connector_points_emu(connector: dict[str, Any]) -> list[tuple[float, float]]:
@@ -2788,13 +3446,50 @@ def transition_node_height(text: str) -> int:
     return max(54, 22 + lines * 18)
 
 
-def render_transition_node(node: dict[str, Any], pos: dict[str, float]) -> str:
+def _node_excel_ref(node: dict[str, Any], book_no: str, sheet_title: str) -> str:
+    """Return the book:sheet!cell citation for a diagram node's anchor."""
+    source = node.get("from")
+    if not source:
+        return ""
+    try:
+        return (
+            f"{book_no}:{sheet_title}!"
+            f"{get_column_letter(int(source[1]))}{int(source[0])}"
+        )
+    except (TypeError, ValueError, IndexError):
+        return ""
+
+
+def _connector_excel_ref(
+    connector: dict[str, Any], book_no: str, sheet_title: str
+) -> str:
+    """Return the book:sheet!cell citation for a connector's anchor cell."""
+    source = connector.get("from")
+    if not source:
+        return ""
+    try:
+        return (
+            f"{book_no}:{sheet_title}!"
+            f"{get_column_letter(int(source[1]))}{int(source[0])}"
+        )
+    except (TypeError, ValueError, IndexError):
+        return ""
+
+
+def render_transition_node(
+    node: dict[str, Any],
+    pos: dict[str, float],
+    book_no: str = "",
+    sheet_title: str = "",
+) -> str:
     css = (
         f"left:{pos['x']:.0f}px;top:{pos['y']:.0f}px;"
         f"width:{pos['w']:.0f}px;height:{pos['h']:.0f}px"
     )
+    ref = _node_excel_ref(node, book_no, sheet_title)
+    ref_attr = f' data-excel-ref="{escape_attr(ref)}"' if ref else ""
     return (
-        f'<div class="diagram-node transition-node" style="{escape_attr(css)}">'
+        f'<div class="diagram-node transition-node" style="{escape_attr(css)}"{ref_attr}>'
         f"{escape_multiline(node['text'])}</div>"
     )
 
@@ -2828,22 +3523,54 @@ def render_transition_edge(
 def render_transition_table(
     edges: list[dict[str, str]],
     nodes_by_id: dict[str, dict[str, Any]],
+    book_no: str = "",
+    sheet_title: str = "",
 ) -> str:
     if not edges:
         return ""
+
+    def row(edge: dict[str, str]) -> str:
+        src = nodes_by_id[edge["source"]]
+        tgt = nodes_by_id[edge["target"]]
+        src_ref = _node_excel_ref(src, book_no, sheet_title)
+        tgt_ref = _node_excel_ref(tgt, book_no, sheet_title)
+        connector = edge.get("connector") or {}
+        connector_id = connector.get("id")
+        connector_ref = _connector_excel_ref(connector, book_no, sheet_title)
+        src_attr = f' data-excel-ref="{escape_attr(src_ref)}"' if src_ref else ""
+        tgt_attr = f' data-excel-ref="{escape_attr(tgt_ref)}"' if tgt_ref else ""
+        con_attr = f' data-excel-ref="{escape_attr(connector_ref)}"' if connector_ref else ""
+        inferred = bool(edge.get("inferred"))
+        # Geometry-inferred edges are visibly flagged as 推定 so an oracle never
+        # mistakes a nearest-node guess for a confirmed (explicit-cxn) transition.
+        inferred_attr = ' data-transition-inferred="1"' if inferred else ""
+        badge = '<span class="inferred-badge">推定</span>' if inferred else ""
+        connector_text = "" if connector_id is None else str(connector_id)
+        connector_display = f"{connector_text}（{connector_ref}）" if connector_ref else connector_text
+        return (
+            f'<tr data-connector-id="{escape_attr(connector_text)}"{inferred_attr}>'
+            f"<td{src_attr}>{escape_multiline(src['text'])}</td>"
+            f"<td{tgt_attr}>{badge}{escape_multiline(tgt['text'])}</td>"
+            f"<td{con_attr}>{escape_text(connector_display)}</td>"
+            "</tr>"
+        )
+
     rows = "\n".join(
-        "<tr>"
-        f"<td>{escape_multiline(nodes_by_id[edge['source']]['text'])}</td>"
-        f"<td>{escape_multiline(nodes_by_id[edge['target']]['text'])}</td>"
-        "</tr>"
+        row(edge)
         for edge in edges
         if edge["source"] in nodes_by_id and edge["target"] in nodes_by_id
     )
+    inferred_count = sum(1 for edge in edges if edge.get("inferred"))
+    note = (
+        f"（うち推定 {inferred_count}件：明示接続でなく最近傍幾何で補完）"
+        if inferred_count
+        else ""
+    )
     return f"""<details class="transition-list">
-  <summary>遷移一覧（{len(edges)}件）</summary>
+  <summary>遷移一覧（{len(edges)}件）{escape_text(note)}</summary>
   <div class="item-table-wrap">
     <table class="item-table">
-      <thead><tr><th>遷移元</th><th>遷移先</th></tr></thead>
+      <thead><tr><th>遷移元</th><th>遷移先</th><th>connector</th></tr></thead>
       <tbody>
 {indent(rows, 8)}
       </tbody>
@@ -2852,7 +3579,13 @@ def render_transition_table(
 </details>"""
 
 
-def render_transition_map(graph: dict[str, Any], sheet_id: str, index: int) -> str:
+def render_transition_map(
+    graph: dict[str, Any],
+    sheet_id: str,
+    index: int,
+    book_no: str = "",
+    sheet_title: str = "",
+) -> str:
     """Render a compact relationship map as a supplement for large Excel diagrams."""
     if len(graph["nodes"]) < 8 or len(graph["edges"]) < 6:
         return ""
@@ -2862,7 +3595,7 @@ def render_transition_map(graph: dict[str, Any], sheet_id: str, index: int) -> s
         render_transition_edge(edge, layout, marker_id) for edge in graph["edges"]
     )
     nodes = "\n".join(
-        render_transition_node(node, layout["nodes"][node["id"]])
+        render_transition_node(node, layout["nodes"][node["id"]], book_no, sheet_title)
         for node in graph["nodes"]
     )
     stage_style = f"width:{layout['width']}px;height:{layout['height']}px"
@@ -2884,7 +3617,13 @@ def render_transition_map(graph: dict[str, Any], sheet_id: str, index: int) -> s
 </details>"""
 
 
-def render_diagram_node(node: dict[str, Any], stage_left: float, stage_top: float) -> str:
+def render_diagram_node(
+    node: dict[str, Any],
+    stage_left: float,
+    stage_top: float,
+    book_no: str = "",
+    sheet_title: str = "",
+) -> str:
     box = node.get("box")
     if not box:
         return ""
@@ -2908,8 +3647,19 @@ def render_diagram_node(node: dict[str, Any], stage_left: float, stage_top: floa
     cls = "diagram-node"
     if geom in {"roundRect", "ellipse"}:
         cls += f" diagram-node-{geom}"
+    ref_attr = ""
+    source = node.get("from")
+    if source:
+        try:
+            node_ref = (
+                f"{book_no}:{sheet_title}!"
+                f"{get_column_letter(int(source[1]))}{int(source[0])}"
+            )
+            ref_attr = f' data-excel-ref="{escape_attr(node_ref)}"'
+        except (TypeError, ValueError, IndexError):
+            ref_attr = ""
     return (
-        f'<div class="{escape_attr(cls)}" style="{escape_attr(css)}">'
+        f'<div class="{escape_attr(cls)}" style="{escape_attr(css)}"{ref_attr}>'
         f"{escape_multiline(node.get('text', ''))}</div>"
     )
 
@@ -3305,12 +4055,44 @@ def format_excel_date(value: date | datetime, number_format: str | None) -> str 
     return None
 
 
-def cell_text_runs(cell: Any) -> list[dict[str, Any]]:
-    """Return display text split into runs that preserve Excel strike style."""
-    value = cell.value
+def cell_text_runs(
+    cell: Any,
+    xml_cell: dict[str, Any] | None = None,
+    value: Any = _UNSET,
+) -> list[dict[str, Any]]:
+    """Return display text split into runs that preserve Excel strike style.
+
+    When ``xml_cell`` (an OOXML direct-read cell model) is supplied, strike/bold
+    come from the XML run/cell-font model (canonical, run-level, cell inheritance,
+    `<strike val="0">`=false); otherwise it falls back to openpyxl's font flags so
+    existing callers (e.g. verify.py) keep their behaviour. ``value`` overrides
+    ``cell.value`` for formula cells whose cached display value is loaded
+    separately with data_only=True.
+    """
     number_format = getattr(cell, "number_format", None)
-    cell_strike = bool(getattr(cell.font, "strike", False))
-    cell_bold = bool(getattr(cell.font, "bold", False))
+    # Canonical path: OOXML string cells use their XML run-level strike/bold.
+    # Do NOT trim here — the raw run text (including xml:space="preserve" leading/
+    # trailing whitespace) is the source spec and must survive verbatim, exactly
+    # like formula bodies. Whether the cell is dropped as "empty" is decided by
+    # the caller on the joined text, not by mutating the cell's own characters.
+    if xml_cell is not None and xml_cell.get("is_string") and xml_cell.get("runs"):
+        return [
+            {
+                "text": run["text"],
+                "strike": bool(run.get("strike")),
+                "bold": bool(run.get("bold")),
+            }
+            for run in xml_cell["runs"]
+            if run["text"] != ""
+        ]
+
+    value = cell.value if value is _UNSET else value
+    if xml_cell is not None:
+        cell_strike = bool(xml_cell.get("cell_strike"))
+        cell_bold = bool(xml_cell.get("cell_bold"))
+    else:
+        cell_strike = bool(getattr(cell.font, "strike", False))
+        cell_bold = bool(getattr(cell.font, "bold", False))
     runs: list[dict[str, Any]] = []
     if isinstance(value, CellRichText):
         for part in value:
@@ -3391,7 +4173,24 @@ def render_cell_text(cell: dict[str, Any] | None) -> str:
         if run.get("strike"):
             text = f'<span class="cell-strike">{text}</span>'
         rendered.append(text)
-    return "".join(rendered)
+    inner = "".join(rendered)
+    ref = cell.get("ref")
+    if not ref:
+        return inner
+    # Wrap each source cell so its real Excel coordinate is machine-citable via
+    # data-excel-ref. The visible reference chip is rendered from this attribute
+    # by CSS (::after), so it never pollutes the readable text nor is it
+    # permanently hidden (shown on hover and via the 参照ID toggle).
+    formula_attr = (
+        f' data-excel-formula="{escape_attr(cell["formula"])}"'
+        if cell.get("formula")
+        else ""
+    )
+    return (
+        f'<span class="src-cell" data-excel-book="{escape_attr(cell.get("book", ""))}"'
+        f' data-excel-sheet="{escape_attr(cell.get("sheet", ""))}"'
+        f' data-excel-ref="{escape_attr(ref)}"{formula_attr}>{inner}</span>'
+    )
 
 
 def join_cell_text(cells: list[dict[str, Any]], sep: str = "　") -> str:
@@ -3606,6 +4405,75 @@ BASE_CSS = """    :root {
     .cell-strike {
       text-decoration: line-through;
       text-decoration-thickness: 1px;
+    }
+
+    /* 実Excel座標の参照chip。data-excel-ref から CSS で生成し、可読テキストを
+       汚さない。ホバーで表示され、参照ID表示トグルで全件を恒常表示にできる。
+       CSS で恒久非表示にはしない。 */
+    .src-cell {
+      position: relative;
+    }
+    .src-cell:hover::after,
+    body.show-refs .src-cell::after {
+      content: attr(data-excel-ref);
+      position: absolute;
+      left: 0;
+      bottom: 100%;
+      z-index: 30;
+      background: var(--olive);
+      color: #fff;
+      font-size: 10px;
+      line-height: 1.4;
+      padding: 1px 5px;
+      border-radius: 4px;
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    }
+    body.show-refs .src-cell {
+      outline: 1px dotted var(--line);
+      outline-offset: 1px;
+    }
+    .ref-toggle {
+      margin: 8px 0 0;
+      padding: 4px 10px;
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .ref-toggle[aria-pressed="true"] {
+      color: #fff;
+      background: var(--olive);
+      border-color: var(--olive);
+    }
+
+    .pin-ledger,
+    .connector-ledger {
+      margin: 10px 0;
+      font-size: 12px;
+    }
+    .pin-ledger > summary,
+    .connector-ledger > summary {
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .connector-ledger[data-connector-unresolved]:not([data-connector-unresolved="0"]) > summary {
+      color: var(--clay);
+    }
+    .inferred-badge {
+      display: inline-block;
+      margin-right: 4px;
+      padding: 0 5px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--clay);
+      border-radius: 4px;
+      vertical-align: middle;
     }
 
     .doc-bullet {
@@ -4190,7 +5058,15 @@ BASE_JS = """    const sheetLinks = document.querySelectorAll(".artifact-map a[d
           panel.classList.toggle("is-active", panel.id === target);
         });
       });
-    });"""
+    });
+
+    const refToggle = document.getElementById("ref-toggle");
+    if (refToggle) {
+      refToggle.addEventListener("click", () => {
+        const on = document.body.classList.toggle("show-refs");
+        refToggle.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    }"""
 
 
 if __name__ == "__main__":

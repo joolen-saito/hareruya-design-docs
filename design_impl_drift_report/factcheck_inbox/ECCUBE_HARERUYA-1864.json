@@ -1,0 +1,260 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1864",
+  "issueId": 43509329,
+  "summary": "【実装乖離】フロント会員_新規会員登録_新規会員登録にて、メールアドレスのRFC準拠チェックが無効化されており、RFC上不正なメールアドレスが登録できてしまう",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:40Z",
+  "updated": "2026-07-14T01:16:40Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1864",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "新規会員登録",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント会員_新規会員登録_新規会員登録にて、メールアドレスのRFC準拠チェックが無効化されており、RFC上不正なメールアドレスが登録できてしまう",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：新規会員登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_新規会員登録_新規会員登録にて、メールアドレスのRFC準拠チェックが無効化されており、RFC上不正なメールアドレスが登録できてしまう\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- 新規会員登録画面(F06-01)で(1-26)同意するを押下したとき、(1-10)メールアドレスおよび(1-11)メールアドレス(確認)に対して RFC 準拠の形式チェックを行うこと。\n- RFC 上不正な形式のメールアドレスの場合、「有効なメールアドレスではありません。」というエラーメッセージを表示すること。",
+    "現在の挙動": "- 設定値 eccube_rfc_email_check が false のため、Email 制約の mode に strict が渡されず、RFC 準拠(Symfony の strict モード)ではなく独自の緩いチェック(NoRFCEmailValidator)が使用される。\n- RepeatedEmailType が追加している Assert\\Regex により「..」「.@」を含むアドレスは拒否されるが、RFC 上不正な user@-example.com（ハイフン始まりのドメイン）や user@exam_ple.com（アンダースコアを含むドメイン）は現実装では有効と判定される（vendor の Egulias RFCValidation では invalid）。\n- エラーメッセージ自体は「有効なメールアドレスではありません。」が表示されるため、メッセージ文言は設計どおりである。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:61-62 「(1-26)同意するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する」\nF06_customer_basedesign.md:74 「| 1-10 | メールアドレス | ... ・(1-26)同意するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する |」\n\n▼実装該当箇所\napp/config/eccube/packages/eccube.yaml:234 （eccube_rfc_email_check: false）\nsrc/Eccube/Form/Type/RepeatedEmailType.php:46 （$this->eccubeConfig['eccube_rfc_email_check'] ? 'strict' : null）\nsrc/Eccube/Form/Validator/EmailValidator.php:45-69 （strict 以外は NoRFCEmailValidator による緩いチェックにフォールバック）\nsrc/Eccube/Validator/EmailValidator/NoRFCEmailValidator.php:33-53 （携帯メール向けに緩和した独自正規表現）\nsrc/Eccube/Form/Type/RepeatedEmailType.php:50-54 （「..」「.@」のみを追加で禁止する Assert\\Regex）\n\n▼備考\n現HEADのコードを実際に読み込んで検証した（php -r で NoRFCEmailValidator と Egulias RFCValidation を突き合わせ）。RepeatedEmailType の Assert\\Regex により「..」「.@」は救済されているため、RFC非準拠アドレスの多くは弾かれるが、ドメイン部の不正(ハイフン始まり・アンダースコア)は素通りする。eccube_rfc_email_check は MailService:967-971 のアドレス変換にも影響するため、単純な true 化ではなく影響範囲の確認が必要。同じ設定は ForgotType/PasswordResetType/CustomerLoginType 等も参照している。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "新規会員登録",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "start": 234,
+      "end": 234,
+      "fileLines": 184,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Form/Type/RepeatedEmailType.php",
+      "start": 46,
+      "end": 46,
+      "fileLines": 93,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    {"
+    },
+    {
+      "path": "src/Eccube/Form/Validator/EmailValidator.php",
+      "start": 45,
+      "end": 69,
+      "fileLines": 66,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Validator/EmailValidator/NoRFCEmailValidator.php",
+      "start": 33,
+      "end": 53,
+      "fileLines": 57,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function isValid($email, EmailValidation $emailValidation = null)\n    {\n        $wsp = '[\\x20\\x09]';\n        $vchar = '[\\x21-\\x7e]';\n        $quoted_pair = \"\\\\\\\\(?:$vchar|$wsp)\";\n        $qtext = '[\\x21\\x23-\\x5b\\x5d-\\x7e]';\n        $qcontent = \"(?:$qtext|$quoted_pair)\";\n        $quoted_string = \"\\\"$qcontent*\\\"\";\n        $atext = '[a-zA-Z0-9!#$%&\\'*+\\-\\/\\=?^_`{|}~]';\n        $dot_atom = \"$atext+(?:[.]$atext+)*\";\n        $domain = $dot_atom;\n        $dot_atom_loose = \"$atext+(?:[.]|$atext)*\";\n        $local_part_loose = \"(?:$dot_atom_loose|$quoted_string)\";\n        $addr_spec_loose = \"{$local_part_loose}[@]$domain\";\n\n        // 携帯メールアドレス用に、..や.@を許容する。\n        $regexp = \"/\\A{$addr_spec_loose}\\z/\";\n\n        if (!preg_match($regexp, $email)) {\n            return false;\n        }"
+    },
+    {
+      "path": "src/Eccube/Form/Type/RepeatedEmailType.php",
+      "start": 50,
+      "end": 54,
+      "fileLines": 93,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            'invalid_message' => 'form_error.same_email',\n            'options' => [\n                'constraints' => [\n                    new Assert\\NotBlank(),\n                    new Email(null, null, $this->eccubeConfig['eccube_rfc_email_check'] ? 'strict' : null),"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 61,
+      "end": 62,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* (1-26)同意するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」と\nエラーメッセージを表示する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 74,
+      "end": 74,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1-10 | メールアドレス | 半角 | ◯ | 255 | - | ・未入力、またはメールアドレス形式として不正な場合、(1-26)同意するを押下すると、動的に必須入力のエラーメッセージを表示する<br><br>・(1-26)同意するを押下すると、RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "app/config/eccube/packages/eccube.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/RepeatedEmailType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Validator/EmailValidator.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Validator/EmailValidator/NoRFCEmailValidator.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:39+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

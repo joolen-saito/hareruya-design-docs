@@ -1,0 +1,234 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1778",
+  "issueId": 43509228,
+  "summary": "【実装乖離】フロントトップ_ECTOP（本店トップ）_ECTOP（本店トップ）にて、設計上「編集/削除可能」とされたブロック（おすすめ特集・体験会バナー・最新記事・晴れる屋チャンネル）が deletable=false で登録されており、ブロック管理から編集も削除もできない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:15:55Z",
+  "updated": "2026-07-14T01:15:55Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1778",
+  "basicInfo": {
+    "分類": "フロントトップ",
+    "機能": "ECTOP（本店トップ）",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロントトップ_ECTOP（本店トップ）_ECTOP（本店トップ）にて、設計上「編集/削除可能」とされたブロック（おすすめ特集・体験会バナー・最新記事・晴れる屋チャンネル）が deletable=false で登録されており、ブロック管理から編集も削除もできない",
+    "設計書": "0301_基本設計仕様書(フロント_トップ).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントトップ\n機能：ECTOP（本店トップ）\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロントトップ_ECTOP（本店トップ）_ECTOP（本店トップ）にて、設計上「編集/削除可能」とされたブロック（おすすめ特集・体験会バナー・最新記事・晴れる屋チャンネル）が deletable=false で登録されており、ブロック管理から編集も削除もできない\n設計書：0301_基本設計仕様書(フロント_トップ).xlsx",
+    "期待される挙動": "- ECTOP（本店トップ）の「おすすめ特集」「体験会バナー」「最新記事」「晴れる屋チャンネル」は、管理画面＞コンテンツ管理＞ブロック管理に設定されている「編集/削除可能」なブロックとして表示されること。\n- したがって運用担当者は、ブロック管理の一覧からこれらのブロックの編集（HTML書き換え）および削除が行えること。",
+    "現在の挙動": "- トップページ用ブロックを dtb_block に投入するマイグレーションは、対象15ブロック（recommend／experience_banner／latest_articles／hareruya_channel を含む）を一律 deletable=false で INSERT しており、「編集/削除可能」であるべきブロックも削除不可として登録されている。\n- 管理画面のブロック管理一覧テンプレートは Block.deletable が false のブロックについて編集リンクも削除ボタンも描画しない。\n- さらに BlockController::edit() は既存ブロックで isDeletable() が false の場合に NotFoundHttpException を投げるため、URLを直接叩いても編集画面に到達できない。\n- 結果として、設計で「編集/削除可能」とされた4ブロックは管理画面から一切編集・削除ができず、おすすめ特集ブロックの中身は href=\"#\" のダミーバナーのまま運用で修正できない状態になっている。",
+    "補足情報": "▼設計書該当箇所\nF01_top_basedesign.md:367 「* 管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集/削除可能なブロックを表示する」（おすすめ特集 処理概要）\nF01_top_basedesign.md:544 「* 管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集/削除可能なブロックを表示する」（体験会バナー 処理概要）\nF01_top_basedesign.md:560 「* 管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集/削除可能なブロックを表示する」（最新記事 処理概要）\nF01_top_basedesign.md:585 「* 管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集/削除可能なブロックを表示する」（晴れる屋チャンネル 処理概要）\n\n▼実装該当箇所\napp/DoctrineMigrations/Version20260416190000.php:32-48 （TOP_BLOCKS 定義。recommend／experience_banner／latest_articles／hareruya_channel を含む15ブロック）\napp/DoctrineMigrations/Version20260416190000.php:68 （INSERT の VALUES で deletable に false をハードコード）\napp/DoctrineMigrations/Version20260424100000.php:50 （experience_banner 等を再投入。deletable=false）\napp/DoctrineMigrations/Version20260424110000.php:50 （recommend 等を再投入。deletable=false）\nsrc/Eccube/Controller/Admin/Content/BlockController.php:118 （deletable=false のブロックは編集画面が404）\nsrc/Eccube/Resource/template/admin/Content/block.twig:71,85,93 （deletable=false のブロックは編集リンク・削除ボタンを非表示）\nsrc/Eccube/Resource/template/default/Block/recommend.twig:7-14 （おすすめ特集ブロックの実体。全バナーが href=\"#\" のダミー）\n\n▼備考\n設計書ではブロックごとに「編集/削除不可」（スライドバナー/最新入荷アイテム/SALE開催中/値下げしました！/補充しました！等、行110・150・219・383・419）と「編集/削除可能」（おすすめ特集/体験会バナー/最新記事/晴れる屋チャンネル、行367・544・560・585）が書き分けられているが、実装は全ブロックを deletable=false で一律登録している。deletable=false は当フォークでは「削除不可」に加えて「編集不可（編集画面404）」も意味するため、影響は削除可否だけに留まらない。git log 2026-07-08 以降のコミットでも当該マイグレーション・BlockController に修正は入っていない。"
+  },
+  "designBook": "0301_基本設計仕様書(フロント_トップ).xlsx",
+  "feature": "ECTOP（本店トップ）",
+  "classification": "フロントトップ",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "app/DoctrineMigrations/Version20260416190000.php",
+      "start": 32,
+      "end": 48,
+      "fileLines": 120,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private const TOP_BLOCKS = [\n        ['file' => 'mv_carousel',       'name' => 'MVカルーセル',           'use_controller' => true],\n        ['file' => 'news',              'name' => 'ニュース',              'use_controller' => true],\n        ['file' => 'new_items',         'name' => '最新入荷アイテム',        'use_controller' => true],\n        ['file' => 'sale',              'name' => 'SALE開催中',            'use_controller' => true],\n        ['file' => 'favorites',         'name' => 'あなたのお気に入り',      'use_controller' => true],\n        ['file' => 'search_items',      'name' => 'アイテムを探す',         'use_controller' => false],\n        ['file' => 'category_list',     'name' => 'カテゴリ一覧',           'use_controller' => true],\n        ['file' => 'recommend',         'name' => 'おすすめ特集',           'use_controller' "
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260416190000.php",
+      "start": 68,
+      "end": 68,
+      "fileLines": 120,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                 VALUES (:device_type_id, :name, :file_name, :use_controller, false, NOW(), NOW())"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260424100000.php",
+      "start": 50,
+      "end": 50,
+      "fileLines": 105,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                 VALUES (:device_type_id, :name, :file_name, :use_controller, false, NOW(), NOW())"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260424110000.php",
+      "start": 50,
+      "end": 50,
+      "fileLines": 105,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                 VALUES (:device_type_id, :name, :file_name, :use_controller, false, NOW(), NOW())"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Content/BlockController.php",
+      "start": 118,
+      "end": 118,
+      "fileLines": 223,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": ""
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Content/block.twig",
+      "start": 71,
+      "end": 71,
+      "fileLines": 131,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                                <a href=\"{{ url('admin_content_block_edit', {id: Block.id}) }}\">"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/recommend.twig",
+      "start": 7,
+      "end": 14,
+      "fileLines": 17,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "      <li class=\"p-hareruya-banner__item\"><a class=\"p-hareruya-banner__link\" href=\"#\"><img class=\"p-hareruya-banner__image\" src=\"{{ asset('assets/hareruya/img/dynamic/top-banner-dammy01.webp') }}\" alt=\"\" width=\"382\" height=\"130\" decoding=\"async\" loading=\"lazy\"></a></li>\n      <li class=\"p-hareruya-banner__item\"><a class=\"p-hareruya-banner__link\" href=\"#\"><img class=\"p-hareruya-banner__image\" src=\"{{ asset('assets/hareruya/img/dynamic/top-banner-dammy01.webp') }}\" alt=\"\" width=\"382\" height=\"130\" decoding=\"async\" loading=\"lazy\"></a></li>\n    </ul>\n    <ul class=\"p-hareruya-banner__list p-hareruya-banner__list--col-2\">\n      <li class=\"p-hareruya-banner__item\"><a class=\"p-hareruya-banner__link\" href=\"#\"><img class=\"p-hareruya-banner__image\" src=\"{{ asset('assets/hareruya/img/dynamic/top-banne"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 367,
+      "end": 367,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集/削除可能なブロックを表示する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 544,
+      "end": 544,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集/削除可能なブロックを表示する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 560,
+      "end": 560,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集/削除可能なブロックを表示する"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "start": 585,
+      "end": 585,
+      "resolvedFrom": "F01_top_basedesign.md",
+      "fileLines": 919,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集/削除可能なブロックを表示する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "app/DoctrineMigrations/Version20260416190000.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260424100000.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20260424110000.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Content/BlockController.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Content/block.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Block/recommend.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:27+09:00",
+  "designResolution": {
+    "requested": "0301_基本設計仕様書(フロント_トップ).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html",
+    "sheetCount": 4,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP",
+        "score": 60
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "ECTOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "支店ECTOP"
+      }
+    ]
+  }
+}

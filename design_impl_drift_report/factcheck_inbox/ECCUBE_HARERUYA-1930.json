@@ -1,0 +1,179 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1930",
+  "issueId": 43509437,
+  "summary": "【実装乖離】フロントイベント_イベント大会TOP_イベント大会TOPの月別カレンダーにて、設計の単一日付選択ではなく、複数日付を同時に選択できるトグル方式で実装されている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:17:13Z",
+  "updated": "2026-07-14T01:17:13Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1930",
+  "basicInfo": {
+    "分類": "フロントイベント",
+    "機能": "イベント大会TOP",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロントイベント_イベント大会TOP_イベント大会TOPの月別カレンダーにて、設計の単一日付選択ではなく、複数日付を同時に選択できるトグル方式で実装されている",
+    "設計書": "0307_基本設計仕様書(フロント_イベント).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロントイベント\n機能：イベント大会TOP\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロントイベント_イベント大会TOP_イベント大会TOPの月別カレンダーにて、設計の単一日付選択ではなく、複数日付を同時に選択できるトグル方式で実装されている\n設計書：0307_基本設計仕様書(フロント_イベント).xlsx",
+    "期待される挙動": "- 月別カレンダーの日付選択(4-23)は単一選択とし、初期表示では現在日が選択された状態とする。\n- 選択した日付で取得済みのイベントリスト(json)を抽出して表示し、選択している月日は黒枠表示とする。\n- 月別カレンダー領域の画面部品は年月表示(4-20)・前月取得(4-21)・後月取得(4-22)・日付選択(4-23)・大型イベントアイコン(4-24)の5点のみで、選択日チップや選択解除ボタンは存在しない。",
+    "現在の挙動": "- 選択日は Set (this.selectedDates) で保持され、日付セルを押下するたびに追加・削除がトグルされるため、複数日を同時に選択した状態になる。\n- 選択中の複数日はチップとして一覧表示され、全解除ボタン(front.event.monthly.clear)で一括解除できる。設計の部品一覧に存在しないUIが追加されている。\n- イベント抽出は renderEventsForSelectedDates() 内で details.filter(...selectedDates.some(...)) により行われ、選択したいずれかの日付に一致するイベントを表示する(OR条件)。\n- 取得済みJSONからの抽出表示・選択セルの黒枠(.is-selected{border:2px solid #333})・0件日のグレー表示と選択不可(.is-closed / disabled)自体は実装されている。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/F07_event_basedesign.md:248 (初期表示: 「日付選択(4-23)は、現在日とする」と単一の日付を指定)\n.cursor/docs/MDfile/F07_event_basedesign.md:250-254 (「選択した日付で取得済みのイベントリスト(json)を抽出して表示」「選択している月日は黒枠表示」と単数形で記述)\n.cursor/docs/MDfile/F07_event_basedesign.md:259-265 (月別カレンダーの部品一覧は4-20〜4-24の5点のみ。選択日チップ・全解除ボタンの記載はない)\n\n▼実装該当箇所\nhtml/template/default/assets/hareruya/js/hareruya-event.js:1 (バンドルJS。this.selectedDates=new Set(...) で選択日を保持し、toggleDateSelection で add/delete をトグル。renderEventsForSelectedDates は selectedDates.some() による OR 抽出)\nsrc/Eccube/Resource/template/default/Event/index.twig:236-238 (選択日チップ領域 data-monthly-calendar-selected-chips と全解除ボタン data-monthly-calendar-clear)\nhtml/template/default/assets/hareruya/css/hareruya-event.css:1 (.p-hareruya-event-top__monthly-calendar-day.is-selected の黒枠。複数セルに同時付与される)\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\nClaude は設計の部品一覧(F07_event_basedesign.md:264)で4-23の書式が「ボタン」としか書かれておらず、他項目のように「単一選択(セレクトボックス)」等の明記が無いことを根拠に「選択方式の指定なし」と読み、FALSE_POSITIVE と判定した。しかし同設計の機能説明 F07_event_basedesign.md:248「日付選択(4-23)は、現在日とする」・:251-252「選択した日付で…」「選択している月日は黒枠表示」はいずれも単数の日付を前提とした記述であり、単一選択と読むのが妥当である。\ncodex は index.twig:236-238 のチップ領域・全解除ボタンと hareruya-event.js の Set 実装を挙げて FACT と判定した。設計の部品一覧(F07_event_basedesign.md:259-265)は4-20〜4-24の5点しか定義しておらず、チップ・全解除ボタンは設計に存在しないUIであるため、codex の判定が正しい。\nただし codex の「複数の選択日すべてに一致するイベントを抽出」という記述は誤り。hareruya-event.js:1 の renderEventsForSelectedDates は details.filter(d => selectedDates.some(date => d.start_date.startsWith(date))) で実装されており、AND ではなく OR(いずれかの選択日に一致)である。結論(FACT)は正しいが、抽出ロジックの説明は誤読している。\n両者が一致しているとおり、4-23の主機能(取得済みJSONからの抽出表示・黒枠・0件日のグレー＋選択不可・大型イベントアイコン)は実装済みであり、乖離しているのは選択方式(単一→複数トグル)と設計外UI(チップ・全解除ボタン)の追加のみである。"
+  },
+  "designBook": "0307_基本設計仕様書(フロント_イベント).xlsx",
+  "feature": "イベント大会TOP",
+  "classification": "フロントイベント",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 248,
+      "end": 248,
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "日付選択(4-23)は、現在日とする"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 250,
+      "end": 254,
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "日付選択ボタン(4-23)\n選択した日付で取得済みのイベントリスト(json)を抽出して表示\n選択している月日は黒枠表示\nその月日に大型イベントがあれば、大型イベントアイコンを表示する。アイコンは「B.日別で探す」と共通\nイベントが0件の日はグレーで表示し、選択不可"
+    },
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 259,
+      "end": 265,
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 識別ID | ラベル | 書式・制限 | 必須 | 最大文字数<br>または最大値 | 初期値 | 画面部品の説明 |\n| --- | --- | --- | --- | --- | --- | --- |\n| 4-20 | 年月表示 | ラベル | - | - | - | 現在表示している年月を表示する |\n| 4-21 | 前月取得 | ボタン | - | - | - | 現在表示している年月の1ヶ月前のデータを取得する |\n| 4-22 | 後月取得 | ボタン | - | - | - | 現在表示している年月の1ヶ月後のデータを取得する |\n| 4-23 | 日付選択 | ボタン | - | - | - | 選択した日時で取得済みのイベントリスト(json)を抽出して表示 |\n| 4-24 | 大型イベントアイコン | 画像 | - | - | - | その月日に大型イベントがあれば表示する |"
+    },
+    {
+      "path": "html/template/default/assets/hareruya/js/hareruya-event.js",
+      "start": 1,
+      "end": 1,
+      "fileLines": 2,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "(()=>{\"use strict\";var e={},t={};function r(a){var n=t[a];if(void 0!==n)return n.exports;var i=t[a]={exports:{}};return e[a](i,i.exports,r),i.exports}function a(e,t,r,a,n,i,o){try{var l=e[i](o),s=l.value}catch(e){r(e);return}l.done?t(s):Promise.resolve(s).then(a,n)}r.rv=()=>\"1.7.5\",r.ruid=\"bundler=rspack@1.7.5\";function n(e,t,r){return t in e?Object.defineProperty(e,t,{value:r,enumerable:!0,configurable:!0,writable:!0}):e[t]=r,e}var i=function(){var e;function t(e){if(!(this instanceof t))throw TypeError(\"Cannot call a class as a function\");n(this,\"container\",void 0),n(this,\"buttonsContainer\",void 0),n(this,\"prevBtn\",void 0),n(this,\"nextBtn\",void 0),n(this,\"startDate\",void 0),n(this,\"selectedDate\",null),this.container=e,this.buttonsContainer=e.querySelector(\"[data-daily-date-buttons]\"),thi"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Event/index.twig",
+      "start": 236,
+      "end": 238,
+      "fileLines": 406,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                            <div class=\"p-hareruya-event-top__monthly-calendar-selected\">\n                                <div class=\"p-hareruya-event-top__monthly-calendar-selected-chips\" data-monthly-calendar-selected-chips></div>\n                                <button class=\"c-hareruya-btn c-hareruya-btn--sm p-hareruya-event-top__monthly-calendar-clear-btn\" type=\"button\" data-monthly-calendar-clear><span>{{ 'front.event.monthly.clear'|trans }}</span></button>"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "start": 248,
+      "end": 248,
+      "resolvedFrom": "F07_event_basedesign.md",
+      "fileLines": 643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "日付選択(4-23)は、現在日とする"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/F07_event_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "html/template/default/assets/hareruya/js/hareruya-event.js",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Event/index.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:08+09:00",
+  "designResolution": {
+    "requested": "0307_基本設計仕様書(フロント_イベント).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html",
+    "sheetCount": 6,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント大会TOP",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "イベント大会TOP"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "大会詳細検索"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "大会詳細"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "大会申込～完了"
+      }
+    ]
+  }
+}

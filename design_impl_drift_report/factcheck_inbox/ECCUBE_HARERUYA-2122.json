@@ -1,0 +1,239 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2122",
+  "issueId": 43509677,
+  "summary": "【実装乖離】会員管理_手動メール通知(入力/確認)_手動メール通知(確認画面)にて、戻るリンクが会員編集画面ではなく入力画面へ遷移する",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:51Z",
+  "updated": "2026-07-14T01:18:51Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2122",
+  "basicInfo": {
+    "分類": "会員管理",
+    "機能": "手動メール通知(入力/確認)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】会員管理_手動メール通知(入力/確認)_手動メール通知(確認画面)にて、戻るリンクが会員編集画面ではなく入力画面へ遷移する",
+    "設計書": "0207_基本設計仕様書(会員管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：会員管理\n機能：手動メール通知(入力/確認)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】会員管理_手動メール通知(入力/確認)_手動メール通知(確認画面)にて、戻るリンクが会員編集画面ではなく入力画面へ遷移する\n設計書：0207_基本設計仕様書(会員管理機能).xlsx",
+    "期待される挙動": "- 手動メール通知(確認画面)には会員名・テンプレ選択・件名・メール本文を表示する。\n- 識別ID:5「会員編集画面へ戻る」ボタン押下時、当該の会員情報編集画面へ遷移する。\n- 識別ID:6「送信」ボタン押下でメール送信を実行し、送信完了後、当該の会員情報編集画面に遷移する。",
+    "現在の挙動": "- 確認画面には会員名・テンプレート名・件名・本文がいずれも表示されており、送信完了後は admin_customer_edit にリダイレクトするため、表示と送信後遷移は設計どおりである。\n- 確認画面左下の戻るリンク(id=\"back\")は mode=back でフォームを再POSTするだけで、コントローラの switch には back の分岐が無いため入力画面(mail_manual.twig)が再表示される。会員編集画面へは遷移しない。\n- 戻るリンクのラベルも 'admin.customer.manual_mail'(「手動メール通知」)であり、設計の「会員編集画面へ戻る」とは異なる。",
+    "補足情報": "▼設計書該当箇所\nM08_customer_management_basedesign.md:743-748 「| 1 | 会員名 | ラベル … | 5 | 会員編集画面へ戻る | ボタン | - | - | - | 当該の会員情報編集画面へ遷移する | | 6 | 送信 | ボタン | … 送信完了後、当該の会員情報編集画面に遷移する」\n\n▼実装該当箇所\nsrc/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig:91 （戻るリンクは mode=back でフォーム再送信。ラベルは「手動メール通知」）\nsrc/Eccube/Controller/Admin/Customer/CustomerMailController.php:180-207 （mode の switch は confirm と complete のみで back は default に落ち、入力画面が再表示される）\nsrc/Eccube/Controller/Admin/Customer/CustomerMailController.php:203 （送信完了後は admin_customer_edit へリダイレクト。設計どおり）\nsrc/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig:52-81 （会員名・テンプレート・件名・本文の表示は実装済み）\n\n▼備考\n確認画面の項目表示・送信後の会員編集画面遷移は設計どおり。乖離は戻るボタンの遷移先(入力画面 vs 会員編集画面)とラベルのみ。なお入力画面側には「会員編集に戻る」リンク(mail_manual.twig:94-96)が存在する。"
+  },
+  "designBook": "0207_基本設計仕様書(会員管理機能).xlsx",
+  "feature": "手動メール通知(入力/確認)",
+  "classification": "会員管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig",
+      "start": 91,
+      "end": 91,
+      "fileLines": 106,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                <div class=\"c-conversionArea__leftBlockItem\"><a class=\"c-baseLink\" href=\"javascript:void(0)\" id=\"back\"><i class=\"fa fa-backward\" aria-hidden=\"true\"></i><span>{{ 'admin.customer.manual_mail'|trans }}</span></a>"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php",
+      "start": 180,
+      "end": 207,
+      "fileLines": 216,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "            $form->handleRequest($request);\n            $mode = $request->get('mode');\n\n            if ($form->isSubmitted() && $form->isValid()) {\n                switch ($mode) {\n                    case 'confirm':\n                        return $this->render('@admin/Customer/mail_manual_confirm.twig', [\n                            'form' => $form->createView(),\n                            'MailTemplate' => $MailTemplate,\n                            'Customer' => $Customer,\n                        ]);\n                    case 'complete':\n                        $formParams = $form->getData();\n\n                        // メール送信\n                        $message = $this->mailService->sendCustomerManualMail($Customer, $formParams);\n\n                        // メール履歴作成\n                        $"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php",
+      "start": 203,
+      "end": 203,
+      "fileLines": 216,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                        return $this->redirectToRoute('admin_customer_edit', ['id' => $Customer->getId()]);"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig",
+      "start": 52,
+      "end": 81,
+      "fileLines": 106,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                        {{ Customer.name01 }} {{ Customer.name02 }}\n                                    </div>\n                                </div>\n                                <div class=\"row mb-2\">\n                                    <div class=\"col-3\">\n                                        <div class=\"d-inline-block\">\n                                            <span>{{ 'admin.order.mail_template'|trans }}</span>\n                                        </div>\n                                    </div>\n                                    <div class=\"col\">\n                                        {{ form.mailTemplate.vars.data }}\n                                        {{ form_widget(form.mailTemplate, { type : 'hidden' }) }}\n                                    </div"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+      "start": 743,
+      "end": 748,
+      "resolvedFrom": "M08_customer_management_basedesign.md",
+      "fileLines": 1097,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 1 | 会員名 | ラベル | - | - | - | 前画面から引き継いだ会員名 |\n| 2 | テンプレ選択 | ラベル | ◯ | - | - | 入力画面から引き継いだテンプレート名を出力 |\n| 3 | 件名 | ラベル | ◯ | - | - | 入力画面から引き継いだ件名を出力 |\n| 4 | メール本文 | ラベル | ◯ | - | - | 入力画面から引き継いだメール本文を出力 |\n| 5 | 会員編集画面へ戻る | ボタン | - | - | - | 当該の会員情報編集画面へ遷移する |\n| 6 | 送信 | ボタン | - | - | - | ボタン押下で、メール送信を実行<br>送信完了後、当該の会員情報編集画面に遷移する |"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:27+09:00",
+  "designResolution": {
+    "requested": "0207_基本設計仕様書(会員管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html",
+    "sheetCount": 26,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "会員検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "会員検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "メール一括送信"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "メール一括送信確認"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "メール一括送信完了"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "顧客情報CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "会員登録編集"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント付与"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "ポイント付与（キャンペーン、特別対応）"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "ポイント付与（余剰入金へのご返金、注文金額変更によるご返金"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "ポイント履歴確認"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "メール配信履歴"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "手動メール通知(入力画面)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "【新規】手動メール通知(確認画面)"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "配送先編集"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "【新規】顧客分析タグ"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "顧客グループ管理"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "ブラックリスト管理"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "会員登録仮登録完了メール再送"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】顧客分析タグ登録CSV入力項目設定"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "【新規】会員顧客分析タグ情報CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "配送先情報CSV登録"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "配送先情報登録CSV入力項目設定"
+      }
+    ]
+  }
+}

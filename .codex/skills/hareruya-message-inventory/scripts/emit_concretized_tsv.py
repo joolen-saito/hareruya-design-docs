@@ -183,6 +183,48 @@ def humanize(text: str, seed: dict) -> str:
     return t or "—"
 
 
+def strip_parens(text: str) -> str:
+    """テストケースの可読性のため括弧書きを可能な限り除去。データ括弧(id=NNN)は非括弧化して保持。"""
+    if not text or text == "—":
+        return text
+    if "画面確認内容の記述" in text:  # Gate B11 の著者向けTODOフラグは保持(可読性除外の対象外)
+        return text
+    t = text
+    # Excel運用メタ注記は明示除去（ユーザー指示）
+    t = re.sub(r"[（(]\s*Excel確定の運用廃止\s*[)）]", "", t)
+    # 文全体が1組の括弧で包まれている場合はアンラップ（中身が本文＝除去でなく括弧だけ外す）
+    ts = t.strip()
+    if ts and ts[0] in "（(" and ts[-1] in "）)":
+        inner = ts[1:-1]
+        if "（" not in inner and "(" not in inner:  # 単一の外側ペアのみ
+            t = inner
+    # データ括弧を非括弧化: (id=990001)/（商品ID=990001） → ID990001
+    t = re.sub(r"[（(]\s*(?:商品)?id\s*[=＝:：]?\s*(\d+)\s*[)）]", r" ID\1", t, flags=re.I)
+    # 残りの括弧書き（説明・メタ注記・URL等）は除去
+    t = re.sub(r"[（(][^（）()]*[)）]", "", t)
+    t = re.sub(r"\*\*", "", t)  # 強調マーカーの残骸
+    t = re.sub(r"\s{2,}", " ", t).strip("／、。 ").strip()
+    return t or "—"
+
+
+_VERB_END = tuple("るいうくすつぬふむゆぐずづぶぷたなれ") + ("ない", "れる", "られる", "できる", "しない")
+
+
+def norm_expect_end(text: str) -> str:
+    """期待結果を『〜されること』のように文末統一（体言止め＋こと）。"""
+    if not text or text == "—":
+        return text
+    t = text.rstrip("。、 ")
+    if not t or t.endswith("こと"):
+        return t
+    # 【TBD】【対象外】等のタグ付き期待はそのまま
+    if t.startswith(("【", "（要")):
+        return t
+    if t.endswith(_VERB_END):
+        return t + "こと"
+    return t + "であること"
+
+
 def clean_operation_steps(text: str) -> str:
     """操作手順を純粋なユーザー(UI)操作のみにする: db.ts/afterEach等の検証・後始末を除去し再採番。
     DB検証は『自動検証（内部）』列にあるので手順には書かない。"""
@@ -300,11 +342,11 @@ def main() -> int:
                     if cref:
                         emitted_cref.add(cref)
                     c = cases[cref]
-                    row[6] = humanize(c["前提"], seedmap)
-                    row[7] = humanize(c["入力"], seedmap)
-                    row[8] = clean_operation_steps(humanize(c["操作"], seedmap))
+                    row[6] = strip_parens(humanize(c["前提"], seedmap))
+                    row[7] = strip_parens(humanize(c["入力"], seedmap))
+                    row[8] = strip_parens(clean_operation_steps(humanize(c["操作"], seedmap)))
                     obs, internal = split_expectation(humanize(c["期待"], seedmap))
-                    row[9] = obs
+                    row[9] = norm_expect_end(strip_parens(obs))
                     row[10] = c["method"]
                     is_exec = True
                 else:

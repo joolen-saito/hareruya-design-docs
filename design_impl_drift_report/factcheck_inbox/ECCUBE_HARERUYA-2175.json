@@ -1,0 +1,235 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2175",
+  "issueId": 43509750,
+  "summary": "【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)の「商品ごとの送料設定を有効にする」が、設計・現行のラジオボタン(無効／有効)ではなくトグルスイッチ(チェックボックス)で実装されている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:19:18Z",
+  "updated": "2026-07-14T01:19:18Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2175",
+  "basicInfo": {
+    "分類": "基本情報設定",
+    "機能": "基本設定(旧ショップマスター)",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)の「商品ごとの送料設定を有効にする」が、設計・現行のラジオボタン(無効／有効)ではなくトグルスイッチ(チェックボックス)で実装されている",
+    "設計書": "0209_基本設計仕様書(基本情報設定).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：基本情報設定\n機能：基本設定(旧ショップマスター)\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】基本情報設定_基本設定(旧ショップマスター)_基本設定(旧ショップマスター)の「商品ごとの送料設定を有効にする」が、設計・現行のラジオボタン(無効／有効)ではなくトグルスイッチ(チェックボックス)で実装されている\n設計書：0209_基本設計仕様書(基本情報設定).xlsx",
+    "期待される挙動": "- 基本設定(旧ショップマスター)の送料設定に「商品ごとの送料設定を有効にする」を単一選択(ラジオボタン)として配置すること（設計 M10-01 識別ID:2-3、選択肢: 無効／有効、初期値: 無効）。\n- M10-01 はカスタマイズ要件「なし」・「カスタマイズ要件に記載の内容以外は現行踏襲とする」と定めており、現行(pf-eccube3)は expanded=true の choice（無効／有効の2ラジオボタン）で実装されている。",
+    "現在の挙動": "- ShopMasterType では option_product_delivery_fee が ToggleSwitchType で追加されており、ToggleSwitchType の親型は CheckboxType である。\n- 描画される HTML は toggle_switch_widget（input type=\"checkbox\" 1個 + on/off ラベルをJSで切り替えるトグルスイッチ）であり、無効／有効の2つのラジオボタンとしては描画されない。\n- 初期値は Entity の DB既定値・プロパティ初期値ともに false（無効）、マイグレーションの投入値も全店舗 '0'（無効）であり、初期値「無効」の要件は満たしている。乖離は画面部品の種類のみである。\n- CSS/JS・別Twig・Form拡張・Controller・EventListener を確認したが、当該部品をラジオボタンへ差し替える処理は存在しない。対象ファイルに 2026-07-08 以降の解消コミットも無い。",
+    "補足情報": "▼設計書該当箇所\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:53（M10-01 識別ID:2-3「商品ごとの送料設定を有効にする」単一選択(ラジオボタン) 初期値:無効 選択肢:無効　有効）\n.cursor/docs/MDfile/M10_base_info_setting_basedesign.md:19-21（カスタマイズ要件 なし／カスタマイズ要件に記載の内容以外は現行踏襲とする）\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/ShopMasterType.php:258（->add('option_product_delivery_fee', ToggleSwitchType::class)）\nsrc/Eccube/Form/Type/ToggleSwitchType.php:52（getParent() は CheckboxType::class）\nsrc/Eccube/Resource/template/admin/Form/bootstrap_4_horizontal_layout.html.twig:12-25（toggle_switch_widget。input type=\"checkbox\" 1個 + JSでon/offラベル切替）\nsrc/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:330（送料設定カード内で form.option_product_delivery_fee を描画）\nsrc/Eccube/Entity/BaseInfo.php:123-124（DB既定値・プロパティ初期値ともに false ＝無効。初期値は設計どおり）\napp/DoctrineMigrations/Version20251127154224.php:235（投入値 'option_product_delivery_fee' => '0' ＝無効）\n/home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/ShopMasterType.php:178-186（現行は choice + expanded=true + multiple=false ＝ 無効／有効の2ラジオボタン）\n\n▼AIレビューで判定が割れた理由\nClaude は「実装済み」、codex は「乖離あり」と判定し、第三者による再検証で codex の判定を採用した。\n実装事実（src/Eccube/Form/Type/Admin/ShopMasterType.php:258 が ToggleSwitchType、src/Eccube/Form/Type/ToggleSwitchType.php:52 の親型が CheckboxType、初期値は false）については両者の読みが完全に一致している。割れたのは「トグルスイッチをラジオボタンの代替として容認できるか」の一点のみ。\nClaude は「トグルスイッチはEC-CUBE標準UIであり、設計の『カスタマイズ要件なし／現行踏襲』に合致する」として FALSE_POSITIVE としたが、これは決定的な読み違いである。第三者検証で現行(pf-eccube3) /home/y-saito/Developments/pf-eccube3/src/Eccube/Form/Type/Admin/ShopMasterType.php:178-186 を確認したところ、現行は `->add('option_product_delivery_fee', 'choice', ['choices' => ['0'=>'無効','1'=>'有効'], 'expanded' => true, 'multiple' => false])` すなわち2択のラジオボタンであり、トグルスイッチではない。つまり「現行踏襲」＝ラジオボタンであって、Claude が根拠にした『現行踏襲だからトグルでよい』という論理は成立しない（トグルスイッチはEC-CUBE 4.x標準UIであって現行UIではない）。\ncodex は src/Eccube/Form/Type/ToggleSwitchType.php:52（親型 CheckboxType）と src/Eccube/Resource/template/admin/Form/bootstrap_4_horizontal_layout.html.twig:16（type=checkbox）から「2つのラジオボタンとしては描画されない」と正しく結論しており、FACT が妥当。設計書 .cursor/docs/MDfile/M10_base_info_setting_basedesign.md:53 の項目表は「単一選択(ラジオボタン)」を明記しているため、項目表を正とすれば乖離である。\nただし乖離の実体は画面部品の種類に限定される（初期値=無効、選択肢=無効／有効の意味論はトグルスイッチでも同一で、src/Eccube/Entity/BaseInfo.php:123-124 と app/DoctrineMigrations/Version20251127154224.php:235 のとおり初期値は設計どおり）。影響度は軽微であり、設計書側を実装（トグルスイッチ）に合わせて改訂する対応も選択肢となる。"
+  },
+  "designBook": "0209_基本設計仕様書(基本情報設定).xlsx",
+  "feature": "基本設定(旧ショップマスター)",
+  "classification": "基本情報設定",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 53,
+      "end": 53,
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "2-3 商品ごとの送料設定を有効にする 単一選択(ラジオボタン) - - 無効 選択肢:無効　有効"
+    },
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "start": 19,
+      "end": 21,
+      "fileLines": 680,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\n### カスタマイズ説明\n* カスタマイズ要件"
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/ShopMasterType.php",
+      "start": 258,
+      "end": 258,
+      "fileLines": 267,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    }"
+    },
+    {
+      "path": "src/Eccube/Form/Type/ToggleSwitchType.php",
+      "start": 52,
+      "end": 52,
+      "fileLines": 43,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Form/bootstrap_4_horizontal_layout.html",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig",
+      "start": 330,
+      "end": 330,
+      "fileLines": 371,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                            {{ form_errors(form.basic_point_rate) }}"
+    },
+    {
+      "path": "src/Eccube/Entity/BaseInfo.php",
+      "start": 123,
+      "end": 124,
+      "fileLines": 1146,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "\n        /**"
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20251127154224.php",
+      "start": 235,
+      "end": 235,
+      "fileLines": 2504,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                'option_product_delivery_fee' => '0',"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": ".cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/Admin/ShopMasterType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Form/Type/ToggleSwitchType.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/BaseInfo.php",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "app/DoctrineMigrations/Version20251127154224.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:17:39+09:00",
+  "designResolution": {
+    "requested": "0209_基本設計仕様書(基本情報設定).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html",
+    "sheetCount": 14,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-3",
+        "title": "基本設定(旧ショップマスター)",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "基本設定(旧ショップマスター)"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "特定商取引に関する法律"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "利用規約管理"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "支払い方法　手数料設定"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "配送方法設定"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "税率設定"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "自動送信メール"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "メール設定"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "CSV出力項目設定"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "カスタムCSV出力設定"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "店舗登録"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "追加システム設定"
+      }
+    ]
+  }
+}

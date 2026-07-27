@@ -1,0 +1,231 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1879",
+  "issueId": 43509358,
+  "summary": "【実装乖離】フロント会員_マイイベント・デッキ登録_マイイベント・デッキ登録にて、開催日当日でも開始時刻を過ぎると処理状態が「イベント終了」になる",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:16:48Z",
+  "updated": "2026-07-14T01:16:48Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-1879",
+  "basicInfo": {
+    "分類": "フロント会員",
+    "機能": "マイイベント・デッキ登録",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】フロント会員_マイイベント・デッキ登録_マイイベント・デッキ登録にて、開催日当日でも開始時刻を過ぎると処理状態が「イベント終了」になる",
+    "設計書": "0306_基本設計仕様書(フロント_会員).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：フロント会員\n機能：マイイベント・デッキ登録\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】フロント会員_マイイベント・デッキ登録_マイイベント・デッキ登録にて、開催日当日でも開始時刻を過ぎると処理状態が「イベント終了」になる\n設計書：0306_基本設計仕様書(フロント_会員).xlsx",
+    "期待される挙動": "- 設計書では、開催日の23:59:59を過ぎたイベントについてのみ、一覧の処理状態に「イベント終了」と表示することとしている。\n- したがって、開催日当日は開催開始時刻を過ぎていても、23:59:59までは処理状態を「イベント終了」にしてはならない。",
+    "現在の挙動": "- 終了判定を行う DtbEventDetail::hasFinished() が「開催開始日時 < 現在日時」で判定しているため、開催開始時刻を1秒でも過ぎた時点で終了扱いになる。\n- Mypage/event_history.twig はこの hasFinished() の戻り値をそのまま用いて処理状態に「イベント終了」を表示するため、開催日当日の開催中・開催直後のイベントが「イベント終了」と表示される。\n- 同じ判定値でデッキ登録/編集ボタンの表示可否も制御しているため、開催開始時刻を過ぎた時点でデッキ登録/編集ボタンも消える。",
+    "補足情報": "▼設計書該当箇所\nF06_customer_basedesign.md:790 「開催日の23:59:59を過ぎたイベントは処理状態に「イベント終了」と表示する」\n\n▼実装該当箇所\nsrc/Eccube/Entity/DtbEventDetail.php:554-557 （hasFinished() が startDate < 現在日時 で終了判定している）\nsrc/Eccube/Resource/template/default/Mypage/event_history.twig:95 （isFinished に hasFinished() の結果を設定）\nsrc/Eccube/Resource/template/default/Mypage/event_history.twig:118-119 （isFinished が true のとき「イベント終了」を表示）\n\n▼備考\nDtbEventDetail に開催日の23:59:59を基準に判定するメソッドは存在しない（grep で hasFinished 以外の終了判定メソッドなし）。2026-07-08以降に当該ファイルへの修正コミットは無い。"
+  },
+  "designBook": "0306_基本設計仕様書(フロント_会員).xlsx",
+  "feature": "マイイベント・デッキ登録",
+  "classification": "フロント会員",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "Mypage/event_history.twig",
+      "start": null,
+      "end": null,
+      "ok": false,
+      "reason": "file_not_found"
+    },
+    {
+      "path": "src/Eccube/Entity/DtbEventDetail.php",
+      "start": 554,
+      "end": 557,
+      "fileLines": 586,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    public function hasFinished(): bool\n    {\n        return $this->startDate < new \\DateTime();\n    }"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/event_history.twig",
+      "start": 95,
+      "end": 95,
+      "fileLines": 168,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                    {% set isFinished = detail.hasFinished() %}"
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/event_history.twig",
+      "start": 118,
+      "end": 119,
+      "fileLines": 168,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                {% if isFinished %}\n                                    <dd class=\"p-hareruya-deckentry-list__card-value\">{{ 'front.mypage.event_history.status__finished'|trans }}</dd>"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "start": 790,
+      "end": 790,
+      "resolvedFrom": "F06_customer_basedesign.md",
+      "fileLines": 1643,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 開催日の23:59:59を過ぎたイベントは処理状態に「イベント終了」と表示する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Entity/DtbEventDetail.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/default/Mypage/event_history.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 0,
+  "comments": [],
+  "fetchedAt": "2026-07-28T08:16:47+09:00",
+  "designResolution": {
+    "requested": "0306_基本設計仕様書(フロント_会員).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html",
+    "sheetCount": 23,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "新規会員登録"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "本会員登録"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "ログイン"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "パスワード再発行"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "マイページ"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "入荷待ち商品一覧"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "お気に入り商品一覧"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "ポイント履歴"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "オンライン本人確認"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "マイイベント・デッキ登録"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "大会デッキ登録編集"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "大会デッキ登録確認～完了"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "会員情報変更"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "配送先新規登録・変更"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "退会"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "お問い合わせ"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "お問い合わせ履歴"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "お問い合わせ履歴詳細"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "店頭注文呼び出し番号表示"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "店頭PC用アカウント制御"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "【新規】パスワード設定（ポリシー違反用）"
+      }
+    ]
+  }
+}

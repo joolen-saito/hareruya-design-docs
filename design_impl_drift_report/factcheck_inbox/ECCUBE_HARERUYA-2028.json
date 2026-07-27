@@ -1,0 +1,379 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2028",
+  "issueId": 43509554,
+  "summary": "【未実装】在庫管理_バーコード貼替リストCSV出力_バーコード貼替リストCSV出力にて、価格変更発生期間の「最大1か月」の上限チェックが行われていない",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:02Z",
+  "updated": "2026-07-22T01:26:50Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2028",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "バーコード貼替リストCSV出力",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【未実装】在庫管理_バーコード貼替リストCSV出力_バーコード貼替リストCSV出力にて、価格変更発生期間の「最大1か月」の上限チェックが行われていない",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：バーコード貼替リストCSV出力\n課題カテゴリ：不具合（バグ）\n課題：【未実装】在庫管理_バーコード貼替リストCSV出力_バーコード貼替リストCSV出力にて、価格変更発生期間の「最大1か月」の上限チェックが行われていない\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- バーコード貼替リストCSV出力画面の価格変更発生期間は、最大で1か月間までしか選択できないこと。\n- 1か月を超える期間が指定された場合はエラーとし、CSV出力を行わないこと。",
+    "現在の挙動": "- フォーム（BarcodeReplacementListType）のPOST_SUBMITイベントでは「To が From 以降であること」のみを検証しており、期間の長さ（最大1か月）の検証は行っていない。\n- コントローラ（BarcodeReplacementListController::csvExport）もフォームのバリデーション結果のみを見ており、期間長のチェックを行っていない。\n- 画面テンプレート（barcode_replacement_list.twig）にも日付入力欄のmin/max属性やJavaScriptによる期間制限は存在せず、例えば1年分の期間を指定してもそのままCSV出力が実行される。",
+    "補足情報": "▼設計書該当箇所\nM04_stock_management_basedesign.md:4021 「* 価格変更発生期間は最大で1か月間を選択可能」\nM04_stock_management_basedesign.md:4019 「* 価格変更発生期間はFromとToどちらも必須とする」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/BarcodeReplacementListType.php:77-94 （POST_SUBMITでの検証はFrom>Toのみ。期間長の上限チェックなし）\nsrc/Eccube/Controller/Admin/Stock/BarcodeReplacementListController.php:70-93 （フォームが有効なら期間長を問わずCSV出力を実行）\nsrc/Eccube/Resource/template/admin/Stock/barcode_replacement_list.twig:26-34 （日付入力欄にmin/max属性やJSによる期間制限なし）\nsrc/Eccube/Resource/locale/messages.ja.yaml:4836-4838 （期間上限超過用のエラーメッセージキーが存在しない）\n\n▼備考\nForm / Controller / Twig / 翻訳ファイルのいずれにも期間上限（1か月）の検証・メッセージが存在しないことを確認。git log でも 2026-07-01 以降に該当ファイルの変更なし。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "バーコード貼替リストCSV出力",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/BarcodeReplacementListType.php",
+      "start": 77,
+      "end": 94,
+      "fileLines": 125,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event): void {\n            $form = $event->getForm();\n            $from = $form->get('price_change_period_from')->getData();\n            $to = $form->get('price_change_period_to')->getData();\n\n            if (!$from instanceof \\DateTimeInterface || !$to instanceof \\DateTimeInterface) {\n                return;\n            }\n\n            $fromComparable = \\DateTimeImmutable::createFromInterface($from)->setTime(0, 0, 0);\n            $toComparable = \\DateTimeImmutable::createFromInterface($to)->setTime(0, 0, 0);\n\n            if ($fromComparable > $toComparable) {\n                $form->get('price_change_period_to')->addError(\n                    new FormError(trans('admin.stock.barcode_replacement_list.price_chang"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/BarcodeReplacementListController.php",
+      "start": 70,
+      "end": 93,
+      "fileLines": 95,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        if (!$form->isSubmitted() || !$form->isValid()) {\n            foreach ($form->getErrors(true) as $error) {\n                $this->addError($error->getMessage(), 'admin');\n            }\n\n            return $this->redirectToRoute('admin_stock_barcode_replacement_list');\n        }\n\n        /** @var BaseInfo $baseInfo */\n        $baseInfo = $form->get('base_info')->getData();\n\n        /** @var \\DateTimeInterface $periodFrom */\n        $periodFrom = $form->get('price_change_period_from')->getData();\n        /** @var \\DateTimeInterface $periodTo */\n        $periodTo = $form->get('price_change_period_to')->getData();\n\n        $priceChangePeriodFrom = \\DateTimeImmutable::createFromInterface($periodFrom)->setTime(0, 0, 0);\n        $priceChangePeriodTo = \\DateTimeImmutable::createFromInterfa"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/barcode_replacement_list.twig",
+      "start": 26,
+      "end": 34,
+      "fileLines": 49,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                    <label class=\"form-label\">{{ 'admin.stock.barcode_replacement_list.price_change_period'|trans }}</label>\n                                    <div class=\"d-flex align-items-center gap-2\">\n                                        {{ form_widget(form.price_change_period_from, { attr: { class: 'form-control' } }) }}\n                                        <span>～</span>\n                                        {{ form_widget(form.price_change_period_to, { attr: { class: 'form-control' } }) }}\n                                    </div>\n                                    {{ form_errors(form.price_change_period_from) }}\n                                    {{ form_errors(form.price_change_period_to) }}\n                                </div>"
+    },
+    {
+      "path": "src/Eccube/Resource/locale/messages.ja.yaml",
+      "start": 4836,
+      "end": 4838,
+      "fileLines": 1841,
+      "ok": false,
+      "reason": "line_out_of_range"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 4021,
+      "end": 4021,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 価格変更発生期間は最大で1か月間を選択可能"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 4019,
+      "end": 4019,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 価格変更発生期間はFromとToどちらも必須とする"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/BarcodeReplacementListType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/BarcodeReplacementListController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/barcode_replacement_list.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/locale/messages.ja.yaml",
+      "repo": "ec-cube",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990941,
+      "created": "2026-07-22T01:26:50Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:20+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力",
+        "score": 100
+      }
+    ],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}

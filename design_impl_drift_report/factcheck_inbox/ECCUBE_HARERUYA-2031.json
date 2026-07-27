@@ -1,0 +1,374 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2031",
+  "issueId": 43509557,
+  "summary": "【実装乖離】在庫管理_棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）_棚卸計画新規作成にて、在庫区分ラジオボタンの初期値「EC-CUBE」が設定されておらず初期表示が未選択になっている",
+  "issueType": "未実装・実装乖離リスト",
+  "issueTypeId": 939706,
+  "status": "未対応",
+  "statusId": 1,
+  "created": "2026-07-14T01:18:04Z",
+  "updated": "2026-07-22T01:26:50Z",
+  "url": "https://joolen.backlog.com/view/ECCUBE_HARERUYA-2031",
+  "basicInfo": {
+    "分類": "在庫管理",
+    "機能": "棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）",
+    "課題カテゴリ": "不具合（バグ）",
+    "課題": "【実装乖離】在庫管理_棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）_棚卸計画新規作成にて、在庫区分ラジオボタンの初期値「EC-CUBE」が設定されておらず初期表示が未選択になっている",
+    "設計書": "0202_基本設計仕様書(在庫管理機能).xlsx"
+  },
+  "sections": {
+    "基本情報": "分類：在庫管理\n機能：棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）\n課題カテゴリ：不具合（バグ）\n課題：【実装乖離】在庫管理_棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）_棚卸計画新規作成にて、在庫区分ラジオボタンの初期値「EC-CUBE」が設定されておらず初期表示が未選択になっている\n設計書：0202_基本設計仕様書(在庫管理機能).xlsx",
+    "期待される挙動": "- 棚卸計画新規作成画面の「在庫区分」はラジオボタン（選択肢: EC-CUBE / スマレジ）で必須項目であり、初期値として「EC-CUBE」が選択された状態で表示されること。",
+    "現在の挙動": "- InventoryPlanType では stockLocationId を ChoiceType（expanded: true = ラジオボタン）かつ required / NotBlank で定義しているが、初期値（data・empty_data・preferred値）を指定していない。\n- エンティティ DtbInventoryPlan の $stockLocationId の初期値は null であり、新規登録画面のコントローラ（InventoryPlanController::newData）も店舗（BaseInfo）のデフォルト値のみを設定し、在庫区分は設定していない。\n- テンプレート inventory_plan.twig も form_row でそのまま描画しているだけで checked 指定はなく、画面初期表示ではEC-CUBE・スマレジのいずれも未選択となる。",
+    "補足情報": "▼設計書該当箇所\nM04_stock_management_basedesign.md:4129 「| 3 | 在庫区分 | ラジオボタン | ◯ | - | EC-CUBE | 選択肢:EC-CUBE スマレジ |」\nM04_stock_management_basedesign.md:4121 「* 識別ID:3「在庫区分」を追加する」\n\n▼実装該当箇所\nsrc/Eccube/Form/Type/Admin/Stock/InventoryPlanType.php:93-105 （ChoiceType expanded=true・NotBlank のみで初期値指定なし）\nsrc/Eccube/Entity/DtbInventoryPlan.php:68 （stockLocationId の初期値は null）\nsrc/Eccube/Controller/Admin/Stock/InventoryPlanController.php:180-190 （新規作成時にBaseInfoのみ既定値設定、在庫区分は未設定）\nsrc/Eccube/Resource/template/admin/Stock/inventory_plan.twig:45-48 （form_row で描画するのみ。checked 指定なし）\n\n▼備考\nラジオボタン化（expanded: true）と必須（NotBlank）は実装済みで、乖離しているのは初期値「EC-CUBE」の未設定のみ。git log でも 2026-07-01 以降に初期値設定を追加したコミットは無い。"
+  },
+  "designBook": "0202_基本設計仕様書(在庫管理機能).xlsx",
+  "feature": "棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）",
+  "classification": "在庫管理",
+  "issueCategory": "不具合（バグ）",
+  "citations": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/Stock/InventoryPlanType.php",
+      "start": 93,
+      "end": 105,
+      "fileLines": 175,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                ->add('stockLocationId', ChoiceType::class, [\n                    'label' => 'admin.stock.list.stock_zone',\n                    'required' => true,\n                    'expanded' => true,\n                    'choices' => [\n                        'admin.stock.list.stock_zone__eccube' => ProductStock::STOCK_LOCATION_ECCUBE,\n                        'admin.stock.list.stock_zone__smaregi' => ProductStock::STOCK_LOCATION_SMAREGI,\n                    ],\n                    'choice_translation_domain' => 'messages',\n                    'constraints' => [\n                        new Assert\\NotBlank(),\n                    ],\n                ])"
+    },
+    {
+      "path": "src/Eccube/Entity/DtbInventoryPlan.php",
+      "start": 68,
+      "end": 68,
+      "fileLines": 300,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "    private ?int $stockLocationId = null;"
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php",
+      "start": 180,
+      "end": 190,
+      "fileLines": 953,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "        $InventoryPlan = new DtbInventoryPlan();\n        $DefaultBaseInfo = $this->getMember()->getDefaultSearchBaseInfo();\n        if ($DefaultBaseInfo !== null && $DefaultBaseInfo->getIsOpenShop()) {\n            $InventoryPlan->setBaseInfo($DefaultBaseInfo);\n        }\n\n        $form = $this->createForm(InventoryPlanType::class, $InventoryPlan, [\n            'isNew' => true,\n            'Member' => $this->getMember(),\n            'disabled' => false,\n        ]);"
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/inventory_plan.twig",
+      "start": 45,
+      "end": 48,
+      "fileLines": 83,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "                                    {{ form_row(form.stockLocationId, {\n                                        label_html: true,\n                                        label: 'admin.stock.list.stock_zone'|trans ~ ' <span class=\"badge bg-primary ms-1\">' ~ ('admin.common.required'|trans) ~ '</span>',\n                                    }) }}"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 4129,
+      "end": 4129,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "| 3 | 在庫区分 | ラジオボタン | ◯ | - | EC-CUBE | 選択肢:EC-CUBE スマレジ |"
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "start": 4121,
+      "end": 4121,
+      "resolvedFrom": "M04_stock_management_basedesign.md",
+      "fileLines": 5389,
+      "ok": true,
+      "reason": "in_range",
+      "excerpt": "* 識別ID:3「在庫区分」を追加する"
+    }
+  ],
+  "quotedBlocks": [],
+  "gitActivity": [
+    {
+      "path": "src/Eccube/Form/Type/Admin/Stock/InventoryPlanType.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Entity/DtbInventoryPlan.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "src/Eccube/Resource/template/admin/Stock/inventory_plan.twig",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    },
+    {
+      "path": "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+      "repo": "ec-cube-enterprise",
+      "commitsSince": []
+    }
+  ],
+  "commentCount": 1,
+  "comments": [
+    {
+      "id": 272990943,
+      "created": "2026-07-22T01:26:50Z",
+      "createdUser": "塙 千代子",
+      "content": null
+    }
+  ],
+  "fetchedAt": "2026-07-28T08:17:21+09:00",
+  "designResolution": {
+    "requested": "0202_基本設計仕様書(在庫管理機能).xlsx",
+    "alternates": {
+      "splitSheets": [],
+      "markdown": [
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_cart_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F04_order_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F05_net_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F07_event_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M06_otc_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M07_net_buy_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M08_customer_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M10_base_info_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M16_data_management_basedesign.md",
+        "ec-cube-enterprise/.cursor/docs/MDfile/O01_mtg_buyer_basedesign.md"
+      ]
+    },
+    "book": "hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html",
+    "sheetCount": 53,
+    "sheetCandidates": [],
+    "allSheets": [
+      {
+        "sheetId": "sheet-1",
+        "title": "表紙"
+      },
+      {
+        "sheetId": "sheet-2",
+        "title": "目次"
+      },
+      {
+        "sheetId": "sheet-3",
+        "title": "共通処理"
+      },
+      {
+        "sheetId": "sheet-4",
+        "title": "在庫検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-5",
+        "title": "在庫検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-6",
+        "title": "在庫編集"
+      },
+      {
+        "sheetId": "sheet-7",
+        "title": "在庫一括編集"
+      },
+      {
+        "sheetId": "sheet-8",
+        "title": "在庫情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-9",
+        "title": "在庫情報カスタムCSV出力"
+      },
+      {
+        "sheetId": "sheet-10",
+        "title": "在庫切れ、在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-11",
+        "title": "在庫切れリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-12",
+        "title": "在庫警戒リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-13",
+        "title": "在庫移動・振替検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-14",
+        "title": "在庫移動・振替登録 編集 (移動)"
+      },
+      {
+        "sheetId": "sheet-15",
+        "title": "在庫移動・振替登録 編集(振替)"
+      },
+      {
+        "sheetId": "sheet-16",
+        "title": "在庫移動・振替情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-17",
+        "title": "在庫分割結合検索一覧(検索・結果)"
+      },
+      {
+        "sheetId": "sheet-18",
+        "title": "在庫分割結合登録編集（分割）"
+      },
+      {
+        "sheetId": "sheet-19",
+        "title": "在庫分割結合登録編集（結合)"
+      },
+      {
+        "sheetId": "sheet-20",
+        "title": "在庫分割結合情報CSV出力"
+      },
+      {
+        "sheetId": "sheet-21",
+        "title": "在庫リコメンドCSV出力"
+      },
+      {
+        "sheetId": "sheet-22",
+        "title": "在庫履歴検索一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-23",
+        "title": "在庫履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-24",
+        "title": "在庫変動履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-25",
+        "title": "欠品履歴検索一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-26",
+        "title": "欠品履歴CSV出力"
+      },
+      {
+        "sheetId": "sheet-27",
+        "title": "在庫変更CSV登録"
+      },
+      {
+        "sheetId": "sheet-28",
+        "title": "在庫移動CSV登録"
+      },
+      {
+        "sheetId": "sheet-29",
+        "title": "在庫振替CSV登録"
+      },
+      {
+        "sheetId": "sheet-30",
+        "title": "在庫分割CSV登録"
+      },
+      {
+        "sheetId": "sheet-31",
+        "title": "在庫結合CSV登録"
+      },
+      {
+        "sheetId": "sheet-32",
+        "title": "在庫移動指示検索"
+      },
+      {
+        "sheetId": "sheet-33",
+        "title": "在庫移動指示詳細"
+      },
+      {
+        "sheetId": "sheet-34",
+        "title": "在庫移動指示リスト ピッキングリスト印刷"
+      },
+      {
+        "sheetId": "sheet-35",
+        "title": "送り状CSV出力"
+      },
+      {
+        "sheetId": "sheet-36",
+        "title": "バーコード貼替リストCSV出力"
+      },
+      {
+        "sheetId": "sheet-37",
+        "title": "棚卸計画一覧"
+      },
+      {
+        "sheetId": "sheet-38",
+        "title": "棚卸計画新規作成"
+      },
+      {
+        "sheetId": "sheet-39",
+        "title": "棚卸計画編集"
+      },
+      {
+        "sheetId": "sheet-40",
+        "title": "棚卸詳細登録CSV"
+      },
+      {
+        "sheetId": "sheet-41",
+        "title": "棚卸詳細CSV出力"
+      },
+      {
+        "sheetId": "sheet-42",
+        "title": "棚卸在庫確認"
+      },
+      {
+        "sheetId": "sheet-43",
+        "title": "棚卸在庫反映"
+      },
+      {
+        "sheetId": "sheet-44",
+        "title": "在庫編集承認一覧(検索入力)"
+      },
+      {
+        "sheetId": "sheet-45",
+        "title": "在庫編集承認一覧(検索結果)"
+      },
+      {
+        "sheetId": "sheet-46",
+        "title": "承認一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-47",
+        "title": "承認対象在庫一覧CSV出力"
+      },
+      {
+        "sheetId": "sheet-48",
+        "title": "在庫移動戻しリストCSV出力"
+      },
+      {
+        "sheetId": "sheet-49",
+        "title": "在庫移動戻しリストPDF"
+      },
+      {
+        "sheetId": "sheet-50",
+        "title": "エラー表示"
+      },
+      {
+        "sheetId": "sheet-51",
+        "title": "別添資料_在庫変動時の履歴作成について"
+      },
+      {
+        "sheetId": "sheet-52",
+        "title": "別添資料_在庫移動ステータス遷移概要"
+      },
+      {
+        "sheetId": "sheet-53",
+        "title": "別添資料_リコメンドCSV出力仕様"
+      }
+    ]
+  }
+}
