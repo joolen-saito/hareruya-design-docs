@@ -438,21 +438,58 @@ def resolve_design(record: dict) -> dict:
         return result
 
     result["sheetCount"] = len(sheets)
-    feature = norm(record.get("feature") or "")
-    candidates = []
-    for sheet in sheets:
-        title = norm(sheet.title)
-        score = 0
-        if feature and title == feature:
-            score = 100
-        elif feature and (feature in title or title in feature):
-            score = 60
-        if score:
-            candidates.append({"sheetId": sheet.sheet_id, "title": sheet.title, "score": score})
-    candidates.sort(key=lambda c: -c["score"])
+    candidates = score_sheet_candidates(record.get("feature") or "", sheets)
     result["sheetCandidates"] = candidates[:10]
     result["allSheets"] = [{"sheetId": s.sheet_id, "title": s.title} for s in sheets]
     return result
+
+
+_FEATURE_SPLIT_RE = re.compile(r"[（）()・、,／/\s　]+")
+
+
+def _feature_tokens(value: str) -> list[str]:
+    return [t for t in _FEATURE_SPLIT_RE.split(norm(value)) if len(t) >= 2]
+
+
+def score_sheet_candidates(feature: str, sheets: list[Any]) -> list[dict[str, Any]]:
+    """機能名からシート候補を採点する。
+
+    課題の『機能』欄は画面をまとめた呼び方になることがあり（例「在庫検索一覧（検索・結果）」）、
+    設計書側が分割されている（「在庫検索一覧(検索入力)」「在庫検索一覧(検索結果)」）と
+    単純な部分一致では1件も拾えない。先頭トークンの一致とトークン重なりで補う。
+    """
+    key = norm(feature)
+    if not key:
+        return []
+    tokens = _feature_tokens(feature)
+    head = tokens[0] if tokens else ""
+
+    candidates: list[dict[str, Any]] = []
+    for sheet in sheets:
+        title = norm(sheet.title)
+        if not title or title in {"表紙", "目次"}:
+            continue
+        score = 0
+        reason = ""
+        if title == key:
+            score, reason = 100, "完全一致"
+        elif key in title or title in key:
+            score, reason = 60, "部分一致"
+        else:
+            sheet_tokens = _feature_tokens(sheet.title)
+            if head and len(head) >= 3 and (title.startswith(head) or key.startswith(sheet_tokens[0] if sheet_tokens else "\0")):
+                score, reason = 40, f"先頭語一致({head})"
+            else:
+                shared = set(tokens) & set(sheet_tokens)
+                if shared and max(len(t) for t in shared) >= 3:
+                    score = 20
+                    reason = "語重なり(" + ",".join(sorted(shared)) + ")"
+        if score:
+            candidates.append(
+                {"sheetId": sheet.sheet_id, "title": sheet.title, "score": score, "reason": reason}
+            )
+    candidates.sort(key=lambda c: (-c["score"], c["sheetId"]))
+    return candidates
 
 
 # ------------------------------------------------------------------- config
@@ -545,6 +582,28 @@ def cmd_fetch(args: argparse.Namespace) -> int:
         write_json(INBOX_DIR / f"{key}.json", record)
         design_state = record["designResolution"].get("book") or record["designResolution"].get("error", "")
         print(f"  {key}\t{issue.get('summary', '')[:60]}\t設計書={design_state}")
+    return 0
+
+
+def cmd_reresolve(args: argparse.Namespace) -> int:
+    """取得済みレコードの設計書解決だけを再計算する（API再取得なし）。"""
+    changed = 0
+    zero_before = zero_after = 0
+    for path in sorted(INBOX_DIR.glob("*.json")):
+        record = read_json(path)
+        before = record.get("designResolution") or {}
+        if not (before.get("sheetCandidates") or []):
+            zero_before += 1
+        after = resolve_design(record)
+        if not (after.get("sheetCandidates") or []):
+            zero_after += 1
+        if json.dumps(before, ensure_ascii=False, sort_keys=True) != json.dumps(
+            after, ensure_ascii=False, sort_keys=True
+        ):
+            record["designResolution"] = after
+            write_json(path, record)
+            changed += 1
+    print(f"更新 {changed} 件 / 候補0: {zero_before} → {zero_after}")
     return 0
 
 
@@ -804,6 +863,9 @@ def build_parser() -> argparse.ArgumentParser:
     fetch.add_argument("--limit", type=int, default=None)
     fetch.set_defaults(func=cmd_fetch)
 
+    reresolve = sub.add_parser("reresolve", help="取得済みレコードの設計書解決を再計算")
+    reresolve.set_defaults(func=cmd_reresolve)
+
     show = sub.add_parser("show", help="1件の課題を節分解・引用検証つきで表示")
     show.add_argument("--issue", required=True)
     show.set_defaults(func=cmd_show)
@@ -841,6 +903,16 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # `| head` などで出力先が閉じられたとき、Python 既定では BrokenPipeError で
+    # 途中終了する。fetch を head に繋いで276件中113件しか保存されない事故を起こしたため、
+    # SIGPIPE を既定動作に戻して「出力は打ち切るが処理は最後まで走る」ようにする。
+    try:
+        import signal
+
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    except (ImportError, AttributeError, ValueError):
+        pass
+
     args = build_parser().parse_args(argv)
     try:
         return args.func(args)
