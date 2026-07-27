@@ -117,6 +117,25 @@ def parse_section8(dtext: str):
     return disp
 
 
+def parse_viewpoint_corrections(dtext: str) -> dict:
+    """§『観点補正』表: | 母集合末尾NNN | 正しい観点 | 根拠 | → NNN→正しい観点。
+    母集合の観点ラベル誤り(例 認証テストが更新内容, メッセージ表示が非同期更新)を派生ビューで是正する。
+    母集合(all_it_cases)自体は不変。"""
+    corr = {}
+    in_sec = False
+    for line in dtext.splitlines():
+        if line.startswith("## ") and "観点補正" in line:
+            in_sec = True
+            continue
+        if in_sec and line.startswith("## "):
+            break
+        if in_sec:
+            m = re.match(r"^\|\s*(\d{3})\s*\|\s*([^|]+?)\s*\|", line)
+            if m and m.group(2) not in ("正しい観点", "観点"):
+                corr[m.group(1)] = m.group(2).strip()
+    return corr
+
+
 def parse_seed_map(dtext: str) -> dict:
     """§2 SEED三段参照表: | SEED-XXX | 内容 | 用途 | → SEED-XXX→短い人間向けラベル。"""
     m = {}
@@ -220,12 +239,15 @@ def main() -> int:
         return 1
 
     seedmap = parse_seed_map(dtext)
+    vp_corr = parse_viewpoint_corrections(dtext)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     n_bound = n_tbd = n_excl = n_raw = n_needlive = 0
     all_rows = []       # 全数(母集合1:1)
     exec_rows = []      # bound(実行可能)のみ
     for nnn in sorted(pop):
         row = list(pop[nnn])  # 11列(母集合原本)
+        if nnn in vp_corr:    # 母集合の観点ラベル誤りを派生ビューで是正（母集合自体は不変）
+            row[3] = vp_corr[nnn]
         d = disp.get(nnn)
         is_exec = False
         internal = "—"
