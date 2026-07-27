@@ -138,44 +138,67 @@ def main() -> int:
         return 1
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = OUT_DIR / f"{slug}_concretized.tsv"
     n_bound = n_tbd = n_excl = n_raw = 0
-    with out_path.open("w", encoding="utf-8", newline="") as fh:
-        w = csv.writer(fh, delimiter="\t", lineterminator="\n")
-        w.writerow(COLS)
-        for nnn in sorted(pop):
-            row = list(pop[nnn])  # 11列(母集合原本)
-            d = disp.get(nnn)
-            if d is None:
-                n_raw += 1
-                w.writerow(row)
-                continue
+    all_rows = []       # 全数(母集合1:1)
+    exec_rows = []      # bound(実行可能)のみ
+    for nnn in sorted(pop):
+        row = list(pop[nnn])  # 11列(母集合原本)
+        d = disp.get(nnn)
+        is_exec = False
+        if d is None:
+            n_raw += 1
+        else:
             dstat, cref, yoshi = d
             if dstat == "bound" and cref in cases:
                 c = cases[cref]
-                row[6] = c["前提"]              # 前提条件
-                row[7] = c["入力"]              # 入力データ
-                row[8] = c["操作"]              # 操作手順
-                row[9] = c["期待"]              # 期待結果
-                row[10] = c["method"]           # 実行方法
-                n_bound += 1
+                row[6], row[7], row[8], row[9], row[10] = c["前提"], c["入力"], c["操作"], c["期待"], c["method"]
+                n_bound += 1; is_exec = True
             elif dstat == "bound":
-                # boundだが§4対応が引けない(shared等) → 要旨で最小具体化
                 row[9] = f"{yoshi}（[候補§4対応 C-{cref} 参照]）" if cref else yoshi
-                n_bound += 1
+                n_bound += 1; is_exec = True
             elif dstat in ("TBD", "要ソース確認"):
                 row[9] = f"【TBD】{yoshi}（一次資料で一意判定不能=要ソース確認/要実機。候補§9参照）"
-                row[10] = "保留(TBD)"
-                n_tbd += 1
+                row[10] = "保留(TBD)"; n_tbd += 1
             elif dstat in ("excluded", "DELEG"):
                 tag = "対象外(DELEG=別導線)" if dstat == "DELEG" else "対象外(excluded)"
                 row[9] = f"【{tag}】{yoshi}（候補§8/§9参照）"
-                row[10] = tag
-                n_excl += 1
-            w.writerow(row)
+                row[10] = tag; n_excl += 1
+        all_rows.append(row)
+        if is_exec:
+            exec_rows.append(row)
 
-    print(f"出力: {out_path.relative_to(ROOT)}")
-    print(f"  母集合{len(pop)}行 = bound具体化{n_bound} / TBD{n_tbd} / excluded・DELEG{n_excl} / 未分類{n_raw}")
+    # ★1:1 不変条件（ハードゲート）: concretized の テストID集合＝母集合と完全一致
+    tid_i = COLS.index("テストID")
+    cset = {r[tid_i] for r in all_rows}
+    mset = {f"IT-{fid.upper()}-" for _ in [0]}  # プレースホルダ(下で実集合)
+    mset = set()
+    pref = f"IT-{fid.upper()}-"
+    with ALL_IT.open(encoding="utf-8", newline="") as fh:
+        rr = csv.reader(fh, delimiter="\t"); hh = {c: i for i, c in enumerate(next(rr))}
+        for row in rr:
+            t = row[hh["テストID"]]
+            if t.startswith(pref):
+                mset.add(t)
+    if cset != mset or len(all_rows) != len(mset):
+        print("NG 1:1不変条件違反: concretized テストID集合が母集合と不一致")
+        print("  母集合のみ:", sorted(mset - cset)[:5], "／ concretizedのみ:", sorted(cset - mset)[:5],
+              "／ 重複:", len(all_rows) - len(cset))
+        return 1
+
+    def write(path, rows):
+        with path.open("w", encoding="utf-8", newline="") as fh:
+            w = csv.writer(fh, delimiter="\t", lineterminator="\n")
+            w.writerow(COLS)
+            w.writerows(rows)
+
+    full = OUT_DIR / f"{slug}_concretized.tsv"
+    execp = OUT_DIR / f"{slug}_executable.tsv"
+    write(full, all_rows)
+    write(execp, exec_rows)
+    print(f"出力(全数・母集合1:1): {full.relative_to(ROOT)}  {len(all_rows)}行")
+    print(f"出力(bound実行可能のみ): {execp.relative_to(ROOT)}  {len(exec_rows)}行")
+    print(f"  内訳: bound{n_bound} / TBD{n_tbd} / excluded・DELEG{n_excl} / 未分類{n_raw}")
+    print("  1:1不変条件: PASS（母集合とテストID完全一致・追加/欠落/重複0）")
     return 0
 
 
