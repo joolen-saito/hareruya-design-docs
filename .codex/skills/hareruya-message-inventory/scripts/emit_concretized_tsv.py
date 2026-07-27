@@ -151,6 +151,8 @@ def humanize(text: str, seed: dict) -> str:
     t = t.replace("%eccube_admin_route%", "管理画面ルート").replace("/%eccube_admin_route%", "/管理画面ルート")
     t = re.sub(r"GET\s+", "", t)  # 「GET …/edit を開く」→「…/edit を開く」
     t = t.replace("…/", "管理画面の /").replace("…", "")  # 省略記号を可読化
+    # 「要実機」注記の括弧を除去（セレクタ具体/失敗再現手段等は正本md §6/§9に保持）
+    t = re.sub(r"\s*[（(][^（）()]*要実機[^（）()]*[)）]", "", t)
     # 内部注記の除去（パイロット共通 等）と冗長表現の圧縮
     t = re.sub(r"[（(]\s*パイロット共通\s*[)）]", "", t)
     t = re.sub(r"ログイン済\s*[（(]\s*管理者でログイン済み\s*[)）]", "管理者でログイン済み", t)
@@ -219,7 +221,7 @@ def main() -> int:
 
     seedmap = parse_seed_map(dtext)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    n_bound = n_tbd = n_excl = n_raw = 0
+    n_bound = n_tbd = n_excl = n_raw = n_needlive = 0
     all_rows = []       # 全数(母集合1:1)
     exec_rows = []      # bound(実行可能)のみ
     for nnn in sorted(pop):
@@ -233,7 +235,11 @@ def main() -> int:
             dstat, cref, yoshi = d
             yoshi_h = humanize(yoshi, seedmap)
             if dstat == "bound":
-                if cref in cases:
+                n_bound += 1
+                if cref in cases and "要実機" in cases[cref]["操作"]:
+                    # 操作の手段自体が要実機＝人間が机上でテストできない → tsv非出力
+                    n_needlive += 1
+                elif cref in cases:
                     c = cases[cref]
                     row[6] = humanize(c["前提"], seedmap)
                     row[7] = humanize(c["入力"], seedmap)
@@ -241,9 +247,10 @@ def main() -> int:
                     obs, internal = split_expectation(humanize(c["期待"], seedmap))
                     row[9] = obs
                     row[10] = c["method"]
+                    is_exec = True
                 else:
                     row[9] = yoshi_h  # §4対応が引けない(shared) → 要旨
-                n_bound += 1; is_exec = True
+                    is_exec = True
             elif dstat in ("TBD", "要ソース確認"):
                 row[6] = "—"
                 row[7] = "—"
@@ -271,8 +278,8 @@ def main() -> int:
         print("NG 会計不整合: 母集合", N, "に対し bound", n_bound, "+TBD", n_tbd,
               "+excluded", n_excl, "+未分類", n_raw, "＝", n_bound + n_tbd + n_excl + n_raw)
         return 1
-    if len(exec_rows) != n_bound:
-        print("NG bound行数と出力行数が不一致:", n_bound, "vs", len(exec_rows))
+    if len(exec_rows) != n_bound - n_needlive:
+        print("NG 出力行数不一致:", len(exec_rows), "vs bound", n_bound, "-要実機", n_needlive)
         return 1
 
     full = OUT_DIR / f"{slug}_concretized.tsv"
@@ -284,9 +291,10 @@ def main() -> int:
     old = OUT_DIR / f"{slug}_executable.tsv"
     if old.exists():
         old.unlink()
-    print(f"出力(bound実行可能のみ): {full.relative_to(ROOT)}  {len(exec_rows)}行")
-    print(f"  会計: 母集合{N} = bound{n_bound}(出力) / TBD{n_tbd} / excluded・DELEG{n_excl}（TBD/excludedはtsv非出力・md §8/§9で管理）")
-    print("  会計完全性: PASS（取りこぼし0・出力=bound全件）")
+    print(f"出力(人間が机上でテスト可能な行のみ): {full.relative_to(ROOT)}  {len(exec_rows)}行")
+    print(f"  会計: 母集合{N} = bound{n_bound}(内 要実機で非出力{n_needlive}) / TBD{n_tbd} / excluded・DELEG{n_excl}")
+    print(f"  tsv非出力: TBD{n_tbd}・excluded{n_excl}・要実機手段{n_needlive}（いずれもmd §8/§9で管理）")
+    print("  会計完全性: PASS（取りこぼし0）")
     return 0
 
 
