@@ -127,8 +127,8 @@ def parse_seed_map(dtext: str) -> dict:
             # 内容の先頭句（最初の「・」「。」まで・括弧のidは残す）を短ラベルに
             short = re.split(r"[・。]", desc)[0].strip().strip("`")
             m[code] = short or code
-    # 汎用
-    m.setdefault("SEED-M01-ADMIN", "管理者でログイン済み")
+    # 汎用（内部注記の付いた§2記述より優先）
+    m["SEED-M01-ADMIN"] = "管理者でログイン済み"
     return m
 
 
@@ -151,6 +151,10 @@ def humanize(text: str, seed: dict) -> str:
     t = t.replace("%eccube_admin_route%", "管理画面ルート").replace("/%eccube_admin_route%", "/管理画面ルート")
     t = re.sub(r"GET\s+", "", t)  # 「GET …/edit を開く」→「…/edit を開く」
     t = t.replace("…/", "管理画面の /").replace("…", "")  # 省略記号を可読化
+    # 内部注記の除去（パイロット共通 等）と冗長表現の圧縮
+    t = re.sub(r"[（(]\s*パイロット共通\s*[)）]", "", t)
+    t = re.sub(r"ログイン済\s*[（(]\s*管理者でログイン済み\s*[)）]", "管理者でログイン済み", t)
+    t = re.sub(r"[（(]\s*[)）]", "", t)  # 空括弧
     # 手順の「1. … 2. …」区切りを読点/改行で自然に
     t = re.sub(r"\s*/\s*(?=\d\.)", "／", t)
     t = re.sub(r"\s{2,}", " ", t).strip("／ ").strip()
@@ -256,44 +260,33 @@ def main() -> int:
                 row[8] = "—"
                 row[9] = f"【{tag}】{act}（該当観点: {row[3]}）"
                 row[10] = "対象外"; n_excl += 1
-        # 11列 → 12列（期待結果と実行方法の間へ「自動検証（内部）」を挿入）
-        out_row = row[:10] + [internal] + [row[10]]
-        all_rows.append(out_row)
+        # TSVは bound(実行可能)行のみ出力。TBD/excludedはcandidate md §8/§9で管理し、tsvには出さない。
         if is_exec:
+            out_row = row[:10] + [internal] + [row[10]]
             exec_rows.append(out_row)
 
-    # ★1:1 不変条件（ハードゲート）: concretized の テストID集合＝母集合と完全一致
-    tid_i = COLS.index("テストID")
-    cset = {r[tid_i] for r in all_rows}
-    mset = {f"IT-{fid.upper()}-" for _ in [0]}  # プレースホルダ(下で実集合)
-    mset = set()
-    pref = f"IT-{fid.upper()}-"
-    with ALL_IT.open(encoding="utf-8", newline="") as fh:
-        rr = csv.reader(fh, delimiter="\t"); hh = {c: i for i, c in enumerate(next(rr))}
-        for row in rr:
-            t = row[hh["テストID"]]
-            if t.startswith(pref):
-                mset.add(t)
-    if cset != mset or len(all_rows) != len(mset):
-        print("NG 1:1不変条件違反: concretized テストID集合が母集合と不一致")
-        print("  母集合のみ:", sorted(mset - cset)[:5], "／ concretizedのみ:", sorted(cset - mset)[:5],
-              "／ 重複:", len(all_rows) - len(cset))
+    # ★会計完全性(ハードゲート): 母集合の全行が bound/TBD/excluded のいずれかに分類され取りこぼしゼロ。
+    N = len(pop)
+    if n_raw != 0 or (n_bound + n_tbd + n_excl) != N:
+        print("NG 会計不整合: 母集合", N, "に対し bound", n_bound, "+TBD", n_tbd,
+              "+excluded", n_excl, "+未分類", n_raw, "＝", n_bound + n_tbd + n_excl + n_raw)
+        return 1
+    if len(exec_rows) != n_bound:
+        print("NG bound行数と出力行数が不一致:", n_bound, "vs", len(exec_rows))
         return 1
 
-    def write(path, rows):
-        with path.open("w", encoding="utf-8", newline="") as fh:
-            w = csv.writer(fh, delimiter="\t", lineterminator="\n")
-            w.writerow(OUT_COLS)
-            w.writerows(rows)
-
     full = OUT_DIR / f"{slug}_concretized.tsv"
-    execp = OUT_DIR / f"{slug}_executable.tsv"
-    write(full, all_rows)
-    write(execp, exec_rows)
-    print(f"出力(全数・母集合1:1): {full.relative_to(ROOT)}  {len(all_rows)}行")
-    print(f"出力(bound実行可能のみ): {execp.relative_to(ROOT)}  {len(exec_rows)}行")
-    print(f"  内訳: bound{n_bound} / TBD{n_tbd} / excluded・DELEG{n_excl} / 未分類{n_raw}")
-    print("  1:1不変条件: PASS（母集合とテストID完全一致・追加/欠落/重複0）")
+    with full.open("w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh, delimiter="\t", lineterminator="\n")
+        w.writerow(OUT_COLS)
+        w.writerows(exec_rows)
+    # 旧・全数版/別名executable.tsvが残っていれば除去（bound-only一本化）
+    old = OUT_DIR / f"{slug}_executable.tsv"
+    if old.exists():
+        old.unlink()
+    print(f"出力(bound実行可能のみ): {full.relative_to(ROOT)}  {len(exec_rows)}行")
+    print(f"  会計: 母集合{N} = bound{n_bound}(出力) / TBD{n_tbd} / excluded・DELEG{n_excl}（TBD/excludedはtsv非出力・md §8/§9で管理）")
+    print("  会計完全性: PASS（取りこぼし0・出力=bound全件）")
     return 0
 
 
