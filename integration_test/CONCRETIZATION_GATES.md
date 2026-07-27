@@ -1,0 +1,39 @@
+# ケース具体化 品質ゲート体制（取り決め・2026-07-27ユーザー承認）
+
+M03-01が codex 8周を要した反省から、**codexレビューを最小回数に抑えるため品質ゲートを前段に決め打ち**する。
+「codexがnoneを出すまで無限反復」は**廃止**。以下3層を順に通過したら**候補確定**とする。
+
+## Gate A｜決定的機械ゲート（codex前に必ず実行・exit1で停止）
+`.codex/skills/hareruya-message-inventory/scripts/gate_concretize_candidate.py --fid <fid>`
+- G1 JSON妥当＋L1 claim数＝md§1表の行数一致
+- G2 source_class純度（oracle値は excel/pf-fallback 始まりのみ・standard-src/design/impl禁止）
+- G3 md↔oracle整合（L1 id集合一致・source_class文字列 全件一致）
+- G4 `_drafts/`隔離（正式パス e2e/fixtures/oracle 直下・exec/tsv に当fid成果物なし）
+- G5 母集合会計（宣言 bound+TBD+excluded＝母集合N ＝ all_it_cases の IT-<FID>- 件数、かつ -001..-N 全言及・欠番0）
+- G6 stale-ref（TBD/excludedの番号が§7実行対象に残存しない／WARN・要目視）
+- G7 逐語 file実在（best-effort／WARN）
+**G1-G5がNGなら着手不可（codexに回さない）。** G6/G7はWARN=著者/codexで確認。
+
+## Gate B｜著者自己監査（codex前・必須／著者プロンプトに前段組込）
+著者(sonnet)は草案完成後、codexに出す前に**全bound行を以下で自己監査**し該当を一掃する:
+- **B1 bound充足検証（最重要）**: 母集合test_idの期待が「〜になり得る/可能性」または「条件成立時のみの正例（環境/プラグイン/特定データ依存）」で**1回の実行でpass/fail一意判定できない**ものは、いかなる言い換え・別副次事実への差し替えでも**boundにできない＝無条件TBD**。
+- **B2 スコープ境界**: 一覧起動の一括/単体削除・状態変更は「一覧側JS/モーダル/メッセージ/遷移＝bound／実際のPOST処理・DB副作用＝別導線DELEG(excluded)」に分離。着地先が別画面(パスワード変更等)は当機能excluded。
+- **B3 過剰主張なし**: 一次資料の「〜し得る」を必発に強化しない。識別ID等の対応付けは一次資料に対応行がある場合のみ（無ければTBD）。
+- **B4 en逐語**: en文言はen一次資料(yaml/xlf/.en.twig)の逐語のみ。無ければ（英訳なし）/TBD。
+- **B5 会計整合**: bound+TBD+excluded=N、excluded/TBDは母集合test_id実引きで根拠（偽陰性禁止）。oracle同期。
+（B1-B5を「自己監査済み」と草案§に明記してからGate Aを回す。）
+
+## Gate C｜codex敵対レビュー（**上限2パス**）
+Gate A(G1-G5 PASS)＋Gate B自己監査済みを前提に:
+1. **codex 1パス**（`codex exec --sandbox read-only "<prompt>" </dev/null`＝stdin遮断でハング回避・`timeout 900`＋bg）。
+2. Blocker/Majorのみ是正対象。**是正後の残りが機械的**（source_class文字列・stale-ref・§7残存等）なら**Gate A再実行で確定**（codex再パス不要）。
+3. **実質的Blocker/Majorが再発したときのみ、もう1パス**（＝**codex上限2パス**）。それでも実質Blocker/Majorが残る場合はユーザーへエスカレーション（機能固有の難所）。
+- Minorは記録のみ（確定を止めない）。
+
+## 役割・独立性（不変）
+著者＝sonnet subagent／レビュー＝codex／戦略・オーケストレーション＝main。**著者≠レビュアー**を維持。
+fable5は上限のため不使用（[[role-assignment-after-fable5-limit]]）。
+
+## 期待効果
+M03-01の bound_overreach(#B1)・スコープ(#B2)・source_class(G3)・stale-ref(G6)・会計(G5)は**全てGate A/Bで事前に消える**。
+→ 8周は **codex 1〜2パス**へ圧縮見込み。M03-02で実測し、必要ならゲートを追補する。
