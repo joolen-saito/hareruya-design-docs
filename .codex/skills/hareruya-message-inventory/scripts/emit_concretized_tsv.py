@@ -90,6 +90,55 @@ def parse_section8(dtext: str):
     return disp
 
 
+def parse_seed_map(dtext: str) -> dict:
+    """§2 SEED三段参照表: | SEED-XXX | 内容 | 用途 | → SEED-XXX→短い人間向けラベル。"""
+    m = {}
+    for line in dtext.splitlines():
+        row = re.match(r"^\|\s*(SEED-[A-Z0-9\-]+)\s*\|\s*(.+?)\s*\|", line)
+        if row:
+            code, desc = row.group(1), row.group(2)
+            # 内容の先頭句（最初の「・」「。」まで・括弧のidは残す）を短ラベルに
+            short = re.split(r"[・。]", desc)[0].strip().strip("`")
+            m[code] = short or code
+    # 汎用
+    m.setdefault("SEED-M01-ADMIN", "管理者でログイン済み")
+    return m
+
+
+def humanize(text: str, seed: dict) -> str:
+    """機械タグ・内部コードを人間可読の自然文へ。内容(意味)は変えない。"""
+    if not text or text == "—":
+        return text
+    t = text
+    # 追跡タグ除去（L1・fixture・候補§参照は正本md/oracle側に保持）
+    t = re.sub(r"\s*\[L1:[^\]]*\]", "", t)
+    t = re.sub(r"\s*\[候補§4対応[^\]]*\]", "", t)
+    t = re.sub(r"\s*\(?（?候補§[0-9.．/／ ]*参照）?\)?", "", t)
+    t = t.replace("@TBD-D5", "")
+    t = re.sub(r"\s*fixture\s*:\s*", "", t)
+    # SEEDコード→人間向けラベル
+    for code, label in sorted(seed.items(), key=lambda x: -len(x[0])):
+        t = t.replace(code, label)
+    t = re.sub(r"SEED-[A-Z0-9\-]+", "所定の前提データ", t)  # 未定義SEEDの保険
+    # URL/技術トークンの緩和
+    t = t.replace("%eccube_admin_route%", "管理画面ルート").replace("/%eccube_admin_route%", "/管理画面ルート")
+    t = re.sub(r"GET\s+", "", t)  # 「GET …/edit を開く」→「…/edit を開く」
+    t = t.replace("…/", "管理画面の /").replace("…", "")  # 省略記号を可読化
+    # 手順の「1. … 2. …」区切りを読点/改行で自然に
+    t = re.sub(r"\s*/\s*(?=\d\.)", "／", t)
+    t = re.sub(r"\s{2,}", " ", t).strip("／ ").strip()
+    return t or "—"
+
+
+def tbd_reason(text: str) -> str:
+    """TBD期待テキストから人の対応カテゴリを推定。"""
+    if "観測" in text or "計装" in text or "通知" in text or "ログ" in text:
+        return "観測手段が未整備（外部通知・ログ等）。計装/モック追加の要否を判断、または手動確認"
+    if "実機" in text:
+        return "稼働環境で実挙動を観測して期待値を確定"
+    return "設計/発注者判断で仕様を確定（一次資料に一意な記載なし）"
+
+
 def parse_section4(dtext: str, fid: str):
     """§4 14列TSV: E2E-<...>C-NNN → dict(前提/入力/手順/期待/観点/優先/項目/実行方法推定)。"""
     slug_key = f"{fid.lower()}_"
@@ -137,6 +186,7 @@ def main() -> int:
         print(f"NG: 母集合行なし (IT-{fid.upper()}-...)")
         return 1
 
+    seedmap = parse_seed_map(dtext)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     n_bound = n_tbd = n_excl = n_raw = 0
     all_rows = []       # 全数(母集合1:1)
@@ -149,20 +199,34 @@ def main() -> int:
             n_raw += 1
         else:
             dstat, cref, yoshi = d
-            if dstat == "bound" and cref in cases:
-                c = cases[cref]
-                row[6], row[7], row[8], row[9], row[10] = c["前提"], c["入力"], c["操作"], c["期待"], c["method"]
-                n_bound += 1; is_exec = True
-            elif dstat == "bound":
-                row[9] = f"{yoshi}（[候補§4対応 C-{cref} 参照]）" if cref else yoshi
+            yoshi_h = humanize(yoshi, seedmap)
+            if dstat == "bound":
+                if cref in cases:
+                    c = cases[cref]
+                    row[6] = humanize(c["前提"], seedmap)
+                    row[7] = humanize(c["入力"], seedmap)
+                    row[8] = humanize(c["操作"], seedmap)
+                    row[9] = humanize(c["期待"], seedmap)
+                    row[10] = c["method"]
+                else:
+                    row[9] = yoshi_h  # §4対応が引けない(shared) → 要旨
                 n_bound += 1; is_exec = True
             elif dstat in ("TBD", "要ソース確認"):
-                row[9] = f"【TBD】{yoshi}（一次資料で一意判定不能=要ソース確認/要実機。候補§9参照）"
+                row[6] = "—"
+                row[7] = "—"
+                row[8] = "自動判定はできない。下記の理由に従い、人が仕様確認または実機確認で期待値を確定する。"
+                row[9] = f"【要確認】期待する挙動: {yoshi_h}。／ 人の対応: {tbd_reason(yoshi)}"
                 row[10] = "保留(TBD)"; n_tbd += 1
             elif dstat in ("excluded", "DELEG"):
-                tag = "対象外(DELEG=別導線)" if dstat == "DELEG" else "対象外(excluded)"
-                row[9] = f"【{tag}】{yoshi}（候補§8/§9参照）"
-                row[10] = tag; n_excl += 1
+                if dstat == "DELEG":
+                    tag, act = "対象外（別導線に委譲）", "実際の処理・DB更新は別機能の担当。当機能では画面側の表示のみ扱う。"
+                else:
+                    tag, act = "対象外（この機能に該当なし）", "母集合が観点テンプレートから機械生成した行で、当機能には該当機能がない。試験不要。"
+                row[6] = "—"
+                row[7] = "—"
+                row[8] = "—"
+                row[9] = f"【{tag}】{act}（該当観点: {row[3]}）"
+                row[10] = "対象外"; n_excl += 1
         all_rows.append(row)
         if is_exec:
             exec_rows.append(row)
