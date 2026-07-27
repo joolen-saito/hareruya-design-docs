@@ -163,3 +163,9 @@ Promotion safeguards:
   具体化ビュー（各母集合テストIDを保持し、bound行に前提/入力/手順/期待の具体値＋`[L1:..]`＋実行方法を反映。
   TBD/excluded行は`【TBD】`/`【対象外】`で明示）。派生ビューなので手編集せず、mdを直して再生成する。
 - 役割: 著者=sonnet subagent／レビュー=codex／独立性維持（[[role-assignment-after-fable5-limit]]）。
+
+### concretized.tsv の出力規約（確定・2026-07-27ユーザー承認）
+- **列**: 母集合11列＋『自動検証（内部: session/DB/URL）』＝12列。期待は「画面で目視できる結果」を主、目視できない内部（session/page_count/DB列/正確なURL/HTTPステータス）は『自動検証(内部)』列へ分離（Gate B6）。
+- **出力対象**: **bound(実行可能)行のみ**。実行方法=対象外(excluded)/保留(TBD)の行は**tsvに出さない**（分類・理由はcandidate md §8/§9で管理。会計完全性 bound+TBD+excluded=母集合N を機械ゲート）。
+- **人間可読**: 機械タグ([L1:..]/fixture/@TBD-D5)除去・SEEDコード→自然文・URL可読化。**『（パイロット共通）』等の内部注記は出力しない**。
+- **過剰生成の除外(Gate B7)**: read-only機能に母集合が機械生成した更新/登録/削除観点は読み替えずexcluded。
