@@ -182,6 +182,34 @@ def humanize(text: str, seed: dict) -> str:
     return t or "—"
 
 
+def clean_operation_steps(text: str) -> str:
+    """操作手順を純粋なユーザー(UI)操作のみにする: db.ts/afterEach等の検証・後始末を除去し再採番。
+    DB検証は『自動検証（内部）』列にあるので手順には書かない。"""
+    if not text or text == "—":
+        return text
+    # db.ts/afterEach を含む括弧注記を除去
+    text = re.sub(r"[（(][^（）()]*(db\.ts|afterEach|db\.ts照会|fs\.ts)[^（）()]*[)）]", "", text)
+    # 番号ステップに分解し、db.ts/afterEach専用ステップを落として再採番
+    parts = re.split(r"(?:^|\s)(\d+)\.\s*", text)
+    # parts = ['pre', '1', 'c1', '2', 'c2', ...]
+    steps = []
+    for i in range(1, len(parts) - 1, 2):
+        content = parts[i + 1].strip().rstrip("、。 ")
+        if not content:
+            continue
+        if re.match(r"^(db\.ts|afterEach|fs\.ts)", content):
+            continue  # 検証・後始末専用ステップは手順から除外
+        # ステップ内の「〜し、db.tsで…」の末尾検証句も削る
+        content = re.sub(r"[、,]?\s*(db\.ts|afterEach|fs\.ts)[^。]*", "", content).strip("、。 ")
+        if content:
+            steps.append(content)
+    if not steps:
+        # 番号形式でない場合は素の db.ts 句だけ削る
+        s = re.sub(r"[、,]?\s*(db\.ts|afterEach|fs\.ts)[^。]*", "", text).strip()
+        return s or text
+    return " ".join(f"{i}. {c}" for i, c in enumerate(steps, 1))
+
+
 def tbd_reason(text: str) -> str:
     """TBD期待テキストから人の対応カテゴリを推定。"""
     if "観測" in text or "計装" in text or "通知" in text or "ログ" in text:
@@ -265,7 +293,7 @@ def main() -> int:
                     c = cases[cref]
                     row[6] = humanize(c["前提"], seedmap)
                     row[7] = humanize(c["入力"], seedmap)
-                    row[8] = humanize(c["操作"], seedmap)
+                    row[8] = clean_operation_steps(humanize(c["操作"], seedmap))
                     obs, internal = split_expectation(humanize(c["期待"], seedmap))
                     row[9] = obs
                     row[10] = c["method"]
