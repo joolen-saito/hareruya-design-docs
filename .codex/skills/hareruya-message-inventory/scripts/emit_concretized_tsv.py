@@ -270,7 +270,8 @@ def main() -> int:
     seedmap = parse_seed_map(dtext)
     vp_corr = parse_viewpoint_corrections(dtext)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    n_bound = n_tbd = n_excl = n_raw = n_needlive = 0
+    n_bound = n_tbd = n_excl = n_raw = n_needlive = n_dup = 0
+    emitted_cref = set()   # 候補ケース単位の重複排除(Gate B12): 同一候補は代表1件のみ出力
     all_rows = []       # 全数(母集合1:1)
     exec_rows = []      # bound(実行可能)のみ
     for nnn in sorted(pop):
@@ -287,10 +288,17 @@ def main() -> int:
             yoshi_h = humanize(yoshi, seedmap)
             if dstat == "bound":
                 n_bound += 1
-                if cref in cases and "要実機" in cases[cref]["操作"]:
+                if cref and cref in emitted_cref:
+                    # 同一候補ケース=完全重複テスト。代表(最小NNN)は既出のため非出力(Gate B12)
+                    n_dup += 1
+                elif cref in cases and "要実機" in cases[cref]["操作"]:
                     # 操作の手段自体が要実機＝人間が机上でテストできない → tsv非出力
+                    if cref:
+                        emitted_cref.add(cref)
                     n_needlive += 1
                 elif cref in cases:
+                    if cref:
+                        emitted_cref.add(cref)
                     c = cases[cref]
                     row[6] = humanize(c["前提"], seedmap)
                     row[7] = humanize(c["入力"], seedmap)
@@ -329,8 +337,8 @@ def main() -> int:
         print("NG 会計不整合: 母集合", N, "に対し bound", n_bound, "+TBD", n_tbd,
               "+excluded", n_excl, "+未分類", n_raw, "＝", n_bound + n_tbd + n_excl + n_raw)
         return 1
-    if len(exec_rows) != n_bound - n_needlive:
-        print("NG 出力行数不一致:", len(exec_rows), "vs bound", n_bound, "-要実機", n_needlive)
+    if len(exec_rows) != n_bound - n_needlive - n_dup:
+        print("NG 出力行数不一致:", len(exec_rows), "vs bound", n_bound, "-要実機", n_needlive, "-重複", n_dup)
         return 1
 
     full = OUT_DIR / f"{slug}_concretized.tsv"
@@ -342,9 +350,9 @@ def main() -> int:
     old = OUT_DIR / f"{slug}_executable.tsv"
     if old.exists():
         old.unlink()
-    print(f"出力(人間が机上でテスト可能な行のみ): {full.relative_to(ROOT)}  {len(exec_rows)}行")
-    print(f"  会計: 母集合{N} = bound{n_bound}(内 要実機で非出力{n_needlive}) / TBD{n_tbd} / excluded・DELEG{n_excl}")
-    print(f"  tsv非出力: TBD{n_tbd}・excluded{n_excl}・要実機手段{n_needlive}（いずれもmd §8/§9で管理）")
+    print(f"出力(ユニーク・人間が机上でテスト可能な行のみ): {full.relative_to(ROOT)}  {len(exec_rows)}行")
+    print(f"  会計: 母集合{N} = bound{n_bound}(内 要実機非出力{n_needlive}・完全重複非出力{n_dup}) / TBD{n_tbd} / excluded・DELEG{n_excl}")
+    print(f"  tsv非出力: TBD{n_tbd}・excluded{n_excl}・要実機{n_needlive}・重複{n_dup}（重複=同一候補ケース、代表1件のみ出力＝Gate B12）")
     print("  会計完全性: PASS（取りこぼし0）")
     return 0
 
