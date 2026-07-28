@@ -171,9 +171,9 @@
         "src/Eccube/EventListener/ExceptionListener.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/EventListener/ExceptionListener.php:72\n69:         /**\n70:          * APIの場合は、エラー詳細をログ出力し、JSON形式で必ず(code, errors)を返す\n71:          */\n72:         if ($this->requestContext->isAppApi()) {\n73:             $logLevel = 'error';\n74:             $errors = ['システムエラーが発生しました'];\n75:             $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR;",
-        "src/Eccube/EventListener/ExceptionListener.php:81\n78:             $errorClass = (new \\ReflectionClass($exception))->getShortName();\n79: \n80:             // カスタムエラーの場合は、エラーコードとメッセージを取得\n81:             if ($exception instanceof BaseApiException) {\n82:                 $statusCode = $exception->getStatusCode();\n83:                 $errors = $exception->getErrors();\n84:                 $logLevel = $exception->getLogLevel();",
-        "src/Eccube/EventListener/ExceptionListener.php:94\n91:                 // - 401/403 は固定文言（漏洩防止）\n92:                 // - 400/404/422 は元メッセージを返す\n93:                 // - それ以外は汎用文言\n94:                 $errors = match ($statusCode) {\n95:                     Response::HTTP_BAD_REQUEST => [$exception->getMessage() ?: 'リクエストが不正です'],\n96:                     Response::HTTP_NOT_FOUND => [$exception->getMessage() ?: 'リソースが見つかりません'],\n97:                     Response::HTTP_UNPROCESSABLE_ENTITY => [$exception->getMessage() ?: '入力値が不正です'],"
+        "src/Eccube/EventListener/ExceptionListener.php:72\n69: \n70:             return;\n71:         }\n72: \n73:         /**\n74:          * APIの場合は、エラー詳細をログ出力し、JSON形式で必ず(code, errors)を返す\n75:          */",
+        "src/Eccube/EventListener/ExceptionListener.php:81\n78:             $errors = ['システムエラーが発生しました'];\n79:             $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR;\n80: \n81:             $logException = $exception->getPrevious() ?: $exception;\n82:             $errorClass = (new \\ReflectionClass($exception))->getShortName();\n83: \n84:             // カスタムエラーの場合は、エラーコードとメッセージを取得",
+        "src/Eccube/EventListener/ExceptionListener.php:94\n91:                 $statusCode = $exception->getStatusCode();\n92:                 $logLevel = $statusCode >= 500 ? 'error' : 'warning';\n93: \n94:                 // 返却メッセージのポリシー:\n95:                 // - 401/403 は固定文言（漏洩防止）\n96:                 // - 400/404/422 は元メッセージを返す\n97:                 // - それ以外は汎用文言"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -239,7 +239,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 76,
+    "extractedRequirementCount": 81,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -728,6 +728,71 @@
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7",
         "designRequirement": "更新前ステータスと指定ステータスが異なる場合のみ、受注のステータス・査定担当者・更新日時を更新し、ステータス変更履歴を1件登録する。更新前後が同じステータスのときは更新も履歴登録も行わない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a06-05_0506_sheet-7_sheet-req-769d3b4a75",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7",
+        "designRequirement": "ステータス更新時、指定した店頭買取受注IDが存在しない",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a06-05_0506_sheet-7_sheet-req-0848edcbbd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7",
+        "designRequirement": "HTTP 404のJSONを返し、更新処理を中止する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a06-05_0506_sheet-7_sheet-req-cf7c29f6aa",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7",
+        "designRequirement": "不正なステータス遷移です",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a06-05_0506_sheet-7_sheet-req-0a9b32e250",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7",
+        "designRequirement": "店頭買取受注ステータス更新APIで、受注の現在ステータスが取得できない場合。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a06-05_0506_sheet-7_sheet-req-e9cf3e2f3b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7",
+        "designRequirement": "HTTP 400のJSON errorsで更新中止。",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1286,7 +1351,7 @@
         "term": "otc_buy_order_status_id",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbOtcBuyOrderRepository.php:471",
+        "ref": "src/Eccube/Repository/DtbOtcBuyOrderRepository.php:470",
         "snippet": "AND o.otc_buy_order_status_id <> :cancel_status_id",
         "weight": 7
       },
@@ -1294,7 +1359,7 @@
         "term": "otc_buy_order_status_id",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbOtcBuyOrderRepository.php:498",
+        "ref": "src/Eccube/Repository/DtbOtcBuyOrderRepository.php:497",
         "snippet": "o.otc_buy_order_status_id <> :cancel_status_id",
         "weight": 7
       },
@@ -1605,13 +1670,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 76,
-    "verdictedCount": 76,
+    "requirementCount": 81,
+    "verdictedCount": 81,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 76,
+      "実装済み": 81,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -2215,6 +2280,86 @@
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7",
         "designRequirement": "更新前ステータスと指定ステータスが異なる場合のみ、受注のステータス・査定担当者・更新日時を更新し、ステータス変更履歴を1件登録する。更新前後が同じステータスのときは更新も履歴登録も行わない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a06-05_0506_sheet-7_sheet-req-769d3b4a75",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7",
+        "designRequirement": "ステータス更新時、指定した店頭買取受注IDが存在しない",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a06-05_0506_sheet-7_sheet-req-0848edcbbd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7",
+        "designRequirement": "HTTP 404のJSONを返し、更新処理を中止する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a06-05_0506_sheet-7_sheet-req-cf7c29f6aa",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7",
+        "designRequirement": "不正なステータス遷移です",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a06-05_0506_sheet-7_sheet-req-0a9b32e250",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7",
+        "designRequirement": "店頭買取受注ステータス更新APIで、受注の現在ステータスが取得できない場合。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a06-05_0506_sheet-7_sheet-req-e9cf3e2f3b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-7",
+        "designRequirement": "HTTP 400のJSON errorsで更新中止。",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

@@ -101,8 +101,8 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiCustomerService.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Smaregi/SmaregiCustomerService.php:31\n28:      *\n29:      * @return array<string, mixed>\n30:      */\n31:     public function postSmaregiPoint(?string $smaregiId = null, ?int $point = null, bool $isRollback = false): array\n32:     {\n33:         // TODO: スマレジAPIを実行する実装を追加\n34:         // 未実装のため仮の固定レスポンスを返却",
-        "src/Eccube/Service/Smaregi/SmaregiCustomerService.php:24\n21: /**\n22:  * スマレジ顧客APIサービス\n23:  */\n24: class SmaregiCustomerService\n25: {\n26:     /**\n27:      * スマレジにポイントを増減させる"
+        "src/Eccube/Service/Smaregi/SmaregiCustomerService.php:31\n28: class SmaregiCustomerService\n29: {\n30:     /** 未使用 smaregi_id を採番する際の最大試行回数。 */\n31:     private const MAX_ID_GENERATION_ATTEMPTS = 10;\n32: \n33:     /** スマレジへ送信する氏名・カナの最大文字数（旧仕様の config 値に合わせる。マルチバイト文字数で判定）。 */\n34:     private const SMAREGI_NAME_MAX_LENGTH = 85;",
+        "src/Eccube/Service/Smaregi/SmaregiCustomerService.php:28\n25: /**\n26:  * スマレジ顧客APIサービス\n27:  */\n28: class SmaregiCustomerService\n29: {\n30:     /** 未使用 smaregi_id を採番する際の最大試行回数。 */\n31:     private const MAX_ID_GENERATION_ATTEMPTS = 10;"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -980,30 +980,6 @@
     "strongSignalCount": 12,
     "candidateRefs": [
       {
-        "term": "smaregi_id",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:289",
-        "snippet": "'player.smaregiId AS smaregi_id',",
-        "weight": 7
-      },
-      {
-        "term": "smaregi_id",
-        "termType": "routeName",
-        "role": "Service",
-        "ref": "src/Eccube/Service/Admin/Customer/LostPointsAction.php:64",
-        "snippet": "'smaregi_id' => $Player->getSmaregiId(),",
-        "weight": 7
-      },
-      {
-        "term": "smaregi_id",
-        "termType": "routeName",
-        "role": "Service",
-        "ref": "src/Eccube/Service/Smaregi/Api/Mock/Response/CustomerMockResponse.php:29",
-        "snippet": "* ことで EC 側の保存済み smaregi_id と整合させる.",
-        "weight": 7
-      },
-      {
         "term": "flush",
         "termType": "path",
         "role": "Service",
@@ -1039,6 +1015,30 @@
         "term": "smaregi_id",
         "termType": "routeName",
         "role": "Entity",
+        "ref": "src/Eccube/Entity/Customer.php:1072",
+        "snippet": "* 固定番号(29) + ゼロ埋めした smaregi_id + チェックデジット の13桁文字列.",
+        "weight": 5
+      },
+      {
+        "term": "smaregi_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Customer.php:1073",
+        "snippet": "* smaregi_id が未設定の場合は生成できないため空文字を返す.",
+        "weight": 5
+      },
+      {
+        "term": "smaregi_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Customer.php:1091",
+        "snippet": "* 指定した smaregi_id からスマレジ会員コード(EAN13)を生成する.",
+        "weight": 5
+      },
+      {
+        "term": "smaregi_id",
+        "termType": "routeName",
+        "role": "Entity",
         "ref": "src/Eccube/Entity/DtbPlayer.php:92",
         "snippet": "#[ORM\\Column(name: 'smaregi_id', type: Types::STRING, length: 16, nullable: true, options: ['comment' => 'スマレジID'])]",
         "weight": 5
@@ -1047,7 +1047,7 @@
         "term": "smaregi_error_flg",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:1973",
+        "ref": "src/Eccube/Entity/Order.php:2011",
         "snippet": "return $this->smaregi_error_flg;",
         "weight": 5
       },
@@ -1055,7 +1055,7 @@
         "term": "smaregi_error_flg",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:697",
+        "ref": "src/Eccube/Entity/Order.php:712",
         "snippet": "#[ORM\\Column(name: 'smaregi_error_flg', type: Types::BOOLEAN, options: ['default' => false, 'comment' => 'スマレジ連携エラーフラグ'])]",
         "weight": 5
       },
@@ -1063,7 +1063,7 @@
         "term": "smaregi_error_flg",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:698",
+        "ref": "src/Eccube/Entity/Order.php:713",
         "snippet": "private bool $smaregi_error_flg = false;",
         "weight": 5
       },
@@ -1079,16 +1079,16 @@
         "term": "使用ポイント",
         "termType": "businessTerm",
         "role": "Service",
-        "ref": "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderPointApplier.php:34",
-        "snippet": "* - 付与ポイント (`pointGetTotal`) を加算、使用ポイント (`pointUseTotal`) を減算する。",
+        "ref": "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderPointApplier.php:35",
+        "snippet": "* - 付与ポイント (`newPoint`) を加算、使用ポイント (`spendPoint`) を減算する。",
         "weight": 4
       },
       {
         "term": "使用ポイント",
         "termType": "businessTerm",
         "role": "Service",
-        "ref": "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentApplier.php:39",
-        "snippet": "* - 区分7: 使用ポイント (`pointUseTotal`) を減算。",
+        "ref": "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentApplier.php:40",
+        "snippet": "* - 区分7: 使用ポイント (`spendPoint`) を減算。",
         "weight": 4
       },
       {
@@ -1335,7 +1335,7 @@
     "verdictedCount": 50,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
       "実装済み": 50,
       "要確認": 0,

@@ -2,18 +2,18 @@
 
 HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）を、機能設計書の入力項目節（現行ソースから起こした実装確認値）と突き合わせ、差分を出力する。**重複仕様の正はExcel基本設計**とし、差分は実装済み・実装違い・移行前後差へ分類する。生成物（HTML・Excel・機能設計書）は一切書き換えない。
 
-生成: `functions/audit_item_definition_drift.py` ／ 全出力: `functions/item_definition_drift.tsv`（908行）
+生成: `functions/audit_item_definition_drift.py` ／ 全出力: `functions/item_definition_drift.tsv`（893行）
 
 ## サマリ
 
 ### 要対応（確定乖離）
-- **必須/任意の不一致: 44 件** — HTML(Excel)とソースで必須判定が逆
-- **最大文字数の不一致（両方に数値・値違い）: 11 件** — 文字型のみ（数値項目の最大値は除外）
+- **必須/任意の不一致: 40 件** — HTML(Excel)とソースで必須判定が逆
+- **最大文字数の不一致（両方に数値・値違い）: 9 件** — 文字型のみ（数値項目の最大値は除外）
 - **最大文字数がHTMLに無いがソースにある: 29 件** — HTMLが文字数制限を書き落とし
 
 ### 要確認
-- 最大文字数がHTMLにあるがソースに数値記載が無い: 44 件 — ソースがconfig委譲/範囲/非数値。TSV参照
-- 未マッチ（設計書に入力項目節はあるがラベル不一致）: 606 件 — 未リバース or ラベル揺れ or Excelにのみ在る項目。TSV参照
+- 最大文字数がHTMLにあるがソースに数値記載が無い: 39 件 — ソースがconfig委譲/範囲/非数値。TSV参照
+- 未マッチ（設計書に入力項目節はあるがラベル不一致）: 602 件 — 未リバース or ラベル揺れ or Excelにのみ在る項目。TSV参照
 
 ### 参考（突合対象外）
 - 設計書に入力項目節が無いシート（検索/一覧/CSV等）: 174 件
@@ -30,12 +30,12 @@ HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）�
 | 書番 | 必須不一致 | 最大数値不一致 | 最大HTML欠落 | 最大ソース未記載 | 未マッチ | 対象外 |
 |---|---|---|---|---|---|---|
 | 0201 | 0 | 1 | 0 | 0 | 3 | 0 |
-| 0202 | 1 | 1 | 1 | 0 | 108 | 93 |
-| 0203 | 5 | 1 | 7 | 0 | 86 | 2 |
+| 0202 | 1 | 0 | 1 | 0 | 107 | 93 |
+| 0203 | 5 | 0 | 7 | 0 | 86 | 2 |
 | 0204 | 16 | 0 | 2 | 0 | 43 | 1 |
 | 0205 | 0 | 0 | 0 | 0 | 7 | 0 |
 | 0206 | 0 | 0 | 0 | 1 | 23 | 10 |
-| 0207 | 4 | 0 | 2 | 8 | 55 | 2 |
+| 0207 | 0 | 0 | 2 | 3 | 52 | 2 |
 | 0208 | 0 | 0 | 1 | 7 | 6 | 0 |
 | 0209 | 13 | 5 | 10 | 8 | 60 | 8 |
 | 0210 | 0 | 0 | 0 | 0 | 8 | 0 |
@@ -50,7 +50,7 @@ HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）�
 | 0306 | 2 | 3 | 3 | 8 | 39 | 2 |
 | 0308 | 0 | 0 | 0 | 4 | 12 | 2 |
 
-## 必須/任意の不一致（44件）
+## 必須/任意の不一致（40件）
 
 | 書番 | シート | 識別ID | ラベル | HTML必須 | 設計書 | 根拠設計書 |
 |---|---|---|---|---|---|---|
@@ -76,10 +76,6 @@ HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）�
 | 0204 | 商品規格登録編集 | 22-23 | 棚番号 | 任意 | 必須 | m03-09_admin_product_product_class_edit.md |
 | 0204 | 買取・基準価格一括編集 | 23-10 | 基準価格(NM) | 必須 | 任意 | m03-10_admin_product_product_bulk_buy_standard_price_edit.md |
 | 0204 | カテゴリ登録 | 25-5 | カテゴリ名(日) | 任意 | 必須 | m03-11_admin_product_product_category_register_edit.md |
-| 0207 | 会員検索一覧(検索入力) | 3-3 | 検索パターン名 | 必須 | 任意 | m08-01_admin_customer_customer_search_list.md |
-| 0207 | 会員登録編集 | 9-13 | 住所1 | 必須 | 任意 | m08-04_admin_customer_customer_edit.md |
-| 0207 | 会員登録編集 | 9-14 | 住所2 | 必須 | 任意 | m08-04_admin_customer_customer_edit.md |
-| 0207 | 配送先編集 | 17-21 | 配送先名称 | 必須 | 任意 | m08-09_admin_customer_customer_delivery.md |
 | 0209 | 特定商取引に関する法律 | 4-1-1 | 販売業者 | 任意 | 必須 | m10-02_admin_base_setting_setting_shop_tradelaw.md |
 | 0209 | 特定商取引に関する法律 | 4-1-2 | 運営責任者 | 任意 | 必須 | m10-02_admin_base_setting_setting_shop_tradelaw.md |
 | 0209 | 特定商取引に関する法律 | 4-1-3 | 所在地 | 任意 | 必須 | m10-02_admin_base_setting_setting_shop_tradelaw.md |
@@ -99,13 +95,11 @@ HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）�
 | 0306 | 会員情報変更 | 15-1-12 | パスワード | 必須 | 任意 | f06-18_front_member_mypage_customer_edit.md |
 | 0306 | 退会 | 17-2-3 | パスワード | 必須 | 任意 | f06-21_front_member_mypage_withdraw.md |
 
-## 最大文字数の不一致（両方に数値）（11件）
+## 最大文字数の不一致（両方に数値）（9件）
 
 | 書番 | シート | 識別ID | ラベル | HTML | 設計書 | 根拠設計書 |
 |---|---|---|---|---|---|---|
 | 0201 | メンバー管理 | 4-1-1 | 名前 | 255 | 50 | m11-02_admin_system_setting_setting_system_member_edit.md |
-| 0202 | 在庫一括編集 | 7-2-11 | 在庫変動理由 | 16384 | 65535 | m04-03_admin_stock_stock_bulk_edit.md |
-| 0203 | 受注情報編集 | 15-10-22 | 会社名 | 50 | 255 | m05-11_admin_order_order_edit.md |
 | 0209 | 自動送信メール | 9-1-4 | テンプレ名称 | 255 | 50 | m10-08_admin_base_setting_setting_shop_auto_mail.md |
 | 0209 | 店舗登録 | 13-1-1 | 会社名 | 255 | 50 | m10-15_admin_base_setting_setting_shop_register.md |
 | 0209 | 店舗登録 | 13-1-3 | 店名 | 255 | 50 | m10-15_admin_base_setting_setting_shop_register.md |
@@ -149,18 +143,13 @@ HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）�
 | 0306 | ログイン | 5-3 | パスワード | - | 320 | f06-03_front_member_customer_login.md |
 | 0306 | 配送先新規登録・変更 | 16-3-3 | 配送先名称 | - | 128 | f06-20_front_member_mypage_delivery_edit.md |
 
-## 最大文字数がHTMLにあるがソースに数値記載が無い（要確認）（44件）
+## 最大文字数がHTMLにあるがソースに数値記載が無い（要確認）（39件）
 
 | 書番 | シート | 識別ID | ラベル | HTML | 設計書記載 | 根拠設計書 |
 |---|---|---|---|---|---|---|
 | 0206 | 買取一覧(検索入力) | 3-2 | 買取番号 | 50 | 255（設定 `eccube_stext_len` の値）。 | m07-01_admin_online_purchase_purchase_online_search_list.md |
-| 0207 | 会員検索一覧(検索入力) | 3-1 | 会員ID・メールアドレス・お名前 | 255 | コアの会員検索フォームに準ずる | m08-01_admin_customer_customer_search_list.md |
 | 0207 | 会員検索一覧(検索入力) | 3-3 | 検索パターン名 | 30865 | コア標準テキスト | m08-01_admin_customer_customer_search_list.md |
 | 0207 | 会員検索一覧(検索入力) | 3-18 | 購入商品名・コード | 50 | コアの会員検索フォームに準ずる | m08-01_admin_customer_customer_search_list.md |
-| 0207 | 会員登録編集 | 9-6 | 会社名 | 50 | コア会員フォームに準ずる | m08-04_admin_customer_customer_edit.md |
-| 0207 | 会員登録編集 | 9-13 | 住所1 | 200 | SJIS換算の上限（プラグイン定数`customer_address.length.addr`） | m08-04_admin_customer_customer_edit.md |
-| 0207 | 会員登録編集 | 9-14 | 住所2 | 200 | SJIS換算の上限（同上） | m08-04_admin_customer_customer_edit.md |
-| 0207 | 会員登録編集 | 9-16 | メールアドレス | 255 | コア会員フォームに準ずる | m08-04_admin_customer_customer_edit.md |
 | 0207 | 会員登録編集 | 9-23 | パスワード | 32 | 確認用と合わせて2入力 | m08-04_admin_customer_customer_edit.md |
 | 0208 | カード詳細(登録・編集・削除) | 6-1-2 | カード名(英) | 255 | 同上 | m14-04_admin_card_card_register_update_delete.md |
 | 0208 | カード詳細(登録・編集・削除) | 6-1-3 | アリーナカード名(日) | 255 | 同上 | m14-04_admin_card_card_register_update_delete.md |
@@ -200,5 +189,5 @@ HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）�
 
 ## 未マッチ・突合対象外について
 
-未マッチ 606 件と突合対象外 174 件は件数が多いため本レポートには列挙しない。`functions/item_definition_drift.tsv` の `kind=unmatched-label` / `kind=no-input-section` を参照。未マッチには 「Excelにあってソースに無い項目（真の差分）」と「ラベル表記揺れ」が混在する。
+未マッチ 602 件と突合対象外 174 件は件数が多いため本レポートには列挙しない。`functions/item_definition_drift.tsv` の `kind=unmatched-label` / `kind=no-input-section` を参照。未マッチには 「Excelにあってソースに無い項目（真の差分）」と「ラベル表記揺れ」が混在する。
 

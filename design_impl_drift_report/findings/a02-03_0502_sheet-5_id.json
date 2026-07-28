@@ -58,7 +58,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/App/ProductController.php:323\n320:     {\n321:         try {\n322:             $result = $this->productRepository->findPopupProductByOldProductIdWithoutLang($oldProductId);\n323:             if ($result === null) {\n324:                 throw new NotFoundException('Not Found');\n325:             }\n326: ",
+        "src/Eccube/Controller/App/ProductController.php:323\n320:     {\n321:         try {\n322:             $result = $this->productRepository->findPopupProductByOldProductIdWithoutLang($oldProductId, $this->getShop()->getId());\n323:             if ($result === null) {\n324:                 throw new NotFoundException('Not Found');\n325:             }\n326: ",
         "src/Eccube/Exception/App/NotFoundException.php:79\n",
         "src/Eccube/Controller/App/ProductController.php:32\n29: use Symfony\\Component\\Routing\\Attribute\\Route;\n30: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n31: \n32: class ProductController extends AbstractController\n33: {\n34:     public function __construct(\n35:         private readonly ProductRepository $productRepository,"
       ],
@@ -120,7 +120,7 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Service/App/Popup/PopupResponseBuilder.php:29\n26:      */\n27:     public function build(array $result, string $productUrl, bool $includeBeltUrl = false): array\n28:     {\n29:         $response = [\n30:             'productId' => $result['productId'],\n31:             'name' => $result['productName'],\n32:             'productClassId' => $result['productClassId'],",
-        "src/Eccube/Repository/ProductRepository.php:2384\n2381:     public function findPopupProductByOldProductIdWithoutLang(string $oldProductId): ?array\n2382:     {\n2383:         $sql = <<<SQL\n2384: SELECT\n2385:     p.id AS productId,\n2386:     p.name AS productName,\n2387:     p.name_en AS nameEn,",
+        "src/Eccube/Repository/ProductRepository.php:2384\n2381:         $rsm->addScalarResult('belturl', 'beltUrl', 'string');\n2382:         $rsm->addScalarResult('imagefilename', 'imageFileName', 'string');\n2383:         $rsm->addScalarResult('weeklysold', 'weeklySold', 'integer');\n2384: \n2385:         $query = $this->getEntityManager()->createNativeQuery($sql, $rsm);\n2386:         $query->setParameter('cardId', $cardId);\n2387:         $query->setParameter('languageCode', $languageCode);",
         "src/Eccube/Service/App/Popup/PopupResponseBuilder.php:18\n15: \n16: namespace Eccube\\Service\\App\\Popup;\n17: \n18: class PopupResponseBuilder\n19: {\n20:     /**\n21:      * ポップアップ用情報のレスポンスを構築する"
       ],
       "auditChecklist": [
@@ -182,7 +182,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Popup/PopupResponseBuilder.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/ProductRepository.php:2428\n2425:         $rsm->addScalarResult('productname', 'productName', 'string');\n2426:         $rsm->addScalarResult('nameen', 'nameEn', 'string');\n2427:         $rsm->addScalarResult('productclassid', 'productClassId', 'integer');\n2428:         $rsm->addScalarResult('price01', 'price01', 'integer');\n2429:         $rsm->addScalarResult('price02', 'price02', 'integer');\n2430:         $rsm->addScalarResult('stock', 'stock', 'integer');\n2431:         $rsm->addScalarResult('languagecode', 'languageCode', 'string');",
+        "src/Eccube/Repository/ProductRepository.php:2428\n2425:      FROM dtb_product_class pc2\n2426:      LEFT JOIN mtb_language lang2 ON pc2.language_id = lang2.id\n2427:      WHERE pc2.product_id = p.id\n2428:        AND pc2.visible = true\n2429:        AND lang2.code = :languageCode) AS weeklySold\n2430: FROM dtb_product p\n2431:     INNER JOIN dtb_product_class pc ON p.id = pc.product_id AND pc.visible = true",
         "src/Eccube/Service/App/Popup/PopupResponseBuilder.php:33\n30:             'productId' => $result['productId'],\n31:             'name' => $result['productName'],\n32:             'productClassId' => $result['productClassId'],\n33:             'price01' => $result['price01'],\n34:             'price02' => $result['price02'],\n35:             'stock' => (int) ($result['stock'] ?? 0),\n36:             'nameEn' => $result['nameEn'],",
         "src/Eccube/Repository/ProductRepository.php:59\n56:  *\n57:  * @extends AbstractEnterpriseRepository<Product>\n58:  */\n59: class ProductRepository extends AbstractEnterpriseRepository implements ServiceEntityRepositoryInterface\n60: {\n61:     public const COLUMNS = [\n62:         'product_id' => 'p.id',"
       ],
@@ -551,6 +551,14 @@
         "term": "www.hareruyamtg.com/ja/goods_api/get_goods",
         "termType": "path",
         "role": "Twig",
+        "ref": "src/Eccube/Resource/template/default/Mail/Mall/id_expire_notification.twig:14",
+        "snippet": "https://www.hareruyamtg.com/ja/contact",
+        "weight": 6
+      },
+      {
+        "term": "www.hareruyamtg.com/ja/goods_api/get_goods",
+        "termType": "path",
+        "role": "Twig",
         "ref": "src/Eccube/Resource/template/default/Mail/Mall/id_expire_notification.twig:7",
         "snippet": "https://www.hareruyamtg.com/ja/mypage/identification",
         "weight": 6
@@ -559,15 +567,7 @@
         "term": "www.hareruyamtg.com/ja/goods_api/get_goods",
         "termType": "path",
         "role": "Twig",
-        "ref": "src/Eccube/Resource/template/default/Purchase/detail.twig:195",
-        "snippet": "<a href=\"https://www.hareruyamtg.com/ja/user_data/purchase_example\" class=\"joutaiWrapper\">",
-        "weight": 6
-      },
-      {
-        "term": "www.hareruyamtg.com/ja/goods_api/get_goods",
-        "termType": "path",
-        "role": "Twig",
-        "ref": "src/Eccube/Resource/template/default/Shopping/index.twig:564",
+        "ref": "src/Eccube/Resource/template/default/Shopping/index.twig:704",
         "snippet": "<p class=\"c-hareruya-text u-hareruya-mt10\"><a class=\"c-hareruya-text--link\" href=\"https://www.hareruyamtg.com/ja/user_data/card_condition\" target=\"_blank\" rel=\"noopener noreferrer\">https://www.hareruyamtg.com/ja/user_da…",
         "weight": 6
       },
@@ -607,7 +607,7 @@
         "term": "productClassId",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:412",
+        "ref": "src/Eccube/Entity/Order.php:427",
         "snippet": "$productClassId = $ProductOrderItem->getProductClass()->getId();",
         "weight": 5
       },
@@ -615,7 +615,7 @@
         "term": "productClassId",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:413",
+        "ref": "src/Eccube/Entity/Order.php:428",
         "snippet": "if (array_key_exists($productClassId, $orderItemArray)) {",
         "weight": 5
       },
@@ -623,7 +623,7 @@
         "term": "productClassId",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:416",
+        "ref": "src/Eccube/Entity/Order.php:431",
         "snippet": "$OrderItem = $orderItemArray[$productClassId];",
         "weight": 5
       }
@@ -833,7 +833,7 @@
     "verdictedCount": 18,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
       "実装済み": 18,
       "要確認": 0,

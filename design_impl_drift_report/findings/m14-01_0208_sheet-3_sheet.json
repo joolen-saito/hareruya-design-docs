@@ -58,7 +58,7 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Resource/template/admin/Card/index.twig:176\n173:             </a>\n174:         </div>\n175:     </div>\n176:     {{ form_start(searchForm, { 'action': url('admin_card_list'), 'method': 'POST', 'attr': { 'id': 'admin_search_form' } }) }}\n177:     {# 検索ボックスエリア #}\n178:     <div class=\"c-outsideBlock search-box-inner\">\n179:         <div class=\"c-outsideBlock__contents\">",
-        "src/Eccube/Controller/Admin/Card/CardController.php:64\n61:      *\n62:      * @return array<string, mixed>\n63:      */\n64:     #[Route('/%eccube_admin_route%/card', name: 'admin_card_list', methods: ['GET', 'POST'])]\n65:     #[Route('/%eccube_admin_route%/card/search/{page_no}', name: 'admin_card_search', requirements: ['page_no' => '\\d+'], methods: ['GET', 'POST'])]\n66:     #[Template('@admin/Card/index.twig')]\n67:     public function index(Request $request, PaginatorInterface $paginator, int $page_no = 1): array",
+        "src/Eccube/Controller/Admin/Card/CardController.php:64\n61:     /**\n62:      * カード一覧・検索画面.\n63:      *\n64:      * @return array<string, mixed>\n65:      */\n66:     #[Route('/%eccube_admin_route%/card', name: 'admin_card_list', methods: ['GET', 'POST'])]\n67:     #[Route('/%eccube_admin_route%/card/search/{page_no}', name: 'admin_card_search', requirements: ['page_no' => '\\d+'], methods: ['GET', 'POST'])]",
         "src/Eccube/Resource/template/admin/Card/index.twig:1\n1: {% extends '@admin/default_frame.twig' %}\n2: \n3: {% set menus = ['card_management', 'card_list'] %}\n4: "
       ],
       "auditChecklist": [
@@ -164,9 +164,9 @@
         "src/Eccube/Controller/Admin/SearchControllerTrait.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Card/CardController.php:98\n95:                 }\n96:                 $viewData = $this->session->get($this->sessionKey, []);\n97:                 FormUtil::submitAndGetData($searchForm, $viewData);\n98:             } else {\n99:                 $viewData = FormUtil::getViewData($searchForm);\n100:                 $this->session->set($this->sessionKey, $viewData);\n101:                 $this->session->set($this->sessionKey.'.page_no', 1);",
-        "src/Eccube/Controller/Admin/SearchControllerTrait.php:110\n107:         $sessionkey = $this->sessionKey;\n108:         // セッションキー：ページ内表示件数\n109:         $pageCountKey = \"eccube.admin.{$sessionkey}.search.page_count\";\n110:         // セッションキー：ページ表示番号\n111:         $pageNoKey = \"eccube.admin.{$sessionkey}.search.page_no\";\n112:         // セッションキー：検索条件\n113:         $viewKey = \"eccube.admin.{$sessionkey}.search\";",
-        "src/Eccube/Controller/Admin/Card/CardController.php:39\n36: use Symfony\\Component\\Security\\Csrf\\CsrfToken;\n37: use Symfony\\Component\\Security\\Csrf\\CsrfTokenManagerInterface;\n38: \n39: class CardController extends AbstractController\n40: {\n41:     use SearchControllerTrait;\n42: "
+        "src/Eccube/Controller/Admin/Card/CardController.php:98\n95:             $this->session->set($this->sessionKey, $viewData);\n96:             $this->session->set($this->sessionKey.'.page_no', $page_no);\n97:         } else {\n98:             $pageNoAttr = $request->attributes->get('page_no');\n99:             if ($request->query->getInt('resume') === Constant::ENABLED || $pageNoAttr !== null) {\n100:                 if ($pageNoAttr !== null) {\n101:                     $page_no = (int) $pageNoAttr;",
+        "src/Eccube/Controller/Admin/SearchControllerTrait.php:110\n107:         $session = $request->getSession();\n108:         $sessionkey = $this->sessionKey;\n109:         // セッションキー：ページ内表示件数\n110:         $pageCountKey = \"eccube.admin.{$sessionkey}.search.page_count\";\n111:         // セッションキー：ページ表示番号\n112:         $pageNoKey = \"eccube.admin.{$sessionkey}.search.page_no\";\n113:         // セッションキー：検索条件",
+        "src/Eccube/Controller/Admin/Card/CardController.php:41\n38: use Symfony\\Component\\Security\\Csrf\\CsrfToken;\n39: use Symfony\\Component\\Security\\Csrf\\CsrfTokenManagerInterface;\n40: \n41: class CardController extends AbstractController\n42: {\n43:     use SearchControllerTrait;\n44: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -285,7 +285,7 @@
       "implementationSnippets": [
         "src/Eccube/Resource/template/admin/Card/index.twig:423\n420:                                                         >\n421:                                                     </td>\n422:                                                     <td class=\"align-middle ps-3\">{{ card.id }}</td>\n423:                                                     <td class=\"align-middle\">\n424:                                                         {{ card.getNameJpWithEn }}\n425:                                                     </td>\n426:                                                     <td class=\"align-middle text-end pe-3\">",
         "src/Eccube/Resource/template/admin/Card/index.twig:428\n425:                                                     </td>\n426:                                                     <td class=\"align-middle text-end pe-3\">\n427:                                                         {# 編集・削除アクション #}\n428:                                                         <a class=\"btn btn-ec-actionIcon me-2\" href=\"{{ url('admin_card_edit', {id: card.id}) }}\">\n429:                                                             <i class=\"fa fa-pencil fa-lg text-secondary\"></i>\n430:                                                         </a>\n431:                                                         {# 削除ボタン：共通モーダルを呼び出すための data 属性を設定  #}",
-        "src/Eccube/Controller/Admin/Card/CardController.php:204\n201:      *\n202:      * @return array<string, mixed>|RedirectResponse\n203:      */\n204:     #[Route('/%eccube_admin_route%/card/{id}/edit', name: 'admin_card_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]\n205:     #[Template('@admin/Card/edit.twig')]\n206:     public function edit(Request $request, MtbCard $card): RedirectResponse|array\n207:     {"
+        "src/Eccube/Controller/Admin/Card/CardController.php:204\n201:      * カード新規登録画面.\n202:      *\n203:      * @return array<string, mixed>|RedirectResponse\n204:      */\n205:     #[Route('/%eccube_admin_route%/card/new', name: 'admin_card_new', methods: ['GET', 'POST'])]\n206:     #[Template('@admin/Card/edit.twig')]\n207:     public function new(Request $request): RedirectResponse|array"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -782,6 +782,318 @@
         "category": "機能仕様 処理概要（★はカスタマイズ項目）",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
         "designRequirement": "・(4)~(21)に入力された値を全て空にする",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-564d79ec4f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!C8",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-5e144d1907",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B117",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-736bab1e0d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B118",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-e3f69e6448",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B119",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-3d45513c5a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B120",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-032737edbe",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B121",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-e5d7f5899a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B122",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-78fb6ec975",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B123",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-3aab29dd7d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B124",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-6dc849458c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B134",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-3eea15fb68",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B125",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-775cc3f18c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B126",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-ce76863477",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B127",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-ef1c8a674f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B128",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-725659383c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B129",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-beb43a8baf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B131",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-ce50c8c1fa",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B132",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-15d00aac11",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B130",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-5a5b223c6d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B139",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-1a5a6971e6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B135",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-06ecc4ffb0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B136",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-7c20fdecc9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B137",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-4973a74366",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B138",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m14-01_0208_sheet-3_sheet-req-559df23ed4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B133",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1454,10 +1766,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-def0e2f63f",
+        "id": "m14-01_0208_sheet-3_sheet-req-928e347486",
         "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "本機能は検索表示のみでは専用のログ出力を定義していない。失敗時の例外メッセージの記録は共通のログ設定に従う。",
+        "designRequirement": "同一 CardController が扱うカード保存（登録・更新）・単体削除・一括削除で表示されるフラッシュメッセージ、および一覧画面のJSダイアログ（confirm/alert）・削除確認モーダル・検索フォームのバリデーションメッセージ。文言はメッセージリソース（ messages.ja.yaml / validators.ja.yaml ）またはテンプレート内リテラル由来。",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1467,10 +1779,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-1aa75e4c0d",
-        "category": "本機能におけるセッション",
+        "id": "m14-01_0208_sheet-3_sheet-req-8f33de51cf",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "検索処理が完了したとき、ページ番号・検索ビュー・ソートキー・ソート順・表示件数を保存する。",
+        "designRequirement": "1つ以上のカードを選択してください。",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1480,10 +1792,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-61a11bfc0b",
-        "category": "本機能におけるセッション",
+        "id": "m14-01_0208_sheet-3_sheet-req-3790b14b7e",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "admin_card_list では検索関連キーを削除する。",
+        "designRequirement": "送信せずカード検索（一覧・条件抽出）画面に留まる",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1493,10 +1805,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-1be4a51df5",
-        "category": "排他制御・トランザクション",
+        "id": "m14-01_0208_sheet-3_sheet-req-e2f0b18bc8",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "検索表示のみでは読み取りクエリ主体であり、本機能単体では楽観・悲観ロックを扱わない。",
+        "designRequirement": "選択されたカードを削除してもよろしいですか？",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1506,10 +1818,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-bd6f8fc53e",
-        "category": "排他制御・トランザクション",
+        "id": "m14-01_0208_sheet-3_sheet-req-5212e8c870",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "admin_card_list … GET … /{admin_route}/card （検索フォームの初期表示。当機能向けセッションキー admin.card.* を削除し、一覧結果は空のまま表示する。）",
+        "designRequirement": "カードを選択して一括削除を行うとき（確認）",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1519,10 +1831,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-d2de45cf32",
-        "category": "排他制御・トランザクション",
+        "id": "m14-01_0208_sheet-3_sheet-req-b2739abca1",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "m14-01_admin_card_card_search … GET, POST … /{admin_route}/card/search/{page_no} （ page_no は 1 以上の整数（ルートの assert）。検索実行結果の一覧表示、ソート・ページ送り・表示件数変更、GET による再開時のセッション復元。）",
+        "designRequirement": "OKでカード検索（一覧・条件抽出）画面に遷移し、キャンセルで同画面に留まる",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1532,10 +1844,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-2ba258b772",
-        "category": "排他制御・トランザクション",
+        "id": "m14-01_0208_sheet-3_sheet-req-9855f252aa",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "M14-02 カード情報CSV出力 / カード管理 — カード情報 CSV 出力",
+        "designRequirement": "カード名リスト作成バッチを実行しますか？",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1545,10 +1857,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-d3c99bdc7c",
-        "category": "排他制御・トランザクション",
+        "id": "m14-01_0208_sheet-3_sheet-req-3b46bdd1b2",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "※ この機能には専用の画面シートが無いため、親機能シート「カード一覧(検索入力)」の末尾に統合した詳細設計書です。",
+        "designRequirement": "カード名リスト作成を実行するとき（確認）",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1558,10 +1870,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-5f24659c64",
-        "category": "排他制御・トランザクション",
+        "id": "m14-01_0208_sheet-3_sheet-req-ec42fba6d4",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "HareruyaEc プラグインが管理画面の「カード管理」検索一覧から、チェックボックスで選んだカード ID を対象に、カードマスタおよびカード詳細に相当する列を並べた CSV ファイルをダウンロード応答として返す機能である。ヘッダ行は項目の論理キー（例: name_jp ）であり、商品 CSV のように店舗設定で項目を並べ替える仕組みは使わない。",
+        "designRequirement": "エラーが発生しました",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1571,10 +1883,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-bcc3148800",
-        "category": "排他制御・トランザクション",
+        "id": "m14-01_0208_sheet-3_sheet-req-8c7f148ecb",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。pf-eccube3 に配置された HareruyaEc プラグインのソースを確認値とする。",
+        "designRequirement": "カード名リスト作成中にエラーが起きたとき",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1584,10 +1896,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-49ed90098f",
-        "category": "排他制御・トランザクション",
+        "id": "m14-01_0208_sheet-3_sheet-req-380b62c34b",
+        "category": "セッションがタイムアウトしました。もう一度やり直してください。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "DB関連の記述は ec-cube-enterprise の実装を正とする。出力が参照するカードマスタ・カード詳細・関連マスタは現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise）で同一のテーブル名・列名であり、同一スキーマである。",
+        "designRequirement": "カード名リスト作成の実行時に、操作の有効期限が切れているとき",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1597,10 +1909,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-db76b05d4b",
-        "category": "排他制御・トランザクション",
+        "id": "m14-01_0208_sheet-3_sheet-req-34a499e7d6",
+        "category": "セッションがタイムアウトしました。もう一度やり直してください。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "出力列の論理キーと並びは現行挙動（pf-eccube3）を参照し、移行先でも同じカードマスタ構造を読む。",
+        "designRequirement": "カード名リスト作成が完了したとき",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1610,10 +1922,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-f947898467",
-        "category": "排他制御・トランザクション",
+        "id": "m14-01_0208_sheet-3_sheet-req-d99c77de44",
+        "category": "セッションがタイムアウトしました。もう一度やり直してください。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "検索結果が 1 件以上あり、一覧でカードをチェックして「CSV出力」を押す",
+        "designRequirement": "カード名リストの作成を実行し、正常に完了したとき",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1623,322 +1935,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m14-01_0208_sheet-3_sheet-req-b1df4f2007",
-        "category": "排他制御・トランザクション",
+        "id": "m14-01_0208_sheet-3_sheet-req-fa949e9a9f",
+        "category": "セッションがタイムアウトしました。もう一度やり直してください。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "検索結果エリアが無い・件数ゼロ",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-5fbb87c22e",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "CSV 出力ボタンは検索結果ボックス内にのみ配置されるため、この入口からは実行できない。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-5e112800cf",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "同一 HTML フォームの既定の action は検索用の POST /{admin_route}/card/search/1 であるが、「CSV出力」ボタンは formaction で m14-02_admin_card_card_csv_export にだけ差し替えて送信する。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-cb7083c263",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "「CSV出力」ボタンは検索結果ヘッダ付近にあり、 pagination.totalItemCount > 0 のときだけ表示される。各行に name=\"cardIds[]\" のチェックボックスがある。表頭チェック #allCheck で [cardId] 属性を持つチェックボックスを一括オンオフする。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-a099a2c783",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "「CSV出力」クリック後、約 500ms は type=submit の pointer-events を空にして多重送信しにくくし、その後解除する。クライアント側で CSV の内容や件数は検証しない。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-44f8d8fdd7",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "出力前の確認ダイアログはない。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-52a4b96a3d",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "検索フォームはカード検索機能側の実装どおり CSRF を無効にした型で生成されているため、「CSV出力」送信にも検索フォームと同じく CSRF トークンフィールドは付かない（一括削除ボタン側だけ別途トークンを抱える実装がある）。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-c389771be2",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "cardIds が PHP の empty() で真と判定される場合、サービス層はフラッシュにメッセージキー admin.csv.error.export.card を積み、 m14-01_admin_card_card_search へリダイレクト応答を組み立てる。ページ番号はセッションキー admin.card.search.page_no があればそれを使い、無ければルート既定に委ねる。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-44b2463725",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "コントローラは手順 5 の戻り値が「空」と判定された場合にのみ、別メッセージ admin.csv.error.export.require を積み Referer へ HTTP リダイレクトする。手順 5 がリダイレクトオブジェクトを返す場合、 empty() は偽になり、この分岐には入らない実装順序になっている（実装を確認値とする）。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-8672542d1a",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "ストリーム送信後、情報ログにファイル名を記録する応答を返す（コールバック内で送信が走る実装になっている）。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-545f14d9c9",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "手順 7 の取得は「存在する ID 分」だけ返す。存在しない ID が混在しても、この段階ではエラーにしない。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-ba83fc2b6e",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "コントローラはメッセージ文字列をフラッシュに積み、 Referer へリダイレクトする。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-061e3106d5",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "本機能では件数集計や売上などの業務集計は行わない。出力対象は POST で明示されたカード ID に対応し、かつリポジトリで検索できたカードのみである。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-18011525ff",
-        "category": "出力列とデータの対応（業務ルール）",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "カード名（日本語）。DB 値をそのまま出力する。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-45df37c702",
-        "category": "出力列とデータの対応（業務ルール）",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "アリーナ表示名（日本語）。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-d730087630",
-        "category": "出力列とデータの対応（業務ルール）",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "アリーナ表示名（英語）。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-2a47a954cc",
-        "category": "出力列とデータの対応（業務ルール）",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "ソース上、 convertExportCsvRows 末尾に「詳細なし」分岐があるが、代入先変数名などに不整合があり、実行経路によっては未定義変数参照や列数不足が起きうる。実装を確認値とし、詳細なしデータの運用可否はコードレビューと実行検証に委ねる。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-696893baab",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "出力対象は画面・APIで確定した検索条件、権限、店舗・支店条件に一致するレコードに限定する。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-d0f5d8d96d",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "金額・数量・日時・ステータスは参照時点の永続化済み値をそのまま出力し、CSV生成時に再計算・補正しない。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-3094581c9c",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "件数上限やページングの有無は呼び出し元の検索条件・既存実装に従い、出力途中で対象データが更新されても再読込による整合補正は行わない。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-b4444b8e05",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "出力対象は一覧にチェックを付けたカード ID のみであり、検索でヒットした全件を自動では出力しない。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-ee88dd97a8",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "POST に含まれるが DB に無い ID は静かに無視され、残りが空ならエラーとなる。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-1d097744fc",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "text/csv のストリーム。ファイル名は cards_YmdHis.csv 形式。先頭に UTF-8 BOM。フィールド値は設定のエンコーディングへ変換したうえで fputcsv により出力され、区切り文字は設定 csv_export_separator 。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-36aa5f3e8c",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "フラッシュメッセージ付きで検索一覧または Referer へ HTTP リダイレクト（経路は実装どおり）。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m14-01_0208_sheet-3_sheet-req-3564e78c5e",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "読み取りクエリとログ出力のみ。該当マスタを更新しない。",
+        "designRequirement": "カード名リストの作成完了後、一覧画面に留まる",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1976,11 +1976,11 @@
         "admin.delete.complete"
       ],
       "classNames": [
+        "CardController",
         "MtbCardRepository",
         "CardCsvController",
         "CardCsv",
         "CsvExportService",
-        "CardController",
         "FormValidHelper",
         "FormToEntityOperationHelper",
         "BranchUpdateService"
@@ -1992,6 +1992,7 @@
         "card/search/1",
         "card/search/{page_no}",
         "card/{id}",
+        "alert",
         "Plugin/HareruyaEc/ServiceProvider/Admin/CardServiceProvider.php",
         "Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php",
         "Plugin/HareruyaEc/Repository/MtbCardRepository.php",
@@ -2027,7 +2028,7 @@
         "term": "admin_card_edit",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Card/CardController.php:204",
+        "ref": "src/Eccube/Controller/Admin/Card/CardController.php:217",
         "snippet": "#[Route('/%eccube_admin_route%/card/{id}/edit', name: 'admin_card_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]",
         "weight": 7
       },
@@ -2035,7 +2036,7 @@
         "term": "admin_card_edit",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Card/CardController.php:252",
+        "ref": "src/Eccube/Controller/Admin/Card/CardController.php:291",
         "snippet": "return $this->redirectToRoute('admin_card_edit', ['id' => $card->getId()]);",
         "weight": 7
       },
@@ -2043,7 +2044,7 @@
         "term": "admin_search_card",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Card/CardController.php:55",
+        "ref": "src/Eccube/Controller/Admin/Card/CardController.php:57",
         "snippet": "$this->formName = 'admin_search_card';",
         "weight": 7
       },
@@ -2051,7 +2052,7 @@
         "term": "admin_card_list",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Card/CardController.php:64",
+        "ref": "src/Eccube/Controller/Admin/Card/CardController.php:66",
         "snippet": "#[Route('/%eccube_admin_route%/card', name: 'admin_card_list', methods: ['GET', 'POST'])]",
         "weight": 7
       },
@@ -2067,7 +2068,7 @@
         "term": "CardCsv",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Card/CardCsvController.php:21",
+        "ref": "src/Eccube/Controller/Admin/Card/CardCsvController.php:23",
         "snippet": "use Eccube\\Service\\Csv\\CardCsv;",
         "weight": 7
       },
@@ -2075,7 +2076,7 @@
         "term": "CardCsvController",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Card/CardCsvController.php:34",
+        "ref": "src/Eccube/Controller/Admin/Card/CardCsvController.php:36",
         "snippet": "class CardCsvController extends AbstractController",
         "weight": 7
       },
@@ -2083,24 +2084,8 @@
         "term": "CardCsv",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Card/CardCsvController.php:37",
+        "ref": "src/Eccube/Controller/Admin/Card/CardCsvController.php:39",
         "snippet": "private readonly CardCsv $cardCsv,",
-        "weight": 7
-      },
-      {
-        "term": "CardCsvController",
-        "termType": "className",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:1",
-        "snippet": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php",
-        "weight": 7
-      },
-      {
-        "term": "CardCsvController",
-        "termType": "className",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:45",
-        "snippet": "class CardCsvController extends AbstractController",
         "weight": 7
       },
       {
@@ -2125,14 +2110,6 @@
         "role": "Controller",
         "ref": "src/Eccube/Controller/App/DeckBuilder/CardController.php:1",
         "snippet": "src/Eccube/Controller/App/DeckBuilder/CardController.php",
-        "weight": 7
-      },
-      {
-        "term": "CardController",
-        "termType": "className",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/App/DeckBuilder/CardController.php:24",
-        "snippet": "class CardController extends AbstractDeckBuilderController",
         "weight": 7
       },
       {
@@ -2165,6 +2142,30 @@
         "role": "Twig",
         "ref": "src/Eccube/Resource/template/admin/Card/index.twig:176",
         "snippet": "{{ form_start(searchForm, { 'action': url('admin_card_list'), 'method': 'POST', 'attr': { 'id': 'admin_search_form' } }) }}",
+        "weight": 7
+      },
+      {
+        "term": "admin_card_edit",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/Card/index.twig:428",
+        "snippet": "<a class=\"btn btn-ec-actionIcon me-2\" href=\"{{ url('admin_card_edit', {id: card.id}) }}\">",
+        "weight": 7
+      },
+      {
+        "term": "admin_card_list",
+        "termType": "routeName",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/Data/mtg_master_data.twig:76",
+        "snippet": "「特殊サジェスト」を設定する際は、設定後に<a href=\"{{ url('admin_card_list') }}\">カード一覧の「カード名リスト作成」</a>を実行してください。",
+        "weight": 7
+      },
+      {
+        "term": "CardCsv",
+        "termType": "className",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Csv/CardCsv.php:1",
+        "snippet": "src/Eccube/Service/Csv/CardCsv.php",
         "weight": 7
       }
     ],
@@ -2493,7 +2494,7 @@
     "verdictedCount": 119,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
       "実装済み": 119,
       "要確認": 0,
@@ -2973,6 +2974,390 @@
         "designRequirement": "・(4)~(21)に入力された値を全て空にする",
         "source": "html_requirement_extractor",
         "risk": "normal",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-564d79ec4f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!C8",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-5e144d1907",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B117",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-736bab1e0d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B118",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-e3f69e6448",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B119",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-3d45513c5a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B120",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-032737edbe",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B121",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-e5d7f5899a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B122",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-78fb6ec975",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B123",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-3aab29dd7d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B124",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-6dc849458c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B134",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-3eea15fb68",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B125",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-775cc3f18c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B126",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-ce76863477",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B127",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-ef1c8a674f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B128",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-725659383c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B129",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-beb43a8baf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B131",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-ce50c8c1fa",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B132",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-15d00aac11",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B130",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-5a5b223c6d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B139",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-1a5a6971e6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B135",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-06ecc4ffb0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B136",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-7c20fdecc9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B137",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-4973a74366",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B138",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-559df23ed4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "0208:カード一覧(検索入力)!B133",
+        "source": "html_requirement_extractor",
+        "risk": "high",
         "verdict": "COVERED_BY_FINDING",
         "candidateCount": 0,
         "strongSignalCount": 0,
@@ -3799,74 +4184,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-def0e2f63f",
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-928e347486",
         "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "本機能は検索表示のみでは専用のログ出力を定義していない。失敗時の例外メッセージの記録は共通のログ設定に従う。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-1aa75e4c0d",
-        "category": "本機能におけるセッション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "検索処理が完了したとき、ページ番号・検索ビュー・ソートキー・ソート順・表示件数を保存する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-61a11bfc0b",
-        "category": "本機能におけるセッション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "admin_card_list では検索関連キーを削除する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-1be4a51df5",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "検索表示のみでは読み取りクエリ主体であり、本機能単体では楽観・悲観ロックを扱わない。",
-        "source": "html_requirement_extractor",
-        "risk": "normal",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-bd6f8fc53e",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "admin_card_list … GET … /{admin_route}/card （検索フォームの初期表示。当機能向けセッションキー admin.card.* を削除し、一覧結果は空のまま表示する。）",
+        "designRequirement": "同一 CardController が扱うカード保存（登録・更新）・単体削除・一括削除で表示されるフラッシュメッセージ、および一覧画面のJSダイアログ（confirm/alert）・削除確認モーダル・検索フォームのバリデーションメッセージ。文言はメッセージリソース（ messages.ja.yaml / validators.ja.yaml ）またはテンプレート内リテラル由来。",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3879,330 +4200,10 @@
         "elementLevel": true
       },
       {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-d2de45cf32",
-        "category": "排他制御・トランザクション",
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-8f33de51cf",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "m14-01_admin_card_card_search … GET, POST … /{admin_route}/card/search/{page_no} （ page_no は 1 以上の整数（ルートの assert）。検索実行結果の一覧表示、ソート・ページ送り・表示件数変更、GET による再開時のセッション復元。）",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-2ba258b772",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "M14-02 カード情報CSV出力 / カード管理 — カード情報 CSV 出力",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-d3c99bdc7c",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "※ この機能には専用の画面シートが無いため、親機能シート「カード一覧(検索入力)」の末尾に統合した詳細設計書です。",
-        "source": "html_requirement_extractor",
-        "risk": "normal",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-5f24659c64",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "HareruyaEc プラグインが管理画面の「カード管理」検索一覧から、チェックボックスで選んだカード ID を対象に、カードマスタおよびカード詳細に相当する列を並べた CSV ファイルをダウンロード応答として返す機能である。ヘッダ行は項目の論理キー（例: name_jp ）であり、商品 CSV のように店舗設定で項目を並べ替える仕組みは使わない。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-bcc3148800",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。pf-eccube3 に配置された HareruyaEc プラグインのソースを確認値とする。",
-        "source": "html_requirement_extractor",
-        "risk": "normal",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-49ed90098f",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "DB関連の記述は ec-cube-enterprise の実装を正とする。出力が参照するカードマスタ・カード詳細・関連マスタは現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise）で同一のテーブル名・列名であり、同一スキーマである。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-db76b05d4b",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "出力列の論理キーと並びは現行挙動（pf-eccube3）を参照し、移行先でも同じカードマスタ構造を読む。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-f947898467",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "検索結果が 1 件以上あり、一覧でカードをチェックして「CSV出力」を押す",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-b1df4f2007",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "検索結果エリアが無い・件数ゼロ",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-5fbb87c22e",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "CSV 出力ボタンは検索結果ボックス内にのみ配置されるため、この入口からは実行できない。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-5e112800cf",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "同一 HTML フォームの既定の action は検索用の POST /{admin_route}/card/search/1 であるが、「CSV出力」ボタンは formaction で m14-02_admin_card_card_csv_export にだけ差し替えて送信する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-cb7083c263",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "「CSV出力」ボタンは検索結果ヘッダ付近にあり、 pagination.totalItemCount > 0 のときだけ表示される。各行に name=\"cardIds[]\" のチェックボックスがある。表頭チェック #allCheck で [cardId] 属性を持つチェックボックスを一括オンオフする。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-a099a2c783",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "「CSV出力」クリック後、約 500ms は type=submit の pointer-events を空にして多重送信しにくくし、その後解除する。クライアント側で CSV の内容や件数は検証しない。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-44f8d8fdd7",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "出力前の確認ダイアログはない。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-52a4b96a3d",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "検索フォームはカード検索機能側の実装どおり CSRF を無効にした型で生成されているため、「CSV出力」送信にも検索フォームと同じく CSRF トークンフィールドは付かない（一括削除ボタン側だけ別途トークンを抱える実装がある）。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-c389771be2",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "cardIds が PHP の empty() で真と判定される場合、サービス層はフラッシュにメッセージキー admin.csv.error.export.card を積み、 m14-01_admin_card_card_search へリダイレクト応答を組み立てる。ページ番号はセッションキー admin.card.search.page_no があればそれを使い、無ければルート既定に委ねる。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-44b2463725",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "コントローラは手順 5 の戻り値が「空」と判定された場合にのみ、別メッセージ admin.csv.error.export.require を積み Referer へ HTTP リダイレクトする。手順 5 がリダイレクトオブジェクトを返す場合、 empty() は偽になり、この分岐には入らない実装順序になっている（実装を確認値とする）。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-8672542d1a",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "ストリーム送信後、情報ログにファイル名を記録する応答を返す（コールバック内で送信が走る実装になっている）。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-545f14d9c9",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "手順 7 の取得は「存在する ID 分」だけ返す。存在しない ID が混在しても、この段階ではエラーにしない。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-ba83fc2b6e",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "コントローラはメッセージ文字列をフラッシュに積み、 Referer へリダイレクトする。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-061e3106d5",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "本機能では件数集計や売上などの業務集計は行わない。出力対象は POST で明示されたカード ID に対応し、かつリポジトリで検索できたカードのみである。",
+        "designRequirement": "1つ以上のカードを選択してください。",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4215,10 +4216,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-18011525ff",
-        "category": "出力列とデータの対応（業務ルール）",
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-3790b14b7e",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "カード名（日本語）。DB 値をそのまま出力する。",
+        "designRequirement": "送信せずカード検索（一覧・条件抽出）画面に留まる",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4231,10 +4232,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-45df37c702",
-        "category": "出力列とデータの対応（業務ルール）",
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-e2f0b18bc8",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "アリーナ表示名（日本語）。",
+        "designRequirement": "選択されたカードを削除してもよろしいですか？",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4247,10 +4248,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-d730087630",
-        "category": "出力列とデータの対応（業務ルール）",
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-5212e8c870",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "アリーナ表示名（英語）。",
+        "designRequirement": "カードを選択して一括削除を行うとき（確認）",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4263,122 +4264,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-2a47a954cc",
-        "category": "出力列とデータの対応（業務ルール）",
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-b2739abca1",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "ソース上、 convertExportCsvRows 末尾に「詳細なし」分岐があるが、代入先変数名などに不整合があり、実行経路によっては未定義変数参照や列数不足が起きうる。実装を確認値とし、詳細なしデータの運用可否はコードレビューと実行検証に委ねる。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-696893baab",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "出力対象は画面・APIで確定した検索条件、権限、店舗・支店条件に一致するレコードに限定する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-d0f5d8d96d",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "金額・数量・日時・ステータスは参照時点の永続化済み値をそのまま出力し、CSV生成時に再計算・補正しない。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-3094581c9c",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "件数上限やページングの有無は呼び出し元の検索条件・既存実装に従い、出力途中で対象データが更新されても再読込による整合補正は行わない。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-b4444b8e05",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "出力対象は一覧にチェックを付けたカード ID のみであり、検索でヒットした全件を自動では出力しない。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-ee88dd97a8",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "POST に含まれるが DB に無い ID は静かに無視され、残りが空ならエラーとなる。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-1d097744fc",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "text/csv のストリーム。ファイル名は cards_YmdHis.csv 形式。先頭に UTF-8 BOM。フィールド値は設定のエンコーディングへ変換したうえで fputcsv により出力され、区切り文字は設定 csv_export_separator 。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-36aa5f3e8c",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "フラッシュメッセージ付きで検索一覧または Referer へ HTTP リダイレクト（経路は実装どおり）。",
+        "designRequirement": "OKでカード検索（一覧・条件抽出）画面に遷移し、キャンセルで同画面に留まる",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4391,10 +4280,122 @@
         "elementLevel": true
       },
       {
-        "requirementId": "m14-01_0208_sheet-3_sheet-req-3564e78c5e",
-        "category": "API/バッチ結果",
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-9855f252aa",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
         "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
-        "designRequirement": "読み取りクエリとログ出力のみ。該当マスタを更新しない。",
+        "designRequirement": "カード名リスト作成バッチを実行しますか？",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-3b46bdd1b2",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "カード名リスト作成を実行するとき（確認）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-ec42fba6d4",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "エラーが発生しました",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-8c7f148ecb",
+        "category": "フラッシュに admin.error.sort 。セッション初期化と同一の一覧表示へ。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "カード名リスト作成中にエラーが起きたとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-380b62c34b",
+        "category": "セッションがタイムアウトしました。もう一度やり直してください。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "カード名リスト作成の実行時に、操作の有効期限が切れているとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-34a499e7d6",
+        "category": "セッションがタイムアウトしました。もう一度やり直してください。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "カード名リスト作成が完了したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-d99c77de44",
+        "category": "セッションがタイムアウトしました。もう一度やり直してください。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "カード名リストの作成を実行し、正常に完了したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m14-01_0208_sheet-3_sheet-req-fa949e9a9f",
+        "category": "セッションがタイムアウトしました。もう一度やり直してください。",
+        "designRef": "excel_to_html/output/0208_基本設計仕様書(カード管理).html#sheet-3",
+        "designRequirement": "カード名リストの作成完了後、一覧画面に留まる",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

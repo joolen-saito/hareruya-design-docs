@@ -58,9 +58,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/ProductClassRepository.php:2208\n2205:             SELECT EXISTS (\n2206:                 SELECT 1 FROM dtb_product_class pc\n2207:                 INNER JOIN dtb_product p ON p.id = pc.product_id\n2208:                 WHERE pc.product_code = ?\n2209:                 {$saleFlgCondition}\n2210:                 AND pc.high_price_code IS NOT NULL\n2211:                 AND pc.high_price_code <> ''",
-        "src/Eccube/Repository/ProductClassRepository.php:2258\n2255:             FROM dtb_product p\n2256:             WHERE dtb_product_class.product_id = p.id\n2257:             AND dtb_product_class.product_code = ?\n2258:             AND dtb_product_class.sale_flg IS TRUE\n2259:             AND dtb_product_class.high_price_code IS NOT NULL\n2260:             AND dtb_product_class.high_price_code <> ''\n2261:             EOT;",
-        "src/Eccube/Repository/ProductClassRepository.php:2290\n2287:             FROM dtb_product p\n2288:             WHERE dtb_product_class.product_id = p.id\n2289:             AND dtb_product_class.product_code = ?\n2290:             AND (dtb_product_class.sale_flg IS NOT TRUE OR dtb_product_class.sale_flg IS NULL)\n2291:             AND dtb_product_class.high_price_code IS NOT NULL\n2292:             AND dtb_product_class.high_price_code <> ''\n2293:             EOT;"
+        "src/Eccube/Repository/ProductClassRepository.php:2208\n2205:      *\n2206:      * @return bool 存在する場合 true\n2207:      */\n2208:     public function existsProductClassByProductCodeAndSaleFlg(string $productCode, bool $saleFlg): bool\n2209:     {\n2210:         $saleFlgCondition = $saleFlg\n2211:             ? 'AND pc.sale_flg IS TRUE'",
+        "src/Eccube/Repository/ProductClassRepository.php:2258\n2255:      * @param string $productCode 商品コード\n2256:      * @param int $standardPrice 基準価格\n2257:      */\n2258:     public function replaceStandardPriceOnly(string $productCode, int $standardPrice): void\n2259:     {\n2260:         // dtb_product_classのidでupdateする\n2261:         $sql = <<<EOT",
+        "src/Eccube/Repository/ProductClassRepository.php:2290\n2287:      * @param string $productCode 商品コード\n2288:      * @param int $standardPrice 基準価格（price02 にも同じ値を設定）\n2289:      */\n2290:     public function replaceStandardPriceAndPrice02(string $productCode, int $standardPrice): void\n2291:     {\n2292:         $sql = <<<EOT\n2293:             UPDATE dtb_product_class"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -119,8 +119,8 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CsvImportType.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:121\n118:         $form = $this->formFactory->createBuilder(CsvImportType::class)->getForm();\n119:         $form->handleRequest($request);\n120: \n121:         if (!$form->isValid()) {\n122:             foreach ($form->getErrors() as $error) {\n123:                 $this->addError($error->getMessage(), 'admin');\n124:             }",
-        "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:131\n128:         /** @var UploadedFile|null $formFile */\n129:         $formFile = $form['import_file']->getData();\n130: \n131:         if ($formFile === null) {\n132:             $this->addError('admin.common.csv_invalid_no_data', 'admin');\n133: \n134:             return $this->redirectToRoute('admin_product_simple_high_price_csv_upload');",
+        "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:121\n118:      * 高額商品価格変更CSV取込\n119:      *\n120:      * @param Request $request\n121:      *\n122:      * @return RedirectResponse\n123:      */\n124:     #[Route(path: '/%eccube_admin_route%/product/simple_high_price/import', name: 'admin_product_simple_high_price_import', methods: ['POST'])]",
+        "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:131\n128:         $Member = $this->getUser();\n129: \n130:         $form = $this->formFactory->createBuilder(CsvImportType::class)->getForm();\n131:         $form->handleRequest($request);\n132: \n133:         if (!$form->isValid()) {\n134:             foreach ($form->getErrors() as $error) {",
         "src/Eccube/Form/Type/Admin/CsvImportType.php:48\n45:     public function buildForm(FormBuilderInterface $builder, array $options): void\n46:     {\n47:         $builder\n48:             ->add('import_file', FileType::class, [\n49:                 'label' => false,\n50:                 'mapped' => false,\n51:                 'required' => true,"
       ],
       "auditChecklist": [
@@ -135,7 +135,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 102,
+    "extractedRequirementCount": 114,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -438,10 +438,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-32_0204_sheet-48_csv-req-6e2f7fef3b",
+        "id": "m03-32_0204_sheet-48_csv-req-0ab552d0b5",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
-        "designRequirement": "M03-32 高額商品価格変更CSV登録 / m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）",
+        "designRequirement": "M03-32 高額商品価格変更CSV登録 / 商品管理 — 高額商品価格変更CSV登録",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1348,6 +1348,162 @@
         "coveredByFinding": true
       },
       {
+        "id": "m03-32_0204_sheet-48_csv-req-5436e6bea1",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "The uploaded file was too large. Please try to upload a smaller file. ／ CSRFトークンが無効です、再送信してください。 ／ フィールドグループに追加のフィールドを含んではなりません。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-32_0204_sheet-48_csv-req-d2688dac9e",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "CSV取込を送信したときに、アップロードしたファイルのサイズが上限を超えた、CSRFトークンが無効になった、または送信内容に未対応の項目が含まれるとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-32_0204_sheet-48_csv-req-f25d58ba25",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "エラーを表示し、高額商品価格変更CSVアップロード画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-32_0204_sheet-48_csv-req-5abdf7d4f3",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "%maxRecord% 行を超えるCSVファイルは登録できません。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-32_0204_sheet-48_csv-req-86d656b70c",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "上限を超える行数のCSVファイルを登録したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-32_0204_sheet-48_csv-req-80a638236b",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "%d行目: セール中商品のため、基準価格のみ更新しました。（販売価格は変更されません）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-32_0204_sheet-48_csv-req-0c71d000ca",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "警告を表示し、高額商品価格変更CSVアップロード画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-32_0204_sheet-48_csv-req-f39b79ea9c",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "CSVのフォーマットが一致しません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ CSVデータが存在しません。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %d 行目の %s ではデータを取得できません。 ／ %d 行目の %s は0以上の数値を設定してください。 ／ %d 行目の %s は %d桁以内の数値 を設定してください。 ／ %d 行目の商品コードの値 %s は重複して登録されてるため更新できません。 ／ %d行目: 対象の商品規格がありません。（商品公開ステータスが0かつ高額商品コードが設定された規格のみ対象です）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-32_0204_sheet-48_csv-req-27f0a815b1",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "登録が完了しました。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-32_0204_sheet-48_csv-req-05e7dca1f7",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "CSVファイルをエラーなく登録したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-32_0204_sheet-48_csv-req-ffca0de50e",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "成功メッセージを表示し、高額商品価格変更CSVアップロード画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-32_0204_sheet-48_csv-req-e4629fc464",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "%d 行目の商品コードの値 %s は重複して登録されてるため更新できません。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
         "id": "m03-32_0204_sheet-48_csv-req-fcc6dd7abd",
         "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
@@ -1593,79 +1749,7 @@
         "term": "admin_product_simple_high_price_import",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:112",
-        "snippet": "#[Route(path: '/%eccube_admin_route%/product/simple_high_price/import', name: 'admin_product_simple_high_price_import', methods: ['POST'])]",
-        "weight": 7
-      },
-      {
-        "term": "admin_product_simple_high_price_csv_upload",
-        "termType": "routeName",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:126",
-        "snippet": "return $this->redirectToRoute('admin_product_simple_high_price_csv_upload');",
-        "weight": 7
-      },
-      {
-        "term": "admin_product_simple_high_price_csv_upload",
-        "termType": "routeName",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:134",
-        "snippet": "return $this->redirectToRoute('admin_product_simple_high_price_csv_upload');",
-        "weight": 7
-      },
-      {
-        "term": "SimpleHighPriceImportHandler",
-        "termType": "className",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:145",
-        "snippet": "$handler = new SimpleHighPriceImportHandler($this->productClassRepository);",
-        "weight": 7
-      },
-      {
-        "term": "SimpleHighPriceImportHandler",
-        "termType": "className",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:25",
-        "snippet": "use Eccube\\Service\\Csv\\Importer\\Event\\SimpleHighPriceImportHandler;",
-        "weight": 7
-      },
-      {
-        "term": "ProductSimpleHighPriceCsvController",
-        "termType": "routeName",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:35",
-        "snippet": "class ProductSimpleHighPriceCsvController extends AbstractController",
-        "weight": 7
-      },
-      {
-        "term": "ProductSimpleHighPriceCsvController",
-        "termType": "className",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:35",
-        "snippet": "class ProductSimpleHighPriceCsvController extends AbstractController",
-        "weight": 7
-      },
-      {
-        "term": "admin_product_simple_high_price_csv_template",
-        "termType": "routeName",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:50",
-        "snippet": "#[Route(path: '/%eccube_admin_route%/product/simple_high_price/csv_template', name: 'admin_product_simple_high_price_csv_template', methods: ['GET'])]",
-        "weight": 7
-      },
-      {
-        "term": "admin_product_simple_high_price_csv_upload",
-        "termType": "routeName",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:67",
-        "snippet": "#[Route(path: '/%eccube_admin_route%/product/simple_high_price/csv_upload', name: 'admin_product_simple_high_price_csv_upload', methods: ['GET'])]",
-        "weight": 7
-      },
-      {
-        "term": "admin_product_simple_high_price_import",
-        "termType": "routeName",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:94",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:106",
         "snippet": "'form_action_route' => 'admin_product_simple_high_price_import',",
         "weight": 7
       },
@@ -1673,7 +1757,7 @@
         "term": "admin_product_simple_high_price_csv_template",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:95",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:107",
         "snippet": "'template_download_route' => 'admin_product_simple_high_price_csv_template',",
         "weight": 7
       },
@@ -1681,8 +1765,80 @@
         "term": "admin_product_simple_high_price_csv_upload",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:97",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:109",
         "snippet": "'history_page_route' => 'admin_product_simple_high_price_csv_upload',",
+        "weight": 7
+      },
+      {
+        "term": "admin_product_simple_high_price_import",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:124",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/product/simple_high_price/import', name: 'admin_product_simple_high_price_import', methods: ['POST'])]",
+        "weight": 7
+      },
+      {
+        "term": "admin_product_simple_high_price_csv_upload",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:138",
+        "snippet": "return $this->redirectToRoute('admin_product_simple_high_price_csv_upload');",
+        "weight": 7
+      },
+      {
+        "term": "admin_product_simple_high_price_csv_upload",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:146",
+        "snippet": "return $this->redirectToRoute('admin_product_simple_high_price_csv_upload');",
+        "weight": 7
+      },
+      {
+        "term": "SimpleHighPriceImportHandler",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:157",
+        "snippet": "$handler = new SimpleHighPriceImportHandler($this->productClassRepository);",
+        "weight": 7
+      },
+      {
+        "term": "SimpleHighPriceImportHandler",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:27",
+        "snippet": "use Eccube\\Service\\Csv\\Importer\\Event\\SimpleHighPriceImportHandler;",
+        "weight": 7
+      },
+      {
+        "term": "ProductSimpleHighPriceCsvController",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:37",
+        "snippet": "class ProductSimpleHighPriceCsvController extends AbstractController",
+        "weight": 7
+      },
+      {
+        "term": "ProductSimpleHighPriceCsvController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:37",
+        "snippet": "class ProductSimpleHighPriceCsvController extends AbstractController",
+        "weight": 7
+      },
+      {
+        "term": "admin_product_simple_high_price_csv_template",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:52",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/product/simple_high_price/csv_template', name: 'admin_product_simple_high_price_csv_template', methods: ['GET'])]",
+        "weight": 7
+      },
+      {
+        "term": "admin_product_simple_high_price_csv_upload",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:79",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/product/simple_high_price/csv_upload', name: 'admin_product_simple_high_price_csv_upload', methods: ['GET'])]",
         "weight": 7
       }
     ],
@@ -1811,13 +1967,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 102,
-    "verdictedCount": 102,
+    "requirementCount": 114,
+    "verdictedCount": 114,
     "unverdictedCount": 0,
     "coverageComplete": true,
     "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
     "counts": {
-      "実装済み": 102,
+      "実装済み": 114,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -2193,10 +2349,10 @@
         "elementLevel": true
       },
       {
-        "requirementId": "m03-32_0204_sheet-48_csv-req-6e2f7fef3b",
+        "requirementId": "m03-32_0204_sheet-48_csv-req-0ab552d0b5",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
-        "designRequirement": "M03-32 高額商品価格変更CSV登録 / m03-32_admin_product_product_simple_high_price_csv_import（管理画面_商品管理_高額商品価格変更CSV登録）",
+        "designRequirement": "M03-32 高額商品価格変更CSV登録 / 商品管理 — 高額商品価格変更CSV登録",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3301,6 +3457,198 @@
         "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
         "designRequirement": "行エラーだけを積みつつ処理継続。コントローラ成功系は実行されないことがある",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-32_0204_sheet-48_csv-req-5436e6bea1",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "The uploaded file was too large. Please try to upload a smaller file. ／ CSRFトークンが無効です、再送信してください。 ／ フィールドグループに追加のフィールドを含んではなりません。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-32_0204_sheet-48_csv-req-d2688dac9e",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "CSV取込を送信したときに、アップロードしたファイルのサイズが上限を超えた、CSRFトークンが無効になった、または送信内容に未対応の項目が含まれるとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-32_0204_sheet-48_csv-req-f25d58ba25",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "エラーを表示し、高額商品価格変更CSVアップロード画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-32_0204_sheet-48_csv-req-5abdf7d4f3",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "%maxRecord% 行を超えるCSVファイルは登録できません。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-32_0204_sheet-48_csv-req-86d656b70c",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "上限を超える行数のCSVファイルを登録したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-32_0204_sheet-48_csv-req-80a638236b",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "%d行目: セール中商品のため、基準価格のみ更新しました。（販売価格は変更されません）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-32_0204_sheet-48_csv-req-0c71d000ca",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "警告を表示し、高額商品価格変更CSVアップロード画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-32_0204_sheet-48_csv-req-f39b79ea9c",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "CSVのフォーマットが一致しません。 ／ CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。 ／ CSVデータが存在しません。 ／ %s は必須項目です。 %d 行目のデータを確認してください。 ／ %d 行目の %s ではデータを取得できません。 ／ %d 行目の %s は0以上の数値を設定してください。 ／ %d 行目の %s は %d桁以内の数値 を設定してください。 ／ %d 行目の商品コードの値 %s は重複して登録されてるため更新できません。 ／ %d行目: 対象の商品規格がありません。（商品公開ステータスが0かつ高額商品コードが設定された規格のみ対象です）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-32_0204_sheet-48_csv-req-27f0a815b1",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "登録が完了しました。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-32_0204_sheet-48_csv-req-05e7dca1f7",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "CSVファイルをエラーなく登録したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-32_0204_sheet-48_csv-req-ffca0de50e",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "成功メッセージを表示し、高額商品価格変更CSVアップロード画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-32_0204_sheet-48_csv-req-e4629fc464",
+        "category": "GET クエリで指定された表示件数をセッションへ保存または既定へ戻す",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-48",
+        "designRequirement": "%d 行目の商品コードの値 %s は重複して登録されてるため更新できません。",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

@@ -1,0 +1,165 @@
+{
+  "packetId": "trial_01",
+  "results": [
+    {
+      "rowId": 1,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html:1057-1058 に「ECCUBE -> スマレジ(API個別)…一括処理ではない管理画面」「ECCUBE -> スマレジ連携(Patch一括)…CSV登録等の一括処理」とあり、同:1073-1082 は在庫編集・一括編集・CSV・移動・分割結合・棚卸しを列挙してスマレジ反映を要求している。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php:74-84 に旧受注経路の「在庫情報更新」と `cURLSmaregi(..., 'stock_upd', ...)` はあるが、管理在庫編集・Patch一括・移動・分割結合・棚卸しの新設計範囲は旧4リポジトリを `smaregi/スマレジ/stock/relative/bulk/callback` で検索しても確認できなかった。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockApprovalStoreAction.php:32-40 の依存はEntityManager・在庫/承認/履歴EntityManagerのみでSmaregiクライアントがなく、同:95-105 は `productStockEntityManager->save` と `stockHistoryEntityManager->save` のDB処理である。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiStockApiClient.php:43-77 の更新系は正数だけを許す `add` のみで、管理各経路やPatch一括への接続はない。",
+      "note": "旧実装にも受注在庫の連携はあるが、判定根拠はExcel原文に明記された移行後の管理在庫連携要件。現実装の `add` は部分的なAPI能力にすぎず、列挙された管理操作への組込みを満たさない。"
+    },
+    {
+      "rowId": 2,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html:1073-1074 に在庫編集・一括編集について「在庫場所区分がスマレジの場合に編集結果をスマレジ側に反映する」「実行できる件数上限を設定し、上限を越えたらエラーを表示し、CSV登録を促す」と明記され、同:1087 に閾値超過時はPatch一括、以下はAPI個別とある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php:74-84 の旧実装は受注の `stock_upd` だけで、管理在庫編集の件数上限・CSV誘導は旧4リポジトリを `20商品/100商品/CSV登録を促/上限/stock_upd` で検索しても見つからなかった。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockBulkApprovalStoreAction.php:35-43 の依存にSmaregi APIクライアントはなく、同:74-100 は各明細の `processOne` と承認一覧保存だけである。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/StockApprovalStoreAction.php:32-40 も同様にDB系依存だけで、件数上限エラーやCSV誘導分岐はない。",
+      "note": ""
+    },
+    {
+      "rowId": 3,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html:1272-1277 に大量CSV時のPatch一括、callback用S3保存、CSV履歴表示、100件毎の分割が明記され、同:1280 に「在庫一括相対値更新APIにより…一括登録」とある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php:74-84 の旧コードは単一受注の `stock_upd` のみ。旧4リポジトリを `在庫一括相対値更新/postBulkUpdate/callback/S3/100件` で横断検索したが、この一括CSVフローは存在しなかった。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:90-101 は親承認レコードを作り、同:124-135 は成功時に承認一覧を保存するだけである。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiStockApiClient.php:43-183 の公開メソッドは `add/getStockChange/listStocks/listStockChanges` で、一括相対値更新・callback登録・S3 CSV送信はない。",
+      "note": ""
+    },
+    {
+      "rowId": 4,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html:1279-1284 に、登録時にはECCUBE在庫を変えず、非同期結果受信後に問合せID/callbackパラメータでCSVを特定しS3から取得、在庫更新、CSV処理履歴登録を行うと明記されている。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php:74-84 の旧 `stock_upd` は同期的な受注在庫更新であり、旧4リポジトリを `問合せID/inquiry/callback/S3/一括相対` で検索しても設計の非同期callback処理は見つからなかった。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:91-109 は汎用イベントを保存して `SmaregiWebhookEventMessage` をdispatchする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Stock/StockEventDispatcher.php:52-88 は `action=edited` の `ids` を在庫変動履歴ID・商品ID・店舗IDとしてdispatchするだけで、問合せID、対象CSV、S3、CSV履歴を扱わない。",
+      "note": ""
+    },
+    {
+      "rowId": 5,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0501_基本設計仕様書(API_在庫管理).html:1593 に「バッチ駆動時間から5時間前まで」、同:1597-1599 に実行時間と取得期間を可変にする旨、同:1612 に検索条件「XからX-Y hoursの間」と明記されている。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiTransaction.php:29-44 に旧再連携処理はあるが、対象は「取引情報」「ポイントを再連携」で `transaction_ref` を呼ぶ別機能である。旧4リポジトリを `在庫変動履歴/target_date/X-Y/5時間/webhook再連携` で検索してもA01-02相当はなかった。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/SmaregiStockBackfillCommand.php:42-58 は可変引数を時間幅ではなく `target-date` 1日として渡す。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Stock/SmaregiStockBackfillAction.php:65-69 は日付を決め、同:169-179 はAPIへ `target_date`, `page`, `limit` のみを渡すため、5時間窓/X-Y hoursを実装していない。",
+      "note": ""
+    },
+    {
+      "rowId": 6,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1055-1056 にEC-CUBE側URL例 `lang=jp` と「EC-CUBEサーバURLではjpで表記する」が明記される。一方、同:1067-1074 は内部API入力を `ja`/`en`、例 `/api/popup/product/ja/180498` としており、外部jp→内部jaの二層契約である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/GoodsApiController.php:50-71 は外部 `goods_api` 経路でロケールjaを `jp` にしてAPIへ渡し、/home/y-saito/Developments/pf-api/src/Repository/DtbProductSubClassRepository.php:17 は `LANG_RANK = ['jp' => 2, 'en' => 1]` としてjp/enを処理する。旧実装は設計の外部jp契約を裏付ける。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:150-162 の現行入口は `/api/popup/product/{lang}/{productId}` で、`'ja' => 'JP', 'en' => 'EN'` のみ許可し `jp` は404にする。`src` を `goods_api/get_goods` で検索しても旧プロキシ相当はなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Front/GoodsApiController.php:40 はカードIDのredirect経路だけである。",
+      "note": "Excel原文は外部EC-CUBE URLのjpと内部APIのjaを区別している。現行に旧 `get_goods` 変換層が無いため、外部jp契約が満たされないと判定した。"
+    },
+    {
+      "rowId": 7,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1075-1078 のExcel原文は「404 該当データがない場合」までで、失敗本文のキー `message` は記載しない（確認範囲: sheet-3のExcel由来 `src-cell` 全件）。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/ProductController.php:67-73 は該当なし時に `View::create(['code' => 404, 'message' => 'Not Found'], 404)` を返す。`{code,message}` の真の根拠は旧実装である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:165-181 はNotFoundExceptionをcatchして `['code' => ..., 'errors' => $e->getErrors()]` を返す。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php:27-34 も `errors: [$message]` を保持する。",
+      "note": "設計書は404自体を裏付けるが、指摘の核心である本文キー `message` は旧実装由来。"
+    },
+    {
+      "rowId": 8,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1090-1099 のExcel原文型表は price01/price02/stock/weeklySold を「数値(整数)」とする一方、同:1110-1119 のサンプルは `price02: \"50\"`, `stock: \"17\"`, `weeklySold: \"1\"` と文字列で、設計書単独では型契約が矛盾している。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Resources/config/doctrine/DtbProductClass.orm.yml:54-80 は stock/price01/price02 を `type: decimal` と定義し、/home/y-saito/Developments/pf-api/src/Repository/DtbProductSubClassRepository.php:52-76 はそれらを無変換で返し、同:227-241 は `SUM(...)` のscalarを無変換でweeklySoldへ返す。旧Doctrine実装が数値文字列の根拠である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2158-2170 は price01/price02/stock/weeklySold をすべてResultSetMappingの `integer` にし、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Popup/PopupResponseBuilder.php:33-41 はstockとweeklySoldをさらに `(int)` で返す。",
+      "note": "Excelの型表とサンプルが矛盾するため設計だけでは確定不能だが、旧実装のdecimal/scalar hydrationがサンプルの文字列を説明するためLEGACY_BACKED。"
+    },
+    {
+      "rowId": 9,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1255-1265 のExcel原文リクエスト表は「言語コード」「カードID」の2項目のみで、`foil_flg`/`price` は存在しない（確認範囲: sheet-4のExcel由来 `src-cell` 全件）。後段のリバース詳細設計は旧pf-apiを正とするため正本Excel根拠には数えない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/ProductController.php:87-93 は `$request->get('foil_flg')`, `$request->get('price')` を取得してリポジトリへ渡す。/home/y-saito/Developments/pf-api/src/Repository/DtbProductSubClassRepository.php:111-121 はfoil真偽でASC/DESC、同:114-116 は `price === 'high' ? 'DESC' : 'ASC'` を適用する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:265-278 はRequestを受け取らずcardId/language/shopIdだけを `findPopupProductByCardId` へ渡す。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2357-2367 のORDER BYは `cd.foil_flg ASC` 固定でprice02順を持たない。",
+      "note": ""
+    },
+    {
+      "rowId": 10,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1271-1274 のExcel原文は「404 該当データがない場合」だけで、本文 `{code,message}` は存在しない（確認範囲: sheet-4のExcel由来 `src-cell` 全件）。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/ProductController.php:95-101 はカード検索結果が空のとき `['code' => 404, 'message' => 'Not Found']` をHTTP 404で返す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:279-295 はNotFoundExceptionを `['code' => ..., 'errors' => ...]` に整形する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php:27-34 もエラーを配列で保持する。",
+      "note": "404ステータスは設計にもあるが、messageキーの根拠は旧実装。"
+    },
+    {
+      "rowId": 11,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1472-1475 のExcel原文はA02-03の404条件までで、失敗本文 `{code,message}` は記載しない（確認範囲: sheet-5のExcel由来 `src-cell` 全件）。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/ProductController.php:119-125 は言語なし旧商品ID経路で `['code' => 404, 'message' => 'Not Found']` を返し、同:143-149 は言語あり旧商品ID経路でも同じ本文を返す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:323-339 は言語なし旧ID経路で `errors`、同:372-388 は言語あり経路でも `errors` を返す。`message` キーは返さない。",
+      "note": "パケットのA02-03/A02-04経路名とExcelシートの言語有無に入替わりがあるため両旧ID経路を確認したが、どちらも旧実装はmessage、新実装はerrorsで同じ結論。"
+    },
+    {
+      "rowId": 12,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1484-1497 のsheet-5 Excel原文レスポンス項目にはproductId等とfoilFlg/weeklySold/productUrlがあるが `cardId` はない（確認範囲: sheet-5レスポンス表全項目）。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Repository/DtbProductRepository.php:88-115 は言語なし旧商品IDを検索し、SELECT末尾で `card.id AS cardId` を返す。/home/y-saito/Developments/pf-api/src/Controller/ProductController.php:113-128 はその配列を無変換で返す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2495-2513 の言語なし旧ID SELECTにcardIdはなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Popup/PopupResponseBuilder.php:29-49 の出力キーにもcardIdはない。",
+      "note": "設計参照シートの項目表はcardIdを裏付けず、言語なし旧実装のSELECTが真の根拠。"
+    },
+    {
+      "rowId": 13,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1487-1489 のExcel型表はprice01/price02/stockを「数値(整数)」とする一方、同:1507-1509 のサンプルは `price02: \"50\"`, `stock: \"17\"` と文字列で、型契約が矛盾する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Resources/config/doctrine/DtbProductClass.orm.yml:54-80 はstock/price01/price02をdecimalとし、/home/y-saito/Developments/pf-api/src/Repository/DtbProductRepository.php:101-115 はこれらをSELECTして無変換で返す。旧Doctrineのdecimal hydrationが数値文字列の根拠である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2538-2550 はprice01/price02/stock/weeklySoldを `integer` にマップし、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Popup/PopupResponseBuilder.php:33-41 はstockとweeklySoldをintへキャストする。",
+      "note": "Excelの表とサンプルが矛盾するため、旧実装で文字列契約を確定した。"
+    },
+    {
+      "rowId": 14,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1627-1629 のsheet-6 Excel原文は `/popup/old/{旧商品ID}` で言語パスを持たず、同:1641-1649 のリクエスト表も旧商品IDだけである。したがって「jp/enを受ける」期待はこの参照シートにはない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/config/routes.yaml:101-107 は別の旧商品ID経路 `/popup/old/{lang}/{oldProductId}` を定義し、/home/y-saito/Developments/pf-api/src/Repository/DtbProductSubClassRepository.php:17 は `LANG_RANK = ['jp' => 2, 'en' => 1]`、同:168-170 はそのlangを利用する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:361-369 は言語あり経路を持つが、`'ja' => 'JP'`、それ以外すべて`EN`なので `jp` をJPとして扱わない。",
+      "note": "指定されたsheet-6は言語なし経路であり設計参照がずれている。旧pf-apiの言語あり経路がjp/en期待の根拠。"
+    },
+    {
+      "rowId": 15,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1658-1661 のExcel原文は「404 該当データがない場合」のみで、本文 `{code,message}` は記載しない（確認範囲: sheet-6のExcel由来 `src-cell` 全件）。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/ProductController.php:119-125 は言語なし旧ID経路、同:143-149 は言語あり旧ID経路で、いずれも `['code' => 404, 'message' => 'Not Found']` を返す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:372-388 は言語あり旧ID経路でNotFoundExceptionを `['code' => ..., 'errors' => ...]` にする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php:27-34 も `errors: [$message]` である。",
+      "note": "404自体は設計にあるが、messageキーは旧実装由来。"
+    },
+    {
+      "rowId": 16,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1673-1682 のExcel型表はprice01/price02/stock/weeklySoldを「数値(整数)」とする一方、同:1693-1702 のサンプルはprice02/stock/weeklySoldを引用符付きで示し、型契約が矛盾する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Resources/config/doctrine/DtbProductClass.orm.yml:54-80 はstock/price01/price02をdecimalとし、/home/y-saito/Developments/pf-api/src/Repository/DtbProductSubClassRepository.php:194-214 は値とSUM結果weeklySoldを無変換で返すため、旧実装が数値文字列の根拠になる。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2458-2470 はprice01/price02/stock/weeklySoldをintegerにマップし、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Popup/PopupResponseBuilder.php:33-41 はstock/weeklySoldを `(int)` で返す。",
+      "note": "Excelの表とサンプルの矛盾を旧実装で解消したためLEGACY_BACKED。"
+    },
+    {
+      "rowId": 17,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1680-1682 のExcel原文レスポンス表は `conditionCode` に続いて `foilFlg`（「Foilフラグ」）、`weeklySold` を明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Repository/DtbProductRepository.php:101-115 の言語なし旧ID SELECTはcardIdまでを返すがfoilFlgを選択せず、/home/y-saito/Developments/pf-api/src/Repository/DtbProductSubClassRepository.php:194-205 の言語あり旧ID SELECTにもfoilFlgはない。旧実装はこの項目を満たさず、根拠は設計書側にある。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:383 は `build(..., true)` を呼び、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Popup/PopupResponseBuilder.php:45-49 はtrue時にbeltUrlを追加し、foilFlgはelse時だけ追加する。/home/y-saito/Developments/ec-cube-enterprise/tests/Eccube/Tests/Web/App/ProductControllerTest.php:408-410 も旧ID経路で `assertArrayNotHasKey('foilFlg', ...)` と固定している。",
+      "note": ""
+    },
+    {
+      "rowId": 18,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1869 はExcel原文の項目名を `result.strageCodeId` とし、同:1898 のサンプルも `\"strageCodeId\": 1449` と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Repository/DtbProductClassRepository.php:34-54 は `storageCode.id AS strageCodeId` として旧APIでも同じ綴りを返す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2218-2224 は `sc.id AS storageCodeId`、同:2257 は結果キーを `storageCodeId` にマップし、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:232-237 は変換せずresultsを返す。",
+      "note": "設計上の綴りは誤記に見えるが、旧API外部契約も `strageCodeId` であり、設計原文を優先すると真の乖離。"
+    },
+    {
+      "rowId": 19,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1864-1865 のExcel型表はstock/price02を「数値(整数)」とする一方、同:1893-1894 のサンプルは `\"stock\": \"1\"`, `\"price02\": \"6000\"` と文字列で、設計書内で矛盾する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Resources/config/doctrine/DtbProductClass.orm.yml:54-80 はstock/price02をdecimalと定義し、/home/y-saito/Developments/pf-api/src/Repository/DtbProductClassRepository.php:34-54 は両値を無変換でSELECTして返す。旧Doctrine実装がサンプルの文字列を裏付ける。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2204-2205 はstock/price02を取得し、同:2252-2253 で両方を `integer` にマップする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:232-237 は結果をそのままJSON化する。",
+      "note": "Excelの型表とJSON例が矛盾するため、旧実装を真の型根拠として採用した。"
+    },
+    {
+      "rowId": 20,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0502_基本設計仕様書(API_商品管理).html:1874-1875 は両更新日時を文字列フィールドとして定義し、同:1903-1904 のExcel原文サンプルは `2025-08-01T20:20:00+09:00` と `2025-03-06T18:34:41+09:00` のISO8601形式を明示する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Repository/DtbProductClassRepository.php:34-54 はDoctrineの `productClass.updateDate AS productClassUpdateDate`, `product.updateDate AS productUpdateDate` を返し、/home/y-saito/Developments/pf-api/src/Resources/config/doctrine/DtbProductClass.orm.yml:87-94 はupdateDateを `datetime` としている。旧FOSRest経路はDateTime値を返す実装で、設計サンプルとも整合する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:2223-2224 はDB列 `update_date` を直接SELECTし、同:2262-2263 は単なる `string` にマップする。入力パラメータは同:2266-2267 で `format('c')` する一方、出力値に `DateTimeInterface::ATOM`/`format('c')` を適用する処理はなく、Controllerも /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:232-237 で結果をそのまま返す。",
+      "note": "実DB値のタイムゾーン設定にかかわらず、現行コードは設計例のT区切り・オフセット付きISO8601を保証する整形を行っていないためSPEC_BACKED。"
+    }
+  ]
+}

@@ -61,9 +61,9 @@
         "src/Eccube/Repository/Traits/SortProductTrait.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbShippingStandbyRepository.php:320\n317:             ->groupBy('o, op, oc, s, sp, sc, d, oi, p, pc, stc, cd, lng, sn, r, c, cs, psc');\n318: \n319:         // 品目のソート\n320:         $this->sortProduct($qb2);\n321: \n322:         $items = $qb2\n323:             ->getQuery()",
-        "src/Eccube/Repository/Traits/SortProductTrait.php:69\n66:                 \"CASE WHEN cs.sort_no IS NULL THEN 0 ELSE cs.sort_no END AS {$hiddenOrNot['colorSequence']} colorSequence\",\n67:                 \"CASE WHEN stc.alphabet_sort_flg = true THEN c.name_en ELSE 'zzz' END AS {$hiddenOrNot['alphabetSort']} alphabetSort\",\n68:                 \"CASE WHEN cd.id IS NULL THEN 0 ELSE 1 END AS {$hiddenOrNot['isCard']} isCard\",\n69:                 \"sn.sortNo AS {$hiddenOrNot['shelfNumberSortNo']} shelfNumberSortNo\",\n70:             )\n71:             ->addOrderBy('isCard', 'DESC')\n72:             ->addOrderBy('shelfNumberSortNo', 'ASC')",
-        "src/Eccube/Repository/Traits/SortProductTrait.php:72\n69:                 \"sn.sortNo AS {$hiddenOrNot['shelfNumberSortNo']} shelfNumberSortNo\",\n70:             )\n71:             ->addOrderBy('isCard', 'DESC')\n72:             ->addOrderBy('shelfNumberSortNo', 'ASC')\n73:             ->addOrderBy('languageOrder', 'ASC')\n74:             ->addOrderBy('psc.CardCondition', 'ASC')\n75:             ->addOrderBy('foilFlg', 'ASC')"
+        "src/Eccube/Repository/DtbShippingStandbyRepository.php:320\n317:             ->leftJoin('p.CardDetail', 'cd')\n318:             ->leftJoin('pc.Language', 'lng')\n319:             ->leftJoin('pc.ShelfNumber', 'sn')\n320:             ->leftJoin('cd.Rarity', 'r')\n321:             ->leftJoin('cd.Card', 'c')\n322:             ->leftJoin('c.ColorSequence', 'cs')\n323:             ->leftJoin('oi.ProductClass', 'psc')",
+        "src/Eccube/Repository/Traits/SortProductTrait.php:69\n66:                 \"stc.rank AS {$hiddenOrNot['storageCodeRank']} storageCodeRank\",\n67:                 \"lng.id AS {$hiddenOrNot['languageOrder']} languageOrder\",\n68:                 \"CASE WHEN cd.foil_flg IS NULL THEN 0 ELSE cd.foil_flg END AS {$hiddenOrNot['foilFlg']} foilFlg\",\n69:                 \"CASE WHEN r.id IS NULL THEN 1 ELSE 0 END AS {$hiddenOrNot['isRarityNull']} isRarityNull\",\n70:                 \"CASE WHEN r.id IN (:rareId, :mythicId) THEN :rareOrderVal ELSE r.id END AS {$hiddenOrNot['rarityOrder']} rarityOrder\",\n71:                 \"CASE WHEN stc.alphabet_sort_flg = false OR cd.card_no IS NULL OR cd.card_no = '' THEN 1 ELSE 0 END AS {$hiddenOrNot['isCardNumberNull']} isCardNumberNull\",\n72:                 \"CASE WHEN stc.alphabet_sort_flg = false THEN concat(cd.card_no, '0') ELSE '0' END AS {$hiddenOrNot['cardNumber']} cardNumber\",    // TODO: カードNOは英数字あり - 文字列結合としたが現行と同じになるか？（MySQL - PgSQLの差異）",
+        "src/Eccube/Repository/Traits/SortProductTrait.php:72\n69:                 \"CASE WHEN r.id IS NULL THEN 1 ELSE 0 END AS {$hiddenOrNot['isRarityNull']} isRarityNull\",\n70:                 \"CASE WHEN r.id IN (:rareId, :mythicId) THEN :rareOrderVal ELSE r.id END AS {$hiddenOrNot['rarityOrder']} rarityOrder\",\n71:                 \"CASE WHEN stc.alphabet_sort_flg = false OR cd.card_no IS NULL OR cd.card_no = '' THEN 1 ELSE 0 END AS {$hiddenOrNot['isCardNumberNull']} isCardNumberNull\",\n72:                 \"CASE WHEN stc.alphabet_sort_flg = false THEN concat(cd.card_no, '0') ELSE '0' END AS {$hiddenOrNot['cardNumber']} cardNumber\",    // TODO: カードNOは英数字あり - 文字列結合としたが現行と同じになるか？（MySQL - PgSQLの差異）\n73:                 \"CASE WHEN cs.sort_no IS NULL THEN 0 ELSE cs.sort_no END AS {$hiddenOrNot['colorSequence']} colorSequence\",\n74:                 \"CASE WHEN stc.alphabet_sort_flg = true THEN c.name_en ELSE 'zzz' END AS {$hiddenOrNot['alphabetSort']} alphabetSort\",\n75:                 \"CASE WHEN cd.id IS NULL THEN 0 ELSE 1 END AS {$hiddenOrNot['isCard']} isCard\","
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -77,7 +77,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 52,
+    "extractedRequirementCount": 53,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -705,6 +705,19 @@
         "coveredByFinding": true
       },
       {
+        "id": "m05-10_0203_sheet-14_sheet-req-fe5169fc02",
+        "category": "一覧の検索セッションを印刷が読む経路はない。子ウィンドウは親のセッションクッキーは共有されるが、このリクエストに検索状態をクエリ載せしない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-14",
+        "designRequirement": "出荷指示リスト編集（ ShippingStandbyController 。本書「関連する別入口」で参照する admin_shipping_standby_* 系）で発生するフラッシュメッセージおよびJS確認ダイアログ。備考登録・リスト削除アクション由来であり、英語納品書印刷アクション自体はメッセージを出さない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
         "id": "m05-10_0203_sheet-14_sheet-req-407b8c9fb7",
         "category": "一覧の検索セッションを印刷が読む経路はない。子ウィンドウは親のセッションクッキーは共有されるが、このリクエストに検索状態をクエリ載せしない。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-14",
@@ -773,6 +786,7 @@
         "ORDER_LIST_THRESHOLD_PRICE_1",
         "ORDER_LIST_THRESHOLD_PRICE_2",
         "order_id",
+        "admin_shipping_standby_",
         "admin_shipping_standby_print_delivery_slips",
         "order_ids"
       ],
@@ -783,7 +797,8 @@
       ],
       "classNames": [
         "OrderController",
-        "DtbShippingStandbyRepository"
+        "DtbShippingStandbyRepository",
+        "ShippingStandbyController"
       ],
       "paths": [
         "pf-eccube3/m05-10_admin_order_order_print_delivery_slips_en.md",
@@ -817,23 +832,39 @@
         "term": "admin_delivery_slips_export",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderController.php:731",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderController.php:798",
         "snippet": "#[Route(path: '/%eccube_admin_route%/order/print/delivery_slips/{lang}', name: 'admin_delivery_slips_export', requirements: ['lang' => 'ja|en'], methods: ['GET', 'POST'])]",
+        "weight": 7
+      },
+      {
+        "term": "ShippingStandbyController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:1",
+        "snippet": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php",
         "weight": 7
       },
       {
         "term": "order_ids",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:291",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:344",
         "snippet": "$orderIdList = array_keys($request->get('order_ids', []));",
+        "weight": 7
+      },
+      {
+        "term": "ShippingStandbyController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:46",
+        "snippet": "class ShippingStandbyController extends AbstractController",
         "weight": 7
       },
       {
         "term": "admin_shipping_standby_print_delivery_slips",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:393",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:461",
         "snippet": "#[Route(path: '/%eccube_admin_route%/standby/{id}/print/delivery/{lang}', name: 'admin_shipping_standby_print_delivery_slips', requirements: ['id' => '\\d+', 'lang' => 'ja|en'], methods: ['GET', 'POST'])]",
         "weight": 7
       },
@@ -841,8 +872,16 @@
         "term": "order_ids",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:401",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:469",
         "snippet": "$orderIdList = array_keys($request->get('order_ids', []));",
+        "weight": 7
+      },
+      {
+        "term": "ShippingStandbyController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:60",
+        "snippet": "* ShippingStandbyController constructor.",
         "weight": 7
       },
       {
@@ -889,39 +928,39 @@
         "term": "order_list_threshold_price_1",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:141",
-        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:144",
+        "snippet": "'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
         "weight": 7
       },
       {
         "term": "order_list_threshold_price_2",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:142",
-        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:149",
+        "snippet": "'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
         "weight": 7
       },
       {
         "term": "order_list_threshold_price_1",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:231",
-        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:239",
+        "snippet": "'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
         "weight": 7
       },
       {
         "term": "order_list_threshold_price_2",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:232",
-        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:244",
+        "snippet": "'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
         "weight": 7
       },
       {
         "term": "DtbShippingStandbyRepository",
         "termType": "className",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:30",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:31",
         "snippet": "class DtbShippingStandbyRepository extends AbstractRepository implements ServiceEntityRepositoryInterface",
         "weight": 7
       },
@@ -929,32 +968,8 @@
         "term": "order_list_threshold_price_1",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/OrderRepository.php:1106",
-        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
-        "weight": 7
-      },
-      {
-        "term": "order_list_threshold_price_2",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/OrderRepository.php:1107",
-        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
-        "weight": 7
-      },
-      {
-        "term": "admin_delivery_slips_export",
-        "termType": "routeName",
-        "role": "Twig",
-        "ref": "src/Eccube/Resource/template/admin/Order/index.twig:173",
-        "snippet": "$('#form_bulk').attr('action', \"{{ url('admin_delivery_slips_export', { 'lang': 'ja' }) }}\");",
-        "weight": 7
-      },
-      {
-        "term": "admin_delivery_slips_export",
-        "termType": "routeName",
-        "role": "Twig",
-        "ref": "src/Eccube/Resource/template/admin/Order/index.twig:186",
-        "snippet": "$('#form_bulk').attr('action', \"{{ url('admin_delivery_slips_export', { 'lang': 'en' }) }}\");",
+        "ref": "src/Eccube/Repository/OrderRepository.php:1208",
+        "snippet": "'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
         "weight": 7
       }
     ],
@@ -1031,13 +1046,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 52,
-    "verdictedCount": 52,
+    "requirementCount": 53,
+    "verdictedCount": 53,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 52,
+      "実装済み": 53,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -1811,6 +1826,22 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": false
+      },
+      {
+        "requirementId": "m05-10_0203_sheet-14_sheet-req-fe5169fc02",
+        "category": "一覧の検索セッションを印刷が読む経路はない。子ウィンドウは親のセッションクッキーは共有されるが、このリクエストに検索状態をクエリ載せしない。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-14",
+        "designRequirement": "出荷指示リスト編集（ ShippingStandbyController 。本書「関連する別入口」で参照する admin_shipping_standby_* 系）で発生するフラッシュメッセージおよびJS確認ダイアログ。備考登録・リスト削除アクション由来であり、英語納品書印刷アクション自体はメッセージを出さない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
       },
       {
         "requirementId": "m05-10_0203_sheet-14_sheet-req-407b8c9fb7",

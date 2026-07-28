@@ -69,7 +69,7 @@
         "src/Eccube/Resource/locale/messages.ja.yaml"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:31\n28: use Symfony\\Component\\HttpFoundation\\Response;\n29: use Symfony\\Component\\Routing\\Attribute\\Route;\n30: \n31: class ProductBulkUpdateBuyPriceController extends AbstractController\n32: {\n33:     /**\n34:      * ProductBulkUpdateBuyPriceController constructor.",
+        "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:33\n30: use Symfony\\Component\\HttpFoundation\\Response;\n31: use Symfony\\Component\\Routing\\Attribute\\Route;\n32: \n33: class ProductBulkUpdateBuyPriceController extends AbstractController\n34: {\n35:     /**\n36:      * ProductBulkUpdateBuyPriceController constructor.",
         "src/Eccube/Form/Type/Admin/BulkUpdateProductPriceType.php:27\n24: use Symfony\\Component\\Validator\\Context\\ExecutionContextInterface;\n25: use Symfony\\Contracts\\Translation\\TranslatorInterface;\n26: \n27: class BulkUpdateProductPriceType extends AbstractType\n28: {\n29:     public function __construct(private readonly TranslatorInterface $translator)\n30:     {",
         "src/Eccube/Form/Type/Admin/BulkUpdateProductPriceDetailType.php:24\n21: use Symfony\\Component\\Form\\FormBuilderInterface;\n22: use Symfony\\Component\\OptionsResolver\\OptionsResolver;\n23: \n24: class BulkUpdateProductPriceDetailType extends AbstractType\n25: {\n26:     #[\\Override]\n27:     public function buildForm(FormBuilderInterface $builder, array $options)"
       ],
@@ -137,8 +137,8 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:79\n76:                 'MP' => (int) ($classData['product_class_id_mp'] ?? 0),\n77:                 'HP' => (int) ($classData['product_class_id_hp'] ?? 0),\n78:             ];\n79:             $conditionStandardPrices = [\n80:                 'NM' => $standardPrice,\n81:                 'SP' => (int) ($classData['standard_price_sp'] ?? $standardPrice),\n82:                 'MP' => (int) ($classData['standard_price_mp'] ?? $standardPrice),",
-        "src/Eccube/Repository/ProductClassRepository.php:1936\n1933: FROM dtb_product_class pc2\n1934: JOIN dtb_product p ON p.id = pc2.product_id\n1935: LEFT JOIN mtb_card_detail cd ON cd.id = p.card_detail_id\n1936: WHERE pc2.id = :productClassId\n1937:     AND pc1.product_id = pc2.product_id\n1938:     AND pc1.language_id = pc2.language_id\n1939:     AND pc2.high_price_code IS NULL",
-        "src/Eccube/Repository/ProductClassRepository.php:1993\n1990: FROM dtb_product_class pc2\n1991: JOIN dtb_product p ON p.id = pc2.product_id\n1992: LEFT JOIN mtb_card_detail cd ON cd.id = p.card_detail_id\n1993: WHERE pc2.id = :productClassId\n1994:     AND pc1.product_id = pc2.product_id\n1995:     AND pc1.language_id = pc2.language_id\n1996:     AND pc2.high_price_code IS NULL"
+        "src/Eccube/Repository/ProductClassRepository.php:1936\n1933:           )\n1934:         LIMIT 1\n1935:     ), :nmPrice),\n1936:     standard_price = CASE\n1937:         WHEN pc1.id = :productClassIdNm::INT THEN :standardPriceNm::INT\n1938:         WHEN pc1.id = :productClassIdSp::INT THEN :standardPriceSp::INT\n1939:         WHEN pc1.id = :productClassIdMp::INT THEN :standardPriceMp::INT",
+        "src/Eccube/Repository/ProductClassRepository.php:1993\n1990:             ELSE :nmPrice::NUMERIC END\n1991:          ) END\n1992: )::NUMERIC / 100) * 100,\n1993:     standard_price = CASE\n1994:         WHEN pc1.id = :productClassIdNm::INT THEN :standardPriceNm::INT\n1995:         WHEN pc1.id = :productClassIdSp::INT THEN :standardPriceSp::INT\n1996:         WHEN pc1.id = :productClassIdMp::INT THEN :standardPriceMp::INT"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -152,7 +152,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 97,
+    "extractedRequirementCount": 104,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -1287,6 +1287,97 @@
         "coveredByFinding": true
       },
       {
+        "id": "m03-10_0204_sheet-23_sheet-req-15238c6027",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "1つ以上の商品を選択してください",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-10_0204_sheet-23_sheet-req-00b586f4e5",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "商品一覧画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-10_0204_sheet-23_sheet-req-6ef9c1bd30",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "登録が完了しました。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-10_0204_sheet-23_sheet-req-690f2e05b6",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "一括編集で価格を更新したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-10_0204_sheet-23_sheet-req-24995bbf58",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "ID:%productId%（%language%）の買取価格は基準価格「%standardPrice%」以下を指定してください。 ／ 整数で入力してください。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-10_0204_sheet-23_sheet-req-716d77a0bf",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "買取価格(NM)に基準価格(NM)を上回る金額を入力して「登録」ボタンを押下したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-10_0204_sheet-23_sheet-req-c69f2ae334",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "登録処理を行わず、買取価格一括更新画面を再表示する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
         "id": "m03-10_0204_sheet-23_sheet-req-61ac2f2096",
         "category": "一覧はセッションのページ番号へ。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
@@ -1399,6 +1490,7 @@
         "product_class",
         "buyprice_valid_bulk",
         "buy_price_exceeds_standard",
+        "productId",
         "ProductBulkUpdateBuyPriceController",
         "ProductBulkUpdateBuyPriceStoreAction"
       ],
@@ -1425,7 +1517,8 @@
         "product/page/{page_no}",
         "product/bulk_update_buy_price",
         "flush",
-        "POST"
+        "POST",
+        "1963/1964/1965/1966"
       ],
       "businessTerms": [
         "M03",
@@ -1477,7 +1570,7 @@
         "term": "BulkUpdateProductPriceType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:22",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:24",
         "snippet": "use Eccube\\Form\\Type\\Admin\\BulkUpdateProductPriceType;",
         "weight": 7
       },
@@ -1485,7 +1578,7 @@
         "term": "ProductBulkUpdateBuyPriceStoreAction",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:24",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:26",
         "snippet": "use Eccube\\Service\\Admin\\Product\\ProductBulkUpdateBuyPriceStoreAction;",
         "weight": 7
       },
@@ -1493,7 +1586,7 @@
         "term": "ProductBulkUpdateBuyPriceStoreAction",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:24",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:26",
         "snippet": "use Eccube\\Service\\Admin\\Product\\ProductBulkUpdateBuyPriceStoreAction;",
         "weight": 7
       },
@@ -1501,7 +1594,7 @@
         "term": "ProductBulkUpdateBuyPriceController",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:31",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:33",
         "snippet": "class ProductBulkUpdateBuyPriceController extends AbstractController",
         "weight": 7
       },
@@ -1509,7 +1602,7 @@
         "term": "ProductBulkUpdateBuyPriceController",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:31",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:33",
         "snippet": "class ProductBulkUpdateBuyPriceController extends AbstractController",
         "weight": 7
       },
@@ -1517,7 +1610,7 @@
         "term": "ProductBulkUpdateBuyPriceController",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:34",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:36",
         "snippet": "* ProductBulkUpdateBuyPriceController constructor.",
         "weight": 7
       },
@@ -1525,7 +1618,7 @@
         "term": "ProductBulkUpdateBuyPriceController",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:34",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:36",
         "snippet": "* ProductBulkUpdateBuyPriceController constructor.",
         "weight": 7
       },
@@ -1533,7 +1626,7 @@
         "term": "BulkUpdateProductPriceType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:60",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:62",
         "snippet": "$builder = $this->formFactory->createBuilder(BulkUpdateProductPriceType::class, ['product_classes' => $ProductClasses]);",
         "weight": 7
       },
@@ -1541,7 +1634,7 @@
         "term": "admin_product_bulk_update_buy_price",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:72",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:85",
         "snippet": "#[Route('/%eccube_admin_route%/product/bulk_update_buy_price', name: 'admin_product_bulk_update_buy_price', methods: ['POST'])]",
         "weight": 7
       },
@@ -1549,7 +1642,7 @@
         "term": "ProductBulkUpdateBuyPriceStoreAction",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:73",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:86",
         "snippet": "public function update(Request $request, ProductBulkUpdateBuyPriceStoreAction $storeAction): RedirectResponse|Response",
         "weight": 7
       },
@@ -1557,8 +1650,24 @@
         "term": "ProductBulkUpdateBuyPriceStoreAction",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:73",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:86",
         "snippet": "public function update(Request $request, ProductBulkUpdateBuyPriceStoreAction $storeAction): RedirectResponse|Response",
+        "weight": 7
+      },
+      {
+        "term": "ProductController",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/App/ProductController.php:1",
+        "snippet": "src/Eccube/Controller/App/ProductController.php",
+        "weight": 7
+      },
+      {
+        "term": "ProductController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/App/ProductController.php:1",
+        "snippet": "src/Eccube/Controller/App/ProductController.php",
         "weight": 7
       },
       {
@@ -1583,22 +1692,6 @@
         "role": "Form",
         "ref": "src/Eccube/Form/Type/Admin/BulkUpdateProductPriceType.php:1",
         "snippet": "src/Eccube/Form/Type/Admin/BulkUpdateProductPriceType.php",
-        "weight": 7
-      },
-      {
-        "term": "buy_price_exceeds_standard",
-        "termType": "routeName",
-        "role": "Form",
-        "ref": "src/Eccube/Form/Type/Admin/BulkUpdateProductPriceType.php:103",
-        "snippet": "$context->buildViolation($this->translator->trans('admin.product.buy_price_exceeds_standard'))",
-        "weight": 7
-      },
-      {
-        "term": "BulkUpdateProductPriceType",
-        "termType": "className",
-        "role": "Form",
-        "ref": "src/Eccube/Form/Type/Admin/BulkUpdateProductPriceType.php:27",
-        "snippet": "class BulkUpdateProductPriceType extends AbstractType",
         "weight": 7
       }
     ],
@@ -1792,13 +1885,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 94,
-    "verdictedCount": 94,
+    "requirementCount": 101,
+    "verdictedCount": 101,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 94,
+      "実装済み": 101,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -3196,6 +3289,118 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": false
+      },
+      {
+        "requirementId": "m03-10_0204_sheet-23_sheet-req-15238c6027",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "1つ以上の商品を選択してください",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-10_0204_sheet-23_sheet-req-00b586f4e5",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "商品一覧画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-10_0204_sheet-23_sheet-req-6ef9c1bd30",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "登録が完了しました。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-10_0204_sheet-23_sheet-req-690f2e05b6",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "一括編集で価格を更新したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-10_0204_sheet-23_sheet-req-24995bbf58",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "ID:%productId%（%language%）の買取価格は基準価格「%standardPrice%」以下を指定してください。 ／ 整数で入力してください。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-10_0204_sheet-23_sheet-req-716d77a0bf",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "買取価格(NM)に基準価格(NM)を上回る金額を入力して「登録」ボタンを押下したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-10_0204_sheet-23_sheet-req-c69f2ae334",
+        "category": "一覧はセッションのページ番号へ。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-23",
+        "designRequirement": "登録処理を行わず、買取価格一括更新画面を再表示する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
       },
       {
         "requirementId": "m03-10_0204_sheet-23_sheet-req-61ac2f2096",

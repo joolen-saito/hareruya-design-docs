@@ -185,8 +185,8 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Command/SmaregiOtcDeleteCommand.php:32\n29: /**\n30:  * 店頭受取注文 (OTC) スマレジ商品削除バッチ。\n31:  *\n32:  * 手続き完了済み (引渡し済み PASSED / 出荷完了 DELIVERED / キャンセル CANCEL) かつ smaregi_code 連携済み・\n33:  * smaregi_del_flg 未 ON の店頭受取注文を抽出し、1 件ごとに MessengerJob を enqueue する。\n34:  * 実処理 (Smaregi 商品削除 API 実行) は {@see \\Eccube\\MessageHandler\\SmaregiOtcDeleteMessageHandler}\n35:  * が Messenger ワーカー上で消化する。",
-        "src/Eccube/Repository/OrderRepository.php:862\n859:         $qb\n860:             ->where($qb->expr()->in('o.OrderStatus', ':statusIds'))\n861:             ->andWhere('o.smaregi_code IS NOT NULL')\n862:             ->andWhere('o.smaregi_del_flg = :flgFalse')\n863:             ->setParameter('statusIds', [OrderStatus::CANCEL, OrderStatus::DELIVERED, OrderStatus::PASSED])\n864:             ->setParameter('flgFalse', Constant::DISABLED)\n865:             ->orderBy('o.id', 'ASC')",
-        "src/Eccube/Repository/OrderRepository.php:863\n860:             ->where($qb->expr()->in('o.OrderStatus', ':statusIds'))\n861:             ->andWhere('o.smaregi_code IS NOT NULL')\n862:             ->andWhere('o.smaregi_del_flg = :flgFalse')\n863:             ->setParameter('statusIds', [OrderStatus::CANCEL, OrderStatus::DELIVERED, OrderStatus::PASSED])\n864:             ->setParameter('flgFalse', Constant::DISABLED)\n865:             ->orderBy('o.id', 'ASC')\n866:             ->setMaxResults($limit);"
+        "src/Eccube/Repository/OrderRepository.php:862\n859:     }\n860: \n861:     /**\n862:      * 店頭受取注文 (Delivery::OTC_GROUP) のうち、スマレジ商品/在庫の連携が未完了な受注を返す。\n863:      *\n864:      * 取得条件:\n865:      * - Shipping.Delivery が OTC または SMOOTH_OTC",
+        "src/Eccube/Repository/OrderRepository.php:863\n860: \n861:     /**\n862:      * 店頭受取注文 (Delivery::OTC_GROUP) のうち、スマレジ商品/在庫の連携が未完了な受注を返す。\n863:      *\n864:      * 取得条件:\n865:      * - Shipping.Delivery が OTC または SMOOTH_OTC\n866:      * - OrderStatus = NEW (受取前)"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -258,7 +258,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 13,
+    "extractedRequirementCount": 15,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -429,6 +429,32 @@
           "設計値と実装値が一致する、または乖離所見として記録済みであること"
         ],
         "coveredByFinding": true
+      },
+      {
+        "id": "b16-07_0416_sheet-9_redash-req-9e34957e31",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-9",
+        "designRequirement": "AWSコンソールにて専用レプリカを作成するため実装しない",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b16-07_0416_sheet-9_redash-req-ec3081b864",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-9",
+        "designRequirement": "0416:Redash用データベース作成!AR5",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
       }
     ],
     "missingRequirementCount": 0,
@@ -488,10 +514,10 @@
       "html/template/default/assets/hareruya",
       "html/template/admin/assets"
     ],
-    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。 限定的な非実装記載あり（機能全体の非実装判定には使わない）: AWSコンソールにて専用レプリカを作成するため実装しない"
   },
-  "designNonImplementationReason": null,
-  "designNonImplementationScope": null,
+  "designNonImplementationReason": "AWSコンソールにて専用レプリカを作成するため実装しない",
+  "designNonImplementationScope": "SCOPED_REQUIREMENT",
   "requirementDifferenceAudit": {
     "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
     "confirmedDifferenceCount": 10,
@@ -751,13 +777,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 13,
-    "verdictedCount": 13,
+    "requirementCount": 15,
+    "verdictedCount": 15,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_CANDIDATE_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 13,
+      "実装済み": 15,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -961,6 +987,38 @@
         "category": "機能仕様 処理概要（★はカスタマイズ項目）",
         "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-9",
         "designRequirement": "エラーハンドリング",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-07_0416_sheet-9_redash-req-9e34957e31",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-9",
+        "designRequirement": "AWSコンソールにて専用レプリカを作成するため実装しない",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b16-07_0416_sheet-9_redash-req-ec3081b864",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html#sheet-9",
+        "designRequirement": "0416:Redash用データベース作成!AR5",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

@@ -76,9 +76,9 @@
         "src/Eccube/Resource/template/admin/Event/banner.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Event/BannerController.php:57\n54:      *\n55:      * @return array<string, mixed>\n56:      */\n57:     #[Route(path: '/%eccube_admin_route%/event/banner', name: 'admin_event_banner', methods: ['GET'])]\n58:     #[Route(path: '/%eccube_admin_route%/event/banner/{htmlClass}', name: 'admin_event_banner_narrow', requirements: ['htmlClass' => '[a-zA-Z0-9_-]+'], methods: ['GET'])]\n59:     #[Template(template: '@admin/Event/banner.twig')]\n60:     public function index(?string $htmlClass = null): array",
-        "src/Eccube/Controller/Admin/Event/BannerController.php:71\n68:      * イベントバナー設定フォームを POST で受け取り、検証成功時は永続化して一覧へリダイレクトする（Post-Redirect-Get）。\n69:      * 検証失敗時は同一画面を再表示する。\n70:      */\n71:     #[Route(path: '/%eccube_admin_route%/event/banner/settings', name: 'admin_event_banner_settings', methods: ['POST'])]\n72:     #[Route(path: '/%eccube_admin_route%/event/banner/{htmlClass}/settings', name: 'admin_event_banner_settings_narrow', requirements: ['htmlClass' => '[a-zA-Z0-9_-]+'], methods: ['POST'])]\n73:     public function saveSettings(Request $request, ?string $htmlClass = null): Response|RedirectResponse\n74:     {",
-        "src/Eccube/Controller/Admin/Event/BannerController.php:91\n88:     /**\n89:      * バナー画像を S3 にアップロードする（フォーム送信）。\n90:      */\n91:     #[Route(path: '/%eccube_admin_route%/event/banner/image/upload', name: 'admin_event_banner_image_upload', methods: ['POST'])]\n92:     #[Route(path: '/%eccube_admin_route%/event/banner/{htmlClass}/image/upload', name: 'admin_event_banner_image_upload_narrow', requirements: ['htmlClass' => '[a-zA-Z0-9_-]+'], methods: ['POST'])]\n93:     public function uploadImage(Request $request, ?string $htmlClass = null): Response|RedirectResponse\n94:     {"
+        "src/Eccube/Controller/Admin/Event/BannerController.php:57\n54:     /**\n55:      * バナー一覧・設定画面を表示する。\n56:      *\n57:      * @return array<string, mixed>\n58:      */\n59:     #[Route(path: '/%eccube_admin_route%/event/banner', name: 'admin_event_banner', methods: ['GET'])]\n60:     #[Route(path: '/%eccube_admin_route%/event/banner/{htmlClass}', name: 'admin_event_banner_narrow', requirements: ['htmlClass' => '[a-zA-Z0-9_-]+'], methods: ['GET'])]",
+        "src/Eccube/Controller/Admin/Event/BannerController.php:71\n68:                 'form' => $page['settingForm'],\n69:             ],\n70:             $request\n71:         );\n72:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_EVENT_BANNER_INDEX_INITIALIZE);\n73: \n74:         return $this->buildBannerTwigViewData($page);",
+        "src/Eccube/Controller/Admin/Event/BannerController.php:91\n88:         if ($page['settingForm']->isSubmitted() && $page['settingForm']->isValid()) {\n89:             $this->eventBannerStoreAction->handle($page['settingForm']);\n90: \n91:             $event = new EventArgs(\n92:                 [\n93:                     'form' => $page['settingForm'],\n94:                 ],"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -141,7 +141,7 @@
         "src/Eccube/Service/Admin/Event/EventBannerStorageService.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Admin/Event/EventBannerStorageService.php:26\n23: \n24: class EventBannerStorageService\n25: {\n26:     private const S3_BANNER_PREFIX = 'banner/';\n27: \n28:     private const MAX_UPLOAD_BYTES = 520000;\n29: ",
+        "src/Eccube/Service/Admin/Event/EventBannerStorageService.php:26\n23: \n24: class EventBannerStorageService\n25: {\n26:     private const S3_BANNER_PREFIX = 'banner/event/';\n27: \n28:     private const MAX_UPLOAD_BYTES = 520000;\n29: ",
         "src/Eccube/Service/Admin/Event/EventBannerStorageService.php:41\n38:      *\n39:      * @return list<array<string, mixed>>\n40:      */\n41:     public function loadSortedFileList(?string $htmlClass): array\n42:     {\n43:         $s3Prefix = $this->resolveListPrefix($htmlClass);\n44:         try {",
         "src/Eccube/Service/Admin/Event/EventBannerStorageService.php:92\n89: \n90:         $extension = $file->guessExtension() ?? 'jpg';\n91:         foreach ($targetShops as $BaseInfo) {\n92:             $uploadDirectory = self::S3_BANNER_PREFIX.$BaseInfo->getHtmlClassName().'/';\n93:             $this->s3AccessService->setS3Directory($uploadDirectory);\n94:             $this->s3AccessService->putFile([\n95:                 'extension' => $extension,"
       ],
@@ -301,7 +301,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 101,
+    "extractedRequirementCount": 115,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -1488,6 +1488,188 @@
         "coveredByFinding": true
       },
       {
+        "id": "m13-15_0214_sheet-22_sheet-req-11a953f358",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "メッセージID対応（自動棚卸）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-15_0214_sheet-22_sheet-req-7b71d56f84",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "この画像を削除します。よろしいですか？",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-15_0214_sheet-22_sheet-req-99d6444052",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "全店舗表示で、編集可能な店舗の画像の削除を選択したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-15_0214_sheet-22_sheet-req-f5233f1eb3",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "確認後に画像を削除し、イベントバナー管理（全店舗）画面に遷移する。キャンセル時は送信せず現在の画面に留まる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-15_0214_sheet-22_sheet-req-070d9daa5f",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "店舗を絞り込み中に、編集可能な画像の削除を選択したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-15_0214_sheet-22_sheet-req-9be3437b7a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "確認後に画像を削除し、イベントバナー管理（店舗絞り込み）画面に遷移する。キャンセル時は送信せず現在の画面に留まる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-15_0214_sheet-22_sheet-req-906d425188",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "画像をアップロードし、イベントバナー管理画面（アップロード先の店舗で絞り込み）に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-15_0214_sheet-22_sheet-req-221ffe277b",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "編集権限のない店舗の画像は削除できません。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-15_0214_sheet-22_sheet-req-1c3d62d2c9",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "絞り込み中の店舗で、編集権限のない画像を削除しようとしたとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-15_0214_sheet-22_sheet-req-a2d6f738f3",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "画像を削除せず、イベントバナー管理画面（当該店舗で絞り込み）に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-15_0214_sheet-22_sheet-req-4aa91c8317",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "編集権限のない店舗の画像を削除しようとしたとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-15_0214_sheet-22_sheet-req-cd2a6d0827",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "画像を削除せず、イベントバナー管理画面（現在の表示条件）に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-15_0214_sheet-22_sheet-req-49e46d7482",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "画像を削除したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-15_0214_sheet-22_sheet-req-ff11dca5fc",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "画像を削除し、イベントバナー管理画面（現在の表示条件）に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
         "id": "m13-15_0214_sheet-22_sheet-req-19938c2588",
         "category": "API/バッチ結果",
         "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
@@ -1684,48 +1866,32 @@
         "term": "banner/event",
         "termType": "path",
         "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:146",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:44",
         "snippet": "const eventApp = document.querySelector('[data-event-app]');",
         "weight": 4
       },
       {
-        "term": "banner/event/delete",
+        "term": "banner/event",
         "termType": "path",
         "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:157",
-        "snippet": "Object.keys(orderByEvent).forEach(function(key) { delete orderByEvent[key]; });",
-        "weight": 4
-      },
-      {
-        "term": "banner/event/delete",
-        "termType": "path",
-        "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:158",
-        "snippet": "Object.keys(idByDatetime).forEach(function(key) { delete idByDatetime[key]; });",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:49",
+        "snippet": "const labelsEl = document.querySelector('[data-event-labels]');",
         "weight": 4
       },
       {
         "term": "banner/event",
         "termType": "path",
         "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:192",
-        "snippet": "eventApp.querySelectorAll('[data-event-id]').forEach(function(item) {",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:92",
+        "snippet": "'大型イベント': labels.large_event,",
         "weight": 4
       },
       {
         "term": "banner/event",
         "termType": "path",
         "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:193",
-        "snippet": "const ids = orderByEvent[item.getAttribute('data-event-id')];",
-        "weight": 4
-      },
-      {
-        "term": "banner/event",
-        "termType": "path",
-        "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:205",
-        "snippet": "if (link.closest('[data-event-id]') !== null) {",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:93",
+        "snippet": "'特別イベント': labels.special_event,",
         "weight": 4
       },
       {
@@ -1733,7 +1899,7 @@
         "termType": "path",
         "role": "JavaScript",
         "ref": "html/template/default/assets/hareruya/js/hareruya-event.js:1",
-        "snippet": "(()=>{\"use strict\";var e={},t={};function r(a){var n=t[a];if(void 0!==n)return n.exports;var i=t[a]={exports:{}};return e[a](i,i.exports,r),i.exports}function a(e,t,r,a,n,i,o){try{var s=e[i](o),l=s.value}catch(e){r(e);r…",
+        "snippet": "(()=>{\"use strict\";var e={},t={};function r(a){var n=t[a];if(void 0!==n)return n.exports;var i=t[a]={exports:{}};return e[a](i,i.exports,r),i.exports}function a(e,t,r,a,n,i,o){try{var l=e[i](o),s=l.value}catch(e){r(e);r…",
         "weight": 4
       },
       {
@@ -1750,6 +1916,14 @@
         "role": "JavaScript",
         "ref": "html/template/default/assets/hareruya/js/hareruya-main.js:1",
         "snippet": "(()=>{\"use strict\";let e,t;var r,i,n,a,o,s,l,c,u,d,h,p,f,m,v={},g={};function y(e){var t=g[e];if(void 0!==t)return t.exports;var r=g[e]={exports:{}};return v[e](r,r.exports,y),r.exports}y.rv=()=>\"1.7.5\",y.ruid=\"bundler=…",
+        "weight": 4
+      },
+      {
+        "term": "banner/event/delete",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-top.js:1",
+        "snippet": "(()=>{\"use strict\";var e,r,t,n,a={},i={};function o(e){var r=i[e];if(void 0!==r)return r.exports;var t=i[e]={exports:{}};return a[e](t,t.exports,o),t.exports}function l(e){e.innerHTML=\"\"}function c(e,r){return e.querySe…",
         "weight": 4
       },
       {
@@ -1777,6 +1951,14 @@
         "weight": 4
       },
       {
+        "term": "banner/event/delete",
+        "termType": "path",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Layout.php:434",
+        "snippet": "* Check layout can delete or not",
+        "weight": 4
+      },
+      {
         "term": "JPEG/PNG",
         "termType": "path",
         "role": "Locale",
@@ -1796,7 +1978,7 @@
         "term": "JPEG/PNG",
         "termType": "path",
         "role": "Source",
-        "ref": "src/Eccube/Twig/Extension/EccubeExtension.php:315",
+        "ref": "src/Eccube/Twig/Extension/EccubeExtension.php:333",
         "snippet": "'jpeg' => 'fa-file-image-o',",
         "weight": 4
       }
@@ -2250,13 +2432,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 101,
-    "verdictedCount": 101,
+    "requirementCount": 115,
+    "verdictedCount": 115,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 101,
+      "実装済み": 115,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -3708,6 +3890,230 @@
         "category": "API/バッチ結果",
         "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
         "designRequirement": "削除前の確認文言。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-11a953f358",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "メッセージID対応（自動棚卸）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-7b71d56f84",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "この画像を削除します。よろしいですか？",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-99d6444052",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "全店舗表示で、編集可能な店舗の画像の削除を選択したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-f5233f1eb3",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "確認後に画像を削除し、イベントバナー管理（全店舗）画面に遷移する。キャンセル時は送信せず現在の画面に留まる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-070d9daa5f",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "店舗を絞り込み中に、編集可能な画像の削除を選択したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-9be3437b7a",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "確認後に画像を削除し、イベントバナー管理（店舗絞り込み）画面に遷移する。キャンセル時は送信せず現在の画面に留まる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-906d425188",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "画像をアップロードし、イベントバナー管理画面（アップロード先の店舗で絞り込み）に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-221ffe277b",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "編集権限のない店舗の画像は削除できません。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-1c3d62d2c9",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "絞り込み中の店舗で、編集権限のない画像を削除しようとしたとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-a2d6f738f3",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "画像を削除せず、イベントバナー管理画面（当該店舗で絞り込み）に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-4aa91c8317",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "編集権限のない店舗の画像を削除しようとしたとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-cd2a6d0827",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "画像を削除せず、イベントバナー管理画面（現在の表示条件）に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-49e46d7482",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "画像を削除したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-15_0214_sheet-22_sheet-req-ff11dca5fc",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-22",
+        "designRequirement": "画像を削除し、イベントバナー管理画面（現在の表示条件）に遷移する",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

@@ -29,7 +29,7 @@
         "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:343"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:343\n340:             // サプライ品でない場合は商品名から略称・言語・状態・色・レアリティを取り除く\n341:             if (intval($item['categoryId']) !== Category::GOODS_ID && intval($item['categoryId']) !== Category::RESERVED_GOODS_ID) {\n342:                 if (preg_match('/\\['.$item['cardsetName'].'\\]/', $productName, $matchedSetName)) {\n343:                     $productName = str_replace($matchedSetName[0], '', $productName);\n344:                 } else {\n345:                     // 商品名内に[略称タグ]が含まれない場合は[～]を削除\n346:                     $productName = preg_replace('/\\[.+?\\]/', '', $productName);"
+        "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:343\n340:         if ($shippingStandby === null) {\n341:             throw $this->createNotFoundException();\n342:         }\n343: \n344:         $orderIdList = array_keys($request->get('order_ids', []));\n345: \n346:         $pickingItems = $this->shippingStandbyRepository->generatePickingList((int) $id, $orderIdList);"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -48,7 +48,7 @@
       "comparisonSummary": "② 業務ルール・計算：設計は「ステップ2より前に、最小カテゴリがグッズ定数または予約グッズ定数に一致しないかだけを見て、サプライ帯への強制があるかを決める。…強制側ならステップ2のマップを読まず goods。」。実装は「設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無(…」。乖離理由は「設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無(…」。",
       "mismatchReason": "設計(pf-eccube3を確認値とする処理フロー)は『最小カテゴリ MIN(ct.category_id) がグッズ定数(Category::GOODS_ID)/予約グッズ定数(Category::RESERVED_GOODS_ID)に一致するか』でサプライ(goods)帯への強制を決める。実装(ec-cube-enterprise)はカテゴリ定数を一切使わず、productClassRepository.getSubInfosByProductClassIds([productClassId]) の返却有無(…",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6908\n6905:       </section>\n6906:       <!-- function-design-embed:end m05-20-m05-20_admin_order_order_shipping_standby_detail_edit_delete -->\n6907: </section>\n6908:       <section class=\"sheet-panel\" id=\"sheet-20\">\n6909:         <div class=\"sheet-heading\">\n6910:           <h2>ピッキングリスト印刷</h2>\n6911:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7789\n7786:       </section>\n7787:       <!-- function-design-embed:end m05-20-m05-20_admin_order_order_shipping_standby_detail_edit_delete -->\n7788: </section>\n7789:       <section class=\"sheet-panel\" id=\"sheet-20\">\n7790:         <div class=\"sheet-heading\">\n7791:           <h2>ピッキングリスト印刷</h2>\n7792:         </div>",
       "auditAspects": [
         "Service・業務ルール",
         "Repository・Entity・DB"
@@ -73,7 +73,7 @@
         "src/Eccube/Repository/DtbShippingStandbyRepository.php:143"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbShippingStandbyRepository.php:143\n140:             ->findBy(['option_key' => [\n141:                 MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,\n142:                 MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,\n143:             ],\n144:             ]);\n145: \n146:         $qb = $this->createQueryBuilder('ss')"
+        "src/Eccube/Repository/DtbShippingStandbyRepository.php:143\n140:      */\n141:     public function generatePickingList(int $standbyId, array $orderIdList = []): array\n142:     {\n143:         $option1 = $this->optionRepository->findOneBy([\n144:             'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,\n145:         ]);\n146:         $thresholdPrice1 = $option1 !== null ? (int) $option1->getOptionValue() : 0;"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -92,7 +92,7 @@
       "comparisonSummary": "④ DBカラム・DB操作 / ⑦ エラー処理：設計は「このクエリでは mtb_option へ findBy(['option_key' => ['order_list_threshold_price_1','order_list_threshold_price_2'], …]) 相当で複数行を一度に読み、その返却順の最初の行値を :price1、2番目を :price2 に結びつける。」。実装は「設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (……」。乖離理由は「設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (……」。",
       "mismatchReason": "設計(pf-eccube3を確認値とする)はクエリ側の閾値取得を『両キーを findByOptionKey で一括取得し返却順の[0]を:price1/[1]を:price2に結ぶ』とし、これに起因する取得順の食い違い・添字[0]/[1]参照による実行時異常(html:277)を論点とする。実装(ec-cube-enterprise)の generatePickingList は各キーを個別に findOneBy(['option_key'=>ORDER_LIST_THRESHOLD_PRICE_1]) / (……",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6908\n6905:       </section>\n6906:       <!-- function-design-embed:end m05-20-m05-20_admin_order_order_shipping_standby_detail_edit_delete -->\n6907: </section>\n6908:       <section class=\"sheet-panel\" id=\"sheet-20\">\n6909:         <div class=\"sheet-heading\">\n6910:           <h2>ピッキングリスト印刷</h2>\n6911:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:7789\n7786:       </section>\n7787:       <!-- function-design-embed:end m05-20-m05-20_admin_order_order_shipping_standby_detail_edit_delete -->\n7788: </section>\n7789:       <section class=\"sheet-panel\" id=\"sheet-20\">\n7790:         <div class=\"sheet-heading\">\n7791:           <h2>ピッキングリスト印刷</h2>\n7792:         </div>",
       "auditAspects": [
         "Repository・Entity・DB",
         "権限・セッション・副作用・エラー・ログ"
@@ -900,7 +900,7 @@
         "term": "admin_shipping_standby_edit",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:152",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:164",
         "snippet": "#[Route(path: '/%eccube_admin_route%/standby/{id}/edit', name: 'admin_shipping_standby_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]",
         "weight": 7
       },
@@ -908,7 +908,7 @@
         "term": "admin_shipping_standby_print_picking_list",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:283",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:336",
         "snippet": "#[Route(path: '/%eccube_admin_route%/standby/{id}/print/picking', name: 'admin_shipping_standby_print_picking_list', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]",
         "weight": 7
       },
@@ -916,15 +916,23 @@
         "term": "order_ids",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:291",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:344",
         "snippet": "$orderIdList = array_keys($request->get('order_ids', []));",
+        "weight": 7
+      },
+      {
+        "term": "ShippingStandbyController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:46",
+        "snippet": "class ShippingStandbyController extends AbstractController",
         "weight": 7
       },
       {
         "term": "order_ids",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:401",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:469",
         "snippet": "$orderIdList = array_keys($request->get('order_ids', []));",
         "weight": 7
       },
@@ -932,15 +940,7 @@
         "term": "ShippingStandbyController",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:44",
-        "snippet": "class ShippingStandbyController extends AbstractController",
-        "weight": 7
-      },
-      {
-        "term": "ShippingStandbyController",
-        "termType": "className",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:58",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:60",
         "snippet": "* ShippingStandbyController constructor.",
         "weight": 7
       },
@@ -964,39 +964,39 @@
         "term": "order_list_threshold_price_1",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:141",
-        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:144",
+        "snippet": "'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
         "weight": 7
       },
       {
         "term": "order_list_threshold_price_2",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:142",
-        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:149",
+        "snippet": "'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
         "weight": 7
       },
       {
         "term": "order_list_threshold_price_1",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:231",
-        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:239",
+        "snippet": "'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
         "weight": 7
       },
       {
         "term": "order_list_threshold_price_2",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:232",
-        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:244",
+        "snippet": "'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
         "weight": 7
       },
       {
         "term": "DtbShippingStandbyRepository",
         "termType": "className",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:30",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:31",
         "snippet": "class DtbShippingStandbyRepository extends AbstractRepository implements ServiceEntityRepositoryInterface",
         "weight": 7
       },
@@ -1004,32 +1004,32 @@
         "term": "order_list_threshold_price_1",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/OrderRepository.php:1106",
-        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
+        "ref": "src/Eccube/Repository/OrderRepository.php:1208",
+        "snippet": "'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
         "weight": 7
       },
       {
         "term": "order_list_threshold_price_2",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/OrderRepository.php:1107",
-        "snippet": "MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
+        "ref": "src/Eccube/Repository/OrderRepository.php:1213",
+        "snippet": "'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
         "weight": 7
       },
       {
-        "term": "admin_shipping_standby_print_picking_list",
+        "term": "order_list_threshold_price_1",
         "termType": "routeName",
-        "role": "Twig",
-        "ref": "src/Eccube/Resource/template/admin/ShippingStandby/edit.twig:14",
-        "snippet": "$('#form_bulk').attr('action', \"{{ url('admin_shipping_standby_print_picking_list', { 'id' : shippingStandby.id }) }}\");",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/OrderRepository.php:1998",
+        "snippet": "'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_1,",
         "weight": 7
       },
       {
-        "term": "order_ids",
+        "term": "order_list_threshold_price_2",
         "termType": "routeName",
-        "role": "Twig",
-        "ref": "src/Eccube/Resource/template/admin/ShippingStandby/edit.twig:157",
-        "snippet": "<input type=\"checkbox\" checked id=\"check-{{ Order.id }}\" data-id=\"{{ Order.id }}\" data-shipping-id=\"{{ (Order.Shippings|first).id ?? '' }}\" name=\"order_ids[{{ Order.id }}]\"></td>",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/OrderRepository.php:2003",
+        "snippet": "'option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_2,",
         "weight": 7
       }
     ],

@@ -4,9 +4,9 @@
 
 管理画面の「ネット買取管理」買取一覧から「ダウンロード」メニュー内の「買取商品一覧CSV」を選ぶか、買取詳細（編集）から「買取商品一覧CSV出力」を押したときに、選択または対象となった買取注文に紐づく商品明細を、在庫増減向けの固定レイアウトでCSVとしてストリーム返却する機能である。一覧ラベルの翻訳キーは`admin.purchase.online.btn.csvexport_product_list`、詳細ボタンは`admin.purchase.online.detail.btn.csvexport_product_list`である。同一HTTPルートにクエリ`type=notSale`を付けた「買取商品（キャンセル）CSV」があり、ヘッダの数量に相当する列見出しとファイル名接頭辞のみ差し替わるが、抽出SQLとサービス実装は共用する。
 
-本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。テンプレート注釈で示された移植元はpf-eccube3プラグインであるが、本書の確認値はec-cube-enterpriseのコア実装とする。
+本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。テンプレート注釈の pf-eccube3 プラグインパスは移植元を示す。「利用者視点の入口」以降を含む本文の挙動は、移行先 ec-cube-enterprise のコア実装をリバースしたものであり、現行 pf-eccube3 の挙動を記述したものではない。
 
-本機能のカスタマイズ区分は現行踏襲であり、挙動の参照は現行リポ（pf-eccube3のネット買取プラグイン）、DB関連はec-cube-enterpriseを正とする。ネット買取の永続化テーブル（`dtb_buy_order`・`dtb_buy_main_card`・`dtb_buy_order_indivisual_input_product`等）はec-cube-enterpriseに同名で実在し、現行と移行先で同一スキーマである。店頭買取の`dtb_otc_buy_*`は別系統であり本機能では扱わない。
+本機能のカスタマイズ区分は現行踏襲である。機能の移植元は現行 pf-eccube3 のネット買取プラグインだが、本書本文の挙動とDB関連は移行先 ec-cube-enterprise を正とする。ネット買取の永続化テーブル（`dtb_buy_order`・`dtb_buy_main_card`・`dtb_buy_order_indivisual_input_product`等）はec-cube-enterpriseに同名で実在し、現行と移行先で同一スキーマである。店頭買取の`dtb_otc_buy_*`は別系統であり本機能では扱わない。
 
 対象はブラウザ経由の管理画面に限定する。
 

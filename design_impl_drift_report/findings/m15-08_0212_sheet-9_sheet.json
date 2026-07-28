@@ -120,7 +120,7 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Resource/template/admin/Deck/index.twig:230\n227:         </div>\n228:     </div>\n229: \n230:     {{ form_start(searchForm, { 'action': url('admin_deck_list'), 'method': 'POST', 'attr': { 'id': 'admin_search_deck' } }) }}\n231: \n232:     {# 検索ボックスエリア #}\n233:     <div class=\"c-outsideBlock search-box-inner p-0\">",
-        "src/Eccube/Controller/Admin/Deck/DeckController.php:74\n71:     /**\n72:      * @return array<string, mixed>\n73:      */\n74:     #[Route('/%eccube_admin_route%/deck', name: 'admin_deck_list', methods: ['GET', 'POST'])]\n75:     #[Route('/%eccube_admin_route%/deck/search/{page_no}', name: 'admin_deck_search', requirements: ['page_no' => '\\d+'], methods: ['GET', 'POST'])]\n76:     #[Template('@admin/Deck/index.twig')]\n77:     public function index(Request $request, PaginatorInterface $paginator, int $page_no = 1): array",
+        "src/Eccube/Controller/Admin/Deck/DeckController.php:74\n71:     }\n72: \n73:     /**\n74:      * @return array<string, mixed>\n75:      */\n76:     #[Route('/%eccube_admin_route%/deck', name: 'admin_deck_list', methods: ['GET', 'POST'])]\n77:     #[Route('/%eccube_admin_route%/deck/search/{page_no}', name: 'admin_deck_search', requirements: ['page_no' => '\\d+'], methods: ['GET', 'POST'])]",
         "src/Eccube/Resource/template/admin/Deck/index.twig:1\n1: {% extends '@admin/default_frame.twig' %}\n2: \n3: {% set menus = ['deck_management', 'deck_list'] %}\n4: "
       ],
       "auditChecklist": [
@@ -225,9 +225,9 @@
         "src/Eccube/Controller/Admin/Deck/DeckController.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/SearchControllerTrait.php:109\n106:         $session = $request->getSession();\n107:         $sessionkey = $this->sessionKey;\n108:         // セッションキー：ページ内表示件数\n109:         $pageCountKey = \"eccube.admin.{$sessionkey}.search.page_count\";\n110:         // セッションキー：ページ表示番号\n111:         $pageNoKey = \"eccube.admin.{$sessionkey}.search.page_no\";\n112:         // セッションキー：検索条件",
-        "src/Eccube/Controller/Admin/Deck/DeckController.php:97\n94:             $page_no = 1;\n95:             $viewData = FormUtil::getViewData($searchForm);\n96: \n97:             $this->session->set($this->sessionKey, $viewData);\n98:             $this->session->set($this->sessionKey.'.page_no', $page_no);\n99:         } else {\n100:             $pageNoAttr = $request->attributes->get('page_no');",
-        "src/Eccube/Controller/Admin/SearchControllerTrait.php:42\n39: use Symfony\\Component\\HttpFoundation\\Request;\n40: use Symfony\\Component\\Security\\Csrf\\CsrfToken;\n41: \n42: trait SearchControllerTrait\n43: {\n44:     /** セッションキー。表示件数、検索条件、ソート条件の保持に使用 */\n45:     protected string $sessionKey;"
+        "src/Eccube/Controller/Admin/SearchControllerTrait.php:109\n106:         // セッション取得\n107:         $session = $request->getSession();\n108:         $sessionkey = $this->sessionKey;\n109:         // セッションキー：ページ内表示件数\n110:         $pageCountKey = \"eccube.admin.{$sessionkey}.search.page_count\";\n111:         // セッションキー：ページ表示番号\n112:         $pageNoKey = \"eccube.admin.{$sessionkey}.search.page_no\";",
+        "src/Eccube/Controller/Admin/Deck/DeckController.php:97\n94: \n95:             if (!$searchForm->isValid()) {\n96:                 return [\n97:                     'searchForm' => $searchForm->createView(),\n98:                     'bulkUpdateForm' => $bulkUpdateForm->createView(),\n99:                     'pagination' => null,\n100:                     'is_search_filter_active' => true,",
+        "src/Eccube/Controller/Admin/SearchControllerTrait.php:43\n40: use Symfony\\Component\\HttpFoundation\\Request;\n41: use Symfony\\Component\\Security\\Csrf\\CsrfToken;\n42: \n43: trait SearchControllerTrait\n44: {\n45:     /** セッションキー。表示件数、検索条件、ソート条件の保持に使用 */\n46:     protected string $sessionKey;"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -290,7 +290,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 46,
+    "extractedRequirementCount": 63,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -376,6 +376,214 @@
         "category": "機能仕様 処理概要（★はカスタマイズ項目）",
         "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
         "designRequirement": "チェックボックス",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-8c583fc655",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!J13",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-0b63a099c7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B48",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-a210265077",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B17",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-df955f46ae",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B49",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-6cfc19b40a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!W16",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-3f956c7fc3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B50",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-17f9b87e7e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!A20",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-c037379e4c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B51",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-fa1d8cc363",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!W19",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-3e5e6128bb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B52",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-d4b90dec65",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!S22",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-04c169eedf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B53",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-01a0fa73f7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!J9",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-7ae2493f3a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B46",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-4103010635",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!O9",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-e6d8abbc10",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B47",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -571,6 +779,19 @@
         "category": "検索データがこのリクエストで得られない場合はセッション admin.deck.search のビューデータから復元する。",
         "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
         "designRequirement": "1 つ以上選ばれていれば、デッキのアーキタイプが持つ色コレクションの ID が、そのいずれかに一致するよう結合する（論理和）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-08_0212_sheet-9_sheet-req-42599070fe",
+        "category": "検索データがこのリクエストで得られない場合はセッション admin.deck.search のビューデータから復元する。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "アーキタイプ一覧で有効な検索条件を指定して検索結果を表示したとき",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -947,7 +1168,7 @@
         "term": "admin_deck_list",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Deck/DeckController.php:146",
+        "ref": "src/Eccube/Controller/Admin/Deck/DeckController.php:156",
         "snippet": "return $this->redirectToRoute('admin_deck_list');",
         "weight": 7
       },
@@ -955,7 +1176,7 @@
         "term": "SearchDeckType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Deck/DeckController.php:26",
+        "ref": "src/Eccube/Controller/Admin/Deck/DeckController.php:28",
         "snippet": "use Eccube\\Form\\Type\\Admin\\SearchDeckType;",
         "weight": 7
       },
@@ -963,7 +1184,7 @@
         "term": "SearchDeckType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Deck/DeckController.php:66",
+        "ref": "src/Eccube/Controller/Admin/Deck/DeckController.php:68",
         "snippet": "$this->formType = SearchDeckType::class;",
         "weight": 7
       },
@@ -971,7 +1192,7 @@
         "term": "admin_search_deck",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Deck/DeckController.php:67",
+        "ref": "src/Eccube/Controller/Admin/Deck/DeckController.php:69",
         "snippet": "$this->formName = 'admin_search_deck';",
         "weight": 7
       },
@@ -979,7 +1200,7 @@
         "term": "admin_deck_list",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Deck/DeckController.php:74",
+        "ref": "src/Eccube/Controller/Admin/Deck/DeckController.php:76",
         "snippet": "#[Route('/%eccube_admin_route%/deck', name: 'admin_deck_list', methods: ['GET', 'POST'])]",
         "weight": 7
       },
@@ -1019,7 +1240,7 @@
         "term": "DtbDeckRepository",
         "termType": "className",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbDeckRepository.php:44",
+        "ref": "src/Eccube/Repository/DtbDeckRepository.php:46",
         "snippet": "class DtbDeckRepository extends AbstractRepository",
         "weight": 7
       },
@@ -1027,7 +1248,7 @@
         "term": "admin_deck_list",
         "termType": "routeName",
         "role": "Twig",
-        "ref": "src/Eccube/Resource/template/admin/Deck/edit.twig:315",
+        "ref": "src/Eccube/Resource/template/admin/Deck/edit.twig:320",
         "snippet": "<a href=\"{{ url('admin_deck_list') }}?resume=1\" class=\"btn btn-ec-conversion\">{{ 'admin.deck.back'|trans }}</a>",
         "weight": 7
       },
@@ -1059,7 +1280,7 @@
         "term": "deck/search/{page_no}",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Deck/DeckController.php:75",
+        "ref": "src/Eccube/Controller/Admin/Deck/DeckController.php:77",
         "snippet": "#[Route('/%eccube_admin_route%/deck/search/{page_no}', name: 'admin_deck_search', requirements: ['page_no' => '\\d+'], methods: ['GET', 'POST'])]",
         "weight": 6
       },
@@ -1067,7 +1288,7 @@
         "term": "deck/search/{page_no}",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ShelfNumberController.php:68",
+        "ref": "src/Eccube/Controller/Admin/Product/ShelfNumberController.php:70",
         "snippet": "#[Route(path: '/%eccube_admin_route%/product/shelf_number/{id}/page/{page_no}', name: 'admin_product_shelf_number_edit_page', requirements: ['id' => '\\d+', 'page_no' => '\\d+'], methods: ['GET'])]",
         "weight": 6
       },
@@ -1075,7 +1296,7 @@
         "term": "admin.error.sort",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/SearchControllerTrait.php:142",
+        "ref": "src/Eccube/Controller/Admin/SearchControllerTrait.php:143",
         "snippet": "$this->addError('admin.error.sort', 'admin');",
         "weight": 6
       },
@@ -1083,7 +1304,7 @@
         "term": "deck/search/{page_no}",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/SearchProductController.php:57",
+        "ref": "src/Eccube/Controller/Admin/SearchProductController.php:59",
         "snippet": "path: '/%eccube_admin_route%/search/product/page/{page_no}',",
         "weight": 6
       }
@@ -1337,13 +1558,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 46,
-    "verdictedCount": 46,
+    "requirementCount": 63,
+    "verdictedCount": 63,
     "unverdictedCount": 0,
     "coverageComplete": true,
     "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
     "counts": {
-      "実装済み": 46,
+      "実装済み": 63,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -1461,6 +1682,262 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": true
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-8c583fc655",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!J13",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-0b63a099c7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B48",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-a210265077",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B17",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-df955f46ae",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B49",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-6cfc19b40a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!W16",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-3f956c7fc3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B50",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-17f9b87e7e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!A20",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-c037379e4c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B51",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-fa1d8cc363",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!W19",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-3e5e6128bb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B52",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-d4b90dec65",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!S22",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-04c169eedf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B53",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-01a0fa73f7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!J9",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-7ae2493f3a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B46",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-4103010635",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!O9",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-e6d8abbc10",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "0212:アーキタイプ管理(検索入力)!B47",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
       },
       {
         "requirementId": "m15-08_0212_sheet-9_sheet-req-a2d826a113",
@@ -1700,6 +2177,22 @@
         "auditNote": "確定所見が本要求をカバー済み。",
         "conformanceBucket": "実装済み",
         "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-08_0212_sheet-9_sheet-req-42599070fe",
+        "category": "検索データがこのリクエストで得られない場合はセッション admin.deck.search のビューデータから復元する。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-9",
+        "designRequirement": "アーキタイプ一覧で有効な検索条件を指定して検索結果を表示したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
         "elementLevel": false
       },
       {

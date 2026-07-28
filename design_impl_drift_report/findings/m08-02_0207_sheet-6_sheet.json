@@ -66,9 +66,9 @@
         "src/Eccube/Resource/template/admin/Customer/mail_confirm.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:50\n47:      * @throws ORMException\n48:      * @throws OptimisticLockException\n49:      */\n50:     #[Route(path: '/%eccube_admin_route%/customer/mail', name: 'admin_customer_mail', methods: ['POST'])]\n51:     #[Template(template: '@admin/Customer/mail.twig')]\n52:     public function index(Request $request): array|Response\n53:     {",
+        "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:50\n47:      * @return array<string, mixed>|Response\n48:      *\n49:      * @throws ORMException\n50:      * @throws OptimisticLockException\n51:      */\n52:     #[Route(path: '/%eccube_admin_route%/customer/mail', name: 'admin_customer_mail', methods: ['POST'])]\n53:     #[Template(template: '@admin/Customer/mail.twig')]",
         "src/Eccube/Resource/template/admin/Customer/mail_confirm.twig:33\n30: <div class=\"c-contentsArea__cols\">\n31:     <div class=\"c-contentsArea__primaryCol\">\n32:         <div class=\"c-primaryCol\">\n33:             <form id=\"customer-mail-form\" class=\"form-horizontal\" method=\"post\" action=\"{{ url('admin_customer_mail') }}\">\n34:                 {{ form_widget(form._token) }}\n35:                 {{ form_widget(form.ids) }}\n36:                 <input id=\"mode\" type=\"hidden\" name=\"mode\">",
-        "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:36\n33: use Symfony\\Component\\HttpFoundation\\Response;\n34: use Symfony\\Component\\Routing\\Attribute\\Route;\n35: \n36: class CustomerMailController extends AbstractController\n37: {\n38:     public function __construct(private readonly MailService $mailService, private readonly CustomerRepository $customerRepository, private readonly MailHistoryRepository $mailHistoryRepository, private readonly MailHistoryEntityManager $mailHistoryEntityManager)\n39:     {"
+        "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:38\n35: use Symfony\\Component\\HttpFoundation\\Response;\n36: use Symfony\\Component\\Routing\\Attribute\\Route;\n37: \n38: class CustomerMailController extends AbstractController\n39: {\n40:     public function __construct(private readonly MailService $mailService, private readonly CustomerRepository $customerRepository, private readonly MailHistoryRepository $mailHistoryRepository, private readonly MailHistoryEntityManager $mailHistoryEntityManager)\n41:     {"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -120,8 +120,8 @@
         "src/Eccube/Resource/template/admin/Customer/mail_confirm.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:75\n72:                 case 'confirm':\n73:                     if ($form->isSubmitted() && $form->isValid()) {\n74:                         // 会員の検索\n75:                         $Customers = $this->customerRepository->findByIds($form->get('ids')->getData());\n76: \n77:                         return $this->render('@admin/Customer/mail_confirm.twig', [\n78:                             'form' => $form->createView(),",
-        "src/Eccube/Repository/CustomerRepository.php:573\n570:      *\n571:      * @return array<int, Customer>\n572:      */\n573:     public function findByIds(string $customerIdsString): array\n574:     {\n575:         $customerIds = explode(',', $customerIdsString);\n576: ",
+        "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:75\n72:             $request\n73:         );\n74:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_CUSTOMER_MAIL_INDEX_INITIALIZE);\n75: \n76:         $form = $builder->getForm();\n77: \n78:         if ($request->getMethod() === 'POST') {",
+        "src/Eccube/Repository/CustomerRepository.php:573\n570:      *\n571:      * 設計仕様に基づき, 会員IDの昇順で返す.\n572:      *\n573:      * @return array<int, Customer>\n574:      */\n575:     public function findByIds(string $customerIdsString): array\n576:     {",
         "src/Eccube/Resource/template/admin/Customer/mail_confirm.twig:85\n82:                             </tr>\n83:                             </thead>\n84:                             <tbody>\n85:                             {% for Customer in Customers %}\n86:                                 <tr id=\"ex-customer-{{ Customer.id }}\">\n87:                                     <td class=\"align-middle ps-3\">{{ Customer.id }}</td>\n88:                                     <td class=\"align-middle\"><a href=\"{{ url('admin_customer_edit', { 'id': Customer.id}) }}\">{{ Customer.name01 }}&nbsp;{{ Customer.name02 }}</a></td>"
       ],
       "auditChecklist": [
@@ -186,7 +186,7 @@
         "src/Eccube/Entity/DtbUserMailHistory.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:94\n91:                             // メール送信\n92:                             $message = $this->mailService->sendCustomerMail($Customer, $formParams);\n93: \n94:                             // メール履歴作成\n95:                             $this->mailHistoryEntityManager->save($message, $this->getMember()->getBaseInfo(), $Customer, null);\n96:                             $this->entityManager->flush();\n97:                         }",
+        "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:94\n91:                                 'Customers' => $Customers,\n92:                             ],\n93:                             $request\n94:                         );\n95:                         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_CUSTOMER_MAIL_INDEX_CONFIRM);\n96: \n97:                         return $this->render('@admin/Customer/mail_confirm.twig', [",
         "src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39\n36:         Customer|Order|DtbBuyOrder|null $ContextInfo = null,\n37:         ?MailTemplate $MailTemplate = null,\n38:     ): void {\n39:         $MailHistory = new MailHistory();\n40:         $MailHistory\n41:             ->setMailSubject($Message->getSubject())\n42:             ->setBaseInfo($BaseInfo)",
         "src/Eccube/Entity/MailHistory.php:25\n22:     /**\n23:      * MailHistory\n24:      */\n25:     #[ORM\\Table(name: 'dtb_mail_history')]\n26:     #[ORM\\HasLifecycleCallbacks]\n27:     #[ORM\\Entity(repositoryClass: MailHistoryRepository::class)]\n28:     class MailHistory extends AbstractEntity implements \\Stringable"
       ],
@@ -202,7 +202,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 62,
+    "extractedRequirementCount": 76,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -379,6 +379,162 @@
         "category": "機能仕様 処理概要（★はカスタマイズ項目）",
         "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
         "designRequirement": "送信完了後、メール一括送信完了画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-02_0207_sheet-6_sheet-req-4a48644d1f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B12",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-02_0207_sheet-6_sheet-req-2ac0faf5f9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B73",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-02_0207_sheet-6_sheet-req-b1dcc73d82",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B15",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-02_0207_sheet-6_sheet-req-7086ebff9e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B74",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-02_0207_sheet-6_sheet-req-77d50293b2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!C41",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-02_0207_sheet-6_sheet-req-da9fc47352",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B75",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-02_0207_sheet-6_sheet-req-556ba4684c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!Q41",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-02_0207_sheet-6_sheet-req-02ab56d643",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B76",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-02_0207_sheet-6_sheet-req-ea5510930d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!AJ52",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-02_0207_sheet-6_sheet-req-e6928c919d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B77",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-02_0207_sheet-6_sheet-req-0c8b45a856",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!AN52",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-02_0207_sheet-6_sheet-req-9270021429",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B78",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -765,6 +921,32 @@
         "coveredByFinding": true
       },
       {
+        "id": "m08-02_0207_sheet-6_sheet-req-5ae4c9a35e",
+        "category": "入力・確認・送信・完了の画面遷移",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "チェックボックスが選択されていません",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-02_0207_sheet-6_sheet-req-1bdbc40fde",
+        "category": "入力・確認・送信・完了の画面遷移",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "メール送信対象の会員を選ばずに送信操作をしたとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
         "id": "m08-02_0207_sheet-6_sheet-req-7568bb813a",
         "category": "業務ルール・計算",
         "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
@@ -1043,15 +1225,7 @@
         "会員ID",
         "対象の会員の会員IDを表示",
         "会員名のリンク押下時",
-        "対象の会員編集画面へ遷移できる",
-        "管理画面の会員一覧から選択した複数会員に対し",
-        "選択会員ごとにメールを送信する",
-        "のHareruyaEcプラグインの管理画面会員一",
-        "会員本体",
-        "メール送信履歴の正典は会員メール送信履歴",
-        "会員一覧から選択した複数会員への一括メール送信",
-        "会員一覧",
-        "会員一覧機能を正とする"
+        "対象の会員編集画面へ遷移できる"
       ]
     },
     "candidateCount": 18,
@@ -1093,7 +1267,7 @@
         "term": "customer/mail",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:50",
+        "ref": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:52",
         "snippet": "#[Route(path: '/%eccube_admin_route%/customer/mail', name: 'admin_customer_mail', methods: ['POST'])]",
         "weight": 6
       },
@@ -1101,7 +1275,7 @@
         "term": "mail.twig",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:51",
+        "ref": "src/Eccube/Controller/Admin/Customer/CustomerMailController.php:53",
         "snippet": "#[Template(template: '@admin/Customer/mail.twig')]",
         "weight": 6
       },
@@ -1173,7 +1347,7 @@
         "term": "customer_id",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:585",
+        "ref": "src/Eccube/Entity/Order.php:600",
         "snippet": "#[ORM\\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]",
         "weight": 5
       },
@@ -1417,13 +1591,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 62,
-    "verdictedCount": 62,
+    "requirementCount": 76,
+    "verdictedCount": 76,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 62,
+      "実装済み": 76,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -1653,6 +1827,198 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": true
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-4a48644d1f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B12",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-2ac0faf5f9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B73",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-b1dcc73d82",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B15",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-7086ebff9e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B74",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-77d50293b2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!C41",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-da9fc47352",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B75",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-556ba4684c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!Q41",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-02ab56d643",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B76",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-ea5510930d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!AJ52",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-e6928c919d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B77",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-0c8b45a856",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!AN52",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-9270021429",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "0207:メール一括送信確認!B78",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
       },
       {
         "requirementId": "m08-02_0207_sheet-6_sheet-req-975f284d66",
@@ -2117,6 +2483,38 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": true
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-5ae4c9a35e",
+        "category": "入力・確認・送信・完了の画面遷移",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "チェックボックスが選択されていません",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-02_0207_sheet-6_sheet-req-1bdbc40fde",
+        "category": "入力・確認・送信・完了の画面遷移",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-6",
+        "designRequirement": "メール送信対象の会員を選ばずに送信操作をしたとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
       },
       {
         "requirementId": "m08-02_0207_sheet-6_sheet-req-7568bb813a",

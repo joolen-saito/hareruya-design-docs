@@ -67,7 +67,7 @@
         "src/Eccube/Resource/template/admin/Deck/csv_import.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:56\n53:     ) {\n54:     }\n55: \n56:     #[Route('/%eccube_admin_route%/deck/csv_import', name: 'admin_deck_csv_import', methods: ['GET', 'POST'])]\n57:     public function index(Request $request): Response|RedirectResponse\n58:     {\n59:         $form = $this->createForm(CsvImportType::class);",
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:56\n53:         private readonly MtbDeckTagRepository $deckTagRepository,\n54:         private readonly MtbFormatRepository $formatRepository,\n55:     ) {\n56:     }\n57: \n58:     #[Route('/%eccube_admin_route%/deck/csv_import', name: 'admin_deck_csv_import', methods: ['GET', 'POST'])]\n59:     public function index(Request $request): Response|RedirectResponse",
         "src/Eccube/Resource/template/admin/Deck/index.twig:226\n223:     <div class=\"row justify-content-between mb-2\">\n224:         <div class=\"col\">\n225:             <a class=\"btn btn-ec-conversion\" href=\"{{ url('admin_deck_new') }}\">{{ 'admin.deck.new'|trans }}</a>\n226:             <a href=\"{{ url('admin_deck_csv_import') }}\" class=\"btn btn-ec-conversion\">{{ 'admin.deck.csv_import'|trans }}</a>\n227:         </div>\n228:     </div>\n229: ",
         "src/Eccube/Resource/template/admin/Deck/csv_import.twig:89\n86:                         <div class=\"row\">\n87:                             <div class=\"col-2\"><span>{{ 'admin.common.csv_file_select'|trans }}</span></div>\n88:                             <div class=\"col\">\n89:                                 <form id=\"upload-form\" method=\"post\" action=\"{{ url('admin_deck_csv_import') }}\" enctype=\"multipart/form-data\">\n90:                                     {{ form_widget(form._token) }}\n91:                                     <div class=\"mb-2\">\n92:                                         <button id=\"file-select\" type=\"button\" class=\"btn btn-ec-regular me-2\">{{ 'admin.common.file_select'|trans }}</button>"
       ],
@@ -210,7 +210,7 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Form/Type/Admin/CsvImportType.php:54\n51:                 'required' => true,\n52:                 'constraints' => [\n53:                     new Assert\\NotBlank(),\n54:                     new Assert\\File([\n55:                         'maxSize' => $this->csvMaxSize.'M',\n56:                     ]),\n57:                 ],",
-        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:90\n87:             ]);\n88:         }\n89: \n90:         $extension = strtolower($formFile->getClientOriginalExtension());\n91:         if ($extension !== 'csv') {\n92:             return $this->renderWithErrors($form, [$this->translator->trans('admin.common.csv_upload_error')]);\n93:         }",
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:90\n87:         $formFile = $form->get('import_file')->getData();\n88:         if ($formFile === null) {\n89:             return $this->renderWithErrors($form, [$this->translator->trans('admin.csv.error.upload.require')]);\n90:         }\n91: \n92:         if ($this->countCsvRows($formFile) >= static::ADMIN_CSV_IMPORT_MAX_ROWS) {\n93:             return $this->renderWithErrors($form, [",
         "src/Eccube/Resource/template/admin/Deck/csv_import.twig:94\n91:                                     <div class=\"mb-2\">\n92:                                         <button id=\"file-select\" type=\"button\" class=\"btn btn-ec-regular me-2\">{{ 'admin.common.file_select'|trans }}</button>\n93:                                         <span id=\"admin_csv_import_import_file_name\">{{ 'admin.common.file_select_empty'|trans }}</span>\n94:                                         {{ form_widget(form.import_file, {'attr': {'accept': 'text/csv,.csv', 'class': 'd-none'}}) }}\n95:                                         {{ form_errors(form.import_file) }}\n96:                                     </div>\n97:                                     <button class=\"btn btn-ec-conversion\" id=\"upload-button\" type=\"submit\" disabled>{{ 'admin.common.csv_upload'|trans }}</button>"
       ],
       "auditChecklist": [
@@ -402,9 +402,9 @@
         "src/Eccube/Controller/Admin/Deck/DeckCsvController.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:67\n64: \n65:         $form->handleRequest($request);\n66: \n67:         if (!$form->isSubmitted() || !$form->isValid()) {\n68:             $errors = [];\n69:             foreach ($form->getErrors(true) as $error) {\n70:                 $errors[] = $error->getMessage();",
-        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:131\n128:             return $this->renderWithErrors($form, [$e->getMessage()]);\n129:         }\n130: \n131:         if ($result->hasError()) {\n132:             $errors = array_map(static fn (array $error): string => $error['message'], $result->getErrors());\n133: \n134:             return $this->renderWithErrors($form, $errors);",
-        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:137\n134:             return $this->renderWithErrors($form, $errors);\n135:         }\n136: \n137:         log_info('admin.deck.csv.import.complete');\n138:         $this->addSuccess('admin.common.csv_upload_complete', 'admin');\n139: \n140:         return $this->redirectToRoute('admin_deck_csv_import');"
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:67\n64:             [\n65:                 'form' => $form,\n66:             ],\n67:             $request\n68:         );\n69:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_DECK_CSV_INDEX_INITIALIZE);\n70: ",
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:131\n128:             $this->entityManager,\n129:             $this->translator,\n130:             $this->eccubeConfig,\n131:             $handler,\n132:             $User,\n133:         );\n134: ",
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:137\n134: \n135:         try {\n136:             $result = $importer->import($formFile);\n137:         } catch (\\Exception $e) {\n138:             return $this->renderWithErrors($form, [$e->getMessage()]);\n139:         }\n140: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -847,10 +847,179 @@
         "coveredByFinding": true
       },
       {
-        "id": "m15-06_0212_sheet-6_csv-req-f4ad14aafa",
+        "id": "m15-06_0212_sheet-6_csv-req-9d59c436e5",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "M15-06 デッキ登録CSV / デッキ管理 — デッキ登録 CSV（取込）",
+        "designRequirement": "0212:デッキ登録CSVアップロード!C14",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-00001d3457",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!B66",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-89c1532ed4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!K14",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-24a35b68aa",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!B67",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-c66fcc4157",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!B15",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-4c71f99250",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!B68",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-ffc736f461",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!O18",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-6635ccc39f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!B69",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-f9b52bc8b4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!A21",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-6650a89b0a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!B70",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-0db1c6b7ef",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!AA22",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-6ec3dc478e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!AF22",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-def9fb84e7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!AK22",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-1afaf89da8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "M15-06 デッキ登録CSV / デッキ管理 — デッキ登録CSV（取込）",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1367,6 +1536,32 @@
         "coveredByFinding": true
       },
       {
+        "id": "m15-06_0212_sheet-6_csv-req-f87f4b83cb",
+        "category": "DB 側トランザクション開始後は行順にヘッダ列長、必須空欄からマスタ照合およびリスト検証（条件付き）へ進む",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "デッキ登録用CSVファイルを正常にアップロードしたとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-6_csv-req-9115fcdf9d",
+        "category": "DB 側トランザクション開始後は行順にヘッダ列長、必須空欄からマスタ照合およびリスト検証（条件付き）へ進む",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "デッキ登録 CSV（取込）画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
         "id": "m15-06_0212_sheet-6_csv-req-e911e85755",
         "category": "業務ルール・計算",
         "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
@@ -1846,201 +2041,6 @@
           "設計値と実装値が一致する、または乖離所見として記録済みであること"
         ],
         "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-33c359e943",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "空でなく非重複のみ通過させる単純規則チェックおよび既存クエリチェックがある。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-e10c032840",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "アクセス許可の共通ルールに従って本パスにも到達し得て、ソース上だけで機能固有の細かなロール分岐へは達しない。詳細権限モデル本文では仕様確定しない。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-df232b5941",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "アップロード送信の成功および取込共通の異常復帰",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-24bffb8fe6",
-        "category": "本機能でのセッションへ検索状態を読み書きする分岐線はソース上読み取れなかった。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "アップロードファイル取得不可の論理異常種別",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-daf7c1b525",
-        "category": "メッセージおよび情報ログのみでフラッシュし、転送のみ。トランザクションは未開始。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "rollback（開始済のみ）とフラッシュ転送。そのうち異常種別のみが翻訳付きとなる場合があり、ヘッダ系はキー文言の経路となる。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-20d6a3d12a",
-        "category": "メッセージおよび情報ログのみでフラッシュし、転送のみ。トランザクションは未開始。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "本ソース上に HTTP 側の送信回数制限処理は並ばない。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-38ed851e04",
-        "category": "メッセージおよび情報ログのみでフラッシュし、転送のみ。トランザクションは未開始。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "情報ログ「デッキCSV登録開始」「デッキCSV登録完了」程度の短文。詳細コンテキスト配列無しまたは最小。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-32495dc3f8",
-        "category": "メッセージおよび情報ログのみでフラッシュし、転送のみ。トランザクションは未開始。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "情報ログ「エラーが発生しました」の配列側に文言が入り得て、フラッシュとは別ログストリーム上の短文が残り得る。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-1d985880c2",
-        "category": "メッセージおよび情報ログのみでフラッシュし、転送のみ。トランザクションは未開始。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "アップロード済みリスト本文に混入し得る利用者入力の一覧は開発者向けにマスクしない設計にあるため運用側で一覧を取らない前提とするログ方針を別途持つことを推奨とするのみ本書には書かず、ソースの網羅的マスク有無についてはログポリシー別紙へ委ねる（秘密値の転記はしない）。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-25e3eca6c7",
-        "category": "一般的なログ禁止例（資格情報、Cookie の原値すべて、セッション完全値）は管理画面共通方針に従う。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "本機能ソース上はアップロード画面の共通 sessionKey 文字列のみを共通オブジェクト構築へ渡している。POST 復帰で検索状態を増殖させない実装のみ確認された。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-f923e35bdd",
-        "category": "排他制御・楽観制御・トランザクション",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "admin_deck_csv … GET … /{admin_route}/deck/csvimport （アップロードフォーム、厳密チェック用チェックボックス、 getCsvHeader で固定された論理キーと説明ラベルを表として表示する。）",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-7128f501de",
-        "category": "排他制御・楽観制御・トランザクション",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "m15-06_admin_deck_deck_csv_import … POST … /{admin_route}/deck/csvimport （multipart で送られたファイルを検証・取込し、成功または失敗のメッセージをフラッシュに積んだうえで GET admin_deck_csv へ HTTP リダイレクトする。）",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-600525c50c",
-        "category": "トランザクション境界",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "明示的なトランザクション境界が実装にある場合は処理フローの保存処理を正とする。明示境界が無い更新はフォーム処理またはCSV取込後の永続化処理と flush 単位で確定する。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-3f19a50d78",
-        "category": "トランザクション境界",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "行ロック・悲観ロック・楽観ロック・ロックファイルを使用しない。競合時は後から確定した更新が残る。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m15-06_0212_sheet-6_csv-req-0d2e88f22a",
-        "category": "トランザクション境界",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "検証エラーまたは保存前の例外では対象更新を確定しない。保存処理中の例外はエラー処理の節を正とし、未確定の永続化対象はロールバックまたは未flushのまま確定しない。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
       }
     ],
     "missingRequirementCount": 0,
@@ -2101,7 +2101,7 @@
         "term": "DeckCsvController",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:40",
+        "ref": "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:42",
         "snippet": "class DeckCsvController extends AbstractCsvImportController",
         "weight": 7
       },
@@ -2109,7 +2109,7 @@
         "term": "admin_csv_import",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:2265",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:2373",
         "snippet": "$request->files->set('admin_csv_import', ['import_file' => new UploadedFile(",
         "weight": 7
       },
@@ -2117,7 +2117,7 @@
         "term": "admin_csv_import",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:2274",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:2382",
         "snippet": "$request->request->set('admin_csv_import', [",
         "weight": 7
       },
@@ -2125,8 +2125,8 @@
         "term": "admin_csv_import",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:2275",
-        "snippet": "Constant::TOKEN_NAME => $tokenManager->getToken('admin_csv_import')->getValue(),",
+        "ref": "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:298",
+        "snippet": "'productCsvFormName' => 'admin_csv_import',",
         "weight": 7
       },
       {
@@ -2173,7 +2173,7 @@
         "term": "admin.register.complete",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:118",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:140",
         "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
         "weight": 6
       },
@@ -2181,7 +2181,7 @@
         "term": "admin.register.complete",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:339",
+        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:410",
         "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
         "weight": 6
       },
@@ -2189,7 +2189,7 @@
         "term": "admin.register.complete",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ShelfNumberController.php:147",
+        "ref": "src/Eccube/Controller/Admin/Product/ShelfNumberController.php:178",
         "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
         "weight": 6
       },
@@ -2809,7 +2809,7 @@
     "verdictedCount": 120,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
       "実装済み": 120,
       "要確認": 0,
@@ -3267,10 +3267,218 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-f4ad14aafa",
+        "requirementId": "m15-06_0212_sheet-6_csv-req-9d59c436e5",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "M15-06 デッキ登録CSV / デッキ管理 — デッキ登録 CSV（取込）",
+        "designRequirement": "0212:デッキ登録CSVアップロード!C14",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-00001d3457",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!B66",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-89c1532ed4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!K14",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-24a35b68aa",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!B67",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-c66fcc4157",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!B15",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-4c71f99250",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!B68",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-ffc736f461",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!O18",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-6635ccc39f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!B69",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-f9b52bc8b4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!A21",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-6650a89b0a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!B70",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-0db1c6b7ef",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!AA22",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-6ec3dc478e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!AF22",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-def9fb84e7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "0212:デッキ登録CSVアップロード!AK22",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-1afaf89da8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "M15-06 デッキ登録CSV / デッキ管理 — デッキ登録CSV（取込）",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3907,6 +4115,38 @@
         "elementLevel": false
       },
       {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-f87f4b83cb",
+        "category": "DB 側トランザクション開始後は行順にヘッダ列長、必須空欄からマスタ照合およびリスト検証（条件付き）へ進む",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "デッキ登録用CSVファイルを正常にアップロードしたとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-6_csv-req-9115fcdf9d",
+        "category": "DB 側トランザクション開始後は行順にヘッダ列長、必須空欄からマスタ照合およびリスト検証（条件付き）へ進む",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
+        "designRequirement": "デッキ登録 CSV（取込）画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
         "requirementId": "m15-06_0212_sheet-6_csv-req-e911e85755",
         "category": "業務ルール・計算",
         "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
@@ -4487,246 +4727,6 @@
         "category": "API/バッチ結果",
         "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
         "designRequirement": "Symfony Length とは別レイヤーの PHP チェックチェーンが並ぶ。リストは正規表現とリポジトリ照会で解釈成否を評価し、フラグオンで禁止制限系へ踏み込む。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-33c359e943",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "空でなく非重複のみ通過させる単純規則チェックおよび既存クエリチェックがある。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-e10c032840",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "アクセス許可の共通ルールに従って本パスにも到達し得て、ソース上だけで機能固有の細かなロール分岐へは達しない。詳細権限モデル本文では仕様確定しない。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-df232b5941",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "アップロード送信の成功および取込共通の異常復帰",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-24bffb8fe6",
-        "category": "本機能でのセッションへ検索状態を読み書きする分岐線はソース上読み取れなかった。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "アップロードファイル取得不可の論理異常種別",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-daf7c1b525",
-        "category": "メッセージおよび情報ログのみでフラッシュし、転送のみ。トランザクションは未開始。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "rollback（開始済のみ）とフラッシュ転送。そのうち異常種別のみが翻訳付きとなる場合があり、ヘッダ系はキー文言の経路となる。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-20d6a3d12a",
-        "category": "メッセージおよび情報ログのみでフラッシュし、転送のみ。トランザクションは未開始。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "本ソース上に HTTP 側の送信回数制限処理は並ばない。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-38ed851e04",
-        "category": "メッセージおよび情報ログのみでフラッシュし、転送のみ。トランザクションは未開始。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "情報ログ「デッキCSV登録開始」「デッキCSV登録完了」程度の短文。詳細コンテキスト配列無しまたは最小。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-32495dc3f8",
-        "category": "メッセージおよび情報ログのみでフラッシュし、転送のみ。トランザクションは未開始。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "情報ログ「エラーが発生しました」の配列側に文言が入り得て、フラッシュとは別ログストリーム上の短文が残り得る。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-1d985880c2",
-        "category": "メッセージおよび情報ログのみでフラッシュし、転送のみ。トランザクションは未開始。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "アップロード済みリスト本文に混入し得る利用者入力の一覧は開発者向けにマスクしない設計にあるため運用側で一覧を取らない前提とするログ方針を別途持つことを推奨とするのみ本書には書かず、ソースの網羅的マスク有無についてはログポリシー別紙へ委ねる（秘密値の転記はしない）。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-25e3eca6c7",
-        "category": "一般的なログ禁止例（資格情報、Cookie の原値すべて、セッション完全値）は管理画面共通方針に従う。",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "本機能ソース上はアップロード画面の共通 sessionKey 文字列のみを共通オブジェクト構築へ渡している。POST 復帰で検索状態を増殖させない実装のみ確認された。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-f923e35bdd",
-        "category": "排他制御・楽観制御・トランザクション",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "admin_deck_csv … GET … /{admin_route}/deck/csvimport （アップロードフォーム、厳密チェック用チェックボックス、 getCsvHeader で固定された論理キーと説明ラベルを表として表示する。）",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-7128f501de",
-        "category": "排他制御・楽観制御・トランザクション",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "m15-06_admin_deck_deck_csv_import … POST … /{admin_route}/deck/csvimport （multipart で送られたファイルを検証・取込し、成功または失敗のメッセージをフラッシュに積んだうえで GET admin_deck_csv へ HTTP リダイレクトする。）",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-600525c50c",
-        "category": "トランザクション境界",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "明示的なトランザクション境界が実装にある場合は処理フローの保存処理を正とする。明示境界が無い更新はフォーム処理またはCSV取込後の永続化処理と flush 単位で確定する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-3f19a50d78",
-        "category": "トランザクション境界",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "行ロック・悲観ロック・楽観ロック・ロックファイルを使用しない。競合時は後から確定した更新が残る。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m15-06_0212_sheet-6_csv-req-0d2e88f22a",
-        "category": "トランザクション境界",
-        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-6",
-        "designRequirement": "検証エラーまたは保存前の例外では対象更新を確定しない。保存処理中の例外はエラー処理の節を正とし、未確定の永続化対象はロールバックまたは未flushのまま確定しない。",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

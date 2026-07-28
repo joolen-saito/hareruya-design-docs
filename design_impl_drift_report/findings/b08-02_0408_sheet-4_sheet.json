@@ -124,9 +124,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiCustomerService.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Admin/Customer/LostPointsAction.php:59\n56:                 $remainingPoint = (int) $lostPointPlayer['remainingPoint'];\n57:                 $losePoint = $remainingPoint - $Player->getPoint();\n58: \n59:                 $response = $this->smaregiCustomerService->postSmaregiPoint();\n60: \n61:                 if (!array_key_exists('result', $response)) {\n62:                     $this->logger->warning('スマレジAPI連携失敗', [",
-        "src/Eccube/Service/Smaregi/SmaregiCustomerService.php:31\n28:      *\n29:      * @return array<string, mixed>\n30:      */\n31:     public function postSmaregiPoint(?string $smaregiId = null, ?int $point = null, bool $isRollback = false): array\n32:     {\n33:         // TODO: スマレジAPIを実行する実装を追加\n34:         // 未実装のため仮の固定レスポンスを返却",
-        "src/Eccube/Service/Admin/Customer/LostPointsAction.php:26\n23: use Eccube\\Service\\Smaregi\\SmaregiCustomerService;\n24: use Psr\\Log\\LoggerInterface;\n25: \n26: class LostPointsAction\n27: {\n28:     private const NOTE = '有効期限切れによる失効';\n29: "
+        "src/Eccube/Service/Admin/Customer/LostPointsAction.php:59\n56: \n57:             if ($losePoint === 0) {\n58:                 // 失効分が無ければ EC・スマレジともに更新不要。\n59:                 continue;\n60:             }\n61: \n62:             $LostPointHistory = new DtbPointHistory();",
+        "src/Eccube/Service/Smaregi/SmaregiCustomerService.php:31\n28: class SmaregiCustomerService\n29: {\n30:     /** 未使用 smaregi_id を採番する際の最大試行回数。 */\n31:     private const MAX_ID_GENERATION_ATTEMPTS = 10;\n32: \n33:     /** スマレジへ送信する氏名・カナの最大文字数（旧仕様の config 値に合わせる。マルチバイト文字数で判定）。 */\n34:     private const SMAREGI_NAME_MAX_LENGTH = 85;",
+        "src/Eccube/Service/Admin/Customer/LostPointsAction.php:27\n24: use Eccube\\Service\\Smaregi\\SmaregiCustomerPointEventService;\n25: use Psr\\Log\\LoggerInterface;\n26: \n27: class LostPointsAction\n28: {\n29:     private const NOTE = '有効期限切れによる失効';\n30: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -236,9 +236,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbPointHistoryRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Admin/Customer/LostPointsAction.php:26\n23: use Eccube\\Service\\Smaregi\\SmaregiCustomerService;\n24: use Psr\\Log\\LoggerInterface;\n25: \n26: class LostPointsAction\n27: {\n28:     private const NOTE = '有効期限切れによる失効';\n29: ",
+        "src/Eccube/Service/Admin/Customer/LostPointsAction.php:27\n24: use Eccube\\Service\\Smaregi\\SmaregiCustomerPointEventService;\n25: use Psr\\Log\\LoggerInterface;\n26: \n27: class LostPointsAction\n28: {\n29:     private const NOTE = '有効期限切れによる失効';\n30: ",
         "src/Eccube/Command/LostPointsCommand.php:26\n23: use Symfony\\Component\\Console\\Style\\SymfonyStyle;\n24: \n25: #[AsCommand(name: 'eccube:customer:lost-points', description: 'ポイント失効バッチ')]\n26: class LostPointsCommand extends Command\n27: {\n28:     public function __construct(\n29:         private readonly LostPointsAction $lostPointsAction,",
-        "src/Eccube/Repository/DtbPointHistoryRepository.php:30\n27: /**\n28:  * @extends AbstractRepository<DtbPointHistory>\n29:  */\n30: class DtbPointHistoryRepository extends AbstractRepository\n31: {\n32:     public function __construct(\n33:         ManagerRegistry $registry,"
+        "src/Eccube/Repository/DtbPointHistoryRepository.php:31\n28: /**\n29:  * @extends AbstractRepository<DtbPointHistory>\n30:  */\n31: class DtbPointHistoryRepository extends AbstractRepository\n32: {\n33:     public function __construct(\n34:         ManagerRegistry $registry,"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -858,33 +858,9 @@
         "失効や使用したポイント"
       ]
     },
-    "candidateCount": 15,
+    "candidateCount": 18,
     "strongSignalCount": 12,
     "candidateRefs": [
-      {
-        "term": "smaregi_id",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:289",
-        "snippet": "'player.smaregiId AS smaregi_id',",
-        "weight": 7
-      },
-      {
-        "term": "smaregi_id",
-        "termType": "routeName",
-        "role": "Service",
-        "ref": "src/Eccube/Service/Admin/Customer/LostPointsAction.php:64",
-        "snippet": "'smaregi_id' => $Player->getSmaregiId(),",
-        "weight": 7
-      },
-      {
-        "term": "smaregi_id",
-        "termType": "routeName",
-        "role": "Service",
-        "ref": "src/Eccube/Service/Smaregi/Api/Mock/Response/CustomerMockResponse.php:29",
-        "snippet": "* ことで EC 側の保存済み smaregi_id と整合させる.",
-        "weight": 7
-      },
       {
         "term": "flush",
         "termType": "path",
@@ -926,6 +902,30 @@
         "weight": 5
       },
       {
+        "term": "smaregi_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Customer.php:1072",
+        "snippet": "* 固定番号(29) + ゼロ埋めした smaregi_id + チェックデジット の13桁文字列.",
+        "weight": 5
+      },
+      {
+        "term": "smaregi_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Customer.php:1073",
+        "snippet": "* smaregi_id が未設定の場合は生成できないため空文字を返す.",
+        "weight": 5
+      },
+      {
+        "term": "smaregi_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Customer.php:1091",
+        "snippet": "* 指定した smaregi_id からスマレジ会員コード(EAN13)を生成する.",
+        "weight": 5
+      },
+      {
         "term": "customer_id",
         "termType": "routeName",
         "role": "Entity",
@@ -945,7 +945,7 @@
         "term": "customer_id",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:585",
+        "ref": "src/Eccube/Entity/Order.php:600",
         "snippet": "#[ORM\\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]",
         "weight": 5
       },
@@ -969,9 +969,33 @@
         "term": "ポイント残高",
         "termType": "businessTerm",
         "role": "Service",
-        "ref": "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderPointApplier.php:41",
+        "ref": "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderPointApplier.php:42",
         "snippet": "* ポイント残高/履歴の更新は共通の {@see PointService} に委譲し、`transactionId` を履歴へ記録する。",
         "weight": 4
+      },
+      {
+        "term": "ポイント発行日より6ヶ月",
+        "termType": "businessTerm",
+        "role": "Source",
+        "ref": "app/template/user_data/hareruya_faq.twig:1294",
+        "snippet": "「ポイント発行日より6ヶ月」とさせていただいております。<br>",
+        "weight": 2
+      },
+      {
+        "term": "ポイントの有効期限は",
+        "termType": "businessTerm",
+        "role": "Source",
+        "ref": "app/template/user_data/help_onlineshop.twig:599",
+        "snippet": "ポイントの有効期限は「ポイント発行日より6ヶ月」となります。<br>",
+        "weight": 2
+      },
+      {
+        "term": "ポイント発行日より6ヶ月",
+        "termType": "businessTerm",
+        "role": "Source",
+        "ref": "app/template/user_data/help_onlineshop.twig:599",
+        "snippet": "ポイントの有効期限は「ポイント発行日より6ヶ月」となります。<br>",
+        "weight": 2
       },
       {
         "term": "ポイント残高",
@@ -1232,7 +1256,7 @@
     "verdictedCount": 43,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
       "実装済み": 43,
       "要確認": 0,

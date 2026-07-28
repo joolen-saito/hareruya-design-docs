@@ -74,9 +74,9 @@
         "src/Eccube/Controller/Admin/Event/EntryController.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Event/EntryController.php:379\n376:     /**\n377:      * イベント申込一覧: イベント情報検索モーダル用\n378:      */\n379:     #[Route(path: '/%eccube_admin_route%/event/entry/search_event', name: 'admin_entry_event_html', methods: ['GET'])]\n380:     #[Route(path: '/%eccube_admin_route%/event/entry/search_event/page/{page_no}', name: 'admin_entry_event_html_page', requirements: ['page_no' => '\\d+'], methods: ['GET'])]\n381:     public function entryEventHtml(Request $request, PaginatorInterface $paginator, ?int $page_no = null): Response\n382:     {",
-        "src/Eccube/Controller/Admin/Event/EntryController.php:380\n377:      * イベント申込一覧: イベント情報検索モーダル用\n378:      */\n379:     #[Route(path: '/%eccube_admin_route%/event/entry/search_event', name: 'admin_entry_event_html', methods: ['GET'])]\n380:     #[Route(path: '/%eccube_admin_route%/event/entry/search_event/page/{page_no}', name: 'admin_entry_event_html_page', requirements: ['page_no' => '\\d+'], methods: ['GET'])]\n381:     public function entryEventHtml(Request $request, PaginatorInterface $paginator, ?int $page_no = null): Response\n382:     {\n383:         $modalPayload = $request->query->all()['admin_entry_event_modal'] ?? [];",
-        "src/Eccube/Controller/Admin/Event/EntryController.php:454\n451:     /**\n452:      * イベント申込一覧モーダル「決定」: サーバーでイベントを解決し JSON でフォーム用データを返す\n453:      */\n454:     #[Route(path: '/%eccube_admin_route%/event/entry/search_event/set', name: 'admin_entry_search_event_by_id', methods: ['POST'])]\n455:     public function searchEventByIdForEntryList(Request $request): JsonResponse\n456:     {\n457:         $token = new CsrfToken(Constant::TOKEN_NAME, (string) $request->request->get(Constant::TOKEN_NAME));"
+        "src/Eccube/Controller/Admin/Event/EntryController.php:379\n376:             [\n377:                 'form' => $form,\n378:             ],\n379:             $request\n380:         );\n381:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_EVENT_ENTRY_BULK_UPDATE_ENTRY_STATUS_COMPLETE);\n382: ",
+        "src/Eccube/Controller/Admin/Event/EntryController.php:380\n377:                 'form' => $form,\n378:             ],\n379:             $request\n380:         );\n381:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_EVENT_ENTRY_BULK_UPDATE_ENTRY_STATUS_COMPLETE);\n382: \n383:         return new JsonResponse(['message' => [trans('admin.event.entry.bulk_update.success', ['%count%' => count($ids)])]]);",
+        "src/Eccube/Controller/Admin/Event/EntryController.php:454\n451:             [\n452:                 'form' => $form,\n453:             ],\n454:             $request\n455:         );\n456:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_EVENT_ENTRY_ENTRY_EVENT_HTML_INITIALIZE);\n457: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -156,7 +156,7 @@
       "implementationSnippets": [
         "src/Eccube/Form/Type/Admin/EntryRegisterSearchType.php:41\n38:                 'label' => 'admin.event.multi',\n39:                 'required' => false,\n40:             ])\n41:             ->add('base_info', EntityType::class, [\n42:                 'class' => BaseInfo::class,\n43:                 'label' => 'admin.event.base_info',\n44:                 'required' => false,",
         "src/Eccube/Form/Type/Admin/EntryRegisterSearchType.php:50\n47:                 'placeholder' => 'common.select__unspecified',\n48:                 'choice_label' => 'shopName',\n49:                 'data' => $options['base_info_default'] ?? [],\n50:                 'query_builder' => fn (EntityRepository $er) => $er->createQueryBuilder('b')\n51:                     ->orderBy('b.id', 'ASC'),\n52:             ])\n53:             ->add('start_date_from', DateType::class, [",
-        "src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:108\n105:             }\n106:         }\n107: \n108:         $eventsQueryBuilder = $this->eventRepository->getQueryBuilderByEntryRegistrationSearchData(\n109:             $searchData ?? []\n110:         );\n111:         $events = $eventsQueryBuilder->getQuery()->getResult();"
+        "src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:108\n105:                     'pagination' => [],\n106:                     'datas' => [],\n107:                     'has_errors' => true,\n108:                 ];\n109:             }\n110:         } else {\n111:             if ($hasExplicitPageParam || $request->get('resume') !== null) {"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -170,7 +170,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 42,
+    "extractedRequirementCount": 52,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -334,6 +334,136 @@
         "category": "機能仕様 処理概要（★はカスタマイズ項目）",
         "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
         "designRequirement": "選択したページへ遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-11_0214_sheet-17_sheet-req-f02c3a07b0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !C9",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-11_0214_sheet-17_sheet-req-c767ce5b72",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !B51",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-11_0214_sheet-17_sheet-req-93c48bd9ec",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !H9",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-11_0214_sheet-17_sheet-req-dfc31a00be",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !B52",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-11_0214_sheet-17_sheet-req-2199358980",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !U8",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-11_0214_sheet-17_sheet-req-eb51acb849",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !B53",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-11_0214_sheet-17_sheet-req-cb0f28ab72",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !S24",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-11_0214_sheet-17_sheet-req-bc114aa6ed",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !B55",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-11_0214_sheet-17_sheet-req-64ad9e6666",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !AT8",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-11_0214_sheet-17_sheet-req-b563625191",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !B54",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -804,39 +934,15 @@
         "term": "entry/search/event/html/{page_no}",
         "termType": "path",
         "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:105",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:3",
         "snippet": "$('[data-deck-header-search]').each(function() {",
-        "weight": 4
-      },
-      {
-        "term": "entry/search/event/html/{page_no}",
-        "termType": "path",
-        "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:107",
-        "snippet": "var $toggle = $form.find('[data-search-venue-toggle]');",
-        "weight": 4
-      },
-      {
-        "term": "entry/search/event/html/{page_no}",
-        "termType": "path",
-        "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:108",
-        "snippet": "var $dropdown = $form.find('[data-search-venue-dropdown]');",
-        "weight": 4
-      },
-      {
-        "term": "entry/search/event/html/{page_no}",
-        "termType": "path",
-        "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:109",
-        "snippet": "var $text = $form.find('[data-search-venue-text]');",
         "weight": 4
       },
       {
         "term": "entry/search/event/id",
         "termType": "path",
         "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:146",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:44",
         "snippet": "const eventApp = document.querySelector('[data-event-app]');",
         "weight": 4
       },
@@ -844,24 +950,48 @@
         "term": "entry/search/event/id",
         "termType": "path",
         "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:192",
-        "snippet": "eventApp.querySelectorAll('[data-event-id]').forEach(function(item) {",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:49",
+        "snippet": "const labelsEl = document.querySelector('[data-event-labels]');",
+        "weight": 4
+      },
+      {
+        "term": "entry/search/event/html/{page_no}",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:5",
+        "snippet": "var $toggle = $form.find('[data-search-venue-toggle]');",
+        "weight": 4
+      },
+      {
+        "term": "entry/search/event/html/{page_no}",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:6",
+        "snippet": "var $dropdown = $form.find('[data-search-venue-dropdown]');",
+        "weight": 4
+      },
+      {
+        "term": "entry/search/event/html/{page_no}",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:7",
+        "snippet": "var $text = $form.find('[data-search-venue-text]');",
         "weight": 4
       },
       {
         "term": "entry/search/event/id",
         "termType": "path",
         "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:193",
-        "snippet": "const ids = orderByEvent[item.getAttribute('data-event-id')];",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:92",
+        "snippet": "'大型イベント': labels.large_event,",
         "weight": 4
       },
       {
         "term": "entry/search/event/id",
         "termType": "path",
         "role": "JavaScript",
-        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:205",
-        "snippet": "if (link.closest('[data-event-id]') !== null) {",
+        "ref": "html/template/default/assets/hareruya/js/ec-cube-bridge.js:93",
+        "snippet": "'特別イベント': labels.special_event,",
         "weight": 4
       },
       {
@@ -869,7 +999,7 @@
         "termType": "path",
         "role": "JavaScript",
         "ref": "html/template/default/assets/hareruya/js/hareruya-event.js:1",
-        "snippet": "(()=>{\"use strict\";var e={},t={};function r(a){var n=t[a];if(void 0!==n)return n.exports;var i=t[a]={exports:{}};return e[a](i,i.exports,r),i.exports}function a(e,t,r,a,n,i,o){try{var s=e[i](o),l=s.value}catch(e){r(e);r…",
+        "snippet": "(()=>{\"use strict\";var e={},t={};function r(a){var n=t[a];if(void 0!==n)return n.exports;var i=t[a]={exports:{}};return e[a](i,i.exports,r),i.exports}function a(e,t,r,a,n,i,o){try{var l=e[i](o),s=l.value}catch(e){r(e);r…",
         "weight": 4
       },
       {
@@ -1156,13 +1286,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 42,
-    "verdictedCount": 42,
+    "requirementCount": 52,
+    "verdictedCount": 52,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 42,
+      "実装済み": 52,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -1376,6 +1506,166 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": true
+      },
+      {
+        "requirementId": "m13-11_0214_sheet-17_sheet-req-f02c3a07b0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !C9",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m13-11_0214_sheet-17_sheet-req-c767ce5b72",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !B51",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m13-11_0214_sheet-17_sheet-req-93c48bd9ec",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !H9",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m13-11_0214_sheet-17_sheet-req-dfc31a00be",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !B52",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m13-11_0214_sheet-17_sheet-req-2199358980",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !U8",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m13-11_0214_sheet-17_sheet-req-eb51acb849",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !B53",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m13-11_0214_sheet-17_sheet-req-cb0f28ab72",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !S24",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m13-11_0214_sheet-17_sheet-req-bc114aa6ed",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !B55",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m13-11_0214_sheet-17_sheet-req-64ad9e6666",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !AT8",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m13-11_0214_sheet-17_sheet-req-b563625191",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-17",
+        "designRequirement": "0214:イベント申込登録(検索結果) !B54",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
       },
       {
         "requirementId": "m13-11_0214_sheet-17_sheet-req-5612798abe",

@@ -58,8 +58,8 @@
         "src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:100\n97:     #[Route(path: '/%eccube_admin_route%/analysis/sales/export', name: 'admin_analysis_sales_export', methods: ['GET'])]\n98:     public function export(): StreamedResponse|RedirectResponse\n99:     {\n100:         $viewData = $this->session->get(self::SESSION_KEY);\n101:         if ($viewData === null) {\n102:             $this->addError('検索条件がありません。先に検索を実行してください。', 'admin');\n103: ",
-        "src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:30\n27: use Symfony\\Component\\HttpFoundation\\StreamedResponse;\n28: use Symfony\\Component\\Routing\\Attribute\\Route;\n29: \n30: class SalesAnalysisController extends AbstractController\n31: {\n32:     private const SESSION_KEY = 'eccube.admin.analysis.sales.search';\n33: "
+        "src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:100\n97:         }\n98: \n99:         $searchData = $searchForm->getData();\n100:         $this->session->set(self::SESSION_KEY, FormUtil::getViewData($searchForm));\n101: \n102:         $searchData['base_info_ids'] = $this->resolveTargetBaseInfoIds(\n103:             (bool) ($searchData['mail_order_enabled'] ?? false),",
+        "src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:32\n29: use Symfony\\Component\\HttpFoundation\\StreamedResponse;\n30: use Symfony\\Component\\Routing\\Attribute\\Route;\n31: \n32: class SalesAnalysisController extends AbstractController\n33: {\n34:     private const SESSION_KEY = 'eccube.admin.analysis.sales.search';\n35: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -117,7 +117,7 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php:38\n35:     public function exportBySearchData(array $searchData): StreamedResponse\n36:     {\n37:         $isProduct = ($searchData['summary_type'] ?? null) !== 'class_category_name';\n38:         $rows = $this->orderItemRepository->getAnalysisSummary($searchData)['result'];\n39:         $header = $isProduct ? $this->buildProductHeader() : $this->buildCategoryHeader();\n40: \n41:         $response = new StreamedResponse(function () use ($rows, $isProduct, $header): void {",
-        "src/Eccube/Repository/OrderItemRepository.php:310\n307:             $qb->orderBy(self::ANALYSIS_SORT_COLUMNS[$sortKey], $ascDesc);\n308:         }\n309: \n310:         $limit = (int) ($searchData['page_count'] ?? 0);\n311:         if ($limit > 0) {\n312:             $qb->setMaxResults($limit);\n313:         }",
+        "src/Eccube/Repository/OrderItemRepository.php:310\n307:         }\n308:         if (!empty($searchData['price_to'])) {\n309:             $qb->andHaving($avgPriceExpr.' <= :priceTo')->setParameter('priceTo', (int) $searchData['price_to']);\n310:         }\n311:         if (!empty($searchData['quantity_from'])) {\n312:             $qb->andHaving('SUM(oi.quantity) >= :quantityFrom')->setParameter('quantityFrom', (int) $searchData['quantity_from']);\n313:         }",
         "src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php:23\n20: use Symfony\\Component\\HttpFoundation\\StreamedResponse;\n21: use Symfony\\Contracts\\Translation\\TranslatorInterface;\n22: \n23: class SalesAnalysisCsvExporterService\n24: {\n25:     public function __construct(\n26:         protected CsvExportService $csvExportService,"
       ],
       "auditChecklist": [
@@ -132,7 +132,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 43,
+    "extractedRequirementCount": 44,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -461,6 +461,19 @@
         "coveredByFinding": true
       },
       {
+        "id": "m12-04_0211_sheet-11_csv-req-0272d09ec5",
+        "category": "検索条件はCSV出力時のフォーム送信値ではなく、直前の集計実行で保存された検索条件セッションの値とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-11",
+        "designRequirement": "エラーを表示し、受注/売上分析 集計一覧表示画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
         "id": "m12-04_0211_sheet-11_csv-req-19369d0789",
         "category": "業務ルール・計算",
         "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-11",
@@ -710,6 +723,7 @@
         "スマレジの取引データは基本的にリアルタイムに送信",
         "支店やスマレジの取引情報も集計対象として取り扱う",
         "CSVダウンロード",
+        "売上分析CSVダウンロード",
         "売上分析のCSVダウンロードは",
         "集計結果をCSVとしてストリーミング出力する機能",
         "のHareruyaEcプラグインの受注",
@@ -723,8 +737,7 @@
         "ログイン",
         "権限設定の詳細",
         "CSV出力はM12",
-        "注文明細テーブル",
-        "注文確定日"
+        "注文明細テーブル"
       ]
     },
     "candidateCount": 18,
@@ -734,7 +747,7 @@
         "term": "analysis/sales/export",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:97",
+        "ref": "src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:126",
         "snippet": "#[Route(path: '/%eccube_admin_route%/analysis/sales/export', name: 'admin_analysis_sales_export', methods: ['GET'])]",
         "weight": 6
       },
@@ -774,15 +787,7 @@
         "term": "order_date",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:1301",
-        "snippet": "$this->order_date = $orderDate;",
-        "weight": 5
-      },
-      {
-        "term": "order_date",
-        "termType": "routeName",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:132",
+        "ref": "src/Eccube/Entity/Order.php:147",
         "snippet": "#[ORM\\Index(columns: ['order_date'], name: 'dtb_order_order_date_idx')]",
         "weight": 5
       },
@@ -790,7 +795,7 @@
         "term": "order_date",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:534",
+        "ref": "src/Eccube/Entity/Order.php:549",
         "snippet": "#[ORM\\Column(name: 'order_date', type: Types::DATETIMETZ_MUTABLE, nullable: true)]",
         "weight": 5
       },
@@ -798,8 +803,16 @@
         "term": "order_date",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:535",
+        "ref": "src/Eccube/Entity/Order.php:550",
         "snippet": "private $order_date;",
+        "weight": 5
+      },
+      {
+        "term": "order_date",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:784",
+        "snippet": "* 関連する店頭受取受注の order_date のうち最も新しい日付。",
         "weight": 5
       },
       {
@@ -807,7 +820,7 @@
         "termType": "routeName",
         "role": "Entity",
         "ref": "src/Eccube/Entity/OrderItem.php:140",
-        "snippet": "#[ORM\\Column(name: 'product_name', type: Types::STRING, length: 255)]",
+        "snippet": "#[ORM\\Column(name: 'product_name', type: Types::TEXT)]",
         "weight": 5
       },
       {
@@ -859,19 +872,19 @@
         "weight": 5
       },
       {
-        "term": "注文確定日",
+        "term": "商品コード",
         "termType": "businessTerm",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:153",
-        "snippet": "'注文確定日' => '注文確定日',",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbStockHistoryRepository.php:95",
+        "snippet": "// id 商品名(日/英)・カード名(日/英)・商品ID・商品コード",
         "weight": 4
       },
       {
-        "term": "注文確定日",
+        "term": "商品コード",
         "termType": "businessTerm",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:80",
-        "snippet": "'注文確定日' => '注文確定日',",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/ProductClassRepository.php:2131",
+        "snippet": "* @param string $productCode 商品コード",
         "weight": 4
       }
     ],
@@ -994,13 +1007,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 42,
-    "verdictedCount": 42,
+    "requirementCount": 43,
+    "verdictedCount": 43,
     "unverdictedCount": 0,
     "coverageComplete": true,
     "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
     "counts": {
-      "実装済み": 42,
+      "実装済み": 43,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -1406,6 +1419,22 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": false
+      },
+      {
+        "requirementId": "m12-04_0211_sheet-11_csv-req-0272d09ec5",
+        "category": "検索条件はCSV出力時のフォーム送信値ではなく、直前の集計実行で保存された検索条件セッションの値とする。",
+        "designRef": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-11",
+        "designRequirement": "エラーを表示し、受注/売上分析 集計一覧表示画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
       },
       {
         "requirementId": "m12-04_0211_sheet-11_csv-req-19369d0789",

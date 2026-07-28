@@ -29,7 +29,7 @@
         "src/Eccube/Repository/OrderRepository.php:1174"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/OrderRepository.php:1174\n1171:             'o.order_date',\n1172:             $conditions['order_date_from'] ?? null,\n1173:             $conditions['order_date_to'] ?? null\n1174:         );\n1175: \n1176:         $orders = $qb\n1177:             ->getQuery()"
+        "src/Eccube/Repository/OrderRepository.php:1174\n1171:      * @param string $alias\n1172:      * @param int|null $until\n1173:      * @param int|null $since\n1174:      *\n1175:      * @return void\n1176:      */\n1177:     private function addSinceAndUntilCondition(QueryBuilder $qb, string $alias, ?int $until, ?int $since): void"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -48,7 +48,7 @@
       "comparisonSummary": "④DBカラム・DB操作・テーブル：設計は「参照列`dtb_order.order_no`は最大255文字の文字列で、条件では数値パラメータとの比較演算が用いられる／キー`order_id_from`。入力時のみ`order_no >= パラメータ`（集計要点行242も「order_noの上下限」）」。実装は「設計は注文番号レンジ条件の参照列を`dtb_order.order_no`（Order.php:464-465、`#[ORM\\Column(name: 'order_no', ..., length: 255)]`）と明記し、集計要点行(HTML:242)も「order_noの上下限」と記す。しかし実装OrderRepository::getOrdersForStandby()はレンジ条件を`o.order_number`（Order.php:647-648、`#[ORM\\Column(name: 'order_…」。乖離理由は「設計は注文番号レンジ条件の参照列を`dtb_order.order_no`（Order.php:464-465、`#[ORM\\Column(name: 'order_no', ..., length: 255)]`）と明記し、集計要点行(HTML:242)も「order_noの上下限」と記す。しかし実装OrderRepository::getOrdersForStandby()はレンジ条件を`o.order_number`（Order.php:647-648、`#[ORM\\Column(name: 'order_…」。",
       "mismatchReason": "設計は注文番号レンジ条件の参照列を`dtb_order.order_no`（Order.php:464-465、`#[ORM\\Column(name: 'order_no', ..., length: 255)]`）と明記し、集計要点行(HTML:242)も「order_noの上下限」と記す。しかし実装OrderRepository::getOrdersForStandby()はレンジ条件を`o.order_number`（Order.php:647-648、`#[ORM\\Column(name: 'order_…",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6176\n6173:       </section>\n6174:       <!-- function-design-embed:end m05-11-m05-11_admin_order_order_edit -->\n6175: </section>\n6176:       <section class=\"sheet-panel\" id=\"sheet-17\">\n6177:         <div class=\"sheet-heading\">\n6178:           <h2>出荷指示リスト生成</h2>\n6179:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html:6975\n6972:       </section>\n6973:       <!-- function-design-embed:end m05-11-m05-11_admin_order_order_edit -->\n6974: </section>\n6975:       <section class=\"sheet-panel\" id=\"sheet-17\">\n6976:         <div class=\"sheet-heading\">\n6977:           <h2>出荷指示リスト生成</h2>\n6978:         </div>",
       "auditAspects": [
         "Form・入力項目",
         "Repository・Entity・DB",
@@ -108,8 +108,8 @@
         "src/Eccube/Entity/Order.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/OrderRepository.php:1157\n1154:             ->setParameter('ignore_status', [OrderStatus::PROCESSING, OrderStatus::CANCEL]);\n1155: \n1156:         // order id\n1157:         if (!empty($conditions['order_id_from'])) {\n1158:             $qb\n1159:                 ->andWhere('o.order_number >= :order_id_from')\n1160:                 ->setParameter('order_id_from', $conditions['order_id_from']);",
-        "src/Eccube/Entity/Order.php:450\n447:         #[ORM\\Column(name: 'pre_order_id', type: Types::STRING, length: 255, nullable: true)]\n448:         private ?string $pre_order_id = null;\n449: \n450:         #[ORM\\Column(name: 'order_no', type: Types::STRING, length: 255, nullable: true)]\n451:         private ?string $order_no = null;\n452: \n453:         #[ORM\\Column(name: 'message', type: Types::STRING, length: 4000, nullable: true)]",
+        "src/Eccube/Repository/OrderRepository.php:1157\n1154:             $qb\n1155:                 ->andWhere(\"{$alias} >= :date_start\")\n1156:                 ->setParameter('date_start', $startDate);\n1157:         }\n1158: \n1159:         if (!empty($endDate)) {\n1160:             $endDate = $endDate->format('Y-m-d H:i:s');",
+        "src/Eccube/Entity/Order.php:450\n447:          *\n448:          * @deprecated\n449:          */\n450:         public function getTotalPrice(): string\n451:         {\n452:             @trigger_error('The '.__METHOD__.' method is deprecated.', E_USER_DEPRECATED);\n453: ",
         "src/Eccube/Repository/OrderRepository.php:57\n54:  *\n55:  * @extends AbstractEnterpriseRepository<Order>\n56:  */\n57: class OrderRepository extends AbstractEnterpriseRepository implements ServiceEntityRepositoryInterface\n58: {\n59:     use SortProductTrait;\n60: "
       ],
       "auditChecklist": [
@@ -124,7 +124,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 63,
+    "extractedRequirementCount": 71,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -245,10 +245,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-18_0203_sheet-17_sheet-req-9a00344e36",
+        "id": "m05-18_0203_sheet-17_sheet-req-1dbfd354de",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
-        "designRequirement": "M05-18 出荷指示リスト作成 / m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）",
+        "designRequirement": "M05-18 出荷指示リスト作成 / 受注管理 — 出荷指示リスト作成",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -548,6 +548,110 @@
         "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
         "designRequirement": "画面上の区分表示名は mtb_order_type.name のデータに依存する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-18_0203_sheet-17_sheet-req-2e35ca8bd8",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "保存に失敗しました",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-18_0203_sheet-17_sheet-req-5a77971648",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "出荷指示リスト作成を、必要な入力内容が満たされない状態で実行したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-18_0203_sheet-17_sheet-req-ed72643012",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "エラーを表示して、出荷指示リスト検索画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-18_0203_sheet-17_sheet-req-98e8a8f762",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "指定した条件に合う出荷指示リスト作成対象の受注がないとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-18_0203_sheet-17_sheet-req-360f945349",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "出荷指示リスト生成時に、対象の注文タイプが見つからない場合",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-18_0203_sheet-17_sheet-req-289f1d595f",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "出荷指示一覧画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-18_0203_sheet-17_sheet-req-7d798196cd",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "出荷指示リストの作成が完了したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-18_0203_sheet-17_sheet-req-6e33a71bb0",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "保存完了を表示して、出荷指示リスト検索画面に遷移する",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1052,7 +1156,7 @@
         "term": "admin_order_generate_standby_list",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderController.php:786",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderController.php:873",
         "snippet": "#[Route(path: '/%eccube_admin_route%/order/generate/standby', name: 'admin_order_generate_standby_list', methods: ['POST'])]",
         "weight": 7
       },
@@ -1060,7 +1164,7 @@
         "term": "GenerateShippingStandbyType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:129",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:132",
         "snippet": "$builder = $this->formFactory->createBuilder(GenerateShippingStandbyType::class);",
         "weight": 7
       },
@@ -1068,7 +1172,7 @@
         "term": "GenerateShippingStandbyType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:23",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:24",
         "snippet": "use Eccube\\Form\\Type\\Admin\\Order\\GenerateShippingStandbyType;",
         "weight": 7
       },
@@ -1076,7 +1180,7 @@
         "term": "admin_shipping_standby",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:83",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:86",
         "snippet": "$this->formName = 'admin_shipping_standby';",
         "weight": 7
       },
@@ -1297,13 +1401,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 63,
-    "verdictedCount": 63,
+    "requirementCount": 71,
+    "verdictedCount": 71,
     "unverdictedCount": 0,
     "coverageComplete": true,
     "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
     "counts": {
-      "実装済み": 63,
+      "実装済み": 71,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -1455,10 +1559,10 @@
         "elementLevel": true
       },
       {
-        "requirementId": "m05-18_0203_sheet-17_sheet-req-9a00344e36",
+        "requirementId": "m05-18_0203_sheet-17_sheet-req-1dbfd354de",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
-        "designRequirement": "M05-18 出荷指示リスト作成 / m05-18_admin_order_order_shipping_standby_list_create（受注管理 — 出荷指示リスト作成）",
+        "designRequirement": "M05-18 出荷指示リスト作成 / 受注管理 — 出荷指示リスト作成",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -1837,6 +1941,134 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": false
+      },
+      {
+        "requirementId": "m05-18_0203_sheet-17_sheet-req-2e35ca8bd8",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "保存に失敗しました",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-18_0203_sheet-17_sheet-req-5a77971648",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "出荷指示リスト作成を、必要な入力内容が満たされない状態で実行したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-18_0203_sheet-17_sheet-req-ed72643012",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "エラーを表示して、出荷指示リスト検索画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-18_0203_sheet-17_sheet-req-98e8a8f762",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "指定した条件に合う出荷指示リスト作成対象の受注がないとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-18_0203_sheet-17_sheet-req-360f945349",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "出荷指示リスト生成時に、対象の注文タイプが見つからない場合",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-18_0203_sheet-17_sheet-req-289f1d595f",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "出荷指示一覧画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-18_0203_sheet-17_sheet-req-7d798196cd",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "出荷指示リストの作成が完了したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-18_0203_sheet-17_sheet-req-6e33a71bb0",
+        "category": "アクションはトランザクション開始後、区分IDごとに次を繰り返す。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-17",
+        "designRequirement": "保存完了を表示して、出荷指示リスト検索画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
       },
       {
         "requirementId": "m05-18_0203_sheet-17_sheet-req-908504f332",

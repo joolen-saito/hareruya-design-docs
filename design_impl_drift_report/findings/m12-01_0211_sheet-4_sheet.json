@@ -120,8 +120,8 @@
         "src/Eccube/Entity/BaseInfo.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/BaseInfoRepository.php:198\n195: \n196:     public function getMallData(): QueryBuilder\n197:     {\n198:         return $this->createQueryBuilder('bi')\n199:             ->where('bi.id = :root_base_info')\n200:             ->setParameter('root_base_info', $this->eccubeConfig->get('eccube_root_base_info_id'));\n201:     }",
-        "src/Eccube/Repository/BaseInfoRepository.php:203\n200:             ->setParameter('root_base_info', $this->eccubeConfig->get('eccube_root_base_info_id'));\n201:     }\n202: \n203:     /**\n204:      * 管理側での検索用のQueryBuilderを取得する\n205:      *\n206:      * @param array<string, string> $searchData",
+        "src/Eccube/Repository/BaseInfoRepository.php:198\n195:     }\n196: \n197:     /**\n198:      * 日次・月次集計画面の店舗売上チェックボックス用に、\n199:      * テナントかつ公開状態の店舗一覧を取得する。\n200:      *\n201:      * @return BaseInfo[]",
+        "src/Eccube/Repository/BaseInfoRepository.php:203\n200:      *\n201:      * @return BaseInfo[]\n202:      */\n203:     public function getPublicTenantShopsForSummary(): array\n204:     {\n205:         return $this->getTenantData()\n206:             ->andWhere('bi.isPublicShop = :isPublicShop')",
         "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php:117\n114:                     'admin.setting.shop.shop.is_main_shop__branch' => BaseInfo::SHOP_BRANCH,\n115:                 ],\n116:             ])\n117:             ->add('is_public_shop', ChoiceType::class, [\n118:                 'required' => true,\n119:                 'expanded' => true,\n120:                 'multiple' => false,"
       ],
       "auditChecklist": [
@@ -188,7 +188,7 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:75\n72:             [$from, $to] = [$to, $from];\n73:         }\n74: \n75:         $rowsRaw = $this->dtbDailySummaryRepository->fetchSummaryRowsByDateRangeAndTargets($from, $to, $targetBaseInfoIds);\n76:         $rows = [];\n77:         foreach ($rowsRaw as $raw) {\n78:             $storeName = $this->resolveStoreName(",
-        "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:126\n123:         $rowsRaw = $this->dtbMonthlySummaryRepository->fetchSummaryRowsByMonthRangeAndTargets($from, $to, $targetBaseInfoIds);\n124: \n125:         $rows = [];\n126:         foreach ($rowsRaw as $raw) {\n127:             $storeName = $this->resolveStoreName(\n128:                 (int) ($raw['base_info_id'] ?? 0),\n129:                 (string) ($raw['short_name_jp'] ?? ''),",
+        "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:126\n123:             [$from, $to] = [$to, $from];\n124:         }\n125: \n126:         $rowsRaw = $this->dtbMonthlySummaryRepository->fetchSummaryRowsByMonthRangeAndTargets($from, $to, $targetBaseInfoIds);\n127: \n128:         $rows = [];\n129:         foreach ($rowsRaw as $raw) {",
         "src/Eccube/Repository/DtbDailySummaryRepository.php:304\n301:      *\n302:      * @return array<int, array<string, mixed>>\n303:      */\n304:     public function fetchSummaryRowsByDateRangeAndTargets(\n305:         \\DateTimeInterface $from,\n306:         \\DateTimeInterface $to,\n307:         array $targetBaseInfoIds,"
       ],
       "auditChecklist": [
@@ -1454,10 +1454,18 @@
         "weight": 7
       },
       {
+        "term": "analysis/summary/result",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:105",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/analysis/summary/result', name: 'admin_summary_result', methods: ['POST'])]",
+        "weight": 6
+      },
+      {
         "term": "analysis/summary/daily",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:62",
+        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:65",
         "snippet": "#[Route(path: '/%eccube_admin_route%/analysis/summary/daily', name: 'admin_summary_daily', methods: ['GET'])]",
         "weight": 6
       },
@@ -1465,16 +1473,8 @@
         "term": "analysis/summary/monthly",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:72",
+        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:85",
         "snippet": "#[Route(path: '/%eccube_admin_route%/analysis/summary/monthly', name: 'admin_summary_monthly', methods: ['GET'])]",
-        "weight": 6
-      },
-      {
-        "term": "analysis/summary/result",
-        "termType": "path",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:82",
-        "snippet": "#[Route(path: '/%eccube_admin_route%/analysis/summary/result', name: 'admin_summary_result', methods: ['POST'])]",
         "weight": 6
       },
       {
@@ -1537,15 +1537,7 @@
         "term": "order_date",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:1301",
-        "snippet": "$this->order_date = $orderDate;",
-        "weight": 5
-      },
-      {
-        "term": "order_date",
-        "termType": "routeName",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:132",
+        "ref": "src/Eccube/Entity/Order.php:147",
         "snippet": "#[ORM\\Index(columns: ['order_date'], name: 'dtb_order_order_date_idx')]",
         "weight": 5
       },
@@ -1553,7 +1545,7 @@
         "term": "order_date",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:534",
+        "ref": "src/Eccube/Entity/Order.php:549",
         "snippet": "#[ORM\\Column(name: 'order_date', type: Types::DATETIMETZ_MUTABLE, nullable: true)]",
         "weight": 5
       },
@@ -1561,7 +1553,7 @@
         "term": "order_date",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:535",
+        "ref": "src/Eccube/Entity/Order.php:550",
         "snippet": "private $order_date;",
         "weight": 5
       },
@@ -1569,7 +1561,7 @@
         "term": "customer_id",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:585",
+        "ref": "src/Eccube/Entity/Order.php:600",
         "snippet": "#[ORM\\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]",
         "weight": 5
       },
@@ -1577,7 +1569,7 @@
         "term": "order_status_id",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:616",
+        "ref": "src/Eccube/Entity/Order.php:631",
         "snippet": "#[ORM\\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]",
         "weight": 5
       },
@@ -1585,7 +1577,15 @@
         "term": "order_status_id",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:623",
+        "ref": "src/Eccube/Entity/Order.php:638",
+        "snippet": "#[ORM\\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "order_status_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:642",
         "snippet": "#[ORM\\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]",
         "weight": 5
       }
@@ -1787,7 +1787,7 @@
     "verdictedCount": 92,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
       "実装済み": 92,
       "要確認": 0,

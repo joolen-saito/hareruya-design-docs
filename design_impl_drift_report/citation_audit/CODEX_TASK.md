@@ -30,6 +30,20 @@
 必ず該当シートの本文を読み、設計期待値を裏付ける記述が**実在するか**を確認する。
 キーワード検索（項目名、パラメータ名、並び順、条件など）も併用する。
 
+**重要: 設計書HTMLには2系統の資料が混在している。**
+
+| 系統 | 見分け方 | 位置づけ |
+|---|---|---|
+| Excel正本 | `src-cell` / `data-excel-ref` を持つ要素 | 正本設計書。`SPEC_BACKED` の根拠になる |
+| リバース詳細設計 | `<!-- function-design-embed:start ... -->` 以降。`data-source="functions/..."` | 旧実装から起こした文書。`LEGACY_BACKED` の根拠 |
+
+リバース詳細設計の実体は `/home/y-saito/Developments/hareruya-design-docs/functions/` 配下にある:
+`functions/pf-api/`(115件) `functions/pf-eccube3/` `functions/ec-cube-enterprise/`。
+機能Noに対応するmdを直接読むのが速い（例 `functions/pf-api/a02-02_api_product_popup_card.md`）。
+
+**この2系統を必ず区別すること。** リバース詳細設計にしか記述が無いものを `SPEC_BACKED` と
+判定してはならない。それは `LEGACY_BACKED` である。
+
 ### 2. 旧実装側の裏取り
 設計書に裏付けが無い、または不十分な場合、旧実装リポジトリを探索する。
 エンドポイントURL・メソッド名・テーブル名・カラム名・機能名で横断検索する。

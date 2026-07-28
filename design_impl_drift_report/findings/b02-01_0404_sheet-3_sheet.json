@@ -166,7 +166,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbSalesQuantityRepository.php:438\n435:         $query = <<<SQL\n436:             SELECT\n437:                 oi.product_class_id,\n438:                 s.base_info_id,\n439:                 SUM(CASE WHEN o.order_date::date = (:order_date_ts::timestamptz)::date - 1 THEN oi.quantity::int ELSE 0 END) AS sales_yesterday,\n440:                 SUM(CASE WHEN o.order_date >= :order_date_ts::timestamptz - INTERVAL '3 days' THEN oi.quantity::int ELSE 0 END) AS sales_3day,\n441:                 SUM(CASE WHEN o.order_date >= :order_date_ts::timestamptz - INTERVAL '7 days' THEN oi.quantity::int ELSE 0 END) AS sales_weekly,",
+        "src/Eccube/Repository/DtbSalesQuantityRepository.php:438\n435:         $cancelStatus = OrderStatus::CANCEL;\n436:         $productItemType = OrderItemType::PRODUCT;\n437: \n438:         // TODO: スマレジ実店舗販売の dtb_order 取り込みが実装されたら、\n439:         //       スマレジ受注が dtb_order + dtb_shipping 経由で集計されるか確認する。\n440:         //       スマレジ受注が別テーブル管理の場合は UNION 等で本クエリを拡張すること。\n441:         $query = <<<SQL",
         "src/Eccube/Repository/DtbSalesQuantityRepository.php:36\n33: /**\n34:  * @extends AbstractRepository<DtbSalesQuantity>\n35:  */\n36: class DtbSalesQuantityRepository extends AbstractRepository\n37: {\n38:     // 人気商品リコメンド用レコード店舗ID\n39:     public const POPULAR_PRODUCT_RECOMMEND_SHOP_ID = 0;"
       ],
       "auditChecklist": [
@@ -219,7 +219,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbSalesQuantityRepository.php:451\n448:             JOIN dtb_shipping s ON oi.shipping_id = s.id\n449:             JOIN dtb_base_info bi ON s.base_info_id = bi.id\n450:             WHERE o.order_date >= :order_date_ts::timestamptz - INTERVAL '366 days'\n451:               AND o.order_status_id != :cancel_status\n452:               AND bi.is_open_shop = true\n453:               AND oi.order_item_type_id = :product_item_type\n454:               AND oi.product_class_id IS NOT NULL",
+        "src/Eccube/Repository/DtbSalesQuantityRepository.php:451\n448:                 SUM(CASE WHEN o.order_date >= :order_date_ts::timestamptz - INTERVAL '28 days' THEN oi.quantity::int ELSE 0 END) AS sales_month,\n449:                 SUM(CASE WHEN o.order_date >= :order_date_ts::timestamptz - INTERVAL '90 days' THEN oi.quantity::int ELSE 0 END) AS sales_90day,\n450:                 SUM(CASE WHEN o.order_date >= :order_date_ts::timestamptz - INTERVAL '180 days' THEN oi.quantity::int ELSE 0 END) AS sales_180day,\n451:                 SUM(CASE WHEN o.order_date >= :order_date_ts::timestamptz - INTERVAL '365 days' THEN oi.quantity::int ELSE 0 END) AS sales_365day\n452:             FROM dtb_order_item oi\n453:             JOIN dtb_order o ON oi.order_id = o.id\n454:             JOIN dtb_shipping s ON oi.shipping_id = s.id",
         "src/Eccube/Repository/DtbSalesQuantityRepository.php:36\n33: /**\n34:  * @extends AbstractRepository<DtbSalesQuantity>\n35:  */\n36: class DtbSalesQuantityRepository extends AbstractRepository\n37: {\n38:     // 人気商品リコメンド用レコード店舗ID\n39:     public const POPULAR_PRODUCT_RECOMMEND_SHOP_ID = 0;"
       ],
       "auditChecklist": [
@@ -499,7 +499,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbSalesQuantityRepository.php:113\n110:         $salesQuantityEntry = $this->findOneBy(['ProductClass' => $salesQuantity['product_class_id'], 'BaseInfo' => $salesQuantity['base_info_id']]);\n111:         if (empty($salesQuantityEntry)) {\n112:             $query = '\n113:                 INSERT INTO dtb_sales_quantity\n114:                 (\n115:                     product_class_id,\n116:                     base_info_id,",
+        "src/Eccube/Repository/DtbSalesQuantityRepository.php:113\n110:         $salesQuantity['sales_location'] = DtbSalesQuantity::SALES_LOCATION_ECCUBE;\n111:         $salesQuantityEntry = $this->findOneBy(['ProductClass' => $salesQuantity['product_class_id'], 'BaseInfo' => $salesQuantity['base_info_id']]);\n112:         if (empty($salesQuantityEntry)) {\n113:             $query = '\n114:                 INSERT INTO dtb_sales_quantity\n115:                 (\n116:                     product_class_id,",
         "src/Eccube/Repository/DtbSalesQuantityRepository.php:36\n33: /**\n34:  * @extends AbstractRepository<DtbSalesQuantity>\n35:  */\n36: class DtbSalesQuantityRepository extends AbstractRepository\n37: {\n38:     // 人気商品リコメンド用レコード店舗ID\n39:     public const POPULAR_PRODUCT_RECOMMEND_SHOP_ID = 0;"
       ],
       "auditChecklist": [
@@ -1026,15 +1026,7 @@
         "term": "order_date",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:1301",
-        "snippet": "$this->order_date = $orderDate;",
-        "weight": 5
-      },
-      {
-        "term": "order_date",
-        "termType": "routeName",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:132",
+        "ref": "src/Eccube/Entity/Order.php:147",
         "snippet": "#[ORM\\Index(columns: ['order_date'], name: 'dtb_order_order_date_idx')]",
         "weight": 5
       },
@@ -1042,7 +1034,7 @@
         "term": "order_date",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:534",
+        "ref": "src/Eccube/Entity/Order.php:549",
         "snippet": "#[ORM\\Column(name: 'order_date', type: Types::DATETIMETZ_MUTABLE, nullable: true)]",
         "weight": 5
       },
@@ -1050,7 +1042,7 @@
         "term": "order_date",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:535",
+        "ref": "src/Eccube/Entity/Order.php:550",
         "snippet": "private $order_date;",
         "weight": 5
       },
@@ -1058,7 +1050,7 @@
         "term": "order_status_id",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:616",
+        "ref": "src/Eccube/Entity/Order.php:631",
         "snippet": "#[ORM\\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]",
         "weight": 5
       },
@@ -1066,7 +1058,7 @@
         "term": "order_status_id",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:623",
+        "ref": "src/Eccube/Entity/Order.php:638",
         "snippet": "#[ORM\\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]",
         "weight": 5
       },
@@ -1074,15 +1066,23 @@
         "term": "order_status_id",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:627",
+        "ref": "src/Eccube/Entity/Order.php:642",
         "snippet": "#[ORM\\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "order_date",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:784",
+        "snippet": "* 関連する店頭受取受注の order_date のうち最も新しい日付。",
         "weight": 5
       },
       {
         "term": "order_quantity_01",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/ProductClass.php:1049",
+        "ref": "src/Eccube/Entity/ProductClass.php:1036",
         "snippet": "return $this->order_quantity_01;",
         "weight": 5
       },
@@ -1090,7 +1090,7 @@
         "term": "order_quantity_01",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/ProductClass.php:1052",
+        "ref": "src/Eccube/Entity/ProductClass.php:1039",
         "snippet": "public function setOrderQuantity01(int $order_quantity_01): ProductClass",
         "weight": 5
       },
@@ -1098,7 +1098,7 @@
         "term": "order_quantity_08",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/ProductClass.php:1133",
+        "ref": "src/Eccube/Entity/ProductClass.php:1120",
         "snippet": "return $this->order_quantity_08;",
         "weight": 5
       },
@@ -1106,7 +1106,7 @@
         "term": "order_quantity_08",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/ProductClass.php:1136",
+        "ref": "src/Eccube/Entity/ProductClass.php:1123",
         "snippet": "public function setOrderQuantity08(int $order_quantity_08): ProductClass",
         "weight": 5
       },
@@ -1114,7 +1114,7 @@
         "term": "order_quantity_01",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/ProductClass.php:325",
+        "ref": "src/Eccube/Entity/ProductClass.php:320",
         "snippet": "#[ORM\\Column(name: 'order_quantity_01', type: Types::INTEGER, nullable: false, options: ['default' => 0, 'unsigned' => true, 'comment' => '当日販売数'])]",
         "weight": 5
       },
@@ -1122,7 +1122,7 @@
         "term": "order_quantity_01",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/ProductClass.php:326",
+        "ref": "src/Eccube/Entity/ProductClass.php:321",
         "snippet": "private int $order_quantity_01 = 0;",
         "weight": 5
       }
@@ -1584,7 +1584,7 @@
     "verdictedCount": 32,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
       "実装済み": 32,
       "要確認": 0,

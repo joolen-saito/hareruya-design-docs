@@ -66,7 +66,7 @@
       "implementationSnippets": [
         "src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php:45\n42:      *\n43:      * login_id と password を受け取り、認証成功時にJWTトークンとメンバー情報を返す。\n44:      */\n45:     #[Route('/%eccube_api_v1_route%/admin/login.json', name: 'api_admin_login', methods: ['POST'])]\n46:     public function login(Request $request): JsonResponse\n47:     {\n48:         $loginId = (string) $request->request->get('login_id', '');",
         "app/config/eccube/packages/eccube.yaml:6\n3:     env(ECCUBE_ADMIN_ROUTE): 'admin'\n4:     env(ECCUBE_MESSENGER_ROUTE): 'messenger'\n5:     env(ECCUBE_USER_DATA_ROUTE): 'user_data'\n6:     env(ECCUBE_API_V1_ROUTE): 'api/v1'\n7:     env(ECCUBE_SMAREGI_WEBHOOK_ROUTE): 'smaregi/webhook'\n8:     env(ECCUBE_FRONT_ALLOW_HOSTS): '[]'\n9:     env(ECCUBE_FRONT_DENY_HOSTS): '[]'",
-        "app/config/eccube/packages/eccube.yaml:286\n283:         - '/shopping/login'\n284:     eccube_member_login_user_routes:\n285:         - '/%eccube_admin_route%/login'\n286:         - '/api/v1/admin/login.json'\n287: \n288:     eccube_content_security_policy_enabled: true\n289:     eccube_content_security_policy_enabled_resources:"
+        "app/config/eccube/packages/eccube.yaml:286\n283:       - css\n284:       - txt\n285:       - pdf\n286:     eccube_login_throttling_max_attempts: 5\n287:     eccube_login_throttling_interval: '30 minutes'\n288:     eccube_shopping_timeout_limit_minute: 30\n289:     s3_bucket_name: '%env(AWS_S3_BUCKET)%'"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -261,7 +261,7 @@
       "implementationSnippets": [
         "src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php:51\n48:         $loginId = (string) $request->request->get('login_id', '');\n49:         $password = (string) $request->request->get('password', '');\n50: \n51:         if ($loginId === '' || $password === '') {\n52:             throw new UnauthenticatedException('ログインIDまたはパスワードが入力されていません');\n53:         }\n54: ",
         "src/Eccube/Exception/App/UnauthenticatedException.php:27\n24:      * @param ?\\Throwable $previous\n25:      * @param string $logLevel ログレベル\n26:      */\n27:     public function __construct(string $message = '認証エラー', ?\\Throwable $previous = null, string $logLevel = 'info')\n28:     {\n29:         parent::__construct(\n30:             errors: [$message],",
-        "src/Eccube/EventListener/ExceptionListener.php:80\n77:             $logException = $exception->getPrevious() ?: $exception;\n78:             $errorClass = (new \\ReflectionClass($exception))->getShortName();\n79: \n80:             // カスタムエラーの場合は、エラーコードとメッセージを取得\n81:             if ($exception instanceof BaseApiException) {\n82:                 $statusCode = $exception->getStatusCode();\n83:                 $errors = $exception->getErrors();"
+        "src/Eccube/EventListener/ExceptionListener.php:80\n77:             $logLevel = 'error';\n78:             $errors = ['システムエラーが発生しました'];\n79:             $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR;\n80: \n81:             $logException = $exception->getPrevious() ?: $exception;\n82:             $errorClass = (new \\ReflectionClass($exception))->getShortName();\n83: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -399,7 +399,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 31,
+    "extractedRequirementCount": 32,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -576,6 +576,19 @@
         "category": "一時Cookieファイルを削除する。",
         "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-3",
         "designRequirement": "解釈できた場合は、中継先が返したJSON（会員名・会員ID・店舗名・店舗住所・JWTトークン）をそのまま返す。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a06-01_0506_sheet-3_sheet-req-762800361d",
+        "category": "一時Cookieファイルを削除する。",
+        "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-3",
+        "designRequirement": "ログインIDまたはパスワードが入力されていません",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -859,7 +872,7 @@
         "term": "admin_api",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/App/PointGranterController.php:44",
+        "ref": "src/Eccube/Controller/App/PointGranterController.php:62",
         "snippet": "#[Route('/admin_api/point_granter', name: 'point_granter', methods: ['POST'])]",
         "weight": 7
       },
@@ -883,7 +896,7 @@
         "term": "admin_api/login_check",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/App/PointGranterController.php:44",
+        "ref": "src/Eccube/Controller/App/PointGranterController.php:62",
         "snippet": "#[Route('/admin_api/point_granter', name: 'point_granter', methods: ['POST'])]",
         "weight": 6
       },
@@ -923,7 +936,7 @@
         "term": "admin/login.json",
         "termType": "path",
         "role": "Config",
-        "ref": "app/config/eccube/packages/eccube.yaml:286",
+        "ref": "app/config/eccube/packages/eccube.yaml:317",
         "snippet": "- '/api/v1/admin/login.json'",
         "weight": 4
       },
@@ -960,43 +973,43 @@
         "weight": 4
       },
       {
-        "term": "店頭買取管理",
-        "termType": "businessTerm",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:57",
-        "snippet": "* 店頭買取管理",
-        "weight": 4
-      },
-      {
-        "term": "店頭買取管理",
-        "termType": "businessTerm",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderHistoryController.php:37",
-        "snippet": "* 店頭買取管理",
-        "weight": 4
-      },
-      {
-        "term": "店頭買取管理",
-        "termType": "businessTerm",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderSummaryController.php:32",
-        "snippet": "* 店頭買取管理",
-        "weight": 4
-      },
-      {
-        "term": "admin/login",
+        "term": "api/admin/login.json",
         "termType": "path",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/DtbStockHistory.php:33",
-        "snippet": "MtbStockHistorySourceType::STOCK_EDIT => 'admin_stock_approval_list',",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-unisearch-list-client-core.js:545",
+        "snippet": "// pf-eccube3 では UniSearch API の $.ajax().done 内で _setNumHit 〜 _sendSearchLog を行っているが、",
         "weight": 4
       },
       {
-        "term": "admin/login",
+        "term": "api/admin/login.json",
         "termType": "path",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/DtbStockHistory.php:34",
-        "snippet": "MtbStockHistorySourceType::STOCK_BULK_EDIT => 'admin_stock_approval_list',",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-unisearch-related-keywords.js:63",
+        "snippet": "const rwordApiUrl = String($keywords.attr('data-rword-api-url') ?? '');",
+        "weight": 4
+      },
+      {
+        "term": "店頭買取管理",
+        "termType": "businessTerm",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:59",
+        "snippet": "* 店頭買取管理",
+        "weight": 4
+      },
+      {
+        "term": "店頭買取管理",
+        "termType": "businessTerm",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderHistoryController.php:39",
+        "snippet": "* 店頭買取管理",
+        "weight": 4
+      },
+      {
+        "term": "店頭買取管理",
+        "termType": "businessTerm",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderSummaryController.php:34",
+        "snippet": "* 店頭買取管理",
         "weight": 4
       }
     ],
@@ -1466,13 +1479,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 31,
-    "verdictedCount": 31,
+    "requirementCount": 32,
+    "verdictedCount": 32,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 31,
+      "実装済み": 32,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -1701,6 +1714,22 @@
         "auditNote": "確定所見が本要求をカバー済み。",
         "conformanceBucket": "実装済み",
         "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a06-01_0506_sheet-3_sheet-req-762800361d",
+        "category": "一時Cookieファイルを削除する。",
+        "designRef": "excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html#sheet-3",
+        "designRequirement": "ログインIDまたはパスワードが入力されていません",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
         "elementLevel": false
       },
       {

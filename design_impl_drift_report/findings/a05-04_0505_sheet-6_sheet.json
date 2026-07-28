@@ -33,7 +33,7 @@
       "implementationSnippets": [
         "src/Eccube/Controller/Smaregi/WebhookController.php:41\n38:      * スマレジ Webhook 受信エンドポイント（検証用）\n39:      * リクエスト内容をログに出力し、200 OK で固定レスポンスを返す。\n40:      */\n41:     #[Route('', name: 'smaregi_webhook', methods: ['POST'])]\n42:     public function index(Request $request): JsonResponse\n43:     {\n44:         log_info('Smaregi webhook received', [",
         "src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/CreatedHandler.php:47\n44: \n45:     public function handle(SmaregiWebhookEvent $event, array $transactionHeadIds, ?int $parentJobId = null): void\n46:     {\n47:         if ($transactionHeadIds === []) {\n48:             $this->logger->warning('Smaregi created webhook has no transactionHeadIds', [\n49:                 'webhookEventId' => $event->getId(),\n50:             ]);",
-        "src/Eccube/Service/Smaregi/Webhook/Transaction/PurchasePatternContextBuilder.php:26\n23: use Eccube\\Repository\\OrderRepository;\n24: \n25: /**\n26:  * 既存 EC-CUBE 受注との突合は `Order.smaregi_code` (= スマレジ商品コード) で行う。\n27:  * スマレジ側 `productId` は EC-CUBE に保存していないため、両者で共有可能な共通キーとして\n28:  * `productCode` を採用する。\n29:  *"
+        "src/Eccube/Service/Smaregi/Webhook/Transaction/PurchasePatternContextBuilder.php:26\n23: use Eccube\\Service\\Smaregi\\SmaregiCustomerResolver;\n24: \n25: /**\n26:  * 既存 EC-CUBE 受注との突合は `Order.smaregi_code` (= スマレジ商品コード) で行う。\n27:  * スマレジ側 `productId` は EC-CUBE に保存していないため、両者で共有可能な共通キーとして\n28:  * `productCode` を採用する。\n29:  *"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -52,7 +52,7 @@
       "comparisonSummary": "①ルート/HTTPメソッド：設計は「スマレジ取引通知の受信 | `POST /{_locale}/smaregi/transaction`」。実装は「設計は言語識別子配下の固定パス `POST /{_locale}/smaregi/transaction`。実装は `#[Route('', name: 'smaregi_webhook', methods: ['POST'])]` で、routes.yaml(app/config/eccube/routes.yaml:9-12)の prefix `/%eccube_smaregi_webhook_route%`（秘匿パス）配下の単一Webhookエンドポイント。`{_locale}`も`/transaction…」。乖離理由は「設計は言語識別子配下の固定パス `POST /{_locale}/smaregi/transaction`。実装は `#[Route('', name: 'smaregi_webhook', methods: ['POST'])]` で、routes.yaml(app/config/eccube/routes.yaml:9-12)の prefix `/%eccube_smaregi_webhook_route%`（秘匿パス）配下の単一Webhookエンドポイント。`{_locale}`も`/transaction…」。",
       "mismatchReason": "設計は言語識別子配下の固定パス `POST /{_locale}/smaregi/transaction`。実装は `#[Route('', name: 'smaregi_webhook', methods: ['POST'])]` で、routes.yaml(app/config/eccube/routes.yaml:9-12)の prefix `/%eccube_smaregi_webhook_route%`（秘匿パス）配下の単一Webhookエンドポイント。`{_locale}`も`/transaction…",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1519\n1516:       </section>\n1517:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1518: </section>\n1519:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1520:         <div class=\"sheet-heading\">\n1521:           <h2>スマレジ受信処理</h2>\n1522:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1703\n1700:       </section>\n1701:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1702: </section>\n1703:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1704:         <div class=\"sheet-heading\">\n1705:           <h2>スマレジ受信処理</h2>\n1706:         </div>",
       "implementationGap": true,
       "implementationGapType": "設計エンドポイント未実装",
       "implementationGapLabel": "明確な実装漏れ",
@@ -105,7 +105,7 @@
       "comparisonSummary": "⑥権限・認可：設計は「入力検証・認証判定を明示的に行わないため、400・401は発生しない。」。実装は「設計は認証トークン不要／匿名許可／400・401は発生しない。実装は AuthenticationService->verify() 失敗時に HTTP 401(`{status:error,message:Authentication failed}`)を返し、`smaregi-event-id`ヘッダ欠落時は HTTP 400 を返す。設計と矛盾。」。乖離理由は「設計は認証トークン不要／匿名許可／400・401は発生しない。実装は AuthenticationService->verify() 失敗時に HTTP 401(`{status:error,message:Authentication failed}`)を返し、`smaregi-event-id`ヘッダ欠落時は HTTP 400 を返す。設計と矛盾。」。",
       "mismatchReason": "設計は認証トークン不要／匿名許可／400・401は発生しない。実装は AuthenticationService->verify() 失敗時に HTTP 401(`{status:error,message:Authentication failed}`)を返し、`smaregi-event-id`ヘッダ欠落時は HTTP 400 を返す。設計と矛盾。",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1519\n1516:       </section>\n1517:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1518: </section>\n1519:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1520:         <div class=\"sheet-heading\">\n1521:           <h2>スマレジ受信処理</h2>\n1522:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1703\n1700:       </section>\n1701:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1702: </section>\n1703:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1704:         <div class=\"sheet-heading\">\n1705:           <h2>スマレジ受信処理</h2>\n1706:         </div>",
       "auditAspects": [
         "ルート・Controller",
         "Form・入力項目",
@@ -157,7 +157,7 @@
       "comparisonSummary": "⑧バッチ/API入出力・再実行性：設計は「`result[].TransactionHead` | integer | 更新件数。会員ポイント・ポイント履歴・出荷完了反映の処理件数と、支店転送の結果件数を合算した値。」。実装は「設計の成功レスポンスは `{result:[{TransactionHead: 更新件数}]}`。実装は `{status:'ok'}`(107-109行)または重複時 `{status:'ok',message:'Event is duplicate'}`(85-88行)を返すのみで、更新件数を集計・返却しない。result/TransactionHead スキーマは存在しない。」。乖離理由は「設計の成功レスポンスは `{result:[{TransactionHead: 更新件数}]}`。実装は `{status:'ok'}`(107-109行)または重複時 `{status:'ok',message:'Event is duplicate'}`(85-88行)を返すのみで、更新件数を集計・返却しない。result/TransactionHead スキーマは存在しない。」。",
       "mismatchReason": "設計の成功レスポンスは `{result:[{TransactionHead: 更新件数}]}`。実装は `{status:'ok'}`(107-109行)または重複時 `{status:'ok',message:'Event is duplicate'}`(85-88行)を返すのみで、更新件数を集計・返却しない。result/TransactionHead スキーマは存在しない。",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1519\n1516:       </section>\n1517:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1518: </section>\n1519:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1520:         <div class=\"sheet-heading\">\n1521:           <h2>スマレジ受信処理</h2>\n1522:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1703\n1700:       </section>\n1701:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1702: </section>\n1703:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1704:         <div class=\"sheet-heading\">\n1705:           <h2>スマレジ受信処理</h2>\n1706:         </div>",
       "implementationGap": true,
       "implementationGapType": "入出力・列定義・副作用未実装",
       "implementationGapLabel": "明確な実装漏れ",
@@ -210,7 +210,7 @@
       "comparisonSummary": "⑧バッチ/API入出力・再実行性：設計は「取引ヘッダの更新件数を合算した値を、更新件数として応答に組み立てて返す（HTTP 200）。」。実装は「設計は同期実行し結果件数を応答。実装は SmaregiWebhookEvent を永続化し MessageBus へ SmaregiWebhookEventMessage を dispatch して即時200を返すのみで、取引取得・ポイント/受注反映は非同期ハンドラで後続実行。再実行性は smaregi-event-id 重複判定と updateDateTime stale判定に依存(設計に無い方式)。」。乖離理由は「設計は同期実行し結果件数を応答。実装は SmaregiWebhookEvent を永続化し MessageBus へ SmaregiWebhookEventMessage を dispatch して即時200を返すのみで、取引取得・ポイント/受注反映は非同期ハンドラで後続実行。再実行性は smaregi-event-id 重複判定と updateDateTime stale判定に依存(設計に無い方式)。」。",
       "mismatchReason": "設計は同期実行し結果件数を応答。実装は SmaregiWebhookEvent を永続化し MessageBus へ SmaregiWebhookEventMessage を dispatch して即時200を返すのみで、取引取得・ポイント/受注反映は非同期ハンドラで後続実行。再実行性は smaregi-event-id 重複判定と updateDateTime stale判定に依存(設計に無い方式)。",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1519\n1516:       </section>\n1517:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1518: </section>\n1519:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1520:         <div class=\"sheet-heading\">\n1521:           <h2>スマレジ受信処理</h2>\n1522:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1703\n1700:       </section>\n1701:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1702: </section>\n1703:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1704:         <div class=\"sheet-heading\">\n1705:           <h2>スマレジ受信処理</h2>\n1706:         </div>",
       "auditAspects": [
         "ルート・Controller",
         "Service・業務ルール",
@@ -261,7 +261,7 @@
       "comparisonSummary": "⑧バッチ/API入出力（リクエスト項目）：設計は「`params` | ボディ（フォーム値）| string | 必須 | JSON文字列。`data`配列に取引ヘッダ（`TransactionHead`）と取引明細（`TransactionDetail`）を含む。」。実装は「設計はフォーム値`params`(JSON文字列)必須＋`proc_name`・`X_contract_id`/`X_access_token`ヘッダ。実装は `smaregi-event-id`ヘッダとボディ生JSON(`$request->getContent()`)を EventService で解釈し、body から contractId/event/action を抽出。`params`フォーム値・`proc_name`・`X_contract_id`/`X_access_token`は参照しない。取引…」。乖離理由は「設計はフォーム値`params`(JSON文字列)必須＋`proc_name`・`X_contract_id`/`X_access_token`ヘッダ。実装は `smaregi-event-id`ヘッダとボディ生JSON(`$request->getContent()`)を EventService で解釈し、body から contractId/event/action を抽出。`params`フォーム値・`proc_name`・`X_contract_id`/`X_access_token`は参照しない。取引…」。",
       "mismatchReason": "設計はフォーム値`params`(JSON文字列)必須＋`proc_name`・`X_contract_id`/`X_access_token`ヘッダ。実装は `smaregi-event-id`ヘッダとボディ生JSON(`$request->getContent()`)を EventService で解釈し、body から contractId/event/action を抽出。`params`フォーム値・`proc_name`・`X_contract_id`/`X_access_token`は参照しない。取引…",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1519\n1516:       </section>\n1517:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1518: </section>\n1519:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1520:         <div class=\"sheet-heading\">\n1521:           <h2>スマレジ受信処理</h2>\n1522:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1703\n1700:       </section>\n1701:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1702: </section>\n1703:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1704:         <div class=\"sheet-heading\">\n1705:           <h2>スマレジ受信処理</h2>\n1706:         </div>",
       "auditAspects": [
         "ラベル・メッセージ・翻訳キー",
         "Form・入力項目",
@@ -313,7 +313,7 @@
       "comparisonSummary": "④DBカラム・DB操作：設計は「ポイント増減（point_change）・摘要（note）・発生日（issue_date）・ポイント区分（point_type_id）・取引ID（transaction_id） | 通常取引で登録、取消・打消で取引IDをキーに削除する。」。実装は「設計は取消・打消で取引IDに一致するポイント履歴を取得して削除。実装の SmaregiPointAdjustmentReverter は元履歴を削除せず監査用に残し、符号反転した逆仕訳ポイント履歴を追加登録して残高を戻す。DELETEではなく相殺INSERTで dtb_point_history の残存状態が設計と異なる。」。乖離理由は「設計は取消・打消で取引IDに一致するポイント履歴を取得して削除。実装の SmaregiPointAdjustmentReverter は元履歴を削除せず監査用に残し、符号反転した逆仕訳ポイント履歴を追加登録して残高を戻す。DELETEではなく相殺INSERTで dtb_point_history の残存状態が設計と異なる。」。",
       "mismatchReason": "設計は取消・打消で取引IDに一致するポイント履歴を取得して削除。実装の SmaregiPointAdjustmentReverter は元履歴を削除せず監査用に残し、符号反転した逆仕訳ポイント履歴を追加登録して残高を戻す。DELETEではなく相殺INSERTで dtb_point_history の残存状態が設計と異なる。",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1519\n1516:       </section>\n1517:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1518: </section>\n1519:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1520:         <div class=\"sheet-heading\">\n1521:           <h2>スマレジ受信処理</h2>\n1522:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1703\n1700:       </section>\n1701:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1702: </section>\n1703:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1704:         <div class=\"sheet-heading\">\n1705:           <h2>スマレジ受信処理</h2>\n1706:         </div>",
       "auditAspects": [
         "ラベル・メッセージ・翻訳キー",
         "Repository・Entity・DB",
@@ -344,7 +344,7 @@
       "implementationSnippets": [
         "src/Eccube/Controller/Smaregi/WebhookController.php:41\n38:      * スマレジ Webhook 受信エンドポイント（検証用）\n39:      * リクエスト内容をログに出力し、200 OK で固定レスポンスを返す。\n40:      */\n41:     #[Route('', name: 'smaregi_webhook', methods: ['POST'])]\n42:     public function index(Request $request): JsonResponse\n43:     {\n44:         log_info('Smaregi webhook received', [",
         "src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/CreatedHandler.php:47\n44: \n45:     public function handle(SmaregiWebhookEvent $event, array $transactionHeadIds, ?int $parentJobId = null): void\n46:     {\n47:         if ($transactionHeadIds === []) {\n48:             $this->logger->warning('Smaregi created webhook has no transactionHeadIds', [\n49:                 'webhookEventId' => $event->getId(),\n50:             ]);",
-        "src/Eccube/Service/Smaregi/Webhook/Transaction/PurchasePatternContextBuilder.php:26\n23: use Eccube\\Repository\\OrderRepository;\n24: \n25: /**\n26:  * 既存 EC-CUBE 受注との突合は `Order.smaregi_code` (= スマレジ商品コード) で行う。\n27:  * スマレジ側 `productId` は EC-CUBE に保存していないため、両者で共有可能な共通キーとして\n28:  * `productCode` を採用する。\n29:  *",
+        "src/Eccube/Service/Smaregi/Webhook/Transaction/PurchasePatternContextBuilder.php:26\n23: use Eccube\\Service\\Smaregi\\SmaregiCustomerResolver;\n24: \n25: /**\n26:  * 既存 EC-CUBE 受注との突合は `Order.smaregi_code` (= スマレジ商品コード) で行う。\n27:  * スマレジ側 `productId` は EC-CUBE に保存していないため、両者で共有可能な共通キーとして\n28:  * `productCode` を採用する。\n29:  *",
         "実装検索証跡\n- rg -n 'branch|支店|transfer|転送|order_sub|sub_order|shipping.*complete|出荷完了' src/Eccube/Service/Smaregi src/Eccube/Controller/Smaregi src/Eccube/Repository\n- スマレジ受信処理はWebhook入口と取引ハンドラが中心で、支店転送時の専用計算・注文サブ/出荷完了反映に対応する明示処理は確認できない。",
         "不在判定\n該当機能そのものは不在。下記の近似実装を確認したが、設計の入口・対象データ・列定義・副作用とは一致しない。"
       ],
@@ -365,7 +365,7 @@
       "comparisonSummary": "②業務ルール・計算（支店転送）：設計は「支店分の明細がある場合は、受信ヘッダの連携用ヘッダを引き継ぎ、支店システムのスマレジ受信APIへ明細を転送する。転送結果に更新件数が含まれる場合は合算し、含まれない場合は転送エラーをログに記録する。」。実装は「設計は自店舗以外の明細を X_contract_id/X_access_token を引き継いで支店システムのスマレジ受信APIへ転送し件数合算/エラーログ記録。実装の取引Webhook処理経路(src/Eccube/Service/Smaregi/Webhook/Transaction 配下)に支店転送処理が無く、grepでも該当なし。設計の支店転送機能が未実装。」。乖離理由は「設計は自店舗以外の明細を X_contract_id/X_access_token を引き継いで支店システムのスマレジ受信APIへ転送し件数合算/エラーログ記録。実装の取引Webhook処理経路(src/Eccube/Service/Smaregi/Webhook/Transaction 配下)に支店転送処理が無く、grepでも該当なし。設計の支店転送機能が未実装。」。",
       "mismatchReason": "設計は自店舗以外の明細を X_contract_id/X_access_token を引き継いで支店システムのスマレジ受信APIへ転送し件数合算/エラーログ記録。実装の取引Webhook処理経路(src/Eccube/Service/Smaregi/Webhook/Transaction 配下)に支店転送処理が無く、grepでも該当なし。設計の支店転送機能が未実装。",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1519\n1516:       </section>\n1517:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1518: </section>\n1519:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1520:         <div class=\"sheet-heading\">\n1521:           <h2>スマレジ受信処理</h2>\n1522:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1703\n1700:       </section>\n1701:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1702: </section>\n1703:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1704:         <div class=\"sheet-heading\">\n1705:           <h2>スマレジ受信処理</h2>\n1706:         </div>",
       "implementationSearches": [
         "rg -n 'branch|支店|transfer|転送|order_sub|sub_order|shipping.*complete|出荷完了' src/Eccube/Service/Smaregi src/Eccube/Controller/Smaregi src/Eccube/Repository",
         "スマレジ受信処理はWebhook入口と取引ハンドラが中心で、支店転送時の専用計算・注文サブ/出荷完了反映に対応する明示処理は確認できない。"
@@ -405,7 +405,7 @@
       "implementationSnippets": [
         "src/Eccube/Controller/Smaregi/WebhookController.php:41\n38:      * スマレジ Webhook 受信エンドポイント（検証用）\n39:      * リクエスト内容をログに出力し、200 OK で固定レスポンスを返す。\n40:      */\n41:     #[Route('', name: 'smaregi_webhook', methods: ['POST'])]\n42:     public function index(Request $request): JsonResponse\n43:     {\n44:         log_info('Smaregi webhook received', [",
         "src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/CreatedHandler.php:47\n44: \n45:     public function handle(SmaregiWebhookEvent $event, array $transactionHeadIds, ?int $parentJobId = null): void\n46:     {\n47:         if ($transactionHeadIds === []) {\n48:             $this->logger->warning('Smaregi created webhook has no transactionHeadIds', [\n49:                 'webhookEventId' => $event->getId(),\n50:             ]);",
-        "src/Eccube/Service/Smaregi/Webhook/Transaction/PurchasePatternContextBuilder.php:26\n23: use Eccube\\Repository\\OrderRepository;\n24: \n25: /**\n26:  * 既存 EC-CUBE 受注との突合は `Order.smaregi_code` (= スマレジ商品コード) で行う。\n27:  * スマレジ側 `productId` は EC-CUBE に保存していないため、両者で共有可能な共通キーとして\n28:  * `productCode` を採用する。\n29:  *",
+        "src/Eccube/Service/Smaregi/Webhook/Transaction/PurchasePatternContextBuilder.php:26\n23: use Eccube\\Service\\Smaregi\\SmaregiCustomerResolver;\n24: \n25: /**\n26:  * 既存 EC-CUBE 受注との突合は `Order.smaregi_code` (= スマレジ商品コード) で行う。\n27:  * スマレジ側 `productId` は EC-CUBE に保存していないため、両者で共有可能な共通キーとして\n28:  * `productCode` を採用する。\n29:  *",
         "実装検索証跡\n- rg -n 'branch|支店|transfer|転送|order_sub|sub_order|shipping.*complete|出荷完了' src/Eccube/Service/Smaregi src/Eccube/Controller/Smaregi src/Eccube/Repository\n- スマレジ受信処理はWebhook入口と取引ハンドラが中心で、支店転送時の専用計算・注文サブ/出荷完了反映に対応する明示処理は確認できない。",
         "不在判定\n該当機能そのものは不在。下記の近似実装を確認したが、設計の入口・対象データ・列定義・副作用とは一致しない。"
       ],
@@ -426,7 +426,7 @@
       "comparisonSummary": "④DBカラム・DB操作（注文サブ／出荷完了反映）：設計は「注文サブ（dtb_order_sub。ec-cube-enterprise 実装で要確認）| スマレジコード・出荷日・担当者・付与ポイント・連携エラー | 出荷完了反映の対象特定と更新に用いる。」。実装は「設計は通常取引で自店舗明細に対し注文サブ(dtb_order_sub)を特定し出荷完了反映。実装に dtb_order_sub 相当エンティティは存在せず(grep一致は 'OrderSubmit' の誤検出のみ)、created処理は PurchasePatternResolver で判定し既存受注の引渡し済み化＋新規Order作成を行う。永続化先・更新項目が設計と異なる（設計も『要確認』と明記）。」。乖離理由は「設計は通常取引で自店舗明細に対し注文サブ(dtb_order_sub)を特定し出荷完了反映。実装に dtb_order_sub 相当エンティティは存在せず(grep一致は 'OrderSubmit' の誤検出のみ)、created処理は PurchasePatternResolver で判定し既存受注の引渡し済み化＋新規Order作成を行う。永続化先・更新項目が設計と異なる（設計も『要確認』と明記）。」。",
       "mismatchReason": "設計は通常取引で自店舗明細に対し注文サブ(dtb_order_sub)を特定し出荷完了反映。実装に dtb_order_sub 相当エンティティは存在せず(grep一致は 'OrderSubmit' の誤検出のみ)、created処理は PurchasePatternResolver で判定し既存受注の引渡し済み化＋新規Order作成を行う。永続化先・更新項目が設計と異なる（設計も『要確認』と明記）。",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1519\n1516:       </section>\n1517:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1518: </section>\n1519:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1520:         <div class=\"sheet-heading\">\n1521:           <h2>スマレジ受信処理</h2>\n1522:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1703\n1700:       </section>\n1701:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1702: </section>\n1703:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1704:         <div class=\"sheet-heading\">\n1705:           <h2>スマレジ受信処理</h2>\n1706:         </div>",
       "implementationSearches": [
         "rg -n 'branch|支店|transfer|転送|order_sub|sub_order|shipping.*complete|出荷完了' src/Eccube/Service/Smaregi src/Eccube/Controller/Smaregi src/Eccube/Repository",
         "スマレジ受信処理はWebhook入口と取引ハンドラが中心で、支店転送時の専用計算・注文サブ/出荷完了反映に対応する明示処理は確認できない。"
@@ -485,7 +485,7 @@
       "comparisonSummary": "⑦エラー処理：設計は「明示的な`try-catch`は持たず、標準例外ハンドラに委ねる（HTTP 500相当）。」。実装は「設計はコントローラで明示的try-catchを持たず標準例外ハンドラに委ねる。実装は index() 内で try/catch し、例外時に HTTP 500(`{status:error,message:'Error processing webhook'}`)を JsonResponse で自前返却。標準例外ハンドラ経由でなく本文形が設計前提と異なる。」。乖離理由は「設計はコントローラで明示的try-catchを持たず標準例外ハンドラに委ねる。実装は index() 内で try/catch し、例外時に HTTP 500(`{status:error,message:'Error processing webhook'}`)を JsonResponse で自前返却。標準例外ハンドラ経由でなく本文形が設計前提と異なる。」。",
       "mismatchReason": "設計はコントローラで明示的try-catchを持たず標準例外ハンドラに委ねる。実装は index() 内で try/catch し、例外時に HTTP 500(`{status:error,message:'Error processing webhook'}`)を JsonResponse で自前返却。標準例外ハンドラ経由でなく本文形が設計前提と異なる。",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1519\n1516:       </section>\n1517:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1518: </section>\n1519:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1520:         <div class=\"sheet-heading\">\n1521:           <h2>スマレジ受信処理</h2>\n1522:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1703\n1700:       </section>\n1701:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1702: </section>\n1703:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1704:         <div class=\"sheet-heading\">\n1705:           <h2>スマレジ受信処理</h2>\n1706:         </div>",
       "auditAspects": [
         "ルート・Controller",
         "CSV・API・Batch・PDF・印刷",
@@ -535,7 +535,7 @@
       "comparisonSummary": "⑧バッチ/API入出力（重複判定）：設計は「同一取引の重複受信時の整合は、取消・打消が取引IDを基準にポイント履歴を特定して巻き戻す前提に依存する。」。実装は「設計は重複受信の整合を取引ID基準の巻き戻し前提に委ねる。実装は EventService->isDuplicate(smaregi-event-id) で受信段階の重複を判定し『Event is duplicate』で200 skip(80-88行)、さらに子ジョブ側で existsByTransactionId 冪等チェックを行う。設計に無い受信重複排除層が追加。」。乖離理由は「設計は重複受信の整合を取引ID基準の巻き戻し前提に委ねる。実装は EventService->isDuplicate(smaregi-event-id) で受信段階の重複を判定し『Event is duplicate』で200 skip(80-88行)、さらに子ジョブ側で existsByTransactionId 冪等チェックを行う。設計に無い受信重複排除層が追加。」。",
       "mismatchReason": "設計は重複受信の整合を取引ID基準の巻き戻し前提に委ねる。実装は EventService->isDuplicate(smaregi-event-id) で受信段階の重複を判定し『Event is duplicate』で200 skip(80-88行)、さらに子ジョブ側で existsByTransactionId 冪等チェックを行う。設計に無い受信重複排除層が追加。",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1519\n1516:       </section>\n1517:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1518: </section>\n1519:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1520:         <div class=\"sheet-heading\">\n1521:           <h2>スマレジ受信処理</h2>\n1522:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1703\n1700:       </section>\n1701:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1702: </section>\n1703:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1704:         <div class=\"sheet-heading\">\n1705:           <h2>スマレジ受信処理</h2>\n1706:         </div>",
       "auditAspects": [
         "ラベル・メッセージ・翻訳キー",
         "Service・業務ルール",
@@ -585,7 +585,7 @@
       "comparisonSummary": "⑧副作用（レスポンスヘッダ）：設計は「`Content-Type`に`application/json;charset=UTF-8`、キャッシュ抑止と`Access-Control-Allow-Origin: *`を明示する。」。実装は「設計は応答に Content-Type `application/json;charset=UTF-8`、キャッシュ抑止ヘッダ、`Access-Control-Allow-Origin: *` を明示。実装は標準 Symfony JsonResponse を返すのみで、コントローラ内でキャッシュ抑止/CORSヘッダの明示的付与は無い。ただしグローバルなレスポンスリスナ等での付与を短時間で網羅確認できず。」。乖離理由は「設計は応答に Content-Type `application/json;charset=UTF-8`、キャッシュ抑止ヘッダ、`Access-Control-Allow-Origin: *` を明示。実装は標準 Symfony JsonResponse を返すのみで、コントローラ内でキャッシュ抑止/CORSヘッダの明示的付与は無い。ただしグローバルなレスポンスリスナ等での付与を短時間で網羅確認できず。」。",
       "mismatchReason": "設計は応答に Content-Type `application/json;charset=UTF-8`、キャッシュ抑止ヘッダ、`Access-Control-Allow-Origin: *` を明示。実装は標準 Symfony JsonResponse を返すのみで、コントローラ内でキャッシュ抑止/CORSヘッダの明示的付与は無い。ただしグローバルなレスポンスリスナ等での付与を短時間で網羅確認できず。",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1519\n1516:       </section>\n1517:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1518: </section>\n1519:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1520:         <div class=\"sheet-heading\">\n1521:           <h2>スマレジ受信処理</h2>\n1522:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1703\n1700:       </section>\n1701:       <!-- function-design-embed:end a05-03-a05-03_api_order_order_store_call_number -->\n1702: </section>\n1703:       <section class=\"sheet-panel\" id=\"sheet-6\">\n1704:         <div class=\"sheet-heading\">\n1705:           <h2>スマレジ受信処理</h2>\n1706:         </div>",
       "auditAspects": [
         "CSV・API・Batch・PDF・印刷",
         "権限・セッション・副作用・エラー・ログ"
@@ -636,7 +636,7 @@
       "comparisonSummary": "⑪ログ・監査：設計は「連携用ヘッダ/Cookieの完全値をログ出力しない。」。実装は「設計は連携ヘッダとCookieの完全値をログに出さないことを要求するが、実装は受信時・認証失敗時にheadersとcontentをログ出力する。X_access_token、Cookie、秘密ヘッダが混入し得る。」。乖離理由は「設計は連携ヘッダとCookieの完全値をログに出さないことを要求するが、実装は受信時・認証失敗時にheadersとcontentをログ出力する。X_access_token、Cookie、秘密ヘッダが混入し得る。」。",
       "mismatchReason": "設計は連携ヘッダとCookieの完全値をログに出さないことを要求するが、実装は受信時・認証失敗時にheadersとcontentをログ出力する。X_access_token、Cookie、秘密ヘッダが混入し得る。",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/function_spec_html_preview/pf-eccube3/a05-04_api_order_order_smaregi_receive.html:292\n289: <h2 id=\"エラー処理\">エラー処理</h2>\n290: <div class=\"table-wrap\"><table><thead><tr><th>エラー内容</th><th>処理</th></tr></thead><tbody><tr><td><code>params</code>の解釈不可・取引ヘッダ不足・処理中の例外</td><td>明示的な<code>try-catch</code>は持たず、標準例外ハンドラに委ねる（HTTP 500相当）。</td></tr><tr><td>会員が見つからない・対象履歴が無い・対象注文が無い</td><td>エラーとせず、その処理の更新件数を0として継続し、200を返す。</td></tr><tr><td>支店転送の結果に件数が含まれない</td><td>転送エラーとしてログに記録し、件数を合算しない。処理は継続する。</td></tr></tbody></table></div>\n291: <hr>\n292: <h2 id=\"ログ・監査\">ログ・監査</h2>\n293: <p>支店転送の結果に件数が含まれない場合に、転送エラーである旨と転送結果をログ出力する。</p>\n294: <h3 id=\"ログに出してはいけないもの\">ログに出してはいけないもの</h3>\n295: <ul><li>連携用ヘッダ（契約ID・アクセストークン）の値</li><li>Cookie値・セッションIDの完全値</li></ul>",
+      "designSnippet": "hareruya-design-docs/function_spec_html_preview/pf-eccube3/a05-04_api_order_order_smaregi_receive.html:292\n289: <a class=\"lv2\" href=\"#排他制御・トランザクション\">排他制御・トランザクション</a></nav>\n290:     </aside>\n291:     <main class=\"doc-content\">\n292:       <header class=\"page-header\">\n293:         <p class=\"crumb\">Source:<br>/home/y-saito/Developments/hareruya-design-docs/functions/pf-eccube3/a05-04_api_order_order_smaregi_receive.md</p>\n294:         <h1>API 受注管理 — スマレジ受信処理（ポイント履歴取得）</h1>\n295:       </header>",
       "auditAspects": [
         "権限・セッション・副作用・エラー・ログ"
       ]
@@ -687,7 +687,7 @@
       "comparisonSummary": "⑦エラー処理・応答：設計は「取引ヘッダ不足はエラーとして扱う。」。実装は「設計は取引ヘッダ不足をエラー扱いにするが、実装はtransactionHeadIds欠落時に後段で警告してreturnし、受信時点のHTTP応答は200になり得る。」。乖離理由は「設計は取引ヘッダ不足をエラー扱いにするが、実装はtransactionHeadIds欠落時に後段で警告してreturnし、受信時点のHTTP応答は200になり得る。」。",
       "mismatchReason": "設計は取引ヘッダ不足をエラー扱いにするが、実装はtransactionHeadIds欠落時に後段で警告してreturnし、受信時点のHTTP応答は200になり得る。",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/function_spec_html_preview/pf-eccube3/a05-04_api_order_order_smaregi_receive.html:257\n254: <h3 id=\"レスポンス-成功\">レスポンス（成功）</h3>\n255: <p>HTTP 200。</p>\n256: <div class=\"table-wrap\"><table><thead><tr><th>フィールド</th><th>型</th><th>説明</th></tr></thead><tbody><tr><td><code>result</code></td><td>array</td><td>更新結果の配列。要素はオブジェクト1件。</td></tr><tr><td><code>result[].TransactionHead</code></td><td>integer</td><td>更新件数。会員ポイント・ポイント履歴・出荷完了反映の処理件数と、支店転送の結果件数を合算した値。</td></tr></tbody></table></div>\n257: <h3 id=\"レスポンス-失敗\">レスポンス（失敗）</h3>\n258: <div class=\"table-wrap\"><table><thead><tr><th>HTTPステータス</th><th>条件</th><th>本文の形</th></tr></thead><tbody><tr><td>500</td><td><code>params</code>の解釈不可、取引ヘッダの不足、処理中の例外</td><td>標準例外ハンドラに委ねる</td></tr></tbody></table></div>\n259: <p>入力検証・認証判定を明示的に行わないため、400・401は発生しない。会員が見つからない・対象履歴が無い・対象注文が無い場合はその処理の更新件数を0として継続し、200を返す。</p>\n260: <h3 id=\"サンプルレスポンス\">サンプルレスポンス</h3>",
+      "designSnippet": "hareruya-design-docs/function_spec_html_preview/pf-eccube3/a05-04_api_order_order_smaregi_receive.html:257\n254:     }\n255:     .phase2-notice a {\n256:       color: #2f4677;\n257:     }\n258:     /* phase2-notice:end */\n259:   </style>\n260: </head>",
       "auditAspects": [
         "ラベル・メッセージ・翻訳キー",
         "ルート・Controller",
@@ -719,8 +719,8 @@
         "src/Eccube/Service/Smaregi/Webhook/Transaction/PurchasePatternContextBuilder.php:26"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderPointApplier.php:99\n96:         // 見て二重付与し得る。1 取引 = 1 会員のため、残高を持つ Player 行を悲観ロックして直列化し、\n97:         // ロック確立後に冪等性チェック → 付与 → 履歴記録までを同一トランザクションで完了させる。\n98:         $this->entityManager->beginTransaction();\n99:         try {\n100:             $this->entityManager->lock($player, LockMode::PESSIMISTIC_WRITE);\n101: \n102:             // 冪等性: 同一取引のポイント履歴が既にあれば再適用しない (ロック確立後に再確認)。",
-        "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentApplier.php:132\n129:                 return;\n130:             }\n131: \n132:             $player->setPoint($player->getPoint() + $pointChange);\n133:             $this->entityManager->persist($player);\n134: \n135:             $pointType = $this->pointTypeRepository->find(MtbPointType::PURCHASE_TYPE);",
+        "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderPointApplier.php:99\n96:         // 同一 transactionHeadId の Webhook が並列処理されると existsByTransactionId が両者 false を\n97:         // 見て二重付与し得る。1 取引 = 1 会員のため、残高を持つ Player 行を悲観ロックして直列化し、\n98:         // ロック確立後に冪等性チェック → 付与 → 履歴記録までを同一トランザクションで完了させる。\n99:         $this->entityManager->beginTransaction();\n100:         try {\n101:             $this->entityManager->lock($player, LockMode::PESSIMISTIC_WRITE);\n102: ",
+        "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentApplier.php:132\n129:         // 同一 transactionHeadId の Webhook が並列処理されると existsByTransactionId が両者 false を\n130:         // 見て二重適用し得る。残高を持つ Player 行を悲観ロックして直列化し、ロック確立後に\n131:         // 冪等性チェック → 残高更新 → 履歴記録までを同一トランザクションで完了させる。\n132:         $this->entityManager->beginTransaction();\n133:         try {\n134:             $this->entityManager->lock($player, LockMode::PESSIMISTIC_WRITE);\n135: ",
         "src/Eccube/Controller/Smaregi/WebhookController.php:41\n38:      * スマレジ Webhook 受信エンドポイント（検証用）\n39:      * リクエスト内容をログに出力し、200 OK で固定レスポンスを返す。\n40:      */\n41:     #[Route('', name: 'smaregi_webhook', methods: ['POST'])]\n42:     public function index(Request $request): JsonResponse\n43:     {\n44:         log_info('Smaregi webhook received', ["
       ],
       "auditChecklist": [
@@ -740,7 +740,7 @@
       "comparisonSummary": "⑫排他制御・トランザクション：設計は「明示的な悲観/楽観ロックなしとする。」。実装は「設計は明示ロックなしとするが、実装は会員ポイント更新でトランザクションとPESSIMISTIC_WRITEを使う。」。乖離理由は「設計は明示ロックなしとするが、実装は会員ポイント更新でトランザクションとPESSIMISTIC_WRITEを使う。」。",
       "mismatchReason": "設計は明示ロックなしとするが、実装は会員ポイント更新でトランザクションとPESSIMISTIC_WRITEを使う。",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/function_spec_html_preview/pf-eccube3/a05-04_api_order_order_smaregi_receive.html:297\n294: <h3 id=\"ログに出してはいけないもの\">ログに出してはいけないもの</h3>\n295: <ul><li>連携用ヘッダ（契約ID・アクセストークン）の値</li><li>Cookie値・セッションIDの完全値</li></ul>\n296: <hr>\n297: <h2 id=\"排他制御・トランザクション\">排他制御・トランザクション</h2>\n298: <p>本APIは会員ポイント・ポイント履歴・受注を更新する。各処理の末尾で永続化を確定する。明示的な悲観ロック・楽観ロックの取得は行わない。同一取引の重複受信時の整合は、取消・打消が取引IDを基準にポイント履歴を特定して巻き戻す前提に依存する。</p>\n299:       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>\n300:     </main>",
+      "designSnippet": "hareruya-design-docs/function_spec_html_preview/pf-eccube3/a05-04_api_order_order_smaregi_receive.html:297\n294:         <h1>API 受注管理 — スマレジ受信処理（ポイント履歴取得）</h1>\n295:       </header>\n296:       \n297:       <h2 id=\"概要\">概要</h2>\n298: <p>スマレジが送信する取引情報の通知を受け取り、対象会員のポイントとポイント履歴を更新するためのAPIである。pf-eccube3のHareruyaEcプラグインが提供するJSON APIで、通知の区分（通常・取消・打消）に応じて会員ポイントの加減算、ポイント履歴の登録または取消、店頭注文の出荷完了反映を行い、支店コードの明細は支店システムのスマレジ受信APIへ転送する。取消・打消の処理では取引IDからポイント履歴を取得して巻き戻す。</p>\n299: <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はHareruyaEcプラグインのスマレジ取引取込処理、フロントのルート登録（ControllerProvider）、ポイント履歴テーブル・会員（プレイヤー）・注文サブ・オプションマスタ・ポイント区分マスタを正とする。</p>\n300: <p>本機能のカスタマイズ区分はカスタマイズで、挙動の参照リポはpf-eccube3（HareruyaEcプラグイン）とする。DB関連の記述（テーブル名・列名・永続化先）はec-cube-enterpriseを正とする。</p>",
       "auditAspects": [
         "Repository・Entity・DB"
       ]
@@ -913,8 +913,8 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:33\n30:     /**\n31:      * @var array<string,string>\n32:      */\n33:     private const TRANSACTION_GET_FIXED_QUERY = [\n34:         'with_details' => 'all',\n35:         'with_payments' => 'none',\n36:         'with_discounts' => 'all',",
-        "src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:28\n25:  * TODO: 429 / 待機時間ヘッダによる指数バックオフ・リトライ\n26:  * TODO: スマレジ独自エラーコードに応じた例外マッピング\n27:  */\n28: class SmaregiTransactionApiClient\n29: {\n30:     /**\n31:      * @var array<string,string>"
+        "src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:33\n30:      * @var array<string,string>\n31:      */\n32:     private const TRANSACTION_GET_FIXED_QUERY = [\n33:         'with_details' => 'all',\n34:         'with_payments' => 'none',\n35:         'with_discounts' => 'all',\n36:         'with_store' => 'all',",
+        "src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:27\n24: /**\n25:  * スマレジ POS 取引 API\n26:  */\n27: class SmaregiTransactionApiClient\n28: {\n29:     /**\n30:      * @var array<string,string>"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -1010,10 +1010,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "a05-04_0505_sheet-6_sheet-req-11f895bf28",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "id": "a05-04_0505_sheet-6_sheet-req-4bc02ef610",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
-        "designRequirement": "遷移一覧（2件）",
+        "designRequirement": "遷移一覧（1件）（うち推定 1件：明示接続でなく最近傍幾何で補完）",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1024,7 +1024,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-99373ed334",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "2. 通常処理かキャンセル処理か返品処理かの場合を判定し、ポイント関連を増減処理 ※既存踏襲",
         "source": "html_requirement_extractor",
@@ -1037,7 +1037,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-a927b2608c",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "★3. スマレジの取引詳細をECCUBEに登録",
         "source": "html_requirement_extractor",
@@ -1050,7 +1050,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-4df7d4ba96",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "※ スマレジに「購入商品が纏まっている１点もの(ユニークな)商品」として登録されているので、そのスマレジの商品IDで検索可能",
         "source": "html_requirement_extractor",
@@ -1063,7 +1063,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-551b6c8869",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ スムーズ店頭受取以外のスマレジにある取引データはECCUBEに新規受注データとして新規作成する。この新規データは出荷完了で登録し、",
         "source": "html_requirement_extractor",
@@ -1076,7 +1076,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-9dfc8409fd",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "配送情報は使用用途がないので未登録とする",
         "source": "html_requirement_extractor",
@@ -1089,7 +1089,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-d28f270d4d",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ ついで買いが発生した場合は、「既存の受注データ + ついで購入」の受注データを新規作成する。既存の受注データには移行先の新規受注データIDを登録する。",
         "source": "html_requirement_extractor",
@@ -1102,7 +1102,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-a1b74fba38",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "※ 既存の受注データはスマレジ上では「複数の商品(カードA,カードB,カードC等)の入った一つの商品(部門カラムに6:店頭受取)」として登録されているので、",
         "source": "html_requirement_extractor",
@@ -1115,7 +1115,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-701ab63957",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ 会員状態も登録する。非会員であれば、「非会員」として登録・更新する",
         "source": "html_requirement_extractor",
@@ -1128,7 +1128,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-95c3e8b715",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ カスタマイズ対象の追加連携項目をECCUBEの受注データに登録する",
         "source": "html_requirement_extractor",
@@ -1141,7 +1141,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-e1a1ed9dd9",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "スマレジの受注レコードをECCUBEに新規作成する。既存の受注データには移行先の新規受注データIDを登録する。",
         "source": "html_requirement_extractor",
@@ -1154,7 +1154,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-7abc513c29",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "店頭受取分の取引に対応する受注データのステータスを引き渡し済みにし、ついで買い分 + 店頭受取分の受注レコードを新規作成。既存の受注データには移行先の新規受注データIDを登録する。",
         "source": "html_requirement_extractor",
@@ -1167,7 +1167,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-af1fb7243f",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "店頭PC購入分の取引に対応する受注データのステータスを引き渡し済みにし、ついで買い分 + 店頭PC購入分の受注レコードを新規作成。既存の受注データには移行先の新規受注データIDを登録する",
         "source": "html_requirement_extractor",
@@ -1180,7 +1180,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-bc33717548",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "会員状態は非会員で登録",
         "source": "html_requirement_extractor",
@@ -1193,7 +1193,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-7635f08e46",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "取引に対応する受注データをECCUBEに新規登録する",
         "source": "html_requirement_extractor",
@@ -1206,7 +1206,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-b0c4c0a69f",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ 全ての受注データを統合した新規受注データを新規作成する。既存の受注データには移行先の新規受注データIDを登録する。",
         "source": "html_requirement_extractor",
@@ -1219,7 +1219,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-8d5fef52f8",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ この組合せに加え、店舗内でのついで買いも同時に発生している場合は、そのデータも統合する。",
         "source": "html_requirement_extractor",
@@ -1232,7 +1232,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-fd3e4c4896",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ 注文日に店頭受取注文の注文日を設定する。複数の店頭受取受注データが存在する場合は一番若いものを注文日とする。",
         "source": "html_requirement_extractor",
@@ -1245,7 +1245,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-90fa510a42",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "ただし、取消(cancelDivision)が1の場合と、打消し(disposeDivision)が1の場合で処理が分岐する",
         "source": "html_requirement_extractor",
@@ -1258,7 +1258,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-8188e6e3e2",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "disposeDivisionが1の場合、打消元取引IDから検索",
         "source": "html_requirement_extractor",
@@ -1271,7 +1271,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-c3aa5f05c8",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "cancelDivisionが1の場合、取引IDから検索",
         "source": "html_requirement_extractor",
@@ -1284,7 +1284,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-f5b8055b51",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "取引種別 created: 登録 edited: 更新 canceled: 取消 disposed: 打消取消",
         "source": "html_requirement_extractor",
@@ -1297,7 +1297,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-617d862a9d",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "bulk-update: 一括更新 bulk-deleted: 一括削除",
         "source": "html_requirement_extractor",
@@ -1310,7 +1310,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-d361f5c0fd",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "allで固定。その他支払方法情報を付加するか(付加する場合はall, しない場合はnone)",
         "source": "html_requirement_extractor",
@@ -1323,7 +1323,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-5b5d9ea329",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "会員毎に付与するID。数字10桁以内。非会員の取引もありうるので、必須項目ではない",
         "source": "html_requirement_extractor",
@@ -1336,7 +1336,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-195ebc3011",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "取引日時。サーバーに送信された日時。販売日時は端末取引日時を参照。[YYYY-MM-DDThh:mm:ssTZD]",
         "source": "html_requirement_extractor",
@@ -1349,7 +1349,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-2a3a07b890",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "小計の値引き金額を設定。 単品割引率が設定された場合、その割合から値引き金額を設定。（切捨て）",
         "source": "html_requirement_extractor",
@@ -1362,7 +1362,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-120fd7528e",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "※税率が10%の場合",
         "source": "html_requirement_extractor",
@@ -1375,7 +1375,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-4ada54d40e",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "※小数点以下は税の丸め方式で指定の通り",
         "source": "html_requirement_extractor",
@@ -1388,7 +1388,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-20e7986a08",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "取引履歴の更新日時。作成時／修正時に日付が設定されます。[YYYY-MM-DDThh:mm:ssTZD]",
         "source": "html_requirement_extractor",
@@ -1401,7 +1401,7 @@
       },
       {
         "id": "a05-04_0505_sheet-6_sheet-req-046685ec9a",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "原価：数字8桁以内(少数5桁まで)。未設定の場合0を設定。 (details内に子データの配列として取得)",
         "source": "html_requirement_extractor",
@@ -2171,30 +2171,6 @@
     "strongSignalCount": 18,
     "candidateRefs": [
       {
-        "term": "smaregi_id",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:289",
-        "snippet": "'player.smaregiId AS smaregi_id',",
-        "weight": 7
-      },
-      {
-        "term": "smaregi_id",
-        "termType": "routeName",
-        "role": "Service",
-        "ref": "src/Eccube/Service/Admin/Customer/LostPointsAction.php:64",
-        "snippet": "'smaregi_id' => $Player->getSmaregiId(),",
-        "weight": 7
-      },
-      {
-        "term": "smaregi_id",
-        "termType": "routeName",
-        "role": "Service",
-        "ref": "src/Eccube/Service/Smaregi/Api/Mock/Response/CustomerMockResponse.php:29",
-        "snippet": "* ことで EC 側の保存済み smaregi_id と整合させる.",
-        "weight": 7
-      },
-      {
         "term": "flush",
         "termType": "path",
         "role": "Service",
@@ -2238,14 +2214,6 @@
         "term": "developers.smaregi.dev/apidoc/common",
         "termType": "path",
         "role": "Service",
-        "ref": "src/Eccube/Service/Smaregi/Api/SmaregiStockApiClient.php:122",
-        "snippet": "* 参考: https://developers.smaregi.dev/platform-api-reference/apis/pos/operations/getstock/",
-        "weight": 6
-      },
-      {
-        "term": "developers.smaregi.dev/apidoc/common",
-        "termType": "path",
-        "role": "Service",
         "ref": "src/Eccube/Service/Smaregi/Api/SmaregiStockApiClient.php:39",
         "snippet": "* 参考: https://developers.smaregi.dev/platform-api-reference/apis/pos/operations/poststockproductidadd/",
         "weight": 6
@@ -2259,11 +2227,43 @@
         "weight": 6
       },
       {
+        "term": "developers.smaregi.dev/apidoc/common",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:95",
+        "snippet": "* 参考: https://developers.smaregi.dev/platform-api-reference/apis/pos/operations/gettransactions/",
+        "weight": 6
+      },
+      {
         "term": "customer_id",
         "termType": "routeName",
         "role": "Entity",
         "ref": "src/Eccube/Entity/BaseInfo.php:1487",
         "snippet": "#[ORM\\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "smaregi_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Customer.php:1072",
+        "snippet": "* 固定番号(29) + ゼロ埋めした smaregi_id + チェックデジット の13桁文字列.",
+        "weight": 5
+      },
+      {
+        "term": "smaregi_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Customer.php:1073",
+        "snippet": "* smaregi_id が未設定の場合は生成できないため空文字を返す.",
+        "weight": 5
+      },
+      {
+        "term": "smaregi_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Customer.php:1091",
+        "snippet": "* 指定した smaregi_id からスマレジ会員コード(EAN13)を生成する.",
         "weight": 5
       },
       {
@@ -2286,7 +2286,7 @@
         "term": "customer_id",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:585",
+        "ref": "src/Eccube/Entity/Order.php:600",
         "snippet": "#[ORM\\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]",
         "weight": 5
       },
@@ -2985,10 +2985,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "a05-04_0505_sheet-6_sheet-req-11f895bf28",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "requirementId": "a05-04_0505_sheet-6_sheet-req-4bc02ef610",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
-        "designRequirement": "遷移一覧（2件）",
+        "designRequirement": "遷移一覧（1件）（うち推定 1件：明示接続でなく最近傍幾何で補完）",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3002,7 +3002,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-99373ed334",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "2. 通常処理かキャンセル処理か返品処理かの場合を判定し、ポイント関連を増減処理 ※既存踏襲",
         "source": "html_requirement_extractor",
@@ -3018,7 +3018,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-a927b2608c",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "★3. スマレジの取引詳細をECCUBEに登録",
         "source": "html_requirement_extractor",
@@ -3034,7 +3034,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-4df7d4ba96",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "※ スマレジに「購入商品が纏まっている１点もの(ユニークな)商品」として登録されているので、そのスマレジの商品IDで検索可能",
         "source": "html_requirement_extractor",
@@ -3050,7 +3050,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-551b6c8869",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ スムーズ店頭受取以外のスマレジにある取引データはECCUBEに新規受注データとして新規作成する。この新規データは出荷完了で登録し、",
         "source": "html_requirement_extractor",
@@ -3066,7 +3066,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-9dfc8409fd",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "配送情報は使用用途がないので未登録とする",
         "source": "html_requirement_extractor",
@@ -3082,7 +3082,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-d28f270d4d",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ ついで買いが発生した場合は、「既存の受注データ + ついで購入」の受注データを新規作成する。既存の受注データには移行先の新規受注データIDを登録する。",
         "source": "html_requirement_extractor",
@@ -3098,7 +3098,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-a1b74fba38",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "※ 既存の受注データはスマレジ上では「複数の商品(カードA,カードB,カードC等)の入った一つの商品(部門カラムに6:店頭受取)」として登録されているので、",
         "source": "html_requirement_extractor",
@@ -3114,7 +3114,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-701ab63957",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ 会員状態も登録する。非会員であれば、「非会員」として登録・更新する",
         "source": "html_requirement_extractor",
@@ -3130,7 +3130,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-95c3e8b715",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ カスタマイズ対象の追加連携項目をECCUBEの受注データに登録する",
         "source": "html_requirement_extractor",
@@ -3146,7 +3146,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-e1a1ed9dd9",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "スマレジの受注レコードをECCUBEに新規作成する。既存の受注データには移行先の新規受注データIDを登録する。",
         "source": "html_requirement_extractor",
@@ -3162,7 +3162,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-7abc513c29",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "店頭受取分の取引に対応する受注データのステータスを引き渡し済みにし、ついで買い分 + 店頭受取分の受注レコードを新規作成。既存の受注データには移行先の新規受注データIDを登録する。",
         "source": "html_requirement_extractor",
@@ -3178,7 +3178,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-af1fb7243f",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "店頭PC購入分の取引に対応する受注データのステータスを引き渡し済みにし、ついで買い分 + 店頭PC購入分の受注レコードを新規作成。既存の受注データには移行先の新規受注データIDを登録する",
         "source": "html_requirement_extractor",
@@ -3194,7 +3194,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-bc33717548",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "会員状態は非会員で登録",
         "source": "html_requirement_extractor",
@@ -3210,7 +3210,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-7635f08e46",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "取引に対応する受注データをECCUBEに新規登録する",
         "source": "html_requirement_extractor",
@@ -3226,7 +3226,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-b0c4c0a69f",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ 全ての受注データを統合した新規受注データを新規作成する。既存の受注データには移行先の新規受注データIDを登録する。",
         "source": "html_requirement_extractor",
@@ -3242,7 +3242,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-8d5fef52f8",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ この組合せに加え、店舗内でのついで買いも同時に発生している場合は、そのデータも統合する。",
         "source": "html_requirement_extractor",
@@ -3258,7 +3258,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-fd3e4c4896",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "・ 注文日に店頭受取注文の注文日を設定する。複数の店頭受取受注データが存在する場合は一番若いものを注文日とする。",
         "source": "html_requirement_extractor",
@@ -3274,7 +3274,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-90fa510a42",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "ただし、取消(cancelDivision)が1の場合と、打消し(disposeDivision)が1の場合で処理が分岐する",
         "source": "html_requirement_extractor",
@@ -3290,7 +3290,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-8188e6e3e2",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "disposeDivisionが1の場合、打消元取引IDから検索",
         "source": "html_requirement_extractor",
@@ -3306,7 +3306,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-c3aa5f05c8",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "cancelDivisionが1の場合、取引IDから検索",
         "source": "html_requirement_extractor",
@@ -3322,7 +3322,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-f5b8055b51",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "取引種別 created: 登録 edited: 更新 canceled: 取消 disposed: 打消取消",
         "source": "html_requirement_extractor",
@@ -3338,7 +3338,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-617d862a9d",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "bulk-update: 一括更新 bulk-deleted: 一括削除",
         "source": "html_requirement_extractor",
@@ -3354,7 +3354,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-d361f5c0fd",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "allで固定。その他支払方法情報を付加するか(付加する場合はall, しない場合はnone)",
         "source": "html_requirement_extractor",
@@ -3370,7 +3370,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-5b5d9ea329",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "会員毎に付与するID。数字10桁以内。非会員の取引もありうるので、必須項目ではない",
         "source": "html_requirement_extractor",
@@ -3386,7 +3386,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-195ebc3011",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "取引日時。サーバーに送信された日時。販売日時は端末取引日時を参照。[YYYY-MM-DDThh:mm:ssTZD]",
         "source": "html_requirement_extractor",
@@ -3402,7 +3402,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-2a3a07b890",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "小計の値引き金額を設定。 単品割引率が設定された場合、その割合から値引き金額を設定。（切捨て）",
         "source": "html_requirement_extractor",
@@ -3418,7 +3418,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-120fd7528e",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "※税率が10%の場合",
         "source": "html_requirement_extractor",
@@ -3434,7 +3434,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-4ada54d40e",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "※小数点以下は税の丸め方式で指定の通り",
         "source": "html_requirement_extractor",
@@ -3450,7 +3450,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-20e7986a08",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "取引履歴の更新日時。作成時／修正時に日付が設定されます。[YYYY-MM-DDThh:mm:ssTZD]",
         "source": "html_requirement_extractor",
@@ -3466,7 +3466,7 @@
       },
       {
         "requirementId": "a05-04_0505_sheet-6_sheet-req-046685ec9a",
-        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 2件 / 元コネクタ 5件）",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 2件 / 遷移 1件 / 元コネクタ 5件）",
         "designRef": "excel_to_html/output/0505_基本設計仕様書(API_受注管理).html#sheet-6",
         "designRequirement": "原価：数字8桁以内(少数5桁まで)。未設定の場合0を設定。 (details内に子データの配列として取得)",
         "source": "html_requirement_extractor",

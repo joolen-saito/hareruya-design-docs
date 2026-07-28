@@ -58,9 +58,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/point_update.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51\n48:      * @return array<string, mixed>|RedirectResponse\n49:      */\n50:     #[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_history', requirements: ['id' => '\\d+', 'type' => 'history|granted|purchase'], methods: ['GET'])]\n51:     #[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_update', requirements: ['id' => '\\d+', 'type' => 'granted|purchase'], methods: ['POST'])]\n52:     #[Template('@admin/Customer/point_update.twig')]\n53:     public function pointHistory(Request $request, Customer $Customer, string $type): array|RedirectResponse\n54:     {",
+        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51\n48:             [\n49:                 'Customer' => $Customer,\n50:             ],\n51:             $request\n52:         );\n53:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_CUSTOMER_POINT_INDEX_INITIALIZE);\n54: ",
         "src/Eccube/Resource/template/admin/Customer/point_update.twig:18\n15:                 {% if pointUpdateFlg %}\n16:                     <div class=\"card rounded border-0 mb-4\">\n17:                         <form name=\"customer_point_form\" role=\"form\" id=\"customer_address_form\" method=\"post\"\n18:                               action=\"{{ url('admin_customer_point_update', { id : Customer.id, type: type }) }}\"\n19:                               novalidate class=\"h-adr\">\n20:                             {{ form_widget(form._token) }}\n21:                             <div class=\"card-header\">",
-        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:29\n26: use Symfony\\Component\\HttpFoundation\\Request;\n27: use Symfony\\Component\\Routing\\Attribute\\Route;\n28: \n29: class CustomerPointController extends AbstractController\n30: {\n31:     public function __construct(private readonly MtbPointTypeRepository $pointTypeRepository)\n32:     {"
+        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:32\n29: use Symfony\\Component\\HttpFoundation\\Request;\n30: use Symfony\\Component\\Routing\\Attribute\\Route;\n31: \n32: class CustomerPointController extends AbstractController\n33: {\n34:     public function __construct(\n35:         private readonly MtbPointTypeRepository $pointTypeRepository,"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -118,8 +118,8 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Resource/template/admin/Customer/point_update.twig:123\n120:                                     <th class=\"align-middle pt-2 pb-2 pe-3\">{{ 'admin.common.expiry_date'|trans }}</th>\n121:                                 </thead>\n122:                                 <tbody>\n123:                                 {% for PointHistory in Customer.PointHistories %}\n124:                                     <tr>\n125:                                         <td class=\"align-middle ps-3\">\n126:                                             {{ PointHistory.id }}",
-        "src/Eccube/Entity/Customer.php:1292\n1289:         /**\n1290:          * @var Collection<int, DtbPointHistory>\n1291:          */\n1292:         #[ORM\\OneToMany(targetEntity: DtbPointHistory::class, mappedBy: 'Customer')]\n1293:         #[ORM\\OrderBy(['id' => Criteria::DESC])]\n1294:         private Collection $PointHistories;\n1295: ",
-        "src/Eccube/Entity/Customer.php:1293\n1290:          * @var Collection<int, DtbPointHistory>\n1291:          */\n1292:         #[ORM\\OneToMany(targetEntity: DtbPointHistory::class, mappedBy: 'Customer')]\n1293:         #[ORM\\OrderBy(['id' => Criteria::DESC])]\n1294:         private Collection $PointHistories;\n1295: \n1296:         public function addPointHistory(DtbPointHistory $PointHistory): Customer"
+        "src/Eccube/Entity/Customer.php:1292\n1289:         public function getDelFlg(): int\n1290:         {\n1291:             return $this->delFlg;\n1292:         }\n1293: \n1294:         public function setDelFlg(int $delFlg): Customer\n1295:         {",
+        "src/Eccube/Entity/Customer.php:1293\n1290:         {\n1291:             return $this->delFlg;\n1292:         }\n1293: \n1294:         public function setDelFlg(int $delFlg): Customer\n1295:         {\n1296:             $this->delFlg = $delFlg;"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -244,8 +244,8 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Entity/Customer.php:1015\n1012:         private ?string $smaregiBuyTotal = '0';\n1013: \n1014:         #[ORM\\OneToOne(targetEntity: DtbPlayer::class, mappedBy: 'Customer')]\n1015:         private ?DtbPlayer $Player = null;\n1016: \n1017:         /**\n1018:          * @var Collection<int, DtbBuyOrder>",
-        "src/Eccube/Entity/Customer.php:1107\n1104:             return $this;\n1105:         }\n1106: \n1107:         public function getPlayer(): ?DtbPlayer\n1108:         {\n1109:             return $this->Player;\n1110:         }",
-        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:85\n82:             ;\n83:             $this->entityManager->persist($PointHistory);\n84: \n85:             $Customer->getPlayer()->addPoint($PointHistory->getPointChange());\n86:             $this->entityManager->persist($Customer);\n87: \n88:             $this->entityManager->flush();"
+        "src/Eccube/Entity/Customer.php:1107\n1104: \n1105:             $strNum = $fixNo.sprintf(\"%0{$zeroPaddingLength}d\", $smaregiId);\n1106: \n1107:             return $strNum.StringUtil::calcCheckDigit($strNum);\n1108:         }\n1109: \n1110:         /**",
+        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:85\n82: \n83:         $form = $builder->getForm();\n84:         $form->handleRequest($request);\n85: \n86:         if ($form->isSubmitted() && $form->isValid()) {\n87:             $pointTypeId = $type == MtbPointType::GRANTED ? MtbPointType::GRANTED_TYPE : MtbPointType::PURCHASE_TYPE;\n88:             $PointType = $this->pointTypeRepository->find($pointTypeId);"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -304,9 +304,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Customer/edit.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:38\n35:     /**\n36:      * @return array<string, mixed>\n37:      */\n38:     #[Route('/%eccube_admin_route%/customer/point/{id}/select', name: 'admin_customer_point_select', requirements: ['id' => '\\d+'], methods: ['GET'])]\n39:     #[Template('@admin/Customer/point_select.twig')]\n40:     public function index(Customer $Customer): array\n41:     {",
+        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:38\n35:         private readonly MtbPointTypeRepository $pointTypeRepository,\n36:         private readonly SmaregiCustomerPointEventService $smaregiCustomerPointEventService,\n37:     ) {\n38:     }\n39: \n40:     /**\n41:      * @return array<string, mixed>",
         "src/Eccube/Resource/template/admin/Customer/edit.twig:1038\n1035:                             {% if Customer.id %}\n1036:                                 <div class=\"col-auto\">\n1037:                                     <a class=\"btn btn-ec-conversion px-5\"\n1038:                                        href=\"{{ url('admin_customer_point_select', { 'id': Customer.id}) }}\">{{ 'admin.customer.point_type_select'|trans }}\n1039:                                     </a>\n1040:                                 </div>\n1041:                                 <div class=\"col-auto\">",
-        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:29\n26: use Symfony\\Component\\HttpFoundation\\Request;\n27: use Symfony\\Component\\Routing\\Attribute\\Route;\n28: \n29: class CustomerPointController extends AbstractController\n30: {\n31:     public function __construct(private readonly MtbPointTypeRepository $pointTypeRepository)\n32:     {"
+        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:32\n29: use Symfony\\Component\\HttpFoundation\\Request;\n30: use Symfony\\Component\\Routing\\Attribute\\Route;\n31: \n32: class CustomerPointController extends AbstractController\n33: {\n34:     public function __construct(\n35:         private readonly MtbPointTypeRepository $pointTypeRepository,"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -320,7 +320,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 39,
+    "extractedRequirementCount": 59,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -393,6 +393,266 @@
         "category": "機能仕様 処理概要（★はカスタマイズ項目）",
         "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
         "designRequirement": "会員編集画面に遷移",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-b89789ff88",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B21",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-a63f5425b5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B52",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-7220a55a49",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !AE11",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-3a22c102ad",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B43",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-628af46fd9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B13",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-817695bb32",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B44",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-ff09b8e0eb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !F13",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-c28862b3dd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B45",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-46e51fe70e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !K13",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-3ada420802",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B46",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-e873c6adf4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !O13",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-01a620d048",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B47",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-67b8579e48",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !R13",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-ea08b156fc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B48",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-97f19d7ff3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !X13",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-b908580740",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B49",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-001994fa72",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !AB13",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-b622d3633a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B50",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-3f480c0454",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !AF13",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-06_0207_sheet-13_sheet-req-dc71f9b07a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B51",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -876,7 +1136,7 @@
         "term": "admin_customer_point_history",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:50",
+        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:63",
         "snippet": "#[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_history', requirements: ['id' => '\\d+', 'type' => 'history|granted|purchase'], methods: ['GET'])]",
         "weight": 7
       },
@@ -908,7 +1168,7 @@
         "term": "customer/point/{id}/select",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:38",
+        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:43",
         "snippet": "#[Route('/%eccube_admin_route%/customer/point/{id}/select', name: 'admin_customer_point_select', requirements: ['id' => '\\d+'], methods: ['GET'])]",
         "weight": 6
       },
@@ -916,7 +1176,7 @@
         "term": "customer/point/{id}/{type}",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:50",
+        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:63",
         "snippet": "#[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_history', requirements: ['id' => '\\d+', 'type' => 'history|granted|purchase'], methods: ['GET'])]",
         "weight": 6
       },
@@ -924,7 +1184,7 @@
         "term": "customer/point/{id}/{type}",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51",
+        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:64",
         "snippet": "#[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_update', requirements: ['id' => '\\d+', 'type' => 'granted|purchase'], methods: ['POST'])]",
         "weight": 6
       },
@@ -932,7 +1192,7 @@
         "term": "point_history.twig",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Front/Mypage/MypageController.php:390",
+        "ref": "src/Eccube/Controller/Front/Mypage/MypageController.php:396",
         "snippet": "#[Template(template: 'Mypage/point_history.twig')]",
         "weight": 6
       },
@@ -972,8 +1232,8 @@
         "term": "customer/point/{id}/update/{type}",
         "termType": "path",
         "role": "Service",
-        "ref": "src/Eccube/Service/Smaregi/Api/Mock/SmaregiMockResponder.php:74",
-        "snippet": "// /pos/products/{id} (update or delete)",
+        "ref": "src/Eccube/Service/Smaregi/SmaregiCustomerResolver.php:28",
+        "snippet": "* dtb_player を直接引けない。会員取得API(GET /pos/customers/{id})で customerNo を取得し、",
         "weight": 6
       },
       {
@@ -996,6 +1256,14 @@
         "term": "order_id",
         "termType": "routeName",
         "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbOrderHistory.php:26",
+        "snippet": "#[ORM\\Index(name: 'dtb_order_history_order_id_idx', columns: ['order_id'])]",
+        "weight": 5
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
         "ref": "src/Eccube/Entity/DtbPointHistory.php:38",
         "snippet": "#[ORM\\JoinColumn(name: 'order_id', nullable: true, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => '注文ID'])]",
         "weight": 5
@@ -1006,14 +1274,6 @@
         "role": "Entity",
         "ref": "src/Eccube/Entity/DtbShippingStandby.php:56",
         "snippet": "#[ORM\\InverseJoinColumn(name: 'order_id', referencedColumnName: 'id')]",
-        "weight": 5
-      },
-      {
-        "term": "order_id",
-        "termType": "routeName",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/DtbUserMailHistory.php:46",
-        "snippet": "#[ORM\\JoinColumn(name: 'order_id', nullable: true, referencedColumnName: 'id')]",
         "weight": 5
       }
     ],
@@ -1312,13 +1572,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 39,
-    "verdictedCount": 39,
+    "requirementCount": 59,
+    "verdictedCount": 59,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 39,
+      "実装済み": 59,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -1420,6 +1680,326 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": true
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-b89789ff88",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B21",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-a63f5425b5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B52",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-7220a55a49",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !AE11",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-3a22c102ad",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B43",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-628af46fd9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B13",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-817695bb32",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B44",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-ff09b8e0eb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !F13",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-c28862b3dd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B45",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-46e51fe70e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !K13",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-3ada420802",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B46",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-e873c6adf4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !O13",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-01a620d048",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B47",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-67b8579e48",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !R13",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-ea08b156fc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B48",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-97f19d7ff3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !X13",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-b908580740",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B49",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-001994fa72",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !AB13",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-b622d3633a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B50",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-3f480c0454",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !AF13",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-06_0207_sheet-13_sheet-req-dc71f9b07a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-13",
+        "designRequirement": "0207:ポイント履歴確認 !B51",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
       },
       {
         "requirementId": "m08-06_0207_sheet-13_sheet-req-8dfa0ee4f5",

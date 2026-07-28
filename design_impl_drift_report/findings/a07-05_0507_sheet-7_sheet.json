@@ -57,7 +57,7 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:171\n168:      * このAPIは、他のAPIとは異なりJSON形式のリクエストが前提となる\n169:      */\n170:     #[Route('/%eccube_api_v1_route%/admin/buyOrder/{id}.json', name: 'api_admin_buy_order_update', methods: ['PUT'])]\n171:     public function updateBuyOrder(int $id, #[MapRequestPayload] UpdateBuyOrderDto $updateBuyOrderDto): JsonResponse\n172:     {\n173:         $BuyOrder = $this->buyOrderRepository->find($id);\n174:         if (!$BuyOrder instanceof DtbBuyOrder) {",
-        "src/Eccube/EventListener/ExceptionListener.php:86\n83:                 $errors = $exception->getErrors();\n84:                 $logLevel = $exception->getLogLevel();\n85:             // HttpException は statusCode を尊重（4xxはwarning, 5xxはerror）\n86:             } elseif ($exception instanceof HttpExceptionInterface) {\n87:                 $statusCode = $exception->getStatusCode();\n88:                 $logLevel = $statusCode >= 500 ? 'error' : 'warning';\n89: ",
+        "src/Eccube/EventListener/ExceptionListener.php:86\n83: \n84:             // カスタムエラーの場合は、エラーコードとメッセージを取得\n85:             if ($exception instanceof BaseApiException) {\n86:                 $statusCode = $exception->getStatusCode();\n87:                 $errors = $exception->getErrors();\n88:                 $logLevel = $exception->getLogLevel();\n89:             // HttpException は statusCode を尊重（4xxはwarning, 5xxはerror）",
         "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:45\n42: use Symfony\\Component\\Security\\Http\\Attribute\\IsGranted;\n43: \n44: #[IsGranted('IS_AUTHENTICATED_FULLY')]\n45: class BuyOrderController extends AbstractController\n46: {\n47:     public function __construct(\n48:         private readonly DtbBuyOrderRepository $buyOrderRepository,"
       ],
       "auditChecklist": [
@@ -181,7 +181,7 @@
       "implementationSnippets": [
         "src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateBuyOrderAction.php:130\n127:                 'memberId' => $input->Member->getId(),\n128:             ]);\n129:             throw $e;\n130:         } catch (\\Throwable $e) {\n131:             $this->entityManager->rollback();\n132:             $this->logger->error('Failed to update buy order assessment', [\n133:                 'exception' => $e,",
         "src/Eccube/Exception/App/InternalException.php:27\n24:      * @param ?\\Throwable $previous\n25:      * @param string $logLevel ログレベル\n26:      */\n27:     public function __construct(string $message = 'システムエラーが発生しました', ?\\Throwable $previous = null, string $logLevel = 'error')\n28:     {\n29:         parent::__construct(\n30:             errors: [$message],",
-        "src/Eccube/EventListener/ExceptionListener.php:136\n133:                     break;\n134:             }\n135: \n136:             $response = new JsonResponse([\n137:                 'code' => $statusCode,\n138:                 'errors' => $errors,\n139:             ], $statusCode);"
+        "src/Eccube/EventListener/ExceptionListener.php:136\n133:                     log_debug($errorClass, $logContext);\n134:                     break;\n135:                 default:\n136:                     log_error('Unknown LogLevel: '.$logLevel, $logContext);\n137:                     break;\n138:             }\n139: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -234,7 +234,7 @@
       "implementationSnippets": [
         "src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:173\n170:     #[Route('/%eccube_api_v1_route%/admin/buyOrder/{id}.json', name: 'api_admin_buy_order_update', methods: ['PUT'])]\n171:     public function updateBuyOrder(int $id, #[MapRequestPayload] UpdateBuyOrderDto $updateBuyOrderDto): JsonResponse\n172:     {\n173:         $BuyOrder = $this->buyOrderRepository->find($id);\n174:         if (!$BuyOrder instanceof DtbBuyOrder) {\n175:             throw new NotFoundException('買取情報が見つかりません');\n176:         }",
         "src/Eccube/Exception/App/NotFoundException.php:29\n26:      */\n27:     public function __construct(string $message = 'リソースが見つかりません', ?\\Throwable $previous = null, string $logLevel = 'info')\n28:     {\n29:         parent::__construct(\n30:             errors: [$message],\n31:             statusCode: Response::HTTP_NOT_FOUND,\n32:             logLevel: $logLevel,",
-        "src/Eccube/EventListener/ExceptionListener.php:136\n133:                     break;\n134:             }\n135: \n136:             $response = new JsonResponse([\n137:                 'code' => $statusCode,\n138:                 'errors' => $errors,\n139:             ], $statusCode);"
+        "src/Eccube/EventListener/ExceptionListener.php:136\n133:                     log_debug($errorClass, $logContext);\n134:                     break;\n135:                 default:\n136:                     log_error('Unknown LogLevel: '.$logLevel, $logContext);\n137:                     break;\n138:             }\n139: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -300,7 +300,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 84,
+    "extractedRequirementCount": 85,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -750,6 +750,19 @@
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-7",
         "designRequirement": "更新前後でステータスが変わった場合は、受注のステータスと更新日時を再設定し、ステータス履歴を1件登録する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "a07-05_0507_sheet-7_sheet-req-60c589741c",
+        "category": "ここまでを1つのトランザクションで確定する。処理中に例外が発生した場合はロールバックし、内部エラー（HTTP 500）とし、エラーメッセージの配列を返す。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-7",
+        "designRequirement": "APIはエラーJSONを返して終了",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1415,7 +1428,8 @@
         "4/30",
         "pf-api/a07-05_api_online_purchase_buy_order_end.md",
         "routes.yaml",
-        "admin/buyOrder/{id}.json"
+        "admin/buyOrder/{id}.json",
+        "{eccube_api_v1_route}/admin/buyOrder/{id}.json"
       ],
       "businessTerms": [
         "A07",
@@ -1445,7 +1459,7 @@
       ]
     },
     "candidateCount": 18,
-    "strongSignalCount": 17,
+    "strongSignalCount": 18,
     "candidateRefs": [
       {
         "term": "order_status",
@@ -1584,11 +1598,11 @@
         "weight": 4
       },
       {
-        "term": "ネット買取管理",
-        "termType": "businessTerm",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Purchase/PurchaseController.php:65",
-        "snippet": "* ネット買取管理",
+        "term": "api/admin/buyOrder/{_buyOrderId}.json",
+        "termType": "path",
+        "role": "JavaScript",
+        "ref": "html/template/default/assets/hareruya/js/hareruya-unisearch-list-client-core.js:545",
+        "snippet": "// pf-eccube3 では UniSearch API の $.ajax().done 内で _setNumHit 〜 _sendSearchLog を行っているが、",
         "weight": 4
       }
     ],
@@ -1825,13 +1839,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 84,
-    "verdictedCount": 84,
+    "requirementCount": 85,
+    "verdictedCount": 85,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 84,
+      "実装済み": 85,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -2387,6 +2401,22 @@
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-7",
         "designRequirement": "更新前後でステータスが変わった場合は、受注のステータスと更新日時を再設定し、ステータス履歴を1件登録する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "a07-05_0507_sheet-7_sheet-req-60c589741c",
+        "category": "ここまでを1つのトランザクションで確定する。処理中に例外が発生した場合はロールバックし、内部エラー（HTTP 500）とし、エラーメッセージの配列を返す。",
+        "designRef": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-7",
+        "designRequirement": "APIはエラーJSONを返して終了",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

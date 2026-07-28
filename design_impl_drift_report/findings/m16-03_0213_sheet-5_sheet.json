@@ -74,8 +74,8 @@
         "src/Eccube/Resource/template/admin/Data/holiday.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Data/HolidayController.php:45\n42:     /**\n43:      * @return array<string, mixed>|RedirectResponse\n44:      */\n45:     #[Route(path: '/%eccube_admin_route%/data/holiday', name: 'admin_data_holiday', methods: ['GET', 'POST'])]\n46:     #[Template(template: '@admin/Data/holiday.twig')]\n47:     public function index(Request $request): array|RedirectResponse\n48:     {",
-        "src/Eccube/Controller/Admin/Data/HolidayController.php:136\n133:         ];\n134:     }\n135: \n136:     #[Route(path: '/%eccube_admin_route%/data/holiday/{id}/delete', name: 'admin_data_holiday_delete', requirements: ['id' => '\\\\d+'], methods: ['DELETE'])]\n137:     public function delete(MtbHoliday $Holiday): RedirectResponse\n138:     {\n139:         $this->isTokenValid();",
+        "src/Eccube/Controller/Admin/Data/HolidayController.php:45\n42:     }\n43: \n44:     /**\n45:      * @return array<string, mixed>|RedirectResponse\n46:      */\n47:     #[Route(path: '/%eccube_admin_route%/data/holiday', name: 'admin_data_holiday', methods: ['GET', 'POST'])]\n48:     #[Template(template: '@admin/Data/holiday.twig')]",
+        "src/Eccube/Controller/Admin/Data/HolidayController.php:136\n133: \n134:             $date = $form->get('date')->getData();\n135:             $name = $form->get('name')->getData();\n136: \n137:             if (!$date instanceof \\DateTimeInterface) {\n138:                 return $this->redirectToRoute('admin_data_holiday');\n139:             }",
         "src/Eccube/Resource/template/admin/Data/holiday.twig:194\n191:                                         <td>{{ Holiday.name }}</td>\n192:                                         <td>{{ Holiday.date|date('Y/m/d') }}</td>\n193:                                         <td class=\"text-center align-middle\">\n194:                                             <a href=\"{{ path('admin_data_holiday_delete', { id: Holiday.id }) }}\"\n195:                                                {{ csrf_token_for_anchor() }}\n196:                                                data-method=\"delete\"\n197:                                                data-message=\"{{ 'admin.data.holiday.delete_confirm'|trans }}\">"
       ],
       "auditChecklist": [
@@ -207,8 +207,8 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Form/Type/Admin/HolidayAddType.php:73\n70:                             return;\n71:                         }\n72: \n73:                         if ($this->holidayRepository->existsByDate($value)) {\n74:                             $context->buildViolation('admin.data.holiday.overlap')->addViolation();\n75:                         }\n76:                     }),",
-        "src/Eccube/Controller/Admin/Data/HolidayController.php:102\n99:         if ($request->isMethod('POST') && $form->isSubmitted()) {\n100:             if (!$form->isValid()) {\n101:                 foreach ($form->getErrors(true) as $error) {\n102:                     if ($error->getMessageTemplate() === 'admin.data.holiday.overlap') {\n103:                         $this->addError('admin.data.holiday.overlap', 'admin');\n104: \n105:                         return $this->redirectToRoute('admin_data_holiday');",
-        "src/Eccube/Resource/locale/messages.ja.yaml:6136\n6133: front.footer.branch.sitemap.privacy: プライバシーポリシー\n6134: front.footer.branch.sitemap.tradelaw: 特定商取引法に基づく表記\n6135: front.footer.branch.postal_prefix: '〒'\n6136: front.footer.branch.google_map_label: GOOGLE MAP\n6137: front.footer.branch.google_map_aria_label: Google Mapで見る\n6138: front.footer.branch.tel_prefix: 'TEL：'\n6139: front.footer.branch.business_hour_prefix: '営業時間：'"
+        "src/Eccube/Controller/Admin/Data/HolidayController.php:102\n99:             if ($result['addedCount'] > 0) {\n100:                 $this->addSuccess(\n101:                     str_replace('%count%', (string) $result['addedCount'], trans('admin.data.holiday.load_complete')),\n102:                     'admin'\n103:                 );\n104: \n105:                 $event = new EventArgs(",
+        "src/Eccube/Resource/locale/messages.ja.yaml:6136\n6133: admin.event.entry.sort.create_date: 申込日\n6134: admin.event.entry.sort.entry_status: 申込状況\n6135: admin.event.entry.sort.deck_create_date: デッキ登録日\n6136: admin.event.entry.sort.deck_update_date: デッキ更新日\n6137: admin.event.entry.sort.event_start_date: 大会開催日\n6138: admin.event.entry.csv_download: CSVダウンロード\n6139: admin.event.entry.csv_column_settings: 出力項目設定"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -222,7 +222,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 87,
+    "extractedRequirementCount": 114,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -789,6 +789,357 @@
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
         "designRequirement": "本機能では件数・合計などの集計表示を行わない。一覧は祝日マスタの全件を日付昇順で表示する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-7a0c09fd3f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "この祝日を削除してもよろしいですか？",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-9f401678d3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "祝日の削除を選んだとき（削除前の確認）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-f8c34069d5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "OKでモーダルを閉じて祝日の追加・削除画面に遷移、キャンセルでモーダルを閉じる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-add24a2b7e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "祝日の期間指定には、左側に開始日、右側に終了日を入力してください。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-07c81ceed4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、開始日が終了日より後のとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-3cfa48fba8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "データ管理 — 祝日の追加・削除画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-e8db9198da",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "登録できませんでした。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-307a1649fb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、開始日と終了日の逆転以外の入力不備があるとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-e10be2032f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "%date%は、既に祝日が登録されているのでスキップします。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-8a92e554fd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、既に登録済みの祝日が含まれるとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-1047b3927a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "警告を表示し、残りの祝日登録を続行した後、データ管理 — 祝日の追加・削除画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-2f0cc3a6c4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "%count%件の祝日が登録されました。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-30ad855e05",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、新しい祝日が1件以上登録されたとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-dd581a66c2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "指定された期間に、登録可能な祝日がありませんでした。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-b8f6c0dbbb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、新たに登録できる祝日がないとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-edd14d4107",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "入力した日付が、登録済みの祝日と重複しています。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-10af88e0d1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "新規追加で、登録済みの祝日と同じ日付を入力したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-264b2b3e38",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "新規追加で、登録済みの日付との重複以外の入力不備があるとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-b5d303d031",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "登録が完了しました。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-776dd05896",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "新規追加で祝日を登録したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-e9224d2896",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "祝日を削除したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-a4d58d40e0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "削除に失敗しました",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-4dfbd6ca0c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "祝日の削除でエラーが起きたとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-f7892656d6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "期間を入力してください。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-9ef4dd82d8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、開始日を入力せずに実行したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-2019f26a20",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "エラーを表示し、データ管理 — 祝日の追加・削除画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m16-03_0213_sheet-5_sheet-req-1e8cf6d71b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、終了日を入力せずに実行したとき",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1414,7 +1765,7 @@
         "term": "HolidayAddType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Data/HolidayController.php:20",
+        "ref": "src/Eccube/Controller/Admin/Data/HolidayController.php:22",
         "snippet": "use Eccube\\Form\\Type\\Admin\\HolidayAddType;",
         "weight": 7
       },
@@ -1422,7 +1773,7 @@
         "term": "HolidayController",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Data/HolidayController.php:32",
+        "ref": "src/Eccube/Controller/Admin/Data/HolidayController.php:34",
         "snippet": "class HolidayController extends AbstractController",
         "weight": 7
       },
@@ -1430,8 +1781,8 @@
         "term": "HolidayAddType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Data/HolidayController.php:50",
-        "snippet": "$form = $this->formFactory->createBuilder(HolidayAddType::class, $Holiday)->getForm();",
+        "ref": "src/Eccube/Controller/Admin/Data/HolidayController.php:52",
+        "snippet": "$builder = $this->formFactory->createBuilder(HolidayAddType::class, $Holiday);",
         "weight": 7
       },
       {
@@ -1454,7 +1805,7 @@
         "term": "admin.register.complete",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:118",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:140",
         "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
         "weight": 6
       },
@@ -1462,7 +1813,7 @@
         "term": "admin.register.failed",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:105",
+        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:127",
         "snippet": "$this->addError('admin.register.failed', 'admin');",
         "weight": 6
       },
@@ -1470,23 +1821,23 @@
         "term": "admin.register.complete",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:339",
+        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:410",
         "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
         "weight": 6
       },
       {
         "term": "admin.register.failed",
-        "termType": "translationKey",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ShelfNumberController.php:125",
-        "snippet": "$this->addError('admin.register.failed', 'admin');",
-        "weight": 6
-      },
-      {
-        "term": "admin.register.complete",
         "termType": "translationKey",
         "role": "Controller",
         "ref": "src/Eccube/Controller/Admin/Product/ShelfNumberController.php:147",
+        "snippet": "$this->addError('admin.register.failed', 'admin');",
+        "weight": 6
+      },
+      {
+        "term": "admin.register.complete",
+        "termType": "translationKey",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ShelfNumberController.php:178",
         "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
         "weight": 6
       },
@@ -1494,7 +1845,7 @@
         "term": "admin.register.failed",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/StorageCodeController.php:116",
+        "ref": "src/Eccube/Controller/Admin/Product/StorageCodeController.php:142",
         "snippet": "$this->addError('admin.register.failed', 'admin');",
         "weight": 6
       },
@@ -1814,13 +2165,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 87,
-    "verdictedCount": 87,
+    "requirementCount": 114,
+    "verdictedCount": 114,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 87,
+      "実装済み": 114,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -2530,6 +2881,438 @@
         "conformanceBucket": "実装済み",
         "material": false,
         "elementLevel": true
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-7a0c09fd3f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "この祝日を削除してもよろしいですか？",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-9f401678d3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "祝日の削除を選んだとき（削除前の確認）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-f8c34069d5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "OKでモーダルを閉じて祝日の追加・削除画面に遷移、キャンセルでモーダルを閉じる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-add24a2b7e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "祝日の期間指定には、左側に開始日、右側に終了日を入力してください。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-07c81ceed4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、開始日が終了日より後のとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-3cfa48fba8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "データ管理 — 祝日の追加・削除画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-e8db9198da",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "登録できませんでした。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-307a1649fb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、開始日と終了日の逆転以外の入力不備があるとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-e10be2032f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "%date%は、既に祝日が登録されているのでスキップします。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-8a92e554fd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、既に登録済みの祝日が含まれるとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-1047b3927a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "警告を表示し、残りの祝日登録を続行した後、データ管理 — 祝日の追加・削除画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-2f0cc3a6c4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "%count%件の祝日が登録されました。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-30ad855e05",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、新しい祝日が1件以上登録されたとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-dd581a66c2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "指定された期間に、登録可能な祝日がありませんでした。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-b8f6c0dbbb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、新たに登録できる祝日がないとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-edd14d4107",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "入力した日付が、登録済みの祝日と重複しています。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-10af88e0d1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "新規追加で、登録済みの祝日と同じ日付を入力したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-264b2b3e38",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "新規追加で、登録済みの日付との重複以外の入力不備があるとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-b5d303d031",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "登録が完了しました。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-776dd05896",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "新規追加で祝日を登録したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-e9224d2896",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "祝日を削除したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-a4d58d40e0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "削除に失敗しました",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-4dfbd6ca0c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "祝日の削除でエラーが起きたとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-f7892656d6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "期間を入力してください。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-9ef4dd82d8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、開始日を入力せずに実行したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-2019f26a20",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "エラーを表示し、データ管理 — 祝日の追加・削除画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m16-03_0213_sheet-5_sheet-req-1e8cf6d71b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0213_基本設計仕様書(データ管理).html#sheet-5",
+        "designRequirement": "一括登録で、終了日を入力せずに実行したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
       },
       {
         "requirementId": "m16-03_0213_sheet-5_sheet-req-e7ab018898",

@@ -44,7 +44,7 @@
         "Service・業務ルール",
         "CSV・API・Batch・PDF・印刷"
       ],
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2299\n2296:       </section>\n2297:       <!-- function-design-embed:end m03-06-m03-06_admin_product_product_custom_csv_export -->\n2298: </section>\n2299:       <section class=\"sheet-panel\" id=\"sheet-8\">\n2300:         <div class=\"sheet-heading\">\n2301:           <h2>カード商品CSV登録</h2>\n2302:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2636\n2633:       </section>\n2634:       <!-- function-design-embed:end m03-06-m03-06_admin_product_product_custom_csv_export -->\n2635: </section>\n2636:       <section class=\"sheet-panel\" id=\"sheet-8\">\n2637:         <div class=\"sheet-heading\">\n2638:           <h2>カード商品CSV登録</h2>\n2639:         </div>",
       "implementationRefs": [
         "src/Eccube/Service/Csv/Importer/Validator/Repository/CategoryIdValidator.php:48-68",
         "src/Eccube/Util/CategoryMap.php:53-56,157",
@@ -56,7 +56,7 @@
       "implementationSnippets": [
         "src/Eccube/Service/Csv/Importer/Validator/Repository/CategoryIdValidator.php:48\n45:      *\n46:      * @return bool 値が正しい場合 true\n47:      */\n48:     public function validate(MessageStore $errors, CsvValueInterface $value): bool\n49:     {\n50:         if (!$value->hasValue()) {\n51:             // 未入力の場合はチェックしない",
         "src/Eccube/Util/CategoryMap.php:53\n50:      *\n51:      * @return bool カテゴリIDが存在する場合、 true\n52:      */\n53:     public function contains(int $categoryId): bool\n54:     {\n55:         return array_key_exists($categoryId, $this->categories);\n56:     }",
-        "src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:619\n616:             $repository->updateProduct($product);\n617: \n618:             return $productId;\n619:         }\n620: \n621:         $product['creatorId'] = $event->getUpdateUser()->getId();\n622:         // TODO: 暫定的に設定しているが、base_info_idカラムは削除予定"
+        "src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:619\n616:         $sourceCategoryIds = $this->productCategoryIdListColumn->getValue($event->getRow());\n617: \n618:         // 画面から商品マスターを登録するのと同様に、親のカテゴリも含めて登録する\n619:         $categoryIds = $this->categoryMap->getAncestorAndSelfCategories($sourceCategoryIds);\n620: \n621:         /** @var ProductRepository $repository */\n622:         $repository = $this->productRepository;"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -98,14 +98,14 @@
         "Twig・画面表示",
         "CSV・API・Batch・PDF・印刷"
       ],
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2299\n2296:       </section>\n2297:       <!-- function-design-embed:end m03-06-m03-06_admin_product_product_custom_csv_export -->\n2298: </section>\n2299:       <section class=\"sheet-panel\" id=\"sheet-8\">\n2300:         <div class=\"sheet-heading\">\n2301:           <h2>カード商品CSV登録</h2>\n2302:         </div>",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html:2636\n2633:       </section>\n2634:       <!-- function-design-embed:end m03-06-m03-06_admin_product_product_custom_csv_export -->\n2635: </section>\n2636:       <section class=\"sheet-panel\" id=\"sheet-8\">\n2637:         <div class=\"sheet-heading\">\n2638:           <h2>カード商品CSV登録</h2>\n2639:         </div>",
       "implementationRefs": [
         "src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:749-768",
         "src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:749\n746:                 $oldSellPrice = (int) ($productCardCondition['price02'] ?? 0);\n747:                 $oldBuyPrice = (int) ($productCardCondition['buyPrice'] ?? 0);\n748:                 $oldStandardPrice = (int) ($productCardCondition['standardPrice'] ?? 0);\n749:                 if ($sellPrice !== $oldSellPrice || $buyPrice !== $oldBuyPrice || $newStandardPrice !== $oldStandardPrice) {\n750:                     /** @var ProductClass $ProductClass */\n751:                     $ProductClass = $this->productClassRepository->find($productClassId);\n752: ",
-        "src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:59\n56: /**\n57:  * カード商品CSVをインポートするもの。\n58:  */\n59: class ProductCardImportHandler extends BaseCsvImportHandler\n60: {\n61:     /** @var EntityManagerInterface */\n62:     private EntityManagerInterface $em;"
+        "src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:749\n746:                 $productCode = $this->createProductCode($productCardCondition);\n747:                 try {\n748:                     $productClassId = $productClassRepository->insertProductClass(\n749:                         [\n750:                             'productId' => $productId,\n751:                             'creatorId' => $memberId,\n752:                             'productCode' => $productCode,",
+        "src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:57\n54: /**\n55:  * カード商品CSVをインポートするもの。\n56:  */\n57: class ProductCardImportHandler extends BaseCsvImportHandler\n58: {\n59:     /** @var EntityManagerInterface */\n60:     private EntityManagerInterface $em;"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -734,10 +734,231 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-26_0204_sheet-8_csv-req-73903c6c2a",
+        "id": "m03-26_0204_sheet-8_csv-req-6e5c4e6816",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "M03-26 カード商品CSV登録 / m03-26_admin_product_product_card_csv_import（管理画面_商品管理_カード商品CSV登録）",
+        "designRequirement": "0204:カード商品CSV登録!N10",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-12a20da0cd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!B145",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-4b833f1bc7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!U13",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-a28db1cdaa",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!B146",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-1c52821b24",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!AI16",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-cc0bd04921",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!B147",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-540b454404",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!F24",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-1b351f0fe4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!B148",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-5db105ac93",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!M36",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-61f78cd568",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!B149",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-08ab7b3a01",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!AM38",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-e2808650a0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!C150",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-9876db2bed",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!G48",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-a32747bebf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!C151",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-d6ccad6731",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!T57",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-ca641e87fd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!B152",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-318b3ce2f8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "M03-26 カード商品CSV登録 / 商品管理 — カード商品CSV登録",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-029afaa935",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "カード商品CSVの4列（カード名(英)・カードセット名・Foilフラグ・プロモーション名(日)） は削除（ 0204 カード商品CSV出力 識別ID:29 ）",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -777,6 +998,32 @@
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
         "designRequirement": "DB関連の記述は ec-cube-enterprise の実装を正とする。取込で書き換える主テーブルは現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise）でテーブル名が一致する。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-4dafba176c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計が廃止を宣言している。刷新後は実装しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-26_0204_sheet-8_csv-req-fc1c7c8226",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "カード商品CSVの4列（カード名(英)・カードセット名・Foilフラグ・プロモーション名(日)）（※Excel基本設計 0204 識別ID:29 により廃止。刷新後は実装しない）。カード詳細(ID)の必須化に伴い、商品詳細(ID)未入力時の検索に使っていた4項目を削除する。",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1421,253 +1668,6 @@
           "設計値と実装値が一致する、または乖離所見として記録済みであること"
         ],
         "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-6c7c32bd0b",
-        "category": "トランザクションはロールバックされ、結果オブジェクトにエラーが載る",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "取込結果オブジェクトにエラーが 1 件でもある",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-d8fdb42688",
-        "category": "トランザクションはロールバックされ、結果オブジェクトにエラーが載る",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "フラッシュはすべてエラー側のみで、成功メッセージと取込履歴 INSERT は行わない",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-988acde344",
-        "category": "トランザクションはロールバックされ、結果オブジェクトにエラーが載る",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "一部行のみスキップされ、かつ中断なしでコミットされた場合",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-af6885b0f3",
-        "category": "トランザクションはロールバックされ、結果オブジェクトにエラーが載る",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "DB は成功行ぶん更新済みでも、画面はエラーのみを見せ、履歴にも残らない",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-3bc45e102b",
-        "category": "トランザクションはロールバックされ、結果オブジェクトにエラーが載る",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "画面は CSV のプレビューを保持しない。取込後は別画面の商品一覧などで確認する必要がある。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-a466f52c3c",
-        "category": "トランザクションはロールバックされ、結果オブジェクトにエラーが載る",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "エラー配列が空のときだけ履歴が 1 件増える。部分スキップでエラーが残った場合は履歴に残らない実装である。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-0abfab1d16",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "HTTP 302 でアップロード画面へ戻り、成功フラッシュが付く場合がある",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-db9f942a4a",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "同上でエラーフラッシュが 1 件以上付く場合がある",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-0a745e25ef",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "永続化の正は ec-cube-enterprise。商品系は承認ワークフローを介さず persist/flush で直接確定する（在庫の承認ワークフローとは別系統。 ProductController ・各CSVサービスで確認）。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-9203a10086",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-00303c6b85",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "ファイル必須、 eccube_csv_size に基づく最大サイズ",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-cef418b4b7",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "必須列の欠落禁止、数値・選択肢・マスタ参照・URL 形式・複数値の内部禁止チェック",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-ac83d09b3d",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "送信成功・失敗のどちらでも POST 後",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-8992df0cec",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "GET アップロード画面へリダイレクト",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-e1e6bb72b4",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "遷移時に引き継ぐ状態",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-db1cd4e8b9",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "遷移後の初期状態",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-819a062582",
-        "category": "直前のセッションに保存されたページ番号・表示件数で履歴を再描画",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "該当キーをフラッシュしリダイレクト",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-c95fefaa6b",
-        "category": "直前のセッションに保存されたページ番号・表示件数で履歴を再描画",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "admin.csv.error.upload.maxrecord をフラッシュしリダイレクト",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-26_0204_sheet-8_csv-req-58a9ee10aa",
-        "category": "直前のセッションに保存されたページ番号・表示件数で履歴を再描画",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "ヘッダのみ・列数不一致などインポータ事前検証",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
       }
     ],
     "missingRequirementCount": 0,
@@ -1778,23 +1778,23 @@
         "term": "CardCsvController",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Card/CardCsvController.php:34",
+        "ref": "src/Eccube/Controller/Admin/Card/CardCsvController.php:36",
         "snippet": "class CardCsvController extends AbstractController",
-        "weight": 7
-      },
-      {
-        "term": "CardCsvController",
-        "termType": "className",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:1",
-        "snippet": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php",
         "weight": 7
       },
       {
         "term": "product_card_csv",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:101",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:114",
+        "snippet": "$sessionKeyPageCount = 'admin.product.product_card_csv.page_count';",
+        "weight": 7
+      },
+      {
+        "term": "product_card_csv",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:123",
         "snippet": "$sessionKeyPageNo = 'admin.product.product_card_csv.page_no';",
         "weight": 7
       },
@@ -1802,7 +1802,7 @@
         "term": "product_card_csv_upload_title",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:112",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:134",
         "snippet": "'csv_box_title' => 'admin.product.product_card_csv_upload_title',",
         "weight": 7
       },
@@ -1810,7 +1810,7 @@
         "term": "admin_product_card_csv_upload",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:114",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:136",
         "snippet": "'form_action_route' => 'admin_product_card_csv_upload',",
         "weight": 7
       },
@@ -1818,7 +1818,7 @@
         "term": "admin_product_card_csv_template",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:115",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:137",
         "snippet": "'template_download_route' => 'admin_product_card_csv_template',",
         "weight": 7
       },
@@ -1826,7 +1826,7 @@
         "term": "admin_product_card_csv_upload",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:127",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:149",
         "snippet": "#[Route(path: '/%eccube_admin_route%/product/product_card_csv_upload', name: 'admin_product_card_csv_upload', methods: ['POST'])]",
         "weight": 7
       },
@@ -1834,7 +1834,7 @@
         "term": "product_card_csv_upload",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:127",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:149",
         "snippet": "#[Route(path: '/%eccube_admin_route%/product/product_card_csv_upload', name: 'admin_product_card_csv_upload', methods: ['POST'])]",
         "weight": 7
       },
@@ -1842,7 +1842,7 @@
         "term": "ProductCardImportHandler",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:166",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:198",
         "snippet": "$handler = new ProductCardImportHandler(",
         "weight": 7
       },
@@ -1850,7 +1850,7 @@
         "term": "ProductCardImportHandler",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:166",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:198",
         "snippet": "$handler = new ProductCardImportHandler(",
         "weight": 7
       },
@@ -1858,7 +1858,7 @@
         "term": "ProductCardImportHandler",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:32",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:34",
         "snippet": "use Eccube\\Service\\Csv\\Importer\\Event\\ProductCardImportHandler;",
         "weight": 7
       },
@@ -1866,23 +1866,15 @@
         "term": "ProductCardImportHandler",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:32",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:34",
         "snippet": "use Eccube\\Service\\Csv\\Importer\\Event\\ProductCardImportHandler;",
-        "weight": 7
-      },
-      {
-        "term": "CardCsvController",
-        "termType": "className",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:45",
-        "snippet": "class CardCsvController extends AbstractController",
         "weight": 7
       },
       {
         "term": "admin_product_card_csv_template",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:70",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:72",
         "snippet": "#[Route(path: '/%eccube_admin_route%/product/product_card/csv_template', name: 'admin_product_card_csv_template', methods: ['GET'])]",
         "weight": 7
       },
@@ -1890,8 +1882,16 @@
         "term": "product_card_csv_upload",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:83",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:95",
         "snippet": "#[Route(path: '/%eccube_admin_route%/product/product_card_csv_upload', name: 'admin_product_card_csv_import', methods: ['GET'])]",
+        "weight": 7
+      },
+      {
+        "term": "ADMIN_CSV_IMPORT_MAX_ROWS",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:383",
+        "snippet": "if ($this->countCsvRows($formFile) >= static::ADMIN_CSV_IMPORT_MAX_ROWS) {",
         "weight": 7
       }
     ],
@@ -1901,10 +1901,10 @@
       "html/template/default/assets/hareruya",
       "html/template/admin/assets"
     ],
-    "auditNote": "設計書由来のルート名・クラス名・翻訳キー・パスに対応する実装入口候補を検出。個別要求の一致は requirementTrace/finding で別途判断する。"
+    "auditNote": "設計書由来のルート名・クラス名・翻訳キー・パスに対応する実装入口候補を検出。個別要求の一致は requirementTrace/finding で別途判断する。 限定的な非実装記載あり（機能全体の非実装判定には使わない）: 刷新後は実装不要 本節は現行実装（pf-eccube3）からのリバースです。次の記述は Excel基本設計により廃止されており、刷新後に実装する必要はありません。"
   },
-  "designNonImplementationReason": null,
-  "designNonImplementationScope": null,
+  "designNonImplementationReason": "刷新後は実装不要 本節は現行実装（pf-eccube3）からのリバースです。次の記述は Excel基本設計により廃止されており、刷新後に実装する必要はありません。",
+  "designNonImplementationScope": "SCOPED_REQUIREMENT",
   "requirementDifferenceAudit": {
     "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
     "confirmedDifferenceCount": 2,
@@ -2732,10 +2732,282 @@
         "elementLevel": true
       },
       {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-73903c6c2a",
+        "requirementId": "m03-26_0204_sheet-8_csv-req-6e5c4e6816",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "M03-26 カード商品CSV登録 / m03-26_admin_product_product_card_csv_import（管理画面_商品管理_カード商品CSV登録）",
+        "designRequirement": "0204:カード商品CSV登録!N10",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-12a20da0cd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!B145",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-4b833f1bc7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!U13",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-a28db1cdaa",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!B146",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-1c52821b24",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!AI16",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-cc0bd04921",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!B147",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-540b454404",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!F24",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-1b351f0fe4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!B148",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-5db105ac93",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!M36",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-61f78cd568",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!B149",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-08ab7b3a01",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!AM38",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-e2808650a0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!C150",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-9876db2bed",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!G48",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-a32747bebf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!C151",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-d6ccad6731",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!T57",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-ca641e87fd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "0204:カード商品CSV登録!B152",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-318b3ce2f8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "M03-26 カード商品CSV登録 / 商品管理 — カード商品CSV登録",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-029afaa935",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "カード商品CSVの4列（カード名(英)・カードセット名・Foilフラグ・プロモーション名(日)） は削除（ 0204 カード商品CSV出力 識別ID:29 ）",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -2784,6 +3056,38 @@
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
         "designRequirement": "DB関連の記述は ec-cube-enterprise の実装を正とする。取込で書き換える主テーブルは現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise）でテーブル名が一致する。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-4dafba176c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計が廃止を宣言している。刷新後は実装しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-26_0204_sheet-8_csv-req-fc1c7c8226",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
+        "designRequirement": "カード商品CSVの4列（カード名(英)・カードセット名・Foilフラグ・プロモーション名(日)）（※Excel基本設計 0204 識別ID:29 により廃止。刷新後は実装しない）。カード詳細(ID)の必須化に伴い、商品詳細(ID)未入力時の検索に使っていた4項目を削除する。",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3578,310 +3882,6 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": true
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-6c7c32bd0b",
-        "category": "トランザクションはロールバックされ、結果オブジェクトにエラーが載る",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "取込結果オブジェクトにエラーが 1 件でもある",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-d8fdb42688",
-        "category": "トランザクションはロールバックされ、結果オブジェクトにエラーが載る",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "フラッシュはすべてエラー側のみで、成功メッセージと取込履歴 INSERT は行わない",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-988acde344",
-        "category": "トランザクションはロールバックされ、結果オブジェクトにエラーが載る",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "一部行のみスキップされ、かつ中断なしでコミットされた場合",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-af6885b0f3",
-        "category": "トランザクションはロールバックされ、結果オブジェクトにエラーが載る",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "DB は成功行ぶん更新済みでも、画面はエラーのみを見せ、履歴にも残らない",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-3bc45e102b",
-        "category": "トランザクションはロールバックされ、結果オブジェクトにエラーが載る",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "画面は CSV のプレビューを保持しない。取込後は別画面の商品一覧などで確認する必要がある。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-a466f52c3c",
-        "category": "トランザクションはロールバックされ、結果オブジェクトにエラーが載る",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "エラー配列が空のときだけ履歴が 1 件増える。部分スキップでエラーが残った場合は履歴に残らない実装である。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-0abfab1d16",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "HTTP 302 でアップロード画面へ戻り、成功フラッシュが付く場合がある",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-db9f942a4a",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "同上でエラーフラッシュが 1 件以上付く場合がある",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-0a745e25ef",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "永続化の正は ec-cube-enterprise。商品系は承認ワークフローを介さず persist/flush で直接確定する（在庫の承認ワークフローとは別系統。 ProductController ・各CSVサービスで確認）。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-9203a10086",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-00303c6b85",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "ファイル必須、 eccube_csv_size に基づく最大サイズ",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-cef418b4b7",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "必須列の欠落禁止、数値・選択肢・マスタ参照・URL 形式・複数値の内部禁止チェック",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-ac83d09b3d",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "送信成功・失敗のどちらでも POST 後",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-8992df0cec",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "GET アップロード画面へリダイレクト",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-e1e6bb72b4",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "遷移時に引き継ぐ状態",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-db1cd4e8b9",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "遷移後の初期状態",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-819a062582",
-        "category": "直前のセッションに保存されたページ番号・表示件数で履歴を再描画",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "該当キーをフラッシュしリダイレクト",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-c95fefaa6b",
-        "category": "直前のセッションに保存されたページ番号・表示件数で履歴を再描画",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "admin.csv.error.upload.maxrecord をフラッシュしリダイレクト",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-26_0204_sheet-8_csv-req-58a9ee10aa",
-        "category": "直前のセッションに保存されたページ番号・表示件数で履歴を再描画",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-8",
-        "designRequirement": "ヘッダのみ・列数不一致などインポータ事前検証",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
       }
     ],
     "materialGapRows": []

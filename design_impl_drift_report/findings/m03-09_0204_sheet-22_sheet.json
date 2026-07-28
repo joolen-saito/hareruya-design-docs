@@ -61,8 +61,8 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Repository/ProductRepository.php:103\n100:             ->leftJoin('p.CardDetail', 'cd')\n101:             ->leftJoin('cd.Card', 'c')\n102:             ->where('p.id = :id')\n103:             ->andWhere('pc.visible = :visible')\n104:             ->setParameter('id', $productId)\n105:             ->setParameter('visible', true)\n106:             ->orderBy('cc1.sort_no', 'DESC')",
-        "src/Eccube/Controller/Front/ProductController.php:1361\n1358:             //         return false;\n1359:             //     }\n1360:             // }\n1361:             // 公開ステータスでない商品は表示しない.\n1362:             if ($Product->getStatus()->getId() !== ProductStatus::DISPLAY_SHOW) {\n1363:                 return false;\n1364:             }",
-        "src/Eccube/Entity/Product.php:1342\n1339:             $products = [];\n1340:             $back = $this->getResolvedBackCardDetail();\n1341:             foreach ($this->getProductClasses() as $ProductClass) {\n1342:                 if (!$ProductClass->isVisible()) {\n1343:                     continue;\n1344:                 }\n1345: "
+        "src/Eccube/Controller/Front/ProductController.php:1361\n1358:         }\n1359: \n1360:         if ($isMainShop && $this->isGranted('ROLE_USER')) {\n1361:             $user = $this->getUser();\n1362:             if ($user instanceof Customer) {\n1363:                 $Player = $user->getPlayer();\n1364:                 $FavoriteProducts = $this->dtbFavoriteProductRepository->findBy(['Player' => $Player]);",
+        "src/Eccube/Entity/Product.php:1342\n1339:             $products = [];\n1340:             $backDetail = $this->getResolvedBackCardDetail();\n1341:             $backImageByLanguageCode = [];\n1342:             if ($backDetail !== null) {\n1343:                 foreach ($backDetail->getCardImages() as $cardImage) {\n1344:                     $language = $cardImage->getLanguage();\n1345:                     if ($language === null) {"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -131,9 +131,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiProductClassEventService.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:282\n279:                                 </div>\n280:                                 <div class=\"row\">\n281:                                     <div class=\"col-3\">\n282:                                         <span>{{ 'admin.product.smaregi_product_code'|trans }}</span>\n283:                                     </div>\n284:                                     <div class=\"col mb-2\">\n285:                                         <div>",
-        "src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:286\n283:                                     </div>\n284:                                     <div class=\"col mb-2\">\n285:                                         <div>\n286:                                             {{ form_widget(form.smaregi_product_code) }}\n287:                                             {{ form_errors(form.smaregi_product_code) }}\n288:                                         </div>\n289:                                     </div>",
-        "src/Eccube/Form/Type/Admin/ProductClassType.php:284\n281:                 'choice_label' => 'name',\n282:                 'placeholder' => 'common.select__unspecified',\n283:             ])\n284:             ->add('smaregi_product_code', TextType::class, [\n285:                 'required' => false,\n286:                 'constraints' => [\n287:                     new Length(["
+        "src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:282\n279:                                         <div class=\"form-control-plaintext\">\n280:                                             {{ ProductClass.smaregiProductId ? ProductClass.smaregiProductId : '-' }}\n281:                                         </div>\n282:                                     </div>\n283:                                 </div>\n284:                                 <div class=\"row\">\n285:                                     <div class=\"col-3\">",
+        "src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:286\n283:                                 </div>\n284:                                 <div class=\"row\">\n285:                                     <div class=\"col-3\">\n286:                                         <span>{{ 'admin.product.smaregi_product_code'|trans }}</span>\n287:                                     </div>\n288:                                     <div class=\"col mb-2\">\n289:                                         <div>",
+        "src/Eccube/Form/Type/Admin/ProductClassType.php:284\n281:                 'placeholder' => 'common.select__unspecified',\n282:             ])\n283:             ->add('smaregi_product_code', TextType::class, [\n284:                 'required' => false,\n285:                 // シングルカードは自動採番のため読み取り専用（disabled で送信値を無視）\n286:                 'disabled' => (bool) $options['is_single_card'],\n287:                 'constraints' => ["
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -204,9 +204,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductClassController.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Product/ProductClassController.php:72\n69:      *\n70:      * @throws NotFoundHttpException|NonUniqueResultException\n71:      */\n72:     #[Route('/%eccube_admin_route%/product/product/class/{id}', name: 'admin_product_product_class', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]\n73:     #[Template('@admin/Product/ProductClass/index.twig')]\n74:     public function index(Request $request, Product $Product, CacheUtil $cacheUtil): RedirectResponse|array\n75:     {",
-        "src/Eccube/Controller/Admin/Product/ProductClassController.php:102\n99:     /**\n100:      * @return array<string, mixed>\n101:      */\n102:     #[Route('/%eccube_admin_route%/product/product/class/{id}/new', name: 'admin_product_product_class_new', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]\n103:     #[Template('@admin/Product/ProductClass/edit.twig')]\n104:     public function new(Product $Product): array\n105:     {",
-        "src/Eccube/Controller/Admin/Product/ProductClassController.php:125\n122:     /**\n123:      * @return RedirectResponse|array<string, mixed>\n124:      */\n125:     #[Route('/%eccube_admin_route%/product/product/class/{id}/store', name: 'admin_product_product_class_store', requirements: ['id' => '\\d+'], methods: ['POST'])]\n126:     #[Template('@admin/Product/ProductClass/edit.twig')]\n127:     public function store(Request $request, Product $Product, ProductClassStoreAction $storeAction): RedirectResponse|array\n128:     {"
+        "src/Eccube/Controller/Admin/Product/ProductClassController.php:72\n69:     /**\n70:      * @return RedirectResponse|array<string, mixed>\n71:      *\n72:      * @throws NotFoundHttpException|NonUniqueResultException\n73:      */\n74:     #[Route('/%eccube_admin_route%/product/product/class/{id}', name: 'admin_product_product_class', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]\n75:     #[Template('@admin/Product/ProductClass/index.twig')]",
+        "src/Eccube/Controller/Admin/Product/ProductClassController.php:102\n99:         );\n100:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_PRODUCT_PRODUCT_CLASS_INDEX_INITIALIZE);\n101: \n102:         return [\n103:             'Product' => $Product,\n104:             'ActiveProductClasses' => $ActiveProductClasses,\n105:             'AbolishedProductClasses' => $AbolishedProductClasses,",
+        "src/Eccube/Controller/Admin/Product/ProductClassController.php:125\n122: \n123:         $DefaultSaleType = $this->entityManager->getRepository(SaleType::class)->find(SaleType::SALE_TYPE_NORMAL);\n124:         $ProductClass->setSaleType($DefaultSaleType);\n125: \n126:         $builder = $this->formFactory->createBuilder(ProductClassType::class, $ProductClass, [\n127:             'is_single_card' => $Product->getCardDetail() !== null,\n128:         ]);"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -275,9 +275,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Product/ProductClassController.php:134\n131:         $form->handleRequest($request);\n132: \n133:         if (!$form->isSubmitted() || !$form->isValid()) {\n134:             $this->addError('admin.common.save_error', 'admin');\n135: \n136:             return [\n137:                 'Product' => $Product,",
-        "src/Eccube/Controller/Admin/Product/ProductClassController.php:166\n163:             ];\n164:         }\n165: \n166:         $this->addSuccess('admin.common.save_complete', 'admin');\n167: \n168:         return $this->redirectToRoute('admin_product_product_class', ['id' => $Product->getId()]);\n169:     }",
-        "src/Eccube/Controller/Admin/Product/ProductClassController.php:168\n165: \n166:         $this->addSuccess('admin.common.save_complete', 'admin');\n167: \n168:         return $this->redirectToRoute('admin_product_product_class', ['id' => $Product->getId()]);\n169:     }\n170: \n171:     /**"
+        "src/Eccube/Controller/Admin/Product/ProductClassController.php:134\n131:             [\n132:                 'builder' => $builder,\n133:                 'Product' => $Product,\n134:                 'ProductClass' => $ProductClass,\n135:             ],\n136:             $request\n137:         );",
+        "src/Eccube/Controller/Admin/Product/ProductClassController.php:166\n163: \n164:         $event = new EventArgs(\n165:             [\n166:                 'builder' => $builder,\n167:                 'Product' => $Product,\n168:                 'ProductClass' => $ProductClass,\n169:             ],",
+        "src/Eccube/Controller/Admin/Product/ProductClassController.php:168\n165:             [\n166:                 'builder' => $builder,\n167:                 'Product' => $Product,\n168:                 'ProductClass' => $ProductClass,\n169:             ],\n170:             $request\n171:         );"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -345,9 +345,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Product/ProductClassDeleteAction.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:568\n565:             </div>\n566:             <div class=\"c-contentsArea__secondaryCol\">\n567:                 <div class=\"c-secondaryCol\">\n568:                     {% if ProductClass.id %}\n569:                         <div class=\"card rounded border-0 mb-4\">\n570:                             <div class=\"card-body\">\n571:                                 <a href=\"#\" data-bs-toggle=\"modal\" data-bs-target=\"#deleteConfirmModal\" class=\"btn btn-ec-delete btn-block w-100\">",
-        "src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:571\n568:                     {% if ProductClass.id %}\n569:                         <div class=\"card rounded border-0 mb-4\">\n570:                             <div class=\"card-body\">\n571:                                 <a href=\"#\" data-bs-toggle=\"modal\" data-bs-target=\"#deleteConfirmModal\" class=\"btn btn-ec-delete btn-block w-100\">\n572:                                     {{ 'admin.common.delete'|trans }}\n573:                                 </a>\n574:                             </div>",
-        "src/Eccube/Controller/Admin/Product/ProductClassController.php:262\n259:         return $this->redirectToRoute('admin_product_product_class', ['id' => $Product->getId()]);\n260:     }\n261: \n262:     #[Route('/%eccube_admin_route%/product/product/class/{id}/delete/{productClassId}', name: 'admin_product_product_class_delete', requirements: ['id' => '\\d+', 'productClassId' => '\\d+'], methods: ['DELETE'])]\n263:     public function delete(\n264:         Product $Product,\n265:         #[MapEntity(id: 'productClassId')]"
+        "src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:568\n565:                                                 {{ 'admin.common.registration'|trans }}\n566:                                             </button>\n567:                                         </div>\n568:                                     </div>\n569:                                 </div>\n570:                             </div>\n571:                         </div>",
+        "src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:571\n568:                                     </div>\n569:                                 </div>\n570:                             </div>\n571:                         </div>\n572:                     </div>\n573:                 </div>\n574:             </div>",
+        "src/Eccube/Controller/Admin/Product/ProductClassController.php:262\n259:         ];\n260:     }\n261: \n262:     /**\n263:      * @return RedirectResponse|array<string, mixed>\n264:      */\n265:     #[Route('/%eccube_admin_route%/product/product/class/{id}/update/{productClassId}', name: 'admin_product_product_class_update', requirements: ['id' => '\\d+', 'productClassId' => '\\d+'], methods: ['POST'])]"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -1145,10 +1145,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-65f1886e3d",
+        "id": "m03-09_0204_sheet-22_sheet-req-0fed383c85",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "M03-09 商品規格登録/編集 / M03-09（商品規格登録/編集）",
+        "designRequirement": "0204:商品規格登録編集!E13",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1158,10 +1158,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-f508bb2521",
+        "id": "m03-09_0204_sheet-22_sheet-req-5121550dfa",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "商品規格登録/編集機能は、管理画面の商品管理で、ある商品に属する1規格（言語・状態の組み合わせ単位）の価格・在庫・コード・画像・販売制限数などを登録・更新する機能である。新規登録（規格の追加）と既存規格の編集は同一の更新処理を共有する。",
+        "designRequirement": "0204:商品規格登録編集!B165",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1171,10 +1171,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-60a8f00901",
+        "id": "m03-09_0204_sheet-22_sheet-req-f7dfd36d86",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。既存実装のふるまい、参照するデータ、判定境界、永続化、副作用を確認し、仕様の確からしさを把握することを目的とする。",
+        "designRequirement": "0204:商品規格登録編集!M70",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1184,10 +1184,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-d1aee0650f",
+        "id": "m03-09_0204_sheet-22_sheet-req-e4807274b6",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "本機能のカスタマイズ区分はカスタマイズである。画面・処理の挙動は現行リポ（pf-eccube3）の実装を参照し、DB関連（テーブル名・列名・保存先・副作用のDB更新）は ec-cube-enterprise を正とする。",
+        "designRequirement": "0204:商品規格登録編集!B200",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1197,10 +1197,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-2c6ddd8183",
+        "id": "m03-09_0204_sheet-22_sheet-req-f4f735e7b0",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "対象はブラウザ経由の管理画面の商品規格の登録・編集画面と更新処理である。商品本体の基本情報の編集はM03-02を正とする。規格一覧の表示、在庫・価格の一括更新、規格削除は概要に留め、価格変更CSV取込はM03-31を正とする。",
+        "designRequirement": "0204:商品規格登録編集!E15",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1210,10 +1210,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-9184472fc7",
+        "id": "m03-09_0204_sheet-22_sheet-req-d7539a5777",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格の新規登録画面と編集画面の表示時のふるまい（言語・状態欄の入力可否の違いを含む）",
+        "designRequirement": "0204:商品規格登録編集!B166",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1223,10 +1223,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-2f98e4d172",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-1b5cbc6b46",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "更新送信時の処理順序（在庫履歴・価格履歴の記録、入荷通知メール、支店連携、成功時の遷移）",
+        "designRequirement": "0204:商品規格登録編集!AH69",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1236,10 +1236,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-24d4ea0e67",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-6df5df7aa6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格削除が最後の1件では行えないこと",
+        "designRequirement": "0204:商品規格登録編集!B201",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1249,10 +1249,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-de188090f2",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-e7862300c6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "designRequirement": "0204:商品規格登録編集!E61",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1262,10 +1262,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-beea686305",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-d3a5ea0af5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格一覧画面（M03-09の一覧側。本書は登録・編集の詳細を扱う）の表示仕様の全量",
+        "designRequirement": "0204:商品規格登録編集!B186",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1275,10 +1275,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-20a2dd63ea",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-e0314b03e3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "在庫一括更新・価格一括更新・買取価格一括更新の画面と処理",
+        "designRequirement": "0204:商品規格登録編集!E59",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1288,10 +1288,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-f736e0b3ac",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-20fdc0ac2a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "買取価格の割引計算式・買取価格表の構造（CSV取込側で扱う計算はM03-31を正とする）",
+        "designRequirement": "0204:商品規格登録編集!B185",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1301,10 +1301,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-5833a0defa",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-c26ecc3471",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "入荷通知メールの送信内容・宛先抽出ロジック",
+        "designRequirement": "0204:商品規格登録編集!E57",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1314,10 +1314,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-eb653a62ce",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-93e1ea1d2a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "支店システム連携APIの通信仕様・失敗時リトライ",
+        "designRequirement": "0204:商品規格登録編集!B184",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1327,10 +1327,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-2efa8c9eba",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-914b1b2fc4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "挙動（入力項目・処理順序・履歴記録・入荷通知）は現行 pf-eccube3 を参照するが、永続化先のスキーマは移行先 ec-cube-enterprise で大きく変わる。",
+        "designRequirement": "0204:商品規格登録編集!E55",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1340,10 +1340,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-6015cb179f",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-93a464f901",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格属性の保持先",
+        "designRequirement": "0204:商品規格登録編集!B183",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1353,10 +1353,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-d76ada1124",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-5b05894ea1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "dtb_product_class に統合。 language_id ・ card_condition_id ・ buy_price ・ belt_url ・ sale_flg ・ high_price_code ・ wholesale_price ・ memo ・ section_id ・ shelf_number_id を実在確認。補助表は廃止",
+        "designRequirement": "0204:商品規格登録編集!E53",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1366,10 +1366,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-c49cdac7cc",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-6365fb0174",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "dtb_product_class.del_flg による論理削除",
+        "designRequirement": "0204:商品規格登録編集!B182",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1379,10 +1379,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-f4a73c9f57",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-8a3faa7a4f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "dtb_product_class に del_flg 列が無く物理削除。移行先 ec-cube-enterprise の削除挙動で要確認",
+        "designRequirement": "0204:商品規格登録編集!I44",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1392,10 +1392,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-f909bc1c5d",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-d1b5fca913",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "別表 dtb_stock_up_quantity に stock_up_quantity_01 〜（アンダースコア区切り）で保持",
+        "designRequirement": "0204:商品規格登録編集!B181",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1405,10 +1405,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-64542cf550",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-0e79e659ec",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "基本設計が描く本機能固有の追加仕様は無い。挙動説明中の論理削除は現行の確認値であり、移行先の物理削除との差は本節に集約する。",
+        "designRequirement": "0204:商品規格登録編集!K20",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1418,10 +1418,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-b0c399719a",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-c82ae119f4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格を識別する言語区分。新規登録時は選択でき、編集時は変更しない読み取り表示になる。",
+        "designRequirement": "0204:商品規格登録編集!B169",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1431,10 +1431,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-0be6e2ef4e",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-8f010863f4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "カードの状態区分。新規登録時は選択でき、編集時は変更しない読み取り表示になる。",
+        "designRequirement": "0204:商品規格登録編集!J22",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1444,10 +1444,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-058b4b4463",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-88cc83c83e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "段階的な在庫の予約数量。入荷区分・マスタ更新区分での在庫増加時に増分を各予約数へ加算する。",
+        "designRequirement": "0204:商品規格登録編集!B170",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1457,10 +1457,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-9ca3b91727",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-cfb54c2c04",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格に紐づける商品画像。商品本体に登録済みの画像から選択する。",
+        "designRequirement": "0204:商品規格登録編集!F24",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1470,10 +1470,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-5c1f04f8ad",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-e305639b14",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "登録済みの規格一覧を表示する。商品が存在しなければ見つからない（HTTP404）。",
+        "designRequirement": "0204:商品規格登録編集!B171",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1483,10 +1483,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-b59c6600bb",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-747aac9abe",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格の新規登録画面",
+        "designRequirement": "0204:商品規格登録編集!F26",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1496,10 +1496,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-051e5939d1",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-11c2f63e15",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "既定値を載せた新規規格フォームを表示する。言語・状態は選択欄として表示する。",
+        "designRequirement": "0204:商品規格登録編集!B172",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1509,10 +1509,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-0d42d3abd2",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-704f50191d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "指定規格の現行値をフォームに載せて表示する。言語・状態は読み取り表示にする。",
+        "designRequirement": "0204:商品規格登録編集!F31",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1522,10 +1522,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-f07a1dd4b8",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-fc23d8fac4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格の新規登録送信",
+        "designRequirement": "0204:商品規格登録編集!B174",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1535,10 +1535,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-efbc19a404",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-cd9637551e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "入力値を検証し、合格時に規格を保存して編集画面へ戻す。",
+        "designRequirement": "0204:商品規格登録編集!E33",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1548,10 +1548,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-99d9fdf5b3",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-a3544391cf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "入力値を検証し、合格時に規格・在庫・履歴を保存して編集画面へ戻す。",
+        "designRequirement": "0204:商品規格登録編集!B175",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1561,10 +1561,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-f5b14f62af",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-94ace8791d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "削除可能なら規格を論理削除し、規格一覧へ戻す。最後の1件は削除できない。",
+        "designRequirement": "0204:商品規格登録編集!E35",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1574,10 +1574,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-e6e9e3a94b",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-3ec5a1fa78",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "新規登録送信と更新送信は同一の更新処理が受け、 classId の有無で新規・編集を判別する。",
+        "designRequirement": "0204:商品規格登録編集!B176",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1587,10 +1587,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-b541135c10",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-db5b0f0deb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "左カラムに基本情報カード（商品ID、編集時は商品規格ID、言語、状態、各入力欄）、右カラムに登録ボタン・削除ボタン（削除可能時）・登録日／更新日・編集時は期間別販売数を表示する。",
+        "designRequirement": "0204:商品規格登録編集!I36",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1600,10 +1600,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-6c9928b09d",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-3cde29bea9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "代表画像の選択でドラッグ＆ドロップとサムネイル表示、選択画像のプレビュー差し替えを行う。 select2 によるセレクト表示補助を用いる。",
+        "designRequirement": "0204:商品規格登録編集!B177",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1613,10 +1613,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-eb49d6deec",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-9959f55ccf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "横型Bootstrapフォームテーマと規格用CSS。画像ドロップ領域は写真用の枠で表示する。",
+        "designRequirement": "0204:商品規格登録編集!E38",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1626,10 +1626,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-b07c6ec529",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-7a4b89adf3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "削除ボタンは確認ダイアログ文言を伴う。本画面に検索モーダルは無い。",
+        "designRequirement": "0204:商品規格登録編集!B178",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1639,10 +1639,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-f37c6e015e",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-cb11118f3a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "言語・状態の入力切替",
+        "designRequirement": "0204:商品規格登録編集!E40",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1652,10 +1652,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-738d25c772",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-56c4a0aa47",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "新規登録時は言語・状態を選択欄として表示する。編集時は当該規格の言語名・状態名を読み取り表示し、隠しフィールドで保持する。",
+        "designRequirement": "0204:商品規格登録編集!B179",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1665,10 +1665,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-a1800e2e62",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-dbaceee2a6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格の登録・編集画面を表示する",
+        "designRequirement": "0204:商品規格登録編集!E42",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1678,10 +1678,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-d7d2bc389b",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-b494a39256",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "利用者が新規登録画面または編集画面を開く。",
+        "designRequirement": "0204:商品規格登録編集!B180",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1691,10 +1691,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-110b40e4ef",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-ffc5cdd5a1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "編集時かつ規格が削除可能な場合は削除ボタンを表示する。",
+        "designRequirement": "0204:商品規格登録編集!AJ12",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1704,10 +1704,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-7a1a5c5a4f",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-87f3a73093",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "利用者が商品規格を登録ボタンを押下する。",
+        "designRequirement": "0204:商品規格登録編集!B189",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1717,10 +1717,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-807938042b",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-0a82b955f8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "入力値を受け取り、検証する。",
+        "designRequirement": "0204:商品規格登録編集!AN69",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1730,10 +1730,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-e077210104",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-ff08961d25",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "検証に失敗した場合は「登録できませんでした。」のエラーを設定し、同じ画面を再表示する。",
+        "designRequirement": "0204:商品規格登録編集!B202",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1743,10 +1743,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-3028619608",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-49fda94811",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "検証に合格した場合、規格を永続化対象にする。",
+        "designRequirement": "0204:商品規格登録編集!AK14",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1756,10 +1756,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-c12d3f6c27",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-9629c7bd5c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "既存の規格・画像関連を削除し、送信された代表画像と並び順で画像関連を作り直す。",
+        "designRequirement": "0204:商品規格登録編集!B190",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1769,10 +1769,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-1ee6e15c81",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-de8f6d326c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "在庫数が変更されている場合、在庫変動区分・理由をもとに在庫履歴を記録し、支店側へ在庫更新を通知する。入荷区分またはマスタ更新区分で在庫が増加した場合は、増分を各段階の在庫予約数へ加算する。",
+        "designRequirement": "0204:商品規格登録編集!AK15",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1782,10 +1782,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-2b50adceb0",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-28dd2742f4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "販売価格または買取価格が変更されている場合、価格履歴を記録する。",
+        "designRequirement": "0204:商品規格登録編集!B191",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1795,10 +1795,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-2576dfa00b",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-558b4658e9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "在庫が0から正数へ増えた場合、当該規格について入荷通知メールを送る。",
+        "designRequirement": "0204:商品規格登録編集!AK16",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1808,10 +1808,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-e7f45fc964",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-425fee9aac",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格の更新日時を現在時刻にし、永続化を確定する。",
+        "designRequirement": "0204:商品規格登録編集!B192",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1821,10 +1821,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-5b988d4da4",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-faa1cc20b5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "支店システムへ当該商品の更新を通知する。",
+        "designRequirement": "0204:商品規格登録編集!AK17",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1834,10 +1834,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-c7b32ea890",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-eb79cccddc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "「登録が完了しました。」の成功フラッシュを設定し、同じ規格の編集画面へリダイレクトする。",
+        "designRequirement": "0204:商品規格登録編集!B193",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1847,10 +1847,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-9ecf00f2f7",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-a0344f4f04",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "削除可能でない（最後の1件）場合は不正要求（HTTP400）とする。",
+        "designRequirement": "0204:商品規格登録編集!B194",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1860,10 +1860,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-7dad141ded",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-132d729ddb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格を論理削除し、永続化を確定する。",
+        "designRequirement": "0204:商品規格登録編集!AK18",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1873,10 +1873,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m03-09_0204_sheet-22_sheet-req-8c85e3abb0",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "id": "m03-09_0204_sheet-22_sheet-req-4d460d8472",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "支店システムへ当該商品の更新を通知し、規格一覧へリダイレクトする。",
+        "designRequirement": "0204:商品規格登録編集!B195",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1910,7 +1910,11 @@
         "stock_up_quantity_03",
         "stock_up_quantity_10",
         "ProductController",
-        "product_class_set_stock_quantity"
+        "product_class_set_stock_quantity",
+        "ProductClassEditType",
+        "ProductClassMatrixType",
+        "ProductClassController",
+        "ProductClassType"
       ],
       "translationKeys": [
         "admin.register.complete",
@@ -1918,7 +1922,11 @@
         "admin.product.product_class_set_stock_quantity"
       ],
       "classNames": [
-        "ProductController"
+        "ProductController",
+        "ProductClassEditType",
+        "ProductClassMatrixType",
+        "ProductClassController",
+        "ProductClassType"
       ],
       "paths": [
         "pf-eccube3/m03-09_admin_product_product_class_edit.md",
@@ -1962,148 +1970,148 @@
     "strongSignalCount": 18,
     "candidateRefs": [
       {
-        "term": "product_class_set_stock_quantity",
+        "term": "ProductClassController",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:1",
+        "snippet": "src/Eccube/Controller/Admin/Product/ProductClassController.php",
+        "weight": 7
+      },
+      {
+        "term": "ProductClassController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:1",
+        "snippet": "src/Eccube/Controller/Admin/Product/ProductClassController.php",
+        "weight": 7
+      },
+      {
+        "term": "ProductClassMatrixType",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:29",
+        "snippet": "use Eccube\\Form\\Type\\Admin\\ProductClassMatrixType;",
+        "weight": 7
+      },
+      {
+        "term": "ProductClassMatrixType",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:29",
+        "snippet": "use Eccube\\Form\\Type\\Admin\\ProductClassMatrixType;",
+        "weight": 7
+      },
+      {
+        "term": "ProductClassType",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:30",
+        "snippet": "use Eccube\\Form\\Type\\Admin\\ProductClassType;",
+        "weight": 7
+      },
+      {
+        "term": "ProductClassType",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:30",
+        "snippet": "use Eccube\\Form\\Type\\Admin\\ProductClassType;",
+        "weight": 7
+      },
+      {
+        "term": "ProductClassController",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:51",
+        "snippet": "class ProductClassController extends AbstractController",
+        "weight": 7
+      },
+      {
+        "term": "ProductClassController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:51",
+        "snippet": "class ProductClassController extends AbstractController",
+        "weight": 7
+      },
+      {
+        "term": "ProductClassController",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:56",
+        "snippet": "* ProductClassController constructor.",
+        "weight": 7
+      },
+      {
+        "term": "ProductClassController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:56",
+        "snippet": "* ProductClassController constructor.",
+        "weight": 7
+      },
+      {
+        "term": "ProductClassMatrixType",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:679",
+        "snippet": "$builder = $this->formFactory->createBuilder(ProductClassMatrixType::class, [",
+        "weight": 7
+      },
+      {
+        "term": "ProductClassMatrixType",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:679",
+        "snippet": "$builder = $this->formFactory->createBuilder(ProductClassMatrixType::class, [",
+        "weight": 7
+      },
+      {
+        "term": "ProductController",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/App/ProductController.php:1",
+        "snippet": "src/Eccube/Controller/App/ProductController.php",
+        "weight": 7
+      },
+      {
+        "term": "ProductController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/App/ProductController.php:1",
+        "snippet": "src/Eccube/Controller/App/ProductController.php",
+        "weight": 7
+      },
+      {
+        "term": "ProductClassEditType",
         "termType": "routeName",
         "role": "Form",
-        "ref": "src/Eccube/Form/Type/Admin/ProductClassEditType.php:208",
-        "snippet": "$form['stock_unlimited']->addError(new FormError(trans('admin.product.product_class_set_stock_quantity')));",
+        "ref": "src/Eccube/Form/Type/Admin/ProductClassEditType.php:1",
+        "snippet": "src/Eccube/Form/Type/Admin/ProductClassEditType.php",
         "weight": 7
       },
       {
-        "term": "productSubClass",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbPriceHistoryRepository.php:69",
-        "snippet": "// public function addHistory($app, $productSubClass, ?int $oldSellPrice = null, ?int $oldBuyPrice = null): void",
-        "weight": 7
-      },
-      {
-        "term": "productSubClass",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbPriceHistoryRepository.php:71",
-        "snippet": "// $productClass = $productSubClass->getProductClass();",
-        "weight": 7
-      },
-      {
-        "term": "productSubClass",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbPriceHistoryRepository.php:73",
-        "snippet": "// $newBuyPrice = (int)($productSubClass->getBuyPrice());",
-        "weight": 7
-      },
-      {
-        "term": "stock_change_type_id",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbStockApprovalListRepository.php:344",
-        "snippet": "->leftJoin('sctd', 'mtb_stock_change_type', 'sct', 'sctd.stock_change_type_id = sct.id')",
-        "weight": 7
-      },
-      {
-        "term": "stock_change_type_id",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbStockEditCsvRepository.php:125",
-        "snippet": "msd.stock_change_type_id",
-        "weight": 7
-      },
-      {
-        "term": "stock_change_type_id",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbStockEditCsvRepository.php:150",
-        "snippet": "'stock_change_type_detail' => $this->stockChangeTypeRepository->get($row['stock_change_type_id']).'/'.$this->stockChangeTypeDetailRepository->get($row['stock_change_type_detail_id']),",
-        "weight": 7
-      },
-      {
-        "term": "stock_change_type_id",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbStockUpQuantityRepository.php:177",
-        "snippet": "AND sctd.stock_change_type_id IN (:be_stocked, :inventory_adjustment)",
-        "weight": 7
-      },
-      {
-        "term": "ProductController",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/PageRepository.php:39",
-        "snippet": "* 商品一覧のSEO対策目的で、ProductController::index() のパスに",
-        "weight": 7
-      },
-      {
-        "term": "ProductController",
+        "term": "ProductClassEditType",
         "termType": "className",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/PageRepository.php:39",
-        "snippet": "* 商品一覧のSEO対策目的で、ProductController::index() のパスに",
+        "role": "Form",
+        "ref": "src/Eccube/Form/Type/Admin/ProductClassEditType.php:1",
+        "snippet": "src/Eccube/Form/Type/Admin/ProductClassEditType.php",
         "weight": 7
       },
       {
-        "term": "productSubClass",
+        "term": "ProductClassEditType",
         "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/ProductClassRepository.php:1162",
-        "snippet": "// * @param array<string, mixed> $productSubClass 商品規格サブの情報",
+        "role": "Form",
+        "ref": "src/Eccube/Form/Type/Admin/ProductClassEditType.php:42",
+        "snippet": "class ProductClassEditType extends AbstractType",
         "weight": 7
       },
       {
-        "term": "ProductController",
-        "termType": "routeName",
-        "role": "Twig",
-        "ref": "src/Eccube/Resource/template/default/Block/js/product_unisearch_js.twig:476",
-        "snippet": "// product_add_favorite / product_remove_favorite（ProductController::addFavorite / removeFavorite）は JsonResponse。",
-        "weight": 7
-      },
-      {
-        "term": "ProductController",
+        "term": "ProductClassEditType",
         "termType": "className",
-        "role": "Twig",
-        "ref": "src/Eccube/Resource/template/default/Block/js/product_unisearch_js.twig:476",
-        "snippet": "// product_add_favorite / product_remove_favorite（ProductController::addFavorite / removeFavorite）は JsonResponse。",
+        "role": "Form",
+        "ref": "src/Eccube/Form/Type/Admin/ProductClassEditType.php:42",
+        "snippet": "class ProductClassEditType extends AbstractType",
         "weight": 7
-      },
-      {
-        "term": "admin.register.complete",
-        "termType": "translationKey",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:118",
-        "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
-        "weight": 6
-      },
-      {
-        "term": "...",
-        "termType": "path",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductController.php:442",
-        "snippet": "// FilePond がこのエンドポイントへ img/goods/... パスでリクエストを送る。",
-        "weight": 6
-      },
-      {
-        "term": "admin.register.failed",
-        "termType": "translationKey",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:105",
-        "snippet": "$this->addError('admin.register.failed', 'admin');",
-        "weight": 6
-      },
-      {
-        "term": "admin.register.complete",
-        "termType": "translationKey",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:339",
-        "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
-        "weight": 6
-      },
-      {
-        "term": "admin.register.failed",
-        "termType": "translationKey",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ShelfNumberController.php:125",
-        "snippet": "$this->addError('admin.register.failed', 'admin');",
-        "weight": 6
       }
     ],
     "searchedAreas": [
@@ -3554,10 +3562,10 @@
         "elementLevel": true
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-65f1886e3d",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-0fed383c85",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "M03-09 商品規格登録/編集 / M03-09（商品規格登録/編集）",
+        "designRequirement": "0204:商品規格登録編集!E13",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3570,10 +3578,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-f508bb2521",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-5121550dfa",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "商品規格登録/編集機能は、管理画面の商品管理で、ある商品に属する1規格（言語・状態の組み合わせ単位）の価格・在庫・コード・画像・販売制限数などを登録・更新する機能である。新規登録（規格の追加）と既存規格の編集は同一の更新処理を共有する。",
+        "designRequirement": "0204:商品規格登録編集!B165",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3583,13 +3591,13 @@
         "auditNote": "確定所見が本要求をカバー済み。",
         "conformanceBucket": "実装済み",
         "material": true,
-        "elementLevel": true
+        "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-60a8f00901",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-f7dfd36d86",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。既存実装のふるまい、参照するデータ、判定境界、永続化、副作用を確認し、仕様の確からしさを把握することを目的とする。",
+        "designRequirement": "0204:商品規格登録編集!M70",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3602,10 +3610,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-d1aee0650f",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-e4807274b6",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "本機能のカスタマイズ区分はカスタマイズである。画面・処理の挙動は現行リポ（pf-eccube3）の実装を参照し、DB関連（テーブル名・列名・保存先・副作用のDB更新）は ec-cube-enterprise を正とする。",
+        "designRequirement": "0204:商品規格登録編集!B200",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3614,14 +3622,14 @@
         "candidateRefs": [],
         "auditNote": "確定所見が本要求をカバー済み。",
         "conformanceBucket": "実装済み",
-        "material": false,
+        "material": true,
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-2c6ddd8183",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-f4f735e7b0",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "対象はブラウザ経由の管理画面の商品規格の登録・編集画面と更新処理である。商品本体の基本情報の編集はM03-02を正とする。規格一覧の表示、在庫・価格の一括更新、規格削除は概要に留め、価格変更CSV取込はM03-31を正とする。",
+        "designRequirement": "0204:商品規格登録編集!E15",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3634,10 +3642,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-9184472fc7",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-d7539a5777",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格の新規登録画面と編集画面の表示時のふるまい（言語・状態欄の入力可否の違いを含む）",
+        "designRequirement": "0204:商品規格登録編集!B166",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3650,10 +3658,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-2f98e4d172",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-1b5cbc6b46",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "更新送信時の処理順序（在庫履歴・価格履歴の記録、入荷通知メール、支店連携、成功時の遷移）",
+        "designRequirement": "0204:商品規格登録編集!AH69",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3666,10 +3674,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-24d4ea0e67",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-6df5df7aa6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格削除が最後の1件では行えないこと",
+        "designRequirement": "0204:商品規格登録編集!B201",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3682,26 +3690,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-de188090f2",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-e7862300c6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-beea686305",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格一覧画面（M03-09の一覧側。本書は登録・編集の詳細を扱う）の表示仕様の全量",
+        "designRequirement": "0204:商品規格登録編集!E61",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3714,10 +3706,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-20a2dd63ea",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-d3a5ea0af5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "在庫一括更新・価格一括更新・買取価格一括更新の画面と処理",
+        "designRequirement": "0204:商品規格登録編集!B186",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3730,10 +3722,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-f736e0b3ac",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-e0314b03e3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "買取価格の割引計算式・買取価格表の構造（CSV取込側で扱う計算はM03-31を正とする）",
+        "designRequirement": "0204:商品規格登録編集!E59",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3746,10 +3738,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-5833a0defa",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-20fdc0ac2a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "入荷通知メールの送信内容・宛先抽出ロジック",
+        "designRequirement": "0204:商品規格登録編集!B185",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3762,10 +3754,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-eb653a62ce",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-c26ecc3471",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "支店システム連携APIの通信仕様・失敗時リトライ",
+        "designRequirement": "0204:商品規格登録編集!E57",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3778,10 +3770,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-2efa8c9eba",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-93e1ea1d2a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "挙動（入力項目・処理順序・履歴記録・入荷通知）は現行 pf-eccube3 を参照するが、永続化先のスキーマは移行先 ec-cube-enterprise で大きく変わる。",
+        "designRequirement": "0204:商品規格登録編集!B184",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3794,42 +3786,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-6015cb179f",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-914b1b2fc4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格属性の保持先",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-d76ada1124",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "dtb_product_class に統合。 language_id ・ card_condition_id ・ buy_price ・ belt_url ・ sale_flg ・ high_price_code ・ wholesale_price ・ memo ・ section_id ・ shelf_number_id を実在確認。補助表は廃止",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-c49cdac7cc",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "dtb_product_class.del_flg による論理削除",
+        "designRequirement": "0204:商品規格登録編集!E55",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3842,10 +3802,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-f4a73c9f57",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-93a464f901",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "dtb_product_class に del_flg 列が無く物理削除。移行先 ec-cube-enterprise の削除挙動で要確認",
+        "designRequirement": "0204:商品規格登録編集!B183",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3858,26 +3818,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-f909bc1c5d",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-5b05894ea1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "別表 dtb_stock_up_quantity に stock_up_quantity_01 〜（アンダースコア区切り）で保持",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-64542cf550",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "基本設計が描く本機能固有の追加仕様は無い。挙動説明中の論理削除は現行の確認値であり、移行先の物理削除との差は本節に集約する。",
+        "designRequirement": "0204:商品規格登録編集!E53",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3890,10 +3834,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-b0c399719a",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-6365fb0174",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格を識別する言語区分。新規登録時は選択でき、編集時は変更しない読み取り表示になる。",
+        "designRequirement": "0204:商品規格登録編集!B182",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3906,10 +3850,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-0be6e2ef4e",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-8a3faa7a4f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "カードの状態区分。新規登録時は選択でき、編集時は変更しない読み取り表示になる。",
+        "designRequirement": "0204:商品規格登録編集!I44",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3922,10 +3866,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-058b4b4463",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-d1b5fca913",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "段階的な在庫の予約数量。入荷区分・マスタ更新区分での在庫増加時に増分を各予約数へ加算する。",
+        "designRequirement": "0204:商品規格登録編集!B181",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3938,42 +3882,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-9ca3b91727",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-0e79e659ec",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格に紐づける商品画像。商品本体に登録済みの画像から選択する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-5c1f04f8ad",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "登録済みの規格一覧を表示する。商品が存在しなければ見つからない（HTTP404）。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-b59c6600bb",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格の新規登録画面",
+        "designRequirement": "0204:商品規格登録編集!K20",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3986,42 +3898,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-051e5939d1",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-c82ae119f4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "既定値を載せた新規規格フォームを表示する。言語・状態は選択欄として表示する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-0d42d3abd2",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "指定規格の現行値をフォームに載せて表示する。言語・状態は読み取り表示にする。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-f07a1dd4b8",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格の新規登録送信",
+        "designRequirement": "0204:商品規格登録編集!B169",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4034,10 +3914,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-efbc19a404",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-8f010863f4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "入力値を検証し、合格時に規格を保存して編集画面へ戻す。",
+        "designRequirement": "0204:商品規格登録編集!J22",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4050,10 +3930,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-99d9fdf5b3",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-88cc83c83e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "入力値を検証し、合格時に規格・在庫・履歴を保存して編集画面へ戻す。",
+        "designRequirement": "0204:商品規格登録編集!B170",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4066,10 +3946,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-f5b14f62af",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-cfb54c2c04",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "削除可能なら規格を論理削除し、規格一覧へ戻す。最後の1件は削除できない。",
+        "designRequirement": "0204:商品規格登録編集!F24",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4082,10 +3962,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-e6e9e3a94b",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-e305639b14",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "新規登録送信と更新送信は同一の更新処理が受け、 classId の有無で新規・編集を判別する。",
+        "designRequirement": "0204:商品規格登録編集!B171",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4098,74 +3978,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-b541135c10",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-747aac9abe",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "左カラムに基本情報カード（商品ID、編集時は商品規格ID、言語、状態、各入力欄）、右カラムに登録ボタン・削除ボタン（削除可能時）・登録日／更新日・編集時は期間別販売数を表示する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-6c9928b09d",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "代表画像の選択でドラッグ＆ドロップとサムネイル表示、選択画像のプレビュー差し替えを行う。 select2 によるセレクト表示補助を用いる。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-eb49d6deec",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "横型Bootstrapフォームテーマと規格用CSS。画像ドロップ領域は写真用の枠で表示する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-b07c6ec529",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "削除ボタンは確認ダイアログ文言を伴う。本画面に検索モーダルは無い。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-f37c6e015e",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "言語・状態の入力切替",
+        "designRequirement": "0204:商品規格登録編集!F26",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4178,42 +3994,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-738d25c772",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-11c2f63e15",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "新規登録時は言語・状態を選択欄として表示する。編集時は当該規格の言語名・状態名を読み取り表示し、隠しフィールドで保持する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-a1800e2e62",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格の登録・編集画面を表示する",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-d7d2bc389b",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "利用者が新規登録画面または編集画面を開く。",
+        "designRequirement": "0204:商品規格登録編集!B172",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4226,42 +4010,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-110b40e4ef",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-704f50191d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "編集時かつ規格が削除可能な場合は削除ボタンを表示する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-7a1a5c5a4f",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "利用者が商品規格を登録ボタンを押下する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-807938042b",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "入力値を受け取り、検証する。",
+        "designRequirement": "0204:商品規格登録編集!F31",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4274,26 +4026,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-e077210104",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-fc23d8fac4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "検証に失敗した場合は「登録できませんでした。」のエラーを設定し、同じ画面を再表示する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-3028619608",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "検証に合格した場合、規格を永続化対象にする。",
+        "designRequirement": "0204:商品規格登録編集!B174",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4306,26 +4042,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-c12d3f6c27",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-cd9637551e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "既存の規格・画像関連を削除し、送信された代表画像と並び順で画像関連を作り直す。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-1ee6e15c81",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "在庫数が変更されている場合、在庫変動区分・理由をもとに在庫履歴を記録し、支店側へ在庫更新を通知する。入荷区分またはマスタ更新区分で在庫が増加した場合は、増分を各段階の在庫予約数へ加算する。",
+        "designRequirement": "0204:商品規格登録編集!E33",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4338,26 +4058,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-2b50adceb0",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-a3544391cf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "販売価格または買取価格が変更されている場合、価格履歴を記録する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-2576dfa00b",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "在庫が0から正数へ増えた場合、当該規格について入荷通知メールを送る。",
+        "designRequirement": "0204:商品規格登録編集!B175",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4370,10 +4074,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-e7f45fc964",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-94ace8791d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格の更新日時を現在時刻にし、永続化を確定する。",
+        "designRequirement": "0204:商品規格登録編集!E35",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4386,10 +4090,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-5b988d4da4",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-3ec5a1fa78",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "支店システムへ当該商品の更新を通知する。",
+        "designRequirement": "0204:商品規格登録編集!B176",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4402,10 +4106,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-c7b32ea890",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-db5b0f0deb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "「登録が完了しました。」の成功フラッシュを設定し、同じ規格の編集画面へリダイレクトする。",
+        "designRequirement": "0204:商品規格登録編集!I36",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4418,10 +4122,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-9ecf00f2f7",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-3cde29bea9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "削除可能でない（最後の1件）場合は不正要求（HTTP400）とする。",
+        "designRequirement": "0204:商品規格登録編集!B177",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4434,10 +4138,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-7dad141ded",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-9959f55ccf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "規格を論理削除し、永続化を確定する。",
+        "designRequirement": "0204:商品規格登録編集!E38",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4450,10 +4154,314 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m03-09_0204_sheet-22_sheet-req-8c85e3abb0",
-        "category": "規格更新時の入力項目、必須・任意、保存先",
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-7a4b89adf3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
-        "designRequirement": "支店システムへ当該商品の更新を通知し、規格一覧へリダイレクトする。",
+        "designRequirement": "0204:商品規格登録編集!B178",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-cb11118f3a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!E40",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-56c4a0aa47",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!B179",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-dbaceee2a6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!E42",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-b494a39256",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!B180",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-ffc5cdd5a1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!AJ12",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-87f3a73093",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!B189",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-0a82b955f8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!AN69",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-ff08961d25",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!B202",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-49fda94811",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!AK14",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-9629c7bd5c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!B190",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-de8f6d326c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!AK15",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-28dd2742f4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!B191",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-558b4658e9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!AK16",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-425fee9aac",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!B192",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-faa1cc20b5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!AK17",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-eb79cccddc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!B193",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-a0344f4f04",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!B194",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-132d729ddb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!AK18",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-09_0204_sheet-22_sheet-req-4d460d8472",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-22",
+        "designRequirement": "0204:商品規格登録編集!B195",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

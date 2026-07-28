@@ -123,7 +123,7 @@
         "src/Eccube/EventListener/TransactionListener.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/MailService.php:1588\n1585:         $this->mailHistoryEntityManager->save($message, $BaseInfo, $input->BuyOrder, $input->MailTemplate);\n1586:     }\n1587: \n1588:     /**\n1589:      * クレジット決済完了メール送信（決済処理中チェックバッチ）\n1590:      */\n1591:     public function sendCreditPaymentCompleteMail(Customer $Customer, DtbEvent $Event, DtbEventEntry $EventEntry): Email",
+        "src/Eccube/Service/MailService.php:1588\n1585:      * ネット買取・査定承諾確定メールを送信する\n1586:      */\n1587:     public function sendBuyOrderAssessmentApprovalMail(DtbBuyOrder $buyOrder): void\n1588:     {\n1589:         log_info('査定承諾メール送信開始', ['buyOrderId' => $buyOrder->getId()]);\n1590: \n1591:         $MailTemplate = $this->mailTemplateRepository->findOneBy([",
         "src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:67\n64:                 ->setCustomer($ContextInfo->getCustomer());\n65:         }\n66: \n67:         $this->entityManager->persist($MailHistory);\n68:     }\n69: }",
         "src/Eccube/EventListener/TransactionListener.php:119\n116:                 $this->em->rollback();\n117:                 log_debug('Rollback executed.');\n118:             } else {\n119:                 $this->em->commit();\n120:                 log_debug('Commit executed.');\n121:             }\n122:         } else {"
       ],
@@ -197,7 +197,7 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Form/Type/Admin/Purchase/PurchaseManualMailType.php:82\n79:                 MailTemplate::BASE_BUY_ORDER,\n80:                 MailTemplate::BASE_BUY_ORDER_ASSESSMENT,\n81:                 MailTemplate::BASE_BUY_ORDER_INCLUDE_DELIVERY_FEE,\n82:                 MailTemplate::BASE_BUY_ORDER_OLD,\n83:                 MailTemplate::BASE_BUY_ORDER_ASSESSMENT_OLD,\n84:                 MailTemplate::BASE_BUY_ORDER_INCLUDE_DELIVERY_FEE_OLD,\n85:                 MailTemplate::BASE_NO_BASE,",
-        "src/Eccube/Controller/Admin/Purchase/MailController.php:126\n123:             return '';\n124:         }\n125:         try {\n126:             return $this->renderView($fileName, [\n127:                 'BuyOrder' => $BuyOrder,\n128:                 'header' => $MailTemplate->getHeader(),\n129:                 'footer' => $MailTemplate->getFooter(),",
+        "src/Eccube/Controller/Admin/Purchase/MailController.php:126\n123:                         }\n124:                         $input = new SendManualPurchaseMailInput(\n125:                             $BuyOrder,\n126:                             $MailTemplate,\n127:                             (string) $form->get('subject')->getData(),\n128:                             (string) $form->get('body')->getData(),\n129:                         );",
         "src/Eccube/Resource/template/default/Mail/buy_order_old.twig:1\n1: {{ buyOrder.lastName }}　{{ buyOrder.firstName }}　様\n2: \n3: {{ header }}\n4: "
       ],
       "auditChecklist": [
@@ -212,7 +212,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 93,
+    "extractedRequirementCount": 108,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -376,6 +376,162 @@
         "category": "機能仕様 処理概要（★はカスタマイズ項目）",
         "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
         "designRequirement": "カスタマイズ対応、ボタンのラベルを「確認」に変更。ボタン押下で「手動メール通知(確認画面)」へ遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-229e80ffc3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!I11",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-f8e0e0ca5c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!B55",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-9f97681681",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!I13",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-42e2f26d8d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!B56",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-7abe801f6a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!I14",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-9332c75d84",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!B57",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-709954c1ea",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!AG35",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-64b3ee9c6d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!B60",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-b914b25c90",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!K35",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-481d9244a6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!B59",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-e628acc350",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!A16",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-b1c6e5a3a2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!B58",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -753,6 +909,45 @@
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
         "designRequirement": "送信でトランスポート例外",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-b45f93b3b9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "メールを送信しました。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-138713d74f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "手動メール通知を送信したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m07-04_0206_sheet-12_sheet-req-eb0eb52f63",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "買取情報編集（買取詳細）画面に遷移する",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1476,10 +1671,7 @@
         "買取番号",
         "前画面から引き継いだ買取番号",
         "買取編集画面へ戻る",
-        "当該の買取情報編集画面へ遷移する",
-        "1件のネット買取受注",
-        "買取番号に相当する識別子をもつ受注",
-        "本文を確定して顧客へメールを送り"
+        "当該の買取情報編集画面へ遷移する"
       ]
     },
     "candidateCount": 18,
@@ -1494,18 +1686,10 @@
         "weight": 7
       },
       {
-        "term": "MailController",
-        "termType": "className",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/MailController.php:45",
-        "snippet": "class MailController extends AbstractController",
-        "weight": 7
-      },
-      {
         "term": "admin_purchase_edit",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Purchase/MailController.php:102",
+        "ref": "src/Eccube/Controller/Admin/Purchase/MailController.php:144",
         "snippet": "return $this->redirectToRoute('admin_purchase_edit', ['id' => $BuyOrder->getId()]);",
         "weight": 7
       },
@@ -1513,7 +1697,7 @@
         "term": "PurchaseManualMailType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Purchase/MailController.php:21",
+        "ref": "src/Eccube/Controller/Admin/Purchase/MailController.php:23",
         "snippet": "use Eccube\\Form\\Type\\Admin\\Purchase\\PurchaseManualMailType;",
         "weight": 7
       },
@@ -1521,7 +1705,7 @@
         "term": "PurchaseManualMailType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Purchase/MailController.php:56",
+        "ref": "src/Eccube/Controller/Admin/Purchase/MailController.php:58",
         "snippet": "$builder = $this->formFactory->createBuilder(PurchaseManualMailType::class);",
         "weight": 7
       },
@@ -1601,7 +1785,7 @@
         "term": "buyOrderId",
         "termType": "routeName",
         "role": "Service",
-        "ref": "src/Eccube/Service/MailService.php:1385",
+        "ref": "src/Eccube/Service/MailService.php:1476",
         "snippet": "log_info('ネット買取受付完了メール送信開始', ['buyOrderId' => $buyOrder->getId()]);",
         "weight": 7
       },
@@ -1609,7 +1793,7 @@
         "term": "buyOrderId",
         "termType": "routeName",
         "role": "Service",
-        "ref": "src/Eccube/Service/MailService.php:1425",
+        "ref": "src/Eccube/Service/MailService.php:1516",
         "snippet": "log_info('ネット買取受付完了メール送信完了', ['buyOrderId' => $buyOrder->getId()]);",
         "weight": 7
       },
@@ -1617,7 +1801,7 @@
         "term": "buyOrderId",
         "termType": "routeName",
         "role": "Service",
-        "ref": "src/Eccube/Service/MailService.php:1442",
+        "ref": "src/Eccube/Service/MailService.php:1533",
         "snippet": "log_info('ネット買取振込完了メール送信開始', ['buyOrderId' => $BuyOrder->getId()]);",
         "weight": 7
       },
@@ -1625,8 +1809,16 @@
         "term": "buy_order_include_delivery_fee",
         "termType": "routeName",
         "role": "Service",
-        "ref": "src/Eccube/Service/MailService.php:1445",
+        "ref": "src/Eccube/Service/MailService.php:1536",
         "snippet": "'mail_key' => 'eccube.mail.buy_order_include_delivery_fee',",
+        "weight": 7
+      },
+      {
+        "term": "buy_order_include_delivery_fee",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/MailService.php:1539",
+        "snippet": "log_critical('振込完了メールテンプレートが見つかりません。mail_key=eccube.mail.buy_order_include_delivery_fee');",
         "weight": 7
       }
     ],
@@ -1874,13 +2066,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 92,
-    "verdictedCount": 92,
+    "requirementCount": 107,
+    "verdictedCount": 107,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 92,
+      "実装済み": 107,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -2094,6 +2286,198 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": true
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-229e80ffc3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!I11",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-f8e0e0ca5c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!B55",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-9f97681681",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!I13",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-42e2f26d8d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!B56",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-7abe801f6a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!I14",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-9332c75d84",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!B57",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-709954c1ea",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!AG35",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-64b3ee9c6d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!B60",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-b914b25c90",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!K35",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-481d9244a6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!B59",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-e628acc350",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!A16",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-b1c6e5a3a2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "0206:手動メール通知(入力画面)!B58",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
       },
       {
         "requirementId": "m07-04_0206_sheet-12_sheet-req-3de7e05ddd",
@@ -2558,6 +2942,54 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-b45f93b3b9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "メールを送信しました。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-138713d74f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "手動メール通知を送信したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m07-04_0206_sheet-12_sheet-req-eb0eb52f63",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0206_基本設計仕様書(ネット買取管理機能).html#sheet-12",
+        "designRequirement": "買取情報編集（買取詳細）画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
       },
       {
         "requirementId": "m07-04_0206_sheet-12_sheet-req-1ddba0700c",

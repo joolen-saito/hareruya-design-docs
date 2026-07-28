@@ -98,8 +98,8 @@
         "src/Eccube/Repository/DtbPointHistoryRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbPointHistoryRepository.php:225\n222:         $fromDate = clone $toDate;\n223:         $fromDate->modify('-1 day');\n224: \n225:         $rows = $this->createQueryBuilder('ph')\n226:             ->select('o.id AS orderId')\n227:             ->join('ph.Order', 'o')\n228:             ->andWhere('ph.pointChange < 0')",
-        "src/Eccube/Repository/DtbPointHistoryRepository.php:30\n27: /**\n28:  * @extends AbstractRepository<DtbPointHistory>\n29:  */\n30: class DtbPointHistoryRepository extends AbstractRepository\n31: {\n32:     public function __construct(\n33:         ManagerRegistry $registry,"
+        "src/Eccube/Repository/DtbPointHistoryRepository.php:225\n222:         $toDate = new \\DateTime();\n223:         $fromDate = clone $toDate;\n224:         $fromDate->modify('-1 day');\n225: \n226:         $rows = $this->createQueryBuilder('ph')\n227:             ->select('o.id AS orderId')\n228:             ->join('ph.Order', 'o')",
+        "src/Eccube/Repository/DtbPointHistoryRepository.php:31\n28: /**\n29:  * @extends AbstractRepository<DtbPointHistory>\n30:  */\n31: class DtbPointHistoryRepository extends AbstractRepository\n32: {\n33:     public function __construct(\n34:         ManagerRegistry $registry,"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -149,8 +149,8 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Util/OrderUtil.php:33\n30:      *\n31:      * @return array <int, string|null>\n32:      */\n33:     public static function getOrderNumbers(mixed $orderRepository, array $orderIds): array\n34:     {\n35:         $orderNumbers = [];\n36:         foreach ($orderRepository->findBy(['id' => $orderIds]) as $order) {",
-        "src/Eccube/Entity/Order.php:450\n447:         #[ORM\\Column(name: 'pre_order_id', type: Types::STRING, length: 255, nullable: true)]\n448:         private ?string $pre_order_id = null;\n449: \n450:         #[ORM\\Column(name: 'order_no', type: Types::STRING, length: 255, nullable: true)]\n451:         private ?string $order_no = null;\n452: \n453:         #[ORM\\Column(name: 'message', type: Types::STRING, length: 4000, nullable: true)]",
-        "src/Eccube/Entity/Order.php:633\n630:         #[ORM\\Column(name: 'waiting_number', type: Types::INTEGER, nullable: true, options: ['unsigned' => true, 'comment' => '店舗販売用整理番号'])]\n631:         private ?int $waitingNumber = null;\n632: \n633:         #[ORM\\Column(name: 'order_number', type: Types::STRING, length: 11, nullable: true, options: ['unsigned' => true, 'comment' => '注文番号'])]\n634:         private ?string $order_number = null;\n635: \n636:         #[ORM\\JoinColumn(name: 'operator_id', referencedColumnName: 'id')]"
+        "src/Eccube/Entity/Order.php:450\n447:          *\n448:          * @deprecated\n449:          */\n450:         public function getTotalPrice(): string\n451:         {\n452:             @trigger_error('The '.__METHOD__.' method is deprecated.', E_USER_DEPRECATED);\n453: ",
+        "src/Eccube/Entity/Order.php:633\n630:         #[ORM\\ManyToOne(targetEntity: CustomerOrderStatus::class)]\n631:         #[ORM\\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]\n632:         private ?CustomerOrderStatus $CustomerOrderStatus = null;\n633: \n634:         /**\n635:          * OrderStatusより先にプロパティを定義しておかないとセットされなくなる\n636:          */"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -201,7 +201,7 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Command/CheckDuplicatePointCommand.php:50\n47: \n48:         try {\n49:             $count = $this->checkDuplicatePointAction->handle();\n50:         } catch (\\Throwable $e) {\n51:             $io->error([\n52:                 'ポイント二重登録チェック処理でエラーが発生しました',\n53:                 $e->getMessage(),",
-        "src/Eccube/Service/MailService.php:2266\n2263:             ->replyTo($baseInfo->getEmail03())\n2264:             ->returnPath($baseInfo->getEmail04());\n2265: \n2266:         try {\n2267:             $this->mailer->send($message);\n2268:             log_info('ポイント重複登録通知メール送信完了');\n2269:         } catch (TransportExceptionInterface $e) {",
+        "src/Eccube/Service/MailService.php:2266\n2263: FF;\n2264:         } else {\n2265:             $headerForm = <<< HF\n2266: <div class=\"form-group\">\n2267:     <div class=\"col-sm-12\">\n2268:         {$mail->getHeader()}\n2269:     </div>",
         "src/Eccube/Command/CheckDuplicatePointCommand.php:35\n32:  *   bin/console eccube:check-duplicate-point\n33:  */\n34: #[AsCommand(name: 'eccube:check-duplicate-point', description: 'ポイント二重登録チェックバッチ')]\n35: class CheckDuplicatePointCommand extends Command\n36: {\n37:     public function __construct(\n38:         private readonly CheckDuplicatePointAction $checkDuplicatePointAction,"
       ],
       "auditChecklist": [
@@ -825,6 +825,14 @@
         "term": "order_id",
         "termType": "routeName",
         "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbOrderHistory.php:26",
+        "snippet": "#[ORM\\Index(name: 'dtb_order_history_order_id_idx', columns: ['order_id'])]",
+        "weight": 5
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
         "ref": "src/Eccube/Entity/DtbPointHistory.php:38",
         "snippet": "#[ORM\\JoinColumn(name: 'order_id', nullable: true, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => '注文ID'])]",
         "weight": 5
@@ -838,18 +846,10 @@
         "weight": 5
       },
       {
-        "term": "order_id",
-        "termType": "routeName",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/DtbUserMailHistory.php:46",
-        "snippet": "#[ORM\\JoinColumn(name: 'order_id', nullable: true, referencedColumnName: 'id')]",
-        "weight": 5
-      },
-      {
         "term": "order_no",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:135",
+        "ref": "src/Eccube/Entity/Order.php:150",
         "snippet": "#[ORM\\Index(columns: ['order_no'], name: 'dtb_order_order_no_idx')]",
         "weight": 5
       },
@@ -857,7 +857,7 @@
         "term": "order_no",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:450",
+        "ref": "src/Eccube/Entity/Order.php:465",
         "snippet": "#[ORM\\Column(name: 'order_no', type: Types::STRING, length: 255, nullable: true)]",
         "weight": 5
       },
@@ -865,7 +865,7 @@
         "term": "order_no",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:451",
+        "ref": "src/Eccube/Entity/Order.php:466",
         "snippet": "private ?string $order_no = null;",
         "weight": 5
       },
@@ -873,7 +873,7 @@
         "term": "order_no",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:842",
+        "ref": "src/Eccube/Entity/Order.php:880",
         "snippet": "$this->order_no = $orderNo;",
         "weight": 5
       },
@@ -902,10 +902,26 @@
         "weight": 4
       },
       {
+        "term": "B05",
+        "termType": "businessTerm",
+        "role": "Command/Batch",
+        "ref": "src/Eccube/Command/ResendMailCommand.php:26",
+        "snippet": "* 購入完了手続き再処理バッチ（B05-02）",
+        "weight": 4
+      },
+      {
+        "term": "ポイント履歴",
+        "termType": "businessTerm",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:110",
+        "snippet": "// ポイント履歴・残高更新と同一トランザクションでスマレジ連携ジョブを積み、commit 後に dispatch する。",
+        "weight": 4
+      },
+      {
         "term": "受注管理",
         "termType": "businessTerm",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:129",
+        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:133",
         "snippet": "* 受注管理 出荷指示リスト編集",
         "weight": 4
       },
@@ -913,15 +929,7 @@
         "term": "受注管理",
         "termType": "businessTerm",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbShippingStandbyRepository.php:218",
-        "snippet": "* 受注管理 出荷指示リスト編集",
-        "weight": 4
-      },
-      {
-        "term": "受注管理",
-        "termType": "businessTerm",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/OrderRepository.php:1351",
+        "ref": "src/Eccube/Repository/OrderRepository.php:1458",
         "snippet": "* 受注管理",
         "weight": 4
       },
@@ -929,41 +937,33 @@
         "term": "受注管理",
         "termType": "businessTerm",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/OrderRepository.php:638",
+        "ref": "src/Eccube/Repository/OrderRepository.php:1988",
+        "snippet": "* 受注管理 受注情報編集",
+        "weight": 4
+      },
+      {
+        "term": "受注管理",
+        "termType": "businessTerm",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/OrderRepository.php:743",
         "snippet": "* 受注管理 送り状CSV用データ取得",
         "weight": 4
       },
       {
         "term": "ポイント履歴",
         "termType": "businessTerm",
-        "role": "Source",
-        "ref": "app/DoctrineMigrations/Version20260126202442.php:44",
-        "snippet": "[$pageId, 'MYページ/ポイント履歴', 'mypage_point_history', 'Mypage/point_history', 2]",
-        "weight": 2
+        "role": "Service",
+        "ref": "src/Eccube/Service/Front/CustomerGroupAccessRouteRegistry.php:64",
+        "snippet": "'mypage_point_history', // マイページ：ポイント履歴",
+        "weight": 4
       },
       {
-        "term": "注文ID",
+        "term": "ポイント履歴",
         "termType": "businessTerm",
-        "role": "Source",
-        "ref": "app/DoctrineMigrations/Version20260224000000.php:32",
-        "snippet": "$this->addSql(\"UPDATE dtb_csv SET sort_no = 2 WHERE csv_type_id = 3 AND disp_name = '注文ID';\");",
-        "weight": 2
-      },
-      {
-        "term": "注文ID",
-        "termType": "businessTerm",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/DtbPointHistory.php:38",
-        "snippet": "#[ORM\\JoinColumn(name: 'order_id', nullable: true, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => '注文ID'])]",
-        "weight": 2
-      },
-      {
-        "term": "ポイント増減量",
-        "termType": "businessTerm",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/DtbPointHistory.php:46",
-        "snippet": "#[ORM\\Column(name: 'point_change', type: Types::INTEGER, nullable: true, options: ['default' => 0, 'comment' => 'ポイント増減量'])]",
-        "weight": 2
+        "role": "Service",
+        "ref": "src/Eccube/Service/Front/CustomerGroupAccessRouteRegistry.php:65",
+        "snippet": "'mypage_point_history_page', // マイページ：ポイント履歴（ページング）",
+        "weight": 4
       }
     ],
     "searchedAreas": [
@@ -1114,7 +1114,7 @@
     "verdictedCount": 39,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
       "実装済み": 39,
       "要確認": 0,

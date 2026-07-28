@@ -50,7 +50,7 @@
         "Twig・画面表示",
         "権限・セッション・副作用・エラー・ログ"
       ],
-      "designSnippet": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:2992\n2989: </section>\n2990:       <section class=\"sheet-panel\" id=\"sheet-12\">\n2991:         <div class=\"sheet-heading\">\n2992:           <h2>ポイント付与（余剰入金へのご返金、注文金額変更によるご返金</h2>\n2993:         </div>\n2994:         <div class=\"sheet-doc\">\n2995:           <dl class=\"doc-card\">",
+      "designSnippet": "hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html:2992\n2989:           <p>本機能のカスタマイズ区分はカスタマイズであり、画面・挙動の確認はpf-eccube3を参照し、DB関連の記述（保存先・テーブル名・列名）はec-cube-enterpriseを正とする。</p>\n2990:           <p>対象はブラウザ経由の管理画面に限定する。会員検索・一覧（M08-01を正とする）、手動メール通知（M08-08を正とする）、オンライン本人確認の確認済への変更操作・身分証画像の閲覧（M08-10を正とする）、ポイント管理・配送先・ブラックリストは別機能とする。</p>\n2991:           <p>本文ではフレームワークのコントローラ型名やメソッド名を主説明としない。管理画面プレフィックスはコア設定<code>admin_route</code>で決まり、環境により変わる。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でルートbind名が必要なときだけ「調査補助」へ書く。</p>\n2992:           <hr>\n2993:           <h2 id=\"function-design-m08-04-m08-04_admin_customer_customer_edit-本書で扱うこと\">本書で扱うこと</h2>\n2994:           <ul><li>会員の新規登録フォームと既存会員の編集フォームの表示</li><li>入力項目（コア項目とプラグイン拡張項目）と保存先</li><li>新規登録時の会員と会員住所の同時生成、パスワード暗号化、シークレットキー採番</li><li>編集時のパスワード初期値（既定パスワード）の扱いと、変更時のみの再暗号化</li><li>本人確認用情報変更時に本人確認ステータスを未確認へ戻す確認ダイアログ</li><li>編集画面の購入履歴・買取履歴の参照と各機能への導線</li></ul>\n2995:           <hr>",
       "implementationRefs": [
         "src/Eccube/Resource/locale/messages.ja.yaml:2780",
         "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:108-110",
@@ -58,8 +58,8 @@
         "src/Eccube/Controller/Admin/Customer/CustomerPointController.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Resource/locale/messages.ja.yaml:2780\n2777: \n2778: # 機能名称\n2779: admin.setting: 設定\n2780: admin.setting.basic_info: 基本情報設定\n2781: admin.setting.shop: 店舗設定\n2782: admin.setting.shop.shop_setting: 基本設定\n2783: admin.setting.shop.tradelaw_setting: 特定商取引法設定",
-        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:108\n105:             'Customer' => $Customer,\n106:             'form' => $form->createView(),\n107:             'type' => $type,\n108:             'pointTypeLabelKey' => $pointTypeLabelKey,\n109:             'pointUpdateFlg' => $type !== MtbPointType::HISTORY,\n110:         ];\n111:     }",
+        "src/Eccube/Resource/locale/messages.ja.yaml:2780\n2777: admin.customer.mail_history: メール履歴\n2778: admin.customer.mail_send: メール送信\n2779: admin.customer.send_mail_history: メール配信履歴\n2780: admin.customer.not_mail_template: テンプレート無し\n2781: admin.customer.customer_name: 会員名\n2782: admin.customer.mail_template.subject: 件名\n2783: admin.customer.abroad_postal_code: 海外用郵便番号",
+        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:108\n105:             $this->entityManager->persist($PointHistory);\n106: \n107:             $Customer->getPlayer()->addPoint($PointHistory->getPointChange());\n108:             $this->entityManager->persist($Customer);\n109: \n110:             // ポイント履歴・残高更新と同一トランザクションでスマレジ連携ジョブを積み、commit 後に dispatch する。\n111:             $job = $this->smaregiCustomerPointEventService->registerPointAddJob($PointHistory);",
         "src/Eccube/Resource/locale/messages.ja.yaml:1\n1: #====================================================================================\n2: # 共通\n3: #====================================================================================\n4: "
       ],
       "auditChecklist": [
@@ -114,9 +114,9 @@
         "src/Eccube/Resource/template/admin/Customer/point_update.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51\n48:      * @return array<string, mixed>|RedirectResponse\n49:      */\n50:     #[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_history', requirements: ['id' => '\\d+', 'type' => 'history|granted|purchase'], methods: ['GET'])]\n51:     #[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_update', requirements: ['id' => '\\d+', 'type' => 'granted|purchase'], methods: ['POST'])]\n52:     #[Template('@admin/Customer/point_update.twig')]\n53:     public function pointHistory(Request $request, Customer $Customer, string $type): array|RedirectResponse\n54:     {",
+        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51\n48:             [\n49:                 'Customer' => $Customer,\n50:             ],\n51:             $request\n52:         );\n53:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_CUSTOMER_POINT_INDEX_INITIALIZE);\n54: ",
         "src/Eccube/Resource/template/admin/Customer/point_update.twig:17\n14:             <div class=\"c-primaryCol\">\n15:                 {% if pointUpdateFlg %}\n16:                     <div class=\"card rounded border-0 mb-4\">\n17:                         <form name=\"customer_point_form\" role=\"form\" id=\"customer_address_form\" method=\"post\"\n18:                               action=\"{{ url('admin_customer_point_update', { id : Customer.id, type: type }) }}\"\n19:                               novalidate class=\"h-adr\">\n20:                             {{ form_widget(form._token) }}",
-        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:29\n26: use Symfony\\Component\\HttpFoundation\\Request;\n27: use Symfony\\Component\\Routing\\Attribute\\Route;\n28: \n29: class CustomerPointController extends AbstractController\n30: {\n31:     public function __construct(private readonly MtbPointTypeRepository $pointTypeRepository)\n32:     {"
+        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:32\n29: use Symfony\\Component\\HttpFoundation\\Request;\n30: use Symfony\\Component\\Routing\\Attribute\\Route;\n31: \n32: class CustomerPointController extends AbstractController\n33: {\n34:     public function __construct(\n35:         private readonly MtbPointTypeRepository $pointTypeRepository,"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -174,9 +174,9 @@
         "src/Eccube/Entity/Customer.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:53\n50:     #[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_history', requirements: ['id' => '\\d+', 'type' => 'history|granted|purchase'], methods: ['GET'])]\n51:     #[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_update', requirements: ['id' => '\\d+', 'type' => 'granted|purchase'], methods: ['POST'])]\n52:     #[Template('@admin/Customer/point_update.twig')]\n53:     public function pointHistory(Request $request, Customer $Customer, string $type): array|RedirectResponse\n54:     {\n55:         $PointHistory = new DtbPointHistory();\n56:         $PointHistory->setCustomer($Customer);",
+        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:53\n50:             ],\n51:             $request\n52:         );\n53:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_CUSTOMER_POINT_INDEX_INITIALIZE);\n54: \n55:         return [\n56:             'Customer' => $Customer,",
         "src/Eccube/Resource/template/admin/Customer/point_update.twig:123\n120:                                     <th class=\"align-middle pt-2 pb-2 pe-3\">{{ 'admin.common.expiry_date'|trans }}</th>\n121:                                 </thead>\n122:                                 <tbody>\n123:                                 {% for PointHistory in Customer.PointHistories %}\n124:                                     <tr>\n125:                                         <td class=\"align-middle ps-3\">\n126:                                             {{ PointHistory.id }}",
-        "src/Eccube/Entity/Customer.php:1292\n1289:         /**\n1290:          * @var Collection<int, DtbPointHistory>\n1291:          */\n1292:         #[ORM\\OneToMany(targetEntity: DtbPointHistory::class, mappedBy: 'Customer')]\n1293:         #[ORM\\OrderBy(['id' => Criteria::DESC])]\n1294:         private Collection $PointHistories;\n1295: "
+        "src/Eccube/Entity/Customer.php:1292\n1289:         public function getDelFlg(): int\n1290:         {\n1291:             return $this->delFlg;\n1292:         }\n1293: \n1294:         public function setDelFlg(int $delFlg): Customer\n1295:         {"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -292,9 +292,9 @@
         "src/Eccube/Entity/Customer.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:53\n50:     #[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_history', requirements: ['id' => '\\d+', 'type' => 'history|granted|purchase'], methods: ['GET'])]\n51:     #[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_update', requirements: ['id' => '\\d+', 'type' => 'granted|purchase'], methods: ['POST'])]\n52:     #[Template('@admin/Customer/point_update.twig')]\n53:     public function pointHistory(Request $request, Customer $Customer, string $type): array|RedirectResponse\n54:     {\n55:         $PointHistory = new DtbPointHistory();\n56:         $PointHistory->setCustomer($Customer);",
-        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:85\n82:             ;\n83:             $this->entityManager->persist($PointHistory);\n84: \n85:             $Customer->getPlayer()->addPoint($PointHistory->getPointChange());\n86:             $this->entityManager->persist($Customer);\n87: \n88:             $this->entityManager->flush();",
-        "src/Eccube/Entity/Customer.php:1107\n1104:             return $this;\n1105:         }\n1106: \n1107:         public function getPlayer(): ?DtbPlayer\n1108:         {\n1109:             return $this->Player;\n1110:         }"
+        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:53\n50:             ],\n51:             $request\n52:         );\n53:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_CUSTOMER_POINT_INDEX_INITIALIZE);\n54: \n55:         return [\n56:             'Customer' => $Customer,",
+        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:85\n82: \n83:         $form = $builder->getForm();\n84:         $form->handleRequest($request);\n85: \n86:         if ($form->isSubmitted() && $form->isValid()) {\n87:             $pointTypeId = $type == MtbPointType::GRANTED ? MtbPointType::GRANTED_TYPE : MtbPointType::PURCHASE_TYPE;\n88:             $PointType = $this->pointTypeRepository->find($pointTypeId);",
+        "src/Eccube/Entity/Customer.php:1107\n1104: \n1105:             $strNum = $fixNo.sprintf(\"%0{$zeroPaddingLength}d\", $smaregiId);\n1106: \n1107:             return $strNum.StringUtil::calcCheckDigit($strNum);\n1108:         }\n1109: \n1110:         /**"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -345,8 +345,8 @@
         "src/Eccube/Controller/Admin/Customer/CustomerPointController.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Resource/locale/messages.ja.yaml:2631\n2628:   ・余剰入金への返金\n2629:   ・欠品、状態不備、誤発送などでの返金\n2630: admin.customer.point_update.granted: ポイント履歴追加（キャンペーン、特別対応）\n2631: admin.customer.point_update.purchase: ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）\n2632: admin.customer.point.order_id: 注文番号\n2633: admin.customer.point.point_change: ポイント増減量\n2634: admin.customer.point.point_change_ex: \"例1: 1000, 例2: -500\"",
-        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:100\n97:             ]);\n98:         }\n99: \n100:         $pointTypeLabelKey = $type === MtbPointType::GRANTED\n101:             ? 'admin.customer.point_update.granted'\n102:             : 'admin.customer.point_update.purchase';\n103: ",
+        "src/Eccube/Resource/locale/messages.ja.yaml:2631\n2628: # 商品詳細\n2629: admin.product_class.price_valid_bulk: \"ID:%productId%（%language%）の販売価格は買取価格「%purchasePrice%」以上を指定してください。\"\n2630: \n2631: # 出荷CSV雛形\n2632: admin.order.shipping_csv.shipping_id_col: 出荷ID\n2633: admin.order.shipping_csv.shipping_id_description: \"\"\n2634: admin.order.shipping_csv.tracking_number_col: お問い合わせ番号",
+        "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:100\n97:             }\n98: \n99:             $orderNumber = $form->get('orderNumber')->getData();\n100: \n101:             $PointHistory\n102:                 ->setOrder($Customer->getOrderByOrderNumber($orderNumber))\n103:                 ->setPointType($PointType)",
         "src/Eccube/Resource/locale/messages.ja.yaml:1\n1: #====================================================================================\n2: # 共通\n3: #====================================================================================\n4: "
       ],
       "auditChecklist": [
@@ -361,7 +361,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 43,
+    "extractedRequirementCount": 52,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -922,6 +922,123 @@
           "設計値と実装値が一致する、または乖離所見として記録済みであること"
         ],
         "coveredByFinding": true
+      },
+      {
+        "id": "m08-05_0207_sheet-12_sheet-req-f559ae2ea4",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "システムエラーが発生しました",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-05_0207_sheet-12_sheet-req-3ac5f55fc2",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "ポイント付与を登録した際に、選択した種別のポイント設定を取得できないとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-05_0207_sheet-12_sheet-req-5db2937e64",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "エラーを表示し、ポイント履歴画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-05_0207_sheet-12_sheet-req-5d5ef3a4d8",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "ポイント付与を保存したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-05_0207_sheet-12_sheet-req-033eb03a9e",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "保存し、ポイント履歴画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-05_0207_sheet-12_sheet-req-36e74a5d68",
+        "category": "入力項目直下/フォーム上部",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "ポイント付与で入力した注文番号が、その会員の注文番号ではないとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-05_0207_sheet-12_sheet-req-b3c0b2ea71",
+        "category": "入力項目直下/フォーム上部",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "エラーを表示し、ポイント履歴画面に留まる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-05_0207_sheet-12_sheet-req-40b270f290",
+        "category": "入力項目直下/フォーム上部",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "ポイント残高を0未満にすることはできません。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m08-05_0207_sheet-12_sheet-req-da9ece7ee5",
+        "category": "入力項目直下/フォーム上部",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "ポイント付与で、付与後のポイント残高が0未満になるとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
       }
     ],
     "missingRequirementCount": 0,
@@ -981,7 +1098,7 @@
         "term": "admin_customer_point_history",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:50",
+        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:63",
         "snippet": "#[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_history', requirements: ['id' => '\\d+', 'type' => 'history|granted|purchase'], methods: ['GET'])]",
         "weight": 7
       },
@@ -1013,7 +1130,7 @@
         "term": "customer/point/{id}/select",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:38",
+        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:43",
         "snippet": "#[Route('/%eccube_admin_route%/customer/point/{id}/select', name: 'admin_customer_point_select', requirements: ['id' => '\\d+'], methods: ['GET'])]",
         "weight": 6
       },
@@ -1021,7 +1138,7 @@
         "term": "customer/point/{id}/{type}",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:50",
+        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:63",
         "snippet": "#[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_history', requirements: ['id' => '\\d+', 'type' => 'history|granted|purchase'], methods: ['GET'])]",
         "weight": 6
       },
@@ -1029,7 +1146,7 @@
         "term": "customer/point/{id}/{type}",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:51",
+        "ref": "src/Eccube/Controller/Admin/Customer/CustomerPointController.php:64",
         "snippet": "#[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_update', requirements: ['id' => '\\d+', 'type' => 'granted|purchase'], methods: ['POST'])]",
         "weight": 6
       },
@@ -1037,7 +1154,7 @@
         "term": "point_history.twig",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Front/Mypage/MypageController.php:390",
+        "ref": "src/Eccube/Controller/Front/Mypage/MypageController.php:396",
         "snippet": "#[Template(template: 'Mypage/point_history.twig')]",
         "weight": 6
       },
@@ -1093,8 +1210,8 @@
         "term": "customer/point/{id}/update/{type}",
         "termType": "path",
         "role": "Service",
-        "ref": "src/Eccube/Service/Smaregi/Api/Mock/SmaregiMockResponder.php:74",
-        "snippet": "// /pos/products/{id} (update or delete)",
+        "ref": "src/Eccube/Service/Smaregi/SmaregiCustomerResolver.php:28",
+        "snippet": "* dtb_player を直接引けない。会員取得API(GET /pos/customers/{id})で customerNo を取得し、",
         "weight": 6
       },
       {
@@ -1117,8 +1234,8 @@
         "term": "order_id",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/DtbPointHistory.php:38",
-        "snippet": "#[ORM\\JoinColumn(name: 'order_id', nullable: true, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => '注文ID'])]",
+        "ref": "src/Eccube/Entity/DtbOrderHistory.php:26",
+        "snippet": "#[ORM\\Index(name: 'dtb_order_history_order_id_idx', columns: ['order_id'])]",
         "weight": 5
       }
     ],
@@ -1409,13 +1526,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 43,
-    "verdictedCount": 43,
+    "requirementCount": 52,
+    "verdictedCount": 52,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 43,
+      "実装済み": 52,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -2109,6 +2226,150 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": true
+      },
+      {
+        "requirementId": "m08-05_0207_sheet-12_sheet-req-f559ae2ea4",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "システムエラーが発生しました",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-05_0207_sheet-12_sheet-req-3ac5f55fc2",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "ポイント付与を登録した際に、選択した種別のポイント設定を取得できないとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-05_0207_sheet-12_sheet-req-5db2937e64",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "エラーを表示し、ポイント履歴画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-05_0207_sheet-12_sheet-req-5d5ef3a4d8",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "ポイント付与を保存したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-05_0207_sheet-12_sheet-req-033eb03a9e",
+        "category": "API/バッチ結果",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "保存し、ポイント履歴画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m08-05_0207_sheet-12_sheet-req-36e74a5d68",
+        "category": "入力項目直下/フォーム上部",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "ポイント付与で入力した注文番号が、その会員の注文番号ではないとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-05_0207_sheet-12_sheet-req-b3c0b2ea71",
+        "category": "入力項目直下/フォーム上部",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "エラーを表示し、ポイント履歴画面に留まる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-05_0207_sheet-12_sheet-req-40b270f290",
+        "category": "入力項目直下/フォーム上部",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "ポイント残高を0未満にすることはできません。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m08-05_0207_sheet-12_sheet-req-da9ece7ee5",
+        "category": "入力項目直下/フォーム上部",
+        "designRef": "excel_to_html/output/0207_基本設計仕様書(会員管理機能).html#sheet-12",
+        "designRequirement": "ポイント付与で、付与後のポイント残高が0未満になるとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
       }
     ],
     "materialGapRows": []

@@ -56,9 +56,9 @@
         "app/config/eccube/packages/eccube.yaml"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:105\n102:         $sessionKeyPageCount = 'eccube.admin.stock.approval_list.search.page_count';\n103:         $sessionKeySearch = self::SESSION_KEY_SEARCH;\n104: \n105:         $pageNo = (int) ($page_no ?? $session->get($sessionKeyPageNo, 1));\n106:         $pageCount = (int) ($page_count ?? $session->get($sessionKeyPageCount, $this->eccubeConfig['eccube_default_page_count']));\n107:         $pageCountParam = (int) $pageCount;\n108:         $PageMaxis = $this->pageMaxRepository->findAll();",
-        "app/config/eccube/packages/eccube.yaml:124\n121:     eccube_smtext_len: 100\n122:     eccube_tax_rule_priority: ['product_id','product_class_id','pref_id','country_id']\n123:     eccube_url_len: 1024\n124:     eccube_default_page_count: 10\n125:     # 在庫編集承認モーダル内明細テーブルの1ページあたりの件数\n126:     eccube_admin_stock_approval_modal_line_items_per_page: 50\n127:     # 在庫編集承認モーダル内明細テーブルの総件数の最大値",
-        "src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:45\n42: use Symfony\\Component\\Routing\\Attribute\\Route;\n43: use Symfony\\Component\\Security\\Csrf\\CsrfTokenManagerInterface;\n44: \n45: class StockApprovalListController extends AbstractController\n46: {\n47:     /** モーダル明細の選択IDのセッションキー */\n48:     private const SESSION_KEY_APPROVAL_LINE_ITEM_IDS = 'eccube.admin.stock.approval_list.line_items.ids';"
+        "src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:105\n102:         $searchForm = $builder->getForm();\n103: \n104:         /**\n105:          * ページの表示件数は, 以下の順に優先される.\n106:          * - リクエストパラメータ\n107:          * - セッション\n108:          * - デフォルト値",
+        "app/config/eccube/packages/eccube.yaml:124\n121:     plugin_realdir: '%kernel.project_dir%/app/Plugin'\n122:     plugin_data_realdir: '%kernel.project_dir%/app/PluginData'\n123:     plugin_temp_realdir: /PATH/TO/WEB_ROOT/src/Eccube/Repository/Master/upload/temp_plugin/ # upload_tmp_dir に任せればよい？\n124:     eccube_capacity_min: 1\n125:     eccube_capacity_max: 8\n126:     eccube_price_len: 8                                                    # 最大値で制御したい\n127:     eccube_product_class_sell_price_max_len: 10",
+        "src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:46\n43: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n44: use Symfony\\Component\\Security\\Csrf\\CsrfTokenManagerInterface;\n45: \n46: class StockApprovalListController extends AbstractController\n47: {\n48:     /** モーダル明細の選択IDのセッションキー */\n49:     private const SESSION_KEY_APPROVAL_LINE_ITEM_IDS = 'eccube.admin.stock.approval_list.line_items.ids';"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -125,7 +125,7 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Entity/DtbStockApprovalList.php:28\n25: #[ORM\\Entity(repositoryClass: DtbStockApprovalListRepository::class)]\n26: class DtbStockApprovalList extends AbstractEntity\n27: {\n28:     public const APPROVAL_STATUS_UNAPPROVED = 1;\n29:     public const APPROVAL_STATUS_APPROVED = 2;\n30:     public const APPROVAL_STATUS_REJECTED = 3;\n31: ",
-        "src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:40\n37: \n38: class SearchStockApprovalListType extends AbstractType\n39: {\n40:     /** 承認ステータス: 未承認 */\n41:     public const APPROVAL_STATUS_UNAPPROVED = 1;\n42: \n43:     /** 承認ステータス: 承認済み */",
+        "src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:40\n37: use Symfony\\Component\\OptionsResolver\\OptionsResolver;\n38: use Symfony\\Component\\Validator\\Constraints as Assert;\n39: \n40: class SearchStockApprovalListType extends AbstractType\n41: {\n42:     /** 承認ステータス: 未承認 */\n43:     public const APPROVAL_STATUS_UNAPPROVED = 1;",
         "src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90\n87:             $user = $this->context->getCurrentUser();\n88:             $currentMemberId = $user?->getId();\n89: \n90:             $isBulkActionable = in_array($typeId, self::BULK_ACTIONABLE_HISTORY_SOURCE_TYPE_IDS, true)\n91:                 && $ApprovalList->getApprovalStatus() === DtbStockApprovalList::APPROVAL_STATUS_UNAPPROVED\n92:                 && $ApprovalList->getRegisteredMember()->getId() !== $currentMemberId; // 登録者と現在のログインユーザーが違う場合のみ一括操作を可能にする\n93:             // TODO 承認状態が「スマレジ連携失敗」の場合も一括操作を可能にする"
       ],
       "auditChecklist": [
@@ -185,7 +185,7 @@
         "src/Eccube/Repository/DtbStockApprovalListRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbStockApprovalListRepository.php:157\n154:                 ->setParameter('id', (int) $searchData['id']);\n155:         }\n156: \n157:         // 並び順: 承認日が空（未承認）を上位、登録日昇順、id 昇順。\n158:         // PostgreSQL の SELECT DISTINCT では ORDER BY は SELECT リストの式のみ可のため、CASE は使わずエンティティのカラムのみ指定する。\n159:         $qb\n160:             ->addOrderBy('a.approvedDate', 'DESC')",
+        "src/Eccube/Repository/DtbStockApprovalListRepository.php:157\n154:                 ->andWhere('a.registeredDate >= :registered_date_start')\n155:                 ->setParameter('registered_date_start', $searchData['registered_date_start']->format('Y-m-d 00:00:00'));\n156:         }\n157:         if (!empty($searchData['registered_date_end'])) {\n158:             $qb\n159:                 ->andWhere('a.registeredDate < :registered_date_end')\n160:                 ->setParameter('registered_date_end', $searchData['registered_date_end']->format('Y-m-d 23:59:59'));",
         "src/Eccube/Repository/DtbStockApprovalListRepository.php:34\n31: /**\n32:  * @extends AbstractRepository<DtbStockApprovalList>\n33:  */\n34: class DtbStockApprovalListRepository extends AbstractRepository\n35: {\n36:     public function __construct(ManagerRegistry $registry)\n37:     {"
       ],
       "auditChecklist": [
@@ -242,7 +242,7 @@
         "src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Resource/template/admin/Stock/approval_list.twig:499\n496:                                                 </td>\n497:                                                 <td class=\"align-middle\">{{ item.approval_status_label|trans }}</td>\n498:                                                 <td class=\"align-middle\">\n499:                                                     {% if item.is_bulk_actionable %}\n500:                                                         <a href=\"#\" class=\"js-open-single-approval-modal\" data-approval-list-id=\"{{ item.id }}\">\n501:                                                             {{ item.approval_target_label|trans }}\n502:                                                         </a>",
+        "src/Eccube/Resource/template/admin/Stock/approval_list.twig:499\n496:                                         <th class=\"pt-2 pb-2\">{{ 'admin.stock.approval_list.total_cost_change'|trans }}</th>\n497:                                         <th class=\"pt-2 pb-2\">{{ 'admin.stock.approval_list.change_type_detail_label'|trans }}</th>\n498:                                         <th class=\"pt-2 pb-2\">{{ 'admin.stock.approval_list.registered_at'|trans }}</th>\n499:                                         <th class=\"pt-2 pb-2\">{{ 'admin.stock.approval_list.registered_member_label'|trans }}</th>\n500:                                         <th class=\"pt-2 pb-2\">{{ 'admin.stock.approval_list.approved_at'|trans }}</th>\n501:                                         <th class=\"pt-2 pb-2 pe-3\">{{ 'admin.stock.approval_list.approver'|trans }}</th>\n502:                                     </tr>",
         "src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:62\n59:         foreach ($StockApprovalLists as $ApprovalList) {\n60:             $typeId = $ApprovalList->getHistorySourceTypeId();\n61: \n62:             $approvalTargetLabel = $ApprovalList->getApprovalTargetLabel();\n63:             $approvalTargetLink = '#';\n64:             $approvalTargetLinkOpenType = '_self';\n65: ",
         "src/Eccube/Resource/template/admin/Stock/approval_list.twig:1\n1: {% extends '@admin/default_frame.twig' %}\n2: \n3: {% set menus = ['product_stock', 'stock_approval_list'] %}\n4: "
       ],
@@ -371,8 +371,8 @@
         "src/Eccube/Service/MailService.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:45\n42: use Symfony\\Component\\Routing\\Attribute\\Route;\n43: use Symfony\\Component\\Security\\Csrf\\CsrfTokenManagerInterface;\n44: \n45: class StockApprovalListController extends AbstractController\n46: {\n47:     /** モーダル明細の選択IDのセッションキー */\n48:     private const SESSION_KEY_APPROVAL_LINE_ITEM_IDS = 'eccube.admin.stock.approval_list.line_items.ids';",
-        "src/Eccube/Service/Admin/Stock/StockApprovalListUpdateAction.php:31\n28: /**\n29:  * 在庫編集承認一覧の一括承認・一括却下処理。\n30:  */\n31: class StockApprovalListUpdateAction\n32: {\n33:     public function __construct(\n34:         private readonly EntityManagerInterface $entityManager,",
+        "src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:46\n43: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n44: use Symfony\\Component\\Security\\Csrf\\CsrfTokenManagerInterface;\n45: \n46: class StockApprovalListController extends AbstractController\n47: {\n48:     /** モーダル明細の選択IDのセッションキー */\n49:     private const SESSION_KEY_APPROVAL_LINE_ITEM_IDS = 'eccube.admin.stock.approval_list.line_items.ids';",
+        "src/Eccube/Service/Admin/Stock/StockApprovalListUpdateAction.php:34\n31: /**\n32:  * 在庫編集承認一覧の一括承認・一括却下処理。\n33:  */\n34: class StockApprovalListUpdateAction\n35: {\n36:     public function __construct(\n37:         private readonly EntityManagerInterface $entityManager,",
         "src/Eccube/Service/Admin/Stock/ActionInput/StockApprovalListUpdateInput.php:23\n20: /**\n21:  * {@see \\Eccube\\Service\\Admin\\Stock\\StockApprovalListUpdateAction::handle()}\n22:  */\n23: final readonly class StockApprovalListUpdateInput\n24: {\n25:     /**\n26:      * @param list<int> $stockApprovalListIds"
       ],
       "auditChecklist": [
@@ -429,7 +429,7 @@
         "src/Eccube/Resource/template/admin/Stock/approval_list_line_items.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbStockApprovalListRepository.php:345\n342:             ->leftJoin('p', 'mtb_card_detail', 'cd', 'p.card_detail_id = cd.id')\n343:             ->leftJoin('sa', 'mtb_stock_change_type_detail', 'sctd', 'sa.stock_change_type_detail_id = sctd.id')\n344:             ->leftJoin('sctd', 'mtb_stock_change_type', 'sct', 'sctd.stock_change_type_id = sct.id')\n345:             ->where('sal.history_source_type_id IN (:stockEditTypes)')\n346:             ->andWhere('sal.id IN (:ids)')\n347:             ->setParameter('stockEditTypes', [\n348:                 MtbStockHistorySourceType::STOCK_EDIT,",
+        "src/Eccube/Repository/DtbStockApprovalListRepository.php:345\n342:                 'bi.shop_name AS shop_name',\n343:                 'ps.stock_location_id AS stock_location_id',\n344:                 'sad.before_edit_quantity AS before_edit_quantity',\n345:                 'sad.edit_quantity AS edit_quantity',\n346:                 'sad.purchase_unit_price AS purchase_unit_price',\n347:                 'sad.before_purchase_unit_price AS before_purchase_unit_price',\n348:                 'sad.stock_change_reason AS stock_change_reason',",
         "src/Eccube/Resource/template/admin/Stock/approval_list_line_items.twig:29\n26:                     <td colspan=\"14\" class=\"text-center text-muted py-3\">{{ 'admin.stock.approval_list.line_items.empty'|trans }}</td>\n27:                 </tr>\n28:             {% else %}\n29:                 {% for item in Pagination %}\n30:                     <tr>\n31:                         <td class=\"align-middle\">{{ item.product_name_and_code|e }}</td>\n32:                         <td class=\"align-middle\">{{ item.language|e }}</td>",
         "src/Eccube/Repository/DtbStockApprovalListRepository.php:34\n31: /**\n32:  * @extends AbstractRepository<DtbStockApprovalList>\n33:  */\n34: class DtbStockApprovalListRepository extends AbstractRepository\n35: {\n36:     public function __construct(ManagerRegistry $registry)\n37:     {"
       ],
@@ -492,7 +492,7 @@
         "src/Eccube/Service/Admin/Stock/StockEditLineItemRowBuilder.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbStockApprovalListRepository.php:307\n304:     {\n305:         $connection = $this->getEntityManager()->getConnection();\n306: \n307:         $qb = $connection->createQueryBuilder();\n308:         $qb\n309:             ->select(\n310:                 'p.name AS product_name',",
+        "src/Eccube/Repository/DtbStockApprovalListRepository.php:307\n304:         $outerQb = $connection->createQueryBuilder();\n305:         $outerQb\n306:             ->select('*')\n307:             ->from('('.$innerQb->getSQL().')', 'modal_line_items_limited')\n308:             ->setParameters($innerQb->getParameters(), $innerQb->getParameterTypes())\n309:             ->orderBy('modal_line_items_limited.sort_approved_date', 'DESC')\n310:             ->addOrderBy('modal_line_items_limited.sort_registered_date', 'ASC')",
         "src/Eccube/Service/Admin/Stock/StockEditLineItemRowBuilder.php:49\n46:      */\n47:     private function mapRow(array $row): array\n48:     {\n49:         $beforeQty = (int) ($row['before_edit_quantity'] ?? 0);\n50:         $editQty = (int) ($row['edit_quantity'] ?? 0);\n51:         $afterQty = $beforeQty + $editQty;\n52: ",
         "src/Eccube/Repository/DtbStockApprovalListRepository.php:34\n31: /**\n32:  * @extends AbstractRepository<DtbStockApprovalList>\n33:  */\n34: class DtbStockApprovalListRepository extends AbstractRepository\n35: {\n36:     public function __construct(ManagerRegistry $registry)\n37:     {"
       ],
@@ -547,8 +547,8 @@
         "src/Eccube/Repository/DtbStockApprovalListRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbStockApprovalListRepository.php:284\n281:             ->select('*')\n282:             ->from('('.$innerQb->getSQL().')', 'modal_line_items_limited')\n283:             ->setParameters($innerQb->getParameters(), $innerQb->getParameterTypes())\n284:             ->orderBy('modal_line_items_limited.sort_sal_id', 'ASC')\n285:             ->addOrderBy('modal_line_items_limited.sort_sad_id', 'ASC');\n286: \n287:         return $outerQb;",
-        "src/Eccube/Repository/DtbStockApprovalListRepository.php:353\n350:                 MtbStockHistorySourceType::STOCK_CHANGE_CSV_IMPORT,\n351:             ], ArrayParameterType::INTEGER)\n352:             ->setParameter('ids', $approvalListIds, ArrayParameterType::INTEGER)\n353:             ->orderBy('sal.id', 'ASC')\n354:             ->addOrderBy('sad.id', 'ASC');\n355: \n356:         return $qb;",
+        "src/Eccube/Repository/DtbStockApprovalListRepository.php:284\n281:                 ],\n282:                 'ids' => $approvalListIds,\n283:             ],\n284:             [\n285:                 'stockEditTypes' => ArrayParameterType::INTEGER,\n286:                 'ids' => ArrayParameterType::INTEGER,\n287:             ]",
+        "src/Eccube/Repository/DtbStockApprovalListRepository.php:353\n350:                 'sctd.child_name AS stock_change_type_child_name',\n351:                 'sa.registered_at AS registered_at',\n352:                 'm_reg.name AS registered_member_name',\n353:                 'sa.approved_at AS approved_at',\n354:                 'm_appr.name AS approver_name',\n355:                 'sal.approved_date AS sort_approved_date',\n356:                 'sal.registered_date AS sort_registered_date',",
         "src/Eccube/Repository/DtbStockApprovalListRepository.php:34\n31: /**\n32:  * @extends AbstractRepository<DtbStockApprovalList>\n33:  */\n34: class DtbStockApprovalListRepository extends AbstractRepository\n35: {\n36:     public function __construct(ManagerRegistry $registry)\n37:     {"
       ],
       "auditChecklist": [
@@ -2177,15 +2177,15 @@
         "term": "在庫編集承認ID",
         "termType": "businessTerm",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:142",
-        "snippet": "// id クエリパラメータ（在庫編集承認ID）で history_source_id のみ絞り込み",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:152",
+        "snippet": "// id クエリパラメータ（在庫編集承認ID）で history_source_id を絞り込み",
         "weight": 4
       },
       {
         "term": "在庫編集承認一覧",
         "termType": "businessTerm",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:70",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:71",
         "snippet": "* 在庫編集承認一覧",
         "weight": 4
       },
@@ -2193,15 +2193,23 @@
         "term": "在庫編集承認ID",
         "termType": "businessTerm",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbStockApprovalListRepository.php:150",
+        "ref": "src/Eccube/Repository/DtbStockApprovalListRepository.php:175",
         "snippet": "// 在庫編集承認ID (idで受け取り、history_source_idにセット)",
+        "weight": 4
+      },
+      {
+        "term": "在庫編集承認ID",
+        "termType": "businessTerm",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/DtbStockApprovalListRepository.php:391",
+        "snippet": "* 在庫変更CSVインポート（在庫編集承認ID）ごとの在庫場所ID取得用 QueryBuilder.",
         "weight": 4
       },
       {
         "term": "在庫増減数",
         "termType": "businessTerm",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbStockHistoryRepository.php:242",
+        "ref": "src/Eccube/Repository/DtbStockHistoryRepository.php:239",
         "snippet": "// stock_change_from 在庫増減数",
         "weight": 4
       },
@@ -2209,7 +2217,7 @@
         "term": "在庫増減数",
         "termType": "businessTerm",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbStockHistoryRepository.php:249",
+        "ref": "src/Eccube/Repository/DtbStockHistoryRepository.php:246",
         "snippet": "// stock_change_to 在庫増減数",
         "weight": 4
       },
@@ -2217,7 +2225,7 @@
         "term": "M04",
         "termType": "businessTerm",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/ProductStockRepository.php:50",
+        "ref": "src/Eccube/Repository/ProductStockRepository.php:51",
         "snippet": "* 在庫一覧（M04-01）用 QueryBuilder。",
         "weight": 4
       },
@@ -2225,7 +2233,7 @@
         "term": "MM/DD",
         "termType": "path",
         "role": "Locale",
-        "ref": "src/Eccube/Resource/locale/messages.en.yaml:3894",
+        "ref": "src/Eccube/Resource/locale/messages.en.yaml:4162",
         "snippet": "front.event.search.date.placeholder: 'YYYY/MM/DD'",
         "weight": 4
       },
@@ -2291,14 +2299,6 @@
         "role": "Source",
         "ref": "app/DoctrineMigrations/Version20260316052806.php:44",
         "snippet": "'【在庫管理】承認通知メール',",
-        "weight": 2
-      },
-      {
-        "term": "在庫管理",
-        "termType": "businessTerm",
-        "role": "Config",
-        "ref": "app/config/eccube/packages/eccube.yaml:213",
-        "snippet": "eccube_stock_approval_alert_mail_template_id: \"eccube.mail.admin.stock_approval_alert\" #【在庫管理】在庫編集時の、承認通知先への通知メール",
         "weight": 2
       }
     ],
@@ -2915,7 +2915,7 @@
     "verdictedCount": 119,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
       "実装済み": 119,
       "要確認": 0,

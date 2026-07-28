@@ -55,7 +55,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/ProductRepository.php:2130\n2127:      FROM dtb_category cat2\n2128:      INNER JOIN dtb_product_category pcat2 ON cat2.id = pcat2.category_id\n2129:      WHERE pcat2.product_id = p.id) AS categoryName,\n2130:     sc.id AS storageCodeId,\n2131:     sc.name AS storageCodeName,\n2132:     lang.code AS languageCode,\n2133:     cs.code AS cardsetCode,",
+        "src/Eccube/Repository/ProductRepository.php:2130\n2127:     CASE WHEN pc.memo IS NOT NULL AND pc.memo != '' THEN pc.memo ELSE cc.code END AS conditionCode,\n2128:     cd.foil_flg AS foilFlg,\n2129:     pimg.file_name AS imageFileName,\n2130:     (SELECT COALESCE(SUM(pc2.order_quantity_04), 0)\n2131:      FROM dtb_product_class pc2\n2132:      LEFT JOIN mtb_language lang2 ON pc2.language_id = lang2.id\n2133:      WHERE pc2.product_id = p.id",
         "src/Eccube/Repository/ProductRepository.php:59\n56:  *\n57:  * @extends AbstractEnterpriseRepository<Product>\n58:  */\n59: class ProductRepository extends AbstractEnterpriseRepository implements ServiceEntityRepositoryInterface\n60: {\n61:     public const COLUMNS = [\n62:         'product_id' => 'p.id',"
       ],
       "auditChecklist": [
@@ -111,7 +111,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/ProductRepository.php:2161\n2158:         $rsm->addScalarResult('descriptiondetailen', 'descriptionDetailEn', 'string');\n2159:         $rsm->addScalarResult('statusid', 'statusId', 'integer');\n2160:         $rsm->addScalarResult('statusname', 'statusName', 'string');\n2161:         $rsm->addScalarResult('stock', 'stock', 'integer');\n2162:         $rsm->addScalarResult('price02', 'price02', 'integer');\n2163:         $rsm->addScalarResult('imagefilename', 'imageFileName', 'string');\n2164:         $rsm->addScalarResult('categoryid', 'categoryId', 'string');",
+        "src/Eccube/Repository/ProductRepository.php:2161\n2158:         $rsm = new ResultSetMapping();\n2159:         $rsm->addScalarResult('productid', 'productId', 'integer');\n2160:         $rsm->addScalarResult('productname', 'productName', 'string');\n2161:         $rsm->addScalarResult('nameen', 'nameEn', 'string');\n2162:         $rsm->addScalarResult('productclassid', 'productClassId', 'integer');\n2163:         $rsm->addScalarResult('price01', 'price01', 'integer');\n2164:         $rsm->addScalarResult('price02', 'price02', 'integer');",
         "src/Eccube/Repository/ProductRepository.php:59\n56:  *\n57:  * @extends AbstractEnterpriseRepository<Product>\n58:  */\n59: class ProductRepository extends AbstractEnterpriseRepository implements ServiceEntityRepositoryInterface\n60: {\n61:     public const COLUMNS = [\n62:         'product_id' => 'p.id',"
       ],
       "auditChecklist": [
@@ -168,7 +168,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/ProductRepository.php:2135\n2132:     lang.code AS languageCode,\n2133:     cs.code AS cardsetCode,\n2134:     cc.code AS cardConditionCode,\n2135:     pc.update_date AS productClassUpdateDate,\n2136:     p.update_date AS productUpdateDate\n2137: FROM dtb_product p\n2138:     INNER JOIN dtb_product_class pc ON p.id = pc.product_id AND pc.visible = true",
+        "src/Eccube/Repository/ProductRepository.php:2135\n2132:      LEFT JOIN mtb_language lang2 ON pc2.language_id = lang2.id\n2133:      WHERE pc2.product_id = p.id\n2134:        AND pc2.visible = true\n2135:        AND lang2.code = :languageCode) AS weeklySold\n2136: FROM dtb_product p\n2137:     INNER JOIN dtb_product_class pc ON p.id = pc.product_id AND pc.visible = true AND pc.price02 > 0\n2138:     LEFT JOIN dtb_product_stock pstock ON pstock.product_class_id = pc.id",
         "src/Eccube/Repository/ProductRepository.php:59\n56:  *\n57:  * @extends AbstractEnterpriseRepository<Product>\n58:  */\n59: class ProductRepository extends AbstractEnterpriseRepository implements ServiceEntityRepositoryInterface\n60: {\n61:     public const COLUMNS = [\n62:         'product_id' => 'p.id',"
       ],
       "auditChecklist": [
@@ -278,10 +278,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "a02-05_0502_sheet-7_sheet-req-08b07b0e33",
+        "id": "a02-05_0502_sheet-7_sheet-req-59b4cfd7d1",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-7",
-        "designRequirement": "A02-05 更新商品規格取得 / API 商品管理 — 更新商品規格取得",
+        "designRequirement": "A02-05 更新商品規格取得 / 商品管理 — 更新商品規格取得（API）",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -605,7 +605,9 @@
         "product_code"
       ],
       "translationKeys": [],
-      "classNames": [],
+      "classNames": [
+        "CsvImportController"
+      ],
       "paths": [
         "updateProducts/{",
         "api/updateProducts/2025-08-01/2025-08-01",
@@ -636,6 +638,22 @@
     "strongSignalCount": 18,
     "candidateRefs": [
       {
+        "term": "CsvImportController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/CsvImportController.php:1",
+        "snippet": "src/Eccube/Controller/Admin/Order/CsvImportController.php",
+        "weight": 7
+      },
+      {
+        "term": "CsvImportController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Order/CsvImportController.php:31",
+        "snippet": "class CsvImportController extends AbstractCsvImportController",
+        "weight": 7
+      },
+      {
         "term": "smaregi_product_code",
         "termType": "routeName",
         "role": "Repository",
@@ -647,7 +665,7 @@
         "term": "productClassUpdateDate",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/ProductRepository.php:2135",
+        "ref": "src/Eccube/Repository/ProductRepository.php:2223",
         "snippet": "pc.update_date AS productClassUpdateDate,",
         "weight": 7
       },
@@ -655,7 +673,7 @@
         "term": "productUpdateDate",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/ProductRepository.php:2136",
+        "ref": "src/Eccube/Repository/ProductRepository.php:2224",
         "snippet": "p.update_date AS productUpdateDate",
         "weight": 7
       },
@@ -663,7 +681,7 @@
         "term": "productClassUpdateDate",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/ProductRepository.php:2171",
+        "ref": "src/Eccube/Repository/ProductRepository.php:2262",
         "snippet": "$rsm->addScalarResult('productclassupdatedate', 'productClassUpdateDate', 'string');",
         "weight": 7
       },
@@ -671,7 +689,7 @@
         "term": "productUpdateDate",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/ProductRepository.php:2172",
+        "ref": "src/Eccube/Repository/ProductRepository.php:2263",
         "snippet": "$rsm->addScalarResult('productupdatedate', 'productUpdateDate', 'string');",
         "weight": 7
       },
@@ -761,22 +779,6 @@
         "role": "Entity",
         "ref": "src/Eccube/Entity/OrderItem.php:143",
         "snippet": "#[ORM\\Column(name: 'product_code', type: Types::STRING, length: 255, nullable: true)]",
-        "weight": 5
-      },
-      {
-        "term": "productCode",
-        "termType": "routeName",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/OrderItem.php:272",
-        "snippet": "* Set productCode.",
-        "weight": 5
-      },
-      {
-        "term": "productCode",
-        "termType": "routeName",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/OrderItem.php:274",
-        "snippet": "public function setProductCode(?string $productCode = null): OrderItem",
         "weight": 5
       }
     ],
@@ -1069,10 +1071,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "a02-05_0502_sheet-7_sheet-req-08b07b0e33",
+        "requirementId": "a02-05_0502_sheet-7_sheet-req-59b4cfd7d1",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0502_基本設計仕様書(API_商品管理).html#sheet-7",
-        "designRequirement": "A02-05 更新商品規格取得 / API 商品管理 — 更新商品規格取得",
+        "designRequirement": "A02-05 更新商品規格取得 / 商品管理 — 更新商品規格取得（API）",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

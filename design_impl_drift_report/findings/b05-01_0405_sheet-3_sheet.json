@@ -51,7 +51,7 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Command/OtcOrderSmaregiPostCommand.php:47\n44:         $io->text('店頭受取注文スマレジ連携バッチ開始');\n45: \n46:         try {\n47:             // 現在時刻から30分前の時刻を取得\n48:             $now = new \\DateTime();\n49:             $thirtyMinutesAgo = $now->modify('-30 minutes');\n50: ",
-        "src/Eccube/Repository/OrderRepository.php:1802\n1799:     {\n1800:         $qb = $this->createQueryBuilder('o');\n1801:         $qb->select('o, bi')\n1802:             ->where('o.order_date < :targetDateTime')\n1803:             ->join('o.baseInfo', 'bi')\n1804:             ->andWhere('bi.smaregi_shop_id IS NOT NULL')\n1805:             ->andWhere('bi.smaregi_shop_code IS NOT NULL')",
+        "src/Eccube/Repository/OrderRepository.php:1802\n1799:                 AND ota.tag_sales_analysis_id = :tagId\n1800:                 {$baseInfoCondition}\n1801:             GROUP BY EXTRACT(DAY FROM o.order_date)\n1802:         SQL;\n1803: \n1804:         $rsm = new ResultSetMapping();\n1805:         $rsm->addScalarResult('day', 'day', Types::INTEGER)",
         "src/Eccube/Command/OtcOrderSmaregiPostCommand.php:26\n23: use Symfony\\Component\\Console\\Style\\SymfonyStyle;\n24: \n25: #[AsCommand(name: 'eccube:order:otc-smaregi-post', description: '店頭受取注文のスマレジ連携バッチ')]\n26: class OtcOrderSmaregiPostCommand extends Command\n27: {\n28:     public function __construct(\n29:         private readonly SmaregiOtcOrderPostAction $smaregiOtcOrderPostAction,"
       ],
       "auditChecklist": [
@@ -109,7 +109,7 @@
       "implementationSnippets": [
         "src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:58\n55:             $orderNumber = $Order->getOrderNumber();\n56: \n57:             // スマレジ商品用バーコードの採番\n58:             $smaregiCode = $this->getProductBarcode('20', '1', sprintf('%03d', $smaregiShopId), $orderNumber);\n59:             // スマレジ用商品コード(バーコード)登録\n60:             $Order->setSmaregiCode($smaregiCode);\n61:             $this->entityManager->persist($Order);",
         "src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:94\n91:      *\n92:      * @return string\n93:      */\n94:     public function getProductBarcode(string $inStoreCode, string $extension, string $shopCode, string $orderNumber): string\n95:     {\n96:         // CheckDigit付与前のJANコード\n97:         $janCode = $inStoreCode.$extension.$shopCode.substr($orderNumber, -6);",
-        "src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:77\n74:         }\n75: \n76:         try {\n77:             $productCode = $Order->getSmaregiCode();\n78:             if ($productCode === null || $productCode === '') {\n79:                 $productCode = $this->productCodeGenerator->generate($storeId, $orderNumber);\n80:             }"
+        "src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:77\n74: \n75:         try {\n76:             $productCode = $Order->getSmaregiCode();\n77:             if ($productCode === null || $productCode === '') {\n78:                 $productCode = $this->productCodeGenerator->generate($storeId, $orderNumber);\n79:             }\n80:         } catch (\\InvalidArgumentException $e) {"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -161,7 +161,7 @@
       "implementationSnippets": [
         "src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:96\n93:                     return;\n94:                 }\n95: \n96:                 $categoryId = $this->resolveSmaregiCategoryId();\n97:                 if ($categoryId === '') {\n98:                     $this->failJob($Job, '追加システム設定のスマレジ部門ID (smaregi_category_id) が未設定のため処理不能');\n99: ",
         "src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:153\n150:         ]);\n151:     }\n152: \n153:     private function resolveSmaregiCategoryId(): string\n154:     {\n155:         $Option = $this->mtbOptionRepository->findOneBy(['option_key' => MtbOption::SMAREGI_CATEGORY_ID]);\n156:         if (!$Option instanceof MtbOption) {",
-        "src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250\n247:     /**\n248:      * @return array<string,string>\n249:      */\n250:     private function buildProductBody(Order $Order, string $productCode, string $categoryId): array\n251:     {\n252:         $name = SmaregiFieldFormatter::truncateProductName(\n253:             sprintf('店頭受取 %s', (string) ($Order->getOrderNumber() ?? '')),"
+        "src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250\n247:     {\n248:         return $statusCode >= 200 && $statusCode < 300;\n249:     }\n250: \n251:     private function markError(Order $Order, string $message): void\n252:     {\n253:         $this->logger->error($message, ["
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -215,8 +215,8 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250\n247:     /**\n248:      * @return array<string,string>\n249:      */\n250:     private function buildProductBody(Order $Order, string $productCode, string $categoryId): array\n251:     {\n252:         $name = SmaregiFieldFormatter::truncateProductName(\n253:             sprintf('店頭受取 %s', (string) ($Order->getOrderNumber() ?? '')),",
-        "src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:41\n38:  * API 呼び出し失敗時は smaregi_error_flg を true にし、{@see SmaregiOtcSyncResult} を返す。\n39:  * エラー受注は次回バッチで自動再試行しない方針 (運用側でのフラグ解除を前提)。\n40:  */\n41: final readonly class SmaregiOtcOrderSyncService\n42: {\n43:     public function __construct(\n44:         private LoggerInterface $logger,"
+        "src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:250\n247:     {\n248:         return $statusCode >= 200 && $statusCode < 300;\n249:     }\n250: \n251:     private function markError(Order $Order, string $message): void\n252:     {\n253:         $this->logger->error($message, [",
+        "src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:39\n36:  * API 呼び出し失敗時は smaregi_error_flg を true にし、{@see SmaregiOtcSyncResult} を返す。\n37:  * エラー受注は次回バッチで自動再試行しない方針 (運用側でのフラグ解除を前提)。\n38:  */\n39: final readonly class SmaregiOtcOrderSyncService\n40: {\n41:     public function __construct(\n42:         private LoggerInterface $logger,"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -347,7 +347,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 98,
+    "extractedRequirementCount": 103,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -459,6 +459,45 @@
         "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
         "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
         "designRequirement": "遷移一覧（3件）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-db2065a29e",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "6（0405:注文番号登録!AC24）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-5bc2ce3ca2",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "12（0405:注文番号登録!K24）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-ba05f31f30",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "35（0405:注文番号登録!K55）",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1092,6 +1131,32 @@
         "coveredByFinding": true
       },
       {
+        "id": "b05-01_0405_sheet-3_sheet-req-437a12e801",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "0405:注文番号登録!AJ20",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "b05-01_0405_sheet-3_sheet-req-ada60d0880",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "0405:注文番号登録!AJ50",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
         "id": "b05-01_0405_sheet-3_sheet-req-d32163cca4",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
@@ -1696,6 +1761,14 @@
         "term": "order_id",
         "termType": "routeName",
         "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbOrderHistory.php:26",
+        "snippet": "#[ORM\\Index(name: 'dtb_order_history_order_id_idx', columns: ['order_id'])]",
+        "weight": 5
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
         "ref": "src/Eccube/Entity/DtbPointHistory.php:38",
         "snippet": "#[ORM\\JoinColumn(name: 'order_id', nullable: true, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => '注文ID'])]",
         "weight": 5
@@ -1709,26 +1782,10 @@
         "weight": 5
       },
       {
-        "term": "order_id",
-        "termType": "routeName",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/DtbUserMailHistory.php:46",
-        "snippet": "#[ORM\\JoinColumn(name: 'order_id', nullable: true, referencedColumnName: 'id')]",
-        "weight": 5
-      },
-      {
-        "term": "order_number",
-        "termType": "routeName",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:1733",
-        "snippet": "return $this->order_number;",
-        "weight": 5
-      },
-      {
         "term": "smaregi_code",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:1925",
+        "ref": "src/Eccube/Entity/Order.php:1963",
         "snippet": "return $this->smaregi_code;",
         "weight": 5
       },
@@ -1744,7 +1801,7 @@
         "term": "order_number",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:633",
+        "ref": "src/Eccube/Entity/Order.php:648",
         "snippet": "#[ORM\\Column(name: 'order_number', type: Types::STRING, length: 11, nullable: true, options: ['unsigned' => true, 'comment' => '注文番号'])]",
         "weight": 5
       },
@@ -1752,7 +1809,7 @@
         "term": "order_number",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:634",
+        "ref": "src/Eccube/Entity/Order.php:649",
         "snippet": "private ?string $order_number = null;",
         "weight": 5
       },
@@ -1760,7 +1817,7 @@
         "term": "smaregi_code",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:685",
+        "ref": "src/Eccube/Entity/Order.php:700",
         "snippet": "#[ORM\\Column(name: 'smaregi_code', type: Types::STRING, length: 20, nullable: true, options: ['comment' => 'スマレジ用商品コード'])]",
         "weight": 5
       },
@@ -1768,7 +1825,7 @@
         "term": "smaregi_code",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:686",
+        "ref": "src/Eccube/Entity/Order.php:701",
         "snippet": "private ?string $smaregi_code = null;",
         "weight": 5
       },
@@ -1778,6 +1835,14 @@
         "role": "Entity",
         "ref": "src/Eccube/Entity/Order.php:79",
         "snippet": "* @method Order setSmaregiCode(?string $smaregi_code)",
+        "weight": 5
+      },
+      {
+        "term": "order_number",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:791",
+        "snippet": "* 統合グループに含まれる全受注の order_number を id 昇順で格納。",
         "weight": 5
       },
       {
@@ -2079,13 +2144,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 97,
-    "verdictedCount": 97,
+    "requirementCount": 102,
+    "verdictedCount": 102,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 97,
+      "実装済み": 102,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -2225,6 +2290,54 @@
         "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
         "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
         "designRequirement": "遷移一覧（3件）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-db2065a29e",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "6（0405:注文番号登録!AC24）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-5bc2ce3ca2",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "12（0405:注文番号登録!K24）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-ba05f31f30",
+        "category": "画面遷移図をExcel図形座標で再構成（画面 4件 / 遷移 3件 / 元コネクタ 3件）",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "35（0405:注文番号登録!K55）",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3002,6 +3115,38 @@
         "auditNote": "確定所見が本要求をカバー済み。",
         "conformanceBucket": "実装済み",
         "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-437a12e801",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "0405:注文番号登録!AJ20",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "b05-01_0405_sheet-3_sheet-req-ada60d0880",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-3",
+        "designRequirement": "0405:注文番号登録!AJ50",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
         "elementLevel": false
       },
       {

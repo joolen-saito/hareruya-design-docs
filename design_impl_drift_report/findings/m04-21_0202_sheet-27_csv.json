@@ -56,7 +56,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Util/SqlUtil.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:160\n157:      */\n158:     private function initializeColumnDefinitions(): void\n159:     {\n160:         $this->productCodeColumn = ColumnDefinitions::productCode()->setRequired(true);\n161:         $this->editQuantityColumn = ColumnDefinitions::editQuantity()->setRequired(true);\n162:         $this->purchaseUnitPriceColumn = ColumnDefinitions::purchaseUnitPrice()->setRequired(true);\n163:     }",
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:160\n157: \n158:             try {\n159:                 $s3Path = sprintf(\n160:                     '%s%s/%s/%d',\n161:                     self::S3_PREFIX,\n162:                     $now->format('Y'),\n163:                     $now->format('m'),",
         "src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:617\n614:      *\n615:      * @return BaseCsvColumn 在庫増減数の列定義\n616:      */\n617:     public static function editQuantity(string $name = '在庫増減数'): BaseCsvColumn\n618:     {\n619:         return self::createUnsignedNumericColumn($name, '在庫増減数');\n620:     }",
         "src/Eccube/Service/Csv/Importer/Validator/NumericValidator.php:22\n19: use Eccube\\Service\\Csv\\Importer\\Model\\CsvValueInterface;\n20: use Eccube\\Util\\SqlUtil;\n21: \n22: /**\n23:  * 0以上の整数であることを検証する ValidatorInterface 実装。\n24:  */\n25: class NumericValidator implements ValidatorInterface"
       ],
@@ -110,8 +110,8 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/change.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:314\n311:                 'description' => trans('admin.product.stock_change_csv.stock_change_quantity_description'),\n312:                 'required' => true,\n313:             ],\n314:             trans('admin.product.stock_change_csv.stock_purchase_price_col') => [\n315:                 'id' => 'stock_purchase_price',\n316:                 'description' => trans('admin.product.stock_change_csv.stock_purchase_price_description'),\n317:                 'required' => true,",
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:162\n159:     {\n160:         $this->productCodeColumn = ColumnDefinitions::productCode()->setRequired(true);\n161:         $this->editQuantityColumn = ColumnDefinitions::editQuantity()->setRequired(true);\n162:         $this->purchaseUnitPriceColumn = ColumnDefinitions::purchaseUnitPrice()->setRequired(true);\n163:     }\n164: \n165:     /**",
+        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:314\n311:                 $input,\n312:             );\n313: \n314:             $importer = new StockChangeCsvImporter(\n315:                 $this->entityManager,\n316:                 $this->translator,\n317:                 $this->eccubeConfig,",
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:162\n159:                 $s3Path = sprintf(\n160:                     '%s%s/%s/%d',\n161:                     self::S3_PREFIX,\n162:                     $now->format('Y'),\n163:                     $now->format('m'),\n164:                     $this->requireStockEditApprovalId(),\n165:                 );",
         "src/Eccube/Resource/template/admin/Stock/change.twig:430\n427:                     <div id=\"ex-stock_change_csv-format\" class=\"card-body\">\n428:                         <table class=\"table table-striped table-bordered\">\n429:                             <tbody>\n430:                             {% for header, key in headers %}\n431:                                 <tr>\n432:                                     <th class=\"w-25 align-middle table-ec-lightGray\" id=\"file_format_box__header--{{ loop.index }}\">{{ header }}\n433:                                         {% if key.required %}"
       ],
       "auditChecklist": [
@@ -161,9 +161,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:301\n298:      *\n299:      * @return array<string, array<string, string|bool>>\n300:      */\n301:     protected function getStockChangeCsvHeader(): array\n302:     {\n303:         return [\n304:             trans('admin.product.stock_change_csv.stock_product_code_col') => [",
-        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:431\n428:     /**\n429:      * 在庫変更CSV雛形ダウンロード\n430:      */\n431:     #[Route(path: '/%eccube_admin_route%/product/stock/change/csv-template', name: 'admin_stock_change_csv_template', methods: ['GET'])]\n432:     public function csvTemplate(): StreamedResponse\n433:     {\n434:         set_time_limit(0);",
-        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:47\n44: use Symfony\\Component\\Routing\\Attribute\\Route;\n45: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n46: \n47: class StockChangeCsvController extends AbstractController\n48: {\n49:     /**\n50:      * ヘッダー行を除いたデータ行の上限（10,000件）に合わせた閾値。"
+        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:301\n298:             );\n299: \n300:             $handler = new StockChangeCsvImportHandler(\n301:                 $this->stockEditApprovalRepository,\n302:                 $this->stockEditApprovalDetailRepository,\n303:                 $this->baseInfoRepository,\n304:                 $this->productStockRepository,",
+        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:431\n428:         if ($BaseInfo === null) {\n429:             return $this->json(['errors' => []]);\n430:         }\n431: \n432:         $errors = [];\n433: \n434:         foreach ($rows as $rowData) {",
+        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:53\n50: use Symfony\\Component\\Routing\\Attribute\\Route;\n51: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n52: \n53: class StockChangeCsvController extends AbstractController\n54: {\n55:     /**\n56:      * ヘッダー行を除いたデータ行の上限（10,000件）に合わせた閾値。"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -282,8 +282,8 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:76\n73:      */\n74:     private array $paginationOption = ['wrap-queries' => true];\n75: \n76:     public function __construct(\n77:         protected ProductStockRepository $productStockRepository,\n78:         protected DtbStockEditApprovalRepository $stockEditApprovalRepository,\n79:         protected DtbStockEditApprovalDetailRepository $stockEditApprovalDetailRepository,",
-        "src/Eccube/Repository/DtbStockEditCsvRepository.php:51\n48:      *\n49:      * @return ?int 在庫編集情報CSVファイルID\n50:      */\n51:     public function insertCsvFilename(array $inputs): ?int\n52:     {\n53:         $sql = <<<EOT\n54: INSERT INTO",
+        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:76\n73:             'admin.csv.error.upload.maxrecord',\n74:             ['%maxRecord%' => 10000]\n75:         );\n76:     }\n77: \n78:     /**\n79:      * @var array<int, mixed>",
+        "src/Eccube/Repository/DtbStockEditCsvRepository.php:51\n48:         $sql = <<<EOT\n49: INSERT INTO\n50:     dtb_stock_edit_csv\n51: (\n52:     file_name,\n53:     s3_object_key,\n54:     create_date,",
         "src/Eccube/Repository/DtbCsvImportHistoryRepository.php:79\n76:      *\n77:      * @return DtbCsvImportHistory[]\n78:      */\n79:     public function getRecentCsvImportHistory(int $csvImportType, string $fileName): array\n80:     {\n81:         $createDate = (new \\DateTime())->modify(self::HISTORY_PERIOD)->format('Y-m-d H:i:s');\n82: "
       ],
       "auditChecklist": [
@@ -401,9 +401,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/ProductStockRepository.php:535\n532:      *\n533:      * @return int|null productStockId\n534:      */\n535:     public function getProductStockIdByProductCode(string $productCode, BaseInfo $BaseInfo, int $stockLocationId): ?int\n536:     {\n537:         $qb = $this->createQueryBuilder('ps');\n538:         $qb->select('ps.id')",
-        "src/Eccube/Repository/ProductStockRepository.php:546\n543:             ->setParameter('baseInfo', $BaseInfo)\n544:             ->andWhere('ps.stockLocationId = :stockLocationId')\n545:             ->setParameter('stockLocationId', $stockLocationId)\n546:             ->setMaxResults(1);\n547: \n548:         $result = $qb->getQuery()->getOneOrNullResult();\n549: ",
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:200\n197: \n198:             return 0;\n199:         }\n200:         $productStockId = $this->productStockRepository->getProductStockIdByProductCode($productCode, $BaseInfo, $this->input->changeStockLocationId);\n201:         if ($productStockId === null || $productStockId === 0) {\n202:             $event->getMessageStore()->addRawMessage(\n203:                 sprintf('%d行目: 商品コード「%s」が見つかりません', $row->getRowNumber(), $productCode)"
+        "src/Eccube/Repository/ProductStockRepository.php:535\n532:      * productCodeからproductStockIdを取得する。\n533:      *\n534:      * @return int|null productStockId\n535:      */\n536:     public function getProductStockIdByProductCode(string $productCode, BaseInfo $BaseInfo, int $stockLocationId): ?int\n537:     {\n538:         $qb = $this->createQueryBuilder('ps');",
+        "src/Eccube/Repository/ProductStockRepository.php:546\n543:             ->andWhere('ps.baseInfo = :baseInfo')\n544:             ->setParameter('baseInfo', $BaseInfo)\n545:             ->andWhere('ps.stockLocationId = :stockLocationId')\n546:             ->setParameter('stockLocationId', $stockLocationId)\n547:             ->setMaxResults(1);\n548: \n549:         $result = $qb->getQuery()->getOneOrNullResult();",
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:200\n197:         }\n198: \n199:         $this->clearColumnDefinitions();\n200:     }\n201: \n202:     /**\n203:      * CSVデータ1行を取り込む。"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -452,9 +452,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:212\n209: \n210:         $ProductStock = $this->productStockRepository->find($productStockId);\n211: \n212:         $stock = [\n213:             'productStockId' => $productStockId,\n214:             'editQuantity' => $this->editQuantityColumn->getValue($row),\n215:             'purchaseUnitPrice' => $this->purchaseUnitPriceColumn->getValue($row),",
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:228\n225:             'memberId' => $this->Member->getId(),\n226:         ];\n227: \n228:         $stockChangeId = $repository->insertStockChangeDetail($stock);\n229: \n230:         $this->totalInventoryChange += (int) $this->editQuantityColumn->getValue($row);\n231:         $this->totalCostPriceBefore += $ProductStock !== null ? (int) $ProductStock->getTotalCost() : 0;",
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:230\n227: \n228:         $stockChangeId = $repository->insertStockChangeDetail($stock);\n229: \n230:         $this->totalInventoryChange += (int) $this->editQuantityColumn->getValue($row);\n231:         $this->totalCostPriceBefore += $ProductStock !== null ? (int) $ProductStock->getTotalCost() : 0;\n232:         ++$this->rowCount;\n233: "
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:212\n209:     public function onReadRow(ReadCsvRowEvent $event): bool\n210:     {\n211:         $this->persistStockChange($event);\n212: \n213:         if ($event->isBreakAll()) {\n214:             return false;\n215:         }",
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:228\n225:     protected function getColumns(): array\n226:     {\n227:         return [\n228:             $this->productCodeColumn,\n229:             $this->editQuantityColumn,\n230:             $this->purchaseUnitPriceColumn,\n231:         ];",
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:230\n227:         return [\n228:             $this->productCodeColumn,\n229:             $this->editQuantityColumn,\n230:             $this->purchaseUnitPriceColumn,\n231:         ];\n232:     }\n233: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -511,8 +511,8 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Stock/Util/StockEditApprovalLineItemApprover.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:79\n76:         $this->rowCount = 0;\n77:     }\n78: \n79:     public function onAfterImport(AfterReadEvent $event): void\n80:     {\n81:         parent::onAfterImport($event);\n82: ",
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:228\n225:             'memberId' => $this->Member->getId(),\n226:         ];\n227: \n228:         $stockChangeId = $repository->insertStockChangeDetail($stock);\n229: \n230:         $this->totalInventoryChange += (int) $this->editQuantityColumn->getValue($row);\n231:         $this->totalCostPriceBefore += $ProductStock !== null ? (int) $ProductStock->getTotalCost() : 0;",
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:79\n76:         private StockChangeCsvImportInput $input,\n77:     ) {\n78:         $this->input = $input;\n79:     }\n80: \n81:     public function onBeforeImport(): void\n82:     {",
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:228\n225:     protected function getColumns(): array\n226:     {\n227:         return [\n228:             $this->productCodeColumn,\n229:             $this->editQuantityColumn,\n230:             $this->purchaseUnitPriceColumn,\n231:         ];",
         "src/Eccube/Service/Admin/Stock/Util/StockEditApprovalLineItemApprover.php:54\n51:         }\n52:     }\n53: \n54:     /**\n55:      * 廃棄系承認\n56:      *\n57:      * - 申請時に作成済みの在庫履歴を更新"
       ],
       "auditChecklist": [
@@ -563,7 +563,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/ProductStockEntityManager.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:228\n225:             'memberId' => $this->Member->getId(),\n226:         ];\n227: \n228:         $stockChangeId = $repository->insertStockChangeDetail($stock);\n229: \n230:         $this->totalInventoryChange += (int) $this->editQuantityColumn->getValue($row);\n231:         $this->totalCostPriceBefore += $ProductStock !== null ? (int) $ProductStock->getTotalCost() : 0;",
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:228\n225:     protected function getColumns(): array\n226:     {\n227:         return [\n228:             $this->productCodeColumn,\n229:             $this->editQuantityColumn,\n230:             $this->purchaseUnitPriceColumn,\n231:         ];",
         "src/Eccube/Service/Admin/Stock/Util/StockEditApprovalLineItemApprover.php:111\n108:         $totalCostAfter = bcadd($totalCostBefore, bcmul($purchaseUnitPrice, $editQuantity, 0), 0);\n109:         $unitCostBefore = $ProductStock->getUnitCost();\n110: \n111:         $this->productStockEntityManager->save(\n112:             ProductStock: $ProductStock,\n113:             ProductClass: $ProductStock->getProductClass(),\n114:             BaseInfo: $ProductStock->getBaseInfo(),",
         "src/Eccube/Service/EntityManager/ProductStockEntityManager.php:29\n26:     {\n27:     }\n28: \n29:     public function save(\n30:         ?ProductStock $ProductStock,\n31:         ProductClass $ProductClass,\n32:         BaseInfo $BaseInfo,"
       ],
@@ -619,9 +619,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Doctrine/EventSubscriber/RestockNotificationOnStockHistoryEntityListener.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:208\n205:             }\n206:         }\n207: \n208:         try {\n209:             $inputs = [\n210:                 'stockChangeTypeDetail' => (int) $formData['stock_change_type_detail']->getId(),\n211:                 'approvalNotificationTargetMembers' => (int) $formData['approval_notification_target_members'],",
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:79\n76:         $this->rowCount = 0;\n77:     }\n78: \n79:     public function onAfterImport(AfterReadEvent $event): void\n80:     {\n81:         parent::onAfterImport($event);\n82: ",
-        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:47\n44: use Symfony\\Component\\Routing\\Attribute\\Route;\n45: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n46: \n47: class StockChangeCsvController extends AbstractController\n48: {\n49:     /**\n50:      * ヘッダー行を除いたデータ行の上限（10,000件）に合わせた閾値。"
+        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:208\n205:         return [\n206:             'form' => $form->createView(),\n207:             'headers' => $headers,\n208:             'pagination' => $pagination,\n209:             'stockChangeSummaries' => $stockChangeSummariesByApprovalId,\n210:             'pageMaxis' => $pageMaxis,\n211:             'page_no' => $pageNo,",
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:79\n76:         private StockChangeCsvImportInput $input,\n77:     ) {\n78:         $this->input = $input;\n79:     }\n80: \n81:     public function onBeforeImport(): void\n82:     {",
+        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:53\n50: use Symfony\\Component\\Routing\\Attribute\\Route;\n51: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n52: \n53: class StockChangeCsvController extends AbstractController\n54: {\n55:     /**\n56:      * ヘッダー行を除いたデータ行の上限（10,000件）に合わせた閾値。"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -673,9 +673,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:275\n272:             return $this->redirectToRoute('admin_stock_change_csv_list');\n273:         }\n274: \n275:         $this->addSuccess('admin.common.save_complete', 'admin');\n276: \n277:         return $this->redirectToRoute('admin_stock_change_csv_list');\n278:     }",
-        "src/Eccube/Resource/locale/messages.ja.yaml:1405\n1402: #====================================================================================\n1403: \n1404: # flashメッセージ\n1405: admin.common.save_complete: 保存しました\n1406: admin.common.save_error: 保存に失敗しました\n1407: admin.common.delete_complete: 削除しました\n1408: admin.common.delete_error: 削除に失敗しました",
-        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:47\n44: use Symfony\\Component\\Routing\\Attribute\\Route;\n45: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n46: \n47: class StockChangeCsvController extends AbstractController\n48: {\n49:     /**\n50:      * ヘッダー行を除いたデータ行の上限（10,000件）に合わせた閾値。"
+        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:275\n272:         // バイトレベルで BOM (\\xEF\\xBB\\xBF) を除去する。\n273:         $filePath = $file->getRealPath();\n274:         if ($filePath !== false) {\n275:             $content = file_get_contents($filePath);\n276:             if ($content !== false && str_starts_with($content, \"\\xEF\\xBB\\xBF\")) {\n277:                 file_put_contents($filePath, substr($content, 3));\n278:             }",
+        "src/Eccube/Resource/locale/messages.ja.yaml:1405\n1402: front.shopping.payment_modal.methods.li4: ●銀行振込\n1403: front.shopping.payment_modal.methods.li5: ●郵便振替\n1404: front.shopping.payment_modal.credit.title: \"●クレジットカード<br>下記のクレジットカードがご利用いただけます。\"\n1405: front.shopping.payment_modal.credit.li1: ・Visa\n1406: front.shopping.payment_modal.credit.li2: ・JCB\n1407: front.shopping.payment_modal.credit.li3: ・Mastercard\n1408: front.shopping.payment_modal.credit.li4: ・American Express",
+        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:53\n50: use Symfony\\Component\\Routing\\Attribute\\Route;\n51: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n52: \n53: class StockChangeCsvController extends AbstractController\n54: {\n55:     /**\n56:      * ヘッダー行を除いたデータ行の上限（10,000件）に合わせた閾値。"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -735,9 +735,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:196\n193:             ];\n194:         }\n195: \n196:         log_info('在庫変更CSV登録開始');\n197: \n198:         // UTF-8 BOM 付きファイルをアップロードした場合も処理できるよう、\n199:         // バイトレベルで BOM (\\xEF\\xBB\\xBF) を除去する。",
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:79\n76:         $this->rowCount = 0;\n77:     }\n78: \n79:     public function onAfterImport(AfterReadEvent $event): void\n80:     {\n81:         parent::onAfterImport($event);\n82: ",
-        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:47\n44: use Symfony\\Component\\Routing\\Attribute\\Route;\n45: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n46: \n47: class StockChangeCsvController extends AbstractController\n48: {\n49:     /**\n50:      * ヘッダー行を除いたデータ行の上限（10,000件）に合わせた閾値。"
+        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:196\n193:             $stockChangeSummariesByApprovalId[$stockEditApprovalId] = $summary;\n194:         }\n195: \n196:         $event = new EventArgs(\n197:             [\n198:                 'form' => $form,\n199:                 'pagination' => $pagination,",
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:79\n76:         private StockChangeCsvImportInput $input,\n77:     ) {\n78:         $this->input = $input;\n79:     }\n80: \n81:     public function onBeforeImport(): void\n82:     {",
+        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:53\n50: use Symfony\\Component\\Routing\\Attribute\\Route;\n51: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n52: \n53: class StockChangeCsvController extends AbstractController\n54: {\n55:     /**\n56:      * ヘッダー行を除いたデータ行の上限（10,000件）に合わせた閾値。"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -796,9 +796,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbStockEditCsv.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Resource/template/admin/Stock/change.twig:498\n495:                                                 {{ 'admin.stock.change_csv.history_approval_upapproved'|trans }}\n496:                                             {% endif %}\n497:                                         </td>\n498:                                         <td class=\"align-middle ps-3\"><a href=\"#\">{{ Stock.file_name }}</a></td>\n499:                                         <td class=\"align-middle ps-3\">{{ Stock.base_info }}<br>{{ Stock.change_stock_location }}</td>\n500:                                         <td class=\"align-middle ps-3\">{{ Stock.stock_change_count }}</td>\n501:                                         <td class=\"align-middle ps-3\">{{ Stock.stock_change_qty }}</td>",
-        "src/Eccube/Repository/DtbStockEditCsvRepository.php:51\n48:      *\n49:      * @return ?int 在庫編集情報CSVファイルID\n50:      */\n51:     public function insertCsvFilename(array $inputs): ?int\n52:     {\n53:         $sql = <<<EOT\n54: INSERT INTO",
-        "src/Eccube/Entity/DtbStockEditCsv.php:36\n33:         return $this->id;\n34:     }\n35: \n36:     #[ORM\\Column(name: 'file_name', type: Types::TEXT, nullable: false, options: ['comment' => 'CSVファイル名'])]\n37:     private ?string $fileName = null;\n38: \n39:     public function getFileName(): ?string"
+        "src/Eccube/Resource/template/admin/Stock/change.twig:498\n495:                                         <td class=\"align-middle ps-3\">\n496:                                             {% if StockEditCsv.isDownloadable %}\n497:                                                 <a href=\"{{ url('admin_stock_change_csv_download', { stock_edit_id: StockEditCsv.StockEdit.id }) }}\">{{ StockEditCsv.fileName }}</a>\n498:                                             {% else %}\n499:                                                 {{ StockEditCsv.fileName }}\n500:                                             {% endif %}\n501:                                         </td>",
+        "src/Eccube/Repository/DtbStockEditCsvRepository.php:51\n48:         $sql = <<<EOT\n49: INSERT INTO\n50:     dtb_stock_edit_csv\n51: (\n52:     file_name,\n53:     s3_object_key,\n54:     create_date,",
+        "src/Eccube/Entity/DtbStockEditCsv.php:36\n33:     public function getId(): int\n34:     {\n35:         return $this->id;\n36:     }\n37: \n38:     #[ORM\\Column(name: 'file_name', type: Types::TEXT, nullable: false, options: ['comment' => 'CSVファイル名'])]\n39:     private ?string $fileName = null;"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -854,9 +854,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/change.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbStockEditCsvRepository.php:132\n129:                 dtb_stock_edit_approval sa ON sc.stock_edit_id = sa.id\n130:             INNER JOIN \n131:                 mtb_stock_change_type_detail msd ON sa.stock_change_type_detail_id = msd.id\n132:             ORDER BY\n133:                 sa.id DESC\n134:         ';\n135: ",
-        "src/Eccube/Resource/template/admin/Stock/change.twig:507\n504:                                         <td class=\"align-middle ps-3\">{{ Stock.create_date|date('Y/m/d H:i') }}</td>\n505:                                         <td class=\"align-middle ps-3\">{{ Stock.registered_member }}</td>\n506:                                         <td class=\"align-middle ps-3\">\n507:                                             {% if Stock.approved_at %}\n508:                                                 {{ Stock.approved_at|date('Y/m/d') }}\n509:                                             {% else %}\n510:                                                 -",
-        "src/Eccube/Repository/DtbStockEditCsvRepository.php:28\n25: /**\n26:  * @extends AbstractRepository<DtbStockEditCsv>\n27:  */\n28: class DtbStockEditCsvRepository extends AbstractRepository\n29: {\n30:     public function __construct(\n31:         ManagerRegistry $registry,"
+        "src/Eccube/Repository/DtbStockEditCsvRepository.php:132\n",
+        "src/Eccube/Resource/template/admin/Stock/change.twig:507\n504:                                         <td class=\"align-middle ps-3\">{{ summary.stock_change_qty }}</td>\n505:                                         <td class=\"align-middle ps-3\">&yen;{{ summary.stock_change_total_price | number_format(0, '.', ',') }}</td>\n506:                                         <td class=\"align-middle ps-3\">{{ StockEditCsv.StockEdit.StockChangeTypeDetail.StockChangeType }}/{{ StockEditCsv.StockEdit.StockChangeTypeDetail }}</td>\n507:                                         <td class=\"align-middle ps-3\">{{ StockEditCsv.createDate|date('Y/m/d H:i') }}</td>\n508:                                         <td class=\"align-middle ps-3\">{{ StockEditCsv.Member }}</td>\n509:                                         <td class=\"align-middle ps-3\">\n510:                                             {% if StockEditCsv.StockEdit.approvedAt %}",
+        "src/Eccube/Repository/DtbStockEditCsvRepository.php:26\n23: /**\n24:  * @extends AbstractRepository<DtbStockEditCsv>\n25:  */\n26: class DtbStockEditCsvRepository extends AbstractRepository\n27: {\n28:     public function __construct(\n29:         ManagerRegistry $registry,"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -907,9 +907,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockEditApprovalDetailRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:49\n46:     /** @var CsvColumnInterface 列: 仕入単価 */\n47:     private ?CsvColumnInterface $purchaseUnitPriceColumn = null;\n48: \n49:     private int $totalInventoryChange = 0;\n50:     private int $totalCostPriceBefore = 0;\n51:     private int $rowCount = 0;\n52: ",
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:100\n97:                 RegisteredMember: $this->entityManager->getReference(Member::class, $this->Member->getId()),\n98:                 approvedDate: null,\n99:                 ApprovalMember: null,\n100:                 ProductStockTotalCount: $this->rowCount,\n101:                 InventoryChangeTotalCount: $this->totalInventoryChange,\n102:                 TotalCostPriceBefore: $this->totalCostPriceBefore,\n103:             );",
-        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:230\n227: \n228:         $stockChangeId = $repository->insertStockChangeDetail($stock);\n229: \n230:         $this->totalInventoryChange += (int) $this->editQuantityColumn->getValue($row);\n231:         $this->totalCostPriceBefore += $ProductStock !== null ? (int) $ProductStock->getTotalCost() : 0;\n232:         ++$this->rowCount;\n233: "
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:49\n46:     /** @var CsvColumnInterface 列: 商品コード */\n47:     private ?CsvColumnInterface $productCodeColumn = null;\n48: \n49:     /** @var CsvColumnInterface 列: 在庫増減数 */\n50:     private ?CsvColumnInterface $editQuantityColumn = null;\n51: \n52:     /** @var CsvColumnInterface 列: 仕入単価 */",
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:100\n97:         if ($stockEditApprovalId === null) {\n98:             throw new \\RuntimeException('Failed to insert stock edit approval.');\n99:         }\n100: \n101:         $this->stockEditApprovalId = $stockEditApprovalId;\n102:     }\n103: ",
+        "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:230\n227:         return [\n228:             $this->productCodeColumn,\n229:             $this->editQuantityColumn,\n230:             $this->purchaseUnitPriceColumn,\n231:         ];\n232:     }\n233: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -961,8 +961,8 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockEditApprovalRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:209\n206:         }\n207: \n208:         try {\n209:             $inputs = [\n210:                 'stockChangeTypeDetail' => (int) $formData['stock_change_type_detail']->getId(),\n211:                 'approvalNotificationTargetMembers' => (int) $formData['approval_notification_target_members'],\n212:                 'changeBaseInfo' => (int) $formData['change_base_info']->getId(),",
-        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:211\n208:         try {\n209:             $inputs = [\n210:                 'stockChangeTypeDetail' => (int) $formData['stock_change_type_detail']->getId(),\n211:                 'approvalNotificationTargetMembers' => (int) $formData['approval_notification_target_members'],\n212:                 'changeBaseInfo' => (int) $formData['change_base_info']->getId(),\n213:             ];\n214:             $stockEditId = $this->stockEditApprovalRepository->insertStockChange($inputs);",
+        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:209\n206:             'form' => $form->createView(),\n207:             'headers' => $headers,\n208:             'pagination' => $pagination,\n209:             'stockChangeSummaries' => $stockChangeSummariesByApprovalId,\n210:             'pageMaxis' => $pageMaxis,\n211:             'page_no' => $pageNo,\n212:             'page_count' => $pageCount,",
+        "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:211\n208:             'pagination' => $pagination,\n209:             'stockChangeSummaries' => $stockChangeSummariesByApprovalId,\n210:             'pageMaxis' => $pageMaxis,\n211:             'page_no' => $pageNo,\n212:             'page_count' => $pageCount,\n213:         ];\n214:     }",
         "src/Eccube/Repository/DtbStockEditApprovalRepository.php:48\n45:      */\n46:     public function insertStockChange(array $stockChange): ?int\n47:     {\n48:         $sql = <<<EOT\n49: INSERT INTO\n50:     dtb_stock_edit_approval\n51: ("
       ],
       "auditChecklist": [
@@ -1014,9 +1014,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/change.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbStockEditCsvRepository.php:148\n145:                 'stock_change_count' => $row['stock_change_count'],\n146:                 'stock_change_qty' => $row['stock_change_qty'],\n147:                 'stock_change_total_price' => $row['stock_change_total_price'],\n148:                 'base_info' => $this->baseInfoRepository->get($row['base_info_id']),\n149:                 'change_stock_location' => ProductStock::STOCK_LOCATION_ID_TO_NAME[1],\n150:                 'stock_change_type_detail' => $this->stockChangeTypeRepository->get($row['stock_change_type_id']).'/'.$this->stockChangeTypeDetailRepository->get($row['stock_change_type_detail_id']),\n151:                 'create_date' => $row['create_date'],",
-        "src/Eccube/Repository/DtbStockEditCsvRepository.php:149\n146:                 'stock_change_qty' => $row['stock_change_qty'],\n147:                 'stock_change_total_price' => $row['stock_change_total_price'],\n148:                 'base_info' => $this->baseInfoRepository->get($row['base_info_id']),\n149:                 'change_stock_location' => ProductStock::STOCK_LOCATION_ID_TO_NAME[1],\n150:                 'stock_change_type_detail' => $this->stockChangeTypeRepository->get($row['stock_change_type_id']).'/'.$this->stockChangeTypeDetailRepository->get($row['stock_change_type_detail_id']),\n151:                 'create_date' => $row['create_date'],\n152:                 'registered_member' => $this->memberRepository->find($row['member_id']),",
-        "src/Eccube/Resource/template/admin/Stock/change.twig:499\n496:                                             {% endif %}\n497:                                         </td>\n498:                                         <td class=\"align-middle ps-3\"><a href=\"#\">{{ Stock.file_name }}</a></td>\n499:                                         <td class=\"align-middle ps-3\">{{ Stock.base_info }}<br>{{ Stock.change_stock_location }}</td>\n500:                                         <td class=\"align-middle ps-3\">{{ Stock.stock_change_count }}</td>\n501:                                         <td class=\"align-middle ps-3\">{{ Stock.stock_change_qty }}</td>\n502:                                         <td class=\"align-middle ps-3\">&yen;{{ Stock.stock_change_total_price | number_format(0, '.', ',') }}</td>"
+        "src/Eccube/Repository/DtbStockEditCsvRepository.php:148\n",
+        "src/Eccube/Repository/DtbStockEditCsvRepository.php:149\n",
+        "src/Eccube/Resource/template/admin/Stock/change.twig:499\n496:                                             {% if StockEditCsv.isDownloadable %}\n497:                                                 <a href=\"{{ url('admin_stock_change_csv_download', { stock_edit_id: StockEditCsv.StockEdit.id }) }}\">{{ StockEditCsv.fileName }}</a>\n498:                                             {% else %}\n499:                                                 {{ StockEditCsv.fileName }}\n500:                                             {% endif %}\n501:                                         </td>\n502:                                         <td class=\"align-middle ps-3\">{{ StockEditCsv.StockEdit.baseInfo }}<br>{{ summary.stock_location_name }}</td>"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -2204,10 +2204,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-9eec39b202",
+        "id": "m04-21_0202_sheet-27_csv-req-c53f80f919",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "M04-21 在庫変更CSV登録 / M04-21（在庫変更CSV登録）",
+        "designRequirement": "0202:在庫変更CSV登録!AM20",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2217,10 +2217,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-e34c0a3788",
+        "id": "m04-21_0202_sheet-27_csv-req-f914c0dbea",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "在庫変更CSV登録は、商品コードと在庫増減数の2列からなるCSVファイルと共通の変更理由を受け取り、1行ずつ該当規格の在庫数を増減して更新する機能である。更新ごとに在庫変更履歴を記録し、在庫が0から増えた規格には入荷通知メールを送り、更新後在庫を支店へ通知する。画面にはアップロードフォーム、ファイルフォーマット表、雛形ダウンロード、取込履歴を表示する。",
+        "designRequirement": "0202:在庫変更CSV登録!B170",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2230,10 +2230,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-cb2b9e31e1",
+        "id": "m04-21_0202_sheet-27_csv-req-39dee8124c",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。HareruyaEc プラグインの実装を確認値とする。",
+        "designRequirement": "0202:在庫変更CSV登録!AO27",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2243,10 +2243,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-bb974583b7",
+        "id": "m04-21_0202_sheet-27_csv-req-4a62ab03ce",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "在庫変更CSVアップロード画面の入口と、アップロードフォーム・変更理由・フォーマット・雛形・取込履歴の表示",
+        "designRequirement": "0202:在庫変更CSV登録!B172",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2256,10 +2256,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-c49f9c5219",
+        "id": "m04-21_0202_sheet-27_csv-req-ba021099aa",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "アップロード時の検証順序（ファイル必須・サイズ・形式・同名重複・行数上限）",
+        "designRequirement": "0202:在庫変更CSV登録!D30",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2269,10 +2269,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-d517773cee",
+        "id": "m04-21_0202_sheet-27_csv-req-dd1a9bbc27",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "1行ごとの在庫数更新の計算と検証（存在・在庫マイナス・在庫上限・更新ロック）",
+        "designRequirement": "0202:在庫変更CSV登録!B174",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2282,10 +2282,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-8e69b01381",
+        "id": "m04-21_0202_sheet-27_csv-req-12254ff974",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "在庫変更履歴の記録、入荷通知メール、支店在庫連携の発火条件",
+        "designRequirement": "0202:在庫変更CSV登録!G30",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2295,10 +2295,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-5396ba4d23",
+        "id": "m04-21_0202_sheet-27_csv-req-c6527320e2",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
+        "designRequirement": "0202:在庫変更CSV登録!B175",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2308,10 +2308,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-92f454e45a",
+        "id": "m04-21_0202_sheet-27_csv-req-d5e3a7af2d",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "在庫一括編集の画面入力経路（M04-03 を正とする）",
+        "designRequirement": "0202:在庫変更CSV登録!K30",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2321,10 +2321,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-8999b59a15",
+        "id": "m04-21_0202_sheet-27_csv-req-59aad887b4",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "入荷通知メールの文面・送信基盤、支店在庫連携の通信仕様",
+        "designRequirement": "0202:在庫変更CSV登録!B176",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2334,10 +2334,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-b98096cf41",
+        "id": "m04-21_0202_sheet-27_csv-req-140881a973",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "DB関連は ec-cube-enterprise を正とする。現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise）でスキーマが異なる主な点を記録する。確認できない点は推測せず要確認として残す。",
+        "designRequirement": "0202:在庫変更CSV登録!N30",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2347,10 +2347,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-285ae3f762",
+        "id": "m04-21_0202_sheet-27_csv-req-13e9583398",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "商品サブ規格テーブルが存在せず dtb_stock_up_quantity テーブルで保持（ec-cube-enterprise 実装で要確認）",
+        "designRequirement": "0202:在庫変更CSV登録!B177",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2360,10 +2360,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-056dc3ccca",
+        "id": "m04-21_0202_sheet-27_csv-req-b71e6c115f",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "移行先 ec-cube-enterprise の在庫変更履歴は原価単価・総原価・承認者・登録者などの列を追加で持つ。本書は現行 pf-eccube3 の取込挙動を扱い、移行先で追加される列・履歴項目は本節に集約する。",
+        "designRequirement": "0202:在庫変更CSV登録!R30",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2373,10 +2373,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-21c5c8b98a",
+        "id": "m04-21_0202_sheet-27_csv-req-91e3069a44",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "アップロードフォーム・変更理由・フォーマット表・雛形リンク・取込履歴を表示する。",
+        "designRequirement": "0202:在庫変更CSV登録!B178",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2386,10 +2386,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-9237de6393",
+        "id": "m04-21_0202_sheet-27_csv-req-34cc617cb8",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "CSVファイルと変更理由を送信",
+        "designRequirement": "0202:在庫変更CSV登録!C10",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2399,10 +2399,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-3a3a6a0017",
+        "id": "m04-21_0202_sheet-27_csv-req-c910fe680c",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "検証後に1行ずつ在庫を更新し、結果メッセージとエラー行を同一画面に表示する。",
+        "designRequirement": "0202:在庫変更CSV登録!B161",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2412,10 +2412,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-df4c6be687",
+        "id": "m04-21_0202_sheet-27_csv-req-d9f9ad51a1",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "在庫変更CSVの雛形を出力する。",
+        "designRequirement": "0202:在庫変更CSV登録!C12",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2425,10 +2425,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-a23d210984",
+        "id": "m04-21_0202_sheet-27_csv-req-07013dfb0d",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "アップロード後も同一画面を再表示し、成功フラッシュまたはエラー一覧を出す。",
+        "designRequirement": "0202:在庫変更CSV登録!B163",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2438,10 +2438,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-dec5121400",
+        "id": "m04-21_0202_sheet-27_csv-req-a75bfcda9e",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "CSVファイル選択欄（受け付けはCSV・TSV相当）、変更理由の入力欄（必須表示）、アップロードボタン、ファイルフォーマット表（列名と必須注記）、雛形ファイルダウンロードリンク、取込履歴一覧。",
+        "designRequirement": "0202:在庫変更CSV登録!C14",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2451,10 +2451,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-9edc3615e9",
+        "id": "m04-21_0202_sheet-27_csv-req-285a82e442",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "アップロード中のスピナー表示領域を持つ。本機能ではモーダル・タブの動的切替は扱わない。",
+        "designRequirement": "0202:在庫変更CSV登録!B164",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2464,10 +2464,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-673ea8ad57",
+        "id": "m04-21_0202_sheet-27_csv-req-a20dda2f61",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "管理画面共通のアップロード用ボックス。変更理由欄は必須を赤字注記で示す。",
+        "designRequirement": "0202:在庫変更CSV登録!F15",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2477,10 +2477,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-810d164ca1",
+        "id": "m04-21_0202_sheet-27_csv-req-6fa531f3fe",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "表示しない。エラーはファイル選択欄付近とフラッシュに表示する。",
+        "designRequirement": "0202:在庫変更CSV登録!B165",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2490,10 +2490,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-a0dcaaf406",
+        "id": "m04-21_0202_sheet-27_csv-req-13e78975fc",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "アップロードフォームと変更理由欄、フォーマット表（商品コード・在庫増減数）、雛形リンク、在庫変更CSV種別の取込履歴を表示する。",
+        "designRequirement": "0202:在庫変更CSV登録!I18",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2503,10 +2503,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-581c2b2423",
+        "id": "m04-21_0202_sheet-27_csv-req-5fae14bce3",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "利用者がCSVファイルと変更理由を送信する。タイムアウトは無効化する。",
+        "designRequirement": "0202:在庫変更CSV登録!B168",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2516,10 +2516,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-6ec207923f",
+        "id": "m04-21_0202_sheet-27_csv-req-6bf69bfd25",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "フォームを検証する。ファイル未選択・サイズ超過・形式不一致・変更理由未入力・変更理由超過があれば、エラーをフラッシュに並べて同一画面を再表示する。",
+        "designRequirement": "0202:在庫変更CSV登録!U49",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2529,10 +2529,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-6acef7c477",
+        "id": "m04-21_0202_sheet-27_csv-req-158008b7b2",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "直近に同じファイル名で在庫変更CSVを取り込んでいれば「直近でアップロードされたファイル名です。ファイルを確認してください。」を表示して中止する。",
+        "designRequirement": "0202:在庫変更CSV登録!B186",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2542,10 +2542,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-40a7164636",
+        "id": "m04-21_0202_sheet-27_csv-req-3c0b83bb17",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "ファイルの行数が上限（5010行）以上なら「…行を超えるCSVファイルは登録できません。」を表示して中止する。",
+        "designRequirement": "0202:在庫変更CSV登録!I17",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2555,10 +2555,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-6971409e5e",
+        "id": "m04-21_0202_sheet-27_csv-req-239f7fa0dc",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "1行ずつ取り込む。各行の処理は後述の判定順序に従う。",
+        "designRequirement": "0202:在庫変更CSV登録!B167",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2568,10 +2568,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-af5b7c78ad",
+        "id": "m04-21_0202_sheet-27_csv-req-c13e28b623",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "取込にエラーがあれば異常終了をログに記録し、結果のエラー行を画面に表示する。",
+        "designRequirement": "0202:在庫変更CSV登録!V29",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2581,10 +2581,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-2dfd12b5db",
+        "id": "m04-21_0202_sheet-27_csv-req-fda9daede0",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "エラーが無ければ「商品登録CSVファイルをアップロードしました。」を表示し、件数つきで完了をログに記録し、ファイル名を在庫変更CSVの取込履歴に追加する。",
+        "designRequirement": "0202:在庫変更CSV登録!B179",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2594,10 +2594,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-05f659a3dd",
+        "id": "m04-21_0202_sheet-27_csv-req-f7321cad3c",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "取込完了後、入荷対象があれば入荷通知メールを送り、更新後在庫を支店へ通知する。",
+        "designRequirement": "0202:在庫変更CSV登録!Z30",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2607,10 +2607,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-df344fd3ed",
+        "id": "m04-21_0202_sheet-27_csv-req-215b205d63",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "結果（成功フラッシュまたはエラー行）を同一画面で表示する。",
+        "designRequirement": "0202:在庫変更CSV登録!B180",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2620,10 +2620,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-b3be5dc2f2",
+        "id": "m04-21_0202_sheet-27_csv-req-c8dbdf9648",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "在庫変更CSV取込時の判定順序（1行あたり）",
+        "designRequirement": "0202:在庫変更CSV登録!AC29",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2633,10 +2633,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m04-21_0202_sheet-27_csv-req-8d978b8187",
+        "id": "m04-21_0202_sheet-27_csv-req-ee2f91d78d",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "更新不要として行をスキップする。",
+        "designRequirement": "0202:在庫変更CSV登録!B181",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -2663,7 +2663,10 @@
         "product_code",
         "product_stock_csv_upload",
         "product_csv_template",
+        "StockChangeCsvController",
+        "StockChangeCsvImportHandler",
         "product_code_duplicated",
+        "admin_stock_change_csv_pre_validate",
         "ProductCsvController",
         "admin_product_stock_csv_import",
         "admin_product_stock_csv_upload",
@@ -2683,6 +2686,8 @@
         "admin.product.csv_import.save.complete"
       ],
       "classNames": [
+        "StockChangeCsvController",
+        "StockChangeCsvImportHandler",
         "ProductCsvController",
         "StockCsvImportType",
         "CsvImportType",
@@ -2764,10 +2769,50 @@
         "weight": 7
       },
       {
+        "term": "StockChangeCsvController",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:1",
+        "snippet": "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php",
+        "weight": 7
+      },
+      {
+        "term": "StockChangeCsvController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:1",
+        "snippet": "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php",
+        "weight": 7
+      },
+      {
+        "term": "admin_stock_change_csv_pre_validate",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:410",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/change/pre-validate', name: 'admin_stock_change_csv_pre_validate', methods: ['POST'])]",
+        "weight": 7
+      },
+      {
+        "term": "StockChangeCsvController",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:53",
+        "snippet": "class StockChangeCsvController extends AbstractController",
+        "weight": 7
+      },
+      {
+        "term": "StockChangeCsvController",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:53",
+        "snippet": "class StockChangeCsvController extends AbstractController",
+        "weight": 7
+      },
+      {
         "term": "stock_change_type_detail_id",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbStockApprovalListRepository.php:343",
+        "ref": "src/Eccube/Repository/DtbStockApprovalListRepository.php:372",
         "snippet": "->leftJoin('sa', 'mtb_stock_change_type_detail', 'sctd', 'sa.stock_change_type_detail_id = sctd.id')",
         "weight": 7
       },
@@ -2775,31 +2820,15 @@
         "term": "stock_change_type_id",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbStockApprovalListRepository.php:344",
+        "ref": "src/Eccube/Repository/DtbStockApprovalListRepository.php:373",
         "snippet": "->leftJoin('sctd', 'mtb_stock_change_type', 'sct', 'sctd.stock_change_type_id = sct.id')",
-        "weight": 7
-      },
-      {
-        "term": "stock_change_type_id",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbStockEditCsvRepository.php:125",
-        "snippet": "msd.stock_change_type_id",
-        "weight": 7
-      },
-      {
-        "term": "stock_change_type_id",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbStockEditCsvRepository.php:150",
-        "snippet": "'stock_change_type_detail' => $this->stockChangeTypeRepository->get($row['stock_change_type_id']).'/'.$this->stockChangeTypeDetailRepository->get($row['stock_change_type_detail_id']),",
         "weight": 7
       },
       {
         "term": "stock_change_reason",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/DtbStockHistoryRepository.php:328",
+        "ref": "src/Eccube/Repository/DtbStockHistoryRepository.php:325",
         "snippet": "// stock_change_reason 在庫変動理由・欠品理由",
         "weight": 7
       },
@@ -2828,52 +2857,28 @@
         "weight": 7
       },
       {
-        "term": "product_code_duplicated",
+        "term": "admin_stock_change_csv_pre_validate",
         "termType": "routeName",
-        "role": "Service",
-        "ref": "src/Eccube/Service/Csv/Importer/Event/StockMoveDifferentialImportHandler.php:205",
-        "snippet": "'admin.stock.move.differential_csv_import.product_code_duplicated',",
+        "role": "Twig",
+        "ref": "src/Eccube/Resource/template/admin/Stock/change.twig:69",
+        "snippet": "const PRE_VALIDATE_URL = '{{ url('admin_stock_change_csv_pre_validate') }}';",
         "weight": 7
       },
       {
-        "term": "product_code_duplicated",
+        "term": "StockChangeCsvImportHandler",
         "termType": "routeName",
         "role": "Service",
-        "ref": "src/Eccube/Service/Csv/Importer/Event/StockMoveShortageImportHandler.php:208",
-        "snippet": "'admin.stock.move.shortage_csv_import.product_code_duplicated',",
+        "ref": "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:1",
+        "snippet": "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php",
         "weight": 7
       },
       {
-        "term": "product_code_duplicated",
-        "termType": "routeName",
+        "term": "StockChangeCsvImportHandler",
+        "termType": "className",
         "role": "Service",
-        "ref": "src/Eccube/Service/Csv/Importer/MessageStore.php:300",
-        "snippet": "$this->addMessage('admin.csv.error.product.product_code_duplicated', $rowNumber, $value);",
+        "ref": "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:1",
+        "snippet": "src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php",
         "weight": 7
-      },
-      {
-        "term": "admin.csv.error.upload.maxrecord",
-        "termType": "translationKey",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/AbstractController.php:445",
-        "snippet": "'admin.csv.error.upload.maxrecord',",
-        "weight": 6
-      },
-      {
-        "term": "admin.csv.error.upload.require",
-        "termType": "translationKey",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:79",
-        "snippet": "return $this->renderWithErrors($form, [$this->translator->trans('admin.csv.error.upload.require')]);",
-        "weight": 6
-      },
-      {
-        "term": "admin.csv.error.upload.maxrecord",
-        "termType": "translationKey",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:84",
-        "snippet": "$this->translator->trans('admin.csv.error.upload.maxrecord', [",
-        "weight": 6
       }
     ],
     "searchedAreas": [
@@ -3583,7 +3588,7 @@
     "verdictedCount": 120,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
       "実装済み": 120,
       "要確認": 0,
@@ -4969,10 +4974,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-9eec39b202",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-c53f80f919",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "M04-21 在庫変更CSV登録 / M04-21（在庫変更CSV登録）",
+        "designRequirement": "0202:在庫変更CSV登録!AM20",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4985,42 +4990,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-e34c0a3788",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-f914c0dbea",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "在庫変更CSV登録は、商品コードと在庫増減数の2列からなるCSVファイルと共通の変更理由を受け取り、1行ずつ該当規格の在庫数を増減して更新する機能である。更新ごとに在庫変更履歴を記録し、在庫が0から増えた規格には入荷通知メールを送り、更新後在庫を支店へ通知する。画面にはアップロードフォーム、ファイルフォーマット表、雛形ダウンロード、取込履歴を表示する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-cb2b9e31e1",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。HareruyaEc プラグインの実装を確認値とする。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-bb974583b7",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "在庫変更CSVアップロード画面の入口と、アップロードフォーム・変更理由・フォーマット・雛形・取込履歴の表示",
+        "designRequirement": "0202:在庫変更CSV登録!B170",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5033,10 +5006,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-c49f9c5219",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-39dee8124c",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "アップロード時の検証順序（ファイル必須・サイズ・形式・同名重複・行数上限）",
+        "designRequirement": "0202:在庫変更CSV登録!AO27",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5049,10 +5022,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-d517773cee",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-4a62ab03ce",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "1行ごとの在庫数更新の計算と検証（存在・在庫マイナス・在庫上限・更新ロック）",
+        "designRequirement": "0202:在庫変更CSV登録!B172",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5065,10 +5038,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-8e69b01381",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-ba021099aa",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "在庫変更履歴の記録、入荷通知メール、支店在庫連携の発火条件",
+        "designRequirement": "0202:在庫変更CSV登録!D30",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5081,26 +5054,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-5396ba4d23",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-dd1a9bbc27",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "以下は本書では仕様確定せず、実装または別機能の設計を正とする。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-92f454e45a",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "在庫一括編集の画面入力経路（M04-03 を正とする）",
+        "designRequirement": "0202:在庫変更CSV登録!B174",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5113,10 +5070,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-8999b59a15",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-12254ff974",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "入荷通知メールの文面・送信基盤、支店在庫連携の通信仕様",
+        "designRequirement": "0202:在庫変更CSV登録!G30",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5129,42 +5086,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-b98096cf41",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-c6527320e2",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "DB関連は ec-cube-enterprise を正とする。現行（pf-eccube3 の HareruyaEc プラグイン）と移行先（ec-cube-enterprise）でスキーマが異なる主な点を記録する。確認できない点は推測せず要確認として残す。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-285ae3f762",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "商品サブ規格テーブルが存在せず dtb_stock_up_quantity テーブルで保持（ec-cube-enterprise 実装で要確認）",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-056dc3ccca",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "移行先 ec-cube-enterprise の在庫変更履歴は原価単価・総原価・承認者・登録者などの列を追加で持つ。本書は現行 pf-eccube3 の取込挙動を扱い、移行先で追加される列・履歴項目は本節に集約する。",
+        "designRequirement": "0202:在庫変更CSV登録!B175",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5177,26 +5102,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-21c5c8b98a",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-d5e3a7af2d",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "アップロードフォーム・変更理由・フォーマット表・雛形リンク・取込履歴を表示する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-9237de6393",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "CSVファイルと変更理由を送信",
+        "designRequirement": "0202:在庫変更CSV登録!K30",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5209,26 +5118,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-3a3a6a0017",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-59aad887b4",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "検証後に1行ずつ在庫を更新し、結果メッセージとエラー行を同一画面に表示する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-df4c6be687",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "在庫変更CSVの雛形を出力する。",
+        "designRequirement": "0202:在庫変更CSV登録!B176",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5241,10 +5134,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-a23d210984",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-140881a973",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "アップロード後も同一画面を再表示し、成功フラッシュまたはエラー一覧を出す。",
+        "designRequirement": "0202:在庫変更CSV登録!N30",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5257,42 +5150,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-dec5121400",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-13e9583398",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "CSVファイル選択欄（受け付けはCSV・TSV相当）、変更理由の入力欄（必須表示）、アップロードボタン、ファイルフォーマット表（列名と必須注記）、雛形ファイルダウンロードリンク、取込履歴一覧。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-9edc3615e9",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "アップロード中のスピナー表示領域を持つ。本機能ではモーダル・タブの動的切替は扱わない。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-673ea8ad57",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "管理画面共通のアップロード用ボックス。変更理由欄は必須を赤字注記で示す。",
+        "designRequirement": "0202:在庫変更CSV登録!B177",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5305,42 +5166,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-810d164ca1",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-b71e6c115f",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "表示しない。エラーはファイル選択欄付近とフラッシュに表示する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-a0dcaaf406",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "アップロードフォームと変更理由欄、フォーマット表（商品コード・在庫増減数）、雛形リンク、在庫変更CSV種別の取込履歴を表示する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-581c2b2423",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "利用者がCSVファイルと変更理由を送信する。タイムアウトは無効化する。",
+        "designRequirement": "0202:在庫変更CSV登録!R30",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5353,26 +5182,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-6ec207923f",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-91e3069a44",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "フォームを検証する。ファイル未選択・サイズ超過・形式不一致・変更理由未入力・変更理由超過があれば、エラーをフラッシュに並べて同一画面を再表示する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-6acef7c477",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "直近に同じファイル名で在庫変更CSVを取り込んでいれば「直近でアップロードされたファイル名です。ファイルを確認してください。」を表示して中止する。",
+        "designRequirement": "0202:在庫変更CSV登録!B178",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5385,10 +5198,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-40a7164636",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-34cc617cb8",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "ファイルの行数が上限（5010行）以上なら「…行を超えるCSVファイルは登録できません。」を表示して中止する。",
+        "designRequirement": "0202:在庫変更CSV登録!C10",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5401,10 +5214,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-6971409e5e",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-c910fe680c",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "1行ずつ取り込む。各行の処理は後述の判定順序に従う。",
+        "designRequirement": "0202:在庫変更CSV登録!B161",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5417,26 +5230,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-af5b7c78ad",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-d9f9ad51a1",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "取込にエラーがあれば異常終了をログに記録し、結果のエラー行を画面に表示する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-2dfd12b5db",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "エラーが無ければ「商品登録CSVファイルをアップロードしました。」を表示し、件数つきで完了をログに記録し、ファイル名を在庫変更CSVの取込履歴に追加する。",
+        "designRequirement": "0202:在庫変更CSV登録!C12",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5449,10 +5246,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-05f659a3dd",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-07013dfb0d",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "取込完了後、入荷対象があれば入荷通知メールを送り、更新後在庫を支店へ通知する。",
+        "designRequirement": "0202:在庫変更CSV登録!B163",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5465,26 +5262,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-df344fd3ed",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-a75bfcda9e",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "結果（成功フラッシュまたはエラー行）を同一画面で表示する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-b3be5dc2f2",
-        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
-        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "在庫変更CSV取込時の判定順序（1行あたり）",
+        "designRequirement": "0202:在庫変更CSV登録!C14",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -5497,10 +5278,234 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m04-21_0202_sheet-27_csv-req-8d978b8187",
+        "requirementId": "m04-21_0202_sheet-27_csv-req-285a82e442",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
-        "designRequirement": "更新不要として行をスキップする。",
+        "designRequirement": "0202:在庫変更CSV登録!B164",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-a20dda2f61",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!F15",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-6fa531f3fe",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!B165",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-13e78975fc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!I18",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-5fae14bce3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!B168",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-6bf69bfd25",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!U49",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-158008b7b2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!B186",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-3c0b83bb17",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!I17",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-239f7fa0dc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!B167",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-c13e28b623",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!V29",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-fda9daede0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!B179",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-f7321cad3c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!Z30",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-215b205d63",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!B180",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-c8dbdf9648",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!AC29",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-21_0202_sheet-27_csv-req-ee2f91d78d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-27",
+        "designRequirement": "0202:在庫変更CSV登録!B181",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

@@ -32,8 +32,8 @@
         "src/Eccube/Repository/OrderRepository.php:1460-1461"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Order/OrderCsvController.php:202\n199:         // 注文情報IDを取得する\n200:         $rawOrderIds = $request->get('order_ids', []);\n201:         if (!is_array($rawOrderIds) || empty($rawOrderIds)) {\n202:             $this->addError('admin.common.select', 'admin');\n203: \n204:             $referer = $request->headers->get('referer');\n205:             if ($referer !== null && $referer !== '') {",
-        "src/Eccube/Repository/OrderRepository.php:1460\n1457:                 s.name01,\n1458:                 s.name02,\n1459:                 s.kana01,\n1460:                 s.kana02,\n1461:                 s.company_name,\n1462:                 s.postal_code,\n1463:                 s.addr01,"
+        "src/Eccube/Controller/Admin/Order/OrderCsvController.php:202\n199:         set_time_limit(0);\n200:         // SQL Loggerを無効にする\n201:         $em = $this->entityManager;\n202:         $em->getConfiguration()->setSQLLogger(null);\n203:         // 注文情報IDを取得する\n204:         $rawOrderIds = $request->get('order_ids', []);\n205:         if (!is_array($rawOrderIds) || empty($rawOrderIds)) {",
+        "src/Eccube/Repository/OrderRepository.php:1460\n1457:     /**\n1458:      * 受注管理\n1459:      * 出荷実績インポート用CSVに出力する情報を取得\n1460:      *\n1461:      * @param array<int> $orderIdList\n1462:      *\n1463:      * @return array<int, mixed>"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -52,7 +52,7 @@
       "comparisonSummary": "③バリデーション・処理フロー：設計は「キー一覧を整数IDの並びとして解釈する。」。実装は「設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。」。乖離理由は「設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。」。",
       "mismatchReason": "設計はキー一覧を整数IDとして扱うが、実装はarray_keys($rawOrderIds)を整数キャストせず、そのままDQLのo IN (:orders)へ渡す。",
       "requiredChange": "設計書を正とするなら、修正対象の実装を設計の値・処理・列・応答・副作用に合わせる。",
-      "designSnippet": "hareruya-design-docs/function_spec_html_preview/pf-eccube3/m05-24_admin_order_order_shipping_export_for_import.html:236\n233: <hr>\n234: <h2 id=\"処理フロー\">処理フロー</h2>\n235: <h3 id=\"CSVをダウンロードする-admin-order-export-for-input-exportForInput\">CSVをダウンロードする（<code>admin_order_export_for_input</code>、<code>exportForInput</code>）</h3>\n236: <ol><li>管理画面の認証・共通制約を通過する。</li><li><code>set_time_limit(0)</code>でPHPの実行時間制限を無効にする。</li><li>Doctrineの設定からSQLログ出力を無効にする確認値となる。</li><li><code>order_ids</code>を配列として取得する。PHP配列でない、または空のときフラッシュへ<code>admin.common.select</code>を載せ、<code>Referer</code>が空で無ければそこへ、空ならルート名<code>admin_order</code>へリダイレクトする。</li><li>キー一覧を整数IDの並びとして解釈し、出荷実績用CSV生成関数へ渡す。</li><li>返却データが論理偽となるとき実行時論外メッセージを投げる。そのメッセージは翻訳キー<code>admin.csv.error.export.not_registered</code>であり、標準ロケール下の日本語文言は文言上カード領域向けであり受注一覧からは転用読みとなる（実装確認値）。</li><li>論外を捕まえた場合はフラッシュへメッセージを載せ、同様に<code>Referer</code>または<code>admin_order</code>へリダイレクトする。</li><li>成功経路では<code>StreamedResponse</code>を返す。コールバック内で<code>CsvExportService</code>を開く。</li><li>ヘッダ行として、ヘッダ定数の連想キー配列について<code>array_keys</code>の順で1行書く。</li><li>クエリ結果の各行について、そのまま<code>fputcsv</code>へ渡す。 DoctrineのDateTime項目はクエリ関数内で事前に<code>'Y/m/d H:i:s'</code>形式へ書式化済みとなる。</li><li>ストリームを閉じる。</li><li>ファイル名は接頭辞<code>order_</code>、<code>YmdHis</code>桁そろえ日時、拡張子<code>.csv</code>を連結する実装関数を用いる（受注一覧向け自動命名と接頭辞と形式が字面で同一規則である確認値）。</li><li>応答ヘッダに<code>Content-Type: text/csv;charset=&lt;出力エンコーディング&gt;</code>と<code>Content-Disposition: attachment; filename=…</code>を付与する。<code>&lt;出力エンコーディング&gt;</code>は設定<code>eccube_csv_export_encoding</code>がSJIS系と判定される場合のラベルを<code>windows-31j</code>に寄せたりそうでない場合そのまま読む処理である。</li><li>ストリーム返却の手前で情報ログに「CSV出力ファイル名」とファイル名を記録する。</li></ol>\n237: <hr>\n238: <h2 id=\"集計条件\">集計条件</h2>\n239: <p>本機能は金額集計をしない。結果行数および列値は検索関数の結合規則に従う。</p>",
+      "designSnippet": "hareruya-design-docs/function_spec_html_preview/pf-eccube3/m05-24_admin_order_order_shipping_export_for_import.html:236\n233:       margin-right: 8px;\n234:       padding: 2px 9px;\n235:       border-radius: 999px;\n236:       background: #3f5b96;\n237:       color: #fff;\n238:       font-size: 12px;\n239:       font-weight: 700;",
       "auditAspects": [
         "Form・入力項目",
         "Twig・画面表示"
@@ -113,9 +113,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Order/OrderCsvController.php:95\n92:         '配送先_都道府県(名称)' => '配送先_都道府県(名称)',\n93:         '配送先_住所1' => '配送先_住所1',\n94:         '配送先_住所2' => '配送先_住所2',\n95:         '配送先_住所3' => '配送先_住所3',\n96:         '配送先_TEL1' => '配送先_TEL1',\n97:         '配送先_TEL2' => '配送先_TEL2',\n98:         '配送先_TEL3' => '配送先_TEL3',",
-        "src/Eccube/Repository/OrderRepository.php:1418\n1415:                 'sp.name AS shipping_pref_name',\n1416:                 's.addr01 AS shipping_addr01',\n1417:                 's.addr02 AS shipping_addr02',\n1418:                 's.addr03 AS shipping_addr03',\n1419:                 's.tel01 AS shipping_tel01',\n1420:                 's.tel02 AS shipping_tel02',\n1421:                 's.tel03 AS shipping_tel03',",
-        "src/Eccube/Controller/Admin/Order/OrderCsvController.php:30\n27: use Symfony\\Component\\HttpFoundation\\Response;\n28: use Symfony\\Component\\Routing\\Attribute\\Route;\n29: \n30: class OrderCsvController extends AbstractController\n31: {\n32:     public function __construct(\n33:         protected OrderCsv $orderCsv,"
+        "src/Eccube/Controller/Admin/Order/OrderCsvController.php:95\n92:         '配送先_会社名' => '配送先_会社名',\n93:         '配送先_郵便番号1' => '配送先_郵便番号1',\n94:         '配送先_郵便番号2' => '配送先_郵便番号2',\n95:         '配送先_都道府県(ID)' => '配送先_都道府県(ID)',\n96:         '配送先_都道府県(名称)' => '配送先_都道府県(名称)',\n97:         '配送先_住所1' => '配送先_住所1',\n98:         '配送先_住所2' => '配送先_住所2',",
+        "src/Eccube/Repository/OrderRepository.php:1418\n1415:         SELECT\n1416:             o.id AS order_id\n1417:             , o.order_date\n1418:             , o.order_number\n1419:             , TRIM(CONCAT(COALESCE(o.kana01, ''), ' ', COALESCE(o.kana02, ''))) AS name_kana\n1420:             , TRIM(CONCAT(COALESCE(o.name01, ''), ' ', COALESCE(o.name02, ''))) AS name\n1421:             , o.payment_total",
+        "src/Eccube/Controller/Admin/Order/OrderCsvController.php:33\n30: use Symfony\\Component\\HttpFoundation\\Response;\n31: use Symfony\\Component\\Routing\\Attribute\\Route;\n32: \n33: class OrderCsvController extends AbstractController\n34: {\n35:     public function __construct(\n36:         protected OrderCsv $orderCsv,"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -129,7 +129,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 55,
+    "extractedRequirementCount": 58,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -172,10 +172,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-24_0203_sheet-23_csv-req-ad936fa43f",
+        "id": "m05-24_0203_sheet-23_csv-req-9a78f687c8",
         "category": "設計要求",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
-        "designRequirement": "M05-24 出荷実績入力用CSV出力 / m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）",
+        "designRequirement": "M05-24 出荷実績入力用CSV出力 / 受注管理 — 出荷実績入力用CSV出力",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -501,6 +501,45 @@
         "category": "POSTで送られた内部IDのみ。セッションの受注検索条件とは無関係である。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
         "designRequirement": "関数が空とみなされる配列または偽値を返したとき、このコントローラ経路では上記論外となる。すべての指定IDが顧客未紐付け・配送無しなどでクエリ結果に現れなかった場合に該当しうる。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-4f57a80639",
+        "category": "POSTで送られた内部IDのみ。セッションの受注検索条件とは無関係である。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "出力する注文を選択せずにCSV出力したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-cc7a593507",
+        "category": "POSTで送られた内部IDのみ。セッションの受注検索条件とは無関係である。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "エラーを表示し、遷移元画面に遷移する（Refererがない場合は受注一覧画面）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m05-24_0203_sheet-23_csv-req-32e8a7a747",
+        "category": "POSTで送られた内部IDのみ。セッションの受注検索条件とは無関係である。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "選択した注文の出荷実績入力用CSVを出力するとき",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -902,26 +941,10 @@
     "strongSignalCount": 18,
     "candidateRefs": [
       {
-        "term": "OrderCsvController",
-        "termType": "routeName",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:1",
-        "snippet": "src/Eccube/Controller/Admin/Order/OrderCsvController.php",
-        "weight": 7
-      },
-      {
-        "term": "OrderCsvController",
-        "termType": "className",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:1",
-        "snippet": "src/Eccube/Controller/Admin/Order/OrderCsvController.php",
-        "weight": 7
-      },
-      {
         "term": "admin_order_export_for_input",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:191",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:195",
         "snippet": "#[Route(path: '/%eccube_admin_route%/order/export/order', name: 'admin_order_export_for_input', methods: ['GET', 'POST'])]",
         "weight": 7
       },
@@ -929,7 +952,7 @@
         "term": "OrderCsv",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:22",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:24",
         "snippet": "use Eccube\\Service\\Csv\\OrderCsv;",
         "weight": 7
       },
@@ -937,7 +960,7 @@
         "term": "OrderCsv",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:22",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:24",
         "snippet": "use Eccube\\Service\\Csv\\OrderCsv;",
         "weight": 7
       },
@@ -945,7 +968,7 @@
         "term": "OrderCsv",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:33",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:36",
         "snippet": "protected OrderCsv $orderCsv,",
         "weight": 7
       },
@@ -953,7 +976,7 @@
         "term": "OrderCsv",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:33",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderCsvController.php:36",
         "snippet": "protected OrderCsv $orderCsv,",
         "weight": 7
       },
@@ -961,7 +984,7 @@
         "term": "order_ids",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:291",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:344",
         "snippet": "$orderIdList = array_keys($request->get('order_ids', []));",
         "weight": 7
       },
@@ -969,7 +992,7 @@
         "term": "order_ids",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:401",
+        "ref": "src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:469",
         "snippet": "$orderIdList = array_keys($request->get('order_ids', []));",
         "weight": 7
       },
@@ -977,7 +1000,7 @@
         "term": "admin_order",
         "termType": "routeName",
         "role": "Twig",
-        "ref": "src/Eccube/Resource/template/admin/Order/edit.twig:1901",
+        "ref": "src/Eccube/Resource/template/admin/Order/edit.twig:2094",
         "snippet": "<a class=\"c-baseLink\" href=\"{{ url('admin_order', { 'resume': 1 }) }}\"><i class=\"fa fa-backward\" aria-hidden=\"true\"></i><span>{{ 'admin.order.order_list'|trans }}</span></a>",
         "weight": 7
       },
@@ -1043,6 +1066,22 @@
         "role": "Twig",
         "ref": "src/Eccube/Resource/template/admin/index.twig:130",
         "snippet": "<a href=\"{{ url('admin_order', { 'order_status_id': OrderStatus.id }) }}\" class=\"p-3 d-block\">",
+        "weight": 7
+      },
+      {
+        "term": "OrderCsv",
+        "termType": "routeName",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Csv/OrderCsv.php:1",
+        "snippet": "src/Eccube/Service/Csv/OrderCsv.php",
+        "weight": 7
+      },
+      {
+        "term": "OrderCsv",
+        "termType": "className",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Csv/OrderCsv.php:1",
+        "snippet": "src/Eccube/Service/Csv/OrderCsv.php",
         "weight": 7
       }
     ],
@@ -1167,13 +1206,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 55,
-    "verdictedCount": 55,
+    "requirementCount": 58,
+    "verdictedCount": 58,
     "unverdictedCount": 0,
     "coverageComplete": true,
     "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
     "counts": {
-      "実装済み": 55,
+      "実装済み": 58,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -1229,10 +1268,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-24_0203_sheet-23_csv-req-ad936fa43f",
+        "requirementId": "m05-24_0203_sheet-23_csv-req-9a78f687c8",
         "category": "設計要求",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
-        "designRequirement": "M05-24 出荷実績入力用CSV出力 / m05-24_admin_order_order_shipping_export_for_import（管理画面_受注管理_出荷実績入力用CSV出力）",
+        "designRequirement": "M05-24 出荷実績入力用CSV出力 / 受注管理 — 出荷実績入力用CSV出力",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -1633,6 +1672,54 @@
         "category": "POSTで送られた内部IDのみ。セッションの受注検索条件とは無関係である。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
         "designRequirement": "関数が空とみなされる配列または偽値を返したとき、このコントローラ経路では上記論外となる。すべての指定IDが顧客未紐付け・配送無しなどでクエリ結果に現れなかった場合に該当しうる。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-4f57a80639",
+        "category": "POSTで送られた内部IDのみ。セッションの受注検索条件とは無関係である。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "出力する注文を選択せずにCSV出力したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-cc7a593507",
+        "category": "POSTで送られた内部IDのみ。セッションの受注検索条件とは無関係である。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "エラーを表示し、遷移元画面に遷移する（Refererがない場合は受注一覧画面）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m05-24_0203_sheet-23_csv-req-32e8a7a747",
+        "category": "POSTで送られた内部IDのみ。セッションの受注検索条件とは無関係である。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-23",
+        "designRequirement": "選択した注文の出荷実績入力用CSVを出力するとき",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

@@ -74,7 +74,7 @@
       ],
       "implementationSnippets": [
         "src/Eccube/Form/Type/Admin/StockMoveCsvImportType.php:110\n107:                     new Assert\\NotBlank(),\n108:                 ],\n109:             ])\n110:             ->add('import_file', FileType::class, [\n111:                 'label' => false,\n112:                 'mapped' => false,\n113:                 // 非表示 file では HTML5 required だと「not focusable」になるため false。必須は NotBlank で担保する",
-        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:243\n240:             return $this->redirectToRoute('admin_stock_move_transfer');\n241:         }\n242: \n243:         /** @var UploadedFile|null $formFile */\n244:         $formFile = $form->get('import_file')->getData();\n245: \n246:         if ($formFile === null) {",
+        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:243\n240:             'MOVE_TRANSFER_TYPE_TRANSFER' => DtbStockMoveTransfer::MOVE_TRANSFER_TYPE_TRANSFER,\n241:         ];\n242:     }\n243: \n244:     /**\n245:      * 在庫移動CSV登録\n246:      */",
         "src/Eccube/Service/Csv/Importer/CsvImporter.php:138\n135:      */\n136:     protected function createTempFileName(UploadedFile $file): string\n137:     {\n138:         return 'upload_'.StringUtil::random().'.'.$file->getClientOriginalExtension();\n139:     }\n140: \n141:     /**"
       ],
       "auditChecklist": [
@@ -138,9 +138,9 @@
         "src/Eccube/Resource/locale/messages.ja.yaml"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:252\n249:             return $this->redirectToRoute('admin_stock_move_transfer');\n250:         }\n251: \n252:         if ($this->countCsvRows($formFile) >= static::ADMIN_CSV_IMPORT_MAX_ROWS) {\n253:             $this->addError($this->getCsvImportMaxRowsExceededMessage(), 'admin');\n254: \n255:             return $this->redirectToRoute('admin_stock_move_transfer');",
+        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:252\n249:     {\n250:         /** @var Member $Member */\n251:         $Member = $this->getUser();\n252: \n253:         $form = $this->createForm(StockMoveCsvImportType::class);\n254:         $form->handleRequest($request);\n255: ",
         "src/Eccube/Controller/AbstractController.php:364\n361:     protected const ADMIN_CSV_IMPORT_HISTORY_PAGE_COUNT_OPTIONS = [10, 50, 100, 300, 500, 1000, 2000, 10000, 12000];\n362: \n363:     /** @var int */\n364:     protected const ADMIN_CSV_IMPORT_MAX_ROWS = 5010;\n365: \n366:     /**\n367:      * CSVの行数を概算する（ダブルクォート内の改行は除いてカウント）。",
-        "src/Eccube/Resource/locale/messages.ja.yaml:5440\n5437: front.deck.bulk.foil.foil_only: Foilカードのみ\n5438: front.deck.bulk.foil.any: 指定しない\n5439: front.deck.bulk.preference.cheap: 安いカード優先\n5440: front.deck.bulk.preference.expensive: 高いカード優先\n5441: front.deck.bulk.preference.ja: 日本語優先\n5442: front.deck.bulk.preference.en: 英語優先\n5443: front.deck.bulk.preference.normal: 通常カード優先"
+        "src/Eccube/Resource/locale/messages.ja.yaml:5440\n5437: admin.stock.approval_list.line_items.stock_change_type_detail: 在庫変動理由区分\n5438: admin.stock.approval_list.line_items.stock_change_reason: 在庫変動理由\n5439: admin.stock.approval_list.line_items.over_display_limit_csv_hint: 参照している在庫情報が表示上限（%max%件）を超えているため、全件を確認する場合はCSVダウンロードして確認してください。\n5440: admin.stock.approval_list.line_items.product_name: 商品名\n5441: admin.stock.approval_list.line_items.product_code: 商品コード\n5442: admin.stock.approval_list.line_items.store_name: 店舗\n5443: admin.stock.approval_list.line_items.stock_location: 在庫区分"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -213,7 +213,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 100,
+    "extractedRequirementCount": 118,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -429,6 +429,240 @@
         "category": "・ 機能ID: M04-09の「処理概要 初期登録画面」に応じた在庫移動登録処理が行われる",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
         "designRequirement": "ボタン押下時に下記のカラムが記入されているCSVファイルを出力する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-032ef9ba92",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!C11",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-eed634b0ce",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B65",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-febeb79b47",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!R11",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-8a0449f7ae",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B66",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-c6991af322",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!R15",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-8253cf43cd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B68",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-c323d35eea",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!C15",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-96e071f361",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B67",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-e20a2eedc1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!C18",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-b771570fa5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B69",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-67b5c15b95",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!C21",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-98901371dd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B70",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-311b0aa2e2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!Y23",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-10e7a2f592",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B72",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-b45910225a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!C26",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-60b028820b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B76",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-9ec52badb2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!C28",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-22_0202_sheet-28_csv-req-1d44b8f7a5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B77",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1543,7 +1777,7 @@
         "term": "ADMIN_CSV_IMPORT_MAX_ROWS",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:312",
+        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:383",
         "snippet": "if ($this->countCsvRows($formFile) >= static::ADMIN_CSV_IMPORT_MAX_ROWS) {",
         "weight": 7
       },
@@ -1551,7 +1785,7 @@
         "term": "ADMIN_CSV_IMPORT_MAX_ROWS",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:314",
+        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:385",
         "snippet": "$this->translator->trans('admin.csv.error.upload.maxrecord', ['%maxRecord%' => static::ADMIN_CSV_IMPORT_MAX_ROWS]),",
         "weight": 7
       },
@@ -1567,7 +1801,7 @@
         "term": "admin_stock_move_outbound_approval_request",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveController.php:264",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveController.php:294",
         "snippet": "return $this->redirectToRoute('admin_stock_move_outbound_approval_request', ['id' => $StockMove->getId()]);",
         "weight": 7
       },
@@ -1575,7 +1809,7 @@
         "term": "admin_stock_move_outbound_approval_request",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveController.php:272",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveController.php:302",
         "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/move/outbound_approval_request/{id}', requirements: ['id' => '\\d+'], name: 'admin_stock_move_outbound_approval_request', methods: ['GET'])]",
         "weight": 7
       },
@@ -1599,7 +1833,7 @@
         "term": "StockMoveCsvImportType",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:119",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:130",
         "snippet": "$stockMoveCsvImportForm = $this->createForm(StockMoveCsvImportType::class)->createView();",
         "weight": 7
       },
@@ -1607,7 +1841,7 @@
         "term": "StockMoveCsvImportType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:119",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:130",
         "snippet": "$stockMoveCsvImportForm = $this->createForm(StockMoveCsvImportType::class)->createView();",
         "weight": 7
       },
@@ -1615,7 +1849,7 @@
         "term": "StockTransferCsvImportType",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:120",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:131",
         "snippet": "$stockTransferCsvImportForm = $this->createForm(StockTransferCsvImportType::class)->createView();",
         "weight": 7
       },
@@ -1623,7 +1857,7 @@
         "term": "StockTransferCsvImportType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:120",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:131",
         "snippet": "$stockTransferCsvImportForm = $this->createForm(StockTransferCsvImportType::class)->createView();",
         "weight": 7
       },
@@ -1631,7 +1865,7 @@
         "term": "admin_stock_move_transfer_move_csv_import",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:226",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:247",
         "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/move_transfer/move_csv_import', name: 'admin_stock_move_transfer_move_csv_import', methods: ['POST'])]",
         "weight": 7
       },
@@ -1639,7 +1873,7 @@
         "term": "StockMoveCsvImportType",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:26",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:28",
         "snippet": "use Eccube\\Form\\Type\\Admin\\StockMoveCsvImportType;",
         "weight": 7
       },
@@ -1647,7 +1881,7 @@
         "term": "StockMoveCsvImportType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:26",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:28",
         "snippet": "use Eccube\\Form\\Type\\Admin\\StockMoveCsvImportType;",
         "weight": 7
       },
@@ -1655,7 +1889,7 @@
         "term": "StockTransferCsvImportType",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:27",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:29",
         "snippet": "use Eccube\\Form\\Type\\Admin\\StockTransferCsvImportType;",
         "weight": 7
       },
@@ -1663,7 +1897,7 @@
         "term": "StockTransferCsvImportType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:27",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:29",
         "snippet": "use Eccube\\Form\\Type\\Admin\\StockTransferCsvImportType;",
         "weight": 7
       }
@@ -1887,13 +2121,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 93,
-    "verdictedCount": 93,
+    "requirementCount": 111,
+    "verdictedCount": 111,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 93,
+      "実装済み": 111,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -2171,6 +2405,294 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": true
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-032ef9ba92",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!C11",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-eed634b0ce",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B65",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-febeb79b47",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!R11",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-8a0449f7ae",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B66",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-c6991af322",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!R15",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-8253cf43cd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B68",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-c323d35eea",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!C15",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-96e071f361",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B67",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-e20a2eedc1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!C18",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-b771570fa5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B69",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-67b5c15b95",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!C21",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-98901371dd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B70",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-311b0aa2e2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!Y23",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-10e7a2f592",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B72",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-b45910225a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!C26",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-60b028820b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B76",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-9ec52badb2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!C28",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-22_0202_sheet-28_csv-req-1d44b8f7a5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-28",
+        "designRequirement": "0202:在庫移動CSV登録!B77",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
       },
       {
         "requirementId": "m04-22_0202_sheet-28_csv-req-0b4efc0b99",

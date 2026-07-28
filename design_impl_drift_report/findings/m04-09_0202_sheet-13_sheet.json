@@ -67,9 +67,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:301\n298:         $this->addSuccess('admin.register.complete', 'admin');\n299: \n300:         log_info('在庫移動CSV登録完了', ['count' => $result->getCount()]);\n301:         $this->csvImportHistoryRepository->insertCsvImportHistory(\n302:             MtbCsvImportType::STOCK_MOVE_IMPORT_CSV_ID,\n303:             $formFile->getClientOriginalName(),\n304:             $Member->getId()",
-        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:402\n399:             $Member->getId()\n400:         );\n401: \n402:         $stockMoveTransferId = $result->getStockMoveTransferId();\n403:         if ($stockMoveTransferId === null) {\n404:             return $this->redirectToRoute('admin_stock_move_transfer');\n405:         }",
-        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:183\n180:                 }\n181: \n182:                 $searchData = FormUtil::submitAndGetData($searchForm, $viewData);\n183:             } else {\n184:                 // ページ番号がない場合はデフォルト値を設定し、検索条件を保存する\n185:                 $page_no = 1;\n186:                 $viewData = FormUtil::getViewData($searchForm);"
+        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:301\n298:             $this->stockMoveTransferStatusRepository,\n299:             $this->entityManager,\n300:             $this->productStockEntityManager,\n301:             $this->stockHistoryEntityManager,\n302:             $this->stockMoveTransferDetailEntityManager,\n303:             $this->stockMoveTransferEntityManager,\n304:             $this->stockChangeTypeDetailRepository,",
+        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:402\n399:             $this->productStockRepository,\n400:             $TransferBaseInfo,\n401:             $transferStockLocationId,\n402:             $Member,\n403:             $this->stockMoveTransferStatusRepository,\n404:             $this->entityManager,\n405:             $this->productStockEntityManager,",
+        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:183\n180:                 $viewData = $this->session->get(self::SESSION_KEY_SEARCH, []);\n181:                 $searchData = FormUtil::submitAndGetData($searchForm, $viewData);\n182:             } elseif ($page_no !== null) {\n183:                 // ページ番号がある場合はセッションに保存し、検索条件を復元する\n184:                 $this->session->set(self::SESSION_KEY_PAGE_NO, $page_no);\n185:                 $viewData = $this->session->get(self::SESSION_KEY_SEARCH, []);\n186: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -235,9 +235,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:665\n662:         return $this->csvTemplateStreamedResponse(\n663:             $this->csvExportService,\n664:             $this->getStockMoveCsvHeader(),\n665:             'stock_move.csv'\n666:         );\n667:     }\n668: ",
-        "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:66\n63:      *\n64:      * @return array<string, mixed>\n65:      */\n66:     #[Route(path: '/%eccube_admin_route%/product/stock/move-instruction', name: 'admin_stock_move_instruction_list', methods: ['GET', 'POST'])]\n67:     #[Route(path: '/%eccube_admin_route%/product/stock/move-instruction/page/{page_no}', name: 'admin_stock_move_instruction_list_page', requirements: ['page_no' => '\\d+'], methods: ['GET'])]\n68:     #[Template(template: '@admin/Stock/stock_move_instruction_index.twig')]\n69:     public function index(Request $request, PaginatorInterface $paginator, ?int $page_no = null): array",
-        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:67\n64: use Symfony\\Component\\Routing\\Attribute\\Route;\n65: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n66: \n67: class StockMoveTransferController extends AbstractController\n68: {\n69:     private const SESSION_KEY_SEARCH = 'eccube.admin.stock.move_transfer.search';\n70: "
+        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:665\n662:             ];\n663:         }\n664: \n665:         /** @var Member $Member */\n666:         $Member = $this->getUser();\n667:         $errors = $this->stockMoveTransferBarcodeCsvExportService->validateBarcodeCsvExportIds(\n668:             $stockMoveTransferIds,",
+        "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:66\n63:     /**\n64:      * 在庫移動指示一覧（検索・全件表示）\n65:      *\n66:      * @return array<string, mixed>\n67:      */\n68:     #[Route(path: '/%eccube_admin_route%/product/stock/move-instruction', name: 'admin_stock_move_instruction_list', methods: ['GET', 'POST'])]\n69:     #[Route(path: '/%eccube_admin_route%/product/stock/move-instruction/page/{page_no}', name: 'admin_stock_move_instruction_list_page', requirements: ['page_no' => '\\d+'], methods: ['GET'])]",
+        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:69\n66: use Symfony\\Component\\Routing\\Attribute\\Route;\n67: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n68: \n69: class StockMoveTransferController extends AbstractController\n70: {\n71:     private const SESSION_KEY_SEARCH = 'eccube.admin.stock.move_transfer.search';\n72: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -304,8 +304,8 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockMoveTransferRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:474\n471:      * 戻しリストPDF出力\n472:      * 別ウィンドウで表示するため、JSONレスポンスでHTMLを返す\n473:      */\n474:     #[Route(path: '/%eccube_admin_route%/product/stock/move_transfer/return_list_pdf_export', name: 'admin_stock_move_transfer_return_list_pdf_export', methods: ['POST'])]\n475:     public function exportReturnListPdf(Request $request): JsonResponse\n476:     {\n477:         $this->isTokenValid();",
-        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:491\n488:         ]);\n489: \n490:         return $this->json(['success' => true, 'html' => $html]);\n491:     }\n492: \n493:     /**\n494:      * 戻しリスト CSV/PDF 出力の共通バリデーション",
+        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:474\n471:             'base_info' => $BaseInfos,\n472:         ]);\n473:         $searchForm = $builder->getForm();\n474: \n475:         $viewData = $this->session->get(self::SESSION_KEY_SEARCH, []);\n476:         if ($viewData === []) {\n477:             $viewData = FormUtil::getViewData($searchForm);",
+        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:491\n488:             ],\n489:             $request\n490:         );\n491:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_STOCK_MOVE_TRANSFER_MOVE_TRANSFER_CSV_EXPORT);\n492: \n493:         return $response;\n494:     }",
         "src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:115\n112:      *\n113:      * @return list<string>\n114:      */\n115:     public function validateReturnListExportIds(array $stockMoveTransferIds, Member $Member): array\n116:     {\n117:         $uniqueStockMoveTransferIds = array_values(array_unique($stockMoveTransferIds));\n118:         $stockMoveTransfers = $this->stockMoveTransferRepository->getMoveToBaseInfoAndStatusByIds($uniqueStockMoveTransferIds);"
       ],
       "auditChecklist": [
@@ -1935,7 +1935,7 @@
         "term": "admin_stock_move_transfer_page",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:109",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:111",
         "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/move_transfer/page/{page_no}', name: 'admin_stock_move_transfer_page', requirements: ['page_no' => '\\d+'], methods: ['GET'])]",
         "weight": 7
       },
@@ -1943,7 +1943,7 @@
         "term": "stockMoveTransferAggregates",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:152",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:163",
         "snippet": "'stockMoveTransferAggregates' => [],",
         "weight": 7
       },
@@ -1951,7 +1951,7 @@
         "term": "stockMoveTransferAggregates",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:206",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:227",
         "snippet": "$stockMoveTransferAggregates = $this->stockMoveTransferDetailRepository->getAggregatesByStockMoveTransferIds($stockMoveTransferIds);",
         "weight": 7
       },
@@ -1959,7 +1959,7 @@
         "term": "stockMoveTransferAggregates",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:213",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:234",
         "snippet": "'stockMoveTransferAggregates' => $stockMoveTransferAggregates,",
         "weight": 7
       },
@@ -1967,7 +1967,7 @@
         "term": "admin_stock_move_transfer_move_csv_import",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:226",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:247",
         "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/move_transfer/move_csv_import', name: 'admin_stock_move_transfer_move_csv_import', methods: ['POST'])]",
         "weight": 7
       },
@@ -1975,7 +1975,7 @@
         "term": "SearchStockMoveTransferType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:25",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:27",
         "snippet": "use Eccube\\Form\\Type\\Admin\\SearchStockMoveTransferType;",
         "weight": 7
       },
@@ -1983,7 +1983,7 @@
         "term": "admin_stock_move_transfer_transfer_csv_import",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:320",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:355",
         "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/move_transfer/transfer_csv_import', name: 'admin_stock_move_transfer_transfer_csv_import', methods: ['POST'])]",
         "weight": 7
       },
@@ -1991,7 +1991,7 @@
         "term": "admin_stock_move_transfer_csv_export",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:415",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:464",
         "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/move_transfer/csv_export', name: 'admin_stock_move_transfer_csv_export', methods: ['GET'])]",
         "weight": 7
       },
@@ -1999,15 +1999,23 @@
         "term": "admin_stock_move_transfer_return_list_csv_export",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:456",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:526",
         "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/move_transfer/return_list_csv_export', name: 'admin_stock_move_transfer_return_list_csv_export', methods: ['POST'])]",
+        "weight": 7
+      },
+      {
+        "term": "admin_stock_move_transfer_return_list_csv_export",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:545",
+        "snippet": "$this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_STOCK_MOVE_TRANSFER_RETURN_LIST_CSV_EXPORT);",
         "weight": 7
       },
       {
         "term": "admin_stock_move_transfer_return_list_pdf_export",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:474",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:554",
         "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/move_transfer/return_list_pdf_export', name: 'admin_stock_move_transfer_return_list_pdf_export', methods: ['POST'])]",
         "weight": 7
       },
@@ -2015,31 +2023,15 @@
         "term": "admin_stock_move_transfer_page",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:506",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:596",
         "snippet": "$redirectUrl = $this->generateUrl('admin_stock_move_transfer_page', ['page_no' => $pageNo]);",
-        "weight": 7
-      },
-      {
-        "term": "admin_stock_move_transfer_move_csv_template",
-        "termType": "routeName",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:659",
-        "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/move_transfer/move_csv_template', name: 'admin_stock_move_transfer_move_csv_template', methods: ['GET'])]",
-        "weight": 7
-      },
-      {
-        "term": "stock_move",
-        "termType": "routeName",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:665",
-        "snippet": "'stock_move.csv'",
         "weight": 7
       },
       {
         "term": "StockMoveTransferController",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:67",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:69",
         "snippet": "class StockMoveTransferController extends AbstractController",
         "weight": 7
       },
@@ -2047,16 +2039,24 @@
         "term": "StockMoveTransferController",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:67",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:69",
         "snippet": "class StockMoveTransferController extends AbstractController",
         "weight": 7
       },
       {
-        "term": "admin_stock_move_transfer_transfer_csv_template",
+        "term": "admin_stock_move_transfer_move_csv_template",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:683",
-        "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/move_transfer/transfer_csv_template', name: 'admin_stock_move_transfer_transfer_csv_template', methods: ['GET'])]",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:757",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/product/stock/move_transfer/move_csv_template', name: 'admin_stock_move_transfer_move_csv_template', methods: ['GET'])]",
+        "weight": 7
+      },
+      {
+        "term": "stock_move",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:763",
+        "snippet": "'stock_move.csv'",
         "weight": 7
       }
     ],

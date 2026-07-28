@@ -310,7 +310,7 @@ footer {
 <div class="table-wrap"><table><thead><tr><th>項目（フォームキー）</th><th>種別・絞り込み</th></tr></thead><tbody><tr><td>出庫元店舗 <code>move_from_base_info</code></td><td><code>BaseInfo</code> 選択。<code>s.MoveFromBaseInfo</code> 完全一致。</td></tr><tr><td>入庫先店舗 <code>move_to_base_info</code></td><td><code>BaseInfo</code> 選択。<code>s.MoveToBaseInfo</code> 完全一致。</td></tr><tr><td>移動指示ID <code>instruction_id</code></td><td>テキスト。<code>CONCAT(s.id,'') LIKE %値%</code>（部分一致、<code>%</code>・<code>_</code> はエスケープ）。</td></tr><tr><td>在庫移動振替ID <code>stock_move_transfer_id</code></td><td>テキスト。<code>DtbStockMoveTransfer</code>（<code>moveInstructionId = s.id</code>）をJOINし <code>CONCAT(t.id,'') = 値</code>（完全一致、<code>distinct</code>）。</td></tr><tr><td>登録日 <code>create_date_start</code> / <code>create_date_end</code></td><td>日付。<code>createDate &gt;= start</code>、<code>createDate &lt; end+1日</code>。</td></tr><tr><td>更新日 <code>update_date_start</code> / <code>update_date_end</code></td><td>日付。<code>updateDate &gt;= start</code>、<code>updateDate &lt; end+1日</code>。</td></tr><tr><td>発送状況・未 <code>shipment_status_not_done</code></td><td>チェック。送り状No.が NULL または空文字の指示。</td></tr><tr><td>発送状況・済 <code>shipment_status_done</code></td><td>チェック。送り状No.が NULL でなく空文字でない指示。</td></tr></tbody></table></div>
 <p>発送状況は「未のみ」「済のみ」チェック時に絞り込み、両方チェックまたは両方未チェックでは送り状No.条件を付けない。日付は From&gt;To のときフォームの POST_SUBMIT で <code>admin.product.date_range_error</code> を該当 To 欄に付与し検証エラーとする。</p>
 <h3 id="在庫移動指示詳細">在庫移動指示詳細</h3>
-<p><code>admin_stock_move_instruction_detail</code> は対象指示を <code>find($id)</code> で取得（無ければ404）し、<code>StockMoveInstructionDetailType</code>（block prefix <code>admin_stock_move_instruction_detail</code>、CSRFトークンID <code>stock_move_instruction_detail</code>）で送り状No.（<code>trackingNo</code>、<code>Length max=255</code>）・備考（<code>memo</code>、<code>Textarea</code>）を編集する。</p>
+<p><code>admin_stock_move_instruction_detail</code> は対象指示を <code>find($id)</code> で取得（無ければ404）し、<code>StockMoveInstructionDetailType</code>（block prefix <code>admin_stock_move_instruction_detail</code>、CSRFトークンID <code>stock_move_instruction_detail</code>）で送り状No.（<code>trackingNo</code>、<code>Length max=255</code>）・備考（<code>memo</code>、<code>Textarea</code>）を編集する。Excel識別ID 1-9 / 1-14 は両項目を最大16384文字とするため、送り状No.はExcelより実装上限が小さく、備考はフォームにLength制約がないという実装差がある。</p>
 <p>表示項目（読取）: 移動指示ID／発送状況／出庫元店舗／入庫先店舗／登録日／登録者（<code>RegisteredMember.name</code>）／更新日／最終更新者（<code>UpdateMember.name</code>）／基準価格合計（<code>standardTotalPrice</code>）／移動原価合計（<code>outboundTotalCost</code>）／高額商品合計（<code>highTotalPrice</code>）／通常商品合計（<code>regularTotalPrice</code>）。下部に当該指示に紐づく在庫移動一覧（<code>DtbStockMoveTransfer</code> を <code>moveInstructionId</code> で <code>id ASC</code> 取得）を表示。</p>
 <p>POST更新時は <code>StockMoveInstructionDetailUpdateAction</code> が <code>updateDate</code>・<code>UpdateMember</code>（ログインメンバー）を更新し、フォーム上の <code>trackingNo</code> を紐づく在庫移動（<code>DtbStockMoveTransfer.trackingNo</code>）へ同期して <code>flush</code>。成功時は <code>admin.common.save_complete</code> を表示し同詳細へリダイレクト。</p>
 <p>&gt; Excel設計の「送り状No.変更時の未入力（空白のみ）での更新は許可しない」「備考は出庫承認済み/移動中のみ入力可」は基本設計要件。実装では <code>trackingNo</code> は <code>required:false</code>・<code>Length</code> のみで、空白のみ禁止や備考のステータス制御はフォーム/Action上は未確認（実装要確認）。</p>
@@ -543,7 +543,7 @@ M04-25
 1-6登録日ラベル---移動指示リストの登録日
 1-7更新日ラベル---移動指示リストの更新日
 1-8最終更新者ラベル---移動指示リストの最終更新者
-1-9送状No.全角・半角-65535byte-送状No.がある場合に値を表示
+1-9送状No.全角・半角-16384文字-送状No.がある場合に値を表示
 数値だけでなく全角・半角を許容する
 1-10総販売価格の合計ラベル---各在庫移動の持つ全ての商品の販売価格の合計金額
 1-11総移動原価の合計ラベル---各在庫移動の持つ総移動原価の合計金額
@@ -553,7 +553,7 @@ M04-25
 1-13●●円未満の商品の合計ラベル---出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
 項目名も閾値の値を使って、●●円未満の商品と表記する
 商品の基準価格が●●円未満の商品の合計金額
-1-14備考全角・半角-65535byte-メモの入力は入庫完了以外で入力可能
+1-14備考全角・半角-16384文字-メモの入力は入庫完了以外で入力可能
 1-15登録ボタン---備考の変更内容を登録する処理を実行
 1-16削除ボタン---表示中の指示書リストを削除する処理を実行
 出庫待ち状態の場合のみ削除可能

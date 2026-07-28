@@ -302,9 +302,9 @@ footer {
         <h1>M04-21（在庫変更CSV登録）</h1>
       </header>
       
-      <p>商品コードと在庫増減数を並べたCSVをアップロードし、変更理由を添えて各規格の在庫数を一括で増減する取込画面。</p>
+      <p>在庫変更CSVをアップロードし、各規格の在庫数を一括で増減する取込画面。現行pfと刷新後では、CSV列と変更理由の入力方法が異なる。</p>
 <h2 id="概要">概要</h2>
-<p>在庫変更CSV登録は、商品コードと在庫増減数の2列からなるCSVファイルと共通の変更理由を受け取り、1行ずつ該当規格の在庫数を増減して更新する機能である。更新ごとに在庫変更履歴を記録し、在庫が0から増えた規格には入荷通知メールを送り、更新後在庫を支店へ通知する。画面にはアップロードフォーム、ファイルフォーマット表、雛形ダウンロード、取込履歴を表示する。</p>
+<p>現行pfの在庫変更CSV登録は、商品コードと在庫増減数の2列からなるCSVファイルと、画面で入力する共通の変更理由を受け取り、1行ずつ在庫を即時更新する。刷新後のExcel基本設計とec-cube-enterprise実装は、CSVを「商品コード・在庫増減数・仕入単価」の3列とし、在庫変動区分・在庫変動理由・承認通知先を画面で指定して承認待ち情報を登録する。以下では両者を混同せず、現行確認値と刷新後仕様を対比する。</p>
 <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。HareruyaEc プラグインの実装を確認値とする。</p>
 <p>本機能のカスタマイズ区分はカスタマイズである。画面・処理の挙動は現行リポ（pf-eccube3 の HareruyaEc プラグイン）を参照し、DB関連（永続化先のテーブル名・列名・制約）は ec-cube-enterprise を正とする。現行と移行先でスキーマが異なる箇所は「リニューアル移行時の扱い」に集約する。</p>
 <p>対象はブラウザ経由の管理画面に限定する。管理画面プレフィックスは HareruyaEc プラグインの設定キー <code>admin_route</code> で決まるため、本書では <code>%eccube_admin_route%</code> で示す。</p>
@@ -349,9 +349,11 @@ footer {
 <div class="table-wrap"><table><thead><tr><th>項目</th><th>内容</th></tr></thead><tbody><tr><td>新在庫数の計算</td><td>更新後在庫数＝現在庫＋在庫増減数。</td></tr><tr><td>商品コードの解決</td><td>削除フラグが立っていない商品・規格のうち、商品コードが一致する規格を1件取得する。2件以上は重複エラー。</td></tr><tr><td>履歴の理由メモ</td><td>取込全体で共通の変更理由を各履歴のメモに保存する。</td></tr><tr><td>履歴の理由区分</td><td>在庫変更履歴の理由区分はマスタ更新区分とする。</td></tr><tr><td>入荷集計の加算</td><td>更新成立時、規格拡張の入荷集計に増減数を加算する。</td></tr><tr><td>上限・下限</td><td>更新後在庫が0未満になる行はエラー。更新後在庫が在庫桁数上限を超える行はエラー。</td></tr></tbody></table></div>
 <h3 id="入力項目">入力項目</h3>
 <div class="table-wrap"><table><thead><tr><th>項目名</th><th>必須／任意</th><th>最大長</th><th>初期値</th><th>保存先・扱い</th></tr></thead><tbody><tr><td>CSVファイル選択</td><td>必須</td><td>ファイルサイズ上限は設定 <code>csv_size</code>（MB）。形式はCSV相当</td><td>未選択</td><td>アップロードファイル。フォームキー <code>import_file</code>（未マッピング）。必須・サイズ・形式（MIME）を検証。</td></tr><tr><td>変更理由</td><td>必須</td><td>最大1024文字（設定キー <code>inventory_plan.length.memo</code>）</td><td>空</td><td>フォームキー <code>memo</code>。各行の在庫変更履歴の理由列に共通で保存（移行先 <code>dtb_stock_history.stock_change_reason</code>、現行 <code>dtb_stock_history.memo</code>）。</td></tr></tbody></table></div>
-<p>CSVの本文は次の2列で、いずれも必須である。</p>
+<p>現行pfのCSV本文は次の2列で、いずれも必須である。</p>
 <div class="table-wrap"><table><thead><tr><th>CSV列</th><th>内容</th></tr></thead><tbody><tr><td>商品コード</td><td><code>dtb_product_class.product_code</code>。規格の特定キー。</td></tr><tr><td>在庫増減数</td><td>現在庫への加算差分。0はスキップ。</td></tr></tbody></table></div>
 <p>フォーマット表のヘッダは「商品コード（必須）」「在庫増減数（必須）」の2列を表示する。</p>
+<p>刷新後のExcel識別ID 2-1およびec-cube-enterpriseの <code>StockChangeCsvController::getStockChangeCsvHeader()</code> / <code>StockChangeCsvImportHandler</code> は、次の3列を必須とする。旧Excelにあった「在庫変動理由」列は雛形から削除され、理由は画面の共通入力として扱う。</p>
+<div class="table-wrap"><table><thead><tr><th>CSV列</th><th>刷新後の扱い</th></tr></thead><tbody><tr><td>商品コード</td><td>対象の商品在庫を特定する必須列。</td></tr><tr><td>在庫増減数</td><td>必須列。入庫・廃棄の区分に応じて符号と更新後在庫を検証する。</td></tr><tr><td>仕入単価</td><td>必須列。<code>StockChangeCsvImportHandler</code> の列定義でも <code>setRequired(true)</code>。</td></tr></tbody></table></div>
 <h3 id="エッジケース">エッジケース</h3>
 <div class="table-wrap"><table><thead><tr><th>ケース</th><th>扱い</th></tr></thead><tbody><tr><td>在庫増減数0の行</td><td>更新せずスキップする。</td></tr><tr><td>商品コードが見つからない</td><td>マスタ未存在エラーで取込を中断する。</td></tr><tr><td>商品コードが2件以上一致</td><td>商品コード重複エラーで取込を中断する。</td></tr><tr><td>更新ロックが取れない</td><td>更新ロックタイムアウトエラーで取込を中断する。</td></tr><tr><td>更新後在庫が負</td><td>在庫不足エラーで取込を中断する。</td></tr><tr><td>更新後在庫が上限超過</td><td>桁数検証エラーで取込を中断する。</td></tr><tr><td>同名ファイルの再取込</td><td>直近同名なら取込前に中止する。</td></tr><tr><td>行数が上限以上</td><td>行数上限エラーで取込前に中止する。</td></tr></tbody></table></div>
 <hr>

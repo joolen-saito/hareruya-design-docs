@@ -249,7 +249,7 @@
         "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:116\n113:                 $grossSales = (int) ($row['order_amount_order'] ?? 0);\n114:                 $totalCost = (int) ($row['cost'] ?? 0);\n115:                 $saleCount = (int) ($row['buyer_count'] ?? 0);\n116:                 $saleAverage = $saleCount > 0\n117:                     ? (int) round($grossSales / $saleCount, 0, PHP_ROUND_HALF_UP)\n118:                     : 0;\n119: ",
+        "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:116\n113:                 $grossSales = (int) ($row['order_amount_order'] ?? 0);\n114:                 $totalCost = (int) ($row['cost'] ?? 0);\n115:                 $saleCount = (int) ($row['buyer_count'] ?? 0);\n116:                 $saleAverage = $saleCount > 0\n117:                     ? (int) ceil($grossSales / $saleCount)\n118:                     : 0;\n119: ",
         "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:22\n19: use Eccube\\Common\\EccubeConfig;\n20: use Eccube\\Repository\\DtbDailySummaryRepository;\n21: \n22: class BatchAggregateDailySummaryAction\n23: {\n24:     public function __construct(\n25:         private readonly EccubeConfig $eccubeConfig,"
       ],
       "auditChecklist": [
@@ -314,9 +314,9 @@
         "src/Eccube/Controller/Admin/Analysis/SummaryController.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Form/Type/Admin/Analysis/SummaryType.php:26\n23: use Symfony\\Component\\Form\\FormBuilderInterface;\n24: use Symfony\\Component\\OptionsResolver\\OptionsResolver;\n25: \n26: class SummaryType extends AbstractType\n27: {\n28:     public function __construct(\n29:         private readonly BaseInfoRepository $baseInfoRepository,",
+        "src/Eccube/Form/Type/Admin/Analysis/SummaryType.php:28\n25: use Symfony\\Component\\Form\\FormEvents;\n26: use Symfony\\Component\\OptionsResolver\\OptionsResolver;\n27: \n28: class SummaryType extends AbstractType\n29: {\n30:     public function __construct(\n31:         private readonly BaseInfoRepository $baseInfoRepository,",
         "src/Eccube/Resource/template/admin/Analysis/summary.twig:1\n1: {% extends '@admin/default_frame.twig' %}\n2: \n3: {% set menus = ['analysis_menu', summaryMenuKey|default('analysis_summary_daily')] %}\n4: ",
-        "src/Eccube/Controller/Admin/Analysis/SummaryController.php:30\n27: use Symfony\\Component\\HttpFoundation\\StreamedResponse;\n28: use Symfony\\Component\\Routing\\Attribute\\Route;\n29: \n30: class SummaryController extends AbstractController\n31: {\n32:     private const VIEW_KEY = 'admin.summary.search';\n33: "
+        "src/Eccube/Controller/Admin/Analysis/SummaryController.php:33\n30: use Symfony\\Component\\HttpFoundation\\StreamedResponse;\n31: use Symfony\\Component\\Routing\\Attribute\\Route;\n32: \n33: class SummaryController extends AbstractController\n34: {\n35:     private const VIEW_KEY = 'admin.summary.search';\n36: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -416,8 +416,8 @@
         "src/Eccube/Controller/Admin/Analysis/SummaryController.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Analysis/SummaryController.php:194\n191: \n192:         $dateFrom = new \\DateTime('first day of this month');\n193:         $dateTo = new \\DateTime('last day of this month');\n194:         if ($summaryType === 'monthly') {\n195:             $dateFrom->modify('-2 months');\n196:             $dateTo = new \\DateTime('first day of this month');\n197:         }",
-        "src/Eccube/Controller/Admin/Analysis/SummaryController.php:30\n27: use Symfony\\Component\\HttpFoundation\\StreamedResponse;\n28: use Symfony\\Component\\Routing\\Attribute\\Route;\n29: \n30: class SummaryController extends AbstractController\n31: {\n32:     private const VIEW_KEY = 'admin.summary.search';\n33: "
+        "src/Eccube/Controller/Admin/Analysis/SummaryController.php:194\n191:             $dateFrom,\n192:             $dateTo,\n193:             $this->resolveTargetBaseInfoIds(\n194:                 $mailOrderEnabled,\n195:                 is_iterable($viewData['store_sales_targets'] ?? null) ? $viewData['store_sales_targets'] : []\n196:             ),\n197:             $mailOrderEnabled",
+        "src/Eccube/Controller/Admin/Analysis/SummaryController.php:33\n30: use Symfony\\Component\\HttpFoundation\\StreamedResponse;\n31: use Symfony\\Component\\Routing\\Attribute\\Route;\n32: \n33: class SummaryController extends AbstractController\n34: {\n35:     private const VIEW_KEY = 'admin.summary.search';\n36: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -1571,10 +1571,18 @@
         "weight": 7
       },
       {
+        "term": "analysis/summary/result",
+        "termType": "path",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:105",
+        "snippet": "#[Route(path: '/%eccube_admin_route%/analysis/summary/result', name: 'admin_summary_result', methods: ['POST'])]",
+        "weight": 6
+      },
+      {
         "term": "analysis/summary/daily",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:62",
+        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:65",
         "snippet": "#[Route(path: '/%eccube_admin_route%/analysis/summary/daily', name: 'admin_summary_daily', methods: ['GET'])]",
         "weight": 6
       },
@@ -1582,16 +1590,8 @@
         "term": "analysis/summary/monthly",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:72",
+        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:85",
         "snippet": "#[Route(path: '/%eccube_admin_route%/analysis/summary/monthly', name: 'admin_summary_monthly', methods: ['GET'])]",
-        "weight": 6
-      },
-      {
-        "term": "analysis/summary/result",
-        "termType": "path",
-        "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Analysis/SummaryController.php:82",
-        "snippet": "#[Route(path: '/%eccube_admin_route%/analysis/summary/result', name: 'admin_summary_result', methods: ['POST'])]",
         "weight": 6
       },
       {
@@ -1654,15 +1654,7 @@
         "term": "order_date",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:1301",
-        "snippet": "$this->order_date = $orderDate;",
-        "weight": 5
-      },
-      {
-        "term": "order_date",
-        "termType": "routeName",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:132",
+        "ref": "src/Eccube/Entity/Order.php:147",
         "snippet": "#[ORM\\Index(columns: ['order_date'], name: 'dtb_order_order_date_idx')]",
         "weight": 5
       },
@@ -1670,7 +1662,7 @@
         "term": "order_date",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:534",
+        "ref": "src/Eccube/Entity/Order.php:549",
         "snippet": "#[ORM\\Column(name: 'order_date', type: Types::DATETIMETZ_MUTABLE, nullable: true)]",
         "weight": 5
       },
@@ -1678,7 +1670,7 @@
         "term": "order_date",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:535",
+        "ref": "src/Eccube/Entity/Order.php:550",
         "snippet": "private $order_date;",
         "weight": 5
       },
@@ -1686,7 +1678,7 @@
         "term": "customer_id",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:585",
+        "ref": "src/Eccube/Entity/Order.php:600",
         "snippet": "#[ORM\\JoinColumn(name: 'customer_id', referencedColumnName: 'id')]",
         "weight": 5
       },
@@ -1694,7 +1686,7 @@
         "term": "order_status_id",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:616",
+        "ref": "src/Eccube/Entity/Order.php:631",
         "snippet": "#[ORM\\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]",
         "weight": 5
       },
@@ -1702,7 +1694,15 @@
         "term": "order_status_id",
         "termType": "routeName",
         "role": "Entity",
-        "ref": "src/Eccube/Entity/Order.php:623",
+        "ref": "src/Eccube/Entity/Order.php:638",
+        "snippet": "#[ORM\\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]",
+        "weight": 5
+      },
+      {
+        "term": "order_status_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/Order.php:642",
         "snippet": "#[ORM\\JoinColumn(name: 'order_status_id', referencedColumnName: 'id')]",
         "weight": 5
       }
@@ -2022,7 +2022,7 @@
     "verdictedCount": 83,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
       "実装済み": 83,
       "要確認": 0,

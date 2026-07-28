@@ -69,7 +69,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/csv_import.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:56\n53:     ) {\n54:     }\n55: \n56:     #[Route('/%eccube_admin_route%/deck/csv_import', name: 'admin_deck_csv_import', methods: ['GET', 'POST'])]\n57:     public function index(Request $request): Response|RedirectResponse\n58:     {\n59:         $form = $this->createForm(CsvImportType::class);",
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:56\n53:         private readonly MtbDeckTagRepository $deckTagRepository,\n54:         private readonly MtbFormatRepository $formatRepository,\n55:     ) {\n56:     }\n57: \n58:     #[Route('/%eccube_admin_route%/deck/csv_import', name: 'admin_deck_csv_import', methods: ['GET', 'POST'])]\n59:     public function index(Request $request): Response|RedirectResponse",
         "src/Eccube/Resource/template/admin/Deck/index.twig:226\n223:     <div class=\"row justify-content-between mb-2\">\n224:         <div class=\"col\">\n225:             <a class=\"btn btn-ec-conversion\" href=\"{{ url('admin_deck_new') }}\">{{ 'admin.deck.new'|trans }}</a>\n226:             <a href=\"{{ url('admin_deck_csv_import') }}\" class=\"btn btn-ec-conversion\">{{ 'admin.deck.csv_import'|trans }}</a>\n227:         </div>\n228:     </div>\n229: ",
         "src/Eccube/Resource/template/admin/Deck/csv_import.twig:89\n86:                         <div class=\"row\">\n87:                             <div class=\"col-2\"><span>{{ 'admin.common.csv_file_select'|trans }}</span></div>\n88:                             <div class=\"col\">\n89:                                 <form id=\"upload-form\" method=\"post\" action=\"{{ url('admin_deck_csv_import') }}\" enctype=\"multipart/form-data\">\n90:                                     {{ form_widget(form._token) }}\n91:                                     <div class=\"mb-2\">\n92:                                         <button id=\"file-select\" type=\"button\" class=\"btn btn-ec-regular me-2\">{{ 'admin.common.file_select'|trans }}</button>"
       ],
@@ -138,7 +138,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:90\n87:             ]);\n88:         }\n89: \n90:         $extension = strtolower($formFile->getClientOriginalExtension());\n91:         if ($extension !== 'csv') {\n92:             return $this->renderWithErrors($form, [$this->translator->trans('admin.common.csv_upload_error')]);\n93:         }",
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:90\n87:         $formFile = $form->get('import_file')->getData();\n88:         if ($formFile === null) {\n89:             return $this->renderWithErrors($form, [$this->translator->trans('admin.csv.error.upload.require')]);\n90:         }\n91: \n92:         if ($this->countCsvRows($formFile) >= static::ADMIN_CSV_IMPORT_MAX_ROWS) {\n93:             return $this->renderWithErrors($form, [",
         "src/Eccube/Resource/template/admin/Deck/csv_import.twig:94\n91:                                     <div class=\"mb-2\">\n92:                                         <button id=\"file-select\" type=\"button\" class=\"btn btn-ec-regular me-2\">{{ 'admin.common.file_select'|trans }}</button>\n93:                                         <span id=\"admin_csv_import_import_file_name\">{{ 'admin.common.file_select_empty'|trans }}</span>\n94:                                         {{ form_widget(form.import_file, {'attr': {'accept': 'text/csv,.csv', 'class': 'd-none'}}) }}\n95:                                         {{ form_errors(form.import_file) }}\n96:                                     </div>\n97:                                     <button class=\"btn btn-ec-conversion\" id=\"upload-button\" type=\"submit\" disabled>{{ 'admin.common.csv_upload'|trans }}</button>",
         "src/Eccube/Form/Type/Admin/CsvImportType.php:48\n45:     public function buildForm(FormBuilderInterface $builder, array $options): void\n46:     {\n47:         $builder\n48:             ->add('import_file', FileType::class, [\n49:                 'label' => false,\n50:                 'mapped' => false,\n51:                 'required' => true,"
       ],
@@ -209,7 +209,7 @@
         "src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:40\n37: use Symfony\\Component\\HttpFoundation\\Response;\n38: use Symfony\\Component\\Routing\\Attribute\\Route;\n39: \n40: class DeckCsvController extends AbstractCsvImportController\n41: {\n42:     public function __construct(\n43:         private readonly DtbDeckRepository $deckRepository,",
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:42\n39: use Symfony\\Component\\HttpFoundation\\Response;\n40: use Symfony\\Component\\Routing\\Attribute\\Route;\n41: \n42: class DeckCsvController extends AbstractCsvImportController\n43: {\n44:     public function __construct(\n45:         private readonly DtbDeckRepository $deckRepository,",
         "src/Eccube/Resource/template/admin/Deck/csv_import.twig:1\n1: {% extends '@admin/default_frame.twig' %}\n2: \n3: {% set menus = ['deck_management', 'deck_list'] %}\n4: ",
         "src/Eccube/Form/Type/Admin/CsvImportType.php:24\n21: use Symfony\\Component\\Form\\FormBuilderInterface;\n22: use Symfony\\Component\\Validator\\Constraints as Assert;\n23: \n24: class CsvImportType extends AbstractType\n25: {\n26:     /**\n27:      * @var int CSVの最大アップロードサイズ"
       ],
@@ -296,7 +296,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Model/CsvRow.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:158\n155:     /**\n156:      * @return array<string, string>\n157:      */\n158:     private function getCsvHeader(): array\n159:     {\n160:         return [\n161:             'player_name' => 'プレイヤー名',",
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:158\n155:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_DECK_CSV_INDEX_COMPLETE);\n156: \n157:         $this->addSuccess('admin.common.csv_upload_complete', 'admin');\n158: \n159:         return $this->redirectToRoute('admin_deck_csv_import');\n160:     }\n161: ",
         "src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:385\n382:         return [];\n383:     }\n384: \n385:     private function initializeColumns(): void\n386:     {\n387:         $definitions = [\n388:             'player_name' => ['プレイヤー名', true],",
         "src/Eccube/Service/Csv/Importer/Event/BaseCsvImportHandler.php:71\n68:         $columns = $this->columnsCache->get();\n69:         $row = $event->getRow();\n70: \n71:         // 列数が一致しない場合、エラー\n72:         if (count($row) !== count($columns)) {\n73:             $event->getMessageStore()\n74:                 ->addInvalidColumnCountError($row->getRowNumber());"
       ],
@@ -366,9 +366,9 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/csv_import.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:67\n64: \n65:         $form->handleRequest($request);\n66: \n67:         if (!$form->isSubmitted() || !$form->isValid()) {\n68:             $errors = [];\n69:             foreach ($form->getErrors(true) as $error) {\n70:                 $errors[] = $error->getMessage();",
-        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:127\n124: \n125:         try {\n126:             $result = $importer->import($formFile);\n127:         } catch (\\Exception $e) {\n128:             return $this->renderWithErrors($form, [$e->getMessage()]);\n129:         }\n130: ",
-        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:131\n128:             return $this->renderWithErrors($form, [$e->getMessage()]);\n129:         }\n130: \n131:         if ($result->hasError()) {\n132:             $errors = array_map(static fn (array $error): string => $error['message'], $result->getErrors());\n133: \n134:             return $this->renderWithErrors($form, $errors);"
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:67\n64:             [\n65:                 'form' => $form,\n66:             ],\n67:             $request\n68:         );\n69:         $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_DECK_CSV_INDEX_INITIALIZE);\n70: ",
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:127\n124:             $this->formatRepository,\n125:             $User,\n126:         );\n127:         $importer = new CsvImporter(\n128:             $this->entityManager,\n129:             $this->translator,\n130:             $this->eccubeConfig,",
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:131\n128:             $this->entityManager,\n129:             $this->translator,\n130:             $this->eccubeConfig,\n131:             $handler,\n132:             $User,\n133:         );\n134: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -580,7 +580,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 95,
+    "extractedRequirementCount": 97,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -610,10 +610,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m15-06_0212_sheet-13_csv-req-ecc99a7ed9",
+        "id": "m15-06_0212_sheet-13_csv-req-b825c60efb",
         "category": "設計要求",
         "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-13",
-        "designRequirement": "M15-06 デッキ登録CSV / デッキ管理 — デッキ登録 CSV（取込）",
+        "designRequirement": "M15-06 デッキ登録CSV / デッキ管理 — デッキ登録CSV（取込）",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1121,6 +1121,32 @@
         "category": "DB 側トランザクション開始後は行順にヘッダ列長、必須空欄からマスタ照合およびリスト検証（条件付き）へ進む",
         "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-13",
         "designRequirement": "「厳密」オフならリスト内の複数種エラー状態は昇格しないまま処理が継続し得て、オンなら昇格順を switch が固定する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-13_csv-req-323a171388",
+        "category": "DB 側トランザクション開始後は行順にヘッダ列長、必須空欄からマスタ照合およびリスト検証（条件付き）へ進む",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-13",
+        "designRequirement": "デッキ登録用CSVファイルを正常にアップロードしたとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m15-06_0212_sheet-13_csv-req-f5134991be",
+        "category": "DB 側トランザクション開始後は行順にヘッダ列長、必須空欄からマスタ照合およびリスト検証（条件付き）へ進む",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-13",
+        "designRequirement": "デッキ登録 CSV（取込）画面に遷移する",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1874,7 +1900,7 @@
         "term": "DeckCsvController",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:40",
+        "ref": "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:42",
         "snippet": "class DeckCsvController extends AbstractCsvImportController",
         "weight": 7
       },
@@ -1882,7 +1908,7 @@
         "term": "admin_csv_import",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:2265",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:2373",
         "snippet": "$request->files->set('admin_csv_import', ['import_file' => new UploadedFile(",
         "weight": 7
       },
@@ -1890,7 +1916,7 @@
         "term": "admin_csv_import",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:2274",
+        "ref": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:2382",
         "snippet": "$request->request->set('admin_csv_import', [",
         "weight": 7
       },
@@ -1898,8 +1924,8 @@
         "term": "admin_csv_import",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:2275",
-        "snippet": "Constant::TOKEN_NAME => $tokenManager->getToken('admin_csv_import')->getValue(),",
+        "ref": "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:298",
+        "snippet": "'productCsvFormName' => 'admin_csv_import',",
         "weight": 7
       },
       {
@@ -1946,7 +1972,7 @@
         "term": "admin.register.complete",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:118",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:140",
         "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
         "weight": 6
       },
@@ -1954,7 +1980,7 @@
         "term": "admin.register.complete",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:339",
+        "ref": "src/Eccube/Controller/Admin/Product/SectionController.php:410",
         "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
         "weight": 6
       },
@@ -1962,7 +1988,7 @@
         "term": "admin.register.complete",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ShelfNumberController.php:147",
+        "ref": "src/Eccube/Controller/Admin/Product/ShelfNumberController.php:178",
         "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
         "weight": 6
       },
@@ -2808,13 +2834,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 95,
-    "verdictedCount": 95,
+    "requirementCount": 97,
+    "verdictedCount": 97,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 95,
+      "実装済み": 97,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -2854,10 +2880,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m15-06_0212_sheet-13_csv-req-ecc99a7ed9",
+        "requirementId": "m15-06_0212_sheet-13_csv-req-b825c60efb",
         "category": "設計要求",
         "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-13",
-        "designRequirement": "M15-06 デッキ登録CSV / デッキ管理 — デッキ登録 CSV（取込）",
+        "designRequirement": "M15-06 デッキ登録CSV / デッキ管理 — デッキ登録CSV（取込）",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3492,6 +3518,38 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-13_csv-req-323a171388",
+        "category": "DB 側トランザクション開始後は行順にヘッダ列長、必須空欄からマスタ照合およびリスト検証（条件付き）へ進む",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-13",
+        "designRequirement": "デッキ登録用CSVファイルを正常にアップロードしたとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m15-06_0212_sheet-13_csv-req-f5134991be",
+        "category": "DB 側トランザクション開始後は行順にヘッダ列長、必須空欄からマスタ照合およびリスト検証（条件付き）へ進む",
+        "designRef": "excel_to_html/output/0212_基本設計仕様書(デッキ管理).html#sheet-13",
+        "designRequirement": "デッキ登録 CSV（取込）画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
       },
       {
         "requirementId": "m15-06_0212_sheet-13_csv-req-cea75559ad",

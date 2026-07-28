@@ -59,6 +59,15 @@
 
 会員グループは移行先で`dtb_customer_group`（`customer_group_id`参照）として保持する。選手情報の各列名・型はec-cube-enterprise実装を正とし、現行プラグインのフォームキー（`identityConfirmStatus`等）は画面側の確認値とする。
 
+最新のExcel基本設計に記載されたリニューアル後の最大長と、ec-cube-enterpriseで確認できるフォーム制約は次のとおり。Excel値を実装済みとは扱わず、不一致は移行時の実装差分として残す。
+
+| 項目 | Excel基本設計（リニューアル後仕様） | ec-cube-enterprise確認値 | 判定 |
+|------|------------------------------------|---------------------------|------|
+| 会社名 | 50文字 | `eccube_stext_len`の255文字 | 不一致 |
+| 住所1・住所2・住所3 | 各200文字 | `eccube_address1_len`・`address2_len`・`address3_len`の各90文字 | 不一致 |
+| メールアドレス | 255文字 | `eccube_email_len`の254文字 | 不一致 |
+| 退会区分 | 256文字 | `eccube_close_reason_len`およびDB列長の256文字 | 一致・実装済み |
+
 ---
 
 ## 用語
@@ -136,7 +145,7 @@
 | 本人確認ステータスの自動降格 | 確認済み・簡易書留確認済みの会員で本人確認用情報を変更した場合、画面側で本人確認ステータスを未確認へ書き換えてから送信する。 |
 | 氏名カナ・郵便番号の必須解除 | プラグイン拡張で氏名カナ・郵便番号の必須を解除する。 |
 | 海外用郵便番号 | 海外用郵便番号は最大文字数の検証を持つ。 |
-| 住所の桁数 | 住所1・住所2はSJIS換算の長さが上限を超える場合に超過エラーを付ける。 |
+| 住所の桁数 | 現行pf-eccube3では住所1・住所2にSJIS換算の上限検証がある。リニューアル後のExcel仕様は住所1・住所2・住所3を各200文字とするが、ec-cube-enterpriseの確認値は各90文字である。 |
 
 本機能は会員情報の登録・更新を行う。金額・税の計算は行わない。
 
@@ -146,14 +155,15 @@
 |--------|------------|--------|--------|----------------|
 | 名前 | 必須 | コア会員フォームに準ずる | 新規は空、編集は現行値 | `dtb_customer.name01`・`name02`。姓名の2入力。 |
 | 名前（カナ） | 任意 | コア会員フォームに準ずる | 新規は空、編集は現行値 | `dtb_customer.kana01`・`kana02`。プラグイン拡張で必須解除（フォームキー`kana`）。 |
-| 会社名 | 任意 | コア会員フォームに準ずる | 新規は空、編集は現行値 | `dtb_customer.company_name`。 |
+| 会社名 | 任意 | Excel仕様50文字（ec-cube-enterprise確認値255文字） | 新規は空、編集は現行値 | `dtb_customer.company_name`。現時点の実装はExcel仕様より長い入力を許可する。 |
 | 国 | 任意 | 選択（国名昇順） | 未選択または現行値 | `dtb_customer.country_id`。プラグイン拡張（フォームキー`country`）。 |
 | 郵便番号 | 任意 | 3桁＋4桁の分割 | 新規は空、編集は現行値 | `dtb_customer.postal_code`（移行先は単一列。現行は`zip01`・`zip02`）。プラグイン拡張で必須解除（フォームキー`zip`）。 |
 | 海外用郵便番号 | 任意 | 標準テキスト上限（`stext_len`、確認値255） | 新規は空、編集は現行値 | `dtb_customer.abroad_postal_code`（プラグイン拡張、フォームキー`zipcode`）。最大長の検証あり。 |
 | 都道府県 | 任意 | 選択 | 新規は空、編集は現行値 | `dtb_customer.pref_id`（フォームキー`address.pref`）。 |
-| 住所1 | 任意 | SJIS換算の上限（プラグイン定数`customer_address.length.addr`） | 新規は空、編集は現行値 | `dtb_customer.addr01`（フォームキー`address.addr01`）。超過時は超過エラー。 |
-| 住所2 | 任意 | SJIS換算の上限（同上） | 新規は空、編集は現行値 | `dtb_customer.addr02`（フォームキー`address.addr02`）。超過時は超過エラー。 |
-| メールアドレス | 必須 | コア会員フォームに準ずる | 新規は空、編集は現行値 | `dtb_customer.email`。 |
+| 住所1 | 必須 | Excel仕様200文字（ec-cube-enterprise確認値90文字） | 新規は空、編集は現行値 | `dtb_customer.addr01`（フォームキー`address.addr01`）。Excelとec-cube-enterpriseで必須指定は一致するが、現時点の実装制約はExcel仕様より短い。 |
+| 住所2 | 必須 | Excel仕様200文字（ec-cube-enterprise確認値90文字） | 新規は空、編集は現行値 | `dtb_customer.addr02`（フォームキー`address.addr02`）。Excelとec-cube-enterpriseで必須指定は一致するが、現時点の実装制約はExcel仕様より短い。 |
+| 住所3 | 任意 | Excel仕様200文字（ec-cube-enterprise確認値90文字） | 新規は空、編集は現行値 | `dtb_customer.addr03`（フォームキー`address.addr03`）。現時点の実装制約はExcel仕様より短い。 |
+| メールアドレス | 必須 | Excel仕様255文字（ec-cube-enterprise確認値254文字） | 新規は空、編集は現行値 | `dtb_customer.email`。現時点の実装制約はExcel仕様より1文字短い。 |
 | 電話番号 | コア会員フォームに準ずる | 3分割 | 新規は空、編集は現行値 | `dtb_customer.tel01`〜`tel03`。 |
 | FAX番号 | 任意 | 3分割 | 新規は空、編集は現行値 | `dtb_customer.fax01`〜`fax03`。 |
 | パスワード | コア会員フォームに準ずる | 確認用と合わせて2入力 | 編集時は既定パスワード | `dtb_customer.password`（暗号化値、不可逆）。既定パスワードのままなら既存値を維持。 |
@@ -170,6 +180,7 @@
 | 身分証有効期限 | 任意 | 単一日付（yyyy-MM-dd） | 現行値 | 選手情報`dtb_player.id_expiration_date`（プラグイン拡張、フォームキー`idExpirationDate`、`mapped`偽）。確認済への変更操作と同時に保存する場合がある（M08-10）。 |
 | メールマガジン配信フラグ | 必須 | ラジオ（不可／可） | 現行値 | プラグイン拡張（フォームキー`mailMagazineFlg`、`mapped`偽。選択肢はプラグイン定数の配信不可・配信可値）。 |
 | 会員ステータス | コア会員フォームに準ずる | 選択 | 現行値 | `dtb_customer.customer_status_id`（移行先。現行は`status`。フォームキー`status`、右カラムに配置）。 |
+| 退会区分 | 任意 | 256文字 | 現行値 | `dtb_customer.close_reason`（フォームキー`close_reason`）。Excel基本設計、フォーム制約、DB列長が一致する。 |
 | ショップ用メモ欄 | 任意 | コア会員フォームに準ずる | 現行値 | `dtb_customer.note`（フォームキー`note`）。 |
 
 最大長のうち数字のみ・桁数はフォーム拡張の確認値とする。`stext_len`・住所のSJIS上限はコア設定とプラグイン定数の確認値とする。`mapped`偽の項目はフォーム拡張・選手情報側の処理が永続化先を決める。
@@ -224,7 +235,7 @@
 | `dtb_customer` | `postal_code`、`abroad_postal_code`、`country_id`、`pref_id`、`addr01`、`addr02`、`addr03` | 住所。郵便番号は移行先で単一列`postal_code`（現行は`zip01`・`zip02`）。海外用郵便番号は`abroad_postal_code`。 |
 | `dtb_customer` | `email`、`tel01`〜`tel03`、`fax01`〜`fax03` | 連絡先。 |
 | `dtb_customer` | `password`、`salt`、`secret_key` | パスワードは不可逆値として扱う。新規時にソルト・シークレットキーを採番。 |
-| `dtb_customer` | `sex_id`、`job_id`、`birth`、`customer_status_id`、`note`、`buy_times`、`buy_total` | 属性・ステータス・メモ・購入実績。会員ステータスは移行先で`customer_status_id`（現行は`status`）。 |
+| `dtb_customer` | `sex_id`、`job_id`、`birth`、`customer_status_id`、`close_reason`、`note`、`buy_times`、`buy_total` | 属性・ステータス・退会区分・メモ・購入実績。会員ステータスは移行先で`customer_status_id`（現行は`status`）。退会区分は256文字。 |
 | `dtb_customer_address` | 氏名・住所・連絡先一式（`postal_code`、`tel01`〜`tel03`、FAXは`fax_number`の単一列） | 新規登録時に会員情報を写して生成する。列名はec-cube-enterpriseを正とする。 |
 | 選手情報（`dtb_player`） | `identity_confirm_status_id`（本人確認ステータス）、`id_expiration_date`（身分証有効期限）、`customer_group_id`（会員グループ）、`mail_magazine_flg`（メールマガジン配信フラグ）、`identification_flg`（本人確認フラグ）、`dci_no`、`first_name_en`・`last_name_en`（DCI登録本名）、`smaregi_id` | プラグイン拡張項目の保存先。フォーム上は`mapped`偽の項目を扱う。 |
 
@@ -245,7 +256,9 @@
 | 名前・メールアドレス | コア会員フォームの必須・形式検証に従う。 |
 | 名前（カナ）・郵便番号 | プラグイン拡張で必須を解除する。 |
 | 海外用郵便番号 | 最大文字数（`stext_len`）。 |
-| 住所1・住所2 | SJIS換算の長さが上限を超えると超過エラー。 |
+| 住所1・住所2・住所3 | リニューアル後のExcel仕様は各200文字。ec-cube-enterpriseの現行フォーム制約は各90文字であり、未解消の実装差分として扱う。 |
+| 会社名・メールアドレス | リニューアル後のExcel仕様は会社名50文字、メールアドレス255文字。ec-cube-enterpriseの現行フォーム制約はそれぞれ255文字、254文字であり、未解消の実装差分として扱う。 |
+| 退会区分 | 最大256文字。 |
 | DCIナンバー | 数字のみ。最大16文字。 |
 | DCI登録本名 | 各最大128文字。 |
 | 本人確認ステータス・本人確認フラグ・会員グループ・メールマガジン配信フラグ | 必須選択。 |

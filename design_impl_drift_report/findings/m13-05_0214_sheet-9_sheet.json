@@ -74,9 +74,9 @@
         "src/Eccube/Resource/template/admin/Event/edit.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Event/EventController.php:245\n242:     /**\n243:      * イベント削除（日程情報がある場合は削除不可）\n244:      */\n245:     #[Route(path: '/%eccube_admin_route%/event/{id}/delete', name: 'admin_event_delete', requirements: ['id' => '\\d+'], methods: ['DELETE'])]\n246:     public function delete(#[MapEntity(id: 'id')] DtbEvent $Event): RedirectResponse\n247:     {\n248:         $isEditableShop = $this->getMember()->isEditableShop($Event->getBaseInfo());",
+        "src/Eccube/Controller/Admin/Event/EventController.php:245\n242: \n243:                 $event = new EventArgs(\n244:                     [\n245:                         'form' => $form,\n246:                         'Event' => $Event,\n247:                     ],\n248:                     $request",
         "src/Eccube/Resource/template/admin/Event/edit.twig:497\n494:                                 <button type=\"button\" id=\"btn_schedule_bulk_delete\" class=\"btn btn-ec-delete px-4\" disabled data-bs-toggle=\"modal\" data-bs-target=\"#schedule_bulk_delete_modal\">\n495:                                     {{ 'admin.event.schedule.bulk_delete.selected'|trans }}\n496:                                 </button>\n497:                                 <a class=\"btn btn-ec-conversion px-4\" href=\"{{ url('admin_event_copy', {id: Event.id}) }}\">{{ 'admin.event.copy'|trans }}</a>\n498:                                 {% endif %}\n499:                                 <button class=\"btn btn-ec-conversion px-5\" type=\"submit\" form=\"event_form\">{{ 'admin.common.registration'|trans }}</button>\n500:                             </div>",
-        "src/Eccube/Controller/Admin/Event/EventController.php:41\n38: use Symfony\\Component\\HttpFoundation\\Request;\n39: use Symfony\\Component\\Routing\\Attribute\\Route;\n40: \n41: class EventController extends AbstractController\n42: {\n43:     public function __construct(\n44:         protected EccubeConfig $eccubeConfig,"
+        "src/Eccube/Controller/Admin/Event/EventController.php:42\n39: use Symfony\\Component\\HttpFoundation\\Request;\n40: use Symfony\\Component\\Routing\\Attribute\\Route;\n41: \n42: class EventController extends AbstractController\n43: {\n44:     private const SESSION_SEARCH_KEY = 'eccube.admin.event.search';\n45: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -215,7 +215,7 @@
         "src/Eccube/Resource/locale/messages.ja.yaml"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Event/EventController.php:41\n38: use Symfony\\Component\\HttpFoundation\\Request;\n39: use Symfony\\Component\\Routing\\Attribute\\Route;\n40: \n41: class EventController extends AbstractController\n42: {\n43:     public function __construct(\n44:         protected EccubeConfig $eccubeConfig,",
+        "src/Eccube/Controller/Admin/Event/EventController.php:42\n39: use Symfony\\Component\\HttpFoundation\\Request;\n40: use Symfony\\Component\\Routing\\Attribute\\Route;\n41: \n42: class EventController extends AbstractController\n43: {\n44:     private const SESSION_SEARCH_KEY = 'eccube.admin.event.search';\n45: ",
         "src/Eccube/Form/Type/Admin/EventType.php:47\n44: use Symfony\\Component\\Validator\\Constraints\\Range;\n45: use Symfony\\Component\\Validator\\Constraints\\Regex;\n46: \n47: class EventType extends AbstractType\n48: {\n49:     public function __construct(\n50:         protected EccubeConfig $eccubeConfig,",
         "src/Eccube/Resource/template/admin/Event/edit.twig:1\n1: {% extends '@admin/default_frame.twig' %}\n2: \n3: {% set menus = ['event', 'event_list'] %}\n4: "
       ],
@@ -345,8 +345,8 @@
         "src/Eccube/Form/Type/Admin/EventType.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Event/EventController.php:214\n211:             $Event = $form->getData();\n212:             $input = new EventEditInput($Event, $Member, $form->get('payments')->getData() ?? []);\n213:             try {\n214:                 $this->eventEditAction->handle($input);\n215:                 $this->addSuccess('admin.common.save_complete', 'admin');\n216:             } catch (\\Exception $e) {\n217:                 $this->addError('admin.common.save_error', 'admin');",
-        "src/Eccube/Controller/Admin/Event/EventController.php:253\n250:             $this->addError('admin.common.error_invalid_request', 'admin');\n251: \n252:             return $this->redirectToRoute('admin_event_edit', ['id' => $Event->getId()]);\n253:         }\n254: \n255:         if ($Event->getDetails()->count() > 0) {\n256:             $this->addError('admin.event.delete.schedule_exists', 'admin');",
+        "src/Eccube/Controller/Admin/Event/EventController.php:214\n211:      */\n212:     #[Route(path: '/%eccube_admin_route%/event/create', name: 'admin_event_create', methods: ['GET', 'POST'])]\n213:     #[Template(template: '@admin/Event/edit.twig')]\n214:     public function create(Request $request): RedirectResponse|array\n215:     {\n216:         $Member = $this->getMember();\n217:         $Event = new DtbEvent();",
+        "src/Eccube/Controller/Admin/Event/EventController.php:253\n250:                 $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_EVENT_CREATE_COMPLETE);\n251: \n252:                 $this->addSuccess('admin.common.save_complete', 'admin');\n253: \n254:                 return $this->redirectToRoute('admin_event_edit', ['id' => $form->getData()->getId()]);\n255:             } catch (\\Exception $e) {\n256:                 $this->addError('admin.common.save_error', 'admin');",
         "src/Eccube/Form/Type/Admin/EventType.php:319\n316:      * {@inheritdoc}\n317:      */\n318:     #[\\Override]\n319:     public function getBlockPrefix(): string\n320:     {\n321:         return 'admin_event';\n322:     }"
       ],
       "auditChecklist": [
@@ -404,7 +404,7 @@
       "implementationSnippets": [
         "src/Eccube/Form/Type/Admin/EventType.php:149\n146:                     ]),\n147:                 ],\n148:             ])\n149:             ->add('capacity', IntegerType::class, [\n150:                 'constraints' => [\n151:                     new Range(['min' => $this->eccubeConfig['eccube_capacity_min']]),\n152:                     new Length(['max' => $this->eccubeConfig['eccube_int_len']]),",
         "src/Eccube/Form/Type/Admin/EventType.php:152\n149:             ->add('capacity', IntegerType::class, [\n150:                 'constraints' => [\n151:                     new Range(['min' => $this->eccubeConfig['eccube_capacity_min']]),\n152:                     new Length(['max' => $this->eccubeConfig['eccube_int_len']]),\n153:                 ],\n154:             ])\n155:             ->add('isTeamBattle', CheckboxType::class, [",
-        "app/config/eccube/packages/eccube.yaml:111\n108:     eccube_price_len: 8                                                    # 最大値で制御したい\n109:     eccube_product_class_sell_price_max_len: 10\n110:     eccube_product_class_buy_price_max_len: 9\n111:     eccube_product_class_sale_limit_max_len: 10\n112:     eccube_product_stock_change_reason_max_len: 16384 # 65535byte制限を4バイト文字の文字数制限で指定\n113:     eccube_product_stock_change_quantity_min: -99999999\n114:     eccube_product_stock_change_quantity_max: 99999999"
+        "app/config/eccube/packages/eccube.yaml:111\n108:     eccube_shopping_max_lead_time: 9\n109:     eccube_id_max_len: 50\n110:     eccube_id_min_len: 4\n111:     eccube_int_len: 9                              # 最大値で制御したい\n112:     eccube_category_nest_level: 5\n113:     eccube_lltext_len: 99999\n114:     eccube_ltext_len: 3000"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -418,7 +418,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 106,
+    "extractedRequirementCount": 112,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -812,6 +812,32 @@
         "coveredByFinding": true
       },
       {
+        "id": "m13-05_0214_sheet-9_sheet-req-e429622824",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
+        "designRequirement": "チーム人数 は チーム戦フラグ（dtb_event.is_team_battle、真偽） へ変更（ 0214 イベント編集 識別ID:1-12 ） これに伴い実装不要: チームメンバーのメールアドレス・席次の入力／メールのみの仮選手（dtb_player）の作成／チームメンバー招待メールの送信／未承認（confirm_flg=UNCONFIRMED）での申込選手登録／招待リンクからのチームプレイヤー認証（events_team_player_activate）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-05_0214_sheet-9_sheet-req-cc9843e9df",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
+        "designRequirement": "支払方法の選択肢「コンビニ決済」 は クレジットカード決済のみ（コンビニ決済を削除） へ変更（ 0214 イベント編集 識別ID:1-13 ） これに伴い実装不要: B13-02 コンビニ支払チェックバッチ（0413で明示的に廃止）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
         "id": "m13-05_0214_sheet-9_sheet-req-32fec772bf",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
@@ -959,6 +985,58 @@
         "category": "イベント情報の入力項目・最大長・検証・保存後の永続化（M13-02を正とする）",
         "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
         "designRequirement": "日程（イベント詳細）の登録ルール",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-05_0214_sheet-9_sheet-req-0685272567",
+        "category": "イベント情報の入力項目・最大長・検証・保存後の永続化（M13-02を正とする）",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
+        "designRequirement": "本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計が廃止を宣言している。刷新後は実装しない。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-05_0214_sheet-9_sheet-req-858f4d6cfe",
+        "category": "イベント情報の入力項目・最大長・検証・保存後の永続化（M13-02を正とする）",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
+        "designRequirement": "チーム人数（※Excel基本設計 0214 イベント編集 識別ID:1-12 により廃止。刷新後は実装しない）。変更。 刷新後はチーム戦フラグ（dtb_event.is_team_battle、真偽）。 これに伴い実装不要: チームメンバーのメールアドレス・席次の入力／メールのみの仮選手（dtb_player）の作成／チームメンバー招待メールの送信／未承認（confirm_flg=UNCONFIRMED）での申込選手登録／招待リンクからのチームプレイヤー認証（events_team_player_activate）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-05_0214_sheet-9_sheet-req-8d1859c24a",
+        "category": "イベント情報の入力項目・最大長・検証・保存後の永続化（M13-02を正とする）",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
+        "designRequirement": "支払方法の選択肢「コンビニ決済」（※Excel基本設計 0214 識別ID:1-13 により廃止。刷新後は実装しない）。変更。 刷新後はクレジットカード決済のみ（コンビニ決済を削除）。 これに伴い実装不要: B13-02 コンビニ支払チェックバッチ（0413で明示的に廃止）。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m13-05_0214_sheet-9_sheet-req-58ffb5aff3",
+        "category": "イベント情報の入力項目・最大長・検証・保存後の永続化（M13-02を正とする）",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
+        "designRequirement": "チーム人数（※Excel基本設計 0214 識別ID:1-12 により廃止。刷新後は実装しない）。複製元から引き継ぐ入力値のうちチーム人数は無くなり、チーム戦フラグ（ is_team_battle 、真偽）の複製に変わる。",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1280,10 +1358,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m13-05_0214_sheet-9_sheet-req-47cee40372",
+        "id": "m13-05_0214_sheet-9_sheet-req-ae45d252d6",
         "category": "業務ルール・計算",
         "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
-        "designRequirement": "複製元イベントの入力フォームに対応する値。イベント名（日・英）、略称（日・英）、店舗、会場、フォーマット、ルール適用度、公開状態、バナーURL（日・英）、定員、チーム人数、参加費、賞品（日・英）、備考（日・英）、支払方法。これらは複製元イベントのエンティティをフォームの初期データに用いることで、初期値として画面に載る。",
+        "designRequirement": "複製元イベントの入力フォームに対応する値。イベント名（日・英）、略称（日・英）、店舗、会場、フォーマット、ルール適用度、公開状態、バナーURL（日・英）、定員、チーム人数、参加費、賞品（日・英）、備考（日・英）、支払方法。これらは複製元イベントのエンティティをフォームの初期データに用いることで、初期値として画面に載る。 （※チーム人数は Excel基本設計 0214 識別ID:1-12 により廃止。刷新後は複製対象に含めない）",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1857,7 +1935,7 @@
         "term": "admin_event_create",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Event/EventController.php:154",
+        "ref": "src/Eccube/Controller/Admin/Event/EventController.php:212",
         "snippet": "#[Route(path: '/%eccube_admin_route%/event/create', name: 'admin_event_create', methods: ['GET', 'POST'])]",
         "weight": 7
       },
@@ -1865,7 +1943,7 @@
         "term": "EventController",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Event/EventController.php:41",
+        "ref": "src/Eccube/Controller/Admin/Event/EventController.php:42",
         "snippet": "class EventController extends AbstractController",
         "weight": 7
       },
@@ -1873,7 +1951,7 @@
         "term": "admin_event_detail",
         "termType": "routeName",
         "role": "Form",
-        "ref": "src/Eccube/Form/Type/Admin/ScheduleType.php:264",
+        "ref": "src/Eccube/Form/Type/Admin/ScheduleType.php:293",
         "snippet": "return 'admin_event_detail';",
         "weight": 7
       },
@@ -1897,7 +1975,7 @@
         "term": "admin_event_create",
         "termType": "routeName",
         "role": "Twig",
-        "ref": "src/Eccube/Resource/template/admin/Event/index.twig:55",
+        "ref": "src/Eccube/Resource/template/admin/Event/index.twig:56",
         "snippet": "<a class=\"btn btn-ec-conversion\" href=\"{{ url('admin_event_create') }}\">{{ 'admin.common.create__new'|trans }}</a>",
         "weight": 7
       },
@@ -1913,7 +1991,7 @@
         "term": "event/create",
         "termType": "path",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Event/EventController.php:154",
+        "ref": "src/Eccube/Controller/Admin/Event/EventController.php:212",
         "snippet": "#[Route(path: '/%eccube_admin_route%/event/create', name: 'admin_event_create', methods: ['GET', 'POST'])]",
         "weight": 6
       },
@@ -1953,7 +2031,7 @@
         "term": "Plugin/HareruyaEc/Controller/Admin/EventController.php",
         "termType": "path",
         "role": "Service",
-        "ref": "src/Eccube/Service/S3AccessService.php:142",
+        "ref": "src/Eccube/Service/S3AccessService.php:131",
         "snippet": "* カード画像をローカルディレクトリへ保存し、保存したファイル名を返す（旧 HareruyaEc S3AccessService::downloadFile 相当）.",
         "weight": 6
       },
@@ -1962,7 +2040,7 @@
         "termType": "routeName",
         "role": "JavaScript",
         "ref": "html/template/default/assets/hareruya/js/hareruya-event.js:1",
-        "snippet": "(()=>{\"use strict\";var e={},t={};function r(a){var n=t[a];if(void 0!==n)return n.exports;var i=t[a]={exports:{}};return e[a](i,i.exports,r),i.exports}function a(e,t,r,a,n,i,o){try{var s=e[i](o),l=s.value}catch(e){r(e);r…",
+        "snippet": "(()=>{\"use strict\";var e={},t={};function r(a){var n=t[a];if(void 0!==n)return n.exports;var i=t[a]={exports:{}};return e[a](i,i.exports,r),i.exports}function a(e,t,r,a,n,i,o){try{var l=e[i](o),s=l.value}catch(e){r(e);r…",
         "weight": 5
       },
       {
@@ -1985,7 +2063,7 @@
         "term": "EventController",
         "termType": "className",
         "role": "Source",
-        "ref": "src/Eccube/Event/EccubeEvents.php:412",
+        "ref": "src/Eccube/Event/EccubeEvents.php:1362",
         "snippet": "* Admin - EventController",
         "weight": 5
       }
@@ -1996,10 +2074,10 @@
       "html/template/default/assets/hareruya",
       "html/template/admin/assets"
     ],
-    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。"
+    "auditNote": "差分所見の中に明確な実装漏れが確認済み。下記候補は周辺実装の参照用。 限定的な非実装記載あり（機能全体の非実装判定には使わない）: 刷新後は実装不要 本節は現行実装（pf-eccube3）からのリバースです。次の記述は Excel基本設計により廃止されており、刷新後に実装する必要はありません。"
   },
-  "designNonImplementationReason": null,
-  "designNonImplementationScope": null,
+  "designNonImplementationReason": "刷新後は実装不要 本節は現行実装（pf-eccube3）からのリバースです。次の記述は Excel基本設計により廃止されており、刷新後に実装する必要はありません。",
+  "designNonImplementationScope": "SCOPED_REQUIREMENT",
   "requirementDifferenceAudit": {
     "policy": "確定所見から逆引きできる個別要求の未実装・実装違いのみを掲載する。検索ヒットなし等の未確認候補は件数に含めず、HTML主レポートにも表示しない。",
     "confirmedDifferenceCount": 18,
@@ -2494,13 +2572,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 106,
-    "verdictedCount": 106,
+    "requirementCount": 112,
+    "verdictedCount": 112,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 106,
+      "実装済み": 112,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -2988,6 +3066,38 @@
         "elementLevel": false
       },
       {
+        "requirementId": "m13-05_0214_sheet-9_sheet-req-e429622824",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
+        "designRequirement": "チーム人数 は チーム戦フラグ（dtb_event.is_team_battle、真偽） へ変更（ 0214 イベント編集 識別ID:1-12 ） これに伴い実装不要: チームメンバーのメールアドレス・席次の入力／メールのみの仮選手（dtb_player）の作成／チームメンバー招待メールの送信／未承認（confirm_flg=UNCONFIRMED）での申込選手登録／招待リンクからのチームプレイヤー認証（events_team_player_activate）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-05_0214_sheet-9_sheet-req-cc9843e9df",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
+        "designRequirement": "支払方法の選択肢「コンビニ決済」 は クレジットカード決済のみ（コンビニ決済を削除） へ変更（ 0214 イベント編集 識別ID:1-13 ） これに伴い実装不要: B13-02 コンビニ支払チェックバッチ（0413で明示的に廃止）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
         "requirementId": "m13-05_0214_sheet-9_sheet-req-32fec772bf",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
@@ -3168,6 +3278,70 @@
         "category": "イベント情報の入力項目・最大長・検証・保存後の永続化（M13-02を正とする）",
         "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
         "designRequirement": "日程（イベント詳細）の登録ルール",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m13-05_0214_sheet-9_sheet-req-0685272567",
+        "category": "イベント情報の入力項目・最大長・検証・保存後の永続化（M13-02を正とする）",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
+        "designRequirement": "本書は現行実装からのリバースであり、以下は現行挙動として記述しているが、Excel基本設計が廃止を宣言している。刷新後は実装しない。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": false,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m13-05_0214_sheet-9_sheet-req-858f4d6cfe",
+        "category": "イベント情報の入力項目・最大長・検証・保存後の永続化（M13-02を正とする）",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
+        "designRequirement": "チーム人数（※Excel基本設計 0214 イベント編集 識別ID:1-12 により廃止。刷新後は実装しない）。変更。 刷新後はチーム戦フラグ（dtb_event.is_team_battle、真偽）。 これに伴い実装不要: チームメンバーのメールアドレス・席次の入力／メールのみの仮選手（dtb_player）の作成／チームメンバー招待メールの送信／未承認（confirm_flg=UNCONFIRMED）での申込選手登録／招待リンクからのチームプレイヤー認証（events_team_player_activate）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m13-05_0214_sheet-9_sheet-req-8d1859c24a",
+        "category": "イベント情報の入力項目・最大長・検証・保存後の永続化（M13-02を正とする）",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
+        "designRequirement": "支払方法の選択肢「コンビニ決済」（※Excel基本設計 0214 識別ID:1-13 により廃止。刷新後は実装しない）。変更。 刷新後はクレジットカード決済のみ（コンビニ決済を削除）。 これに伴い実装不要: B13-02 コンビニ支払チェックバッチ（0413で明示的に廃止）。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m13-05_0214_sheet-9_sheet-req-58ffb5aff3",
+        "category": "イベント情報の入力項目・最大長・検証・保存後の永続化（M13-02を正とする）",
+        "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
+        "designRequirement": "チーム人数（※Excel基本設計 0214 識別ID:1-12 により廃止。刷新後は実装しない）。複製元から引き継ぐ入力値のうちチーム人数は無くなり、チーム戦フラグ（ is_team_battle 、真偽）の複製に変わる。",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3564,10 +3738,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m13-05_0214_sheet-9_sheet-req-47cee40372",
+        "requirementId": "m13-05_0214_sheet-9_sheet-req-ae45d252d6",
         "category": "業務ルール・計算",
         "designRef": "excel_to_html/output/0214_基本設計仕様書(イベント管理).html#sheet-9",
-        "designRequirement": "複製元イベントの入力フォームに対応する値。イベント名（日・英）、略称（日・英）、店舗、会場、フォーマット、ルール適用度、公開状態、バナーURL（日・英）、定員、チーム人数、参加費、賞品（日・英）、備考（日・英）、支払方法。これらは複製元イベントのエンティティをフォームの初期データに用いることで、初期値として画面に載る。",
+        "designRequirement": "複製元イベントの入力フォームに対応する値。イベント名（日・英）、略称（日・英）、店舗、会場、フォーマット、ルール適用度、公開状態、バナーURL（日・英）、定員、チーム人数、参加費、賞品（日・英）、備考（日・英）、支払方法。これらは複製元イベントのエンティティをフォームの初期データに用いることで、初期値として画面に載る。 （※チーム人数は Excel基本設計 0214 識別ID:1-12 により廃止。刷新後は複製対象に含めない）",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

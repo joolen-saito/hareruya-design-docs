@@ -54,7 +54,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbStockHistoryRepository.php:143\n140:                 ->setParameter('selected_change_type_detail', $searchData['stock_change_type_detail']);\n141:         }\n142: \n143:         // disposal_search 欠品検索\n144:         if (isset($searchData['disposal_search']) && StringUtil::isNotBlank($searchData['disposal_search'])) {\n145:             $StockChangeTypeIds = $this->stockChangeTypeDetailRepository->getQueryBuilderByStockChangeTypeIds(\n146:                 [MtbStockChangeType::DISPOSAL]",
+        "src/Eccube/Repository/DtbStockHistoryRepository.php:143\n140:                 ->setParameter('selected_change_type_detail', $searchData['stock_change_type_detail']);\n141:         }\n142: \n143:         // disposal_search 欠品検索\n144:         $DisposalTypeIds = $this->stockChangeTypeDetailRepository->getQueryBuilderByStockChangeTypeIds(\n145:             [MtbStockChangeType::DISPOSAL]\n146:         )->getQuery()->getResult();",
         "src/Eccube/Repository/DtbStockHistoryRepository.php:37\n34: /**\n35:  * @extends AbstractRepository<DtbStockHistory>\n36:  */\n37: class DtbStockHistoryRepository extends AbstractRepository\n38: {\n39:     public function __construct(\n40:         ManagerRegistry $registry,"
       ],
       "auditChecklist": [
@@ -108,7 +108,7 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbStockHistoryRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/DtbStockHistoryRepository.php:332\n329:         if (isset($searchData['stock_change_reason']) && StringUtil::isNotBlank($searchData['stock_change_reason'])) {\n330:             $qb\n331:                 ->andWhere('sh.stockChangeReason LIKE :likeStockChangeReason')\n332:                 ->setParameter('likeStockChangeReason', '%'.str_replace(['%', '_'], ['\\\\%', '\\\\_'], $searchData['stock_change_reason']).'%');\n333:         }\n334: \n335:         // Order By",
+        "src/Eccube/Repository/DtbStockHistoryRepository.php:332\n329:                 ->setParameter('likeStockChangeReason', '%'.str_replace(['%', '_'], ['\\\\%', '\\\\_'], $searchData['stock_change_reason']).'%');\n330:         }\n331: \n332:         // Order By\n333:         $qb->addOrderBy('pc.code', 'DESC');\n334:         $qb->addOrderBy('ps.baseInfo', 'DESC');\n335:         $qb->addOrderBy('sh.createDate', 'DESC');",
         "src/Eccube/Repository/DtbStockHistoryRepository.php:37\n34: /**\n35:  * @extends AbstractRepository<DtbStockHistory>\n36:  */\n37: class DtbStockHistoryRepository extends AbstractRepository\n38: {\n39:     public function __construct(\n40:         ManagerRegistry $registry,"
       ],
       "auditChecklist": [
@@ -274,8 +274,8 @@
         "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Stock/StockHistoryController.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Stock/StockHistoryController.php:220\n217: \n218:     /**\n219:      * 欠品理由の編集\n220:      *\n221:      * @return RedirectResponse|array<mixed>\n222:      */\n223:     #[Route(",
-        "src/Eccube/Controller/Admin/Stock/StockHistoryController.php:38\n35: use Symfony\\Component\\HttpFoundation\\StreamedResponse;\n36: use Symfony\\Component\\Routing\\Attribute\\Route;\n37: \n38: class StockHistoryController extends AbstractController\n39: {\n40:     /**\n41:      * @var array<int, mixed>"
+        "src/Eccube/Controller/Admin/Stock/StockHistoryController.php:220\n217: \n218:         $qb = $this->stockHistoryRepository->getQueryBuilderBySearchDataForAdmin($searchData);\n219: \n220:         $event = new EventArgs(\n221:             [\n222:                 'qb' => $qb,\n223:                 'searchData' => $searchData,",
+        "src/Eccube/Controller/Admin/Stock/StockHistoryController.php:40\n37: use Symfony\\Component\\HttpFoundation\\StreamedResponse;\n38: use Symfony\\Component\\Routing\\Attribute\\Route;\n39: \n40: class StockHistoryController extends AbstractController\n41: {\n42:     /**\n43:      * @var array<int, mixed>"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -343,7 +343,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 99,
+    "extractedRequirementCount": 104,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -1595,6 +1595,71 @@
         "coveredByFinding": true
       },
       {
+        "id": "m04-19_0202_sheet-25_sheet-req-175dd194d3",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "メッセージID対応（自動棚卸）",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-3193875c65",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "保存に失敗しました",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-1bdde70ed8",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品理由の保存中にエラーが起きたとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-a1e27e52f3",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "M04-19（欠品履歴検索/一覧）画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m04-19_0202_sheet-25_sheet-req-6d76f9373f",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品理由を保存したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
         "id": "m04-19_0202_sheet-25_sheet-req-fc66800c69",
         "category": "本機能におけるセッション",
         "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
@@ -1733,7 +1798,7 @@
         "term": "admin.error.sort",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/SearchControllerTrait.php:142",
+        "ref": "src/Eccube/Controller/Admin/SearchControllerTrait.php:143",
         "snippet": "$this->addError('admin.error.sort', 'admin');",
         "weight": 6
       },
@@ -1757,32 +1822,8 @@
         "term": "Plugin/HareruyaEc/Controller/Admin/SearchControllerTrait.php",
         "termType": "path",
         "role": "Service",
-        "ref": "src/Eccube/Service/S3AccessService.php:142",
+        "ref": "src/Eccube/Service/S3AccessService.php:131",
         "snippet": "* カード画像をローカルディレクトリへ保存し、保存したファイル名を返す（旧 HareruyaEc S3AccessService::downloadFile 相当）.",
-        "weight": 6
-      },
-      {
-        "term": "product/product/{id}/class/{classId}/edit",
-        "termType": "path",
-        "role": "Service",
-        "ref": "src/Eccube/Service/Smaregi/Api/Mock/Response/CustomerMockResponse.php:25",
-        "snippet": "* - GET /pos/customers/{id} : 指定 ID の会員スタブを返す (存在確認)",
-        "weight": 6
-      },
-      {
-        "term": "product/product/{id}/class/{classId}/edit",
-        "termType": "path",
-        "role": "Service",
-        "ref": "src/Eccube/Service/Smaregi/Api/Mock/Response/ProductMockResponse.php:26",
-        "snippet": "* - PATCH /pos/products/{id} : リクエストボディをエコー (200)",
-        "weight": 6
-      },
-      {
-        "term": "product/product/{id}/class/{classId}/edit",
-        "termType": "path",
-        "role": "Service",
-        "ref": "src/Eccube/Service/Smaregi/Api/Mock/SmaregiMockResponder.php:125",
-        "snippet": "// /pos/customers/{id} (existence check or delete)",
         "weight": 6
       },
       {
@@ -1792,6 +1833,38 @@
         "ref": "src/Eccube/Service/Smaregi/Api/Mock/SmaregiMockResponder.php:74",
         "snippet": "// /pos/products/{id} (update or delete)",
         "weight": 6
+      },
+      {
+        "term": "product/product/{id}/class/{classId}/edit",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Smaregi/SmaregiCustomerResolver.php:121",
+        "snippet": "* GET /pos/customers/{id} は単一オブジェクトを返す想定だが、型上は配列(リスト)応答も",
+        "weight": 6
+      },
+      {
+        "term": "product/product/{id}/class/{classId}/edit",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Smaregi/SmaregiCustomerResolver.php:28",
+        "snippet": "* dtb_player を直接引けない。会員取得API(GET /pos/customers/{id})で customerNo を取得し、",
+        "weight": 6
+      },
+      {
+        "term": "product/product/{id}/class/{classId}/edit",
+        "termType": "path",
+        "role": "Service",
+        "ref": "src/Eccube/Service/Smaregi/SmaregiCustomerResolver.php:73",
+        "snippet": "* 会員取得API(GET /pos/customers/{id}) から customerNo を取得する。",
+        "weight": 6
+      },
+      {
+        "term": "order_id",
+        "termType": "routeName",
+        "role": "Entity",
+        "ref": "src/Eccube/Entity/DtbOrderHistory.php:26",
+        "snippet": "#[ORM\\Index(name: 'dtb_order_history_order_id_idx', columns: ['order_id'])]",
+        "weight": 5
       },
       {
         "term": "order_id",
@@ -1847,14 +1920,6 @@
         "role": "Entity",
         "ref": "src/Eccube/Entity/DtbStockoutHistory.php:20",
         "snippet": "use Eccube\\Repository\\DtbStockoutHistoryRepository;",
-        "weight": 5
-      },
-      {
-        "term": "DtbStockoutHistoryRepository",
-        "termType": "className",
-        "role": "Entity",
-        "ref": "src/Eccube/Entity/DtbStockoutHistory.php:23",
-        "snippet": "#[ORM\\Entity(repositoryClass: DtbStockoutHistoryRepository::class)]",
         "weight": 5
       }
     ],
@@ -2165,13 +2230,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 99,
-    "verdictedCount": 99,
+    "requirementCount": 104,
+    "verdictedCount": 104,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 99,
+      "実装済み": 104,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -3713,6 +3778,86 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-175dd194d3",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "メッセージID対応（自動棚卸）",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-3193875c65",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "保存に失敗しました",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-1bdde70ed8",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品理由の保存中にエラーが起きたとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-a1e27e52f3",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "M04-19（欠品履歴検索/一覧）画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m04-19_0202_sheet-25_sheet-req-6d76f9373f",
+        "category": "検索条件セッションを消去",
+        "designRef": "excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html#sheet-25",
+        "designRequirement": "欠品理由を保存したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
       },
       {
         "requirementId": "m04-19_0202_sheet-25_sheet-req-fc66800c69",

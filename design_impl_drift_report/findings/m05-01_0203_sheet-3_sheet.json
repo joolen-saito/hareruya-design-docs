@@ -71,9 +71,9 @@
         "src/Eccube/Resource/template/admin/Order/index.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Admin/Order/OrderController.php:223\n220:                 /**\n221:                  * 初期表示の場合.\n222:                  */\n223:                 $page_no = 1;\n224:                 $viewData = [];\n225: \n226:                 if ($statusId = (int) $request->get('order_status_id')) {",
-        "src/Eccube/Controller/Admin/Order/OrderController.php:233\n230:                 $searchData = FormUtil::submitAndGetData($searchForm, $viewData);\n231: \n232:                 // セッション中の検索条件, ページ番号を初期化.\n233:                 $this->session->set('eccube.admin.order.search', $viewData);\n234:                 $this->session->set('eccube.admin.order.search.page_no', $page_no);\n235:             }\n236:         }",
-        "src/Eccube/Form/Type/Admin/SearchOrderType.php:289\n286:             ->add('sorttype', HiddenType::class, [\n287:                 'label' => 'admin.list.sort.type',\n288:                 'required' => false,\n289:             ])->add('tenants', EntityType::class, [\n290:                 'class' => BaseInfo::class,\n291:                 'label' => 'enterprise.admin.shop.name',\n292:                 'choice_label' => 'shop_name',"
+        "src/Eccube/Controller/Admin/Order/OrderController.php:223\n220:                     // 他画面から遷移した場合.\n221:                     $page_no = $this->session->get('eccube.admin.order.search.page_no', 1);\n222:                 }\n223:                 $viewData = $this->session->get('eccube.admin.order.search', []);\n224:                 $searchData = FormUtil::submitAndGetData($searchForm, $viewData);\n225:             } else {\n226:                 /**",
+        "src/Eccube/Controller/Admin/Order/OrderController.php:233\n230:                  * セッション中の検索条件・ページ番号・表示件数を削除して初期化する.\n231:                  */\n232:                 $page_no = 1;\n233:                 $page_count = (int) $this->eccubeConfig->get('eccube_order_list_page_count');\n234:                 $searchData = [];\n235:                 $isInitialDisplay = true;\n236: ",
+        "src/Eccube/Form/Type/Admin/SearchOrderType.php:289\n286:             // ソート用\n287:             ->add('sortkey', HiddenType::class, [\n288:                 'label' => 'admin.list.sort.key',\n289:                 'required' => false,\n290:             ])\n291:             ->add('sorttype', HiddenType::class, [\n292:                 'label' => 'admin.list.sort.type',"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -136,9 +136,9 @@
         "src/Eccube/Repository/OrderRepository.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Form/Type/Admin/SearchOrderType.php:245\n242:                 'label' => 'admin.order.buy_product_code',\n243:                 'required' => false,\n244:             ])\n245:             // 顧客グループ\n246:             ->add('customer_group', EntityType::class, [\n247:                 'label' => 'admin.order.customer_group',\n248:                 'placeholder' => false,",
-        "src/Eccube/Resource/template/admin/Order/index.twig:475\n472:                 </div>\n473:                 <div class=\"row\">\n474:                     <div class=\"col\">\n475:                         <label class=\"col-form-label\">顧客グループ</label>\n476:                     </div>\n477:                     <div class=\"col\">\n478:                         <label class=\"col-form-label\">{{ 'admin.order.message_flg'|trans }}</label>",
-        "src/Eccube/Repository/OrderRepository.php:324\n321:                 ->setParameter('deliveries', $deliveries);\n322:         }\n323: \n324:         // customer_group - TBD\n325: \n326:         // message_flg\n327:         if (!empty($searchData['message_flg'])) {"
+        "src/Eccube/Form/Type/Admin/SearchOrderType.php:245\n242:                 'expanded' => true,\n243:                 'multiple' => false,\n244:             ])\n245:             // 購入商品コード\n246:             ->add('buy_product_code', TextType::class, [\n247:                 'label' => 'admin.order.buy_product_code',\n248:                 'required' => false,",
+        "src/Eccube/Resource/template/admin/Order/index.twig:475\n472:                         <label class=\"col-form-label\">{{ 'admin.order.orderer_name'|trans }}</label>\n473:                         {{ form_widget(searchForm.name) }}\n474:                         {{ form_errors(searchForm.name) }}\n475:                     </div>\n476:                     <div class=\"col\">\n477:                         <label class=\"col-form-label\">{{ 'admin.order.orderer_kana'|trans }}</label>\n478:                         {{ form_widget(searchForm.kana) }}",
+        "src/Eccube/Repository/OrderRepository.php:324\n321:                 ->setParameter('payments', $payments);\n322:         }\n323: \n324:         // delivery\n325:         if (!empty($searchData['delivery']) && count($searchData['delivery']) > 0) {\n326:             $deliveries = [];\n327:             foreach ($searchData['delivery'] as $delivery) {"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -200,9 +200,9 @@
         "src/Eccube/Entity/Order.php"
       ],
       "implementationSnippets": [
-        "src/Eccube/Repository/OrderRepository.php:258\n255:                 ->setParameter('BaseInfo', $searchData['tenants']);\n256:         }\n257: \n258:         // order_number\n259:         if (isset($searchData['order_number']) && StringUtil::isNotBlank($searchData['order_number'])) {\n260:             $qb\n261:                 ->andWhere('o.order_number LIKE :order_number')",
-        "src/Eccube/Repository/OrderRepository.php:295\n292:             $filterStatus = true;\n293:         }\n294: \n295:         if (!$filterStatus) {\n296:             // キャンセル・引渡し済みは検索対象から除外\n297:             $qb->andWhere($qb->expr()->notIn('o.OrderStatus', ':status'))\n298:                 ->setParameter('status', [OrderStatus::CANCEL, OrderStatus::PASSED]);",
-        "src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/Pattern/EccubeOtcPatternHandler.php:115\n112:             // 既存受注の next_order_id に入れる前に flush して新規受注 ID を確定させる\n113:             $this->entityManager->flush();\n114: \n115:             foreach ($matchedOrders as $existingOrder) {\n116:                 $existingOrder->setOrderStatus($passed);\n117:                 $existingOrder->setNextOrderId($newOrder->getId());\n118:             }"
+        "src/Eccube/Repository/OrderRepository.php:258\n255: \n256:         // tenants\n257:         if (!empty($searchData['tenants'])) {\n258:             $tenants = $this->findAllOpenTenantsForSearch($searchData['tenants']);\n259:             if ($tenants === []) {\n260:                 $qb->andWhere('1 = 0');\n261:             } else {",
+        "src/Eccube/Repository/OrderRepository.php:295\n292:             ];\n293:             SqlUtil::multiTextQuery($qb, $texts, $searchColumns);\n294:         }\n295: \n296:         // status\n297:         $filterStatus = false;\n298:         if (isset($searchData['status']) && count($searchData['status']) > 0) {",
+        "src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/Pattern/EccubeOtcPatternHandler.php:115\n112:             foreach ($newOrder->getOrderItems() as $item) {\n113:                 $this->entityManager->persist($item);\n114:             }\n115:             // 既存受注の next_order_id に入れる前に flush して新規受注 ID を確定させる\n116:             $this->entityManager->flush();\n117: \n118:             foreach ($matchedOrders as $existingOrder) {"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -258,9 +258,9 @@
         "src/Eccube/Resource/template/admin/Order/index.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Resource/template/admin/Order/index.twig:1075\n1072:             <div class=\"row mb-3\">\n1073:                 {% for SearchPattern in SearchPatterns %}\n1074:                 <div class=\"col-3\">\n1075:                     {% if pattern_id is defined and SearchPattern.id == pattern_id %}\n1076:                         {{ SearchPattern.name }}\n1077:                     {% else %}\n1078:                         <a href=\"{{ url('admin_order_search_pattern', { 'pattern_id': SearchPattern.id }) }}\" id=\"search_pattern_{{ SearchPattern.id }}\">{{ SearchPattern.name }}",
-        "src/Eccube/Resource/template/admin/Order/index.twig:1078\n1075:                     {% if pattern_id is defined and SearchPattern.id == pattern_id %}\n1076:                         {{ SearchPattern.name }}\n1077:                     {% else %}\n1078:                         <a href=\"{{ url('admin_order_search_pattern', { 'pattern_id': SearchPattern.id }) }}\" id=\"search_pattern_{{ SearchPattern.id }}\">{{ SearchPattern.name }}\n1079:                         (<span id=\"pattern_id_{{SearchPattern.id}}\">*</span>)\n1080:                         </a>\n1081:                         <button type=\"button\" class=\"get_count_pattern btn p-0 border-0 bg-transparent\" id=\"get_count_pattern_{{ SearchPattern.id }}\" data-pattern-id=\"{{ SearchPattern.id }}\">",
-        "src/Eccube/Resource/template/admin/Order/index.twig:1081\n1078:                         <a href=\"{{ url('admin_order_search_pattern', { 'pattern_id': SearchPattern.id }) }}\" id=\"search_pattern_{{ SearchPattern.id }}\">{{ SearchPattern.name }}\n1079:                         (<span id=\"pattern_id_{{SearchPattern.id}}\">*</span>)\n1080:                         </a>\n1081:                         <button type=\"button\" class=\"get_count_pattern btn p-0 border-0 bg-transparent\" id=\"get_count_pattern_{{ SearchPattern.id }}\" data-pattern-id=\"{{ SearchPattern.id }}\">\n1082:                             <i class=\"fa fa-refresh\" aria-hidden=\"true\"></i>\n1083:                         </button>\n1084:                     {% endif %}"
+        "src/Eccube/Resource/template/admin/Order/index.twig:1075\n1072:                                 <div class=\"d-inline-block me-2 align-bottom\">\n1073:                                     <select id=\"page_count_pulldown\" class=\"form-select\">\n1074:                                         {% for pageMax in pageMaxis %}\n1075:                                             <option {% if pageMax.name == page_count %} selected {% endif %}\n1076:                                                     value=\"{{ path('admin_order_page', {'page_no': 1, 'page_count': pageMax.name}) }}\">\n1077:                                                 {{ 'admin.common.count'|trans({ '%count%': pageMax.name }) }}</option>\n1078:                                         {% endfor %}",
+        "src/Eccube/Resource/template/admin/Order/index.twig:1078\n1075:                                             <option {% if pageMax.name == page_count %} selected {% endif %}\n1076:                                                     value=\"{{ path('admin_order_page', {'page_no': 1, 'page_count': pageMax.name}) }}\">\n1077:                                                 {{ 'admin.common.count'|trans({ '%count%': pageMax.name }) }}</option>\n1078:                                         {% endfor %}\n1079:                                     </select>\n1080:                                 </div>\n1081:                                 <div class=\"d-inline-block\">",
+        "src/Eccube/Resource/template/admin/Order/index.twig:1081\n1078:                                         {% endfor %}\n1079:                                     </select>\n1080:                                 </div>\n1081:                                 <div class=\"d-inline-block\">\n1082:                                     <div class=\"btn-group\" role=\"group\">\n1083:                                         <div class=\"btn-group\" role=\"group\">\n1084:                                             <button type=\"button\" class=\"btn btn-ec-regular dropdown-menu-toggle\" id=\"csvDownloadDropDown\">"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -824,10 +824,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-9adac67734",
+        "id": "m05-01_0203_sheet-3_sheet-req-2abd2e0db8",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "管理画面の「受注管理」において、 dtb_order および関連する配送・明細・顧客・店舗情報を検索条件で絞り込み、一覧（配送単位の行）としてページング表示する機能である。検索条件・ページ番号・表示件数・並び替えキーはセッションに保持し、 resume クエリや検索パターン適用時に復元する。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B8",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -837,10 +837,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-e35606fd08",
+        "id": "m05-01_0203_sheet-3_sheet-req-f3aef4a045",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値とするソースは src/Eccube/Controller/Admin/Order 、 src/Eccube/Controller/Admin/Order/SearchOrderController 、 src/Eccube/Form/Type/Admin/SearchOrderType 、 src/Eccube/Repository/OrderRepository 、 src/Eccube/Resource/template/admin/Order/index.twig 、共通 JS html/template/admin/assets/js/function.js とする。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B188",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -850,10 +850,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-f751e94372",
+        "id": "m05-01_0203_sheet-3_sheet-req-6542c555a3",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "対象はブラウザ経由の管理画面に限定する。受注詳細の編集・メール個別送信・状態機械の業務規則の全部、CSV本体の項目マッピング、一括処理モーダル内部の通信仕様の細部は別範囲とする。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B189",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -863,10 +863,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-486248ad4f",
+        "id": "m05-01_0203_sheet-3_sheet-req-d2fdfed6c4",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "受注検索・一覧が参照する永続化テーブルは、現行（pf-eccube3）と移行先（ec-cube-enterprise）で同一の名称を用いる。受注本体は dtb_order 、配送は dtb_shipping 、検索パターンは dtb_search_pattern であり、移行先 ec-cube-enterprise にいずれも実在する。本書が条件として参照する受注の列（注文番号 order_number 、店頭注文番号 waiting_number 、スマレジ取引ID smaregi_receipt_no 、店頭予約日時 otc_rsv_date ほか）も移行先に存在し、列名・用途に差は確認されない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B190",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -876,10 +876,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-8117cdcba6",
+        "id": "m05-01_0203_sheet-3_sheet-req-b9169e9031",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "DB関連の記述は ec-cube-enterprise を正とする。検索パターンの保存・適用が用いる列（ name ・ display_key 等）の型・桁・制約の細部は ec-cube-enterprise の Entity / Repository / Migration を正とし、現行と移行先でスキーマが食い違う箇所があれば移行先の名称を主とする。本書時点で現行と移行先のスキーマ差は確認されていない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B192",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -889,10 +889,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-550a37f4a1",
+        "id": "m05-01_0203_sheet-3_sheet-req-346e15aceb",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "クエリに page_no も resume も無い通常GETの場合、検索条件は空に近い初期値、ページ1、表示件数はセッションまたは eccube_default_page_count に従う。対応状況のチェックが空ならキャンセル・引渡し済みステータスは検索対象外の条件が付く",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B193",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -902,10 +902,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-58eb7c6c8e",
-        "category": "クエリのステータスIDが単一選択状態としてフォーム初期データに載り、セッションの検索ビューデータも初期化される",
+        "id": "m05-01_0203_sheet-3_sheet-req-d916fe1b0c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "「検索」ボタンで送信",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B194",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -915,10 +915,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-784c21feca",
-        "category": "セッションの検索ビューデータとページ番号を復元して一覧を表示する",
+        "id": "m05-01_0203_sheet-3_sheet-req-4b4dfb1580",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "表示件数プルダウン変更",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B195",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -928,10 +928,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-40c3c9d172",
-        "category": "page_count がページマスタ mtb_page_max のいずれかの名前と一致するときだけセッションの表示件数が更新され、1ページ目が表示される",
+        "id": "m05-01_0203_sheet-3_sheet-req-bc4709308e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "POST /{admin_route}/order （フォーム送信）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B196",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -941,10 +941,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-d855e46276",
-        "category": "隠し項目 sortkey と sorttype が更新された状態で検索フォーム全体が送信され、検証成功時はページ1相当のセッション更新と並び替え付き一覧となる",
+        "id": "m05-01_0203_sheet-3_sheet-req-515f84ff21",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "保存済み検索パターン名をクリック",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B197",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -954,10 +954,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-6e5adcbc80",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "id": "m05-01_0203_sheet-3_sheet-req-62b2328d41",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "パターン名が空ならエラーフラッシュ付きで admin_order に戻る。成功時はパターンがUPSERTされ、適用ルートへリダイレクトする",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B198",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -967,10 +967,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-3f662e7689",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "id": "m05-01_0203_sheet-3_sheet-req-7e4a0855cc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "検索パターン削除ボタン",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B199",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -980,10 +980,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-364a270519",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "id": "m05-01_0203_sheet-3_sheet-req-fbf7eaac60",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "パターン削除後、 admin_order へリダイレクトする",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B203",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -993,10 +993,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-bd513374aa",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "id": "m05-01_0203_sheet-3_sheet-req-fdded6a1ee",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "受注編集画面へ遷移する（詳細仕様は別書）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B202",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1006,10 +1006,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-d8949004e3",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "id": "m05-01_0203_sheet-3_sheet-req-49c6b7b8e2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "パターンに保存された条件での件数をJSONで返す（一覧ヘッダからXHRで利用）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B201",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1019,10 +1019,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-845286e769",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "id": "m05-01_0203_sheet-3_sheet-req-0088f4a765",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "ページタイトル・サブタイトルは受注一覧／受注管理。検索は単一の #search_form 。上部に店舗複数選択（select2）、注文番号、注文者名複合検索、会社名・備考・商品コード複合検索（横に詳細検索の開閉ボタン）。折りたたみブロックに検索パターン名・保存／削除、対応状況チェック（マスタにより件数リンク）、支払方法チェック、配送方法チェック、顧客グループ見出しのみ行、購入メッセージ有無ラジオ群、電話・メール、氏名・カナ、性別、各種日時レンジと「○日以内」「○日以上前」数値、更新日レンジ、購入金額レンジ、購入商品名3欄とAND/ORラジオ、商品コード、エンティティ拡張の自動描画欄、配送複合検索と配送詳細折りたたみ（配送先氏名・カナ・郵便・電話・国・県）、店頭注文番号、スマレジ取引ID、「検索条件クリア」「検索」、検索結果件数表示、隠し並び項目。一覧はチェックボックス、ソート付き列、配送単位の操作アイコン、ページネーション。検索パターン一覧ブロックが別途表示されることがある",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B200",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1032,10 +1032,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-c9c928963e",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "id": "m05-01_0203_sheet-3_sheet-req-b299173e1b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "共通 function.js の .search-clear で、 #search_form 内の .input_search および .search-box-inner 配下の入力をクリアする。チェックボックスとラジオは選択解除、hiddenはトークン以外を空にし、select2の選択チップDOMを削除する。並びヘッダ .js-listSort のクリックで隠し sortkey ・ sorttype を書き換えて #search_form を送信する。表示件数変更で window.location.href を書き換える。一覧チェックボックス群で一括ボタン表示を連動させる。送り状番号更新はXHRで別エンドポイントへ送信する。検索パターン件数は admin_order_count_pattern へのGETで更新する。Bootstrap collapse の開閉に合わせて詳細ボタンのアイコンと aria-expanded を同期する。確認モーダルは confirmationModal_js.twig を読み込む",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B204",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1045,10 +1045,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-5288f016ef",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "id": "m05-01_0203_sheet-3_sheet-req-c3b6c1ada7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "一括ステータス・メール確認モーダル、PDFや印刷の別ウィンドウを開く処理がある",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B208",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1058,10 +1058,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-da8145ea3b",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "id": "m05-01_0203_sheet-3_sheet-req-04edc2c12c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "通常一覧を表示する（ admin_order / admin_order_page ）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B205",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1071,10 +1071,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-b95732295b",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "id": "m05-01_0203_sheet-3_sheet-req-b4d7f54380",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "表示件数はリクエストの page_count が mtb_page_max と一致するときのみセッション eccube.admin.order.search.page_count を更新し、それ以外はセッションまたは eccube_default_page_count を使う。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B209",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1084,10 +1084,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-65114f33ed",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "id": "m05-01_0203_sheet-3_sheet-req-0b5e6636c7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "POST のときフォームをバインドし、検証に成功した場合のみ検索ビューデータをセッション eccube.admin.order.search に保存しページ番号を1にする。失敗時は has_errors を真にして詳細検索枠を開いた状態で同一テンプレートを返し、一覧は組み立てない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B206",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1097,10 +1097,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-8a83461359",
-        "category": "GET で page_no または resume があるときはセッションから検索ビューデータを復元してフォームへ流し込む。ページ番号はルートパラメータ優先。",
+        "id": "m05-01_0203_sheet-3_sheet-req-e941bd1955",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "GET でどちらも無く初期表示のときはページ1とし、 order_status_id クエリがあればステータス配列初期値のみ載せたビューデータでセッションを初期化する。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B207",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1110,10 +1110,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-0b8638e101",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-fbf7072d92",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "検索パターンを保存する（ admin_order_save_pattern ）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B210",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1123,10 +1123,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-afa9be5582",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-c846a7310e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "パターン名が空ならエラーメッセージを積み admin_order へ戻る。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B211",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1136,10 +1136,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-a8c025eeaa",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-742c000748",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "tenants キーは保存前にビューデータから除去する。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B212",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1149,10 +1149,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-3390e1de43",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-f4e3525e3b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "既存IDがあれば更新、無ければ新規行を作り、 display_key を order にし、会員が紐づく基本情報を書き込む。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B213",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1162,10 +1162,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-7273ef14b9",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-1a71864d64",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "成功メッセージののち、 admin_order_search_pattern にリダイレクトする。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B214",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1175,10 +1175,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-38549ee2da",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-a3d32cc7ff",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "検索パターンを削除する（ admin_order_delete_pattern ）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B215",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1188,10 +1188,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-8a2d475793",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-7186bc4443",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "対象が無ければエラーで admin_order に戻る。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B216",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1201,10 +1201,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-bbb0342211",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-ff4a5c9f96",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "削除成功時は成功メッセージののち admin_order に戻る。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B217",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1214,10 +1214,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-8f35cc4bab",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-a6019e8dd6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "OrderRepository::countByOrderStatus が単純カウントする。マスタの「件数表示」フラグが偽のステータスではリンクと件数は表示しない",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B218",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1227,10 +1227,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-bc039d7358",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-db51e337cd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "画面ラベルはテンプレートとメッセージキーの意味に基づく。フォーム項目キー・列名は「保存先・扱い」に集約する。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B219",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1240,10 +1240,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-d905312fad",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-979ecd99bf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "tenants 。非空時は配送先の baseInfo が選択店舗に含まれる注文だけに限定。検索パターン保存時はシリアライズ対象から除外される",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B220",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1253,10 +1253,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-fe511e3095",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-e2ef206921",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "255文字（設定 eccube_stext_len の確認値）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B221",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1266,10 +1266,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-5d9f00934d",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-f39b86d27e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "部分一致 o.order_number",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B222",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1279,10 +1279,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-e19dcd82f3",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-eb2f8c7946",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "保存処理時は必須扱い。空ならエラーでリダイレクト。 dtb_search_pattern.name",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B223",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1292,10 +1292,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-fbf917d3d0",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-c18a97dea2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "保存時に既存行の特定に使う",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B224",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1305,10 +1305,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-7f74f8f494",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-4d62894bb9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "対応状況（複数チェック）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B225",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1318,10 +1318,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-87f83c089f",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-17193a4b89",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "1件以上選択時は選択IDに一致。未選択時はキャンセルと引渡し済を除く既定条件が付く",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B226",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1331,10 +1331,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-09d6ac5c0c",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-7945df40c5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "支払方法（複数チェック）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B227",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1344,10 +1344,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-0f9c03b60c",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-976594aaa5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "選択IDの支払方法に一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B228",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1357,10 +1357,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-202e9eb685",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-8aa6437ad6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "配送方法（複数チェック）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B229",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1370,10 +1370,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-7a397deda1",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-31f3c20ef9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "購入メッセージの有無（チェック複数可）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B230",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1383,10 +1383,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-ed39bf2f03",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-b4632268c1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "値 1 のみ選択時は o.message IS NOT NULL 、 0 のみは IS NULL 。実装は厳密 in_array であるため送信値型は要確認",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B231",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1396,10 +1396,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-583a0acfd8",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-0688b4f7b5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "数字以外を除去し連結電話番号部分一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B232",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1409,10 +1409,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-affdc3aaa1",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-450f6e63e9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "姓名連結への部分一致（空白除去後）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B233",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1422,10 +1422,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-fa372cb13a",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-0fcd8714e0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "セイメイ連結への部分一致（空白除去後）。全角カナへ正規化イベントあり",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B234",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1435,10 +1435,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-45dca6ebc0",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-ee92e7d616",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "性別（複数チェック）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B235",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1448,10 +1448,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-8f320c3dc3",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-3fee18b8c5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "o.order_date に下限・上限（上限は未満比較で格納形式 Y-m-d H:i:s ）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B236",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1461,10 +1461,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-095d624f5f",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-22f7fccbc2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "注文日の「○日以内」「○日以上前」",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B237",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1474,10 +1474,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-5735f036a6",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-d760b0f690",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "ピック日時・入金日時・出荷指示日時・出荷日時・キャンセル日時・売上確定日時・店頭予約日時・更新日時",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B238",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1487,10 +1487,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-99677f09ef",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-39cef38f00",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "上記各日時の入力有無（ラジオ系）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B239",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1500,10 +1500,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-0a78929d44",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-eac8628e62",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "o.payment_total の下限以上・上限以下",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B240",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1513,10 +1513,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-5e0abbfead",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-e1b215c92e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "AND指定時は同一明細の product_name が3語すべて部分一致すること。OR指定時はいずれかの語で明細が一致すればよい。ラジオ値 0 がAND、 1 がOR",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B241",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1526,10 +1526,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-472c5dd5bb",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-845d48e14a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "明細商品コード部分一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B242",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1539,10 +1539,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-3bf18b4fde",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-1344f72789",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "配送先姓名連結の部分一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B243",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1552,10 +1552,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-0813949dae",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-13da0fbbb7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "DQL文字列に括弧欠落があり、実行時エラーや無効条件になりうる実装になっている（要コード修正の可能性）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B244",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1565,10 +1565,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-e46382aa5e",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-0559e8d114",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "配送先郵便番号部分一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B245",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1578,10 +1578,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-8535d4a67b",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-86f887ec79",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "配送先電話3要素連結への部分一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B246",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1591,10 +1591,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-ccecfc2b45",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-efc6377078",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "配送先国エンティティ一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B247",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1604,10 +1604,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-968402919f",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-24564a09dc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "配送先県エンティティ一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B248",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1617,10 +1617,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-d5460b1cd1",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-2c23a6008b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "o.waitingNumber 完全一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B249",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1630,10 +1630,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-632da96875",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-8a08c42924",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "o.smaregiReceiptNo 完全一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B250",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1643,10 +1643,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-f312c5229d",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-681e821592",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "sortkey ・ sorttype （ a 以外は降順扱い）。空のときは更新日時降順、次点注文ID降順",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B251",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1656,10 +1656,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-6e770f774a",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-46b16dfce4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "補足（画面に無いフォーム項目）: 受注マスタ側のフォーム型には、注文ID風コード、会社名単体、送り状番号、発送メール状態、お届け日の日付フィールド群なども定義があるが、 index.twig ではウィジェットを出しておらず、通常の一覧UIからは入力できない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B252",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1669,10 +1669,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-2ffe3f76e0",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-e0f6ba764d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "対応状況を1件も選ばないGET初期表示では、キャンセルと引渡し済を除く否定条件が付き、一覧の母集団が狭まる。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B253",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1682,10 +1682,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-31c5863bcc",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-5d3b9a2fcd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "日時範囲の開始と終了の両方があるとき、終了が開始より前ならフォームエラーとなり一覧は返らない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B254",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1695,10 +1695,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-21155cfd2f",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "id": "m05-01_0203_sheet-3_sheet-req-a4acb2515d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "相対日数とカレンダー日時を同時に入れた場合、ヘルパが双方の境界を合成し、意図と異なる狭いレンジになりうる。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B255",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1708,10 +1708,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-cc7ed71b5d",
-        "category": "業務ルール・計算",
+        "id": "m05-01_0203_sheet-3_sheet-req-6c81a8a49c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B191",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1721,10 +1721,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-21257a90a9",
-        "category": "業務ルール・計算",
+        "id": "m05-01_0203_sheet-3_sheet-req-29e41bdca9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B262",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1734,10 +1734,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-5cd7c506a9",
-        "category": "業務ルール・計算",
+        "id": "m05-01_0203_sheet-3_sheet-req-a38d177bd3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B263",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1747,10 +1747,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-467740b4ca",
-        "category": "業務ルール・計算",
+        "id": "m05-01_0203_sheet-3_sheet-req-5c0a844f3b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "セッションキー eccube.admin.order.search 、 eccube.admin.order.search.page_no 、 eccube.admin.order.search.page_count が一覧・ページング・ resume の再表示と整合することを狙う。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B264",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1760,10 +1760,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-76b0970ee2",
-        "category": "業務ルール・計算",
+        "id": "m05-01_0203_sheet-3_sheet-req-34a9292da7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "一覧テーブルは配送単位であり、詳細画面の注文単位表示と行数が一致しない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B256",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1773,10 +1773,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-ab79c23509",
-        "category": "業務ルール・計算",
+        "id": "m05-01_0203_sheet-3_sheet-req-71929722cd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "admin_order_search_pattern のレスポンスでは OrderCsvExtensions や ShippingCsvExtensions 、 memberId などが通常一覧より欠けるため、 kernel.debug が真のTwigでは未定義変数エラーになりうる。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B257",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1786,10 +1786,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-66f85b1198",
-        "category": "業務ルール・計算",
+        "id": "m05-01_0203_sheet-3_sheet-req-45fbd737ff",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "一覧ヘッダの data-sortkey に order_date ・ order_number ・ order_commit_date などがあり、リポジトリの並びキーマップのキー集合（ order ・ orderer ・ payment_method 等）と一致しない。該当キーで並び指示が送られると未定義キー参照になりうる。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B258",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1799,10 +1799,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-77f4367199",
-        "category": "セッションへ検索ビューデータ・ページ・表示件数を書き込む。",
+        "id": "m05-01_0203_sheet-3_sheet-req-9a8924a66e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "検索パターン保存・削除で dtb_search_pattern を更新する。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B259",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1812,10 +1812,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-8d548ab60b",
-        "category": "セッションへ検索ビューデータ・ページ・表示件数を書き込む。",
+        "id": "m05-01_0203_sheet-3_sheet-req-399140b57b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "フラッシュバッグへ成功・エラーメッセージを積むことがある。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B260",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1825,10 +1825,10 @@
         "coveredByFinding": true
       },
       {
-        "id": "m05-01_0203_sheet-3_sheet-req-d6e8a54811",
-        "category": "セッションへ検索ビューデータ・ページ・表示件数を書き込む。",
+        "id": "m05-01_0203_sheet-3_sheet-req-33b8c5f166",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "一覧からのXHRや別フォーム送信は受注・配送・メール状態を変えうるが、その詳細は本書の対象外とする。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B261",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1876,6 +1876,7 @@
         "admin.order.search.page_count",
         "admin.order.search",
         "admin.order.search.page_no",
+        "admin.product.date_range_error",
         "common.bulk_actions",
         "common.decision",
         "common.close",
@@ -1908,6 +1909,7 @@
         "order/delete/pattern/{pattern_id}",
         "order/{id}/edit",
         "order/count/pattern/{pattern_id}",
+        "slices/M05-01.resolved.tsv",
         "ec-cube-enterprise/m05-12_admin_order_order_bulk_status_change.md",
         "shipping/{id}/order_status",
         "flush",
@@ -1953,7 +1955,7 @@
         "term": "ADMIN_ORDER_INDEX_INITIALIZE",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderController.php:150",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderController.php:152",
         "snippet": "$this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_ORDER_INDEX_INITIALIZE);",
         "weight": 7
       },
@@ -1961,7 +1963,7 @@
         "term": "ADMIN_ORDER_INDEX_SEARCH",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderController.php:249",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderController.php:258",
         "snippet": "$this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_ORDER_INDEX_SEARCH);",
         "weight": 7
       },
@@ -1969,7 +1971,7 @@
         "term": "OrderCsvExtensions",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/OrderController.php:279",
+        "ref": "src/Eccube/Controller/Admin/Order/OrderController.php:298",
         "snippet": "'OrderCsvExtensions' => $this->dtbCsvExtensionRepository->findBy(['CsvType' => CsvType::CSV_TYPE_ORDER]),",
         "weight": 7
       },
@@ -1985,7 +1987,7 @@
         "term": "admin_order_save_pattern",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/SearchOrderController.php:138",
+        "ref": "src/Eccube/Controller/Admin/Order/SearchOrderController.php:156",
         "snippet": "#[Route(path: '/%eccube_admin_route%/order/save/pattern', name: 'admin_order_save_pattern', methods: ['POST'])]",
         "weight": 7
       },
@@ -1993,7 +1995,7 @@
         "term": "admin_order_search_pattern",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/SearchOrderController.php:167",
+        "ref": "src/Eccube/Controller/Admin/Order/SearchOrderController.php:195",
         "snippet": "return $this->redirectToRoute('admin_order_search_pattern', ['pattern_id' => $SearchPattern->getId()]);",
         "weight": 7
       },
@@ -2001,7 +2003,7 @@
         "term": "admin_order_delete_pattern",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/SearchOrderController.php:175",
+        "ref": "src/Eccube/Controller/Admin/Order/SearchOrderController.php:203",
         "snippet": "#[Route(path: '/%eccube_admin_route%/order/delete/pattern/{pattern_id}', name: 'admin_order_delete_pattern', requirements: ['pattern_id' => '\\d+'], methods: ['POST'])]",
         "weight": 7
       },
@@ -2009,7 +2011,7 @@
         "term": "admin_order_count_pattern",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/SearchOrderController.php:197",
+        "ref": "src/Eccube/Controller/Admin/Order/SearchOrderController.php:233",
         "snippet": "#[Route(path: '/%eccube_admin_route%/order/count/pattern/{pattern_id}', name: 'admin_order_count_pattern', methods: ['GET'])]",
         "weight": 7
       },
@@ -2017,7 +2019,7 @@
         "term": "SearchOrderController",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/SearchOrderController.php:40",
+        "ref": "src/Eccube/Controller/Admin/Order/SearchOrderController.php:42",
         "snippet": "class SearchOrderController extends AbstractController",
         "weight": 7
       },
@@ -2025,7 +2027,7 @@
         "term": "admin_order_search_pattern",
         "termType": "routeName",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Order/SearchOrderController.php:52",
+        "ref": "src/Eccube/Controller/Admin/Order/SearchOrderController.php:54",
         "snippet": "#[Route(path: '/%eccube_admin_route%/order/search/pattern/{pattern_id}', name: 'admin_order_search_pattern', requirements: ['pattern_id' => '\\d+'], methods: ['GET', 'POST'])]",
         "weight": 7
       },
@@ -2070,14 +2072,6 @@
         "weight": 7
       },
       {
-        "term": "smaregi_receipt_no",
-        "termType": "routeName",
-        "role": "Repository",
-        "ref": "src/Eccube/Repository/OrderRepository.php:143",
-        "snippet": "* smaregi_receipt_no?:int|string|null,",
-        "weight": 7
-      },
-      {
         "term": "customer_group",
         "termType": "routeName",
         "role": "Repository",
@@ -2089,8 +2083,16 @@
         "term": "customer_group",
         "termType": "routeName",
         "role": "Repository",
-        "ref": "src/Eccube/Repository/OrderRepository.php:324",
-        "snippet": "// customer_group - TBD",
+        "ref": "src/Eccube/Repository/OrderRepository.php:252",
+        "snippet": "// ゲスト受注(c が null)は除外されない。customer_group 検索は `c.Player` を別途 join するため",
+        "weight": 7
+      },
+      {
+        "term": "customer_group",
+        "termType": "routeName",
+        "role": "Repository",
+        "ref": "src/Eccube/Repository/OrderRepository.php:335",
+        "snippet": "// customer_group",
         "weight": 7
       }
     ],
@@ -2376,7 +2378,7 @@
     "verdictedCount": 120,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
       "実装済み": 120,
       "要確認": 0,
@@ -3058,10 +3060,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-9adac67734",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-2abd2e0db8",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "管理画面の「受注管理」において、 dtb_order および関連する配送・明細・顧客・店舗情報を検索条件で絞り込み、一覧（配送単位の行）としてページング表示する機能である。検索条件・ページ番号・表示件数・並び替えキーはセッションに保持し、 resume クエリや検索パターン適用時に復元する。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B8",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3071,13 +3073,13 @@
         "auditNote": "確定所見が本要求をカバー済み。",
         "conformanceBucket": "実装済み",
         "material": true,
-        "elementLevel": true
+        "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-e35606fd08",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-f3aef4a045",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値とするソースは src/Eccube/Controller/Admin/Order 、 src/Eccube/Controller/Admin/Order/SearchOrderController 、 src/Eccube/Form/Type/Admin/SearchOrderType 、 src/Eccube/Repository/OrderRepository 、 src/Eccube/Resource/template/admin/Order/index.twig 、共通 JS html/template/admin/assets/js/function.js とする。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B188",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3086,14 +3088,14 @@
         "candidateRefs": [],
         "auditNote": "確定所見が本要求をカバー済み。",
         "conformanceBucket": "実装済み",
-        "material": false,
+        "material": true,
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-f751e94372",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-6542c555a3",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "対象はブラウザ経由の管理画面に限定する。受注詳細の編集・メール個別送信・状態機械の業務規則の全部、CSV本体の項目マッピング、一括処理モーダル内部の通信仕様の細部は別範囲とする。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B189",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3103,13 +3105,13 @@
         "auditNote": "確定所見が本要求をカバー済み。",
         "conformanceBucket": "実装済み",
         "material": true,
-        "elementLevel": true
+        "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-486248ad4f",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-d2fdfed6c4",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "受注検索・一覧が参照する永続化テーブルは、現行（pf-eccube3）と移行先（ec-cube-enterprise）で同一の名称を用いる。受注本体は dtb_order 、配送は dtb_shipping 、検索パターンは dtb_search_pattern であり、移行先 ec-cube-enterprise にいずれも実在する。本書が条件として参照する受注の列（注文番号 order_number 、店頭注文番号 waiting_number 、スマレジ取引ID smaregi_receipt_no 、店頭予約日時 otc_rsv_date ほか）も移行先に存在し、列名・用途に差は確認されない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B190",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3122,10 +3124,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-8117cdcba6",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-b9169e9031",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "DB関連の記述は ec-cube-enterprise を正とする。検索パターンの保存・適用が用いる列（ name ・ display_key 等）の型・桁・制約の細部は ec-cube-enterprise の Entity / Repository / Migration を正とし、現行と移行先でスキーマが食い違う箇所があれば移行先の名称を主とする。本書時点で現行と移行先のスキーマ差は確認されていない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B192",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3138,10 +3140,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-550a37f4a1",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-346e15aceb",
         "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "クエリに page_no も resume も無い通常GETの場合、検索条件は空に近い初期値、ページ1、表示件数はセッションまたは eccube_default_page_count に従う。対応状況のチェックが空ならキャンセル・引渡し済みステータスは検索対象外の条件が付く",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B193",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3154,42 +3156,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-58eb7c6c8e",
-        "category": "クエリのステータスIDが単一選択状態としてフォーム初期データに載り、セッションの検索ビューデータも初期化される",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-d916fe1b0c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "「検索」ボタンで送信",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-784c21feca",
-        "category": "セッションの検索ビューデータとページ番号を復元して一覧を表示する",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "表示件数プルダウン変更",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-40c3c9d172",
-        "category": "page_count がページマスタ mtb_page_max のいずれかの名前と一致するときだけセッションの表示件数が更新され、1ページ目が表示される",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "POST /{admin_route}/order （フォーム送信）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B194",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3202,10 +3172,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-d855e46276",
-        "category": "隠し項目 sortkey と sorttype が更新された状態で検索フォーム全体が送信され、検証成功時はページ1相当のセッション更新と並び替え付き一覧となる",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-4b4dfb1580",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "保存済み検索パターン名をクリック",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B195",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3218,10 +3188,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-6e5adcbc80",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-bc4709308e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "パターン名が空ならエラーフラッシュ付きで admin_order に戻る。成功時はパターンがUPSERTされ、適用ルートへリダイレクトする",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B196",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3234,26 +3204,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-3f662e7689",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-515f84ff21",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "検索パターン削除ボタン",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-364a270519",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "パターン削除後、 admin_order へリダイレクトする",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B197",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3266,26 +3220,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-bd513374aa",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-62b2328d41",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "受注編集画面へ遷移する（詳細仕様は別書）",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-d8949004e3",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "パターンに保存された条件での件数をJSONで返す（一覧ヘッダからXHRで利用）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B198",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3298,74 +3236,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-845286e769",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-7e4a0855cc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "ページタイトル・サブタイトルは受注一覧／受注管理。検索は単一の #search_form 。上部に店舗複数選択（select2）、注文番号、注文者名複合検索、会社名・備考・商品コード複合検索（横に詳細検索の開閉ボタン）。折りたたみブロックに検索パターン名・保存／削除、対応状況チェック（マスタにより件数リンク）、支払方法チェック、配送方法チェック、顧客グループ見出しのみ行、購入メッセージ有無ラジオ群、電話・メール、氏名・カナ、性別、各種日時レンジと「○日以内」「○日以上前」数値、更新日レンジ、購入金額レンジ、購入商品名3欄とAND/ORラジオ、商品コード、エンティティ拡張の自動描画欄、配送複合検索と配送詳細折りたたみ（配送先氏名・カナ・郵便・電話・国・県）、店頭注文番号、スマレジ取引ID、「検索条件クリア」「検索」、検索結果件数表示、隠し並び項目。一覧はチェックボックス、ソート付き列、配送単位の操作アイコン、ページネーション。検索パターン一覧ブロックが別途表示されることがある",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-c9c928963e",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "共通 function.js の .search-clear で、 #search_form 内の .input_search および .search-box-inner 配下の入力をクリアする。チェックボックスとラジオは選択解除、hiddenはトークン以外を空にし、select2の選択チップDOMを削除する。並びヘッダ .js-listSort のクリックで隠し sortkey ・ sorttype を書き換えて #search_form を送信する。表示件数変更で window.location.href を書き換える。一覧チェックボックス群で一括ボタン表示を連動させる。送り状番号更新はXHRで別エンドポイントへ送信する。検索パターン件数は admin_order_count_pattern へのGETで更新する。Bootstrap collapse の開閉に合わせて詳細ボタンのアイコンと aria-expanded を同期する。確認モーダルは confirmationModal_js.twig を読み込む",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-5288f016ef",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "一括ステータス・メール確認モーダル、PDFや印刷の別ウィンドウを開く処理がある",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-da8145ea3b",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "通常一覧を表示する（ admin_order / admin_order_page ）",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-b95732295b",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "表示件数はリクエストの page_count が mtb_page_max と一致するときのみセッション eccube.admin.order.search.page_count を更新し、それ以外はセッションまたは eccube_default_page_count を使う。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B199",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3378,10 +3252,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-65114f33ed",
-        "category": "DBから復号したビューデータでフォームが組み立てられ、セッション検索状態がその内容で上書きされる",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-fbf7eaac60",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "POST のときフォームをバインドし、検証に成功した場合のみ検索ビューデータをセッション eccube.admin.order.search に保存しページ番号を1にする。失敗時は has_errors を真にして詳細検索枠を開いた状態で同一テンプレートを返し、一覧は組み立てない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B203",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3394,10 +3268,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-8a83461359",
-        "category": "GET で page_no または resume があるときはセッションから検索ビューデータを復元してフォームへ流し込む。ページ番号はルートパラメータ優先。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-fdded6a1ee",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "GET でどちらも無く初期表示のときはページ1とし、 order_status_id クエリがあればステータス配列初期値のみ載せたビューデータでセッションを初期化する。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B202",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3410,10 +3284,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-0b8638e101",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-49c6b7b8e2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "検索パターンを保存する（ admin_order_save_pattern ）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B201",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3426,26 +3300,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-afa9be5582",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-0088f4a765",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "パターン名が空ならエラーメッセージを積み admin_order へ戻る。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-a8c025eeaa",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "tenants キーは保存前にビューデータから除去する。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B200",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3458,10 +3316,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-3390e1de43",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-b299173e1b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "既存IDがあれば更新、無ければ新規行を作り、 display_key を order にし、会員が紐づく基本情報を書き込む。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B204",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3474,26 +3332,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-7273ef14b9",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-c3b6c1ada7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "成功メッセージののち、 admin_order_search_pattern にリダイレクトする。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-38549ee2da",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "検索パターンを削除する（ admin_order_delete_pattern ）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B208",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3506,10 +3348,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-8a2d475793",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-04edc2c12c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "対象が無ければエラーで admin_order に戻る。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B205",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3522,58 +3364,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-bbb0342211",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-b4d7f54380",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "削除成功時は成功メッセージののち admin_order に戻る。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-8f35cc4bab",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "OrderRepository::countByOrderStatus が単純カウントする。マスタの「件数表示」フラグが偽のステータスではリンクと件数は表示しない",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-bc039d7358",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "画面ラベルはテンプレートとメッセージキーの意味に基づく。フォーム項目キー・列名は「保存先・扱い」に集約する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-d905312fad",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "tenants 。非空時は配送先の baseInfo が選択店舗に含まれる注文だけに限定。検索パターン保存時はシリアライズ対象から除外される",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B209",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3586,42 +3380,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-fe511e3095",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-0b5e6636c7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "255文字（設定 eccube_stext_len の確認値）",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-5d9f00934d",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "部分一致 o.order_number",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-e19dcd82f3",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "保存処理時は必須扱い。空ならエラーでリダイレクト。 dtb_search_pattern.name",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B206",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3634,10 +3396,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-fbf917d3d0",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-e941bd1955",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "保存時に既存行の特定に使う",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B207",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3650,10 +3412,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-7f74f8f494",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-fbf7072d92",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "対応状況（複数チェック）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B210",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3666,26 +3428,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-87f83c089f",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-c846a7310e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "1件以上選択時は選択IDに一致。未選択時はキャンセルと引渡し済を除く既定条件が付く",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-09d6ac5c0c",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "支払方法（複数チェック）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B211",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3698,10 +3444,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-0f9c03b60c",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-742c000748",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "選択IDの支払方法に一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B212",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3714,10 +3460,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-202e9eb685",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-f4e3525e3b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "配送方法（複数チェック）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B213",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3730,26 +3476,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-7a397deda1",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-1a71864d64",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "購入メッセージの有無（チェック複数可）",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-ed39bf2f03",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "値 1 のみ選択時は o.message IS NOT NULL 、 0 のみは IS NULL 。実装は厳密 in_array であるため送信値型は要確認",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B214",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3762,58 +3492,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-583a0acfd8",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-a3d32cc7ff",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "数字以外を除去し連結電話番号部分一致",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-affdc3aaa1",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "姓名連結への部分一致（空白除去後）",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-fa372cb13a",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "セイメイ連結への部分一致（空白除去後）。全角カナへ正規化イベントあり",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-45dca6ebc0",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "性別（複数チェック）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B215",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3826,42 +3508,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-8f320c3dc3",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-7186bc4443",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "o.order_date に下限・上限（上限は未満比較で格納形式 Y-m-d H:i:s ）",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-095d624f5f",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "注文日の「○日以内」「○日以上前」",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-5735f036a6",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "ピック日時・入金日時・出荷指示日時・出荷日時・キャンセル日時・売上確定日時・店頭予約日時・更新日時",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B216",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3874,42 +3524,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-99677f09ef",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-ff4a5c9f96",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "上記各日時の入力有無（ラジオ系）",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-0a78929d44",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "o.payment_total の下限以上・上限以下",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-5e0abbfead",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "AND指定時は同一明細の product_name が3語すべて部分一致すること。OR指定時はいずれかの語で明細が一致すればよい。ラジオ値 0 がAND、 1 がOR",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B217",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3922,10 +3540,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-472c5dd5bb",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-a6019e8dd6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "明細商品コード部分一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B218",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3938,10 +3556,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-3bf18b4fde",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-db51e337cd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "配送先姓名連結の部分一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B219",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3954,10 +3572,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-0813949dae",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-979ecd99bf",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "DQL文字列に括弧欠落があり、実行時エラーや無効条件になりうる実装になっている（要コード修正の可能性）",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B220",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3970,10 +3588,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-e46382aa5e",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-e2ef206921",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "配送先郵便番号部分一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B221",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -3986,10 +3604,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-8535d4a67b",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-f39b86d27e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "配送先電話3要素連結への部分一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B222",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4002,10 +3620,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-ccecfc2b45",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-eb2f8c7946",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "配送先国エンティティ一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B223",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4018,10 +3636,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-968402919f",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-c18a97dea2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "配送先県エンティティ一致",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B224",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4034,42 +3652,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-d5460b1cd1",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-4d62894bb9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "o.waitingNumber 完全一致",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-632da96875",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "o.smaregiReceiptNo 完全一致",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-f312c5229d",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "sortkey ・ sorttype （ a 以外は降順扱い）。空のときは更新日時降順、次点注文ID降順",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B225",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4082,26 +3668,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-6e770f774a",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-17193a4b89",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "補足（画面に無いフォーム項目）: 受注マスタ側のフォーム型には、注文ID風コード、会社名単体、送り状番号、発送メール状態、お届け日の日付フィールド群なども定義があるが、 index.twig ではウィジェットを出しておらず、通常の一覧UIからは入力できない。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-2ffe3f76e0",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "対応状況を1件も選ばないGET初期表示では、キャンセルと引渡し済を除く否定条件が付き、一覧の母集団が狭まる。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B226",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4114,10 +3684,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-31c5863bcc",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-7945df40c5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "日時範囲の開始と終了の両方があるとき、終了が開始より前ならフォームエラーとなり一覧は返らない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B227",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4130,26 +3700,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-21155cfd2f",
-        "category": "セッションの検索ビューデータとページ番号をこの内容で上書きする。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-976594aaa5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "相対日数とカレンダー日時を同時に入れた場合、ヘルパが双方の境界を合成し、意図と異なる狭いレンジになりうる。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-cc7ed71b5d",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "件数、ページ番号、表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B228",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4162,10 +3716,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-21257a90a9",
-        "category": "業務ルール・計算",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-8aa6437ad6",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "金額、ポイント、数量、ステータス、日時はDBまたは連携元の永続化済み値を返却し、レスポンス生成時の丸め・補正は行わない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B229",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4178,10 +3732,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-5cd7c506a9",
-        "category": "業務ルール・計算",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-31f3c20ef9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "条件に一致しない、権限がない、または非公開のデータは空結果または既存のエラー形式で返す。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B230",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4194,10 +3748,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-467740b4ca",
-        "category": "業務ルール・計算",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-b4632268c1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "セッションキー eccube.admin.order.search 、 eccube.admin.order.search.page_no 、 eccube.admin.order.search.page_count が一覧・ページング・ resume の再表示と整合することを狙う。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B231",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4210,10 +3764,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-76b0970ee2",
-        "category": "業務ルール・計算",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-0688b4f7b5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "一覧テーブルは配送単位であり、詳細画面の注文単位表示と行数が一致しない。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B232",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4226,10 +3780,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-ab79c23509",
-        "category": "業務ルール・計算",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-450f6e63e9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "admin_order_search_pattern のレスポンスでは OrderCsvExtensions や ShippingCsvExtensions 、 memberId などが通常一覧より欠けるため、 kernel.debug が真のTwigでは未定義変数エラーになりうる。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B233",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4242,10 +3796,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-66f85b1198",
-        "category": "業務ルール・計算",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-0fcd8714e0",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "一覧ヘッダの data-sortkey に order_date ・ order_number ・ order_commit_date などがあり、リポジトリの並びキーマップのキー集合（ order ・ orderer ・ payment_method 等）と一致しない。該当キーで並び指示が送られると未定義キー参照になりうる。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B234",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4258,10 +3812,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-77f4367199",
-        "category": "セッションへ検索ビューデータ・ページ・表示件数を書き込む。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-ee92e7d616",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "検索パターン保存・削除で dtb_search_pattern を更新する。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B235",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4274,10 +3828,10 @@
         "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-8d548ab60b",
-        "category": "セッションへ検索ビューデータ・ページ・表示件数を書き込む。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-3fee18b8c5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "フラッシュバッグへ成功・エラーメッセージを積むことがある。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B236",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",
@@ -4287,13 +3841,461 @@
         "auditNote": "確定所見が本要求をカバー済み。",
         "conformanceBucket": "実装済み",
         "material": true,
-        "elementLevel": true
+        "elementLevel": false
       },
       {
-        "requirementId": "m05-01_0203_sheet-3_sheet-req-d6e8a54811",
-        "category": "セッションへ検索ビューデータ・ページ・表示件数を書き込む。",
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-22f7fccbc2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
         "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
-        "designRequirement": "一覧からのXHRや別フォーム送信は受注・配送・メール状態を変えうるが、その詳細は本書の対象外とする。",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B237",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-d760b0f690",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B238",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-39cef38f00",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B239",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-eac8628e62",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B240",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-e1b215c92e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B241",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-845d48e14a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B242",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-1344f72789",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B243",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-13da0fbbb7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B244",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-0559e8d114",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B245",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-86f887ec79",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B246",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-efc6377078",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B247",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-24564a09dc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B248",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-2c23a6008b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B249",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-8a08c42924",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B250",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-681e821592",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B251",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-46b16dfce4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B252",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-e0f6ba764d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B253",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-5d3b9a2fcd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B254",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-a4acb2515d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B255",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-6c81a8a49c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B191",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-29e41bdca9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B262",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-a38d177bd3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B263",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-5c0a844f3b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B264",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-34a9292da7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B256",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-71929722cd",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B257",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-45fbd737ff",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B258",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-9a8924a66e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B259",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-399140b57b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B260",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m05-01_0203_sheet-3_sheet-req-33b8c5f166",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0203_基本設計仕様書(受注管理機能).html#sheet-3",
+        "designRequirement": "0203:受注情報検索 一覧(検索入力)!B261",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

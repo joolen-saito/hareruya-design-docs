@@ -161,9 +161,9 @@
         "src/Eccube/Resource/template/default/default_frame.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Controller/Front/ProductController.php:1170\n1167:      *\n1168:      * @param  array<mixed>|null $searchData\n1169:      */\n1170:     protected function getPageTitle(?array $searchData): string\n1171:     {\n1172:         if (!empty($searchData['name'])) {\n1173:             return trans('front.product.search_result');",
-        "src/Eccube/Resource/template/default/default_frame.twig:17\n14:     <meta charset=\"utf-8\">\n15:     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n16:     <meta name=\"eccube-csrf-token\" content=\"{{ csrf_token(constant('Eccube\\\\Common\\\\Constant::TOKEN_NAME')) }}\">\n17:     <title>{{ BaseInfo.shop_name }}{% if subtitle is defined and subtitle is not empty %} / {{ subtitle }}{% elseif title is defined and title is not empty %} / {{ title }}{% endif %}</title>\n18:     {% if Page.meta_tags is not empty %}\n19:         {{ include(template_from_string(Page.meta_tags), sandboxed = true) }}\n20:         {% if Page.description is not empty %}",
-        "src/Eccube/Controller/Front/ProductController.php:80\n77: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n78: use Symfony\\Component\\Security\\Http\\Authentication\\AuthenticationUtils;\n79: \n80: class ProductController extends AbstractController\n81: {\n82:     use ProductSearchTrait;\n83: "
+        "src/Eccube/Controller/Front/ProductController.php:1170\n1167:             if (str_contains($m, '削除しました') || str_contains($m, 'deleted this item from the cart')) {\n1168:                 return $m;\n1169:             }\n1170:         }\n1171: \n1172:         return $messages[0];\n1173:     }",
+        "src/Eccube/Resource/template/default/default_frame.twig:17\n14:     <meta charset=\"utf-8\">\n15:     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\">\n16:     <meta name=\"eccube-csrf-token\" content=\"{{ csrf_token(constant('Eccube\\\\Common\\\\Constant::TOKEN_NAME')) }}\">\n17:     {% set shopNameSuffix = 'front.seo.title_suffix'|trans %}\n18:     {% if page_title is defined and page_title is not empty %}\n19:         {% set t = page_title %}\n20:     {% elseif subtitle is defined and subtitle is not empty %}",
+        "src/Eccube/Controller/Front/ProductController.php:83\n80: use Symfony\\Component\\Routing\\Generator\\UrlGeneratorInterface;\n81: use Symfony\\Component\\Security\\Http\\Authentication\\AuthenticationUtils;\n82: \n83: class ProductController extends AbstractController\n84: {\n85:     use ProductSearchTrait;\n86: "
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -220,9 +220,9 @@
         "src/Eccube/Resource/template/default/meta.twig"
       ],
       "implementationSnippets": [
-        "src/Eccube/Resource/template/default/meta.twig:14\n11:     {% if not Product.stock_find %}\n12:         <meta name=\"robots\" content=\"noindex\">\n13:     {% endif %}\n14: {% elseif app.request.get('_route') in ['product_list', 'product_list_category', 'product_list_tag', 'product_list_category_tag'] %}\n15:     {% if app.request.get('_route') == 'product_list_category' %}\n16:         {% set meta_canonical = url('product_list_category', {'categoryId': app.request.attributes.get('categoryId')|default(null)}) %}\n17:     {% elseif app.request.get('_route') == 'product_list_tag' %}",
-        "src/Eccube/Resource/template/default/meta.twig:39\n36: \n37: <meta property=\"og:type\" content=\"{{ meta_og_type|default('article') }}\"/>\n38: <meta property=\"og:site_name\" content=\"{{ BaseInfo.shop_name }}\"/>\n39: {% set meta_description = meta_description | default(Page.description) %}\n40: {% if meta_description %}\n41:     <meta name=\"description\" content=\"{{ meta_description|striptags|slice(0,120) }}\">\n42:     <meta property=\"og:description\" content=\"{{ meta_description|striptags|slice(0,120) }}\"/>",
-        "src/Eccube/Resource/template/default/meta.twig:1\n1: {% if app.request.get('_route') == 'product_detail' %}\n2:     {% set meta_og_type = \"og:product\" %}\n3:     {% set meta_description = Product.description_list | default(Product.description_detail) | default(Page.description) %}\n4:     {% set meta_canonical = url('product_detail', {'id': Product.id}) %}"
+        "src/Eccube/Resource/template/default/meta.twig:14\n11:             {% set _desc_name = _isEn ? (Product.CardDetail.Card.nameEn ?: Product.CardDetail.Card.nameJp) : Product.CardDetail.Card.nameJp ~ (Product.CardDetail.Card.nameEn ? '/' ~ Product.CardDetail.Card.nameEn : '') %}\n12:         {% else %}\n13:             {% set _desc_name = Product.name %}\n14:         {% endif %}\n15:         {% set _desc_parts = _desc_parts|merge([_desc_name]) %}\n16:         {% set _desc_parts = _desc_parts|merge([Product.getPrice02IncTaxMin ~ (_isEn ? ' JPY' : ' 円')]) %}\n17:         {% if Product.stockMin is not null %}",
+        "src/Eccube/Resource/template/default/meta.twig:39\n36:     <meta property=\"product:product_link\" content=\"{{ url('product_detail', {'id': Product.id}) }}\"/>\n37:     <meta property=\"product:retailer_title\" content=\"{{ BaseInfo.shop_name }}\"/>\n38:     {% if not Product.stock_find or not isMainShop %}\n39:         <meta name=\"robots\" content=\"noindex\">\n40:     {% endif %}\n41: {% elseif app.request.get('_route') in ['product_list', 'product_list_category', 'product_list_tag', 'product_list_category_tag'] %}\n42:     {# ページネーションの prev/next/canonical 用。pageno は後段で url() に渡す #}",
+        "src/Eccube/Resource/template/default/meta.twig:1\n1: {% if app.request.get('_route') == 'product_detail' %}\n2:     {% set meta_og_type = \"og:product\" %}\n3:     {% set _isEn = app.request.locale == 'en' %}\n4:     {% if Product.description_list %}"
       ],
       "auditChecklist": [
         "設計HTMLの該当節を確認",
@@ -236,7 +236,7 @@
   "auditEvidenceLegacy": "標準観点: 設計HTML / ルート・Controller / Form・入力 / Service・業務ルール / Repository・Entity・DB / Twig・表示 / CSV・API・Batch・PDF・印刷(該当時) / 権限・セッション・副作用・エラー・ログ",
   "requirementTraceGate": {
     "policy": "処理概要・図形内テキスト・項目表・業務ルール・エッジケース・画面遷移・エラー処理にある must/shall 相当の個別要求は、ルートや画面の存在確認とは別に requirementTrace として照合する。秒・分などの時間条件、自動遷移、タイマー、店内アカウント/キオスク向けの強制遷移も個別要求として扱う。対象要求が未照合のまま残る場合、同一機能に他の所見があっても要求単位の監査完了とはみなしてはならない。",
-    "extractedRequirementCount": 113,
+    "extractedRequirementCount": 120,
     "explicitRequirementCount": 0,
     "requirements": [
       {
@@ -569,6 +569,552 @@
         "category": "機能仕様 処理概要",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
         "designRequirement": "選択したページへ遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-f1c9b6a991",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!C8",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-48aea474b8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B80",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-76f2d011c3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!N8",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-ed753dfe0e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B81",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-1b615dc75a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!X8",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-46cc4b34e9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B82",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-3493cb5c11",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!C12",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-184b83a69b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B83",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-3a9d868c7c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B37",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-69de06e962",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B94",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-ea13ad318a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!G37",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-094f317705",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B95",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-0a282d91a1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!X38",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-7c28fc7c42",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B96",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-0eaa335f5b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!AN38",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-99e43b85b2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B97",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-b3f528915d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!AS38",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-2ce32fa6e3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B98",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-a9f79f6c58",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!AK12",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-e6fbc2320b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B84",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-46d2f02818",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!C16",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-53d3314f35",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B86",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-2b215f3ed4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!AV9",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-b780f33bb7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B85",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-959e6367b5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!P22",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-48e5c78e1c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B88",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-225245dc5a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!G19",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-c60787d521",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B87",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-b820a18cdc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!E27",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-b16fdffa08",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B90",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-ef65f2915f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B24",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-cea73956eb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B89",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-71a80a0fc8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B30",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-c1dddbc58d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B91",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-5c48718799",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!E32",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-ada62869a5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B92",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-67df7096c3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!AB46",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-3f06213975",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B99",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-876d2b244f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!AS36",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-9b32041e84",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B93",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-8abddb6503",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!E12",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-473961a30d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!E13",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1085,6 +1631,149 @@
         "coveredByFinding": true
       },
       {
+        "id": "m03-13_0204_sheet-27_sheet-req-f839b8c9d1",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "登録できませんでした。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-08ba80e68b",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "タグの登録内容に入力漏れや不備があるとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-5dd2e78095",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "タグ登録/編集画面に留まる",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-e04dd206e3",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "タグを登録・更新するとき、優先表示商品に入力した商品コードの商品が存在しない、またはそのタグに紐付いていない場合",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-2ddef3130f",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "登録が完了しました。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-e1f016b541",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "タグを登録したとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-987c6a6787",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "タグ登録/編集画面に遷移する",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-f46dc5fabd",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "商品で使用されているため、「%name%」のタグは削除することができません。",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-6dd571be6e",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "商品で使用中のタグを削除しようとしたとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-1a3e6f12c3",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "関連するデータがあるため「%name%」を削除できませんでした",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
+        "id": "m03-13_0204_sheet-27_sheet-req-c66d30fab1",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "他のデータに関連するタグを削除しようとしたとき",
+        "source": "html_requirement_extractor",
+        "requiredImplementationEvidence": [
+          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
+          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
+          "設計値と実装値が一致する、または乖離所見として記録済みであること"
+        ],
+        "coveredByFinding": true
+      },
+      {
         "id": "m03-13_0204_sheet-27_sheet-req-dd7c98134a",
         "category": "業務ルール・計算",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
@@ -1102,604 +1791,6 @@
         "category": "業務ルール・計算",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
         "designRequirement": "入力テキストの先頭に近いコードほど大きい rank。行数を n 、0 始まりインデックスを i とすると rank は n − i 。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-58f1f71885",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "優先表示の対象規格",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-56a226182d",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "渡したコードが「表示中の規格」かつ「当該タグが商品に付いている」必要がある。登録直後の新規タグでは、まだ商品に付いていないため優先コードを保存しても規格解決に失敗し得る。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-b687b32eca",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "新規は未入力、編集は dtb_tag.name",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-3ad5cf6147",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "dtb_tag.name 。空白不可。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-1449a234e2",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "新規は未入力、編集は dtb_tag.name_en",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-684584b43e",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "dtb_tag.name_en 。空白不可。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-2538bb2a2a",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "整数（フレームワークの整数入力種別の範囲に従う）",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-703e524902",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "dtb_tag.sort_no 。空白不可。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-fe9e2d2778",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "保存時のみ \\r\\n 分割。単一の LF のみの改行は区切りとして split されない実装。プレースホルダは商品規格コードの改行入力を示す。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-42197c10c3",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "新規タグに優先商品コードだけ入力",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-51f7c7853e",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "削除時に商品タグ紐付けあり",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-d3766c2311",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "DB 削除は行わずエラーメッセージを出して一覧へ戻る。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-81dd1c8229",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "フォーム型に存在するが当画面に無い。POST に無い場合の更新挙動に注意する。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-ba480c4886",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "保存と dtb_tag_sort",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-3c4b395efb",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "保存成功後、当該タグ ID のソート行は入力に完全一致する集合に置き換わる。空入力ならソート行は 0 件。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-764993bd55",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "リダイレクトまたは 200 HTML。登録成功時は成功フラッシュ。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-abf1ff5bd2",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "同一 HTML 再描画とエラーフラッシュ、または権限・トークンエラー。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-fa6951c741",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "本機能が直接更新し得る主な列は次のとおり（型の細部はスキーマ参照）。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-d1665e2df7",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "保存時に該当 tag_id を消してから再挿入。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-4a5b15b92c",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "永続化の正は ec-cube-enterprise。商品系は承認ワークフローを介さず persist/flush で直接確定する（在庫の承認ワークフローとは別系統。 ProductController ・各CSVサービスで確認）。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-f7cc11060b",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-b6059d6793",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "必須、最大 255。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-f0d9baf4d5",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "任意、最大 255。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-fc022c3dd9",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "任意、最大 4000。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-b24e2a9c71",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "ログイン済み、拒否 URL に一致",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-a285dfa36b",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "画面表示・フォーム送信・削除ルート到達可（削除は画面にボタンが無く、ルートのみ存在）。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-fdbbb7dd0c",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "登録失敗・保存例外",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-4f503551ce",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "削除完了・一部失敗",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-7e6b02b4ca",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "GET m03-13_admin_product_product_tag （実装によりクエリ id が付く場合あり）。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-17c25fc0dc",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "遷移時に引き継ぐ状態",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-b05912ca49",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "遷移後の初期状態",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-829e101dde",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "登録成功リダイレクト",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-c6d2a14c0f",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "一覧は再読込。クエリ id は付くが、ルートに {id} が無いためパスに基づくマスタ行解決は行われず、フォームは新規空のまま表示されやすい（実装確認値。クエリだけでは ORM のルート引数解決の対象外）。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-705fd9f99c",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "admin.register.failed を表示し同ページ。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-4eb53afcc0",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "例外メッセージ（翻訳済み）を表示し rollback 後に同ページ。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-bc92f8e6fc",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "タグ削除時に商品紐付けあり",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-1e092a849c",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "削除の DB 例外",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-ee460b603e",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "本画面固有のログ出力",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-f7b4672e84",
-        "category": "本機能におけるセッション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "admin.product.tag.page_no と admin.product.tag.page_count を更新する。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-6e258433d1",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "保存処理は明示的にトランザクションを張り、タグ本体の flush と dtb_tag_sort の再生成を同一トランザクションに収める。一覧表示や GET 処理に楽観ロックは無い。",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-64870b77c1",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "m03-13_admin_product_product_tag_edit_page … GET … /{admin_route}/product/tag/{id}/page/{page_no} （編集中に一覧の指定ページを表示する。 id と page_no は 10 進整数。）",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-2a3bd4bf83",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "m03-13_admin_product_product_tag_page … GET … /{admin_route}/product/tag/page/{page_no} （新規モードで一覧の指定ページを表示する。）",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-d8b6ede84e",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "m03-13_admin_product_product_tag_edit … GET … /{admin_route}/product/tag/{id} （指定タグをフォームに載せて一覧とあわせて表示する。）",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-d65d963959",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "m03-13_admin_product_product_tag … GET … /{admin_route}/product/tag （新規用の空フォームと一覧を表示する。）",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-06a8096a58",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "m03-13_admin_product_product_tag_store … POST … /{admin_route}/product/tag/store （フォーム送信による登録・更新。 id ありの URL は更新時。）",
-        "source": "html_requirement_extractor",
-        "requiredImplementationEvidence": [
-          "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
-          "設計条件を満たす分岐・判定・保存・遷移・表示・副作用のコード証跡",
-          "設計値と実装値が一致する、または乖離所見として記録済みであること"
-        ],
-        "coveredByFinding": true
-      },
-      {
-        "id": "m03-13_0204_sheet-27_sheet-req-c1ca59b991",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "m03-13_admin_product_product_tag_delete … DELETE … /{admin_route}/product/tag/{id}/delete （タグマスタの削除（商品との紐付けがある場合は拒否）。）",
         "source": "html_requirement_extractor",
         "requiredImplementationEvidence": [
           "設計要求に対応する Controller/Form/Service/Repository/Twig/Command/API/CSV/PDF の実装箇所",
@@ -1778,10 +1869,18 @@
         "weight": 7
       },
       {
+        "term": "TagStoreAction",
+        "termType": "className",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/Admin/Product/TagController.php:111",
+        "snippet": "* @param TagStoreAction $storeAction",
+        "weight": 7
+      },
+      {
         "term": "TagType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/TagController.php:18",
+        "ref": "src/Eccube/Controller/Admin/Product/TagController.php:20",
         "snippet": "use Eccube\\Form\\Type\\Admin\\TagType;",
         "weight": 7
       },
@@ -1789,7 +1888,7 @@
         "term": "TagStoreAction",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/TagController.php:21",
+        "ref": "src/Eccube/Controller/Admin/Product/TagController.php:23",
         "snippet": "use Eccube\\Service\\Admin\\Product\\TagStoreAction;",
         "weight": 7
       },
@@ -1797,7 +1896,7 @@
         "term": "TagController",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/TagController.php:28",
+        "ref": "src/Eccube/Controller/Admin/Product/TagController.php:30",
         "snippet": "class TagController extends AbstractController",
         "weight": 7
       },
@@ -1805,16 +1904,24 @@
         "term": "TagType",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/TagController.php:71",
+        "ref": "src/Eccube/Controller/Admin/Product/TagController.php:73",
         "snippet": "$builder = $this->formFactory->createBuilder(TagType::class, $Tag);",
         "weight": 7
       },
       {
-        "term": "TagStoreAction",
+        "term": "ProductController",
+        "termType": "routeName",
+        "role": "Controller",
+        "ref": "src/Eccube/Controller/App/ProductController.php:1",
+        "snippet": "src/Eccube/Controller/App/ProductController.php",
+        "weight": 7
+      },
+      {
+        "term": "ProductController",
         "termType": "className",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/TagController.php:99",
-        "snippet": "* @param TagStoreAction $storeAction",
+        "ref": "src/Eccube/Controller/App/ProductController.php:1",
+        "snippet": "src/Eccube/Controller/App/ProductController.php",
         "weight": 7
       },
       {
@@ -1850,22 +1957,6 @@
         "weight": 7
       },
       {
-        "term": "ProductController",
-        "termType": "routeName",
-        "role": "Twig",
-        "ref": "src/Eccube/Resource/template/default/Block/js/product_unisearch_js.twig:476",
-        "snippet": "// product_add_favorite / product_remove_favorite（ProductController::addFavorite / removeFavorite）は JsonResponse。",
-        "weight": 7
-      },
-      {
-        "term": "ProductController",
-        "termType": "className",
-        "role": "Twig",
-        "ref": "src/Eccube/Resource/template/default/Block/js/product_unisearch_js.twig:476",
-        "snippet": "// product_add_favorite / product_remove_favorite（ProductController::addFavorite / removeFavorite）は JsonResponse。",
-        "weight": 7
-      },
-      {
         "term": "TagStoreAction",
         "termType": "className",
         "role": "Service",
@@ -1885,7 +1976,7 @@
         "term": "admin.common.delete_error_foreign_key",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/CategoryController.php:472",
+        "ref": "src/Eccube/Controller/Admin/Product/CategoryController.php:759",
         "snippet": "$message = trans('admin.common.delete_error_foreign_key', ['%name%' => $TargetCategory->getName()]);",
         "weight": 6
       },
@@ -1901,7 +1992,7 @@
         "term": "admin.register.complete",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:118",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductBulkUpdateBuyPriceController.php:140",
         "snippet": "$this->addSuccess('admin.register.complete', 'admin');",
         "weight": 6
       },
@@ -1909,7 +2000,7 @@
         "term": "admin.common.delete_error_foreign_key",
         "termType": "translationKey",
         "role": "Controller",
-        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:277",
+        "ref": "src/Eccube/Controller/Admin/Product/ProductClassController.php:377",
         "snippet": "trans('admin.common.delete_error_foreign_key', ['%name%' => trans('admin.product.product_class')]),",
         "weight": 6
       }
@@ -2083,13 +2174,13 @@
   },
   "requirementConformanceAudit": {
     "policy": "設計書から抽出した全要求に判定を付ける（判定漏れ0）。実装済み/要確認/未実装候補/対象外(理由付き)のいずれかへ必ず分類する。未実装候補・要確認は、codex批判的レビューと実機確認で実装済/未実装/実装違いを確定する候補。",
-    "requirementCount": 113,
-    "verdictedCount": 113,
+    "requirementCount": 120,
+    "verdictedCount": 120,
     "unverdictedCount": 0,
     "coverageComplete": true,
-    "functionEntryVerdict": "IMPLEMENTATION_ENTRY_FOUND",
+    "functionEntryVerdict": "CONFIRMED_IMPLEMENTATION_GAP",
     "counts": {
-      "実装済み": 113,
+      "実装済み": 120,
       "要確認": 0,
       "未実装候補": 0,
       "対象外": 0
@@ -2511,6 +2602,678 @@
         "conformanceBucket": "実装済み",
         "material": true,
         "elementLevel": true
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-f1c9b6a991",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!C8",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-48aea474b8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B80",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-76f2d011c3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!N8",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-ed753dfe0e",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B81",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-1b615dc75a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!X8",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-46cc4b34e9",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B82",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-3493cb5c11",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!C12",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-184b83a69b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B83",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-3a9d868c7c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B37",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-69de06e962",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B94",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-ea13ad318a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!G37",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-094f317705",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B95",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-0a282d91a1",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!X38",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-7c28fc7c42",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B96",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-0eaa335f5b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!AN38",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-99e43b85b2",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B97",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-b3f528915d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!AS38",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-2ce32fa6e3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B98",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-a9f79f6c58",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!AK12",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-e6fbc2320b",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B84",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-46d2f02818",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!C16",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-53d3314f35",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B86",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-2b215f3ed4",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!AV9",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-b780f33bb7",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B85",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-959e6367b5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!P22",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-48e5c78e1c",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B88",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-225245dc5a",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!G19",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-c60787d521",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B87",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-b820a18cdc",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!E27",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-b16fdffa08",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B90",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-ef65f2915f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B24",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-cea73956eb",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B89",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-71a80a0fc8",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B30",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-c1dddbc58d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B91",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-5c48718799",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!E32",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-ada62869a5",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B92",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-67df7096c3",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!AB46",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-3f06213975",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B99",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-876d2b244f",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!AS36",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-9b32041e84",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!B93",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-8abddb6503",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!E12",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-473961a30d",
+        "category": "画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "0204:タグ登録!E13",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
       },
       {
         "requirementId": "m03-13_0204_sheet-27_sheet-req-b09fed2911",
@@ -3137,6 +3900,182 @@
         "elementLevel": false
       },
       {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-f839b8c9d1",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "登録できませんでした。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-08ba80e68b",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "タグの登録内容に入力漏れや不備があるとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-5dd2e78095",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "タグ登録/編集画面に留まる",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-e04dd206e3",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "タグを登録・更新するとき、優先表示商品に入力した商品コードの商品が存在しない、またはそのタグに紐付いていない場合",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-2ddef3130f",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "登録が完了しました。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-e1f016b541",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "タグを登録したとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-987c6a6787",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "タグ登録/編集画面に遷移する",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": true
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-f46dc5fabd",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "商品で使用されているため、「%name%」のタグは削除することができません。",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-6dd571be6e",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "商品で使用中のタグを削除しようとしたとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-1a3e6f12c3",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "関連するデータがあるため「%name%」を削除できませんでした",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
+        "requirementId": "m03-13_0204_sheet-27_sheet-req-c66d30fab1",
+        "category": "トランザクション開始後、タグ行の persist・flush",
+        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
+        "designRequirement": "他のデータに関連するタグを削除しようとしたとき",
+        "source": "html_requirement_extractor",
+        "risk": "high",
+        "verdict": "COVERED_BY_FINDING",
+        "candidateCount": 0,
+        "strongSignalCount": 0,
+        "candidateRefs": [],
+        "auditNote": "確定所見が本要求をカバー済み。",
+        "conformanceBucket": "実装済み",
+        "material": true,
+        "elementLevel": false
+      },
+      {
         "requirementId": "m03-13_0204_sheet-27_sheet-req-dd7c98134a",
         "category": "業務ルール・計算",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
@@ -3157,742 +4096,6 @@
         "category": "業務ルール・計算",
         "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
         "designRequirement": "入力テキストの先頭に近いコードほど大きい rank。行数を n 、0 始まりインデックスを i とすると rank は n − i 。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-58f1f71885",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "優先表示の対象規格",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-56a226182d",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "渡したコードが「表示中の規格」かつ「当該タグが商品に付いている」必要がある。登録直後の新規タグでは、まだ商品に付いていないため優先コードを保存しても規格解決に失敗し得る。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-b687b32eca",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "新規は未入力、編集は dtb_tag.name",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-3ad5cf6147",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "dtb_tag.name 。空白不可。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-1449a234e2",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "新規は未入力、編集は dtb_tag.name_en",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-684584b43e",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "dtb_tag.name_en 。空白不可。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-2538bb2a2a",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "整数（フレームワークの整数入力種別の範囲に従う）",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-703e524902",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "dtb_tag.sort_no 。空白不可。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-fe9e2d2778",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "保存時のみ \\r\\n 分割。単一の LF のみの改行は区切りとして split されない実装。プレースホルダは商品規格コードの改行入力を示す。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-42197c10c3",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "新規タグに優先商品コードだけ入力",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-51f7c7853e",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "削除時に商品タグ紐付けあり",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-d3766c2311",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "DB 削除は行わずエラーメッセージを出して一覧へ戻る。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-81dd1c8229",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "フォーム型に存在するが当画面に無い。POST に無い場合の更新挙動に注意する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-ba480c4886",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "保存と dtb_tag_sort",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-3c4b395efb",
-        "category": "業務ルール・計算",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "保存成功後、当該タグ ID のソート行は入力に完全一致する集合に置き換わる。空入力ならソート行は 0 件。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-764993bd55",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "リダイレクトまたは 200 HTML。登録成功時は成功フラッシュ。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-abf1ff5bd2",
-        "category": "API/バッチ結果",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "同一 HTML 再描画とエラーフラッシュ、または権限・トークンエラー。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-fa6951c741",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "本機能が直接更新し得る主な列は次のとおり（型の細部はスキーマ参照）。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-d1665e2df7",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "保存時に該当 tag_id を消してから再挿入。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-4a5b15b92c",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "永続化の正は ec-cube-enterprise。商品系は承認ワークフローを介さず persist/flush で直接確定する（在庫の承認ワークフローとは別系統。 ProductController ・各CSVサービスで確認）。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-f7cc11060b",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "当機能が行う登録・更新で対象テーブルを直接保存する（不要な削除は含まない）。確定は persist/flush による即時反映。DB=ec-cube-enterprise を正典とする。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-b6059d6793",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "必須、最大 255。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-f0d9baf4d5",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "任意、最大 255。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-fc022c3dd9",
-        "category": "dtb_tag の INSERT/UPDATE、 dtb_tag_sort の DELETE/INSERT、フラッシュメッセージ、セッションのページ状態。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "任意、最大 4000。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-b24e2a9c71",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "ログイン済み、拒否 URL に一致",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-a285dfa36b",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "画面表示・フォーム送信・削除ルート到達可（削除は画面にボタンが無く、ルートのみ存在）。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-fdbbb7dd0c",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "登録失敗・保存例外",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-4f503551ce",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "削除完了・一部失敗",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-7e6b02b4ca",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "GET m03-13_admin_product_product_tag （実装によりクエリ id が付く場合あり）。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-17c25fc0dc",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "遷移時に引き継ぐ状態",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-b05912ca49",
-        "category": "形式チェックは分割後のコード存在確認のみ（トランザクション内）。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "遷移後の初期状態",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-829e101dde",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "登録成功リダイレクト",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-c6d2a14c0f",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "一覧は再読込。クエリ id は付くが、ルートに {id} が無いためパスに基づくマスタ行解決は行われず、フォームは新規空のまま表示されやすい（実装確認値。クエリだけでは ORM のルート引数解決の対象外）。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-705fd9f99c",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "admin.register.failed を表示し同ページ。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-4eb53afcc0",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "例外メッセージ（翻訳済み）を表示し rollback 後に同ページ。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-bc92f8e6fc",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "タグ削除時に商品紐付けあり",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-1e092a849c",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "削除の DB 例外",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-ee460b603e",
-        "category": "次回 POST 失敗時の再描画でも同セッション値で一覧を組む。",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "本画面固有のログ出力",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": false,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-f7b4672e84",
-        "category": "本機能におけるセッション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "admin.product.tag.page_no と admin.product.tag.page_count を更新する。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-6e258433d1",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "保存処理は明示的にトランザクションを張り、タグ本体の flush と dtb_tag_sort の再生成を同一トランザクションに収める。一覧表示や GET 処理に楽観ロックは無い。",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-64870b77c1",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "m03-13_admin_product_product_tag_edit_page … GET … /{admin_route}/product/tag/{id}/page/{page_no} （編集中に一覧の指定ページを表示する。 id と page_no は 10 進整数。）",
-        "source": "html_requirement_extractor",
-        "risk": "normal",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-2a3bd4bf83",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "m03-13_admin_product_product_tag_page … GET … /{admin_route}/product/tag/page/{page_no} （新規モードで一覧の指定ページを表示する。）",
-        "source": "html_requirement_extractor",
-        "risk": "normal",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-d8b6ede84e",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "m03-13_admin_product_product_tag_edit … GET … /{admin_route}/product/tag/{id} （指定タグをフォームに載せて一覧とあわせて表示する。）",
-        "source": "html_requirement_extractor",
-        "risk": "normal",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-d65d963959",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "m03-13_admin_product_product_tag … GET … /{admin_route}/product/tag （新規用の空フォームと一覧を表示する。）",
-        "source": "html_requirement_extractor",
-        "risk": "normal",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": true
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-06a8096a58",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "m03-13_admin_product_product_tag_store … POST … /{admin_route}/product/tag/store （フォーム送信による登録・更新。 id ありの URL は更新時。）",
-        "source": "html_requirement_extractor",
-        "risk": "high",
-        "verdict": "COVERED_BY_FINDING",
-        "candidateCount": 0,
-        "strongSignalCount": 0,
-        "candidateRefs": [],
-        "auditNote": "確定所見が本要求をカバー済み。",
-        "conformanceBucket": "実装済み",
-        "material": true,
-        "elementLevel": false
-      },
-      {
-        "requirementId": "m03-13_0204_sheet-27_sheet-req-c1ca59b991",
-        "category": "排他制御・トランザクション",
-        "designRef": "excel_to_html/output/0204_基本設計仕様書(商品管理).html#sheet-27",
-        "designRequirement": "m03-13_admin_product_product_tag_delete … DELETE … /{admin_route}/product/tag/{id}/delete （タグマスタの削除（商品との紐付けがある場合は拒否）。）",
         "source": "html_requirement_extractor",
         "risk": "high",
         "verdict": "COVERED_BY_FINDING",

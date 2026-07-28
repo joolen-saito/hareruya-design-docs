@@ -343,6 +343,7 @@ def main() -> int:
             row[3] = vp_corr[nnn]
         d = disp.get(nnn)
         is_exec = False
+        is_tbd = False
         internal = "—"
         seeds = "—"
         if d is None:
@@ -382,7 +383,7 @@ def main() -> int:
                 row[7] = "—"
                 row[8] = "自動判定はできない。下記の理由に従い、人が仕様確認または実機確認で期待値を確定する。"
                 row[9] = f"【要確認】期待する挙動: {yoshi_h}。／ 人の対応: {tbd_reason(yoshi)}"
-                row[10] = "保留(TBD)"; n_tbd += 1
+                row[10] = "手動"; n_tbd += 1; is_tbd = True  # TBDは手動(要仕様/実機確認)＝自動bound(Playwright)と区別
             elif dstat in ("excluded", "DELEG"):
                 if dstat == "DELEG":
                     tag, act = "対象外（別導線に委譲）", "実際の処理・DB更新は別機能の担当。当機能では画面側の表示のみ扱う。"
@@ -393,8 +394,8 @@ def main() -> int:
                 row[8] = "—"
                 row[9] = f"【{tag}】{act}（該当観点: {row[3]}）"
                 row[10] = "対象外"; n_excl += 1
-        # TSVは bound(実行可能)行のみ出力。TBD/excludedはcandidate md §8/§9で管理し、tsvには出さない。
-        if is_exec:
+        # TSVは bound(自動・Playwright)＋TBD(手動・要確認)を出力。excluded(対象外)は非出力(md §8/§9管理)。
+        if is_exec or is_tbd:
             out_row = row[:7] + [seeds] + row[7:10] + [internal] + [row[10]]
             exec_rows.append(out_row)
 
@@ -404,8 +405,8 @@ def main() -> int:
         print("NG 会計不整合: 母集合", N, "に対し bound", n_bound, "+TBD", n_tbd,
               "+excluded", n_excl, "+未分類", n_raw, "＝", n_bound + n_tbd + n_excl + n_raw)
         return 1
-    if len(exec_rows) != n_bound - n_needlive - n_dup:
-        print("NG 出力行数不一致:", len(exec_rows), "vs bound", n_bound, "-要実機", n_needlive, "-重複", n_dup)
+    if len(exec_rows) != n_bound - n_needlive - n_dup + n_tbd:
+        print("NG 出力行数不一致:", len(exec_rows), "vs bound", n_bound, "-要実機", n_needlive, "-重複", n_dup, "+TBD", n_tbd)
         return 1
 
     full = OUT_DIR / f"{slug}_concretized.tsv"
@@ -417,9 +418,10 @@ def main() -> int:
     old = OUT_DIR / f"{slug}_executable.tsv"
     if old.exists():
         old.unlink()
-    print(f"出力(ユニーク・人間が机上でテスト可能な行のみ): {full.relative_to(ROOT)}  {len(exec_rows)}行")
+    n_bound_out = n_bound - n_needlive - n_dup
+    print(f"出力: {full.relative_to(ROOT)}  {len(exec_rows)}行（自動bound{n_bound_out}＋手動TBD{n_tbd}）")
     print(f"  会計: 母集合{N} = bound{n_bound}(内 要実機非出力{n_needlive}・完全重複非出力{n_dup}) / TBD{n_tbd} / excluded・DELEG{n_excl}")
-    print(f"  tsv非出力: TBD{n_tbd}・excluded{n_excl}・要実機{n_needlive}・重複{n_dup}（重複=同一候補ケース、代表1件のみ出力＝Gate B12）")
+    print(f"  実行方法: bound={n_bound_out}行=自動(Playwright) ／ TBD={n_tbd}行=手動(要仕様/実機確認) ／ excluded{n_excl}・要実機{n_needlive}・重複{n_dup}は非出力")
     print("  会計完全性: PASS（取りこぼし0）")
     return 0
 
