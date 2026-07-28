@@ -31,6 +31,35 @@ COLS = ["機能名", "テストID", "I/FID", "テスト観点", "優先度", "�
         "前提条件", "入力データ/リクエスト内容", "操作手順/実行方法", "期待結果／レスポンス", "実行方法"]
 # 出力は母集合11列に「自動検証（内部）」を期待結果と実行方法の間へ挿入した12列。
 OUT_COLS = COLS[:7] + ["使用シード"] + COLS[7:10] + ["自動検証（内部: session/DB/URL）"] + [COLS[10]]
+ALL_OUT = ROOT / "integration_test/e2e/exec/all_concretized.tsv"  # 全機能集約ビュー(人が全体チェック用)
+
+
+def aggregate_all() -> None:
+    """全機能の <fid>_concretized.tsv を母集合同型の1本(all_concretized.tsv)へ集約。テストID昇順。"""
+    import glob as _glob
+    rows = []
+    header = list(OUT_COLS)  # 現行13列フォーマットを正準ヘッダにする
+    skipped = 0
+    for p in sorted(_glob.glob(str(OUT_DIR / "*_concretized.tsv"))):
+        with open(p, encoding="utf-8", newline="") as fh:
+            r = list(csv.reader(fh, delimiter="\t"))
+        if len(r) < 1:
+            continue
+        if r[0] != header:  # 旧フォーマット(11列等)は集約対象外
+            skipped += 1
+            continue
+        rows.extend(r[1:])
+    if not rows:
+        return
+    rows.sort(key=lambda x: x[1])  # テストID昇順(=モジュール/機能順)
+    with ALL_OUT.open("w", encoding="utf-8", newline="") as fh:
+        w = csv.writer(fh, delimiter="\t", lineterminator="\n")
+        w.writerow(header)
+        w.writerows(rows)
+    from collections import Counter as _C
+    mc = _C(x[len(header) - 1] for x in rows)
+    fids = sorted({x[1].split("-")[1] + "-" + x[1].split("-")[2] for x in rows if x[1].count("-") >= 2})
+    print(f"  集約: {ALL_OUT.relative_to(ROOT)} = {len(rows)}行（{len(fids)}機能 / 実行方法 {dict(mc)}）")
 
 # 目視できない内部状態の手掛かり（この語を含む句は「自動検証(内部)」列へ寄せる）
 INTERNAL_HINT = re.compile(
@@ -424,6 +453,7 @@ def main() -> int:
     print(f"  会計: 母集合{N} = bound{n_bound}(内 要実機非出力{n_needlive}・完全重複非出力{n_dup}) / TBD{n_tbd} / excluded・DELEG{n_excl}")
     print(f"  実行方法: bound={n_bound_out}行=自動(Playwright) ／ TBD={n_tbd}行=手動(要仕様/実機確認) ／ excluded{n_excl}・要実機{n_needlive}・重複{n_dup}は非出力")
     print("  会計完全性: PASS（取りこぼし0）")
+    aggregate_all()  # 全機能集約ビューを更新(人が全体チェック用)
     return 0
 
 
