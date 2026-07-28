@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2011",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 結合側と同じく固定文言を付与。文言が分割と結合で異なる点も要確認",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "分割側に固定文言の付与が無い。結合側には実装済み。上限判定に off-by-one の疑いalso",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-18「在庫分割結合登録編集（分割）」\n§3.分割先商品CSV登録\n> 3-5-2.エラーメッセージには固定で、「**エラーは20件まで表示されます**」、とエラーメッセージの上に表示する\n\n■実装の現状\nStockSplitEditReplaceDestinationsImportHandler.php:44,46 に `MAX_ROWS = 2000` / `MAX_ERROR_COUNT = 20` はありますが、:307-309 は errors をそのまま返すのみで**固定文言の付与がありません**。\n対照として結合側 StockJoinEditReplaceSourcesImportHandler.php:257-262 は `array_unshift($errors, trans('admin.stock.csv.error_limit_notice'))` を実装済みです。\n`error_limit_notice` の全リポジトリ検索は3ヒットのみで、分割側の呼び出し元（StockSplitController.php:600-637）は `$result['errors']` をそのまま JSON 返却しています。\n\n**起票未指摘の追加事実**: 上限判定が `$rowIndex > MAX_ROWS`（`$lineNum = $rowIndex + 1`）で off-by-one の疑いがあります（2,001行目が通る可能性）。\n\n■次の対応\n実装対応: 結合側と同じく固定文言を先頭に付与する。off-by-one の疑いも併せてご確認ください。\n\n要確認: 固定文言が**分割側と結合側で異なります**（分割「エラーは20件まで表示されます」／結合「エラーを最大20件まで表示しています」）。実装の翻訳値は結合側の文言です。文言の統一もご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-18「在庫分割結合登録編集（分割）」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:23:59+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:24:04+09:00",
+  "appliedStatus": "処理中"
+}

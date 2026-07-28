@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2128",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 負数を弾く検証の追加と、カラム型を設計値に足る型へ変更(マイグレーション要)",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施。主要3点は独立に抜き取り再検証済み",
+  "summary": "負数がRegexを通過し、DBはSMALLINT unsigned(65535)で設計値4294967295に届かない",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）\n\n■結論\n指摘は事実です。設計要求が正本設計書に実在し、実装がそれと異なることを確認しました。\n\n■設計上の根拠\n正本設計書 0207_基本設計仕様書(会員管理機能) sheet-20「顧客グループ管理」画面部品仕様\n> 3 ポイント還元率　数値（整数）　必須○　最大値 4294967295　備考「0以上の整数のみ」\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/CustomerGroupType.php:39-45 の制約は `NotBlank` と `Regex('/^[-]?([1-9]\\d*|0)$/')` のみです。\n\n1) 負数が通る: Regex の先頭 `[-]?` が負符号を許容し、`Range` / `GreaterThanOrEqual` もありません。設計の「0以上の整数のみ」を満たしません。\n2) 上限が設計値に届かない: src/Eccube/Entity/DtbCustomerGroup.php:70 は `Types::SMALLINT` の unsigned で最大65535です。設計の4294967295を保持できません。\n\n反証として、画面（CustomerGroup/index.twig:39）に min/max の手書きはなく、Controller側の追加検証もなく、SMALLINT を拡張するマイグレーションも存在しませんでした。\n\n■次の対応\n実装対応: (1) Regex から負符号を外すか GreaterThanOrEqual(0) を追加する。(2) カラム型を設計値に足る型へ変更する（マイグレーションが必要）。現状は負数がDBのunsigned制約で例外となり、バリデーションエラーではなくシステムエラー相当になります。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html / sheet-20「顧客グループ管理」画面部品仕様\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / マイグレーション）\n- 設計原文の抽出、実装の確認、および別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T09:36:30+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T09:36:33+09:00",
+  "appliedStatus": "処理中"
+}

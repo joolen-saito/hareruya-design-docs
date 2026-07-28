@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2130",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 電話番号のチェック前にハイフン除去の正規化を追加。保存値もハイフン無しに揃えること",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施。主要3点は独立に抜き取り再検証済み",
+  "summary": "数字チェックは実装済みだがチェック前のハイフン除去が全経路に存在しない",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）\n\n■結論\n指摘は事実です。設計要求が正本設計書に実在し、実装がそれと異なることを確認しました。\n\n■設計上の根拠\n正本設計書 0207_基本設計仕様書(会員管理機能) sheet-21「ブラックリスト管理」機能仕様処理概要（新規登録処理・更新処理の両方に同一記述）\n> ・電話番号の場合、チェックの前にハイフンを除去する\n> ・電話番号のみ追加で半角数字のみかのチェックを行う\n\n■実装の現状\n半角数字チェックは実装されています。src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:78-83（更新）および :108-113（新規）が `preg_match('/^[0-9]+$/', $keyword)` で検証します。\nしかし**チェック前のハイフン除去がありません**。入力値をそのまま数字チェックにかけるため、「090-1234-5678」はエラーになります。\n\n反証として次の経路すべてを確認し、`str_replace` / `preg_replace` / DataTransformer による正規化が存在しないことを確認しました。\n- BlacklistUpdateType.php / BlacklistType.php\n- BlacklistController.php:63-110\n- BlacklistUpdateAction.php:33-61\n- BlacklistEntityManager.php:28-36（`setKeyword($keyword)` のみ）\n- blacklist.twig:11-21（JSは削除行のフェードアウトのみ）\n\n設計どおりの部分: 重複チェック（BlacklistUpdateType.php:85-90, 101-106）は実装済みです。\n\n■次の対応\n実装対応: 電話番号項目の場合、チェック前にハイフンを除去する正規化を入れる。照合側（DtbBlacklistRepository.php:37-42）はハイフン無しで比較するため、保存値もハイフン無しに揃える必要があります。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html / sheet-21「ブラックリスト管理」機能仕様処理概要（新規登録処理・更新処理の両方に同一記述）\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / マイグレーション）\n- 設計原文の抽出、実装の確認、および別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T09:36:30+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T09:36:34+09:00",
+  "appliedStatus": "処理中"
+}

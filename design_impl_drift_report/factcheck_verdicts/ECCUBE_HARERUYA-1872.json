@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1872",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: Customer.getSmaregiMemberCode を使う。smaregi_id未設定時の表示も要検討",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "バーコード値が固定値にハードコード。起票のDtbPlayer実装済みという説明は誤り",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-7「マイページ」\n画面部品仕様\n> 5 バーコード　・**店頭受取注文の際にバーコードを店頭で読み取ると、スマレジと連携して会員の注文履歴に登録する**　※ポイントも付与される\n\n■実装の現状\nBlock/js/point_barcode_js.twig:22-23 でバーコード値が**固定値にハードコード**されています。\n```\n{#$(\"#js-ec_point_barcode\").barcode('{{ Customer.getSmaregiMemberCode }}', \"ean13\", …);#}\n$(\"#js-ec_point_barcode\").barcode('2900065596792', \"ean13\", …);\n```\n会員を特定できないため、読み取っても当該会員の注文履歴に登録できません。5分タイマーと「再表示する」への切替（同:3-19）は設計どおりです。\n\n**起票の説明を1点補正します。** 「`DtbPlayer::getSmaregiMemberCode()` も実装済みで呼び出しを戻すだけで解消できる」とありますが、DtbPlayer.php:532-545 は**本体が全行コメントアウトされ `return '';` を返すスタブ**です。ただし Twig が呼ぶのは `Customer.getSmaregiMemberCode` で、Customer.php:1075-1088 は実装済み（`getPlayer()->getSmaregiId()` から13桁を生成）のため**この経路は生きています**。\n\n■次の対応\n実装対応: コメントアウトを戻して `Customer.getSmaregiMemberCode` を使う。ただし smaregi_id 未設定の会員では空文字が返り `barcode('')` になるため、その場合の表示も併せてご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-7「マイページ」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:43:47+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:43:53+09:00",
+  "appliedStatus": "処理中"
+}

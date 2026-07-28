@@ -1,0 +1,999 @@
+{
+  "book": "0306",
+  "count": 41,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-1863",
+      "summary": "【実装乖離】フロント会員_新規会員登録_新規会員登録にて、メールアドレスの最大文字数が設計の255文字ではなく254文字になっている",
+      "feature": "新規会員登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "新規会員登録"
+        }
+      ],
+      "期待される挙動": "- 新規会員登録画面(F06-01)の(1-10)メールアドレスおよび(1-11)メールアドレス(確認)は、必須入力かつ最大文字数255文字であること。\n- 255文字のメールアドレスを入力しても文字数超過エラーにならずに登録できること。",
+      "現在の挙動": "- メールアドレスの最大文字数チェックは Assert\\Length の max に eccube_email_len を渡しており、その設定値は 254 になっている。\n- そのため255文字のメールアドレスを入力すると、設計上は許容されるはずが文字数超過エラーとなり登録できない。\n- 必須入力チェック(NotBlank)およびメールアドレス(確認)との一致チェックは実装されている。",
+      "引用": [
+        "src/Eccube/Form/Type/RepeatedEmailType.php:47-49",
+        "src/Eccube/Form/Type/Front/EntryType.php:122-125",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:74-74",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:75-75"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/eccube.yaml:235 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1864",
+      "summary": "【実装乖離】フロント会員_新規会員登録_新規会員登録にて、メールアドレスのRFC準拠チェックが無効化されており、RFC上不正なメールアドレスが登録できてしまう",
+      "feature": "新規会員登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "新規会員登録"
+        }
+      ],
+      "期待される挙動": "- 新規会員登録画面(F06-01)で(1-26)同意するを押下したとき、(1-10)メールアドレスおよび(1-11)メールアドレス(確認)に対して RFC 準拠の形式チェックを行うこと。\n- RFC 上不正な形式のメールアドレスの場合、「有効なメールアドレスではありません。」というエラーメッセージを表示すること。",
+      "現在の挙動": "- 設定値 eccube_rfc_email_check が false のため、Email 制約の mode に strict が渡されず、RFC 準拠(Symfony の strict モード)ではなく独自の緩いチェック(NoRFCEmailValidator)が使用される。\n- RepeatedEmailType が追加している Assert\\Regex により「..」「.@」を含むアドレスは拒否されるが、RFC 上不正な user@-example.com（ハイフン始まりのドメイン）や user@exam_ple.com（アンダースコアを含むドメイン）は現実装では有効と判定される（vendor の Egulias RFCValidation では invalid）。\n- エラーメッセージ自体は「有効なメールアドレスではありません。」が表示されるため、メッセージ文言は設計どおりである。",
+      "引用": [
+        "src/Eccube/Form/Type/RepeatedEmailType.php:46-46",
+        "src/Eccube/Validator/EmailValidator/NoRFCEmailValidator.php:33-53",
+        "src/Eccube/Form/Type/RepeatedEmailType.php:50-54",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:61-62",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:74-74"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/eccube.yaml:234 [line_out_of_range]",
+        "src/Eccube/Form/Validator/EmailValidator.php:45 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1865",
+      "summary": "【未実装】フロント会員_本会員登録_本会員登録にて、仮会員が既にスマレジIDを保有している場合の「登録済みエラー」判定が実装されておらず、エラーにならずに本会員登録が完了してしまう",
+      "feature": "本会員登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "本会員登録"
+        }
+      ],
+      "期待される挙動": "- 本会員登録(F06-02)では、秘密鍵で検索して存在した仮会員が既にスマレジIDを持っていないかを確認すること。\n- スマレジIDを持っていた場合は、すでに会員登録済みとみなしエラーとし、E-2. ユーザー存在チェックエラー画面を表示すること。",
+      "現在の挙動": "- EntryController::entryActivate は秘密鍵で仮会員を検索し、見つからない場合のみ「本会員済み(already_activated)」または「無効な秘密鍵(forbidden)」の例外を投げており、スマレジID保有有無のチェックは行っていない。\n- 仮会員がスマレジIDを保有していた場合、linkSmaregiCustomer は「既に連携済みなら何もしない (冪等)」として $Customer をそのまま返すため、エラーにならず本会員化・会員登録完了メール送信・自動ログインまで進んでしまう。\n- 会員ステータスの本会員(REGULAR)への更新はスマレジID確認より前に実行されている。",
+      "引用": [
+        "src/Eccube/Controller/Front/EntryController.php:273-280",
+        "src/Eccube/Controller/Front/EntryController.php:348-352",
+        "src/Eccube/Repository/Views/RegisterCustomerViewRepository.php:128-134",
+        "src/Eccube/Repository/Views/RegisterCustomerViewRepository.php:113-119",
+        "src/Eccube/Controller/Front/EntryController.php:None-None",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:202-203",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:206-206"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1866",
+      "summary": "【一部実装】フロント会員_本会員登録_本会員登録にて、既にスマレジIDを持つユーザーの場合に E-2. ユーザー存在チェックエラー画面が表示されない",
+      "feature": "本会員登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "本会員登録"
+        }
+      ],
+      "期待される挙動": "- 本会員登録(F06-02)の E-2. ユーザー存在チェックエラー画面は、秘密鍵で検索して仮会員のユーザーが存在しない場合、もしくは既にスマレジIDを持っているユーザーの場合に表示すること。\n- E-2画面には「トップページへ」ボタンを表示し、押下するとECTOP画面へ遷移すること。",
+      "現在の挙動": "- 仮会員が存在しない場合はエラー画面が表示されるが、その分岐は「本会員済み(already_activated)」と「無効な秘密鍵(forbidden)」に分かれており、後者は E-1(秘密鍵書式エラー)と同じ error_type=forbidden・同じ文言「このURLは無効です。」を共用している。\n- 設計が E-2 の表示条件として挙げるもう一方の「既にスマレジIDを持っているユーザー」の場合は、そもそもエラー判定が存在せず、エラー画面が表示されないまま本会員登録が正常完了する。\n- エラー画面のテンプレート(Entry/activate_error.twig)自体は存在し、「トップページへ」ボタンも実装されている。",
+      "引用": [
+        "src/Eccube/Controller/Front/EntryController.php:250-256",
+        "src/Eccube/Controller/Front/EntryController.php:273-280",
+        "src/Eccube/Controller/Front/EntryController.php:348-352",
+        "src/Eccube/Resource/template/default/Entry/activate_error.twig:22-27",
+        "src/Eccube/Resource/locale/messages.ja.yaml:451-456",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:242-243",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:206-206",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:246-246"
+      ],
+      "引用_不在または範囲外": [
+        "Entry/activate_error.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1867",
+      "summary": "【実装乖離】フロント会員_パスワード再発行_パスワード再発行にて、メールアドレスのRFC準拠チェックが行われておらず、最大文字数(255)のサーバ側チェックも無い",
+      "feature": "パスワード再発行",
+      "sheetCandidates": [
+        {
+          "id": "sheet-6",
+          "title": "パスワード再発行"
+        }
+      ],
+      "期待される挙動": "- パスワード再発行(F06-04)の再発行メール送信先入力画面(1-2)メールアドレスは、必須入力・最大255文字であり、フォーム送信後にRFC準拠の形式チェックを行うこと。\n- メールアドレスの形式(RFC)に問題がある場合は、メールアドレス(1-2)の直下にエラー文言を表示すること。",
+      "現在の挙動": "- ForgotType の login_email には Assert\\NotBlank と Eccube の Email 制約が付いているが、Email 制約の mode は eccube_rfc_email_check(=false)により strict にならず、RFC準拠ではない独自の緩いチェック(NoRFCEmailValidator)が使われる。\n- 最大文字数は HTML の maxlength 属性(eccube_stext_len=255)のみで、サーバ側の Assert\\Length が無いため、maxlength を回避すれば256文字以上のメールアドレスもバリデーションを通過する。\n- パスワード再設定画面の(3-2)メールアドレス(PasswordResetType)も同じく maxlength のみ・非strict であり、同一の乖離がある。",
+      "引用": [
+        "src/Eccube/Form/Type/Front/ForgotType.php:43-51",
+        "src/Eccube/Form/Type/Front/PasswordResetType.php:44-52",
+        "app/config/eccube/packages/eccube.yaml:137-137",
+        "src/Eccube/Form/Type/Front/ForgotType.php:None-None",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:331-333",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:337-337",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:390-390"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/eccube.yaml:234 [line_out_of_range]",
+        "src/Eccube/Form/Validator/EmailValidator.php:45 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1868",
+      "summary": "【実装乖離】フロント会員_パスワード再発行_パスワード再発行にて、リセットキーの有効期限が設計の24時間ではなく10分になっており、メール文面には「10時間」と表示される",
+      "feature": "パスワード再発行",
+      "sheetCandidates": [
+        {
+          "id": "sheet-6",
+          "title": "パスワード再発行"
+        }
+      ],
+      "期待される挙動": "- パスワード再発行(F06-04)では、時間制限(有効時間:24時間)のリセットキーを発行し、ユーザー情報に保存すること。\n- リセットキーを含んだパスワード再発行用のURLをメールで送信し、その有効期限は24時間であること。",
+      "現在の挙動": "- ForgotController は reset_expire を「現在時刻 + eccube_customer_reset_expire 分」で計算しており、eccube_customer_reset_expire の設定値は 10 のため、有効期限は10分になっている(設計の24時間と乖離)。\n- 一方、パスワード再発行メールのテンプレートは同じ設定値を「時間」の単位で埋め込んでおり、「※URLの有効期限は、メール配信時刻から10時間になります。」と実際(10分)と異なる案内が表示される。\n- 英語版メールテンプレートも同様に「This URL will expire after 10 hours ...」と表示される。",
+      "引用": [
+        "src/Eccube/Controller/Front/ForgotController.php:82-82",
+        "app/config/eccube/packages/eccube.yaml:150-150",
+        "src/Eccube/Resource/template/default/Mail/Mall/forgot_mail.twig:2-2",
+        "src/Eccube/Resource/template/default/Mail/Mall/forgot_mail.en.twig:2-2",
+        "src/Eccube/Service/MailService.php:646-646",
+        "src/Eccube/Controller/Front/ForgotController.php:None-None",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:352-352",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:353-353"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1869",
+      "summary": "【未実装】フロント会員_パスワード再発行_パスワード再発行にて、E-1. リセットキー書式エラー画面と E-2. ユーザー存在チェックエラー画面が実装されておらず、いずれも汎用の404エラーページになる",
+      "feature": "パスワード再発行",
+      "sheetCandidates": [
+        {
+          "id": "sheet-6",
+          "title": "パスワード再発行"
+        }
+      ],
+      "期待される挙動": "- パスワード再設定URLのリセットキーが未指定・英数字以外を含む場合は、E-1. リセットキー書式エラー画面(「トップページへ」ボタンを持つ専用画面)を表示すること。\n- リセットキーで検索して有効期限内の本会員が存在しない場合は、E-2. ユーザー存在チェックエラー画面(「トップページへ」ボタンを持つ専用画面)を表示すること。",
+      "現在の挙動": "- ForgotController::reset はリセットキーの書式チェックに失敗すると NotFoundHttpException を投げており、専用のエラー画面を描画していない。\n- リセットキーから会員データが取得できない場合も同様に NotFoundHttpException を投げている。\n- その結果、ExceptionListener が汎用エラーテンプレート(error.twig)を HTTP 404 で描画するだけで、E-1/E-2 の区別も無く、本会員登録側で用意されているようなデザイン適用済みエラー画面(Entry/activate_error.twig)も存在しない。\n- Forgot 配下のテンプレートは index/complete/reset/reset_complete の4種のみで、エラー画面用テンプレートは存在しない。",
+      "引用": [
+        "src/Eccube/Controller/Front/ForgotController.php:184-187",
+        "src/Eccube/Controller/Front/ForgotController.php:192-195",
+        "src/Eccube/Resource/template/default/error.twig:30-32",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:382-383",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:423-426",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:436-439"
+      ],
+      "引用_不在または範囲外": [
+        "Entry/activate_error.twig:None [file_not_found]",
+        "src/Eccube/EventListener/ExceptionListener.php:170 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1870",
+      "summary": "【一部実装】フロント会員_パスワード再発行_パスワード再設定完了にて、パスワードリセット完了のログ(ユーザーID・メールアドレス・グローバルIP)が保存されていない",
+      "feature": "パスワード再発行",
+      "sheetCandidates": [
+        {
+          "id": "sheet-6",
+          "title": "パスワード再発行"
+        }
+      ],
+      "期待される挙動": "- パスワード再設定完了(F06-04)では、入力されたパスワードを暗号化して登録し、リセットキーを削除すること。\n- パスワードリセット完了をログに保存すること。その際、ユーザーID・メールアドレス・アクセスしてきたグローバルIPもログに保存すること。\n- パスワード再設定完了画面を表示し、ログイン状態にはしないこと。",
+      "現在の挙動": "- ForgotController::reset の再設定成功時の処理は、パスワードのハッシュ化・UPDATE(reset_key = null)・イベントディスパッチ・完了画面へのリダイレクトのみで、ログ出力処理(log_info 等)が一切無い。\n- ForgotController 内のログ出力は index() のパスワード再発行メール送信時(103行目)とユーザー不在時(105行目)の2箇所だけで、再設定完了時には存在しない。\n- FRONT_FORGOT_RESET_COMPLETE イベントを購読してログを保存するリスナも現HEADには存在しない。\n- パスワードの暗号化・登録、リセットキーの削除(reset_key = null)、ログイン状態にしないこと、完了画面の表示は設計どおり実装されている。",
+      "引用": [
+        "src/Eccube/Controller/Front/ForgotController.php:208-229",
+        "src/Eccube/Controller/Front/ForgotController.php:103-103",
+        "src/Eccube/Controller/Front/ForgotController.php:227-227",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:404-409"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1871",
+      "summary": "【一部実装】フロント会員_マイページ_マイページの各メニュー遷移後の画面上部のユーザ名表示が、買取履歴一覧・買取履歴詳細・購入履歴詳細(旧テンプレート)に残っている",
+      "feature": "マイページ",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "マイページ"
+        }
+      ],
+      "期待される挙動": "- マイページ(F06-05)のカスタマイズ要件として、各メニュー遷移後の画面上部のユーザ名表示(「ようこそ○○さん」「○○様」等)を削除すること。\n- 入荷待ち商品一覧(F06-08)・お気に入り商品一覧(F06-09)・ポイント履歴(F06-10)の項目表でも「(2)名前」は項目除去とされている。",
+      "現在の挙動": "- 買取履歴一覧画面(Mypage/purchase_history.twig)は、一覧の直上に p-hareruya-history-list__member-name として「{{ Customer.name01 }} {{ Customer.name02 }}様」を表示している。\n- 買取履歴詳細画面(Mypage/purchase_history_detail.twig)も、ページヘッダ内に「{{ Customer.name01 }} {{ Customer.name02 }} 様」を表示している。\n- 購入履歴詳細画面(Mypage/history.twig)は Mypage/navi.twig を include しており、navi.twig の ec-welcomeMsg で「ようこそ○○ ○○さん」を表示している。この画面はポイント履歴の注文番号リンク(mypage_point_history → mypage_history)から到達できる。\n- バンドルCSS(html/template/default/assets/hareruya/css/common.css 等)には .p-hareruya-history-list__member-name の margin 指定のみで display:none 等の非表示指定は無く、JS からも操作されていないため、実際に画面に表示される。\n- 入荷待ち商品一覧・お気に入り商品一覧・ポイント履歴の各テンプレートには名前表示が無く、これらは設計どおり除去されている。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Mypage/purchase_history.twig:53-56",
+        "src/Eccube/Resource/template/default/Mypage/purchase_history_detail.twig:88-92",
+        "src/Eccube/Resource/template/default/Mypage/history.twig:23-23",
+        "src/Eccube/Resource/template/default/Mypage/navi.twig:33-38",
+        "src/Eccube/Resource/template/default/Mypage/point_history.twig:112-112",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:457-457",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:474-474",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:551-551"
+      ],
+      "引用_不在または範囲外": [
+        "Mypage/purchase_history.twig:None [file_not_found]",
+        "Mypage/purchase_history_detail.twig:None [file_not_found]",
+        "Mypage/history.twig:None [file_not_found]",
+        "Mypage/navi.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1872",
+      "summary": "【実装乖離】フロント会員_マイページ_マイページのバーコードが会員ごとのスマレジ会員コードではなく固定値でハードコードされており、店頭で読み取っても会員を特定できない",
+      "feature": "マイページ",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "マイページ"
+        }
+      ],
+      "期待される挙動": "- マイページ(F06-05)の(5)バーコードは、店頭受取注文の際に店頭で読み取ることでスマレジと連携し、会員の注文履歴に登録され、ポイントも付与されること。\n- そのためバーコードは、ログインしている会員のスマレジ会員コードを表す値で描画されること。",
+      "現在の挙動": "- バーコード描画スクリプト(Block/js/point_barcode_js.twig)では、会員のスマレジ会員コードを渡す行 $(\"#js-ec_point_barcode\").barcode('{{ Customer.getSmaregiMemberCode }}', ...) が Twig コメント({# #})でコメントアウトされている。\n- 実際に実行されるのは固定値 '2900065596792' を EAN13 で描画する行であり、どの会員でログインしても同一のバーコードが表示される。\n- 会員コードを返す Customer::getSmaregiMemberCode() および DtbPlayer::getSmaregiMemberCode() は実装済みで存在しており、呼び出しを戻すだけで解消できる状態にある。\n- 5分間のタイマー(data-minutes-left=\"5\")と、タイマー満了後の「再表示する」リンクへの切り替えは実装されている。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Block/js/point_barcode_js.twig:22-23",
+        "src/Eccube/Entity/Customer.php:1075-1075",
+        "src/Eccube/Entity/DtbPlayer.php:532-532",
+        "src/Eccube/Resource/template/default/Mypage/index.twig:22-22",
+        "src/Eccube/Resource/template/default/Block/js/point_barcode_js.twig:None-None",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:491-491",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:475-479"
+      ],
+      "引用_不在または範囲外": [
+        "Block/js/point_barcode_js.twig:None [file_not_found]",
+        "Mypage/index.twig:74 [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1873",
+      "summary": "【未実装】フロント会員_マイページ_マイページの「マイデッキ」メニューのリンク先が未設定(href が空)で、押下してもマイデッキ画面へ遷移しない",
+      "feature": "マイページ",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "マイページ"
+        }
+      ],
+      "期待される挙動": "- マイページ(F06-05)の(19)マイデッキを押下すると、マイデッキ画面へ遷移すること。",
+      "現在の挙動": "- マイページのメニュー「マイデッキ」のアンカーは href=\"\" のままで、直前に「TODO: 「マイデッキ」機能の遷移先URLが未確定のため空リンク。決まり次第 href を設定する」というコメントが記述されている。\n- 押下しても同一ページの再読み込みになるだけで、マイデッキ画面へは遷移しない。\n- 日本語版(Mypage/index.twig)・英語版(Mypage/index.en.twig)とも同じ状態である。\n- マイデッキ画面に相当するルート(mypage_my_deck 等)も現HEADには存在しない。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Mypage/index.en.twig:172-176",
+        "src/Eccube/Resource/locale/messages.ja.yaml:787-787",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:505-505"
+      ],
+      "引用_不在または範囲外": [
+        "Mypage/index.twig:None [file_not_found]",
+        "Mypage/index.en.twig:None [file_not_found]",
+        "src/Eccube/Resource/template/default/Mypage/index.twig:172 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1874",
+      "summary": "【一部実装】フロント会員_マイページ_マイページの「あなたへのおすすめアイテム」が常に空表示になり、リコメンド商品が一件も表示されない",
+      "feature": "マイページ",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "マイページ"
+        }
+      ],
+      "期待される挙動": "- マイページ(F06-05)の(27)あなたへのおすすめアイテムに、別紙「0303_基本設計仕様書(フロント_商品)」のシート「商品リコメンド」で定義されたリコメンド商品を表示すること。",
+      "現在の挙動": "- マイページのテンプレートには見出し「あなたへのおすすめアイテム」とカルーセルの器が用意されているが、表示条件が {% if recommendProducts is defined and recommendProducts is not empty %} であるのに対し、MypageController::index は Customer と nextDeadlinePointHistory しか返しておらず recommendProducts を一切渡していない。\n- その結果、常に else 側の「おすすめ商品はありません」相当のメッセージ(front.product.recommend_no_items)が表示される。\n- リコメンドを非同期取得する Block/js/recommend_js.twig の include も「TODO: ECCUBE_HARERUYA-164 マイページ ... 商品リコメンド実装時に追加する」というコメント付きでコメントアウトされている。\n- 日本語版(Mypage/index.twig)・英語版(Mypage/index.en.twig)とも同一の状態である。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Mypage/index.twig:20-21",
+        "src/Eccube/Controller/Front/Mypage/MypageController.php:127-138",
+        "src/Eccube/Resource/template/default/Mypage/index.en.twig:21-21",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:513-513",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:484-484"
+      ],
+      "引用_不在または範囲外": [
+        "Block/js/recommend_js.twig:None [file_not_found]",
+        "Mypage/index.twig:None [file_not_found]",
+        "Mypage/index.en.twig:None [file_not_found]",
+        "src/Eccube/Resource/template/default/Mypage/index.twig:243 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1875",
+      "summary": "【実装乖離】フロント会員_ポイント履歴_ポイント履歴の並び順が、設計のポイント履歴ID降順ではなく発行日降順(第2キーがID降順)になっている",
+      "feature": "ポイント履歴",
+      "sheetCandidates": [
+        {
+          "id": "sheet-10",
+          "title": "ポイント履歴"
+        }
+      ],
+      "期待される挙動": "- ポイント履歴(F06-10)の一覧は、ポイント履歴IDの降順で表示すること。",
+      "現在の挙動": "- ポイント履歴一覧のクエリ(DtbPointHistoryRepository::getQueryBuilderByCustomer)は、第1ソートキーが p.issueDate の降順、第2ソートキーが p.id の降順になっている。\n- 設計が指定するポイント履歴ID(p.id)は第2キーでしか効かないため、発行日(issueDate)がID順と一致しないデータ(スマレジ連携や移行取込などで後から過去日付のポイント履歴が作成されるケース)では、設計と異なる並び順で表示される。",
+      "引用": [
+        "src/Eccube/Repository/DtbPointHistoryRepository.php:83-90",
+        "src/Eccube/Controller/Front/Mypage/MypageController.php:400-409",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:635-635"
+      ],
+      "引用_不在または範囲外": [
+        "Mypage/point_history.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1876",
+      "summary": "【実装乖離】フロント会員_ポイント履歴_ポイント履歴のページネーションで、現在ページの前後4ページ分のページ番号が表示されず、前後2ページ分(計5件)しか表示されない",
+      "feature": "ポイント履歴",
+      "sheetCandidates": [
+        {
+          "id": "sheet-10",
+          "title": "ポイント履歴"
+        }
+      ],
+      "期待される挙動": "- ポイント履歴(F06-10)の(10)ページ番号は、現在表示しているページ番号から前後最大4つまで表示できること。\n- (9)最初・(11)最後のリンクにより、最初のページ・最後のページへ遷移できること(最初/最後のページを表示中の場合は表示しない)。",
+      "現在の挙動": "- ポイント履歴は共通の pager.twig を使用しており、表示するページ番号は KnpPaginator の pagesInRange(page_range で決まるウィンドウ)をそのまま出力している。\n- page_range はアプリ側の設定ファイルで上書きされておらず、KnpPaginatorBundle の既定値 5 が効くため、表示されるページ番号は現在ページを中心とした計5件(前後2ページ分)にとどまり、設計の「前後最大4つ」(計9件)を満たさない。\n- MypageController::pointHistory の paginate() 呼び出しでも pageRange オプションは指定されていない。\n- 最初/最後のページへのリンクは、範囲外になったときに『1』『最終ページ番号』という数字リンクと「…」で表現されており、設計の「最初」「最後」というラベルのリンクにはなっていない。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Mypage/point_history.twig:82-82",
+        "src/Eccube/Resource/template/default/pager.twig:36-46",
+        "src/Eccube/Controller/Front/Mypage/MypageController.php:402-409",
+        "vendor/knplabs/knp-paginator-bundle/src/DependencyInjection/Configuration.php:49-51",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:652-652",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:651-651",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:653-653"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1877",
+      "summary": "【未実装】フロント会員_ポイント履歴_ポイント履歴の「内容」が英語サイトでも日本語のまま表示され、英語の内容が表示されない",
+      "feature": "ポイント履歴",
+      "sheetCandidates": [
+        {
+          "id": "sheet-10",
+          "title": "ポイント履歴"
+        }
+      ],
+      "期待される挙動": "- ポイント履歴(F06-10)の(16)内容は、英語サイトの場合は英語の内容を表示すること。",
+      "現在の挙動": "- ポイント履歴一覧のテンプレートは「内容」欄に {{ PointHistory.note }} をそのまま出力しており、ロケールによる出し分けを行っていない(同じテンプレート内で日付列は isLocaleJa による出し分けを行っているのと対照的)。\n- エンティティ DtbPointHistory には note カラムが1つしか無く、英語用のカラム(note_en 等)も翻訳キーによる保持も存在しない。\n- note に格納される値は日本語の固定文言(例: LostPointsAction の '有効期限切れによる失効')や管理画面で入力されたメモであり、英語サイトでもそのまま日本語が表示される。\n- ポイント履歴には .en.twig の英語版テンプレートも存在しない。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Mypage/point_history.twig:138-140",
+        "src/Eccube/Entity/DtbPointHistory.php:49-50",
+        "src/Eccube/Service/Admin/Customer/LostPointsAction.php:29-29",
+        "src/Eccube/Service/EntityManager/PointHistoryEntityManager.php:71-71",
+        "src/Eccube/Resource/template/default/Mypage/point_history.twig:None-None",
+        "src/Eccube/Entity/DtbPointHistory.php:None-None",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:658-658"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1878",
+      "summary": "【実装乖離】フロント会員_オンライン本人確認_オンライン本人確認の「撮影する身分証明書の種類」に、設計で除外された「住民基本台帳カード」「健康保険被保険者証」が選択肢として残っている",
+      "feature": "オンライン本人確認",
+      "sheetCandidates": [
+        {
+          "id": "sheet-11",
+          "title": "オンライン本人確認"
+        }
+      ],
+      "期待される挙動": "- オンライン本人確認(F06-13)の(2-3)撮影する身分証明書の種類は、「自動車運転免許証」「パスポート」「外国人登録証明書」「学生証・社員証」「身体障害者手帳」「マイナンバーカード」の6種類から1つを選択できること。\n- 現行システムに含まれていた「住民基本台帳カード」は、2025/12/31で全カードの有効期限が切れるため選択肢から除外すること。",
+      "現在の挙動": "- 身分証明書の選択肢は mtb_identification マスタから取得しており、マイグレーション(Version20251125145015)が投入するレコードは8件で、設計に無い「健康保険被保険者証」(id=3)と、設計が明示的に除外した「住民基本台帳カード」(id=5)が含まれている。\n- 選択肢を構築する IdentificationType の query_builder は id 昇順で全件を取得するだけで、除外対象を絞り込むフィルタが無い。\n- そのため、オンライン本人確認の身分証明書セレクトボックスには8種類が表示され、「住民基本台帳カード」も選択できてしまう。",
+      "引用": [
+        "app/DoctrineMigrations/Version20251125145015.php:62-95",
+        "src/Eccube/Form/Type/Master/IdentificationType.php:32-38",
+        "src/Eccube/Form/Type/Front/IdentificationSelectType.php:43-50",
+        "src/Eccube/Resource/template/default/Mypage/online_identification.twig:64-69",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:704-707",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:713-713"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1879",
+      "summary": "【実装乖離】フロント会員_マイイベント・デッキ登録_マイイベント・デッキ登録にて、開催日当日でも開始時刻を過ぎると処理状態が「イベント終了」になる",
+      "feature": "マイイベント・デッキ登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-12",
+          "title": "マイイベント・デッキ登録"
+        }
+      ],
+      "期待される挙動": "- 設計書では、開催日の23:59:59を過ぎたイベントについてのみ、一覧の処理状態に「イベント終了」と表示することとしている。\n- したがって、開催日当日は開催開始時刻を過ぎていても、23:59:59までは処理状態を「イベント終了」にしてはならない。",
+      "現在の挙動": "- 終了判定を行う DtbEventDetail::hasFinished() が「開催開始日時 < 現在日時」で判定しているため、開催開始時刻を1秒でも過ぎた時点で終了扱いになる。\n- Mypage/event_history.twig はこの hasFinished() の戻り値をそのまま用いて処理状態に「イベント終了」を表示するため、開催日当日の開催中・開催直後のイベントが「イベント終了」と表示される。\n- 同じ判定値でデッキ登録/編集ボタンの表示可否も制御しているため、開催開始時刻を過ぎた時点でデッキ登録/編集ボタンも消える。",
+      "引用": [
+        "src/Eccube/Entity/DtbEventDetail.php:554-557",
+        "src/Eccube/Resource/template/default/Mypage/event_history.twig:95-95",
+        "src/Eccube/Resource/template/default/Mypage/event_history.twig:118-119",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:790-790"
+      ],
+      "引用_不在または範囲外": [
+        "Mypage/event_history.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1880",
+      "summary": "【一部実装】フロント会員_マイイベント・デッキ登録_マイイベント・デッキ登録にて、デッキ登録状況ラベルが非表示条件に該当しても常に表示される",
+      "feature": "マイイベント・デッキ登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-12",
+          "title": "マイイベント・デッキ登録"
+        }
+      ],
+      "期待される挙動": "- 設計書では、デッキステータス（デッキ登録状況）とデッキ登録/編集の両方を、「イベント終了」・デッキ登録締切超過・「デッキ登録を終了する」チェック済み・「デッキ登録あり」未チェックのいずれかに該当する場合は表示しないこととしている。",
+      "現在の挙動": "- デッキ登録/編集ボタンは「not isFinished かつ canBeRegisteredDeck()」で制御されており、イベント終了・デッキ登録締切超過（deckRegistDeadline）・デッキ登録終了フラグ（deadlineFlg）・デッキ登録ありフラグ（deckRegistFlg）の4条件を満たしているため、設計どおり非表示になる。\n- 一方、デッキ登録状況ラベル（「デッキ登録済み」／「デッキ未登録」）は条件分岐を持たず、上記4条件のいずれに該当する場合でも常に表示される。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Mypage/event_history.twig:142-145",
+        "src/Eccube/Resource/template/default/Mypage/event_history.twig:148-150",
+        "src/Eccube/Entity/DtbEventDetail.php:508-511",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:792-796",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:807-807"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1881",
+      "summary": "【実装乖離】フロント会員_マイイベント・デッキ登録_マイイベント・デッキ登録のページネーションで、現在ページの前後4ページ分のリンクが表示されない",
+      "feature": "マイイベント・デッキ登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-12",
+          "title": "マイイベント・デッキ登録"
+        }
+      ],
+      "期待される挙動": "- 設計書では、ページネーションは現在ページの前後に4ページ分のリンクを表示することとしている（例：8ページ選択時は4〜12ページのリンクを表示する）。\n- 表示しきれないページが存在する場合、先頭方向に「＜最初」、末尾方向に「最後＞」のリンクを表示することとしている。",
+      "現在の挙動": "- EventHistoryController は KnpPaginator の paginate() をオプション指定なしで呼び出しており、page_range を指定していない。\n- KnpPaginatorBundle の page_range 既定値は 5、SlidingPagination の pageRange 初期値も 5 であり、プロジェクト側に knp_paginator の設定ファイルは存在しないため、実際に表示されるページ範囲は5ページ分（現在ページの前後2ページ）にとどまる。\n- pager.twig には先頭ページ・最終ページへのリンクと省略記号（…）はあるが、リンク文言はページ番号そのもので、「＜最初」「最後＞」のラベルにはなっていない。",
+      "引用": [
+        "src/Eccube/Controller/Front/Mypage/EventHistoryController.php:99-99",
+        "vendor/knplabs/knp-paginator-bundle/src/DependencyInjection/Configuration.php:49-50",
+        "vendor/knplabs/knp-paginator-bundle/src/Pagination/SlidingPagination.php:19-19",
+        "src/Eccube/Resource/template/default/pager.twig:23-27",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:810-810"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1882",
+      "summary": "【未実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集にて、開催店舗が表示されていない",
+      "feature": "大会デッキ登録編集",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "大会デッキ登録編集"
+        }
+      ],
+      "期待される挙動": "- 設計書のカスタマイズ要件では、大会デッキ登録編集画面に開催店舗を表示することとしている（画面項目 5 開催店舗）。",
+      "現在の挙動": "- Mypage/deck_entry_edit.twig のイベント情報エリアには大会名・開催日時・お名前しか出力されておらず、開催店舗を表示する要素が存在しない。\n- DeckEntryController::index() も EventDetail / Player / Customer / Formats / deckByFormats / MyDecks のみをテンプレートへ渡しており、店舗情報（Event の BaseInfo）を渡していない。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:164-176",
+        "src/Eccube/Controller/Front/Mypage/DeckEntryController.php:85-92",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:832-832",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:867-867"
+      ],
+      "引用_不在または範囲外": [
+        "Mypage/deck_entry_edit.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1883",
+      "summary": "【実装乖離】フロント会員_大会デッキ登録編集_大会デッキ登録編集にて、削除要件である「MTGアリーナからデッキリストをインポートする方法」が残存している",
+      "feature": "大会デッキ登録編集",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "大会デッキ登録編集"
+        }
+      ],
+      "期待される挙動": "- 設計書のカスタマイズ要件では、大会デッキ登録編集画面から「MTGアリーナからデッキリストをインポートする方法」を削除することとしている。",
+      "現在の挙動": "- Mypage/deck_entry_edit.twig は id=\"how-to-import\" のフリースペースで Block/deck_entry_how_to_import.twig をインクルードしており、「MTGアリーナからデッキリストをインポートする方法」の見出しと手順解説がそのまま表示される。\n- 「2.カード選択」内の「使い方（ヘルプアイコン）」リンクも #how-to-import へのページ内リンクとして残っており、インラインJSでスクロール処理まで実装されている。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:316-318",
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:219-219",
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:128-136",
+        "src/Eccube/Resource/template/default/Block/deck_entry_how_to_import.twig:33-35",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:833-833"
+      ],
+      "引用_不在または範囲外": [
+        "Mypage/deck_entry_edit.twig:None [file_not_found]",
+        "Block/deck_entry_how_to_import.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1884",
+      "summary": "【一部実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集のマイデッキ取得ポップアップに、1ページ20件のページングと件数表示が無い",
+      "feature": "大会デッキ登録編集",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "大会デッキ登録編集"
+        }
+      ],
+      "期待される挙動": "- 設計書では、マイデッキを取得ポップアップに検索結果総数・表示件数・ページングを設け、1ページあたりの最大表示数を20件とし、ページ切り替えは動的に処理することとしている。",
+      "現在の挙動": "- DeckEntryController::index() は会員のマイデッキを findBy() で件数制限なしに全件取得し、テンプレートへ渡している。\n- Mypage/deck_entry_edit.twig のマイデッキモーダルは MyDecks を単純にループして全件を一覧描画しており、検索結果総数・表示件数・ページングの各要素が存在しない。\n- バンドルJS（hareruya-event.js / hareruya-deck.js / hareruya-mypage.js）にもマイデッキ一覧のページング処理は存在せず、実装されているのはフォーマット絞り込み（表示/非表示切替）のみである。",
+      "引用": [
+        "src/Eccube/Controller/Front/Mypage/DeckEntryController.php:80-83",
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:386-416",
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:138-148",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:919-919",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:917-918"
+      ],
+      "引用_不在または範囲外": [
+        "Mypage/deck_entry_edit.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1885",
+      "summary": "【一部実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集にて、カード名入力時のサジェスト候補が取得・表示されない",
+      "feature": "大会デッキ登録編集",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "大会デッキ登録編集"
+        }
+      ],
+      "期待される挙動": "- 設計書では、カード名を入力するとカード名が部分一致するカードがサジェスト表示され、サジェストを選択すると自動入力できることとしている。",
+      "現在の挙動": "- サジェスト候補を格納する ul（data-deckentry-card-suggest-list）はテンプレート上で常に空であり、サーバ側から候補を描画する処理も無い。\n- deck_entry_edit.twig のインラインJSは、入力有無に応じてサジェスト領域の aria-hidden を切り替えるのみで、カード名を検索して候補を取得する fetch/Ajax 処理を一切持たない。\n- DeckEntryController もカード検索用のデータをテンプレートへ渡しておらず、結果としてサジェストは常に空のまま表示されることがない（候補選択時の自動入力ハンドラのみ実装されている）。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:235-238",
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:71-73",
+        "src/Eccube/Controller/Front/Mypage/DeckEntryController.php:85-92",
+        "src/Eccube/Controller/App/DeckBuilder/CardController.php:71-71",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:846-847"
+      ],
+      "引用_不在または範囲外": [
+        "Mypage/deck_entry_edit.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1886",
+      "summary": "【一部実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集にて、ボード選択ボタンとメイン/サイドボード入力欄の選択状態が相互に連携・強調表示されない",
+      "feature": "大会デッキ登録編集",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "大会デッキ登録編集"
+        }
+      ],
+      "期待される挙動": "- 設計書では、ボード選択ボタンとデッキリストのメインボード・サイドボード入力欄について、選択している方が強調表示されることとしている。\n- 設計書では、選択ボタンとボード入力欄の選択状態は相互に連携し、一方の選択がもう一方の選択に反映（強調表示）されることとしている。",
+      "現在の挙動": "- deck_entry_edit.twig のインラインJSは、ボード選択ラジオの change でJS変数 selectedBoard を書き換えるだけで、対応するボード入力欄に強調表示用のクラスを付与しない。\n- ボード入力欄（textarea）をクリック・フォーカスしてもボード選択ラジオの選択状態は変化せず、選択状態の相互連携が成立しない。\n- バンドルJS hareruya-event.js には、ラジオ選択とテキストエリア（deckMain / deckSide）への強調クラス p-hareruya-deckentry-edit__deck-textarea--active 付与を相互に同期させる処理が実装されているが、hareruya-event.js は Event/index.twig・Event/list.twig・Event/entry.twig でのみ読み込まれており、Mypage/deck_entry_edit.twig では読み込まれていないため動作しない。\n- 結果として、ボード選択ボタン側の強調（CSS の :checked + ラベル装飾）のみが機能し、入力欄側の強調と双方向連携は機能しない。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:37-40",
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:11-12",
+        "html/template/default/assets/hareruya/js/hareruya-event.js:1-1",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:848-849"
+      ],
+      "引用_不在または範囲外": [
+        "Event/index.twig:None [file_not_found]",
+        "Event/list.twig:None [file_not_found]",
+        "Event/entry.twig:None [file_not_found]",
+        "Mypage/deck_entry_edit.twig:None [file_not_found]",
+        "Event/list.twig:105 [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1887",
+      "summary": "【未実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集のデッキ登録処理で、デッキを構築するカード情報（デッキカード）が保存されない",
+      "feature": "大会デッキ登録編集",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "大会デッキ登録編集"
+        }
+      ],
+      "期待される挙動": "- 設計書では、デッキリスト提出時にデッキへプレイヤー名・大会情報・デッキリストの内容テキスト・フォーマット・公開設定・デッキタイプを設定して保存するとともに、デッキを構築するカード情報を保存することとしている。",
+      "現在の挙動": "- フロントのデッキ登録処理 DeckEntryAction::handle() は DtbDeck に textMain / textSide などを設定して persist / flush するのみで、DtbDeckCard を1件も生成・保存していない。\n- デッキリストのテキストを解析して DtbDeckCard を登録する CardListParserService::setDeckCards() は実装されているが、呼び出しているのは管理画面側の Admin\\Deck\\DeckStoreAction のみで、フロントの大会デッキ登録からは呼ばれていない。\n- DtbDeck の persist に対してデッキカードを生成する Doctrine イベントリスナ等も存在しないため、大会デッキ登録編集から登録したデッキにはカード情報（dtb_deck_card）が一切作られない。",
+      "引用": [
+        "src/Eccube/Service/Front/Mypage/DeckEntryAction.php:36-82",
+        "src/Eccube/Service/Deck/CardListParserService.php:102-111",
+        "src/Eccube/Service/Admin/Deck/DeckStoreAction.php:133-135",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:855-857"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1888",
+      "summary": "【未実装】フロント会員_大会デッキ登録確認～完了_大会デッキ登録確認～完了にて、開催店舗が表示されていない",
+      "feature": "大会デッキ登録確認～完了",
+      "sheetCandidates": [
+        {
+          "id": "sheet-14",
+          "title": "大会デッキ登録確認～完了"
+        }
+      ],
+      "期待される挙動": "- 設計書のカスタマイズ要件では、大会デッキ登録確認～完了画面に開催店舗を表示することとしている（画面項目 4 開催店舗）。",
+      "現在の挙動": "- Mypage/deck_entry_check.twig のイベント情報エリアには大会名とお名前しか出力されておらず、開催店舗を表示する要素が存在しない。\n- DeckEntryController::check() も Deck / EventDetail / Player / Customer と検証結果のみをテンプレートへ渡しており、店舗情報（Event の BaseInfo）を渡していない。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_check.twig:17-25",
+        "src/Eccube/Controller/Front/Mypage/DeckEntryController.php:182-193",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:944-944",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:963-963"
+      ],
+      "引用_不在または範囲外": [
+        "Mypage/deck_entry_check.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1889",
+      "summary": "【実装乖離】フロント会員_大会デッキ登録確認～完了_大会デッキ登録確認～完了の「大会一覧に戻る」ボタンの遷移先がイベント・大会トップページになっていない",
+      "feature": "大会デッキ登録確認～完了",
+      "sheetCandidates": [
+        {
+          "id": "sheet-14",
+          "title": "大会デッキ登録確認～完了"
+        }
+      ],
+      "期待される挙動": "- 設計書では、「大会一覧に戻る」ボタンを押下するとイベント・大会のトップページに遷移することとしている。",
+      "現在の挙動": "- Mypage/deck_entry_check.twig の「大会一覧に戻る」ボタンのリンク先は url('mypage_event_history') であり、マイページのマイイベント・デッキ登録一覧へ遷移する。\n- イベント・大会トップへのルート event_top は存在し他画面（Mypage/event_history.twig の「イベントを探す」）で使用されているが、本ボタンでは使用されていない。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_check.twig:92-92",
+        "src/Eccube/Resource/template/default/Mypage/event_history.twig:163-163",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:974-974"
+      ],
+      "引用_不在または範囲外": [
+        "Mypage/deck_entry_check.twig:None [file_not_found]",
+        "Mypage/event_history.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1890",
+      "summary": "【実装乖離】フロント会員_会員情報変更_会員情報変更にて、メールアドレスの最大文字数が255ではなく254で、RFC準拠チェックも無効化されている",
+      "feature": "会員情報変更",
+      "sheetCandidates": [
+        {
+          "id": "sheet-15",
+          "title": "会員情報変更"
+        }
+      ],
+      "期待される挙動": "- 設計書では、会員情報変更のメールアドレス（1-10）およびメールアドレス（確認）（1-11）の最大文字数を255としている。\n- 設計書では、「変更する」押下時にRFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示することとしている。",
+      "現在の挙動": "- 会員情報変更は EntryType の email（RepeatedEmailType）を利用しており、最大文字数は eccube_email_len の値で制限される。eccube.yaml の設定値は 254 であり、設計値の255と一致しない。\n- RepeatedEmailType は eccube_rfc_email_check が true のときだけ Email 制約のモードを 'strict'（RFC準拠チェック）にするが、eccube.yaml の eccube_rfc_email_check は false であるため、RFC準拠チェックは行われない。\n- 設定ファイル上も「メールアドレスをRFC準拠でチェックするか true: チェックする、false: チェックしない」というコメントとともに false が指定されている。",
+      "引用": [
+        "src/Eccube/Form/Type/Front/EntryType.php:122-125",
+        "src/Eccube/Form/Type/RepeatedEmailType.php:46-46",
+        "src/Eccube/Form/Type/RepeatedEmailType.php:48-48",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1036-1036",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1017-1018"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/eccube.yaml:234 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1891",
+      "summary": "【実装乖離】フロント会員_会員情報変更_会員情報変更にて、パスワードの文字数制限が設計（最小8・最大32）と異なり最小12・最大50になっている",
+      "feature": "会員情報変更",
+      "sheetCandidates": [
+        {
+          "id": "sheet-15",
+          "title": "会員情報変更"
+        }
+      ],
+      "期待される挙動": "- 設計書では、会員情報変更のパスワード（1-12）およびパスワード（確認）（1-13）について、最大文字数を32、最低文字数を8としている。",
+      "現在の挙動": "- 会員情報変更は EntryType の plain_password（RepeatedPasswordType）を利用しており、文字数制限は eccube_password_min_len / eccube_password_max_len で決まる。\n- eccube.yaml の設定値は eccube_password_min_len: 12、eccube_password_max_len: 50 であり、設計の最小8・最大32と一致しない。\n- 同じ設定値が入力欄のプレースホルダ文言にも使用されるため、画面上の案内文も設計と異なる文字数で表示される。",
+      "引用": [
+        "src/Eccube/Form/Type/Front/EntryType.php:126-128",
+        "src/Eccube/Form/Type/RepeatedPasswordType.php:50-51",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1038-1038",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1039-1039"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/eccube.yaml:195 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1892",
+      "summary": "【実装乖離】フロント会員_会員情報変更_会員情報変更にて、ブラックリスト該当時に会員情報更新エラー画面へ遷移しない",
+      "feature": "会員情報変更",
+      "sheetCandidates": [
+        {
+          "id": "sheet-15",
+          "title": "会員情報変更"
+        }
+      ],
+      "期待される挙動": "- 設計書では、お名前（1-2〜1-3）、住所（1-17〜1-19）、電話番号（1-20）がブラックリストに該当する内容に変更されている場合、「変更する」押下時に会員情報更新エラー画面へ遷移することとしている。",
+      "現在の挙動": "- ChangeController::index() はブラックリスト該当を検出すると、flash メッセージ（「ブラックリスト登録があるため会員情報を変更できません。」）を追加したうえで、会員情報変更フォーム（Mypage/change.twig）をそのまま再表示している。\n- 会員情報更新エラー画面に相当する専用テンプレートは Mypage 配下に存在せず、専用ルートへのリダイレクトも行われていない。\n- change.twig 側は app.flashes をフォーム上部のアラート領域に表示するだけで、エラー画面としての遷移は発生しない。",
+      "引用": [
+        "src/Eccube/Controller/Front/Mypage/ChangeController.php:116-133",
+        "src/Eccube/Resource/template/default/Mypage/change.twig:76-79",
+        "src/Eccube/Resource/locale/messages.ja.yaml:820-820",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1019-1024"
+      ],
+      "引用_不在または範囲外": [
+        "Mypage/change.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1893",
+      "summary": "【実装乖離】フロント会員_配送先新規登録・変更_配送先新規登録・変更画面にて、会社名の最大文字数が設計の100文字ではなく255文字になっている",
+      "feature": "配送先新規登録・変更",
+      "sheetCandidates": [
+        {
+          "id": "sheet-16",
+          "title": "配送先新規登録・変更"
+        }
+      ],
+      "期待される挙動": "- 配送先新規登録・変更(入力・変更)画面の「会社名」(識別ID 2-15)は、任意入力で最大文字数100文字であること。\n- 101文字以上を入力して確認画面へ進もうとした場合は、文字数超過のバリデーションエラーとなること。",
+      "現在の挙動": "- 配送先フォーム(Eccube\\Form\\Type\\Front\\CustomerAddressType)の company_name には Assert\\Length の max として設定値 eccube_stext_len が指定されており、その実値は 255 である。\n- テンプレート Mypage/delivery_edit.twig および delivery_edit.en.twig の会社名入力欄には maxlength 属性が付与されておらず、画面側でも100文字での入力制限は行われていない。\n- 結果として、会社名は101文字以上255文字までがエラーにならずに登録できる。",
+      "引用": [
+        "app/config/eccube/packages/eccube.yaml:137-137",
+        "src/Eccube/Resource/template/default/Mypage/delivery_edit.en.twig:396-400",
+        "src/Eccube/Entity/CustomerAddress.php:107-107",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1156-1156"
+      ],
+      "引用_不在または範囲外": [
+        "Mypage/delivery_edit.twig:None [file_not_found]",
+        "src/Eccube/Form/Type/Front/CustomerAddressType.php:95 [line_out_of_range]",
+        "src/Eccube/Resource/template/default/Mypage/delivery_edit.twig:458 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1894",
+      "summary": "【未実装】フロント会員_配送先新規登録・変更_配送先新規登録・変更の確認画面で「登録する」を押下した際に、ブラックリスト判定（氏名・住所・電話番号）が行われず、会員情報登録エラー画面へ遷移しない",
+      "feature": "配送先新規登録・変更",
+      "sheetCandidates": [
+        {
+          "id": "sheet-16",
+          "title": "配送先新規登録・変更"
+        }
+      ],
+      "期待される挙動": "- 配送先新規登録・変更(確認)画面の「登録する」(識別ID 3-14)を押下した際、配送先氏名・住所(住所1〜3)・電話番号がブラックリストに登録されている場合は、登録を行わず会員情報登録エラー画面へ遷移すること。",
+      "現在の挙動": "- 配送先の確定処理である DeliveryController::complete() では、フォームのバリデーション後に即座に CustomerAddress を persist / flush しており、ブラックリスト判定は一切行っていない。\n- ブラックリスト判定は会員登録(EntryController)・会員情報変更(ChangeController)・ネット買取(OtcBuyController)にのみ実装されており、DeliveryController からは DtbBlacklistRepository を参照していない。\n- ブラックリスト検索メソッド DtbBlacklistRepository::FindBlacklistByCustomer() は引数が Customer エンティティのみで、配送先(CustomerAddress)の氏名・住所・電話番号を検索する手段自体が存在しない。\n- 会員情報登録エラー画面(entry_regist_error)への遷移も EntryController からのみ行われる。",
+      "引用": [
+        "src/Eccube/Controller/Front/Mypage/DeliveryController.php:171-211",
+        "src/Eccube/Controller/Front/Mypage/DeliveryController.php:200-208",
+        "src/Eccube/Controller/Front/EntryController.php:129-141",
+        "src/Eccube/Repository/DtbBlacklistRepository.php:37-41",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1185-1188",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1206-1206"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1895",
+      "summary": "【実装乖離】フロント会員_退会_退会手続き画面のパスワード入力欄の最大文字数が、設計の32文字ではなく50文字になっている",
+      "feature": "退会",
+      "sheetCandidates": [
+        {
+          "id": "sheet-17",
+          "title": "退会"
+        }
+      ],
+      "期待される挙動": "- 退会手続き画面の「パスワード」(識別ID 2-3)は必須入力で、最大文字数32文字であること。",
+      "現在の挙動": "- 退会フォーム(Eccube\\Form\\Type\\Front\\WithdrawType)のパスワード欄は maxlength 属性に設定値 eccube_password_max_len を指定しており、その実値は 50 である。\n- サーバ側にも文字数制約(Assert\\Length)は設定されておらず、入力値は既存パスワードとの照合(isPasswordValid)のみで判定される。\n- 画面(withdraw_confirm.twig / withdraw_confirm.en.twig)は form_widget の attr に class と autocomplete のみを追加しており、maxlength は FormType 側の 50 がそのまま出力される。",
+      "引用": [
+        "src/Eccube/Form/Type/Front/WithdrawType.php:37-43",
+        "src/Eccube/Controller/Front/Mypage/WithdrawController.php:96-98",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1261-1261"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/eccube.yaml:196 [line_out_of_range]",
+        "src/Eccube/Resource/template/default/Mypage/withdraw_confirm.twig:52 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1896",
+      "summary": "【実装乖離】フロント会員_お問い合わせ_お問い合わせ画面の件名の選択肢マスタに「協賛関連」が投入されておらず、設計の8件に対して7件しか存在しない",
+      "feature": "お問い合わせ",
+      "sheetCandidates": [
+        {
+          "id": "sheet-18",
+          "title": "お問い合わせ"
+        },
+        {
+          "id": "sheet-19",
+          "title": "お問い合わせ履歴"
+        },
+        {
+          "id": "sheet-20",
+          "title": "お問い合わせ履歴詳細"
+        }
+      ],
+      "期待される挙動": "- お問い合わせ画面の「件名（タイトル）」(識別ID 1-3)は、マスターデータから8つの選択肢（通販／ネット買取／店舗でのお買い物・イベント／委託販売／デッキ構築機能／記事・動画／その他／協賛関連）を取得して表示すること。",
+      "現在の挙動": "- 件名の選択肢は ContactType で MtbContactSubject（mtb_contact_subject マスタ）から動的に取得する実装になっており、選択肢の内容はマスタの登録内容に依存する。\n- マスタ投入マイグレーション Version20251125141030 が登録するレコードは id=1〜7 の7件のみで、「協賛関連」に相当するレコードは存在しない。リポジトリ内の他のマイグレーションにも「協賛関連」を投入する処理はない。\n- そのため初期状態では件名の選択肢は7件となり、「協賛関連」が表示されない。",
+      "引用": [
+        "app/DoctrineMigrations/Version20251125141030.php:62-127",
+        "src/Eccube/Controller/Admin/Data/MtgMasterDataController.php:240-254",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1326-1334"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Form/Type/Front/ContactType.php:88 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1897",
+      "summary": "【実装乖離】フロント会員_お問い合わせ_お問い合わせ画面の「戻る」がブラウザ履歴の1つ前ではなく、ECTOP（ホーム）への固定遷移になっている",
+      "feature": "お問い合わせ",
+      "sheetCandidates": [
+        {
+          "id": "sheet-18",
+          "title": "お問い合わせ"
+        },
+        {
+          "id": "sheet-19",
+          "title": "お問い合わせ履歴"
+        },
+        {
+          "id": "sheet-20",
+          "title": "お問い合わせ履歴詳細"
+        }
+      ],
+      "期待される挙動": "- お問い合わせ画面の「戻る」ボタン(識別ID 1-10)を押下すると、ブラウザの履歴から1つ前のページに遷移すること。",
+      "現在の挙動": "- お問い合わせ画面(Contact/index.twig)の「戻る」は、href に url('homepage') を指定した単なるリンクであり、押下すると常にECTOPへ遷移する。\n- 英語版テンプレート(Contact/index.en.twig)も同じく url('homepage') への固定リンクである。\n- バンドルJS(html/template/default/assets/hareruya/js/hareruya-contact.js 他)にも history.back() 等で戻る動作を上書きする処理は存在しない。",
+      "引用": [
+        "html/template/default/assets/hareruya/js/hareruya-contact.js:None-None",
+        "src/Eccube/Resource/template/default/Contact/index.en.twig:380-380",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1359-1359"
+      ],
+      "引用_不在または範囲外": [
+        "Contact/index.twig:None [file_not_found]",
+        "Contact/index.en.twig:None [file_not_found]",
+        "src/Eccube/Resource/template/default/Contact/index.twig:387 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1898",
+      "summary": "【実装乖離】フロント会員_お問い合わせ_お問い合わせ確認画面の「送信をする」で、店舗ごとに設定された問い合わせ受付メールアドレスではなく、件名マスタのメールアドレス（未設定時は本店の受付アドレス）宛に送信している",
+      "feature": "お問い合わせ",
+      "sheetCandidates": [
+        {
+          "id": "sheet-18",
+          "title": "お問い合わせ"
+        },
+        {
+          "id": "sheet-19",
+          "title": "お問い合わせ履歴"
+        },
+        {
+          "id": "sheet-20",
+          "title": "お問い合わせ履歴詳細"
+        }
+      ],
+      "期待される挙動": "- お問い合わせ確認画面の「送信をする」(識別ID 6-6)を押下すると、店舗ごとに設定している問い合わせ受付メールアドレス宛にメールを送信し、お問い合わせ完了画面へ遷移すること。",
+      "現在の挙動": "- MailService::sendContactMail() は、送信先(bcc / replyTo / from)のアドレスを、件名マスタ MtbContactSubject の email 列から取得し、空の場合のみ BaseInfo の email02（問い合わせ受付メールアドレス）にフォールバックしている。\n- フォールバック先の BaseInfo は MailService のコンストラクタで BaseInfoRepository::get()（フロントでは id=1 の本店/モール）から取得しており、支店の BaseInfo は参照されない。\n- お問い合わせフォームで選択した店舗（識別ID 4-2 お問い合わせ店舗選択 / 4-5 イベント実施店舗）は DtbContact への保存に使われるのみで、メール送信先の決定には使用されていない。\n- 結果として、店舗を選択する「店舗でのお買い物・イベントに関するお問い合わせ」でも、送信先は件名マスタに設定された共通アドレス（初期投入値: shop_info@hareruyamtg.com）となる。",
+      "引用": [
+        "src/Eccube/Service/MailService.php:336-352",
+        "src/Eccube/Service/MailService.php:355-361",
+        "src/Eccube/Service/MailService.php:100-100",
+        "src/Eccube/Service/Front/Mypage/ContactCreateAction.php:44-62",
+        "app/DoctrineMigrations/Version20251125141030.php:82-89",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1400-1400",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1369-1371"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Repository/BaseInfoRepository.php:65 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1901",
+      "summary": "【一部実装】フロント会員_パスワード設定(ポリシー違反用)_ログイン時のパスワードポリシー未準拠判定に「IDと同一のパスワードは許可しない」という条件が含まれておらず、メールアドレスと同一のパスワードの会員がパスワード設定画面へ誘導されない",
+      "feature": "パスワード設定(ポリシー違反用)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-23",
+          "title": "【新規】パスワード設定（ポリシー違反用）"
+        }
+      ],
+      "期待される挙動": "- パスワードポリシー（半角英数記号12〜50文字、IDと同一は許可しない）に準拠していないパスワードでログインに成功した場合は、セッションにポリシー未準拠フラグを立て、パスワード設定（ポリシー違反用）画面へ誘導すること。\n- フラグが立っている間はログインが必要な画面にアクセスできずパスワード変更画面へ遷移させ、パスワード変更が完了したらフラグを下ろすこと。",
+      "現在の挙動": "- EccubeAuthenticationSuccessHandler はログイン成功時に、入力パスワードが eccube_password_min_len(12) 未満か、eccube_password_pattern（/\\A(?=.*?[a-z])(?=.*?\\d)[!-~]+\\z/i）に一致しない場合にセッションフラグ PasswordPolicyListener::SESSION_KEY を立てる。\n- しかし「IDと同一（パスワード = メールアドレス）は許可しない」という条件はログイン時の判定に含まれておらず、メールアドレスと同一のパスワード（12文字以上で英字と数字を含む一般的なメールアドレスは正規表現に一致する）を使用している会員はポリシー未準拠と判定されない。\n- パスワード = メールアドレスの禁止チェックは会員登録フォーム(EntryType の POST_SUBMIT リスナー)にのみ存在し、ポリシー違反用のパスワード変更フォーム(PasswordChangeType → RepeatedPasswordType)にも実装されていないため、当該画面で再びメールアドレスと同一のパスワードを設定できてしまう。\n- フラグによる画面制御（PasswordPolicyListener でのリダイレクト、変更完了時のフラグ削除）は設計どおり実装されている。",
+      "引用": [
+        "src/Eccube/EventListener/PasswordPolicyListener.php:33-95",
+        "src/Eccube/Controller/Front/Mypage/PasswordChangeController.php:55-73",
+        "src/Eccube/Form/Type/RepeatedPasswordType.php:47-58",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:297-303",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:1637-1638"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Security/Http/Authentication/EccubeAuthenticationSuccessHandler.php:88 [line_out_of_range]",
+        "app/config/eccube/packages/eccube.yaml:195 [line_out_of_range]",
+        "src/Eccube/Form/Type/Front/EntryType.php:186 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1902",
+      "summary": "【実装乖離】フロント会員_新規会員登録_新規会員登録画面のパスワード入力補助文が「8文字以上、32文字以内」と表示されるが、実際の入力チェックは12〜50文字であり、画面表示と実装のどちらもが設計書内で整合していない。",
+      "feature": "新規会員登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "新規会員登録"
+        }
+      ],
+      "期待される挙動": "- 設計書 F06-01 の画面項目表では、パスワード(1-12)およびパスワード(確認)(1-13)は必須で、最大文字数32・最低文字数8とする。\n- 設計書 F06-03 ログインの★カスタマイズでは「ECCUBE4のパスワードは半角英数記号12〜50文字、IDと同一は許可しない」と規定し、ポリシー非準拠のパスワードは専用のパスワード設定画面へ誘導するとしている。\n- 画面に表示するパスワードの入力補助文（案内文）は、実際にサーバ側で適用される文字数制限と一致していなければならない。\n- パスワードとパスワード(確認)の一致チェック、およびメールアドレスと同一のパスワードの禁止を行う。",
+      "現在の挙動": "- サーバ側の文字数チェックは Assert\\Length(min=eccube_password_min_len=12, max=eccube_password_max_len=50) で、設計書の画面項目表(最大32/最低8)とは一致しない。\n- 一方、新規会員登録画面に表示される案内文は「半角英数字記号 8文字以上、32文字以内で入力してください。」という固定文言のままで、実際に効く12〜50文字と矛盾している（英語版も \"Enter 8–32 characters ...\"）。利用者は8〜11文字のパスワードを入力できると誤認し、必ずエラーになる。\n- 同じ用途の案内文でも、パスワード再発行(Forgot/reset.twig:63)とパスワード変更(Mypage/change.twig:331)は eccube_password_min_len / eccube_password_max_len を埋め込む動的文言になっており、12〜50文字と正しく表示される。新規会員登録画面(Entry/index.twig:316)だけが古い固定文言のまま残っている。\n- パスワード(確認)との一致チェック（RepeatedPasswordType の invalid_message: form_error.same_password）と、メールアドレスと同一パスワードの禁止（EntryType の POST_SUBMIT リスナ）は実装済みである。",
+      "引用": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md:76-76",
+        ".cursor/docs/MDfile/F06_customer_basedesign.md:77-77",
+        ".cursor/docs/MDfile/F06_customer_basedesign.md:298-298",
+        "src/Eccube/Form/Type/RepeatedPasswordType.php:44-56",
+        "src/Eccube/Resource/locale/messages.ja.yaml:462-462",
+        "src/Eccube/Resource/locale/messages.en.yaml:354-354",
+        "src/Eccube/Resource/template/default/Forgot/reset.twig:63-63",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:76-77"
+      ],
+      "引用_不在または範囲外": [
+        "Forgot/reset.twig:63 [file_not_found]",
+        "Mypage/change.twig:331 [file_not_found]",
+        "Entry/index.twig:316 [file_not_found]",
+        "app/config/eccube/packages/eccube.yaml:195 [line_out_of_range]",
+        "src/Eccube/Resource/template/default/Entry/index.twig:306 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1903",
+      "summary": "【一部実装】フロント会員_新規会員登録_新規会員登録のMTG Campaign登録名(姓/名)は最大128文字がHTMLのmaxlength属性のみで制限されており、サーバ側の文字数バリデーションが無いため、129文字以上を送信するとバリデーションエラーではなくDBエラーになる。",
+      "feature": "新規会員登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "新規会員登録"
+        }
+      ],
+      "期待される挙動": "- 設計書 F06-01 の画面項目表では、MTG Campaign 登録名(姓)(1-23)・MTG Campaign 登録名(名)(1-24) は任意項目で、最大文字数を128文字とする。\n- 最大文字数の制限は、他の画面項目（会社名・フリガナ等）と同様にサーバ側の入力チェックでも担保し、超過時は入力チェックエラーとして画面にエラーメッセージを表示する。",
+      "現在の挙動": "- MTG Campaign 登録名を構築する PlayerType では firstNameEn / lastNameEn ともに attr.maxlength=128 のみを付与しており、constraints（Assert\\Length 等）が一切定義されていない。\n- 会員登録確認画面では両項目が maxlength 属性の無い hidden として再POSTされるため、入力画面の maxlength は最終的な担保にならない。\n- エンティティ DtbPlayer の first_name_en / last_name_en は ORM の length=128（varchar(128)）のみで、129文字以上が渡ると入力チェックエラーではなくカラム長超過のDB例外（500エラー）になる。\n- 同じ会員登録フォームの他項目は、EntryType の company_name（Assert\\Length）や KanaType・NameType のように必ずサーバ側の Assert\\Length を持っており、PlayerType だけが例外になっている。",
+      "引用": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md:87-87",
+        ".cursor/docs/MDfile/F06_customer_basedesign.md:88-88",
+        ".cursor/docs/MDfile/F06_customer_basedesign.md:1049-1050",
+        "src/Eccube/Form/Type/Front/PlayerType.php:34-51",
+        "src/Eccube/Entity/DtbPlayer.php:57-57",
+        "src/Eccube/Form/Type/Front/EntryType.php:83-90",
+        "src/Eccube/Form/Type/Front/PlayerType.php:None-None",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F06_customer_basedesign.md:87-88"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/template/default/Entry/confirm.twig:244 [line_out_of_range]",
+        "src/Eccube/Resource/template/default/Entry/index.twig:619 [line_out_of_range]",
+        "Entry/confirm.twig:244 [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1904",
+      "summary": "【一部実装】フロント会員_本会員登録_本会員登録のE-1.秘密鍵書式エラー画面が専用画面として用意されておらず、E-2.ユーザー存在チェックエラーと同一のerror_type=forbiddenのテンプレート・同一文言を共用している。",
+      "feature": "本会員登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "本会員登録"
+        }
+      ],
+      "期待される挙動": "- 設計書 F06-02 の処理概要では、条件1（秘密鍵文字列がパラメータとして存在する／英数字のみで構成されている）でエラーになった場合は E-1. 秘密鍵書式エラー画面を表示する。\n- 設計書 F06-02 の処理概要では、条件2（秘密鍵に該当する仮会員ユーザーが存在する）および条件3（既にスマレジIDを持っていない）でエラーになった場合は E-2. ユーザー存在チェックエラー画面を表示する。\n- E-1 と E-2 は別々のエラー画面として定義されており（E-1は識別ID 2-1、E-2は識別ID 3-1の「トップページへ」ボタンを持つ独立した画面）、エラー原因に応じて表示を出し分ける。",
+      "現在の挙動": "- EntryController::activate は秘密鍵に Assert\\NotBlank + Assert\\Regex('/^[a-zA-Z0-9]+$/') を適用し、書式エラー時に Entry/activate_error.twig を error_type='forbidden' で描画する。エラー画面自体（トップページへボタン付き）は表示されるため完全な未実装ではない。\n- しかし、仮会員が存在しない場合（EntryInvalidSecretKeyException）も同じ error_type='forbidden' で描画されるため、E-1（書式エラー）と E-2（ユーザー存在チェックエラー）で全く同じタイトル「アクセスできません」・同じ本文「このURLは無効です。」が表示され、エラー原因を区別できない。\n- 実装のエラー種別は forbidden / already_activated / activate_failed の3種で、設計の E-1 / E-2 / E-3 とは対応が取れていない。設計で E-2 に含まれる『既にスマレジIDを持っている』ケースだけが already_activated として別文言になっている。\n- ルート定義 /entry/activate/{secret_key} は secret_key を必須パラメータとして要求するため、秘密鍵パラメータが存在しないURLではController内のNotBlank検証にもE-1画面にも到達せず、404となる。設計の条件1「秘密鍵の文字列がパラメータとして存在する」を画面へ振り分ける経路が無い。",
+      "引用": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md:196-206",
+        ".cursor/docs/MDfile/F06_customer_basedesign.md:221-232",
+        ".cursor/docs/MDfile/F06_customer_basedesign.md:235-246",
+        "src/Eccube/Controller/Front/EntryController.php:218-218",
+        "src/Eccube/Controller/Front/EntryController.php:222-232",
+        "src/Eccube/Controller/Front/EntryController.php:253-253",
+        "src/Eccube/Controller/Front/EntryController.php:259-259",
+        "src/Eccube/Resource/template/default/Entry/activate_error.twig:22-27"
+      ],
+      "引用_不在または範囲外": [
+        "Entry/activate_error.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1906",
+      "summary": "【実装乖離】フロント会員_マイページ_マイページの「買取履歴」メニューおよび遷移先画面の名称が、設計書のカスタマイズ要件「買取履歴を買取一覧に名称変更する」に沿った「買取一覧」になっていない。",
+      "feature": "マイページ",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "マイページ"
+        }
+      ],
+      "期待される挙動": "- 設計書 F06-05 マイページのカスタマイズ要件では「買取履歴を買取一覧に名称変更する」と規定されている。\n- 設計書 F06-05 の画面項目表 識別ID 16 の画面部品の説明でも「押下すると、買取一覧画面へ遷移する」とされており、遷移先の画面名は「買取一覧画面」である。\n- （ただし同じ識別ID 16 のラベル欄は「買取履歴」のままであり、説明欄にも「ネット買取履歴を買取歴に名称変更する」という別の記載がある。さらに設計書 :1589-1590 のアクセス制限画面一覧では同画面を「買取履歴一覧」「買取履歴詳細」と呼んでいる。設計書内で名称が三重に矛盾しており、どれを正とするか確定が必要。）",
+      "現在の挙動": "- マイページの「買取」グループのメニューラベルは front.mypage.nav__purchase_history で、日本語訳は「買取履歴」、英語訳は「Buyback history」である。「買取一覧」という名称はテンプレート・翻訳ファイル・バンドルCSS/JSのいずれにも存在しない。\n- 遷移先の一覧画面の見出しも front.mypage.purchase_history.title = 「買取履歴一覧」であり、設計書のカスタマイズ要件が求める「買取一覧」ではない。\n- 日本語版(Mypage/index.twig)と英語版(Mypage/index.en.twig)の双方が同じ翻訳キーを参照しており、テンプレート間の反映漏れは無い（英語版のみの未反映ではない）。\n- 現行サイトの「ネット買取履歴」という文言は残っておらず、「ネット買取履歴 → 買取履歴」への改名までは反映されている。",
+      "引用": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md:456-456",
+        ".cursor/docs/MDfile/F06_customer_basedesign.md:502-502",
+        ".cursor/docs/MDfile/F06_customer_basedesign.md:1589-1590",
+        "src/Eccube/Resource/template/default/Mypage/index.en.twig:149-151",
+        "src/Eccube/Resource/locale/messages.ja.yaml:834-834",
+        "src/Eccube/Resource/locale/messages.ja.yaml:835-835",
+        "src/Eccube/Resource/locale/messages.en.yaml:540-540"
+      ],
+      "引用_不在または範囲外": [
+        "Mypage/index.twig:None [file_not_found]",
+        "Mypage/index.en.twig:None [file_not_found]",
+        "src/Eccube/Resource/template/default/Mypage/index.twig:149 [line_out_of_range]"
+      ]
+    }
+  ]
+}

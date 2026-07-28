@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1898",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 選択店舗のBaseInfoからemail02を引く。店舗はContactCreateInputに既に渡っている",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "宛先が件名マスタemailまたは本店email02で選択店舗を参照しない",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-18「お問い合わせ」\n画面部品仕様\n> 1-6 送信をする　ボタン　・押下すると、**店舗ごとに設定している問い合わせ受付メールアドレス**当てにメールを送信し、お問い合わせ完了画面へ遷移する\n\n（4-2 お問い合わせ店舗選択で店舗を選ぶ設計です）\n\n■実装の現状\nMailService.php:336-351 の宛先決定は「件名マスタの email、空なら BaseInfo の email02」で、**選択店舗を参照していません**。\n```\n$adminEmail = ($subjectEmail !== null && $subjectEmail !== '') ? $subjectEmail : $baseEmail02;\n```\nこの `$this->BaseInfo` は BaseInfoRepository::get() が返すもので、テナント差し替えは**管理画面URLかつ tenant ロールのセッションがある場合のみ**のため、フロント `/contact` では常に id=1（本店）になります。\n選択店舗（`$formData['shop']`）は ContactCreateAction.php:49-62 で `dtb_contact.base_info_id` の保存にのみ使われ、`sendContactMail()` には渡されていません。イベント実施店舗（4-5）も宛先に使われません。\n\n**データは揃っています。** BaseInfo.php:78-79 に `email02`（テーブル定義書上の「問い合わせ受付メールアドレス」）があり、店舗ごとの編集UIも tenant/detail.twig:450 に存在します。**選択店舗の BaseInfo を引く経路だけが実装されていません。**\n`sendContactMail` の呼び出し元は1箇所のみで、`EccubeEvents::MAIL_CONTACT` の購読者も存在しません。\n\n■次の対応\n実装対応: 選択店舗の BaseInfo から `email02` を引いて宛先にする。`ContactCreateInput` には既に店舗が渡っているため、`sendContactMail()` へ受け渡す改修で足ります。\n\n付記: 本文テンプレート contact_mail.twig:24 の `{{ BaseInfo.email02 }}` も本店の値になるため、併せて是正が必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-18「お問い合わせ」\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:27:01+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:27:03+09:00",
+  "appliedStatus": "処理中"
+}

@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2209",
+  "verdict": "SUSPECT",
+  "reasonCode": "DESIGN_AMBIGUOUS",
+  "reasonLabel": "設計内に解釈の分岐・矛盾があり設計判断待ち",
+  "nextAction": "要確認: 2208と同じ論点に加え必須/任意の矛盾も。設計担当者の確定が必要",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "フォーム255/NotBlank vs DB155/nullable。必須任意も部品表と詳細設計で食い違い",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-5「イベント編集」\n画面部品仕様\n> 1-2 イベント名(英)　全角・半角　〇　**255字**\n\n一方、同シートの「リニューアル移行時の扱い」表とDBカラム表は移行先を155文字と明記しています。\n> イベント名の桁　name_jp・name_enは最大255文字　→　**name_jp・name_enは最大155文字。桁が縮小する。**\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/EventType.php の `nameEn` は `Length(max: eccube_stext_len)`（=255）ですが、src/Eccube/Entity/DtbEvent.php の同カラムは `length: 155` です。\n156〜255文字はバリデーションを通過してDB書込で例外となり、EventController の catch で汎用エラー「admin.common.save_error」が表示されます。切り詰め処理やカスタムValidatorはありません。\n\nさらに必須／任意も食い違います。部品表は必須「〇」ですが、詳細設計書の入力項目表・バリデーション表は「任意」としています。実装は `NotBlank` を付けており部品表準拠、DBは `nullable: true` で詳細設計書準拠と、**設計内の矛盾がそのまま実装に写っています**。\n\n■次の対応\n要確認: **DB列155は設計どおり**です（移行仕様表が明記）。乖離は「部品表255 vs 移行仕様155」という設計内矛盾であり、フォーム側を155に合わせるのが正解の可能性があります。どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-5「イベント編集」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T09:46:02+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T09:46:06+09:00",
+  "appliedStatus": "処理中"
+}

@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2146",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 個別税率設定ブロックを追加。false上書きの副作用も解消(2147と同一原因)",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施。主要3点は独立に抜き取り再検証済み",
+  "summary": "税率設定画面に個別税率設定ブロックが無い。基本情報設定の登録でfalse上書きされる副作用あり",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0209_基本設計仕様書(基本情報設定) sheet-8「税率設定」\n画面部品仕様\n> 個別税率設定\n> 1-1 商品別税率機能　単一選択(ラジオボタン)　初期値: 無効　選択肢: 有効　無効\n\n■実装の現状\n税率設定画面に「個別税率設定」ブロックがありません。tax_rule.twig:53-214 のカードは「税率設定」1枚のみで、中身は税率の新規行フォームと一覧テーブルです。\n`option_product_tax_rule` のフォーム項目自体は ShopMasterType.php:280 に ToggleSwitchType として存在しますが、shop_master.twig（全461行）にも `form_widget` がありません（:209 の auto_render ループは DoctrineOrmExtension で既定 false のため救済になりません）。\n\n副作用: ToggleSwitchType は CheckboxType を親に持つため、未描画のチェックボックスはPOSTに含まれず Symfony が false としてマッピングします。ShopController.php:68-70 が `isValid()` で persist するため、**基本情報設定を登録するたびに false で上書き**されます。\n機能自体は生きています（TaxRuleService.php:53 / TaxRuleRepository.php:119 が `isOptionProductTaxRule()` を参照）。\n翻訳キー `admin.setting.shop.shop.option_product_tax: 商品別税率機能`（messages.ja.yaml:3061）は参照元0件の未使用キーです。\n\n■次の対応\n実装対応: 税率設定画面に個別税率設定ブロックを追加する。あわせて、基本情報設定の登録で値が false 上書きされる副作用の解消が必要です（2147と同一原因）。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html / sheet-8「税率設定」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / 翻訳ファイル / マイグレーション / JS）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T09:40:52+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T09:40:54+09:00",
+  "appliedStatus": "処理中"
+}

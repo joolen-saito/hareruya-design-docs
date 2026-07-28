@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2129",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: query_builder の絞り込みを外す。visible=false の支払方法も欠落する点も併せて是正",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施。主要3点は独立に抜き取り再検証済み",
+  "summary": "ID5/6の除外に加え visible=true 条件もあり、設計の「すべて表示」と乖離",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）\n\n■結論\n指摘は事実です。設計要求が正本設計書に実在し、実装がそれと異なることを確認しました。\n\n■設計上の根拠\n正本設計書 0207_基本設計仕様書(会員管理機能) sheet-20「顧客グループ管理」画面部品仕様\n> 6 支払方法　複数選択(チェックボックス)　…　支払方法設定に登録されている支払方法をすべて表示する\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/CustomerGroupType.php:54-66 の query_builder が2つの絞り込みを掛けています。\n```\n->where('p.visible = true')\n->andWhere('p.id NOT IN (:excludeIds)')\n->setParameter('excludeIds', [Payment::EC_CREDIT, Payment::EC_CVS])\n```\nEC_CREDIT=5（クレジットカード決済）/ EC_CVS=6（コンビニ決済）は、シードデータ（Version20251128150157.php:144-175）で `visible => '1'` として登録されており、支払方法設定画面には表示されます。\n一方、支払方法設定の一覧は絞り込み無しの全件です（PaymentController.php:51-55 の `findBy([], ['sort_no'=>'DESC'])`）。\n\n■次の対応\n実装対応: query_builder の絞り込みを外す。なお乖離はチケットの記述より1つ広く、`visible = true` 条件により**非表示に設定された支払方法も選択肢から欠落**します。支払方法設定画面は非表示のものも一覧表示するため、こちらも併せて是正対象です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html / sheet-20「顧客グループ管理」画面部品仕様\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / マイグレーション）\n- 設計原文の抽出、実装の確認、および別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T09:36:30+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T09:36:34+09:00",
+  "appliedStatus": "処理中"
+}

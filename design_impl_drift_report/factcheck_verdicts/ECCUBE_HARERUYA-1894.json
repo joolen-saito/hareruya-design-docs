@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1894",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 照合メソッドの追加と判定・遷移の実装",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "判定処理が皆無でCustomerAddressを照合する手段もリポジトリに無い",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-16「配送先新規登録・変更」\n機能仕様処理概要および画面部品仕様（3-14）の**2箇所に重複記載**\n> ・ブラックリストに以下1~3が登録されている場合に登録を押下すると、**会員情報登録エラー画面に遷移する**\n> 1 配送先氏名／2 住所／3 電話番号\n\n■実装の現状\nDeliveryController.php:197-208 の `complete()` は、フォーム検証通過後**間に何の判定も挟まず即 persist / flush** します。コンストラクタに `DtbBlacklistRepository` の注入もありません。\nさらに `DtbBlacklistRepository` の public メソッドは `FindBlacklistByCustomer(Customer $Customer)` の1本のみで、**`CustomerAddress` の氏名・住所・電話番号を照合する手段がリポジトリに存在しません**。\nフロントでブラックリスト判定を行うのは EntryController / ChangeController / OtcBuyController の3画面のみで、DeliveryController からの参照はゼロです。Validator・EventSubscriber・JS・バッチによる判定も存在しません。\n\n■次の対応\n実装対応: `CustomerAddress` を対象とする照合メソッドの追加と、判定・エラー画面遷移の実装が必要です。\n\n付記: 設計の識別ID参照に誤記があります（本文の「(3-3)配送先氏名」は表では 3-3=配送先名称で、配送先氏名は 3-4）。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-16「配送先新規登録・変更」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:43:50+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:43:56+09:00",
+  "appliedStatus": "処理中"
+}

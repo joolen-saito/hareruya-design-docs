@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1886",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: JSの読み込みを追加。インラインJSとの二重実装の整理が必要",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "未実装ではなく hareruya-event.js の読み込み漏れ。双方向連携はJSに実装済み",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-13「大会デッキ登録編集」\n機能仕様処理概要\n> ・ボード選択ボタン(14)とデッキリストのメインボード(18)サイドボード(19)入力欄は、選択している方が強調表示される\n> **選択ボタンとボード入力欄の選択状態は相互に連携**して、一方の選択がもう一方の選択に反映(強調表示)される\n\n■実装の現状\n**未実装ではなく、実装済みJSの読み込み漏れです。**\n\n要求どおりの双方向連携は `html/template/default/assets/hareruya/js/hareruya-event.js` に実装済みです。ラジオ change → textarea へ `p-hareruya-deckentry-edit__deck-textarea--active` を付与、textarea focus → ラジオを選択、という双方向のハンドラと初期化処理を持ちます。\nしかし deck_entry_edit.twig の `{% block javascript %}`（11-151行）は**このJSを読み込んでいません**（`{% block stylesheet %}` は hareruya-deck.css と hareruya-event.css を読むのに、JS側だけ欠落）。読み込み元は Event/index.twig:278 / list.twig:105 / entry.twig:23 の3ファイルのみです。\n代わりに :37-40 のインラインJSが `selectedBoard` 変数を書き換えるだけで、強調表示も相互連携も行いません。\n`deck-textarea--active` を含むJSは全 hareruya-*.js 中このファイルのみで、代替実装はありません。\n\n■次の対応\n実装対応: deck_entry_edit.twig に `hareruya-event.js` の読み込みを追加する。**修正コストは小さいです。**\nただし :37-40 のインラインJS（`selectedBoard` 変数方式）と二重実装になるため、競合の整理が必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-13「大会デッキ登録編集」\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:27:00+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:27:02+09:00",
+  "appliedStatus": "処理中"
+}

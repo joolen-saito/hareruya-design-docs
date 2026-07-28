@@ -1,0 +1,736 @@
+{
+  "book": "0214",
+  "count": 29,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-2207",
+      "summary": "【未実装】イベント管理_イベント一覧(検索入力/検索結果)_イベント一覧（検索入力）の検索キーワード「イベント名、略称」に、設計書で定められた最大50文字の入力制限が実装されていない",
+      "feature": "イベント一覧(検索入力/検索結果)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "イベント一覧(検索入力)"
+        },
+        {
+          "id": "sheet-4",
+          "title": "イベント一覧(検索結果)"
+        },
+        {
+          "id": "sheet-10",
+          "title": "イベント申込一覧(検索入力)"
+        }
+      ],
+      "期待される挙動": "- イベント一覧（検索入力）画面の識別ID:2「イベント名、略称」は、最大50文字までしか入力できないこと。\n- 50文字を超える入力があった場合は、入力制限またはバリデーションエラーによって検索が実行されないこと。",
+      "現在の挙動": "- 検索フォーム SearchEventType の multi フィールドには Length 制約が一切設定されておらず、文字数上限のバリデーションが存在しない。\n- テンプレート admin/Event/index.twig の form_widget でも attr に placeholder しか指定しておらず、HTML の maxlength 属性が出力されない。\n- その結果、51文字以上のキーワードでもそのまま検索処理（DtbEventRepository::getQueryBuilderBySearchData）に渡され、部分一致検索が実行される。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/SearchEventType.php:40-43",
+        "src/Eccube/Resource/template/admin/Event/index.twig:47-47",
+        "src/Eccube/Repository/DtbEventRepository.php:67-91",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:42-42"
+      ],
+      "引用_不在または範囲外": [
+        "admin/Event/index.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2208",
+      "summary": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント名(日)」はフォーム上255文字まで入力できるが、DB列が155文字のため156文字以上を登録するとDB書き込みエラーになる",
+      "feature": "イベント編集 / イベント削除",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "イベント編集"
+        },
+        {
+          "id": "sheet-6",
+          "title": "イベント削除"
+        }
+      ],
+      "期待される挙動": "- イベント編集画面の識別ID:1-1「イベント名(日)」は必須項目であり、最大255文字まで登録できること。",
+      "現在の挙動": "- フォーム EventType の nameJp には NotBlank と Length(max = eccube_stext_len = 255) が設定されており、255文字までバリデーションを通過する。\n- しかしエンティティ DtbEvent の name_jp 列は length: 155 で定義されており、DB列長は155文字しかない。\n- その結果、156文字以上255文字以下のイベント名(日)を入力するとバリデーションは通過するがDB書き込み時に失敗し、EventController::create / edit の catch により「admin.common.save_error」が表示される。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/EventType.php:76-81",
+        "app/config/eccube/packages/eccube.yaml:137-137",
+        "src/Eccube/Entity/DtbEvent.php:46-46",
+        "src/Eccube/Controller/Admin/Event/EventController.php:227-229",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:146-146"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2209",
+      "summary": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント名(英)」はフォーム上255文字まで入力できるが、DB列が155文字のため156文字以上を登録するとDB書き込みエラーになる",
+      "feature": "イベント編集 / イベント削除",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "イベント編集"
+        },
+        {
+          "id": "sheet-6",
+          "title": "イベント削除"
+        }
+      ],
+      "期待される挙動": "- イベント編集画面の識別ID:1-2「イベント名(英)」は必須項目であり、最大255文字まで登録できること。",
+      "現在の挙動": "- フォーム EventType の nameEn には NotBlank と Length(max = eccube_stext_len = 255) が設定されており、255文字までバリデーションを通過する。\n- しかしエンティティ DtbEvent の name_en 列は length: 155 で定義されており、DB列長は155文字しかない。\n- その結果、156文字以上255文字以下のイベント名(英)を入力するとバリデーションは通過するがDB書き込み時に失敗し、保存エラーとなる。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/EventType.php:82-87",
+        "app/config/eccube/packages/eccube.yaml:137-137",
+        "src/Eccube/Entity/DtbEvent.php:49-49",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:147-147"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2210",
+      "summary": "【未実装】イベント管理_イベント編集 / イベント削除_イベント編集画面に、設計書で必須項目とされている「会場」の単一選択フィールドが存在しない",
+      "feature": "イベント編集 / イベント削除",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "イベント編集"
+        },
+        {
+          "id": "sheet-6",
+          "title": "イベント削除"
+        }
+      ],
+      "期待される挙動": "- イベント編集画面の識別ID:1-4「会場」は必須の単一選択項目であり、選択肢として全会場を選択できること。\n- イベント申込CSVの出力項目にも「会場ID」（識別ID:23）が含まれること。",
+      "現在の挙動": "- フォーム EventType には baseInfo（店舗）はあるが venue（会場）に相当するフィールドが一切定義されていない。\n- テンプレート admin/Event/edit.twig にも会場の入力欄は存在しない。\n- マイグレーション Version20260611000000 により dtb_event.venue_id 列と mtb_venue テーブルが削除され、イベント申込CSV定義（dtb_csv）からも venue_id が DELETE されている。\n- エンティティ DtbEvent にも Venue プロパティは存在せず、src/Eccube 配下に venue を扱うコードは残っていない。",
+      "引用": [
+        "app/DoctrineMigrations/Version20260611000000.php:27-27",
+        "app/DoctrineMigrations/Version20260611000000.php:34-39",
+        "src/Eccube/Form/Type/Admin/EventType.php:75-271",
+        "src/Eccube/Resource/template/admin/Event/edit.twig:75-160",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:150-150",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:746-746",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:1070-1070"
+      ],
+      "引用_不在または範囲外": [
+        "admin/Event/edit.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2211",
+      "summary": "【一部実装】イベント管理_イベント編集 / イベント削除_イベント編集の「フォーマット」に必須のサーバサイドバリデーション（NotBlank）が無く、未選択のままイベントを登録できてしまう",
+      "feature": "イベント編集 / イベント削除",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "イベント編集"
+        },
+        {
+          "id": "sheet-6",
+          "title": "イベント削除"
+        }
+      ],
+      "期待される挙動": "- イベント編集画面の識別ID:1-5「フォーマット」は必須の複数選択項目であり、未選択の場合はエラーとなって登録・更新できないこと。",
+      "現在の挙動": "- フォーム EventType の formats（EntityType, multiple: true）には constraints が設定されておらず、NotBlank によるサーバサイド必須チェックが存在しない。\n- 同じ必須項目である rel（ルール適用度）、disp（公開状態）、eventScale（イベント規模）には NotBlank が設定されており、formats のみ欠落している。\n- 画面テンプレートには必須バッジが表示され、EntityType の required デフォルト値により HTML の required 属性は出力されるが、サーバサイドの検証は行われない。\n- EventCreateAction / EventEditAction / EventEntityManager にもフォーマット未選択を弾く処理は無く、EventEntityManager::save は空の ArrayCollection をそのまま setFormats する。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/EventType.php:93-99",
+        "src/Eccube/Form/Type/Admin/EventType.php:110-117",
+        "src/Eccube/Resource/template/admin/Event/edit.twig:113-118",
+        "src/Eccube/Service/EntityManager/EventEntityManager.php:108-108",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:151-151"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2212",
+      "summary": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント規模」は設計上は任意項目だが、実装では NotBlank により必須項目になっている",
+      "feature": "イベント編集 / イベント削除",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "イベント編集"
+        },
+        {
+          "id": "sheet-6",
+          "title": "イベント削除"
+        }
+      ],
+      "期待される挙動": "- イベント編集画面の識別ID:1-8「イベント規模」は単一選択の任意項目であり、未選択のままでもイベントを登録・更新できること。\n- 選択肢は大型イベント・特別イベント・デイリーイベント・おすすめイベントであること。",
+      "現在の挙動": "- フォーム EventType の eventScale（EntityType）に NotBlank 制約が設定されており、未選択の場合はバリデーションエラーとなって保存できない。\n- テンプレート admin/Event/edit.twig でもイベント規模の項目に「必須」バッジが表示されている。\n- エンティティ DtbEvent の EventScale プロパティは nullable（?MtbEventScale $EventScale = null）で、DB上は NULL 許容であるにもかかわらず、フォームで必須化されている。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/EventType.php:100-109",
+        "src/Eccube/Resource/template/admin/Event/edit.twig:151-156",
+        "src/Eccube/Entity/DtbEvent.php:81-82",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:156-156",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:135-135"
+      ],
+      "引用_不在または範囲外": [
+        "admin/Event/edit.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2213",
+      "summary": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「定員」の最大桁数が、設計書の8字に対して実装では9字まで入力できる",
+      "feature": "イベント編集 / イベント削除",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "イベント編集"
+        },
+        {
+          "id": "sheet-6",
+          "title": "イベント削除"
+        }
+      ],
+      "期待される挙動": "- イベント編集画面の識別ID:1-11「定員」は必須の数値（整数）項目であり、最大8字まで入力できること。",
+      "現在の挙動": "- フォーム EventType の capacity には Length(max: eccube_int_len) が設定されており、eccube_int_len は 9 と定義されている。\n- そのため9桁（999,999,999まで）の定員が登録でき、設計書の最大8字を1桁超過している。\n- 同じ画面の参加費（entryFee）は eccube_price_len（=8）を使用しており、設計書の8字と一致している。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/EventType.php:149-154",
+        "app/config/eccube/packages/eccube.yaml:111-111",
+        "app/config/eccube/packages/eccube.yaml:126-126",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:159-159"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2214",
+      "summary": "【一部実装】イベント管理_日程登録_日程登録の「受付開始時間」に、サーバ側の条件必須チェックと初期値00:00が実装されていない",
+      "feature": "日程登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "日程登録"
+        }
+      ],
+      "期待される挙動": "- 日程登録画面の識別ID:7「受付開始時間」は、受付あり（識別ID:6）がオンの場合は必須であること。\n- 受付開始時間の初期値は 00:00 であること。\n- 受付ありの値に応じて表示／非表示を切り替えること。",
+      "現在の挙動": "- ScheduleType の entryStartDate は TimeType で 'required' => false のみ指定され、constraints が一切設定されていない。POST_SUBMIT リスナーでも受付ありがオンのときに必須とする条件チェックは行っていないため、受付ありでも受付開始時間を空のまま登録できる。\n- 初期値についても 'data' オプションの指定が無く、新規日程作成時の DtbEventDetail::__construct でも entryStartDate は初期化されないため（初期値 null）、画面には 00:00 ではなく空欄が表示される。\n- 表示／非表示の切り替えは Schedule/edit.twig の JavaScript（offlineRegist）で実装されており、受付ありチェックボックスに応じて .offlineEntryRegist の表示切替と disabled/required プロパティの付け外しを行っている（クライアント側のみ）。\n- 受付開始時間 < 受付終了時間 の相関チェックは ScheduleType の DATE_RELATION_RULES で実装済みである。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/ScheduleType.php:109-113",
+        "src/Eccube/Form/Type/Admin/ScheduleType.php:187-266",
+        "src/Eccube/Entity/DtbEventDetail.php:54-54",
+        "src/Eccube/Entity/DtbEventDetail.php:129-143",
+        "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig:26-33",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:291-291"
+      ],
+      "引用_不在または範囲外": [
+        "Schedule/edit.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2215",
+      "summary": "【一部実装】イベント管理_日程登録_日程登録の「受付終了時間」に、サーバ側の条件必須チェックと初期値00:00が実装されていない",
+      "feature": "日程登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "日程登録"
+        }
+      ],
+      "期待される挙動": "- 日程登録画面の識別ID:8「受付終了時間」は、受付あり（識別ID:6）がオンの場合は必須であること。\n- 受付終了時間の初期値は 00:00 であること。\n- 受付ありの値に応じて表示／非表示を切り替えること。",
+      "現在の挙動": "- ScheduleType の entryEndDate は TimeType で 'required' => false のみ指定され、constraints が一切設定されていない。POST_SUBMIT リスナーにも受付ありオン時の必須チェックが無いため、空のまま登録できる。\n- 初期値の 'data' 指定が無く、DtbEventDetail の entryEndDate 初期値も null のため、新規日程画面では 00:00 ではなく空欄が表示される。\n- 表示／非表示の切り替えと required 属性の付与は Schedule/edit.twig の JavaScript（offlineRegist）でクライアント側のみ実装されている。\n- 受付終了時間 <= 開始時間 の相関チェックは ScheduleType の DATE_RELATION_RULES で実装済みである。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/ScheduleType.php:114-118",
+        "src/Eccube/Form/Type/Admin/ScheduleType.php:50-59",
+        "src/Eccube/Entity/DtbEventDetail.php:57-57",
+        "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig:26-33",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:292-292"
+      ],
+      "引用_不在または範囲外": [
+        "Schedule/edit.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2216",
+      "summary": "【一部実装】イベント管理_日程登録_日程登録の「デッキ登録締め切り」に、デッキ登録ありがオンの場合の必須チェックが実装されていない",
+      "feature": "日程登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "日程登録"
+        }
+      ],
+      "期待される挙動": "- 日程登録画面の識別ID:10「デッキ登録締め切り」は、デッキ登録あり（識別ID:9）がオンの場合は必須であること。\n- デッキ登録ありの値に応じて表示／非表示を切り替えること。",
+      "現在の挙動": "- ScheduleType の deckRegistDeadline は DateTimeType で 'required' => false のみ指定され、constraints が設定されていない。POST_SUBMIT にもデッキ登録ありオン時の必須チェックが無いため、デッキ登録ありのままデッキ登録締め切りを空で登録できる。\n- 表示／非表示の切り替えは Schedule/edit.twig の JavaScript（changeRegist）で実装されているが、受付時間の項目と異なり required プロパティの付与は行っておらず、disabled の切り替えのみである（クライアント側の必須制御も無い）。\n- 同 JS の setDeckRegisterLimit により、デッキ登録ありをオンにする／開始時間を入力した際に締め切りへ「開始日の23:59」を自動セットするため、通常操作では空になりにくいが、値を手動でクリアした場合は空のまま保存できる。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/ScheduleType.php:131-136",
+        "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig:35-39",
+        "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig:54-66",
+        "src/Eccube/Entity/DtbEventDetail.php:66-66",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:294-294"
+      ],
+      "引用_不在または範囲外": [
+        "Schedule/edit.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2217",
+      "summary": "【実装乖離】イベント管理_日程登録_日程登録の「定員」の最大桁数が設計書の50文字に対して9桁であり、初期値も設計書の10ではなく親イベントの定員が設定される",
+      "feature": "日程登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "日程登録"
+        }
+      ],
+      "期待される挙動": "- 日程登録画面の識別ID:15「定員」は必須の数値（整数）項目であり、最大50文字まで入力できること。\n- 定員の初期値は 10 であること。\n- 定員は 1 以上であること。",
+      "現在の挙動": "- ScheduleType の capacity には Length(max: eccube_int_len) が設定されており、eccube_int_len は 9 のため最大9桁に制限されている（設計書は50文字）。\n- 新規日程作成時は DtbEventDetail::__construct で親イベントの定員（$event->getCapacity()）がセットされるため、初期値は 10 ではなく親イベントの定員値になる。\n- 「1以上であること」は Range(min: eccube_capacity_min = 1) で実装済みであり、画面上の必須バッジも表示されている。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/ScheduleType.php:137-142",
+        "app/config/eccube/packages/eccube.yaml:111-111",
+        "app/config/eccube/packages/eccube.yaml:124-124",
+        "src/Eccube/Entity/DtbEventDetail.php:136-136",
+        "src/Eccube/Entity/DtbEventDetail.php:250-250",
+        "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig:188-190",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:299-299"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2218",
+      "summary": "【実装乖離】イベント管理_日程登録_日程登録の「参加費」の最大桁数が設計書の50文字に対して8桁であり、初期値も設計書の0ではなく親イベントの参加費が設定される",
+      "feature": "日程登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "日程登録"
+        }
+      ],
+      "期待される挙動": "- 日程登録画面の識別ID:16「参加費」は必須の数値（整数）項目であり、最大50文字まで入力できること。\n- 参加費の初期値は 0 であること。",
+      "現在の挙動": "- ScheduleType の entryFee には Length(max: eccube_price_len) が設定されており、eccube_price_len は 8 のため最大8桁に制限されている（設計書は50文字）。\n- 新規日程作成時は DtbEventDetail::__construct で親イベントの参加費（$event->getEntryFee()）がセットされるため、初期値は 0 ではなく親イベントの参加費になる。\n- 0以上であることのチェック（PositiveOrZero）と画面上の必須バッジ表示は実装済みである。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/ScheduleType.php:143-148",
+        "app/config/eccube/packages/eccube.yaml:126-126",
+        "src/Eccube/Entity/DtbEventDetail.php:137-137",
+        "src/Eccube/Entity/DtbEventDetail.php:262-262",
+        "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig:208-211",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:300-300"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2220",
+      "summary": "【一部実装】イベント管理_日程登録_日程登録・日程編集のサーバ側処理に店舗権限のチェックが無く、編集権限のない店舗のイベントにも日程を追加・更新できる",
+      "feature": "日程登録",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "日程登録"
+        }
+      ],
+      "期待される挙動": "- メンバーが権限を保持している店舗のイベントに対してのみ、日程の追加（登録）および更新が可能であること。\n- 識別ID:3-3「日程追加」・識別ID:3-4「繰返日程追加」は編集権限のある店舗のイベントのみ表示すること。",
+      "現在の挙動": "- ScheduleController::create および ScheduleController::edit には店舗権限のガードが無く、フォーム送信を受け取るとそのまま ScheduleStoreAction / ScheduleUpdateAction を呼び出して保存する。isEditableBaseInfo は画面表示用に計算されるだけで、書き込み処理の前提条件になっていない。\n- ScheduleStoreAction・ScheduleUpdateAction・EventDetailEntityManager にも isEditableShop による権限チェックは無く、Member は登録者情報としてのみ使用されている。\n- そのため編集権限のない店舗のイベントに対して /event/{eventId}/schedule/create へ直接 POST すると、日程が登録できてしまう。\n- 画面側では Event/edit.twig で日程追加・繰返日程追加ボタンを isEditableBaseInfo で出し分け、Schedule/edit.twig でも保存ボタンに disabled を付与しており、UI 上の制御のみ実装されている。なお繰返日程追加（RepeatScheduleController::create）と日程削除（ScheduleController::delete / bulkDelete）にはサーバ側の権限ガードが実装されている。",
+      "引用": [
+        "src/Eccube/Controller/Admin/Event/ScheduleController.php:47-80",
+        "src/Eccube/Controller/Admin/Event/ScheduleController.php:89-124",
+        "src/Eccube/Service/Admin/Event/ScheduleStoreAction.php:33-65",
+        "src/Eccube/Controller/Admin/Event/RepeatScheduleController.php:47-53",
+        "src/Eccube/Controller/Admin/Event/ScheduleController.php:132-137",
+        "src/Eccube/Resource/template/admin/Event/edit.twig:489-493",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:275-275",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:206-211"
+      ],
+      "引用_不在または範囲外": [
+        "Event/edit.twig:None [file_not_found]",
+        "Schedule/edit.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2221",
+      "summary": "【実装乖離】イベント管理_繰返日程追加_繰返日程追加の「曜日選択」は設計上は任意項目だが、実装では NotBlank により必須項目になっている",
+      "feature": "繰返日程追加",
+      "sheetCandidates": [
+        {
+          "id": "sheet-8",
+          "title": "繰返日程追加"
+        }
+      ],
+      "期待される挙動": "- 繰返日程追加画面の識別ID:7「曜日選択」は複数選択の任意項目であり、未選択のままでも登録できること。",
+      "現在の挙動": "- RepeatScheduleType の week（ChoiceType, multiple: true, expanded: true）に NotBlank 制約が設定されており、曜日を1つも選択しないとバリデーションエラーになる。\n- 設計書では識別ID:7「曜日選択」の必須列は「-」（任意）である。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/RepeatScheduleType.php:103-119",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:339-339",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:329-329"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2222",
+      "summary": "【一部実装】イベント管理_繰返日程追加_繰返日程追加の「受付開始時間」「受付終了時間」に、初期値00:00と受付ありの場合の必須チェックが実装されていない",
+      "feature": "繰返日程追加",
+      "sheetCandidates": [
+        {
+          "id": "sheet-8",
+          "title": "繰返日程追加"
+        }
+      ],
+      "期待される挙動": "- 繰返日程追加画面の識別ID:10「受付開始時間」・識別ID:11「受付終了時間」の初期値は 00:00 であること。\n- 受付あり（識別ID:9）がオンの場合、受付開始時間・受付終了時間は必須であること。\n- 受付開始時間 < 受付終了時間、受付終了時間 <= 開始時間 であること。",
+      "現在の挙動": "- RepeatScheduleType の entryStartTime / entryEndTime は TimeType で 'required' => false のみ指定されており、'data' による初期値 00:00 の設定が無いため画面には空欄が表示される。\n- 受付あり（offlineEntryFlg）がオンのときに受付開始・終了時間を必須とする条件チェックは、フォームの constraints にも POST_SUBMIT リスナーにも存在しない。\n- 受付開始時間 < 受付終了時間、受付終了時間 <= 開始時間 の順序チェックは DATE_RELATION_RULES で実装済みである。\n- 同フォームの deckRegistDeadlineTime には 'data' => Carbon::now()->setTime(23, 59, 59) と初期値が設定されており（設計書の23:59に対応）、受付時間側のみ初期値設定が漏れている。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/RepeatScheduleType.php:132-141",
+        "src/Eccube/Form/Type/Admin/RepeatScheduleType.php:43-47",
+        "src/Eccube/Form/Type/Admin/RepeatScheduleType.php:152-157",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:342-342",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:343-343"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2223",
+      "summary": "【一部実装】イベント管理_繰返日程追加_繰返日程追加の「オンライン受付開始時間」の時刻に初期値00:00が設定されておらず、オンライン受付ありの場合の必須チェックも無い",
+      "feature": "繰返日程追加",
+      "sheetCandidates": [
+        {
+          "id": "sheet-8",
+          "title": "繰返日程追加"
+        }
+      ],
+      "期待される挙動": "- 繰返日程追加画面の識別ID:16「オンライン受付開始時間 開始日前日数」の初期値は 0 であること。\n- 識別ID:17「オンライン受付開始時間 時刻」の初期値は 00:00 であること。\n- オンライン受付あり（識別ID:15）がオンの場合、オンライン受付開始時間は必須であること。",
+      "現在の挙動": "- 開始日前日数（onlineEntryStartDays）は 'data' => 0 が設定されており、初期値0および0以上の制約（GreaterThanOrEqual(0)）は実装済みである。\n- 時刻（onlineEntryStartTime）は TimeType で 'required' => false のみ指定され、'data' による初期値 00:00 の設定が無いため空欄で表示される。\n- オンライン受付あり（entryFlg）がオンのときにオンライン受付開始時間を必須とする条件チェックは、constraints にも POST_SUBMIT リスナーにも存在しない。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/RepeatScheduleType.php:163-170",
+        "src/Eccube/Form/Type/Admin/RepeatScheduleType.php:171-174",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:348-348",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:349-349"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2224",
+      "summary": "【一部実装】イベント管理_繰返日程追加_繰返日程追加の「オンライン受付終了時間」の時刻に初期値00:00が設定されておらず、オンライン受付ありの場合の必須チェックも無い",
+      "feature": "繰返日程追加",
+      "sheetCandidates": [
+        {
+          "id": "sheet-8",
+          "title": "繰返日程追加"
+        }
+      ],
+      "期待される挙動": "- 繰返日程追加画面の識別ID:18「オンライン受付終了時間 開始日前日数」の初期値は 0 であること。\n- 識別ID:19「オンライン受付終了時間 時刻」の初期値は 00:00 であること。\n- オンライン受付ありがオンの場合は必須であり、オンライン受付開始時間 < オンライン受付終了時間であること。",
+      "現在の挙動": "- 開始日前日数（onlineEntryEndDateDays）は 'data' => 0 と GreaterThanOrEqual(0) が設定されており、初期値0は実装済みである。\n- 時刻（onlineEntryEndTime）は TimeType で 'required' => false のみ指定され、'data' による初期値 00:00 が設定されていないため空欄で表示される。\n- オンライン受付あり（entryFlg）がオンのときの必須チェックは実装されていない。\n- オンライン受付開始 < オンライン受付終了、およびオンライン受付終了 < イベント開始時間 の相関チェックは POST_SUBMIT リスナーで実装済みである。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/RepeatScheduleType.php:175-182",
+        "src/Eccube/Form/Type/Admin/RepeatScheduleType.php:183-186",
+        "src/Eccube/Form/Type/Admin/RepeatScheduleType.php:251-279",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:350-350",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:351-351"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2225",
+      "summary": "【一部実装】イベント管理_イベント申込一覧(検索入力/検索結果)_イベント申込一覧の検索条件「支払番号」に、設計書で定められた最大64字の入力制限が実装されていない",
+      "feature": "イベント申込一覧(検索入力/検索結果)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-10",
+          "title": "イベント申込一覧(検索入力)"
+        },
+        {
+          "id": "sheet-11",
+          "title": "イベント申込一覧(検索結果)"
+        },
+        {
+          "id": "sheet-16",
+          "title": "イベント申込登録(検索入力)"
+        }
+      ],
+      "期待される挙動": "- イベント申込一覧（検索入力）の識別ID:1-5「支払番号」は最大64字まで入力できること。\n- 検索種別で「デッキ登録を検索」を選択した場合、支払番号は操作不可となること。",
+      "現在の挙動": "- SearchEntryType の payment_no は TextType で 'required' => false のみ指定されており、Length 制約が無い。\n- テンプレート Event/Entry/index.twig でも form_widget に attr 指定が無く、HTML の maxlength 属性が出力されないため、65字以上でも入力・検索できる。\n- 「デッキ登録を検索」選択時の操作不可については、Entry/index.twig の JavaScript で支払番号入力欄に disabled を付与しており実装済みである。\n- 同フォームの event_detail_id には Length(max: eccube_event_detail_id_max_len) が設定されており、支払番号のみ文字数制約が漏れている。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/SearchEntryType.php:98-101",
+        "src/Eccube/Form/Type/Admin/SearchEntryType.php:152-158",
+        "src/Eccube/Resource/template/admin/Event/Entry/index.twig:272-274",
+        "src/Eccube/Resource/template/admin/Event/Entry/index.twig:41-52",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:490-490"
+      ],
+      "引用_不在または範囲外": [
+        "Event/Entry/index.twig:None [file_not_found]",
+        "Entry/index.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2226",
+      "summary": "【未実装】イベント管理_イベント申込一覧(検索入力/検索結果)_イベント申込一覧の検索条件「プレイヤー名」に、設計書で定められた最大255字の入力制限が実装されていない",
+      "feature": "イベント申込一覧(検索入力/検索結果)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-10",
+          "title": "イベント申込一覧(検索入力)"
+        },
+        {
+          "id": "sheet-11",
+          "title": "イベント申込一覧(検索結果)"
+        },
+        {
+          "id": "sheet-16",
+          "title": "イベント申込登録(検索入力)"
+        }
+      ],
+      "期待される挙動": "- イベント申込一覧（検索入力）の識別ID:1-6「プレイヤー名」は最大255字まで入力できること。",
+      "現在の挙動": "- SearchEntryType の player_name は TextType で 'required' => false のみ指定されており、Length 制約が設定されていない。\n- テンプレート Event/Entry/index.twig でも form_widget に attr の指定が無く、HTML の maxlength 属性が出力されない。\n- そのため256字以上のプレイヤー名でも入力・検索でき、文字数の上限制御が一切効いていない。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/SearchEntryType.php:102-105",
+        "src/Eccube/Resource/template/admin/Event/Entry/index.twig:279-281",
+        "src/Eccube/Repository/DtbEventEntryRepository.php:103-103",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:491-491"
+      ],
+      "引用_不在または範囲外": [
+        "Event/Entry/index.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2227",
+      "summary": "【未実装】イベント管理_イベント申込一覧(検索入力/検索結果)_イベント申込一覧の検索条件に「チームメンバー確認状況」が存在しない",
+      "feature": "イベント申込一覧(検索入力/検索結果)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-10",
+          "title": "イベント申込一覧(検索入力)"
+        },
+        {
+          "id": "sheet-11",
+          "title": "イベント申込一覧(検索結果)"
+        },
+        {
+          "id": "sheet-16",
+          "title": "イベント申込登録(検索入力)"
+        }
+      ],
+      "期待される挙動": "- イベント申込一覧（検索入力）の識別ID:1-9「チームメンバー確認状況」を複数選択で指定できること。\n- 選択肢は「有効（確認済み）」「無効（未確認）」であること。",
+      "現在の挙動": "- SearchEntryType にはチームメンバー確認状況に相当するフィールドが定義されていない（実装されている検索項目は event_name / base_info / entry_status / payment / payment_no / player_name / start_date_from / start_date_to / is_deck_registered / event_detail_id / searchMode のみ）。\n- 検索クエリ DtbEventEntryRepository にも確認フラグ（confirm_flg）による絞り込み条件は存在しない。\n- エンティティ側には DtbEntryPlayer::getConfirmFlg() と DtbEventEntry::areTeamMemberConfirmed() が存在するが、イベント申込一覧の検索条件としては利用されていない。\n- テンプレート Event/Entry/index.twig の検索フォームにも該当の入力欄は無い。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/SearchEntryType.php:63-169",
+        "src/Eccube/Repository/DtbEventEntryRepository.php:72-171",
+        "src/Eccube/Entity/DtbEventEntry.php:275-275",
+        "src/Eccube/Entity/DtbEntryPlayer.php:47-48",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:494-494"
+      ],
+      "引用_不在または範囲外": [
+        "Event/Entry/index.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2228",
+      "summary": "【一部実装】イベント管理_イベント申込一覧(検索入力/検索結果)_イベント申込一覧のイベント情報検索モーダルにて、「イベント名、略称」の最大50字の入力制限が実装されていない",
+      "feature": "イベント申込一覧(検索入力/検索結果)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-10",
+          "title": "イベント申込一覧(検索入力)"
+        },
+        {
+          "id": "sheet-11",
+          "title": "イベント申込一覧(検索結果)"
+        },
+        {
+          "id": "sheet-16",
+          "title": "イベント申込登録(検索入力)"
+        }
+      ],
+      "期待される挙動": "- イベント情報を検索モーダルの識別ID:1-1「イベント名、略称」は最大50字まで入力でき、部分一致で検索すること。\n- 店舗は単一選択でデフォルト表示の店舗を初期値とし、開催日(From)は3か月前を初期表示すること。\n- オンライン受付ありの日程のみを検索対象とし、1ページに最大10件、イベントID降順→日程ID降順で表示し、「決定」でイベント名・店舗・開始時間From/Toを検索フォームに反映すること。",
+      "現在の挙動": "- SearchEntryEventModalType の event_name は TextType で 'required' => false のみ指定されており Length 制約が無く、テンプレート側でも maxlength 属性を出力していないため、51字以上でも入力できる。\n- 店舗の単一選択（multiple: false）とデフォルト店舗の初期値、開催日(From)の3か月前初期値、From>Toのエラーチェックは実装済みである。\n- オンライン受付ありの日程のみを対象とする絞り込みは DtbEventRepository::getQueryBuilderByEntryRegistrationSearchData の join（ed.entryFlg = true）で実装済みである。\n- 1ページ10件（MODAL_EVENT_SEARCH_PER_PAGE = 10）、イベントID降順（orderBy e.id DESC）、日程ID降順（EntryRegistrationScheduleRowBuilder の usort）、「決定」による検索フォームへの反映（イベント名・開始時間From/To・店舗）もすべて実装済みである。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/SearchEntryEventModalType.php:37-40",
+        "src/Eccube/Resource/template/admin/Event/Entry/index.twig:499-499",
+        "src/Eccube/Form/Type/Admin/SearchEntryEventModalType.php:41-58",
+        "src/Eccube/Repository/DtbEventRepository.php:151-155",
+        "src/Eccube/Controller/Admin/Event/EntryController.php:61-61",
+        "src/Eccube/Service/Admin/Event/EntryRegistrationScheduleRowBuilder.php:57-57",
+        "src/Eccube/Resource/template/admin/Event/Entry/index.twig:199-213",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:535-535"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2229",
+      "summary": "【実装乖離】イベント管理_デッキ表示_デッキ表示画面の「Event」欄に、設計書のイベント名（英）ではなくイベント名（日）が表示されている",
+      "feature": "デッキ表示",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "デッキ表示"
+        }
+      ],
+      "期待される挙動": "- デッキ表示画面の識別ID:6「Event」には、イベント名（英）を表示すること。",
+      "現在の挙動": "- デッキ表示の表示データを組み立てる EntryDeckListDisplayBuilder が、eventName に DtbEvent::getNameJp()（イベント名 日本語）を設定している。\n- テンプレート Event/Entry/decklist.twig の「Event:」欄はこの eventName をそのまま出力するため、英語名ではなく日本語名が表示される。\n- DtbEvent には getNameEn() が存在するが、デッキ表示では使用されていない。",
+      "引用": [
+        "src/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php:144-144",
+        "src/Eccube/Resource/template/admin/Event/Entry/decklist.twig:324-325",
+        "src/Eccube/Entity/DtbEvent.php:49-49",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:707-707"
+      ],
+      "引用_不在または範囲外": [
+        "Event/Entry/decklist.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2231",
+      "summary": "【一部実装】イベント管理_イベント申込登録(検索入力/検索結果)_イベント申込登録（検索結果）の「新規登録」ボタンが、編集権限のない店舗のイベントに対しても表示される",
+      "feature": "イベント申込登録(検索入力/検索結果)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-16",
+          "title": "イベント申込登録(検索入力)"
+        },
+        {
+          "id": "sheet-17",
+          "title": "イベント申込登録(検索結果)"
+        },
+        {
+          "id": "sheet-10",
+          "title": "イベント申込一覧(検索入力)"
+        }
+      ],
+      "期待される挙動": "- イベント申込登録（検索結果）の識別ID:4「新規登録」ボタンは、メンバーが権限を保持している店舗のイベントのみ表示すること。",
+      "現在の挙動": "- テンプレート Event/EntryRegistration/index.twig では、検索結果の各行に対して権限判定を行わずに「新規登録」ボタン（admin_entry_new へのリンク）を無条件で出力している。\n- 一覧の検索クエリ DtbEventRepository::getQueryBuilderByEntryRegistrationSearchData にも編集可能店舗による絞り込みが無く、EntryRegistrationController::index も権限フィルタを掛けていないため、権限のない店舗のイベント日程も一覧に表示される。\n- 権限チェックは遷移先の EntryRegistrationController::create（admin_entry_new）で行われており、編集権限が無い場合は 404（createNotFoundException）となる。つまり押下してから初めてエラーになる。\n- 参考として、イベント申込一覧のイベント検索モーダル（EntryController::entryEventHtml）では編集可能店舗による絞り込みが実装されており、こちらの一覧のみ未対応である。",
+      "引用": [
+        "src/Eccube/Resource/template/admin/Event/EntryRegistration/index.twig:109-111",
+        "src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:117-134",
+        "src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:152-155",
+        "src/Eccube/Controller/Admin/Event/EntryController.php:435-438",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:933-933",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:945-945"
+      ],
+      "引用_不在または範囲外": [
+        "Event/EntryRegistration/index.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2233",
+      "summary": "【未実装】イベント管理_イベント一括登録(CSV)_イベント一括登録CSVで、親イベントにクレジットカード決済が無いのに日程がオンライン受付あり・参加費有料の場合のエラーチェックが実装されていない",
+      "feature": "イベント一括登録(CSV)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-19",
+          "title": "イベント一括登録"
+        },
+        {
+          "id": "sheet-20",
+          "title": "イベント一括登録CSV"
+        }
+      ],
+      "期待される挙動": "- イベント一括登録CSVの取込時、親イベント情報に支払方法（クレジットカード決済）の設定が無いにもかかわらず、日程情報のオンライン受付が「あり」かつ参加費が有料である行はエラーとすること。",
+      "現在の挙動": "- EventBulkCsvImportHandler の行バリデーションでは、クレジットカード支払い列は「あり／なし」の選択値チェック（行290-291）のみ行われ、オンライン受付・参加費との相関チェックは行われていない。\n- オンライン受付が「あり」の場合の検証は、オンライン受付時間From/Toの必須・書式・前後関係・イベント開始時間との関係のみで、親イベントのクレジットカード決済設定を参照する処理が存在しない。\n- 翻訳ファイルにも該当のエラーメッセージキー（クレジットカード決済未設定に関するもの）が存在しない（admin.event.entry.bulk_csv.error.* に該当キー無し）。\n- なお同等の相関チェックは画面側では実装されており、イベント編集（EventType の POST_SUBMIT）および日程登録（ScheduleType の POST_SUBMIT、form_error.schedule_credit_payment_required）でエラーとしている。",
+      "引用": [
+        "src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:289-291",
+        "src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:364-400",
+        "src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:453-455",
+        "src/Eccube/Form/Type/Admin/ScheduleType.php:191-199",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:1049-1049"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2234",
+      "summary": "【一部実装】イベント管理_画像設定_画像設定のアップロード先「店舗」の初期値に、メンバーのデフォルト表示の店舗が設定されない",
+      "feature": "画像設定",
+      "sheetCandidates": [
+        {
+          "id": "sheet-22",
+          "title": "画像設定"
+        }
+      ],
+      "期待される挙動": "- 画像設定の識別ID:1「店舗」は単一選択の必須項目であり、初期値にメンバーのデフォルト表示の店舗を設定すること。\n- 編集権限のある店舗のみを選択肢として表示し、編集権限のない店舗が選択された場合はエラーとすること。",
+      "現在の挙動": "- BannerController は Member::getDefaultSearchBaseInfo()（デフォルト表示の店舗）を一切参照しておらず、アップロードフォームの店舗の初期値には「絞り込み中の店舗（htmlClass で指定された店舗）」が編集可能な場合のみ設定される。\n- そのため、店舗で絞り込んでいない全体表示（admin_event_banner）では店舗が未選択の状態でフォームが表示され、設計書の「初期値：デフォルト表示の店舗」を満たしていない。\n- 単一選択（multiple: false）・必須（required: true + NotBlank）・編集権限のある店舗のみ選択肢に表示（filterBaseInfosEditableByMember）・権限外店舗のエラー（EventBannerStorageService::processUpload での isEditableShop チェック）は実装済みである。",
+      "引用": [
+        "src/Eccube/Controller/Admin/Event/BannerController.php:174-194",
+        "src/Eccube/Controller/Admin/Event/BannerController.php:267-272",
+        "src/Eccube/Form/Type/Admin/Event/EventBannerUploadType.php:42-54",
+        "src/Eccube/Service/Admin/Event/EventBannerStorageService.php:71-73",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:1178-1178",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:1167-1167"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2235",
+      "summary": "【実装乖離】イベント管理_画像設定_画像設定の削除リンクの確認メッセージが、設計書で指定された文言と異なる",
+      "feature": "画像設定",
+      "sheetCandidates": [
+        {
+          "id": "sheet-22",
+          "title": "画像設定"
+        }
+      ],
+      "期待される挙動": "- 画像設定の識別ID:8「削除」は編集権限のある店舗の画像のみ表示すること。\n- 削除リンク押下時に「一度削除したデータは元に戻せません。削除してもよろしいですか？」を表示し、「OK」を選択で削除すること。",
+      "現在の挙動": "- 削除リンクの確認メッセージには翻訳キー admin.event.banner.delete_confirm が使われており、その文言は「この画像を削除します。よろしいですか？」で、設計書指定の「一度削除したデータは元に戻せません。削除してもよろしいですか？」と異なる。\n- 設計書と同じ文言は admin.data.top_banner.delete_confirm（TOPバナー用）にのみ存在し、イベントの画像設定では使われていない。\n- 「編集権限のある店舗の画像のみ削除リンクを表示する」という要件は、banner.twig で app.user.isEditableShop(selectedBaseInfo) および bannerDeletableHtmlClasses による出し分けとして実装済みであり、削除処理側（BannerController::delete）でも canMemberDeleteObject による権限チェックが行われている。",
+      "引用": [
+        "src/Eccube/Resource/template/admin/Event/banner.twig:327-327",
+        "src/Eccube/Resource/template/admin/Event/banner.twig:329-330",
+        "src/Eccube/Controller/Admin/Event/BannerController.php:150-154",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:1185-1185",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:1168-1168"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:5961 [line_out_of_range]",
+        "src/Eccube/Resource/locale/messages.ja.yaml:6135 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2236",
+      "summary": "【実装乖離】イベント管理_画像設定_画像設定のS3アップロード先フォルダが、設計書の /banner/{店舗識別子} ではなく banner/event/{店舗識別子} になっている",
+      "feature": "画像設定",
+      "sheetCandidates": [
+        {
+          "id": "sheet-22",
+          "title": "画像設定"
+        }
+      ],
+      "期待される挙動": "- 画像設定でアップロードするイベントバナー画像の保存先は /banner/{選択店舗の識別子（tc など）} のフォルダであること。\n- イベントバナーの参照先・アップロード先は、TOPバナー用フォルダとは別のイベントバナー用フォルダであること。",
+      "現在の挙動": "- EventBannerStorageService の S3 プレフィックスは 'banner/event/' と定義されており、アップロード先ディレクトリは banner/event/{BaseInfo.htmlClassName}/ となる（設計書の /banner/{店舗識別子} に対し event/ が1階層余分）。\n- ファイル一覧の取得（loadSortedFileList / resolveListPrefix）、削除キーの検証（normalizeObjectKey / isObjectKeyUnderNarrowShop）もすべて同じ banner/event/ プレフィックスを前提としており、参照先とアップロード先は一貫している。\n- S3AccessService::putFile はセットされたディレクトリ文字列をそのままキーの先頭に付与するため、実際の S3 オブジェクトキーは banner/event/{店舗識別子}/{ファイル名} となる。\n- TOPバナーの保存先は 'banner/top/'（TopBannerUploadAction 等）であり、イベントバナー用フォルダと分離されているという要件自体は満たされている。",
+      "引用": [
+        "src/Eccube/Service/Admin/Event/EventBannerStorageService.php:26-26",
+        "src/Eccube/Service/Admin/Event/EventBannerStorageService.php:92-92",
+        "src/Eccube/Service/Admin/Event/EventBannerStorageService.php:128-146",
+        "src/Eccube/Service/S3AccessService.php:49-52",
+        "src/Eccube/Service/Admin/Data/TopBannerUploadAction.php:25-25",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:1174-1174",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:1171-1171",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M13_event_management_basedesign.md:1159-1159"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2238",
+      "summary": "【一部実装】イベント管理_複製新規_イベント複製新規・新規登録画面にて、「店舗」の選択肢が編集権限のある店舗に絞り込まれず全店舗が表示される",
+      "feature": "複製新規",
+      "sheetCandidates": [
+        {
+          "id": "sheet-9",
+          "title": "複製新規"
+        }
+      ],
+      "期待される挙動": "- 複製新規（M13-05）の識別ID:1-3「店舗」は、編集権限のある店舗のみを選択肢として表示すること。\n- 編集権限のない店舗が選択された場合はエラーとすること。\n- 初期値はメンバーのデフォルト表示店舗とすること（ただし複製新規から表示した場合、入力項目は複製元イベントの値で入力済みとする）。",
+      "現在の挙動": "- EventType の baseInfo は EntityType で BaseInfo 全件を取得しており、query_builder は id 昇順に並べるだけで、ログインメンバーの編集可能店舗（Member::isEditableShop / dtb_member_base_info）による絞り込みを一切行っていない。そのため編集権限のない店舗も選択肢に表示される（設計 :379 / :399 の「編集権限のある店舗のみ表示する」が未実装）。\n- 編集権限のない店舗が選択された場合のエラー（form_error.event_not_editable）は EventType の POST_SUBMIT で実装済みであり、保存は拒否される（設計 :380 / :400 は充足）。\n- 新規登録（admin_event_create）では Member::getDefaultSearchBaseInfo() の店舗を初期値に設定しており、デフォルト店舗の初期化は実装済みである（設計 :381 は充足）。\n- 複製新規（admin_event_copy）は複製元イベントをそのままフォームにバインドするため店舗も複製元を引き継ぐが、設計 :392 が「入力項目は複製元のイベントのものを複製して入力済みで画面を表示する」と明記しているため、この挙動は設計どおりであり乖離ではない。",
+      "引用": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md:379-381",
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md:399-400",
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md:391-392",
+        "src/Eccube/Form/Type/Admin/EventType.php:88-92",
+        "src/Eccube/Form/Type/Admin/EventType.php:292-297",
+        "src/Eccube/Controller/Admin/Event/EventController.php:206-212",
+        "src/Eccube/Controller/Admin/Event/EventController.php:244-256"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2240",
+      "summary": "【実装乖離】イベント管理_イベント申込詳細・編集(＋プレイヤー検索)_イベント申込詳細・編集(M13-10)の「支払金額」が、設計指定の「ラベル(参照表示)」ではなく disabled 入力欄として描画されている",
+      "feature": "イベント申込詳細・編集(＋プレイヤー検索)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-15",
+          "title": "イベント申込詳細・編集"
+        }
+      ],
+      "期待される挙動": "- 設計書(M13-10 識別ID 2025-01-09)では「支払金額」の画面部品は「ラベル」であり、参照専用のテキスト表示であること。\n- カスタマイズ要件「識別ID:1-9「支払金額」は参照のみのため操作不可」のとおり、編集不可であること。\n- 同一画面の他の参照専用項目（支払会員・支払番号など）と同じく、テキスト（col-form-plain）として表示されること。",
+      "現在の挙動": "- 支払金額は EventEntryDetailType で IntegerType の入力フィールドとして定義され（src/Eccube/Form/Type/Admin/EventEntryDetailType.php:109-116）、'disabled' => true が指定されている。\n- テンプレート src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:314-320 では form_widget(form.price) で描画されるため、画面上は「グレーアウトした入力ボックス」として表示される。\n- 同テンプレート内の参照専用項目（支払会員: edit.twig:291-299、支払番号: edit.twig:322-326）は col-form-plain のテキスト表示となっており、支払金額だけが表示形式で揃っていない。\n- 操作不可という機能要件自体は満たしている（Symfony の disabled フィールドはリクエスト値を無視するため改ざんによる更新も不可）。乖離は画面部品の表示形式に限定される。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/EventEntryDetailType.php:109-116",
+        "src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:314-320",
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md:835-835",
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md:811-811",
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md:834-834",
+        "src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:291-299",
+        "src/Eccube/Controller/Admin/Event/EntryController.php:260-268",
+        "src/Eccube/Form/Type/Admin/EventEntryDetailType.php:112-112"
+      ],
+      "引用_不在または範囲外": [
+        "admin/Event/EntryRegistration/edit.twig:None [file_not_found]"
+      ]
+    }
+  ]
+}

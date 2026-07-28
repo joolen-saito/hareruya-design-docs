@@ -1,0 +1,286 @@
+{
+  "book": "0304",
+  "count": 16,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-1815",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-3:買い物かご"
+      ],
+      "課題タイトル": "【未実装】フロント注文_買い物かご_買い物かご画面にて、支店を閲覧している場合でも送料無料までの残額表示を抑止するガードが実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "支店で送料無料残額表示を抑止するガードが無い。ただしシードは全店null で潜在リスク",
+      "前回書いた次にすること": "実装対応: 支店で残額表示を抑止するガードを追加。潜在リスクのため優先度は中",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-3「買い物かご」\n機能仕様処理概要（★カスタマイズ）\n> ★送料の表示\n> ・支店は商品の配送方法が店舗受取のみで送料が存在しないため、**支店では送料は表示しない**\n\n■実装の現状\nCart/index.twig:280-288 は `{% if BaseInfo.delivery_free_amount %}` のみで判定しており、本支店の分岐がありません。CartController.php:129-176 の `buildCartSummary()` も閲覧店舗の BaseInfo から値を読むだけです。\n`isMainShop` の全文検索でも、送料無料まわりには一切使われていません（CartController.php:432 の使用は入荷通知XHRのガード）。\n\n**現時点では顕在化しません。** マイグレーション Version20251127154224.php では全31店舗（本店含む）で `delivery_free_amount => null` のため、初期データのままではこの領域が描画されません。管理画面で支店に値を設定した場合に顕在化する潜在リスクです。\n\n■次の対応\n実装対応: 支店では送料無料までの残額表示を抑止するガードを追加する。現状は潜在リスクのため優先度は中程度で差し支えありません。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-3「買い物かご」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_cart_basedesign.md",
+        "src/Eccube/Controller/Front/CartController.php",
+        "src/Eccube/Form/Type/Admin/Enterprise/MallTenantShopType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1816",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-3:買い物かご"
+      ],
+      "課題タイトル": "【未実装】フロント注文_買い物かご_買い物かご画面の画面部品「送料無料までの価格」（識別ID 12）に、支店では非表示とする条件が実装されていない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "実装にガードは無いが、起票の期待挙動2文のうち画面部品仕様12に支店非表示の記載がなく第2文は設計に根拠なし",
+      "前回書いた次にすること": "要確認: 支店非表示の要否を確定のうえ1815と一括対応",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-3「買い物かご」\n画面部品仕様\n> 12 送料無料までの価格　ラベル　（画面部品の説明欄は空欄）\n\n機能仕様処理概要（★）\n> ★送料の表示 ・支店では送料は表示しない\n\n数量変更時の反映\n> ・計算した内容を下記に反映する ・小計 ・**送料無料までの残り金額表示** ・合計金額\n\n■実装の現状\nCart/index.twig:280-288 と 同:91-97 のインラインJS（Ajax後の再描画）はいずれも本支店を区別しません。CartController.php:341 の Ajax レスポンスも `buildCartSummary()` を再利用し区別しません。\n\n■次の対応\n要確認: 起票の「期待される挙動」に**設計の裏付けがない記述**が含まれます。\n\n1. 画面部品仕様の識別ID 12 には支店非表示の条件が**書かれていません**。起票の第1文は機能仕様処理概要からの推論です。\n2. 第2文「数量変更時の再計算結果の反映は本店のみ」に対応する設計記述は**存在しません**。設計は本支店の限定なしに「送料無料までの残り金額表示」への反映を要求しています。\n\n1815 と同一箇所のため、支店非表示の要否を確定のうえ一括対応してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-3「買い物かご」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_cart_basedesign.md",
+        "src/Eccube/Controller/Front/CartController.php",
+        "src/Eccube/Resource/template/default/Cart/index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1817",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-4:ご注文方法指定"
+      ],
+      "課題タイトル": "【未実装】フロント注文_ご注文方法指定_ご注文方法指定画面にて、支店の場合に注文ボタンの文言を「購入する」へ変更する処理が実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "ボタン文言の分岐が支払方法のみで支店の分岐なし。購入する の翻訳キーも0件",
+      "前回書いた次にすること": "実装対応: 支店時にボタン文言を購入するにする。翻訳キー追加が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-4「ご注文方法指定」\n機能仕様処理概要\n> ・支払方法によって「注文する」ボタンの文言を変更する\n> ・**支店の場合、「注文する」ボタンの文言は「購入する」に変更する**\n\n画面部品仕様\n> 10-10 注文するボタン　・支店の場合は「購入する」に文言を変更\n\n■実装の現状\nShopping/index.twig:136-142 の文言分岐は支払方法のみ（クレジット／コンビニ／それ以外）で、支店の分岐がありません。\n`isMainShop` は TwigInitializeListener.php:69 でグローバル登録済みで同テンプレート内の 209/415/757/828 行で使われていますが、**ボタン文言の分岐には未使用**です。\n翻訳ファイルにも「購入する」に相当する `front.shopping.*` キーは存在せず、JS（hareruya-*.js）にも0件でした。\n\n■次の対応\n実装対応: 支店の場合にボタン文言を「購入する」にする。翻訳キーの追加が必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-4「ご注文方法指定」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_cart_basedesign.md",
+        "src/Eccube/EventListener/TwigInitializeListener.php",
+        "src/Eccube/Resource/locale/messages.ja.yaml",
+        "src/Eccube/Resource/template/default/Shopping/index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1818",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-4:ご注文方法指定"
+      ],
+      "課題タイトル": "【一部実装】フロント注文_ご注文方法指定_ご注文方法指定画面にて、支店の場合にポイント関連項目を非表示にする判定が店舗種別ではなく配送方法で行われており、支店でスムーズ店頭受取を選ぶとポイント欄が表示される",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "canUsePoint が OTC 単独判定で SMOOTH_OTC を含まず、支店既定の SMOOTH_OTC でポイント欄が表示される",
+      "前回書いた次にすること": "実装対応: canUsePoint を店舗種別+購入グループの条件に置換(1830と同一箇所)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-4「ご注文方法指定」\nお支払い方法 処理概要\n> ・**支店の場合はポイントを表示しない**\n> ・**購入グループが店内アカウントの場合は文言を表示し、ポイント系の項目は非表示とする**\n\n画面部品仕様\n> 6-4 ポイント残高 / 6-5 ポイント使用 / 6-6 使用ポイント　いずれも「・**ECの場合のみ表示する**」\n\nレイアウト図でも（本店）は 6-1〜6-6、（支店）（購入グループ：店内アカウント）は **6-1・6-2 のみ**です。\n\n■実装の現状\nShopping/index.twig:129 の判定軸が設計と異なります。\n```\n{% set canUsePoint = delivery.id is defined and delivery.id != constant('Eccube\\\\Entity\\\\Delivery::OTC') %}\n```\n`OTC(6)` 単独との不一致のみで、`OTC_GROUP`（OTC + SMOOTH_OTC）ではありません。\n支店の配送方法は ShippingType.php:127-135 / OrderHelper.php:164-172 で OTC・SMOOTH_OTC の2件に固定され、既定選択は `sort_no` 昇順の先頭です。Version20260604000002.php:37-38 で 店頭受取=4 / スムーズ店頭受取=2 のため**既定は SMOOTH_OTC** となり、`canUsePoint` が真になってポイント欄が表示されます。\n設計の分岐軸は「EC／支店／購入グループ＝店内アカウント」の3軸で、**配送方法による分岐は設計に存在しません**。\n対照として、同テンプレート:397 の「当日中に受け取ります」は `not app.user.Player.CustomerGroup.isOtcGroup()` で購入グループを判定済みです。\n\n■次の対応\n実装対応: `canUsePoint` の条件を店舗種別（isMainShop）＋購入グループ（isOtcGroup）に置き換える。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-4「ご注文方法指定」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_order_basedesign.md",
+        "src/Eccube/Entity/Delivery.php",
+        "src/Eccube/Form/Type/Shopping/ShippingType.php",
+        "src/Eccube/Resource/template/default/Shopping/index.twig",
+        "src/Eccube/Service/OrderHelper.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1819",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-4:ご注文方法指定"
+      ],
+      "課題タイトル": "【実装乖離】フロント注文_ご注文方法指定_ご注文方法指定画面の「使用ポイント」の初期値が、設計の「会員の保有ポイント」ではなく保有ポイントと支払上限の小さい方になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "初期値が保有ポイントと支払総額の小さい方。設計は保有ポイント",
+      "前回書いた次にすること": "実装対応: 頭打ちを外す。ただし支払総額超過の初期表示になるため設計意図を要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-4「ご注文方法指定」\n画面部品仕様\n> 6-6 使用ポイント　数値（整数）　初期値: **会員の保有ポイント**\n> ・ポイント使用ラジオボタンで「ポイントを使う」を選択した場合のみ活性化する\n\n■実装の現状\nOrderType.php:403-414 の `getDefaultUsePoint()` は保有ポイントと支払総額の**小さい方**を初期値にします。\n```\nreturn max(0, min($pointBalance, $this->getPaymentTotalBeforePoint($Order)));\n```\n設計は「会員の保有ポイント」であり、支払総額での頭打ちは指定されていません。\nラジオ連動の活性化制御（hareruya-checkout.js の `data-point-use` / `data-point-input` ハンドラ、末尾の初期実行含む）は設計どおり実装済みです。\n\n■次の対応\n実装対応: 初期値を保有ポイントそのままにする。ただし「保有ポイント > 支払総額」の場合に差が出るため、頭打ちを外すと入力値が支払総額を超える状態が初期表示されます。設計意図を確認のうえ対応してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-4「ご注文方法指定」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_order_basedesign.md",
+        "html/template/default/assets/hareruya/js/hareruya-checkout.js",
+        "src/Eccube/Form/Type/Shopping/OrderType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1820",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-4:ご注文方法指定"
+      ],
+      "課題タイトル": "【一部実装】フロント注文_ご注文方法指定_ご注文方法指定画面にて、支店の場合に「注文する」ボタンの文言が「購入する」に変更されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "1817と対象コード・不足点が完全一致",
+      "前回書いた次にすること": "実装対応: 1817で対応し本件は重複クローズを推奨",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-4「ご注文方法指定」\n機能仕様処理概要\n> ・支払方法によって「注文する」ボタンの文言を変更する\n> ・**支店の場合、「注文する」ボタンの文言は「購入する」に変更する**\n\n画面部品仕様\n> 10-10 注文するボタン　・支店の場合は「購入する」に文言を変更\n\n■実装の現状\nShopping/index.twig:136-142 の文言分岐は支払方法のみ（クレジット／コンビニ／それ以外）で、支店の分岐がありません。\n`isMainShop` は TwigInitializeListener.php:69 でグローバル登録済みで同テンプレート内の 209/415/757/828 行で使われていますが、**ボタン文言の分岐には未使用**です。\n翻訳ファイルにも「購入する」に相当する `front.shopping.*` キーは存在せず、JS（hareruya-*.js）にも0件でした。\n\n付記: 本チケットは ECCUBE_HARERUYA-1817 と対象コード・不足点が完全に一致します。片方で対応し他方は重複としてクローズすることを推奨します。\n\n■次の対応\n実装対応: 支店の場合にボタン文言を「購入する」にする。翻訳キーの追加が必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-4「ご注文方法指定」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_order_basedesign.md",
+        "src/Eccube/EventListener/TwigInitializeListener.php",
+        "src/Eccube/Resource/locale/messages.ja.yaml",
+        "src/Eccube/Resource/template/default/Shopping/index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1821",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-5:配送先の新規登録_変更",
+        "sheet-6:配送先の新規登録_確認"
+      ],
+      "課題タイトル": "【一部実装】フロント注文_配送先の新規登録・変更／確認_配送先の新規登録・変更画面にて、会員の場合にご注文方法指定画面で選択した配送情報が項目に設定されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "会員時に setFromShipping が呼ばれず空フォーム。変更ボタンの遷移先も選択画面",
+      "前回書いた次にすること": "実装対応: 会員時も選択中の配送情報を設定。遷移先が設計どおりかも要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-5「配送先の新規登録_変更」\n機能仕様処理概要（★印なし＝現行踏襲）\n> ・初期表示\n> ・**ご注文方法指定画面で選択していた配送情報を項目に設定する**\n\n（会員／非会員の区別は記載されていません）\n\nsheet-4 画面部品仕様\n> 3-9 お届け先情報を変更するボタン　・クリックすると**選択している配送情報を設定した**「配送先の新規登録・変更」画面へ遷移する\n\n■実装の現状\nShoppingController.php:813-829 は会員と非会員で分岐し、**非会員のみ** `setFromShipping($Shipping)` を実行します。会員時は空の `CustomerAddress` のままフォームにバインドされます（:912-921 の `shippingEditComplete()` も同構造）。\nさらに Shopping/index.twig:255 の「お届け先情報を変更する」ボタンの遷移先は `shopping_shipping`（お届け先**選択**画面）で、設計が指す編集画面ではありません。`shopping_shipping_edit` へ遷移するのは :257 の「新しいお届け先を追加する」のみです。\n`setFromShipping` の呼び出しは上記2箇所のみで、会員向けに初期値を詰める Subscriber / FormType もありません。\n\n■次の対応\n実装対応: 会員時も選択中の配送情報をフォームへ設定する。あわせて「お届け先情報を変更する」の遷移先が設計どおりか（選択画面か編集画面か）をご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-5「配送先の新規登録_変更」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_order_basedesign.md",
+        "src/Eccube/Controller/Front/ShoppingController.php",
+        "src/Eccube/Resource/template/default/Shopping/index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1822",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-8:注文購入履歴一覧"
+      ],
+      "課題タイトル": "【実装乖離】フロント注文_注文購入履歴一覧_注文購入履歴一覧にて、処理状態が別添資料の画像ではなく3色のテキストバッジで表示されている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "テキストバッジで画像未実装。注文ステータス用の画像アセットもマッピングも不在",
+      "前回書いた次にすること": "実装対応: 別添資料sheet-10の対応表に沿って画像とマッピングを実装(1828と一括対応可)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-8「注文購入履歴一覧」\nカスタマイズ説明\n> ・**ステータス表示の画像を変更する** ・どの注文ステータスでどの画像を表示するかは基本設計で確定する\n\n画面部品仕様\n> 13 処理状態　**画像**　…　注文ステータスと表示画像の紐付けは「注文ステータスと表示画像の紐付け」シートを参照\n\n別添資料 sheet-10 は BOステータス×注文種別の対応表を持ち、「フロント表示画像」列に画像レイヤー9枚が埋め込まれています。\n\n■実装の現状\nMypage/shopping_history.twig:194-200 は `{{ Order.OrderStatus.name }}` の**テキストバッジ**で、CSS（hareruya-common.css）の `--status-pending/completed/cancelled` も背景色のみで画像指定がありません。\nスマレジ系での非表示制御（`Order.isEcOrder or Order.isOtcAwaitingPickup`）は設計どおり実装済みです。\n\n**反証**: `PurchaseHistoryStatusMapper::resolveStatusIcon()` は `assets/img/mypage/*.svg` を返しますが、利用元は買取履歴3クラスのみで注文購入履歴からの参照は0件です。画像アセット自体も買取用svg6点のみで、注文ステータス用は存在しません。BOステータス×注文種別のマッピングを持つPHPも見つかりませんでした。\n\n■次の対応\n実装対応: 別添資料 sheet-10 の対応表に沿って画像アセットとマッピングを実装する。1828（詳細画面）と根本原因・欠落実装が同一のため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-8「注文購入履歴一覧」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_order_basedesign.md",
+        "src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+        "src/Eccube/Service/Front/Mypage/PurchaseHistory/PurchaseHistoryStatusMapper.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1823",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-8:注文購入履歴一覧"
+      ],
+      "課題タイトル": "【実装乖離】フロント注文_注文購入履歴一覧_注文購入履歴一覧の購入日にて、店頭受取受注→スマレジ取引で複数取引した場合に最も新しい注文日が表示される（設計は一番若い＝最古の注文日）",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "MAX(最新)を取得。設計は一番若い注文日。Twigのコメントとも矛盾",
+      "前回書いた次にすること": "実装対応: MAX を MIN に変更。Twigのコメントも修正",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-8「注文購入履歴一覧」\n画面部品仕様\n> 5 購入日　ラベル　・「店頭受取受注→スマレジ取引」の注文データの場合は店頭受取したデータの注文日を表示し、複数取引した場合は**一番若い注文日**を表示する\n\n■実装の現状\nOrderRepository.php:2240-2261 の `findNewestOtcOrderDatesByNextOrderIds()` は **MAX**（最も新しい日付）を取得します。メソッド名・PHPDocとも「最新」で明記されています。\n:2216-2218 で `setOtcSmaregiLinkedPurchaseDate()` に代入され、shopping_history.twig:100-104 で表示されます。\n\nなお同 twig:99 のコメントは「複数取引した場合は一番若い注文日を表示」と設計をそのまま写しており、**コメントと実装が矛盾**しています。MIN を取る別実装・別ルートは存在しません。\n\n■次の対応\n実装対応: MAX を MIN に変更する。あわせて実装と食い違っている Twig のコメントも修正してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-8「注文購入履歴一覧」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_order_basedesign.md",
+        "src/Eccube/Resource/template/default/Mypage/shopping_history.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1824",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-9:注文購入履歴詳細"
+      ],
+      "課題タイトル": "【一部実装】フロント注文_注文購入履歴詳細_旧購入履歴詳細画面（mypage_history）に「再注文する」ボタンが残存し、ポイント履歴画面から到達できる",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "新画面のボタン削除は充足。旧画面 history.twig に再注文ボタンが残存し到達可能",
+      "前回書いた次にすること": "要確認+実装対応: 旧画面の存廃は設計に明文がないため確認が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-9「注文購入履歴詳細」\nカスタマイズ説明および機能仕様処理概要（★）\n> ・「この注文商品をもう一度購入する」ボタンを**非表示にする**\n> ★この注文品をもう一度購入するボタンを削除\n\n■実装の現状\n設計対象である新画面 Mypage/shopping_history_detail.twig（全329行）には「もう一度」「再注文」「order_again」「mypage_order」のいずれも**0件**で、要件どおり削除済みです。\n一方、EC-CUBE標準の**旧画面** Mypage/history.twig:190-194 に再注文ボタンが残存し、ルート `mypage_history`（MypageController.php:147-149）と実行ルート `mypage_order`（同:196）も健在です。\n到達導線は Mypage/point_history.twig:112 の1箇所のみで、新履歴一覧からは `mypage_shopping_history_detail` へリンクするため旧画面には行きません。\n\n■次の対応\n要確認+実装対応: 設計要求（新画面のボタン削除）は満たされています。乖離は「到達可能な旧画面が残存している」点で、**旧画面の存廃については設計に明文の記述がありません**。旧画面を廃止するか、ポイント履歴からの導線を新画面に付け替えるかを設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-9「注文購入履歴詳細」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_order_basedesign.md",
+        "src/Eccube/Controller/Front/Mypage/MypageController.php",
+        "src/Eccube/Resource/template/default/Mypage/history.twig",
+        "src/Eccube/Resource/template/default/Mypage/point_history.twig",
+        "src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1825",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-9:注文購入履歴詳細"
+      ],
+      "課題タイトル": "【一部実装】フロント注文_注文購入履歴詳細_注文購入履歴詳細にて、免税額の値が「TODO: スマレジ連携後」という固定文字列のまま表示される",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "免税額が固定文字列。値はSmaregi Webhookで投入済みでTwig配線のみ欠落",
+      "前回書いた次にすること": "実装対応: getterの出力に差し替え。値は既にDBにあるため配線のみで解消(1827と一括対応可)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-9「注文購入履歴詳細」\n注文商品情報エリア 機能仕様処理概要（★）\n> ★スマレジの取引データの場合は下記項目を表示する ・クーポン名 ・クーポン値引き ・**免税額**\n\n画面部品仕様\n> 9 免税額　いずれも「・カスタマイズにより追加」「・スマレジの取引の場合表示する」\n\n■実装の現状\nshopping_history_detail.twig:192-205 は行の出し分け条件（スマレジ系のみ）は設計どおりですが、**値欄が固定文字列「TODO: スマレジ連携後」**になっています。\n\n**起票の説明に誤りがあります。** 起票は「Order の該当getterがどこからも呼ばれていない」としていますが、setter は Smaregi Webhook から呼ばれており**値は既にDBに投入されています**。\n- SmaregiOrderFactory.php:271-277（`setTaxFree` / `setCouponDiscount` / `setSubtotalDiscountDivision`）\n- SmaregiTransactionEditedProcessor.php:94-100（同内容）\n\n欠けているのは getter の Twig への配線のみです。\n\n■次の対応\n実装対応: 固定文字列を getter の出力に差し替える。**値は既にDBにあるため Twig の配線のみで解消します**（起票の見積もりより小規模です）。1825・1827 は同一箇所のため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-9「注文購入履歴詳細」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_order_basedesign.md",
+        "src/Eccube/Entity/Order.php",
+        "src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1826",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-9:注文購入履歴詳細"
+      ],
+      "課題タイトル": "【未実装】フロント注文_注文購入履歴詳細_注文購入履歴詳細にて、店頭で割引券を使った割引額と割引理由が表示されない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "割引・割引理由の表示が無い。ただし設計側で識別IDが未採番で表示位置・書式が未確定",
+      "前回書いた次にすること": "要確認: 設計側の定義が先。カスタマイズ説明に3回登場するのみで部品表に項目がない",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-9「注文購入履歴詳細」\nカスタマイズ説明（画面全体・注文商品情報エリア・注文者/支払い情報エリアの3箇所に同一記述）\n> ・**店頭で割引券を使った割引及び割引理由を表示する**\n\n■実装の現状\nshopping_history_detail.twig:173-229 の合計欄に割引・割引理由の行はありません。全文検索でも「割引理由」「discount_reason」「discountReason」は**0件**です。\n\n**起票の説明に誤りがあります。** 「`getSubtotalDiscountDivision()` がどこからも呼ばれていない」とありますが、setter は SmaregiOrderFactory.php:274-277 と SmaregiTransactionEditedProcessor.php:97-100 から呼ばれています。なお割引「額」の専用カラムは存在せず、小計値引き額は `coupon_discount` に集約されています。\n\n■次の対応\n要確認: **設計側の記述が不足しています。** 「割引」「割引理由」はカスタマイズ説明に3回登場するのみで、**機能仕様処理概要にも画面部品仕様表にも現れず、識別ID が採番されていません**。注文商品情報の部品表は 1〜12、注文者・支払い情報は 1〜9 で、いずれにも該当項目がありません。\n表示位置・書式・表示条件が設計から確定できないため、まず設計側の定義が必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-9「注文購入履歴詳細」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_order_basedesign.md",
+        "src/Eccube/Entity/Order.php",
+        "src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1827",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-9:注文購入履歴詳細"
+      ],
+      "課題タイトル": "【一部実装】フロント注文_注文購入履歴詳細_注文購入履歴詳細にて、スマレジ取引のクーポン名・クーポン値引き・免税の値が「TODO: スマレジ連携後」という固定文字列のまま表示される",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "クーポン名/値引き/免税額が固定文字列。値は投入済みでTwig配線のみ欠落。クーポン名のカラムは不在",
+      "前回書いた次にすること": "実装対応: 1825と一括対応。クーポン名は格納先の新設要否も要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-9「注文購入履歴詳細」\n注文商品情報エリア 機能仕様処理概要（★）\n> ★スマレジの取引データの場合は下記項目を表示する ・クーポン名 ・クーポン値引き ・**免税額**\n\n画面部品仕様\n> 7 クーポン名 / 8 クーポン値引き / 9 免税額　いずれも「・カスタマイズにより追加」「・スマレジの取引の場合表示する」\n\n■実装の現状\nshopping_history_detail.twig:192-205 は行の出し分け条件（スマレジ系のみ）は設計どおりですが、**値欄が固定文字列「TODO: スマレジ連携後」**になっています。\n\n**起票の説明に誤りがあります。** 起票は「Order の該当getterがどこからも呼ばれていない」としていますが、setter は Smaregi Webhook から呼ばれており**値は既にDBに投入されています**。\n- SmaregiOrderFactory.php:271-277（`setTaxFree` / `setCouponDiscount` / `setSubtotalDiscountDivision`）\n- SmaregiTransactionEditedProcessor.php:94-100（同内容）\n\n欠けているのは getter の Twig への配線のみです。\nなお「クーポン名に相当するカラムが Order / OrderItem に存在しない」という指摘は事実で、最も近いのが `subtotal_discount_division`（小計値引き/割引区分）です。\n\n■次の対応\n実装対応: 固定文字列を getter の出力に差し替える。**値は既にDBにあるため Twig の配線のみで解消します**（起票の見積もりより小規模です）。1825・1827 は同一箇所のため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-9「注文購入履歴詳細」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_order_basedesign.md",
+        "src/Eccube/Entity/Order.php",
+        "src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1828",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-9:注文購入履歴詳細"
+      ],
+      "課題タイトル": "【未実装】フロント注文_注文購入履歴詳細_購入履歴のステータス表示にて、別添資料のBOステータス×注文種別による表示画像切替が実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "詳細画面もテキストバッジ。表示元は CustomerOrderStatus(起票の記述を補正)",
+      "前回書いた次にすること": "実装対応: 1822と根本原因が同一。一括対応",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-9「注文購入履歴詳細」\nカスタマイズ説明\n> ・ステータス表示の**画像**を変更する\n\n画面部品仕様\n> 7 注文ステータス　…　注文ステータスと表示画像の紐付けは「注文ステータスと表示画像の紐付け」シートを参照\n\n■実装の現状\nshopping_history_detail.twig:107-115 はテキストバッジで、CSSも背景色のみです。画像アセット・マッピングとも存在しません（1822と同じ反証結果）。\n\n**起票の記述を1点補正します。** 起票は「一覧・詳細ともステータス名をテキストのバッジとして表示」としていますが、詳細画面が表示しているのは `Order.OrderStatus.name` ではなく **`Order.CustomerOrderStatus`**（`mtb_customer_order_status` の顧客向け名称マスタ）です。CSS修飾子だけが `OrderStatus.id` 由来です。画像未実装という結論は変わりません。\n\n■次の対応\n実装対応: 1822 と根本原因・欠落実装が同一（対象画面が一覧か詳細かの違いのみ）です。一括対応してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-9「注文購入履歴詳細」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_order_basedesign.md",
+        "src/Eccube/Resource/template/default/Mypage/shopping_history.twig",
+        "src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig",
+        "src/Eccube/Service/Front/Mypage/PurchaseHistory/PurchaseHistoryStatusMapper.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1830",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-4:ご注文方法指定"
+      ],
+      "課題タイトル": "【一部実装】フロント注文_ご注文方法指定_ご注文方法指定(F04-02)のポイントエリアにて、表示制御の条件が「購入グループ＝店内アカウント」ではなく「配送方法＝店頭受取(OTC)」となっているため、支店用店内アカウントでスムーズ店頭受取が選択された場合にポイント項目が表示されてしまう。",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "1818と同一の canUsePoint。設計は購入グループ軸も要求",
+      "前回書いた次にすること": "実装対応: canUsePoint の条件式を店舗種別+購入グループへ置換する1箇所に収束",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-4「ご注文方法指定」\nお支払い方法 処理概要\n> ・**支店の場合はポイントを表示しない**\n> ・**購入グループが店内アカウントの場合は文言を表示し、ポイント系の項目は非表示とする**\n\n画面部品仕様\n> 6-4 ポイント残高 / 6-5 ポイント使用 / 6-6 使用ポイント　いずれも「・**ECの場合のみ表示する**」\n\nレイアウト図でも（本店）は 6-1〜6-6、（支店）（購入グループ：店内アカウント）は **6-1・6-2 のみ**です。\n\n■実装の現状\nShopping/index.twig:129 の判定軸が設計と異なります。\n```\n{% set canUsePoint = delivery.id is defined and delivery.id != constant('Eccube\\\\Entity\\\\Delivery::OTC') %}\n```\n`OTC(6)` 単独との不一致のみで、`OTC_GROUP`（OTC + SMOOTH_OTC）ではありません。\n支店の配送方法は ShippingType.php:127-135 / OrderHelper.php:164-172 で OTC・SMOOTH_OTC の2件に固定され、既定選択は `sort_no` 昇順の先頭です。Version20260604000002.php:37-38 で 店頭受取=4 / スムーズ店頭受取=2 のため**既定は SMOOTH_OTC** となり、`canUsePoint` が真になってポイント欄が表示されます。\n設計の分岐軸は「EC／支店／購入グループ＝店内アカウント」の3軸で、**配送方法による分岐は設計に存在しません**。\n対照として、同テンプレート:397 の「当日中に受け取ります」は `not app.user.Player.CustomerGroup.isOtcGroup()` で購入グループを判定済みです。\n\n付記: ECCUBE_HARERUYA-1818 と原因・修正箇所が同一です（1818は「支店」軸、本件は「購入グループ」軸で同じ `canUsePoint` を指摘）。設計は両軸とも要求しているため、修正は `canUsePoint` の条件式を店舗種別＋購入グループへ置換する1箇所に収束します。\n\n■次の対応\n実装対応: `canUsePoint` の条件を店舗種別（isMainShop）＋購入グループ（isOtcGroup）に置き換える。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-4「ご注文方法指定」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_order_basedesign.md",
+        "app/DoctrineMigrations/Version20260604000002.php",
+        "src/Eccube/Entity/DtbCustomerGroup.php",
+        "src/Eccube/Form/Type/Shopping/ShippingType.php",
+        "src/Eccube/Resource/template/default/Shopping/index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1831",
+      "設計書": "0304_基本設計仕様書(フロント_注文).html",
+      "設計シート": [
+        "sheet-4:ご注文方法指定"
+      ],
+      "課題タイトル": "【一部実装】フロント注文_ご注文方法指定_ご注文方法指定(F04-02)の注文サマリーにて、支店では「注文金額合計（税込）」のみを表示すべきところ、別項目である(10-6)内税も併記されている（元レポートの「サマリーが常時フル表示」自体は解消済み）。",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "本店店頭受取の簡略化は設計に記述なし。支店の内税併記は支店レイアウト図と一致し起票の主張は不成立の可能性",
+      "前回書いた次にすること": "要確認: 処理概要と支店レイアウト図が矛盾。図を優先するなら実装は適合",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-4「ご注文方法指定」\nご注文の内容の確認 処理概要（★）\n> ★表示について ・**支店の場合は「注文金額合計（税込）」のみを表示する**\n\n一方、同シートの**支店レイアウト図**は 10-5 / **10-6（内税）** / 10-9 / 10-10 / 10-11 を明示的に含みます（本店レイアウト図は 10-1〜10-11）。\n\n■実装の現状\nShopping/index.twig:757 の条件は `{% if isMainShop and not isDeliveryOTC %}` で、真のときフル表示（758-812）、偽のとき :813-824 で「注文金額合計（税込）＋税率別内税」を表示します。10-9/10-10/10-11 は if/else の外側で常時表示されます。\n\n起票の3つの主張の検証結果です。\n1. 「元レポートの常時フル表示は解消済み」→ **事実**（コミット 0ed1b128 で本支店の表示制御が入っています）\n2. 「本店の店頭受取でも簡略表示になり設計に根拠がない」→ **事実**。設計は「支店の場合」しか規定しておらず、本店店頭受取の簡略化に関する記述はありません\n3. 「支店で内税(10-6)を併記しているのは設計違反」→ **事実でない可能性が高い**。支店レイアウト図が 10-6 を明示的に含んでおり、実装（注文金額合計＋税率別内税）は図と一致します\n\n■次の対応\n要確認: **処理概要と支店レイアウト図が矛盾しています。** 処理概要の「『注文金額合計（税込）』のみを表示する」を字義どおり取ると、同じシートの支店レイアウト図が含む 10-6 内税と両立しません。\n図を優先するなら実装は適合しており、起票の主張3は成立しません。主張2（本店店頭受取の簡略化）は設計に記述がないため別途の確定が必要です。設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-4「ご注文方法指定」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F04_order_basedesign.md",
+        "src/Eccube/EventListener/TwigInitializeListener.php"
+      ]
+    }
+  ]
+}

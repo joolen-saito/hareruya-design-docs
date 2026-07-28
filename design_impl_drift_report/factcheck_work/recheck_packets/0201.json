@@ -1,0 +1,151 @@
+{
+  "book": "0201",
+  "count": 8,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-2190",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-3:メンバー管理一覧",
+        "sheet-4:メンバー管理"
+      ],
+      "課題タイトル": "【未実装】システム設定_メンバー管理一覧_メンバー管理一覧にて、「デフォルト検索表示店舗」による絞り込みができない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "店舗による絞り込みが無く表示列のみ。ただし画面部品仕様表では2-4は表示リスト区分で書式欄も空",
+      "前回書いた次にすること": "要確認: 機能仕様処理概要と画面部品仕様表で粒度が食い違う。どちらを正とするか確認が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-3「メンバー管理一覧」\n機能仕様処理概要「項目の追加」\n> ・識別ID:2-4「デフォルト検索表示店舗」を選択時、**選択された店舗で表示を絞り込む**\n\n■実装の現状\nmember.twig:113-128 の画面上部の絞り込みは `#filter_department` と `#filter_authority` の2つのみです。:45-65 の `filterMembers()` も2軸しか参照せず、:164 の `<tr>` に店舗の data 属性もありません。\n:174-176 の `Member.DefaultSearchBaseInfo.shopName` は**表示列としてのみ**存在します。MemberController.php:60-86 の `index()` はテンプレートへ `Departments` と `Authorities` しか渡しておらず、店舗一覧すら渡していません。\n\n■次の対応\n要確認: **設計内で粒度が食い違います。** 同シートの画面部品仕様表では 2-4 は「表示リスト」区分に置かれ、書式・制限が空欄です。絞り込みUIである 1-2「所属」1-3「権限」は「単一選択(セレクトボックス)」「選択された値でリストを絞り込み」と明記されているのに、2-4 にはその記載がありません。レイアウト図でも 1-2/1-3 は画面上部、2-4 は一覧内に置かれています。\n機能仕様処理概要が絞り込みを要求し、画面部品仕様表は表示列としか定義していないため、どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-3「メンバー管理一覧」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "html/template/admin/assets/js/function.js",
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2191",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-3:メンバー管理一覧",
+        "sheet-4:メンバー管理"
+      ],
+      "課題タイトル": "【一部実装】システム設定_メンバー管理一覧_メンバー管理一覧にて、表示順の上/下移動アイコン押下時に処理前の確認が行われない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "上下移動と編集アイコンに処理前確認が無い。上下移動アンカーにはCSRFトークンも無い",
+      "前回書いた次にすること": "実装対応: 処理前確認を追加。CSRFトークン欠落も併せて是正を検討",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-3「メンバー管理一覧」\n画面部品仕様\n> 2-8 編集アイコン　リンク　**それぞれのアイコンの処理を行う**\n> **処理前に確認を行う**\n\n■実装の現状\nmember.twig:22-43 の上/下移動はインラインJSで `confirm()` もモーダルもなく、クリックで即 `$.ajax` を送信します。:231-250 のアンカーには `{{ csrf_token_for_anchor() }}` も付与されていません。\n:222-230 の編集アイコンも確認なしで遷移します。\n削除のみ :260-297 で Bootstrap モーダルを経由します（`data-confirm=\"false\"` で共通confirmを明示的に無効化しモーダルで代替）。\n\n共通の確認ダイアログ（function.js:161-172）は `a[token-for-anchor]` セレクタにのみ発火するため、上/下移動アンカーは対象外です。全JSアセットを検索しても `action-up` / `action-down` の確認処理は0件でした。\n\n■次の対応\n実装対応: 上移動・下移動・編集アイコンに処理前の確認を追加する。あわせて上/下移動アンカーにCSRFトークンが付与されていない点も是正をご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-3「メンバー管理一覧」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "html/template/admin/assets/js/function.js",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2192",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-4:メンバー管理",
+        "sheet-3:メンバー管理一覧"
+      ],
+      "課題タイトル": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、ログインIDの最大文字数が設計の255文字ではなく50文字になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "eccube_id_max_len=50。設計部品表は255文字",
+      "前回書いた次にすること": "要確認: 同シートに「現行の項目は各システムの入力制限に準拠する」があり255を否定。設計担当者の確定が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-4「メンバー管理」\n画面部品仕様\n> 1-4 ログインID　半角・全角　○　**255文字**\n\n■実装の現状\nMemberType.php の該当フィールドは `Length(max: eccube_id_max_len)` を使用し、app/config/eccube/packages/eccube.yaml の `eccube_id_max_len: 50` により実効上限は**50文字**です。\n\n■次の対応\n要確認: **設計内に255文字を否定する記述があります。** 同シートの機能仕様処理概要に「入力制限について ・**EC-CUBEエンタプライズ、現行の項目は各システムの入力制限に準拠する**」とあり、ログインIDは「項目の追加」に列挙されていない現行踏襲項目のため、この一文に従えばEC-CUBEの入力制限に準拠することになります。画面部品仕様表の255文字と正面から矛盾します。どちらを正とするか設計担当者にご確認ください。\n\n付記: 起票が引用する識別IDは設計書と1つずれています（二次資料 .cursor/docs/MDfile/M11_system_setting_basedesign.md 由来）。設計書の正しい対応は 1-4=ログインID、1-6=パスワード、1-7=パスワード(確認)、1-8=権限グループ、1-11=稼働 です。要求内容は一致するため事実認定に影響はありませんが、起票本文の訂正をご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-4「メンバー管理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Entity/Member.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2193",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-4:メンバー管理",
+        "sheet-3:メンバー管理一覧"
+      ],
+      "課題タイトル": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、パスワードの最大文字数が設計の255文字ではなく50文字になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "eccube_password_max_len=50。設計部品表は255文字。全角も入力不可",
+      "前回書いた次にすること": "要確認: 2192と同じ論点。全角不可は起票未指摘の追加乖離",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-4「メンバー管理」\n画面部品仕様\n> 1-6 パスワード　半角・全角　○　**255文字**\n\n■実装の現状\nMemberType.php の該当フィールドは `Length(max: eccube_password_max_len)` を使用し、app/config/eccube/packages/eccube.yaml の `eccube_password_max_len: 50` により実効上限は**50文字**です。\n\nなお `eccube_password_pattern`（`/\\A(?=.*?[a-z])(?=.*?\\d)[!-~]+\\z/i`）は ASCII 可視文字のみを許可するため、設計の「半角・全角」のうち**全角文字は入力できません**（起票未指摘の追加乖離）。\n\n■次の対応\n要確認: **設計内に255文字を否定する記述があります。** 同シートの機能仕様処理概要に「入力制限について ・**EC-CUBEエンタプライズ、現行の項目は各システムの入力制限に準拠する**」とあり、パスワードは「項目の追加」に列挙されていない現行踏襲項目のため、この一文に従えばEC-CUBEの入力制限に準拠することになります。画面部品仕様表の255文字と正面から矛盾します。どちらを正とするか設計担当者にご確認ください。\n\n付記: 起票が引用する識別IDは設計書と1つずれています（二次資料 .cursor/docs/MDfile/M11_system_setting_basedesign.md 由来）。設計書の正しい対応は 1-4=ログインID、1-6=パスワード、1-7=パスワード(確認)、1-8=権限グループ、1-11=稼働 です。要求内容は一致するため事実認定に影響はありませんが、起票本文の訂正をご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-4「メンバー管理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "src/Eccube/Form/Type/Admin/MemberType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2194",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-4:メンバー管理",
+        "sheet-3:メンバー管理一覧"
+      ],
+      "課題タイトル": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、パスワード(確認)の最大文字数が設計の255文字ではなく50文字になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "パスワード確認も同じ Length(max:50) が適用される",
+      "前回書いた次にすること": "要確認: 2192/2193と同じ論点",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-4「メンバー管理」\n画面部品仕様\n> 1-7 パスワード(確認)　半角・全角　○　**255文字**\n\n■実装の現状\nMemberType.php の該当フィールドは `Length(max: eccube_password_max_len)` を使用し、app/config/eccube/packages/eccube.yaml の `eccube_password_max_len: 50` により実効上限は**50文字**です。\n\nRepeatedType は `options` を first/second 双方にマージするため、パスワード(確認)にも同じ制約が適用されます。\n\n■次の対応\n要確認: **設計内に255文字を否定する記述があります。** 同シートの機能仕様処理概要に「入力制限について ・**EC-CUBEエンタプライズ、現行の項目は各システムの入力制限に準拠する**」とあり、パスワード(確認)は「項目の追加」に列挙されていない現行踏襲項目のため、この一文に従えばEC-CUBEの入力制限に準拠することになります。画面部品仕様表の255文字と正面から矛盾します。どちらを正とするか設計担当者にご確認ください。\n\n付記: 起票が引用する識別IDは設計書と1つずれています（二次資料 .cursor/docs/MDfile/M11_system_setting_basedesign.md 由来）。設計書の正しい対応は 1-4=ログインID、1-6=パスワード、1-7=パスワード(確認)、1-8=権限グループ、1-11=稼働 です。要求内容は一致するため事実認定に影響はありませんが、起票本文の訂正をご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-4「メンバー管理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "src/Eccube/Form/Type/Admin/MemberType.php",
+        "src/Eccube/Form/Type/RepeatedPasswordType.php",
+        "src/Eccube/Resource/template/admin/Setting/System/member_edit.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2195",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-4:メンバー管理",
+        "sheet-3:メンバー管理一覧"
+      ],
+      "課題タイトル": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、権限グループの選択肢が「登録されている全権限」になっていない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "権限レベル以上かつ isViewable の絞り込みで、店舗オペレーターでは1件のみ",
+      "前回書いた次にすること": "要確認: 設計に絞り込みを禁じる記述も顧客/ゲストを含めよという記述も無い。設計意図の確認が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-4「メンバー管理」\n画面部品仕様\n> 1-8 権限グループ　単一選択(セレクトボックス)　○　選択肢:**登録されている全権限**\n\n■実装の現状\nMemberType.php:99-120 の `Authority` は次の2つの絞り込みを行います。\n- `query_builder`: `a.id >= :current_member_level`（ログイン中メンバーの権限ID）かつ `a.isViewable = true`\n- `constraints`: `NotEqualTo(GUEST_ID)` と `NotEqualTo(CUSTOMER_ID)`\n\nマスタは 1システム管理者/2モールオーナー/3モールオペレーター/4店舗オーナー/5店舗オペレーター/6顧客(is_viewable=0)/7ゲスト(is_viewable=0) の7件です。店舗オペレーター(id=5)でログインすると選択肢は**「店舗オペレーター」1件のみ**になります。\n顧客・ゲストの除外は表示層（isViewable）と検証層（NotEqualTo）の**二重**で実装されており、単なる実装漏れではありません。\n\n■次の対応\n要確認: 実装が「登録されている全権限」になっていないことは事実です。ただし設計書には**権限レベルによる絞り込みを禁じる記述も、顧客・ゲストを含めよという記述もありません**。根拠は部品表の「選択肢:登録されている全権限」の一文のみです。\nsheet-5「権限管理」には「上位権限でアクセス可となっている場合は下位権限もアクセス可となり、下位権限の権限編集不可とする」という権限レベルの上下関係の定義がありますが、メンバーへの権限付与範囲の規定はありません。設計意図を設計担当者にご確認ください。\n\n付記: 起票が引用する識別IDは設計書と1つずれています（二次資料 .cursor/docs/MDfile/M11_system_setting_basedesign.md 由来）。設計書の正しい対応は 1-4=ログインID、1-6=パスワード、1-7=パスワード(確認)、1-8=権限グループ、1-11=稼働 です。要求内容は一致するため事実認定に影響はありませんが、起票本文の訂正をご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-4「メンバー管理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php",
+        "src/Eccube/Form/Type/Admin/MemberType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2197",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-4:メンバー管理",
+        "sheet-3:メンバー管理一覧"
+      ],
+      "課題タイトル": "【実装乖離】システム設定_メンバー管理_メンバー管理の新規登録時に、稼働ラジオボタンの初期値「非稼働」が選択されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "初期値「非稼働」が未設定でどちらも未選択。設計は任意だが実装は NotBlank で必須",
+      "前回書いた次にすること": "実装対応: 初期値に非稼働を設定。NotBlank の要否も要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-4「メンバー管理」\n画面部品仕様\n> 1-11 稼働　単一選択(ラジオボタン)　必須欄は空欄（＝**任意**）　初期値: **非稼働**\n\n■実装の現状\nMemberType.php:130-137 の `Work` に `'data'` も `'preferred_choices'` も既定値指定もなく、MemberController.php:93-97 の新規登録経路でも `setWork()` を呼んでいません（全文検索でも新規登録経路での呼び出しは0件）。Member エンティティも `?Work $Work = null` でコンストラクタ初期化がありません。結果、初期表示はどちらも未選択になります。\nマスタは id=0「非稼働」/ id=1「稼働」です。\n\n**起票未指摘の追加乖離**: 設計は「稼働」を**任意**（必須欄が「-」）としていますが、実装は `NotBlank()` を付けて必須にしています。\n\n■次の対応\n実装対応: 初期値に「非稼働」（id=0）を設定する。あわせて `NotBlank()` の要否（設計は任意）もご確認ください。\n\n付記: 起票が引用する識別IDは設計書と1つずれています（二次資料 .cursor/docs/MDfile/M11_system_setting_basedesign.md 由来）。設計書の正しい対応は 1-4=ログインID、1-6=パスワード、1-7=パスワード(確認)、1-8=権限グループ、1-11=稼働 です。要求内容は一致するため事実認定に影響はありませんが、起票本文の訂正をご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-4「メンバー管理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php",
+        "src/Eccube/Entity/Member.php",
+        "src/Eccube/Form/Type/Admin/MemberType.php",
+        "src/Eccube/Resource/doctrine/import_csv/ja/mtb_work.csv"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2198",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-5:権限管理"
+      ],
+      "課題タイトル": "【実装乖離】システム設定_権限管理_権限管理画面にて、複製操作が設計書指定の「リンク」ではなく通常ボタン（button要素）で実装されている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "権限名の必須チェックがサーバ側に無い。複製もリンクでなくボタン要素",
+      "前回書いた次にすること": "実装対応: サーバ側の必須チェックを追加。部品種別の相違は優先度低め",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-5「権限管理」\n機能仕様処理概要「複製について」\n> ・権限名を入力し画面下部の登録ボタンを押して登録する\n> ・**権限名は必須**かつ重複は不可とする\n\n画面部品仕様\n> 1-9 複製**リンク**　リンク　・クリック時、該当の行と同権限の複製行を追加する\n> 1-11 権限名入力　テキスト　○　権限名の重複は不可能\n\n■実装の現状\n1) 部品種別: authority.twig:328-332 は `<button type=\"button\" class=\"btn btn-ec-regular btn-copy\">` で、設計の「リンク」ではなく**ボタン要素**です。アンカー風にするCSS/JSもありません。\n2) 必須チェック: 複製行の権限名入力（同:180-183 で動的生成）に付くのは HTML の `required` 属性のみです。AuthorityIndexAction.php:66-89 は重複チェック（同一リクエスト内＋既存同名）のみで、**空文字を弾く NotBlank 相当の検証がサーバ側に存在しません**（`new_authority_name` の全文検索で確認）。\n複製機能そのもの（cloneNode による行追加）と重複チェックは設計どおり実装済みです。\n\n■次の対応\n実装対応: サーバ側に権限名の必須チェックを追加する。部品種別（ボタン／リンク）の相違は表示上の差のため優先度は低めで差し支えありません。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-5「権限管理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "src/Eccube/Service/Admin/Setting/System/AuthorityIndexAction.php"
+      ]
+    }
+  ]
+}

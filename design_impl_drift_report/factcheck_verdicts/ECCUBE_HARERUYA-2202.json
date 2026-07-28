@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2202",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 総合計行を追加。total は計算済みのため出力側のみで解消。出荷完了の件は2199に集約推奨",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "CSV出力が total を捨てており総合計行が無い。画面側は total を使用",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-7「日別・月別集計 CSV出力」\n機能仕様処理概要（★集計項目の固定）\n> ・**最終行には「総合計」を追加**。識別ID3～12各列のそれぞれの総合計を出力\n\n■実装の現状\nSummaryCsvExporterService.php:85-125 の `export()` は `AnalysisSummaryBuilder::build()` の戻り値のうち **`$summaryData['summary']` だけを使用**し、総合計行を出力しません。\n\n**総合計は既に計算済みです。** AnalysisSummaryBuilder.php:40-56 の `build()` は `['summary' => ..., 'total' => $this->buildTotal(...)]` を返しており、画面側（Analysis/summary.twig:236-243）は `total` を使って総合計行を描画しています。**CSVだけが `total` を捨てている**という明確な非対称です（`src/Eccube/Service/Csv/` 全体で `grand_total` / `総合計` は0件）。\n\n■次の対応\n実装対応: CSV出力に総合計行を追加する。`total` は既に計算されているため、出力側の対応のみで解消します。\n\n要確認: 起票が併せて指摘する「出荷完了のみ計上」については、**sheet-7 のカスタマイズ説明に「集計方式の変更」が列挙されておらず、機能仕様処理概要にも「出荷完了」の語が一度も出てきません**。この要求は sheet-3 / sheet-5（M12-01）側の記載です。2199 として別途起票されているため、本件は総合計行の欠落に絞ることを推奨します。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-7「日別・月別集計 CSV出力」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:19:41+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:19:49+09:00",
+  "appliedStatus": "処理中"
+}

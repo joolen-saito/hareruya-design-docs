@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1830",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: canUsePoint の条件式を店舗種別+購入グループへ置換する1箇所に収束",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "1818と同一の canUsePoint。設計は購入グループ軸も要求",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-4「ご注文方法指定」\nお支払い方法 処理概要\n> ・**支店の場合はポイントを表示しない**\n> ・**購入グループが店内アカウントの場合は文言を表示し、ポイント系の項目は非表示とする**\n\n画面部品仕様\n> 6-4 ポイント残高 / 6-5 ポイント使用 / 6-6 使用ポイント　いずれも「・**ECの場合のみ表示する**」\n\nレイアウト図でも（本店）は 6-1〜6-6、（支店）（購入グループ：店内アカウント）は **6-1・6-2 のみ**です。\n\n■実装の現状\nShopping/index.twig:129 の判定軸が設計と異なります。\n```\n{% set canUsePoint = delivery.id is defined and delivery.id != constant('Eccube\\\\Entity\\\\Delivery::OTC') %}\n```\n`OTC(6)` 単独との不一致のみで、`OTC_GROUP`（OTC + SMOOTH_OTC）ではありません。\n支店の配送方法は ShippingType.php:127-135 / OrderHelper.php:164-172 で OTC・SMOOTH_OTC の2件に固定され、既定選択は `sort_no` 昇順の先頭です。Version20260604000002.php:37-38 で 店頭受取=4 / スムーズ店頭受取=2 のため**既定は SMOOTH_OTC** となり、`canUsePoint` が真になってポイント欄が表示されます。\n設計の分岐軸は「EC／支店／購入グループ＝店内アカウント」の3軸で、**配送方法による分岐は設計に存在しません**。\n対照として、同テンプレート:397 の「当日中に受け取ります」は `not app.user.Player.CustomerGroup.isOtcGroup()` で購入グループを判定済みです。\n\n付記: ECCUBE_HARERUYA-1818 と原因・修正箇所が同一です（1818は「支店」軸、本件は「購入グループ」軸で同じ `canUsePoint` を指摘）。設計は両軸とも要求しているため、修正は `canUsePoint` の条件式を店舗種別＋購入グループへ置換する1箇所に収束します。\n\n■次の対応\n実装対応: `canUsePoint` の条件を店舗種別（isMainShop）＋購入グループ（isOtcGroup）に置き換える。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-4「ご注文方法指定」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:13:47+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:13:51+09:00",
+  "appliedStatus": "処理中"
+}

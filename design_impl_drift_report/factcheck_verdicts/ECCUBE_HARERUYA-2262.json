@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2262",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: CSV取込に枚数検証を追加。既存メソッドは警告扱いのため呼ぶだけでは要求を満たさない",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "CSV取込に枚数上下限検証が無い。DeckValidationService はCSVから未参照",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0212_基本設計仕様書(デッキ管理) sheet-6「デッキ登録CSVアップロード」\n機能仕様処理概要\n> メインリスト、サイドリストのカード枚数がフォーマットで規定されている最大数を超えるか最小数に満たない場合は**エラー**。\n\n■実装の現状\nDeckUpdateImportHandler.php:97-240 の `onValidateRow()` に含まれるのは、メインリスト必須／フォーマット存在／アーキタイプ存在／イベント詳細ID存在／日付形式／disp_flg形式／private_flg形式／統率者必須・存在／デッキID存在・種別 の9チェックのみで、**枚数の上下限検証がありません**。onReadRow(242-371) にもありません。\n枚数検証ロジック `DeckValidationService::validateBoardCounts()`（271-334）は存在しますが、public 経由の利用者は DeckStoreAction（管理画面デッキ登録）と DeckEntryController（フロント）の2つだけで、**CSV取込からの参照は0件**です。\n\n■次の対応\n実装対応: CSV取込に枚数上下限の検証を追加する。\n\n注意: 既存の `validate()` は結果を `$warnings` として返す**警告**扱いで、DeckStoreAction では commit 後に呼ばれ登録を止めません。設計は「エラー」を要求しているため、単に既存メソッドを呼ぶだけでは要求を満たしません。messageStore へのエラー追加と `breakAll()` の経路に載せる必要があります。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html / sheet-6「デッキ登録CSVアップロード」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T09:51:36+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T09:51:45+09:00",
+  "appliedStatus": "処理中"
+}

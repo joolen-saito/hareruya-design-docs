@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1998",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 保存時に base_info も unset する",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "除外が _token のみで base_info が保存され、読込時に初期値を上書きする",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-4「在庫検索一覧(検索入力)」\n> ・ボタン押下時に設定されている検索条件を保存する\n> ・**店舗は検索条件の保存に含めない**\n\n■実装の現状\nStockListController.php:337-344 の除外は `_token` のみで、`base_info`（店舗）が保存対象に残ります。\n```\n$dataToStore = $viewData;\nunset($dataToStore['_token']); // トークンは保存しない\n$searchPattern->setPattern(serialize($dataToStore))\n```\n読込側 :399-403 は `unserialize` 結果をそのまま `submitAndGetData` するため、フォーム定義の初期値（ログインメンバーのBaseInfo）を上書きします。\n`savePattern()`（308-352行）・`pattern()`（390-428行）を通読しましたが、`base_info` を除外・上書きする処理も、それを行う Service / Subscriber も存在しません。\n\n■次の対応\n実装対応: 保存時に `base_info` も `unset` する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-4「在庫検索一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:23:58+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:24:02+09:00",
+  "appliedStatus": "処理中"
+}

@@ -1,0 +1,48 @@
+{
+  "book": "0204",
+  "count": 2,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-1958",
+      "summary": "【一部実装】商品管理_グッズ商品CSV登録/フォーマット_グッズ商品CSV登録にて、スマレジサーバへ照会したうえでの重複スマレジ商品コードのエラー判定が実装されていない",
+      "feature": "グッズ商品CSV登録/フォーマット",
+      "sheetCandidates": [
+        {
+          "id": "sheet-11",
+          "title": "グッズ商品CSV登録"
+        }
+      ],
+      "期待される挙動": "- グッズ商品CSV登録では、登録・更新時にスマレジサーバに通信し、スマレジ商品コードの登録状況を確認すること。\n- 登録時、重複するスマレジ商品コードがある場合はエラー扱いとすること。",
+      "現在の挙動": "- 取込処理はスマレジサーバへ照会を行っておらず、dtb_product_class の部分ユニークインデックス(uniq_smaregi_product_code_partial)違反(UniqueConstraintViolationException)を捕捉して重複エラーメッセージを出力しているのみである。\n- したがって重複判定はEC-CUBEのDB内に同一コードが存在する場合に限られ、EC-CUBEに未登録でスマレジ側にのみ存在するコードは重複として検出されない。\n- スマレジ連携は取込完了後に SmaregiProductClassCsvImportUpsertCoordinator が非同期の upsert ジョブを投入する方式で、取込中にスマレジ商品の登録状況を照会する処理は存在しない。\n- 実装内にも『スマレジ連携状態の確認後、更新するか決める』旨のTODOコメントが残っている。",
+      "引用": [
+        "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:658-666",
+        "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:616-620",
+        "src/Eccube/Entity/ProductClass.php:36-40",
+        "src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:65-108",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md:773-776"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1959",
+      "summary": "【未実装】商品管理_グッズ商品CSV登録/フォーマット_グッズ商品CSV登録にて、更新時にスマレジ商品情報が存在しない場合のエラー判定が実装されていない",
+      "feature": "グッズ商品CSV登録/フォーマット",
+      "sheetCandidates": [
+        {
+          "id": "sheet-11",
+          "title": "グッズ商品CSV登録"
+        }
+      ],
+      "期待される挙動": "- グッズ商品CSV登録では、登録・更新時にスマレジサーバに通信し、スマレジ商品コードの登録状況を確認すること。\n- 更新時、スマレジ商品情報がない場合はエラー扱いとすること。",
+      "現在の挙動": "- グッズ商品CSV取込の更新処理では、スマレジサーバへ商品情報の存在確認を行う処理が一切存在しない。\n- 更新時に実行される行バリデータは、買取価格と販売価格の整合、スマレジ連携フラグON時の必須項目、廃止時の在庫チェック、連携フラグOFF時のスマレジ在庫チェックのみで、スマレジ商品情報の存在確認は含まれていない。\n- スマレジへの反映は取込完了後の非同期 upsert ジョブに委ねられており、取込時点でのエラー判定は行われない（実装にも『スマレジ連携状態の確認後、更新するか決める』というTODOが残っている）。",
+      "引用": [
+        "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:583-620",
+        "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:320-340",
+        "src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:47-56",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md:775-775",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md:777-777"
+      ],
+      "引用_不在または範囲外": []
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1827",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 1825と一括対応。クーポン名は格納先の新設要否も要確認",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "クーポン名/値引き/免税額が固定文字列。値は投入済みでTwig配線のみ欠落。クーポン名のカラムは不在",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-9「注文購入履歴詳細」\n注文商品情報エリア 機能仕様処理概要（★）\n> ★スマレジの取引データの場合は下記項目を表示する ・クーポン名 ・クーポン値引き ・**免税額**\n\n画面部品仕様\n> 7 クーポン名 / 8 クーポン値引き / 9 免税額　いずれも「・カスタマイズにより追加」「・スマレジの取引の場合表示する」\n\n■実装の現状\nshopping_history_detail.twig:192-205 は行の出し分け条件（スマレジ系のみ）は設計どおりですが、**値欄が固定文字列「TODO: スマレジ連携後」**になっています。\n\n**起票の説明に誤りがあります。** 起票は「Order の該当getterがどこからも呼ばれていない」としていますが、setter は Smaregi Webhook から呼ばれており**値は既にDBに投入されています**。\n- SmaregiOrderFactory.php:271-277（`setTaxFree` / `setCouponDiscount` / `setSubtotalDiscountDivision`）\n- SmaregiTransactionEditedProcessor.php:94-100（同内容）\n\n欠けているのは getter の Twig への配線のみです。\nなお「クーポン名に相当するカラムが Order / OrderItem に存在しない」という指摘は事実で、最も近いのが `subtotal_discount_division`（小計値引き/割引区分）です。\n\n■次の対応\n実装対応: 固定文字列を getter の出力に差し替える。**値は既にDBにあるため Twig の配線のみで解消します**（起票の見積もりより小規模です）。1825・1827 は同一箇所のため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-9「注文購入履歴詳細」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:13:47+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:13:50+09:00",
+  "appliedStatus": "処理中"
+}

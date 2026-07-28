@@ -1,0 +1,932 @@
+{
+  "group": "misc",
+  "books": [
+    "0201",
+    "0211",
+    "0303",
+    "0203",
+    "0302",
+    "0212",
+    "0308",
+    "0210",
+    "0204",
+    "0208"
+  ],
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-2190",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-3:メンバー管理一覧",
+        "sheet-4:メンバー管理"
+      ],
+      "課題タイトル": "【未実装】システム設定_メンバー管理一覧_メンバー管理一覧にて、「デフォルト検索表示店舗」による絞り込みができない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "店舗による絞り込みが無く表示列のみ。ただし画面部品仕様表では2-4は表示リスト区分で書式欄も空",
+      "前回書いた次にすること": "要確認: 機能仕様処理概要と画面部品仕様表で粒度が食い違う。どちらを正とするか確認が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-3「メンバー管理一覧」\n機能仕様処理概要「項目の追加」\n> ・識別ID:2-4「デフォルト検索表示店舗」を選択時、**選択された店舗で表示を絞り込む**\n\n■実装の現状\nmember.twig:113-128 の画面上部の絞り込みは `#filter_department` と `#filter_authority` の2つのみです。:45-65 の `filterMembers()` も2軸しか参照せず、:164 の `<tr>` に店舗の data 属性もありません。\n:174-176 の `Member.DefaultSearchBaseInfo.shopName` は**表示列としてのみ**存在します。MemberController.php:60-86 の `index()` はテンプレートへ `Departments` と `Authorities` しか渡しておらず、店舗一覧すら渡していません。\n\n■次の対応\n要確認: **設計内で粒度が食い違います。** 同シートの画面部品仕様表では 2-4 は「表示リスト」区分に置かれ、書式・制限が空欄です。絞り込みUIである 1-2「所属」1-3「権限」は「単一選択(セレクトボックス)」「選択された値でリストを絞り込み」と明記されているのに、2-4 にはその記載がありません。レイアウト図でも 1-2/1-3 は画面上部、2-4 は一覧内に置かれています。\n機能仕様処理概要が絞り込みを要求し、画面部品仕様表は表示列としか定義していないため、どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-3「メンバー管理一覧」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "html/template/admin/assets/js/function.js",
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2191",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-3:メンバー管理一覧",
+        "sheet-4:メンバー管理"
+      ],
+      "課題タイトル": "【一部実装】システム設定_メンバー管理一覧_メンバー管理一覧にて、表示順の上/下移動アイコン押下時に処理前の確認が行われない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "上下移動と編集アイコンに処理前確認が無い。上下移動アンカーにはCSRFトークンも無い",
+      "前回書いた次にすること": "実装対応: 処理前確認を追加。CSRFトークン欠落も併せて是正を検討",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-3「メンバー管理一覧」\n画面部品仕様\n> 2-8 編集アイコン　リンク　**それぞれのアイコンの処理を行う**\n> **処理前に確認を行う**\n\n■実装の現状\nmember.twig:22-43 の上/下移動はインラインJSで `confirm()` もモーダルもなく、クリックで即 `$.ajax` を送信します。:231-250 のアンカーには `{{ csrf_token_for_anchor() }}` も付与されていません。\n:222-230 の編集アイコンも確認なしで遷移します。\n削除のみ :260-297 で Bootstrap モーダルを経由します（`data-confirm=\"false\"` で共通confirmを明示的に無効化しモーダルで代替）。\n\n共通の確認ダイアログ（function.js:161-172）は `a[token-for-anchor]` セレクタにのみ発火するため、上/下移動アンカーは対象外です。全JSアセットを検索しても `action-up` / `action-down` の確認処理は0件でした。\n\n■次の対応\n実装対応: 上移動・下移動・編集アイコンに処理前の確認を追加する。あわせて上/下移動アンカーにCSRFトークンが付与されていない点も是正をご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-3「メンバー管理一覧」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "html/template/admin/assets/js/function.js",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2192",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-4:メンバー管理",
+        "sheet-3:メンバー管理一覧"
+      ],
+      "課題タイトル": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、ログインIDの最大文字数が設計の255文字ではなく50文字になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "eccube_id_max_len=50。設計部品表は255文字",
+      "前回書いた次にすること": "要確認: 同シートに「現行の項目は各システムの入力制限に準拠する」があり255を否定。設計担当者の確定が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-4「メンバー管理」\n画面部品仕様\n> 1-4 ログインID　半角・全角　○　**255文字**\n\n■実装の現状\nMemberType.php の該当フィールドは `Length(max: eccube_id_max_len)` を使用し、app/config/eccube/packages/eccube.yaml の `eccube_id_max_len: 50` により実効上限は**50文字**です。\n\n■次の対応\n要確認: **設計内に255文字を否定する記述があります。** 同シートの機能仕様処理概要に「入力制限について ・**EC-CUBEエンタプライズ、現行の項目は各システムの入力制限に準拠する**」とあり、ログインIDは「項目の追加」に列挙されていない現行踏襲項目のため、この一文に従えばEC-CUBEの入力制限に準拠することになります。画面部品仕様表の255文字と正面から矛盾します。どちらを正とするか設計担当者にご確認ください。\n\n付記: 起票が引用する識別IDは設計書と1つずれています（二次資料 .cursor/docs/MDfile/M11_system_setting_basedesign.md 由来）。設計書の正しい対応は 1-4=ログインID、1-6=パスワード、1-7=パスワード(確認)、1-8=権限グループ、1-11=稼働 です。要求内容は一致するため事実認定に影響はありませんが、起票本文の訂正をご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-4「メンバー管理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Entity/Member.php"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2193",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-4:メンバー管理",
+        "sheet-3:メンバー管理一覧"
+      ],
+      "課題タイトル": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、パスワードの最大文字数が設計の255文字ではなく50文字になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "eccube_password_max_len=50。設計部品表は255文字。全角も入力不可",
+      "前回書いた次にすること": "要確認: 2192と同じ論点。全角不可は起票未指摘の追加乖離",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-4「メンバー管理」\n画面部品仕様\n> 1-6 パスワード　半角・全角　○　**255文字**\n\n■実装の現状\nMemberType.php の該当フィールドは `Length(max: eccube_password_max_len)` を使用し、app/config/eccube/packages/eccube.yaml の `eccube_password_max_len: 50` により実効上限は**50文字**です。\n\nなお `eccube_password_pattern`（`/\\A(?=.*?[a-z])(?=.*?\\d)[!-~]+\\z/i`）は ASCII 可視文字のみを許可するため、設計の「半角・全角」のうち**全角文字は入力できません**（起票未指摘の追加乖離）。\n\n■次の対応\n要確認: **設計内に255文字を否定する記述があります。** 同シートの機能仕様処理概要に「入力制限について ・**EC-CUBEエンタプライズ、現行の項目は各システムの入力制限に準拠する**」とあり、パスワードは「項目の追加」に列挙されていない現行踏襲項目のため、この一文に従えばEC-CUBEの入力制限に準拠することになります。画面部品仕様表の255文字と正面から矛盾します。どちらを正とするか設計担当者にご確認ください。\n\n付記: 起票が引用する識別IDは設計書と1つずれています（二次資料 .cursor/docs/MDfile/M11_system_setting_basedesign.md 由来）。設計書の正しい対応は 1-4=ログインID、1-6=パスワード、1-7=パスワード(確認)、1-8=権限グループ、1-11=稼働 です。要求内容は一致するため事実認定に影響はありませんが、起票本文の訂正をご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-4「メンバー管理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "src/Eccube/Form/Type/Admin/MemberType.php"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2194",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-4:メンバー管理",
+        "sheet-3:メンバー管理一覧"
+      ],
+      "課題タイトル": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、パスワード(確認)の最大文字数が設計の255文字ではなく50文字になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "パスワード確認も同じ Length(max:50) が適用される",
+      "前回書いた次にすること": "要確認: 2192/2193と同じ論点",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-4「メンバー管理」\n画面部品仕様\n> 1-7 パスワード(確認)　半角・全角　○　**255文字**\n\n■実装の現状\nMemberType.php の該当フィールドは `Length(max: eccube_password_max_len)` を使用し、app/config/eccube/packages/eccube.yaml の `eccube_password_max_len: 50` により実効上限は**50文字**です。\n\nRepeatedType は `options` を first/second 双方にマージするため、パスワード(確認)にも同じ制約が適用されます。\n\n■次の対応\n要確認: **設計内に255文字を否定する記述があります。** 同シートの機能仕様処理概要に「入力制限について ・**EC-CUBEエンタプライズ、現行の項目は各システムの入力制限に準拠する**」とあり、パスワード(確認)は「項目の追加」に列挙されていない現行踏襲項目のため、この一文に従えばEC-CUBEの入力制限に準拠することになります。画面部品仕様表の255文字と正面から矛盾します。どちらを正とするか設計担当者にご確認ください。\n\n付記: 起票が引用する識別IDは設計書と1つずれています（二次資料 .cursor/docs/MDfile/M11_system_setting_basedesign.md 由来）。設計書の正しい対応は 1-4=ログインID、1-6=パスワード、1-7=パスワード(確認)、1-8=権限グループ、1-11=稼働 です。要求内容は一致するため事実認定に影響はありませんが、起票本文の訂正をご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-4「メンバー管理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "src/Eccube/Form/Type/Admin/MemberType.php",
+        "src/Eccube/Form/Type/RepeatedPasswordType.php",
+        "src/Eccube/Resource/template/admin/Setting/System/member_edit.twig"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2195",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-4:メンバー管理",
+        "sheet-3:メンバー管理一覧"
+      ],
+      "課題タイトル": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、権限グループの選択肢が「登録されている全権限」になっていない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "権限レベル以上かつ isViewable の絞り込みで、店舗オペレーターでは1件のみ",
+      "前回書いた次にすること": "要確認: 設計に絞り込みを禁じる記述も顧客/ゲストを含めよという記述も無い。設計意図の確認が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-4「メンバー管理」\n画面部品仕様\n> 1-8 権限グループ　単一選択(セレクトボックス)　○　選択肢:**登録されている全権限**\n\n■実装の現状\nMemberType.php:99-120 の `Authority` は次の2つの絞り込みを行います。\n- `query_builder`: `a.id >= :current_member_level`（ログイン中メンバーの権限ID）かつ `a.isViewable = true`\n- `constraints`: `NotEqualTo(GUEST_ID)` と `NotEqualTo(CUSTOMER_ID)`\n\nマスタは 1システム管理者/2モールオーナー/3モールオペレーター/4店舗オーナー/5店舗オペレーター/6顧客(is_viewable=0)/7ゲスト(is_viewable=0) の7件です。店舗オペレーター(id=5)でログインすると選択肢は**「店舗オペレーター」1件のみ**になります。\n顧客・ゲストの除外は表示層（isViewable）と検証層（NotEqualTo）の**二重**で実装されており、単なる実装漏れではありません。\n\n■次の対応\n要確認: 実装が「登録されている全権限」になっていないことは事実です。ただし設計書には**権限レベルによる絞り込みを禁じる記述も、顧客・ゲストを含めよという記述もありません**。根拠は部品表の「選択肢:登録されている全権限」の一文のみです。\nsheet-5「権限管理」には「上位権限でアクセス可となっている場合は下位権限もアクセス可となり、下位権限の権限編集不可とする」という権限レベルの上下関係の定義がありますが、メンバーへの権限付与範囲の規定はありません。設計意図を設計担当者にご確認ください。\n\n付記: 起票が引用する識別IDは設計書と1つずれています（二次資料 .cursor/docs/MDfile/M11_system_setting_basedesign.md 由来）。設計書の正しい対応は 1-4=ログインID、1-6=パスワード、1-7=パスワード(確認)、1-8=権限グループ、1-11=稼働 です。要求内容は一致するため事実認定に影響はありませんが、起票本文の訂正をご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-4「メンバー管理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php",
+        "src/Eccube/Form/Type/Admin/MemberType.php"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2197",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-4:メンバー管理",
+        "sheet-3:メンバー管理一覧"
+      ],
+      "課題タイトル": "【実装乖離】システム設定_メンバー管理_メンバー管理の新規登録時に、稼働ラジオボタンの初期値「非稼働」が選択されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "初期値「非稼働」が未設定でどちらも未選択。設計は任意だが実装は NotBlank で必須",
+      "前回書いた次にすること": "実装対応: 初期値に非稼働を設定。NotBlank の要否も要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-4「メンバー管理」\n画面部品仕様\n> 1-11 稼働　単一選択(ラジオボタン)　必須欄は空欄（＝**任意**）　初期値: **非稼働**\n\n■実装の現状\nMemberType.php:130-137 の `Work` に `'data'` も `'preferred_choices'` も既定値指定もなく、MemberController.php:93-97 の新規登録経路でも `setWork()` を呼んでいません（全文検索でも新規登録経路での呼び出しは0件）。Member エンティティも `?Work $Work = null` でコンストラクタ初期化がありません。結果、初期表示はどちらも未選択になります。\nマスタは id=0「非稼働」/ id=1「稼働」です。\n\n**起票未指摘の追加乖離**: 設計は「稼働」を**任意**（必須欄が「-」）としていますが、実装は `NotBlank()` を付けて必須にしています。\n\n■次の対応\n実装対応: 初期値に「非稼働」（id=0）を設定する。あわせて `NotBlank()` の要否（設計は任意）もご確認ください。\n\n付記: 起票が引用する識別IDは設計書と1つずれています（二次資料 .cursor/docs/MDfile/M11_system_setting_basedesign.md 由来）。設計書の正しい対応は 1-4=ログインID、1-6=パスワード、1-7=パスワード(確認)、1-8=権限グループ、1-11=稼働 です。要求内容は一致するため事実認定に影響はありませんが、起票本文の訂正をご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-4「メンバー管理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php",
+        "src/Eccube/Entity/Member.php",
+        "src/Eccube/Form/Type/Admin/MemberType.php",
+        "src/Eccube/Resource/doctrine/import_csv/ja/mtb_work.csv"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2198",
+      "設計書": "0201_基本設計仕様書(システム設定).html",
+      "設計シート": [
+        "sheet-5:権限管理"
+      ],
+      "課題タイトル": "【実装乖離】システム設定_権限管理_権限管理画面にて、複製操作が設計書指定の「リンク」ではなく通常ボタン（button要素）で実装されている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "権限名の必須チェックがサーバ側に無い。複製もリンクでなくボタン要素",
+      "前回書いた次にすること": "実装対応: サーバ側の必須チェックを追加。部品種別の相違は優先度低め",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0201_基本設計仕様書(システム設定) sheet-5「権限管理」\n機能仕様処理概要「複製について」\n> ・権限名を入力し画面下部の登録ボタンを押して登録する\n> ・**権限名は必須**かつ重複は不可とする\n\n画面部品仕様\n> 1-9 複製**リンク**　リンク　・クリック時、該当の行と同権限の複製行を追加する\n> 1-11 権限名入力　テキスト　○　権限名の重複は不可能\n\n■実装の現状\n1) 部品種別: authority.twig:328-332 は `<button type=\"button\" class=\"btn btn-ec-regular btn-copy\">` で、設計の「リンク」ではなく**ボタン要素**です。アンカー風にするCSS/JSもありません。\n2) 必須チェック: 複製行の権限名入力（同:180-183 で動的生成）に付くのは HTML の `required` 属性のみです。AuthorityIndexAction.php:66-89 は重複チェック（同一リクエスト内＋既存同名）のみで、**空文字を弾く NotBlank 相当の検証がサーバ側に存在しません**（`new_authority_name` の全文検索で確認）。\n複製機能そのもの（cloneNode による行追加）と重複チェックは設計どおり実装済みです。\n\n■次の対応\n実装対応: サーバ側に権限名の必須チェックを追加する。部品種別（ボタン／リンク）の相違は表示上の差のため優先度は低めで差し支えありません。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0201_基本設計仕様書(システム設定).html / sheet-5「権限管理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md",
+        "src/Eccube/Service/Admin/Setting/System/AuthorityIndexAction.php"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2199",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-13:入荷通知依頼 一覧表示(検索項目)",
+        "sheet-14:入荷通知依頼 一覧表示(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、販売関連の集計が注文ステータス「出荷完了」に限定されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "集計SQLに order_status_id の絞り込みが一切無い",
+      "前回書いた次にすること": "実装対応: 出荷完了の条件を追加。既存集計データの再作成要否も検討",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-3/sheet-5「日別・月別集計 集計一覧」\n機能仕様処理概要（★カスタマイズ）\n> ・集計は売上として計上できるものとし、それ以外の対応状況は計上しない\n> (**注文ステータスが「出荷完了」のみ集計対象とする**)\n> ・販売関連の集計は注文データの注文ステータスが「出荷完了」のみ計上し、それ以外の注文ステータスは計上しない\n\n■実装の現状\nDtbDailySummaryRepository.php:42-73 の `aggregateOrderSummaryByBaseInfo()` の WHERE 句は `base_info_id IS NOT NULL` と集計日範囲のみで、**`order_status_id` による絞り込みが一切ありません**。\nBatchAggregateDailySummaryAction.php:31-59 の日次バッチもこのメソッドを呼ぶだけで、前後にステータス除外処理はありません。\n`DtbDailySummaryRepository` / `DtbMonthlySummaryRepository` / `Service/Admin/Analysis/*` の全ファイルで `order_status` / `OrderStatus` を検索しましたが**ヒット0件**でした。月次集計も日次テーブルの合算です。\n\n■次の対応\n実装対応: 集計SQLに `order_status_id = 5`（出荷完了）の条件を追加する。既存の集計データの再作成要否も併せてご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-3/sheet-5「日別・月別集計 集計一覧」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Entity/Master/OrderStatus.php",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php",
+        "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php"
+      ],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2200",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-13:入荷通知依頼 一覧表示(検索項目)",
+        "sheet-14:入荷通知依頼 一覧表示(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、買取関連の集計が買取ステータス「買取成立」に限定されていない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "買取ステータスの絞り込みが無い。SUMMARY_STATUSES も日別月別集計からは未使用",
+      "前回書いた次にすること": "要確認: 機能仕様処理概要(ステータス基準)と各項目の詳細説明(日付有無基準)で判定軸が食い違う",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-5「日別・月別集計 集計一覧(検索結果-日別)」\n機能仕様処理概要（★カスタマイズ）\n> ・買取関連の集計は買取データの**買取ステータスが「買取成立」のみ**計上し、それ以外の買取ステータスは計上しない\n\n■実装の現状\nDtbDailySummaryRepository.php:83-152 の `aggregatePurchaseSummaryByBaseInfo()` は、ネット買取が `auto_approval_flg = TRUE` ＋日付範囲、店頭買取が `cancel_date IS NULL` ＋日付範囲で、いずれも**買取ステータスによる絞り込みがありません**。\n`MtbOtcBuyOrderStatus::SUMMARY_STATUSES` は実在しますが、参照は RecalculateSummaryAction.php:36-37 と DtbOtcBuyOrderRepository.php:830 の2箇所のみで、日別・月別集計からは使われていません。なお同定数は買取成立以外に3ステータスを含むため、流用しても設計の「買取成立のみ」は満たしません。\n\n■次の対応\n要確認: **設計内で判定軸が食い違います。** 同シートの「各項目の詳細説明」は\n> (9)買取件数 … ネット買取は**査定承諾日が入っているもの**を集計対象とする ※キャンセルは含まない／店頭買取の場合は**買取成立日が入っているもの**を集計対象とする ※管理者取消は含まない\n\nとしており、「買取ステータス＝買取成立のみ」（機能仕様処理概要）と「日付の有無で判定」（各項目の詳細説明）の2軸が併存しています。正しい実装が設計から一意に定まらないため、設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-5「日別・月別集計 集計一覧(検索結果-日別)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Entity/DtbBuyOrder.php",
+        "src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php"
+      ],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2201",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-13:入荷通知依頼 一覧表示(検索項目)",
+        "sheet-14:入荷通知依頼 一覧表示(検索結果)"
+      ],
+      "課題タイトル": "【一部実装】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計の検索結果にて、店舗名の「その他」区分が集計・出力されない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "その他を返す分岐が無い。ただし同シートに「その他は不要」と明記されている",
+      "前回書いた次にすること": "要確認: 起票の前提が設計内で否定されている。乖離として対応すべきかの判断が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-5「日別・月別集計 集計一覧(検索結果-日別)」\n機能仕様処理概要（★集計項目の固定）\n> ・識別ID 2:「支店名」を追加。「通販」もしくは指定された「店舗名」または**「その他」**を出力\n> ※「その他」は通販・各店舗に該当しない売上を計上\n\n■実装の現状\nAnalysisSummaryBuilder.php:200-211 の `resolveStoreName()` は「通販」「略称」「店舗名」を返すのみで、**「その他」を返す分岐がありません**。DtbDailySummaryRepository.php:62-64 の集計元SQLが `base_info_id IS NOT NULL` で絞るため、店舗未紐付けの受注は集計対象から除外されます。\n`その他` を Analysis 関連のService・CSV・テンプレートで検索しましたが**0件**でした。\n\n■次の対応\n要確認: **設計自体が「その他」を否定しています。** 同シートの「各項目の詳細説明」に\n> (2)店舗名　集計対象の店舗\n> **その他は不要**\n\nと明記されており、同シート下部の機能仕様処理概要の「その他を出力」と正反対です。シートの更新日（2025-10-28、作成 2025-07-09）から、「その他は不要」が後から追記された仕様変更である可能性があります。\n**起票の前提が設計内で否定されているため、乖離として対応すべきかの判断が必要です。** 設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-5「日別・月別集計 集計一覧(検索結果-日別)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php",
+        "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php",
+        "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php"
+      ],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2202",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-7:日別・月別集計 CSV出力"
+      ],
+      "課題タイトル": "【実装乖離】分析・集計管理_日別・月別集計 CSV出力_日別・月別集計CSV出力にて、注文ステータス「出荷完了」のみを計上する集計方式が反映されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "CSV出力が total を捨てており総合計行が無い。画面側は total を使用",
+      "前回書いた次にすること": "実装対応: 総合計行を追加。total は計算済みのため出力側のみで解消。出荷完了の件は2199に集約推奨",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-7「日別・月別集計 CSV出力」\n機能仕様処理概要（★集計項目の固定）\n> ・**最終行には「総合計」を追加**。識別ID3～12各列のそれぞれの総合計を出力\n\n■実装の現状\nSummaryCsvExporterService.php:85-125 の `export()` は `AnalysisSummaryBuilder::build()` の戻り値のうち **`$summaryData['summary']` だけを使用**し、総合計行を出力しません。\n\n**総合計は既に計算済みです。** AnalysisSummaryBuilder.php:40-56 の `build()` は `['summary' => ..., 'total' => $this->buildTotal(...)]` を返しており、画面側（Analysis/summary.twig:236-243）は `total` を使って総合計行を描画しています。**CSVだけが `total` を捨てている**という明確な非対称です（`src/Eccube/Service/Csv/` 全体で `grand_total` / `総合計` は0件）。\n\n■次の対応\n実装対応: CSV出力に総合計行を追加する。`total` は既に計算されているため、出力側の対応のみで解消します。\n\n要確認: 起票が併せて指摘する「出荷完了のみ計上」については、**sheet-7 のカスタマイズ説明に「集計方式の変更」が列挙されておらず、機能仕様処理概要にも「出荷完了」の語が一度も出てきません**。この要求は sheet-3 / sheet-5（M12-01）側の記載です。2199 として別途起票されているため、本件は総合計行の欠落に絞ることを推奨します。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-7「日別・月別集計 CSV出力」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Analysis/SummaryController.php",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php",
+        "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php"
+      ],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2203",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-13:入荷通知依頼 一覧表示(検索項目)",
+        "sheet-14:入荷通知依頼 一覧表示(検索結果)"
+      ],
+      "課題タイトル": "【一部実装】分析・集計管理_入荷通知依頼 一覧表示（検索項目/検索結果）_入荷通知依頼一覧のキーワード検索が商品名(日/英)のみで、会員名で検索できない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "キーワード検索が商品名のみで会員テーブルを結合していない",
+      "前回書いた次にすること": "実装対応: 会員テーブルを結合し会員名を検索対象に追加。プレースホルダ文言も修正",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-13「入荷通知依頼 一覧表示(検索項目)」\n画面部品仕様\n> 1 キーワード検索　テキストボックス　検索対象 : **商品名(日/英)・会員名**\n\n■実装の現状\nDtbProductRequestRepository.php:317-341 の `getAnalysisSummary()` は、キーワード条件が `(p.name LIKE :multi OR p.name_en LIKE :multi)` のみで、**会員テーブル（dtb_customer / dtb_player）が結合すらされていません**。\n翻訳側も messages.ja.yaml:6187 の `admin.analysis.product_request.form.multi.placeholder: 商品名(日/英)` で会員名の記載がありません。\n\n■次の対応\n実装対応: 会員テーブルを結合し、キーワード検索の対象に会員名を追加する。プレースホルダの文言も併せて修正してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-13「入荷通知依頼 一覧表示(検索項目)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/Analysis/SearchProductRequestType.php",
+        "src/Eccube/Repository/DtbProductRequestRepository.php"
+      ],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2205",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-15:入荷通知依頼 CSV出力"
+      ],
+      "課題タイトル": "【一部実装】分析・集計管理_入荷通知依頼 CSV出力_入荷通知依頼CSV出力にて、項目「通知済み/削除」が「削除」件数のみとなっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "ヘッダー名が「削除」。通知済みを記録するカラムが存在せず集計不能",
+      "前回書いた次にすること": "実装対応: 通知済みを記録するカラム/テーブルの追加が必要。ヘッダー名修正だけでは要求を満たさない",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-15「入荷通知依頼 CSV出力」\n項目一覧\n> 5 **通知済み/削除**　※カスタマイズ対応\n\n機能仕様処理概要\n> ・識別ID 5:「通知済み/削除」の追加\n> 検索項目で指定した条件に該当する商品ごとの**通知済み**もしくはユーザー自身が通知取り消しを行った件数を取得\n\n■実装の現状\n1) ヘッダー名: ProductRequestCsvExportService.php:24-30 の `CSV_HEADER` は `'deleted_count' => '削除'` で、設計の「通知済み/削除」と異なります。\n2) 通知済み件数が集計できません。DtbProductRequest エンティティに**「通知済み」を表すカラムが存在せず**、RestockNotificationMailSender.php:112-124 は送信成功時に何も記録しません（フラグ更新も deletedAt 設定もなし）。`setDeletedAt` / `remove(` の呼び出しは NotifylistController.php:142,221（**フロントでユーザー自身が通知を取り消した場合**）の2箇所のみです。\nつまり `deleted_count` は「ユーザー自身の取り消し」だけを表し、通知済みを一切含みません。\n重複排除（`COUNT(DISTINCT pr.player_id)` により異なる規格でも1カウント）は設計どおり実装済みです。\n\n■次の対応\n実装対応: 通知済みを記録するカラムまたはテーブルの追加が必要です（現状データを保持していないため、ヘッダー名の修正だけでは要求を満たしません）。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-15「入荷通知依頼 CSV出力」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Entity/DtbProductRequest.php",
+        "src/Eccube/Repository/DtbProductRequestRepository.php",
+        "src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php",
+        "src/Eccube/Service/Stock/RestockNotificationMailSender.php"
+      ],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2206",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-19:特集タグ編集CSVダウンロード(検索項目)",
+        "sheet-20:特集タグ編集CSVダウンロード CSV出力"
+      ],
+      "課題タイトル": "【実装乖離】分析・集計管理_特集タグ編集CSVダウンロード（検索項目）_特集タグ編集CSVダウンロードにて、集計日(From)の初期値が当月1日ではなく2週間前になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "初期値が2週間前。設計部品表は当月1日",
+      "前回書いた次にすること": "要確認: 機能仕様処理概要が「現行踏襲」としており部品表の当月1日が新規要求か現行値の記録か判別できない",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-19「特集タグ編集CSVダウンロード(検索項目)」\n画面部品仕様\n> 1 集計日(From)　日付(yyyy/mm/dd)　〇　初期値: **当月1日**\n\n■実装の現状\nSearchUsedCardType.php:43-49 の `start_date` は `'data' => new \\DateTime('2 weeks ago')` で初期値が**2週間前**です。UsedCardController.php:42-46 にも上書きはなく、used_card.twig の JS はクリア時に元の値へ戻すだけです。\n必須（required=true + NotBlank）は設計どおりです。\n\n参考として、同じ分析機能群の SearchProductRequestType.php:56-61 は `'data' => new \\DateTime('first day of this month')`（当月1日）を使っており、**同一機能群内で初期値の実装方針が不統一**です。\n\n■次の対応\n要確認: 同シートの機能仕様処理概要は「特集タグ編集用CSVダウンロードは**現行踏襲**」としており、部品表の「初期値: 当月1日」が新規要求なのか現行値の記録なのかが判別できません（現行が2週間前であれば両者が衝突します）。設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-19「特集タグ編集CSVダウンロード(検索項目)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Analysis/UsedCardController.php",
+        "src/Eccube/Form/Type/Admin/Analysis/SearchUsedCardType.php",
+        "src/Eccube/Resource/template/admin/Analysis/used_card.twig"
+      ],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1809",
+      "設計書": "0303_基本設計仕様書(フロント_商品).html",
+      "設計シート": [
+        "sheet-7:商品リコメンド"
+      ],
+      "課題タイトル": "【一部実装】フロント商品_商品リコメンド_マイページにおすすめ商品が表示されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "マイページに block_product_recommend の呼び出しが無く recommendProducts を設定するPHPも0件",
+      "前回書いた次にすること": "実装対応: 他3画面と同じ形でマイページに呼び出しを追加",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0303_基本設計仕様書(フロント_商品) sheet-7「商品リコメンド」\n> ・下記の機能で表示する / 1 マイページ / 2 購入完了ページ / 3 商品詳細ページ / 4 買い物かごページ\n> ・マイページまたは注文完了ページの場合 / ・直近の注文に含まれる明細のうち販売価格が最も高い商品\n\n詳細設計書も「マイページ表示時のおすすめブロック／非同期のおすすめ取得（種別mypage）」と明記しています。\n\n■実装の現状\nMypageController.php:128-137 の `index()` 戻り値は `Customer` と `nextDeadlinePointHistory` のみで、Mypage/index.twig:247 の `{% if recommendProducts is defined and ... %}` は常に偽になります。\n全文検索でも `recommendProducts` を設定するPHPコードは**0件**でした。\n\n他の3画面（Product/detail.twig:555、Cart/index.twig:348、Shopping/complete.twig:147）は `render(url('block_product_recommend', ...))` を呼んでいます。マイページだけ呼び出しがありません。\n起点商品のフォールバック（ProductRecommendController.php:55-60、OrderItemRepository.php:139-155）は実装済みです。\n\n■次の対応\n実装対応: マイページに `block_product_recommend` の呼び出しを追加する。他3画面と同じ形で実装できます。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html / sheet-7「商品リコメンド」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F03_product_basedesign.md",
+        "src/Eccube/Controller/Block/ProductRecommendController.php",
+        "src/Eccube/Controller/Front/Mypage/MypageController.php",
+        "src/Eccube/Resource/template/default/Block/user_recommend_product.twig"
+      ],
+      "book": "0303"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1810",
+      "設計書": "0303_基本設計仕様書(フロント_商品).html",
+      "設計シート": [
+        "sheet-8:最近チェックした商品"
+      ],
+      "課題タイトル": "【実装乖離】フロント商品_最近チェックした商品_本店ECTOPの「最近チェックした商品」がスライダー表示になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "homepage レイアウトのみ slick カルーセル。設計はスライダーなし",
+      "前回書いた次にすること": "実装対応: top レイアウトもグリッド表示に変更",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0303_基本設計仕様書(フロント_商品) sheet-8「最近チェックした商品」\n> ・最大15件を**スライダーなしで**表示する、表示順は最近見た順（新しい順）とする\n\n詳細設計書も「履歴の商品サムネイルの**横並び一覧**」でスライダーの記載はありません。\n\n■実装の現状\nRecentlyViewedBlockPayloadBuilder.php:87-91 の `resolveLayout()` が `homepage` のとき `top` を返し、recently_viewed.twig:19-42 の `{% elseif layout == 'top' %}` 分岐だけが `p-hareruya-product-carousel` と `data-js-target=\"product-carousel-slider\"` を出力します。hareruya-top.js が slick で初期化するため、本店ECTOPではカルーセルになります。\n`list` / `detail` レイアウトはグリッド表示で設計どおりです。15件・新しい順（MAX_HISTORY_COUNT=15、Cookie順の usort）も満たしています。\n\n■次の対応\n実装対応: `top` レイアウトもグリッド表示に変更する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html / sheet-8「最近チェックした商品」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F03_product_basedesign.md",
+        "html/template/default/assets/hareruya/js/hareruya-top.js",
+        "src/Eccube/Controller/Front/ProductController.php",
+        "src/Eccube/Resource/template/default/Block/recently_viewed.twig",
+        "src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php"
+      ],
+      "book": "0303"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1811",
+      "設計書": "0303_基本設計仕様書(フロント_商品).html",
+      "設計シート": [
+        "sheet-9:入荷時通知"
+      ],
+      "課題タイトル": "【実装乖離】フロント商品_入荷時通知_商品一覧のSOLDOUT商品の入荷通知が、商品単位でなく規格単位で登録される",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "一覧SOLDOUTは規格1件のみ登録。商品単位ルートはデッドコード",
+      "前回書いた次にすること": "要確認: 詳細設計書は「商品規格単位」と規定し基本設計★と矛盾。確定後 push_all_receive の配線が最短",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0303_基本設計仕様書(フロント_商品) sheet-9「入荷時通知」\nカスタマイズ要件および機能仕様（★）\n> ・一覧の場合はSOLDOUTとなっている場合、**商品単位の通知**とする\n\n■実装の現状\nBlock/product.twig:294 の SOLDOUT カードのボタンは `data-productclass=\"{{ lead.id }}\"` で代表規格1件のIDのみを持ち、product_js.twig:70-92 の `notifyRequest()` が `product_class_id` を1件だけ POST します。CartController.php:419-500 も1行だけ作成します。\n商品単位のルート `push_all_receive`（NotifylistController.php:187-188）は実装されていますが、**twig/JS/ビルド済みJSからの呼び出しが0件のデッドコード**です。\n\n■次の対応\n要確認+実装対応: 同シートの詳細設計書は「依頼は**商品規格単位**で行う」「入力項目：商品規格 必須」と規定しており、基本設計の★カスタマイズ（商品単位）と粒度が食い違います。どちらを正とするか確定のうえ、商品単位とするなら既存の `push_all_receive` を配線するのが最短です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html / sheet-9「入荷時通知」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F03_product_basedesign.md",
+        "src/Eccube/Controller/Front/CartController.php",
+        "src/Eccube/Controller/Front/Mypage/NotifylistController.php",
+        "src/Eccube/Resource/template/default/Block/js/product_js.twig",
+        "src/Eccube/Resource/template/default/Block/product.en.twig",
+        "src/Eccube/Resource/template/default/Block/product.twig"
+      ],
+      "book": "0303"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1812",
+      "設計書": "0303_基本設計仕様書(フロント_商品).html",
+      "設計シート": [
+        "sheet-9:入荷時通知"
+      ],
+      "課題タイトル": "【未実装】フロント商品_入荷時通知_商品詳細に、NM／SP以下／全状態の3種類の入荷通知ボタンが無い",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "NM/SP以下/全状態の3区分が未実装。SP以下の語はリポジトリ全体で0件",
+      "前回書いた次にすること": "実装対応: 3区分の通知ボタンを実装。SP以下のグルーピング定義を要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0303_基本設計仕様書(フロント_商品) sheet-9「入荷時通知」\nカスタマイズ要件および機能仕様（★）\n> ・商品詳細画面にて、**NMとSP以下と全状態**の通知ボタンを表示する\n\n■実装の現状\n商品詳細の通知ボタンは「状態行ごと」（Product/detail.twig:316）と「まとめて」（同:353 の `#bulk_restock_notice`）の2系統のみです。まとめてボタンは product_js.twig:328-345 で表示中の全 `.notifyme` をループするだけで、区分指定がありません。\n全文検索でも `SP以下` / `sp_below` / `spBelow` / `below_sp` は**0件**、マスタ MtbCardCondition にも「SP以下」の概念はありません。日英とも未実装です。\n\n■次の対応\n実装対応: NM／SP以下／全状態の3区分の通知ボタンを実装する。「SP以下」のグルーピング定義（どの状態を含むか）を設計担当者に確認のうえ着手してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html / sheet-9「入荷時通知」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F03_product_basedesign.md",
+        "src/Eccube/Entity/Master/MtbCardCondition.php",
+        "src/Eccube/Resource/template/default/Block/js/product_js.twig",
+        "src/Eccube/Resource/template/default/Product/detail.twig"
+      ],
+      "book": "0303"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1813",
+      "設計書": "0303_基本設計仕様書(フロント_商品).html",
+      "設計シート": [
+        "sheet-9:入荷時通知"
+      ],
+      "課題タイトル": "【実装乖離】フロント商品_入荷時通知_入荷通知の登録上限値・カウント単位・まとめて登録時のエラー表示が設計と相違している",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "上限25(設計20)、カウントは規格単位、まとめて時はエラー非表示。option行が無いと上限無効",
+      "前回書いた次にすること": "要確認+実装対応: 上限値とエラー表示は実装対応。カウント単位は詳細設計書と矛盾のため要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0303_基本設計仕様書(フロント_商品) sheet-9「入荷時通知」\n> ・登録上限は管理画面で設定されている入荷通知登録上限数(**現在は20件**)とする\n> ※上限件数は「まとめて入荷通知」で登録している場合でも**1件**、商品規格単位でも1件としてカウントする\n> ※登録上限数以上の登録をしようとした場合は、**エラーを表示する**\n\n■実装の現状\n3点とも乖離しています。\n\n1) 上限値: Version20251125161057.php:63-67 で `arrival_alert_max = 25`（設計は20）。\n2) カウント単位: DtbProductRequestRepository.php:504-524 は `dtb_product_request` の**行数**（規格単位）で比較します。まとめて登録は JS が規格数ぶん個別呼び出しするため規格数ぶん消費します。\n3) エラー非表示: product_js.twig:328-345 のまとめて処理は `notifyRequest(this, false, true)` と `suppressModal=true` を渡すため、上限超過の fail でもポップアップを出さず、最後に一律で成功文言を表示します。\n\nまた `mtb_option` に該当行が無い場合 `$maxValue === false` となり**上限が一切効きません**。\n\n■次の対応\n要確認+実装対応: 上限値25→20とエラー表示は実装対応が必要です。カウント単位については同シートの詳細設計書が「未削除の依頼**行数**で上限と比較」と規定しており基本設計の「まとめてでも1件」と矛盾するため、設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html / sheet-9「入荷時通知」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F03_product_basedesign.md",
+        "app/DoctrineMigrations/Version20251125161057.php",
+        "src/Eccube/Controller/Front/CartController.php",
+        "src/Eccube/Entity/Master/MtbOption.php",
+        "src/Eccube/Repository/DtbProductRequestRepository.php",
+        "src/Eccube/Resource/template/default/Block/js/product_js.twig"
+      ],
+      "book": "0303"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1814",
+      "設計書": "0303_基本設計仕様書(フロント_商品).html",
+      "設計シート": [
+        "sheet-4:商品詳細",
+        "sheet-5:商品詳細検索"
+      ],
+      "課題タイトル": "【一部実装】フロント商品_商品詳細_商品詳細の英語版にて、「他のバージョンも見る」の並び替えが動作しない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "英語版が旧マークアップでハンドラ未結線。非基本土地では sameNameProducts が空",
+      "前回書いた次にすること": "実装対応: 英語版を日本語版と同じ same-name-sort/data-sort-key に揃える",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0303_基本設計仕様書(フロント_商品) sheet-4「商品詳細」\n画面部品仕様\n> 4-5 並び順　単一選択　・選択肢:価格(低い順) 価格(高い順)\n> ・選択すると、画面を読み込み、選択した並び順で商品一覧を表示する\n\n日本語版・英語版で仕様を分ける記述はありません。\n\n■実装の現状\n日本語版 Product/detail.twig:486-487 は `class=\"same-name-sort\" data-sort-key=\"price_asc/desc\"` で、product_detail_unisearch_same_name_js.twig:111-123 のハンドラが対応しています。\n英語版 detail.en.twig:520-521 は旧マークアップの `class=\"sortButton\" data-order=\"asc/desc\"` のままで、同JSは `.same-name-sort` / `data-sort-key` しかバインドしません。全文検索でも `sortButton` は detail.en.twig の2行のみで**ハンドラが存在しません**。\nさらに非・基本土地では ProductController.php:629,668-679 により `sameNameProducts` が空配列のままなので、英語版の該当分岐はサーバ描画で空になります。\n\n■次の対応\n実装対応: 英語版のマークアップを日本語版と同じ `same-name-sort` / `data-sort-key` に揃え、非基本土地時のAJAX描画にも対応させる。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0303_基本設計仕様書(フロント_商品).html / sheet-4「商品詳細」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F03_product_basedesign.md",
+        "src/Eccube/Controller/Front/ProductController.php",
+        "src/Eccube/Resource/template/default/Block/js/product_detail_unisearch_same_name_js.twig",
+        "src/Eccube/Resource/template/default/Product/detail.en.twig"
+      ],
+      "book": "0303"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2039",
+      "設計書": "0203_基本設計仕様書(受注管理機能).html",
+      "設計シート": [
+        "sheet-3:受注情報検索 一覧(検索入力)",
+        "sheet-4:受注情報検索 一覧(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】受注管理_受注検索一覧(検索入力/検索結果)_受注検索一覧の「対応状況」チェックボックスに、設計書のチェック項目に無い「対応中」「返品」が選択肢として表示される",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "除外が PASSED のみで13項目表示。id=4 対応中と id=15 返品が残存",
+      "前回書いた次にすること": "実装対応: 除外リストに id=4 と id=15 を追加するかマスタから削除",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-3「受注情報検索 一覧(検索入力)」\n画面部品仕様\n> 2-3 対応状況　複数選択(チェックボックス)　※カスタマイズ対応：選択肢追加\n> チェック項目：決済処理中、注文受領、入金待ち、入金済み、キャンセル、出荷指示、出荷完了、購入処理中、ピック中、ピック完了、店頭予約（**11項目**）\n\n■実装の現状\nSearchOrderType.php:141-156 の除外は `OrderStatus::PASSED`（=14 引渡し済み）**のみ**です。\nマスタの確定経路を追跡しました。EC-CUBE標準CSVが id 1,3,**4=対応中**,5,6,7,8,9 を投入し、Version20251125150428 が id 1,2,3,5,6,7,8,9,10,12,13 を追加、Version20260220000001 が id 14「引渡し済み」/ 15「返品」を追加したうえで id 1/3/5/9 の名称を UPDATE で確定します。**id=4「対応中」は改名も削除もされず残存**します。\n結果 `mtb_order_status` は14件となり、PASSED を除いた**13項目**が描画されます（設計の11項目＋対応中＋返品）。\n\n■次の対応\n実装対応: 除外リストに id=4（対応中）と id=15（返品）を追加するか、マスタから削除する。設計の11項目はすべて含まれているため、追加分の除外のみで解消します。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-3「受注情報検索 一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "app/DoctrineMigrations/Version20260220000001.php",
+        "src/Eccube/Form/Type/Admin/SearchOrderType.php",
+        "src/Eccube/Resource/doctrine/import_csv/ja/mtb_order_status.csv",
+        "src/Eccube/Resource/template/admin/Order/index.twig"
+      ],
+      "book": "0203"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2045",
+      "設計書": "0203_基本設計仕様書(受注管理機能).html",
+      "設計シート": [
+        "sheet-10:【新規】手動メール通知(確認画面)",
+        "sheet-9:メール一括送信"
+      ],
+      "課題タイトル": "【実装乖離】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_メール一括送信のテンプレ選択が、メール管理で作成されたテンプレート一覧ではなく特定ベースファイル（sell_order / sell_order.en / no_base）のテンプレートのみに限定されている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "選択肢が3ファイル名に限定され、メール管理で作成したテンプレートと構造的に一致しない",
+      "前回書いた次にすること": "実装対応: 抽出条件をメール管理側(baseInfo かつ isAutoSend=false)と揃える",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-9「メール一括送信」\n画面部品仕様\n> 1 テンプレ選択　単一選択(セレクトボックス)　・選択肢は**ショップ設定＞メール管理で作成されているテンプレート一覧**が表示される\n\n■実装の現状\nOrderManualMailAllType.php:38-55 の `query_builder` は `mt.file_name IN (:fileNames)` で、MailController.php:345-354 が渡す3ファイル名（`Mail/sell_order.twig` / `Mail/sell_order.en.twig` / `Mail/no_base.twig`）に限定されます。\nメール管理で新規作成した場合のファイル名は MailType.php:112,118 で `'Mail/Mall/'.$data->getFileName().'.twig'` と生成されるため、**上記3ファイル名と絶対に一致しません**。\nさらにメール管理側の一覧は `mt.baseInfo = :baseInfo` かつ `mt.isAutoSend = false` で絞っており、一括送信側はどちらでも絞っていないため、両者の一覧は構造的に一致しません。\n`getManualMailTemplate()`（:425-433）も同じ3ファイル名でしか検索せず、二重に限定されています。\n\n■次の対応\n実装対応: 選択肢の抽出条件をメール管理側（baseInfo かつ isAutoSend=false）と揃える。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-9「メール一括送信」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "src/Eccube/Entity/MailTemplate.php",
+        "src/Eccube/Form/Type/Admin/MailType.php",
+        "src/Eccube/Form/Type/Admin/OrderManualMailAllType.php"
+      ],
+      "book": "0203"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2047",
+      "設計書": "0203_基本設計仕様書(受注管理機能).html",
+      "設計シート": [
+        "sheet-13:納品書印刷（日本語）",
+        "sheet-21:出荷指示ー納品書印刷（日本語）"
+      ],
+      "課題タイトル": "【一部実装】受注管理_納品書印刷(日本語)_納品書印刷(日本語)のデータ取得クエリが会員(Customer/Player)を内部結合しているため、ゲスト(非会員)受注が納品書の対象から外れる",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "サマリ側が INNER JOIN のためゲスト受注が欠落しマージが破綻。非会員フォールバックに到達しない",
+      "前回書いた次にすること": "実装対応: サマリ側の join を leftJoin に変更。ゲスト受注で納品書が正しく出力されないため優先度高め",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-13「納品書印刷（日本語）」\n画面部品仕様\n> 16 送り主-会員番号　ラベル　**ゲストの場合は「非会員」と表示する**\n\n機能仕様処理概要（★）\n> ★本店のほかに、支店もスマレジも出力対象とする\n\n■実装の現状\nDtbShippingStandbyRepository.php:263 で `$qb2 = clone $qb;`（Customer 結合を追加する**前**にクローン）した後、:300-307 でサマリ側にのみ `join('o.Customer', 'cus')->join('cus.Player', 'player')` を追加しています。`join()` は INNER JOIN のため、`Order.Customer` が null のゲスト受注はサマリ結果から欠落します。\n:337-344 のマージ処理は `$items`（Customer 結合なし＝ゲスト受注を含む）のキーでループするため、ゲスト受注では `$summary[$key]` が未定義になります。\n\n「非会員」フォールバック自体は delivery_slips.ja.twig:85-90 に存在しますが、**ゲスト受注ではそこに到達しません**（会員受注で smaregiId が null の場合には到達します）。\n\n■次の対応\n実装対応: サマリ側の `join` を `leftJoin` に変更する。ゲスト受注で納品書が正しく出力されない不具合のため、優先度は高めです。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-13「納品書印刷（日本語）」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "src/Eccube/Entity/Order.php",
+        "src/Eccube/Repository/DtbShippingStandbyRepository.php",
+        "src/Eccube/Resource/template/admin/ShippingStandby/delivery_slips.ja.twig"
+      ],
+      "book": "0203"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2061",
+      "設計書": "0203_基本設計仕様書(受注管理機能).html",
+      "設計シート": [
+        "sheet-15:受注情報編集"
+      ],
+      "課題タイトル": "【未実装】受注管理_受注情報編集 / 受注情報履歴_受注情報編集（受注商品情報）にて、小計値引き/割引区分・クーポン値引き・免税額が表示されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "3項目ともTwigがコメントのみ。カラムは存在し値も投入済み",
+      "前回書いた次にすること": "実装対応: 表示を追加。Twigの配線のみで解消",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-15「受注情報編集」\n画面部品仕様\n> 6-20 小計値引き/割引区分　ラベル　スマレジ連携\n> 6-21 クーポン値引き　ラベル　スマレジ連携\n> 6-22 免税額　ラベル　スマレジ連携\n\n■実装の現状\nadmin/Order/edit.twig:1237-1240 は**コメントのみ**です。\n```\n{# TODO: 小計値引/割引区分 - スマレジ連携後#}\n{# TODO: クーポン値引き - スマレジ連携後 #}\n{# TODO: 免税額 - スマレジ連携後 #}\n```\n受け皿のカラムは存在します（Order.php:753-760 の `tax_free` / `coupon_discount` / `subtotal_discount_division`）。\n同:1226-1231 の `Order.tax_free_discount_items` ループは EC-CUBE標準の非課税・不課税値引き明細で、設計6-22 の単一値「免税額」とは別物です。\n全twigを検索した結果、管理画面側での表示は**0件**でした（唯一のヒットはフロントのマイページ）。\n\n■次の対応\n実装対応: 3項目の表示を追加する。カラムは既に存在し値も投入されているため、Twig の配線のみで解消します。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-15「受注情報編集」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "src/Eccube/Entity/Order.php"
+      ],
+      "book": "0203"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2077",
+      "設計書": "0203_基本設計仕様書(受注管理機能).html",
+      "設計シート": [
+        "sheet-5:受注一覧CSV出力"
+      ],
+      "課題タイトル": "【一部実装】受注管理_受注一覧CSV出力_受注一覧CSV出力にて、非会員（会員未紐付け）の受注の「お名前(姓)」を「非会員」と出力する変換処理が実装されておらず、受注一覧画面の表示と食い違う",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "name01 をそのまま出力。ただし非会員の判定基準が設計に定義されていない",
+      "前回書いた次にすること": "要確認: 判定基準を設計担当者に確定いただく。同シート内で識別IDのズレもあり",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-5「受注一覧CSV出力」\n項目一覧\n> 6 お名前(姓)　**非会員である場合は非会員と表示する**\n\nカスタマイズ説明・機能仕様処理概要（★）\n> ・非会員である場合、非会員と表現する ※スマレジでの非会員による取引データを考慮\n\n■実装の現状\nOrderController.php:386-455 の `exportOrder()` は `dtb_csv` 定義に従う汎用処理で、CsvExportService.php:213-235 の `getData()` がエンティティのフィールドをそのまま返すだけです。`dtb_csv.csv:61` は `Order.name01` をそのまま出力する定義で、姓に対する特別扱いはありません。\nスマレジ取込時は SmaregiOrderFactory.php:49 の `GUEST_NAME01 = '非会員'` により `name01` 自体に「非会員」が入るため、結果的にCSVにも出力されます（設計の※注記は充足）。\n一覧画面は index.twig:1217-1223 で `{% if Order.Customer is null %}非会員{% else %}...{% endif %}` と判定しています。\n\n■次の対応\n要確認: **「非会員」の判定基準が設計に定義されていません。** 起票の「非会員の判定は受注一覧画面と同一の基準とし…」は起票側の解釈です。\nまた同シート内で識別IDにズレがあります（項目一覧では「お名前(姓)」= 6、機能仕様処理概要では 4）。\n判定基準（Order.Customer が null かどうか等）を設計担当者に確定いただいたうえで対応してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-5「受注一覧CSV出力」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "src/Eccube/Controller/Front/NonMemberShoppingController.php",
+        "src/Eccube/Form/Type/Admin/OrderType.php",
+        "src/Eccube/Service/CsvExportService.php",
+        "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php"
+      ],
+      "book": "0203"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2078",
+      "設計書": "0203_基本設計仕様書(受注管理機能).html",
+      "設計シート": [
+        "sheet-10:【新規】手動メール通知(確認画面)",
+        "sheet-9:メール一括送信"
+      ],
+      "課題タイトル": "【一部実装】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_手動メール通知(確認画面)のメール一括送信にて、送信失敗時のメッセージ表示が実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "失敗時の addError が無い。送信例外も未捕捉で500になる",
+      "前回書いた次にすること": "実装対応: 失敗時のaddErrorと送信処理のtry/catchを追加。部分送信時の件数通知も検討",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-10「【新規】手動メール通知(確認画面)」\n機能仕様処理概要\n> ・送信ボタンを押下すると確認のダイアログを表示し、OKなら送信を実行する。\n> ・**成功/失敗に応じてメッセージを表示する**\n\n■実装の現状\n確認ダイアログ（manual_mail.js:3-7）と成功メッセージ（MailController.php:390-400 の `addSuccess('admin.order.mail_send_complete')`）は実装済みです。\n**失敗メッセージがありません。** :390 の `if` が偽のとき `break` して入力画面を再描画するだけで、`addError` を一切呼びません。\nさらに MailService.php:2092-2110 の `sendManualMailForBulk()` は `$this->mailer->send()` を try/catch しておらず、送信例外は ExceptionListener に到達して HTTP 500 の共通エラー画面になります。ループ送信のため、何件目まで送信済みかも利用者に伝わりません。\n同 Controller 内には失敗メッセージの前例（:200、:319 の `addError`）があり、一括送信の complete 分岐だけが持ちません。\n\n**起票の記述を1点補正します。** 「メールテンプレートが取得できない場合は switch を break して入力画面を再描画する」とありますが、実際は `getManualMailTemplate()`（:425-440）が `NotFoundHttpException`（404）を投げます。中核の主張（失敗メッセージ不在）は事実です。\n\n■次の対応\n実装対応: 失敗時の `addError` を追加し、送信処理を try/catch で囲む。部分送信時に何件成功したかを伝えることも併せてご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-10「【新規】手動メール通知(確認画面)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "html/template/admin/assets/js/manual_mail.js",
+        "src/Eccube/Controller/Admin/Order/MailController.php",
+        "src/Eccube/EventListener/ExceptionListener.php",
+        "src/Eccube/Resource/template/admin/Order/manual_mail_all_confirm.twig"
+      ],
+      "book": "0203"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1788",
+      "設計書": "0302_基本設計仕様書(フロント_グローバルナビ).html",
+      "設計シート": [
+        "sheet-3:PC版ナビゲーション",
+        "sheet-5:支店PC版ナビゲーション"
+      ],
+      "課題タイトル": "【未実装】フロントグローバルナビ_PC版ナビゲーション_PC版ナビゲーションのメニュー内「デッキ構築」リンクが href=\"#\" のままで、デッキTOP画面へ遷移しない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "デッキ構築が href=# のまま。/decks のルート定義も0件",
+      "前回書いた次にすること": "実装対応: デッキTOPのルートを実装しhrefを差し替え(1792と同一箇所)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0302_基本設計仕様書(フロント_グローバルナビ) sheet-3「PC版ナビゲーション」\n画面部品仕様\n> 1-6 デッキ構築　リンク　・押下すると、**デッキTOP画面へ遷移する**\n\n同趣旨がヘッダーナビ(7)・フッター(24-6)にもあります。\n\n■実装の現状\nBlock/mega_menu.twig:42-48 の「デッキ構築」は `href=\"#\"` のままで、TODOコメント（「デッキ構築 TOP ルート実装後に href を差し替え」）が残っています。\nさらに全文検索の結果、`path: '/decks'` を定義するルートは**0件**でした。header.twig:74,92 と footer_sitemap.twig:36 が出している `/decks` も実際には404になります。\n\n■次の対応\n実装対応: デッキTOPのルートを実装し、メニュー・ヘッダー・フッターの href を差し替える。1792と同一箇所です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0302_基本設計仕様書(フロント_グローバルナビ).html / sheet-3「PC版ナビゲーション」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "src/Eccube/Resource/template/default/Block/footer_sitemap.twig",
+        "src/Eccube/Resource/template/default/Block/mega_menu.twig"
+      ],
+      "book": "0302"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1789",
+      "設計書": "0302_基本設計仕様書(フロント_グローバルナビ).html",
+      "設計シート": [
+        "sheet-3:PC版ナビゲーション",
+        "sheet-5:支店PC版ナビゲーション"
+      ],
+      "課題タイトル": "【実装乖離】フロントグローバルナビ_PC版ナビゲーション_カートのマウスオーバー一覧が「追加日時の昇順」ではなく CartItem.id 昇順で並べられており、数量を直接設定した明細が末尾へ移動する",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "CartItem.id 昇順。追加日時カラムが存在しない",
+      "前回書いた次にすること": "実装対応: dtb_cart_item に追加日時カラムを追加するマイグレーションが必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0302_基本設計仕様書(フロント_グローバルナビ) sheet-3「PC版ナビゲーション」\n機能仕様処理概要（★）\n> ★カートに商品を追加した**日時の昇順**でカート内商品を一覧表示する\n\n■実装の現状\nCartHeaderViewService.php:38-49 は `CartItem.id` の昇順でソートしています。\n```\nusort($items, fn (CartItem $a, CartItem $b): int => ($a->getId() ?? 0) <=> ($b->getId() ?? 0));\n```\nさらに CartItem エンティティに**追加日時のカラムが存在しません**（`#[ORM\\Column]` は id / price / quantity のみ）。\nCartService.php:388-397 の `setProductQuantity()` は remove→add で再作成し、`restoreCarts()`（237-246）も全削除して再構築するため、idは追加順を保持しません。\n\n■次の対応\n実装対応: `dtb_cart_item` に追加日時カラムを追加するマイグレーションが必要です。現行のデータ構造では設計どおりの並びを実現できません。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0302_基本設計仕様書(フロント_グローバルナビ).html / sheet-3「PC版ナビゲーション」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "src/Eccube/Controller/Front/CartController.php",
+        "src/Eccube/Entity/CartItem.php",
+        "src/Eccube/Service/Cart/CartHeaderViewService.php",
+        "src/Eccube/Service/CartService.php"
+      ],
+      "book": "0302"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1790",
+      "設計書": "0302_基本設計仕様書(フロント_グローバルナビ).html",
+      "設計シート": [
+        "sheet-3:PC版ナビゲーション",
+        "sheet-5:支店PC版ナビゲーション"
+      ],
+      "課題タイトル": "【一部実装】フロントグローバルナビ_PC版ナビゲーション_フッター(24)サイトマップの「FAQ」リンクが href=\"#\" のままで、FAQ画面へ遷移しない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "FAQのみ href=#。遷移先ページ・ルート・DB行は既に存在",
+      "前回書いた次にすること": "実装対応: href を url('user_data',{route:'hareruya_faq'}) に差し替えるだけで解消",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0302_基本設計仕様書(フロント_グローバルナビ) sheet-3「PC版ナビゲーション」\n画面部品仕様\n> 24-11 FAQ　リンク　・押下すると、**FAQ画面へ遷移する**\n\n■実装の現状\nBlock/footer_sitemap.twig:50-53 の FAQ のみ `href=\"#\"` で、TODOコメントが残っています。他10リンクは実装済みです。\n\n**遷移先は既に存在します。** app/template/user_data/hareruya_faq.twig（53,686バイト）が実在し、Version20260703063355.php:122 で `dtb_page` に `url = 'hareruya_faq'` として投入済みです。UserDataController.php:41-55 のルートで `url('user_data', {route:'hareruya_faq'})` により到達できます。\n\n■次の対応\n実装対応: href を `url('user_data', {route:'hareruya_faq'})` に差し替えるだけで解消します。ページ・ルート・DB行はすべて存在します。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0302_基本設計仕様書(フロント_グローバルナビ).html / sheet-3「PC版ナビゲーション」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "app/template/user_data/hareruya_faq.twig",
+        "src/Eccube/Controller/Front/UserDataController.php",
+        "src/Eccube/Resource/template/default/Block/footer_sitemap.twig"
+      ],
+      "book": "0302"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1791",
+      "設計書": "0302_基本設計仕様書(フロント_グローバルナビ).html",
+      "設計シート": [
+        "sheet-3:PC版ナビゲーション",
+        "sheet-5:支店PC版ナビゲーション"
+      ],
+      "課題タイトル": "【実装乖離】フロントグローバルナビ_PC版ナビゲーション_フッターのサイトマップ／会社情報／お得な情報が、管理画面＞コンテンツ管理＞ブロック管理から編集できない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "3ブロックとも deletable=false 固定で編集リンク非表示かつ編集画面404",
+      "前回書いた次にすること": "実装対応: 3ブロックの deletable を true にするマイグレーションを追加",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0302_基本設計仕様書(フロント_グローバルナビ) sheet-3「PC版ナビゲーション」\nサイトマップ／会社情報／お得な情報の各節に同一文言\n> ・管理画面＞コンテンツ管理＞ブロック管理にて**編集可能**\n\n■実装の現状\nVersion20260508120000.php:32-36 で3ブロック（footer_sitemap / footer_company / footer_promo）を登録していますが、:58-66 の INSERT が `deletable` を **false リテラルで固定**しており、`ON CONFLICT DO UPDATE` でも `deletable = EXCLUDED.deletable`（=false）を再適用します。\nadmin/Content/block.twig:71-77 は `{% if Block.deletable %}` で編集リンクを出し分け、BlockController.php:118-120 は `if ($id && !$Block->isDeletable()) { throw new NotFoundHttpException(); }` でURL直打ちも拒否します。\n3ブロックを deletable=true にする後続マイグレーションは見つかりませんでした。\n\n■次の対応\n実装対応: 3ブロックの `deletable` を true にするマイグレーションを追加する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0302_基本設計仕様書(フロント_グローバルナビ).html / sheet-3「PC版ナビゲーション」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "app/DoctrineMigrations/Version20260508120000.php",
+        "src/Eccube/Controller/Admin/Content/BlockController.php",
+        "src/Eccube/Resource/template/admin/Content/block.twig"
+      ],
+      "book": "0302"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1792",
+      "設計書": "0302_基本設計仕様書(フロント_グローバルナビ).html",
+      "設計シート": [
+        "sheet-4:スマホ版ナビゲーション",
+        "sheet-6:支店スマホ版ナビゲーション"
+      ],
+      "課題タイトル": "【一部実装】フロントグローバルナビ_スマホ版ナビゲーション_スマホ版ナビゲーションの(4)メニュー内「デッキ構築」リンクが href=\"#\" のままで、デッキTOP画面へ遷移しない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "スマホ版も同一テンプレートでデッキ構築のみ href=#",
+      "前回書いた次にすること": "実装対応: 1788と同一箇所。あわせて対応",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0302_基本設計仕様書(フロント_グローバルナビ) sheet-4「スマホ版ナビゲーション」（メニュー定義は sheet-3 と共通）\n画面部品仕様\n> 1-6 デッキ構築 → デッキTOP\n\n■実装の現状\nスマホ版も同一テンプレート Block/mega_menu.twig を使用します（SP専用のメガメニューtwigは存在しません）。9リンクは実装済みで、:42-48 の「デッキ構築」のみ `href=\"#\"` です。\n\n■次の対応\n実装対応: 1788と同一箇所です。あわせて対応してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0302_基本設計仕様書(フロント_グローバルナビ).html / sheet-4「スマホ版ナビゲーション」（メニュー定義は sheet-3 と共通）\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F02_global_nav_basedesign.md",
+        "src/Eccube/Resource/template/default/Block/mega_menu.twig"
+      ],
+      "book": "0302"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2258",
+      "設計書": "0212_基本設計仕様書(デッキ管理).html",
+      "設計シート": [
+        "sheet-3:デッキ一覧(検索入力)",
+        "sheet-4:デッキ一覧(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】デッキ管理_デッキ一覧(検索入力/検索結果)_デッキ一覧の検索条件にて、デッキID・デッキ名・イベント名・成績・プレイヤー名の最大文字数が設計の50文字ではなく255文字になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "5項目とも eccube_stext_len=255。設計は50文字",
+      "前回書いた次にすること": "要確認: 詳細設計書は「50(stext_len)」と設定キー基準。移行先は255のため解釈の確定が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0212_基本設計仕様書(デッキ管理) sheet-3「デッキ一覧(検索入力)」\n画面部品仕様\n> 3/12/16/23/25 デッキID・イベント名・成績・デッキ名・プレイヤー名　**50文字**\n\n■実装の現状\nSearchDeckType.php の該当フィールドはいずれも `Length(max: eccube_stext_len)` を使用し、app/config/eccube/packages/eccube.yaml の `eccube_stext_len: 255` により実効上限は**255文字**です。Twig にも maxlength の上書きはありません。\n\n■次の対応\n要確認: 同シートの詳細設計書は当該項目を「50（**stext_len**）」と設定キー基準で記述しています。移行先の `eccube_stext_len` は255のため、「設定キーを踏襲」と読めば実装は整合し、「50文字」と読めば不整合です。どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html / sheet-3「デッキ一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Form/Type/Admin/SearchDeckType.php",
+        "src/Eccube/Resource/template/admin/Deck/index.twig"
+      ],
+      "book": "0212"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2259",
+      "設計書": "0212_基本設計仕様書(デッキ管理).html",
+      "設計シート": [
+        "sheet-3:デッキ一覧(検索入力)",
+        "sheet-4:デッキ一覧(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】デッキ管理_デッキ一覧(検索入力/検索結果)_デッキ一覧の検索条件にて、カード名の最大文字数が設計の100文字ではなく200文字になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "カード名は eccube_mtext_len=200。設計部品表は100文字",
+      "前回書いた次にすること": "要確認: 詳細設計書は「200(mtext_len)」と明記し実装と一致。設計内で100と200が矛盾",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0212_基本設計仕様書(デッキ管理) sheet-3「デッキ一覧(検索入力)」\n画面部品仕様\n> 27 カード名　文字列　**100文字**\n\n■実装の現状\nSearchDeckType.php:164-170 は `Length(max: eccube_mtext_len)` を使用し、eccube.yaml:118 の `eccube_mtext_len: 200` により実効上限は**200文字**です。\n（なお100文字用の定数 `eccube_smtext_len: 100` は別に存在します。）\n\n■次の対応\n要確認: **設計内で真っ向から矛盾しています。** 同シートの詳細設計書は「カード　任意　文字列 **200（設定 mtext_len）**」と明記しており、実装は詳細設計書と一致しています。画面部品仕様表の100文字とどちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html / sheet-3「デッキ一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Form/Type/Admin/SearchDeckType.php"
+      ],
+      "book": "0212"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2260",
+      "設計書": "0212_基本設計仕様書(デッキ管理).html",
+      "設計シート": [
+        "sheet-3:デッキ一覧(検索入力)",
+        "sheet-4:デッキ一覧(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】デッキ管理_デッキ一覧(検索入力/検索結果)_デッキ一覧の検索条件にて、イベント詳細IDの最大文字数が設計の50文字ではなく255文字になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "イベント詳細IDは eccube_stext_len=255。書式チェックと項目差し替えは実装済み",
+      "前回書いた次にすること": "要確認: 2258と同じ論点",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0212_基本設計仕様書(デッキ管理) sheet-3「デッキ一覧(検索入力)」\n画面部品仕様\n> 28 イベント詳細ID　**50文字**\n\n■実装の現状\nSearchDeckType.php の該当フィールドはいずれも `Length(max: eccube_stext_len)` を使用し、app/config/eccube/packages/eccube.yaml の `eccube_stext_len: 255` により実効上限は**255文字**です。Twig にも maxlength の上書きはありません。\n書式チェック（数字・カンマ・スペースの Regex）と項目名の差し替え（event_id → event_detail_id）は設計どおり実装済みです。\n\n■次の対応\n要確認: 同シートの詳細設計書は当該項目を「50（**stext_len**）」と設定キー基準で記述しています。移行先の `eccube_stext_len` は255のため、「設定キーを踏襲」と読めば実装は整合し、「50文字」と読めば不整合です。どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html / sheet-3「デッキ一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Form/Type/Admin/SearchDeckType.php"
+      ],
+      "book": "0212"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2262",
+      "設計書": "0212_基本設計仕様書(デッキ管理).html",
+      "設計シート": [
+        "sheet-6:デッキ登録CSVアップロード",
+        "sheet-7:デッキ登録CSV"
+      ],
+      "課題タイトル": "【未実装】デッキ管理_デッキ登録CSVアップロード / デッキ登録CSV_デッキ登録CSVアップロードにて、メインリスト・サイドリストのカード枚数がフォーマット規定の上限・下限を外れてもエラーにならない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "CSV取込に枚数上下限検証が無い。DeckValidationService はCSVから未参照",
+      "前回書いた次にすること": "実装対応: CSV取込に枚数検証を追加。既存メソッドは警告扱いのため呼ぶだけでは要求を満たさない",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0212_基本設計仕様書(デッキ管理) sheet-6「デッキ登録CSVアップロード」\n機能仕様処理概要\n> メインリスト、サイドリストのカード枚数がフォーマットで規定されている最大数を超えるか最小数に満たない場合は**エラー**。\n\n■実装の現状\nDeckUpdateImportHandler.php:97-240 の `onValidateRow()` に含まれるのは、メインリスト必須／フォーマット存在／アーキタイプ存在／イベント詳細ID存在／日付形式／disp_flg形式／private_flg形式／統率者必須・存在／デッキID存在・種別 の9チェックのみで、**枚数の上下限検証がありません**。onReadRow(242-371) にもありません。\n枚数検証ロジック `DeckValidationService::validateBoardCounts()`（271-334）は存在しますが、public 経由の利用者は DeckStoreAction（管理画面デッキ登録）と DeckEntryController（フロント）の2つだけで、**CSV取込からの参照は0件**です。\n\n■次の対応\n実装対応: CSV取込に枚数上下限の検証を追加する。\n\n注意: 既存の `validate()` は結果を `$warnings` として返す**警告**扱いで、DeckStoreAction では commit 後に呼ばれ登録を止めません。設計は「エラー」を要求しているため、単に既存メソッドを呼ぶだけでは要求を満たしません。messageStore へのエラー追加と `breakAll()` の経路に載せる必要があります。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html / sheet-6「デッキ登録CSVアップロード」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "src/Eccube/Service/Admin/Deck/DeckStoreAction.php",
+        "src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php",
+        "src/Eccube/Service/Deck/DeckValidationService.php"
+      ],
+      "book": "0212"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2263",
+      "設計書": "0212_基本設計仕様書(デッキ管理).html",
+      "設計シート": [
+        "sheet-12:アーキタイプ登録CSVアップロード",
+        "sheet-13:アーキタイプ登録CSV"
+      ],
+      "課題タイトル": "【一部実装】デッキ管理_アーキタイプ登録CSVアップロード / アーキタイプ登録CSV_アーキタイプ登録CSVアップロードにて、拡張子TSVのファイルをエラーにする処理が実装されておらず、TSVファイルがそのまま取り込まれる",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "拡張子チェックが無くCsvImporterがTSVをタブ区切りで取り込む",
+      "前回書いた次にすること": "実装対応: DeckCsvController:90-93 と同じ拡張子チェックを追加",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0212_基本設計仕様書(デッキ管理) sheet-12「アーキタイプ登録CSVアップロード」\nカスタマイズ要件および機能仕様（★）\n> ・TSVアップロードを廃止\n> ・CSVアップロード実行ロジック内に記載されている **ファイル拡張子「TSV」をエラー扱いにする処理を追加**\n\n■実装の現状\nArchetypeCsvController.php:47-109 の `csv()` に**拡張子チェックが1つもありません**。行数上限チェックの後そのまま CsvImporter へ渡します。\nCsvImporter.php:173-174 は `$fileExtension === 'tsv'` のときデリミタをタブに切り替えるため、**TSVファイルが正常に取り込まれます**。\nCsvImportType.php:47-57 の制約も `NotBlank` と `File(maxSize)` のみで mimeTypes/extensions の指定がありません。\n\n画面上の「TSV」表記除去は完了しています（csv_import.twig に TSV の文字列は0件）。\n対照として、デッキ側 DeckCsvController.php:90-93 には `if ($extension !== 'csv')` のエラー化が実装済みです。\n\n■次の対応\n実装対応: DeckCsvController.php:90-93 と同じ拡張子チェックを追加する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html / sheet-12「アーキタイプ登録CSVアップロード」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M15_deck_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php",
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php",
+        "src/Eccube/Form/Type/Admin/CsvImportType.php",
+        "src/Eccube/Resource/template/admin/Archetype/csv_import.twig",
+        "src/Eccube/Service/Csv/Importer/CsvImporter.php"
+      ],
+      "book": "0212"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1932",
+      "設計書": "0308_基本設計仕様書(フロント_店頭買取).html",
+      "設計シート": [
+        "sheet-3:店頭買取査定申込前ログイン"
+      ],
+      "課題タイトル": "【実装乖離】フロント店頭買取_店頭買取査定申込前ログイン_店頭買取査定申込前ログインにて、メールアドレス入力欄の最大文字数が設計値320文字ではなく255文字になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "maxlength が eccube_stext_len=255。設計は320",
+      "前回書いた次にすること": "実装対応: 320文字にする。パスワードにも320を適用すべきかは要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0308_基本設計仕様書(フロント_店頭買取) sheet-3「店頭買取査定申込前ログイン」\n画面部品仕様\n> 2 メールアドレス　全角・半角　△　**320**\n> 3 パスワード　全角・半角　△　**320**\n\n■実装の現状\nOtcBuyController.php:225-227 が `CustomerLoginType` を使用し、CustomerLoginType.php:39-56 は `maxlength` に `eccube_stext_len` を指定しています。eccube.yaml:137 の `eccube_stext_len: 255` により実効は**255**です。\nOtcBuy/entry.twig:31-37（英語版も同様）は `form.login_email.vars.attr` をそのまま継承しており上書きしていません。\n320を指す設定値は eccube.yaml に存在しません。\n\n■次の対応\n実装対応: 320文字にする。ただしメールアドレスの320はRFC上の最大長に由来する値であり、パスワードにも同じ320を適用すべきかは設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html / sheet-3「店頭買取査定申込前ログイン」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Controller/Front/Purchase/OtcBuyController.php",
+        "src/Eccube/Form/Type/Front/CustomerLoginType.php",
+        "src/Eccube/Resource/template/default/OtcBuy/entry.en.twig",
+        "src/Eccube/Resource/template/default/OtcBuy/entry.twig"
+      ],
+      "book": "0308"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1938",
+      "設計書": "0308_基本設計仕様書(フロント_店頭買取).html",
+      "設計シート": [
+        "sheet-6:会員登録フォーム"
+      ],
+      "課題タイトル": "【実装乖離】フロント店頭買取_会員登録フォーム_店頭買取の会員登録フォームにて、パスワードの文字数チェックが設計の8〜32文字ではなく12〜50文字になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "実効12〜50文字。設計の8〜32と両端とも不一致",
+      "前回書いた次にすること": "実装対応: 8〜32文字にする。下限12はポリシー由来の可能性があり設計値8の妥当性も要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0308_基本設計仕様書(フロント_店頭買取) sheet-6「会員登録フォーム」\n画面部品仕様\n> 4 パスワード　◯　**32**　**8～32文字であるかチェックを行う**\n> 5 パスワード(確認用)　◯　32　パスワードと同一かチェックを行う\n\n■実装の現状\nOtcBuyRepeatedPasswordType.php:46-55 は `eccube_password_min_len` / `eccube_password_max_len` を使用し、eccube.yaml:195-196 の `12` / `50` により実効は**12〜50文字**です。設計の8〜32と**両端とも不一致**です。\nregister_customer.twig:55 には maxlength 属性の付与もありません（日英とも0件）。\n\n■次の対応\n実装対応: 8〜32文字にする。ただし下限12はパスワードポリシー由来の可能性があるため、設計値8の妥当性も設計担当者にご確認ください。1939と同一箇所です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html / sheet-6「会員登録フォーム」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "src/Eccube/Form/Type/Front/OtcBuy/OtcBuyOrderType.php",
+        "src/Eccube/Form/Type/Front/OtcBuy/OtcBuyRepeatedPasswordType.php",
+        "src/Eccube/Resource/template/default/OtcBuy/register_customer.twig"
+      ],
+      "book": "0308"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1939",
+      "設計書": "0308_基本設計仕様書(フロント_店頭買取).html",
+      "設計シート": [
+        "sheet-6:会員登録フォーム"
+      ],
+      "課題タイトル": "【実装乖離】フロント店頭買取_会員登録フォーム_店頭買取の会員登録フォームにて、パスワードの注意書き（12文字以上32文字以内）と実際のバリデーション（12〜50文字）が一致していない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "注意書き12-32、実バリデーション12-50、プレースホルダ12-50で三者不一致",
+      "前回書いた次にすること": "実装対応: 1938の是正にあわせ注意書き・プレースホルダ・実バリデーションを一致させる",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0308_基本設計仕様書(フロント_店頭買取) sheet-6「会員登録フォーム」\n画面部品仕様\n> 4 パスワード　◯　32　**8～32文字であるかチェックを行う**\n\n（画面の注意書き文言そのものは設計書に記載がありません）\n\n■実装の現状\n画面の注意書きと実バリデーションが不一致です。\nregister_customer.twig:56（ハードコード）\n> （半角英数字記号 **12文字以上,32文字以内**で入力してください。IDと同様のパスワードは入力できません。）\n実際の制約は OtcBuyRepeatedPasswordType.php:46-51 の **12〜50文字**です。\n\nさらに同一画面内で**プレースホルダは「12～50文字」**（同:59 で動的生成）となっており、注意書きと食い違っています。英語版 register_customer.en.twig:56 も「12 - 32」です。\n\n■次の対応\n実装対応: 1938の是正にあわせて、注意書き・プレースホルダ・実バリデーションの3者を一致させる。現状は同一画面内で3つの値が並存しています。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html / sheet-6「会員登録フォーム」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F08_otc_buy_basedesign.md",
+        "src/Eccube/Form/Type/Front/OtcBuy/OtcBuyRepeatedPasswordType.php",
+        "src/Eccube/Resource/template/default/OtcBuy/register_customer.en.twig",
+        "src/Eccube/Resource/template/default/OtcBuy/register_customer.twig"
+      ],
+      "book": "0308"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2131",
+      "設計書": "0210_基本設計仕様書(コンテンツ管理).html",
+      "設計シート": [
+        "sheet-4:ページ管理(登録・編集)"
+      ],
+      "課題タイトル": "【実装乖離】コンテンツ管理_a ページ管理(登録・編集)_ページ管理(登録・編集)にて、日本語ページのtwigファイル名に言語識別子(.ja)が付与されず、画面表示の拡張子(.ja.twig)と実ファイル名が一致しない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "表示は .ja.twig、実ファイルはサフィックスなしで不一致。ブロック管理とも規約が不統一",
+      "前回書いた次にすること": "要確認: 設計は表示上の拡張子しか要求しておらず実ファイル名の規約が未定義。是正方向の確定が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0210_基本設計仕様書(コンテンツ管理) sheet-4「ページ管理(登録・編集)」\n機能仕様処理概要「・選択されている言語に応じた画面表示について」\n> ・(1-7)twigファイルの**テキストボックス右横のファイル拡張子**に、言語に応じた識別子を追加する\n> 日本語の場合: .ja.twig ／ 英語の場合: .en.twig\n\n■実装の現状\nPageController.php:99-100 は日本語をサフィックスなしで扱います。\n```\n// 日本語は.jaなし（例: foo.twig）、英語は.en付き（例: foo.en.twig）\n$localeSuffix = $locale === 'ja' ? '' : '.'.$locale;\n```\n一方 page_edit.twig:186 は常に `.{{ locale }}.twig` を表示するため、日本語選択時は**表示が `.ja.twig`、実ファイルはサフィックスなし**で不一致です。\n実測でも app/template/user_data 配下は `.en.twig` 74件、`.ja.twig` **0件**、`.twig` 290件です。\n\nさらに BlockController.php:97-98 は `$localeSuffix = '.'.$locale;`（ja でも `.ja` 付き）で、**同じ設計書内の姉妹機能でファイル名規約が実装レベルで不統一**です。\n\n■次の対応\n要確認: 設計原文は一貫して「**テキストボックス右横の（表示上の）ファイル拡張子**」についての要求で、**実ファイル名の規約は設計に記述がありません**。表示と実ファイルが不一致である事実は確定していますが、どちらを是正すべきか（表示をサフィックスなしにするか、実ファイルを `.ja.twig` にするか）は設計判断が必要です。ページ管理とブロック管理の規約統一もあわせてご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html / sheet-4「ページ管理(登録・編集)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Content/BlockController.php",
+        "src/Eccube/Controller/Admin/Content/PageController.php",
+        "src/Eccube/Resource/template/admin/Content/page_edit.twig"
+      ],
+      "book": "0210"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2134",
+      "設計書": "0210_基本設計仕様書(コンテンツ管理).html",
+      "設計シート": [
+        "sheet-4:ページ管理(登録・編集)"
+      ],
+      "課題タイトル": "【実装乖離】コンテンツ管理_a ページ管理(登録・編集)_ページ管理(登録・編集)にて、titleタグのサフィックス固定文言のカギカッコが設計書の『晴れる屋』と異なり「晴れる屋」になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "固定文言のカギカッコが単カギ。設計は二重カギ",
+      "前回書いた次にすること": "実装対応: 翻訳値のカギカッコを設計指定に合わせる",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0210_基本設計仕様書(コンテンツ管理) sheet-4「ページ管理(登録・編集)」\n機能仕様処理概要「★タイトルタグの固定文言を非表示」\n> ・(1-9)コード内に{% set noShopName = true %}を設定すると、titleタグのサフィックス（末尾）に以下の固定文言が追加されない\n> 固定文言:  | 日本最大級 MTG通販サイト**『晴れる屋』**\n\n■実装の現状\nnoShopName による分岐は default_frame.twig:25-33 で設計どおりフロントに実装済みです。連結文字 ` | ` も設計どおりです。\n固定文言のカギカッコが異なります。\nmessages.ja.yaml:6666\n```\nfront.seo.title_suffix: '日本最大級 MTG通販サイト「晴れる屋」'\n```\n設計は**二重カギ『晴れる屋』**、実装は**単カギ「晴れる屋」**です。ja/en 両方の翻訳ファイルを検索しましたが、`『晴れる屋』` を含む値・テンプレートは存在しません。\n\n■次の対応\n実装対応: 翻訳値のカギカッコを設計指定に合わせる。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html / sheet-4「ページ管理(登録・編集)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "src/Eccube/Resource/template/default/default_frame.twig"
+      ],
+      "book": "0210"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2136",
+      "設計書": "0210_基本設計仕様書(コンテンツ管理).html",
+      "設計シート": [
+        "sheet-6:ブロック管理(登録・編集)"
+      ],
+      "課題タイトル": "【一部実装】コンテンツ管理_c ブロック管理(登録・編集)_ブロック管理(登録・編集)にて、ファイル名を変更して更新した際に日英2種類のtwigファイルが作成されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "ファイル名変更時に旧ファイル削除のみで他ロケールのファイルが孤立する",
+      "前回書いた次にすること": "実装対応: ファイル名変更時にもう一方のロケールも新名で作成し旧ファイルを削除",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0210_基本設計仕様書(コンテンツ管理) sheet-6「ブロック管理(登録・編集)」\n機能仕様処理概要\n> ・ブロックを新規登録する場合、日英2種類のファイルを作成する\n> ・(1)言語で選択している言語の(6)ファイル名に該当するtwigファイルのみを更新する\n> ・**(6)ファイル名を変更して更新する場合、日英2種類のtwigファイルを作成する**\n\n■実装の現状\n新規登録時の日英2種作成（BlockController.php:196-204）と通常更新時の選択ロケールのみ更新（:174-189）は設計どおり実装済みです。\n**ファイル名変更時の処理が不足しています。** :206-218 は**旧ファイルの削除のみ**、しかも選択中ロケール分だけで、もう一方の言語のファイルを新ファイル名で作成する処理も、旧ファイル名で削除する処理もありません。結果、他方の言語ファイルは旧ファイル名のまま孤立します。\n`otherLocale` の検索でも :197-204 の新規登録分岐**1箇所のみ**で、補完する EventSubscriber もありません。\n\n■次の対応\n実装対応: ファイル名変更時に、もう一方のロケールのファイルも新ファイル名で作成し旧ファイルを削除する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html / sheet-6「ブロック管理(登録・編集)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M09_content_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Content/BlockController.php"
+      ],
+      "book": "0210"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1958",
+      "設計書": "0204_基本設計仕様書(商品管理).html",
+      "設計シート": [
+        "sheet-11:グッズ商品CSV登録"
+      ],
+      "課題タイトル": "【一部実装】商品管理_グッズ商品CSV登録/フォーマット_グッズ商品CSV登録にて、スマレジサーバへ照会したうえでの重複スマレジ商品コードのエラー判定が実装されていない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "DB一意制約違反の捕捉のみでスマレジサーバ照会なし",
+      "前回書いた次にすること": "要確認: 詳細設計書は「一意制約違反→skipRow」と規定し実装と一致。基本設計★との矛盾解消が先",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0204_基本設計仕様書(商品管理) sheet-11「グッズ商品CSV登録」\n★スマレジ商品コードの追加\n> ・**登録・更新時にスマレジサーバに通信し、スマレジ商品コードの登録状況を確認する**\n> ・登録時、重複するスマレジ商品コードがある場合はエラー扱い\n\n■実装の現状\nProductGoodsImportHandler.php:604-613（更新時）および :658-667（新規時）は `UniqueConstraintViolationException` を捕捉しているだけで、**EC-CUBE の DB 一意制約違反**（ProductClass.php:36-40 の `uniq_smaregi_product_code_partial`）の検出にとどまります。スマレジサーバへの照会は行っていません。\n同:616-619 / :674-678 に「TODO:スマレジ連携状態の確認後、更新するか決める」というコメントが残っています。\n\n**反証**: `SmaregiProductApiClient::listByProductCode()` は実在しますが、呼び出し元は MessageHandler 2件と Smaregi/Otc 系 2件のみで、**CSV取込ハンドラからの呼び出しは0件**です。ProductGoodsImportHandler のコンストラクタにも API クライアントは注入されていません。\n\n■次の対応\n要確認+実装対応: 同シートの詳細設計書は「スマレジ商品コードの一意制約違反　当該行 skipRow」と、**DB一意制約による検出**を前提に記述しており、★カスタマイズの「スマレジサーバへ照会」と食い違います。実装は詳細設計書側に一致しています。どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html / sheet-11「グッズ商品CSV登録」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "src/Eccube/Entity/ProductClass.php",
+        "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php",
+        "src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php"
+      ],
+      "book": "0204"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1959",
+      "設計書": "0204_基本設計仕様書(商品管理).html",
+      "設計シート": [
+        "sheet-11:グッズ商品CSV登録"
+      ],
+      "課題タイトル": "【未実装】商品管理_グッズ商品CSV登録/フォーマット_グッズ商品CSV登録にて、更新時にスマレジ商品情報が存在しない場合のエラー判定が実装されていない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "getRowValidators に存在確認が無く更新パスも事前照会なし",
+      "前回書いた次にすること": "要確認: 1958と同じ論点",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0204_基本設計仕様書(商品管理) sheet-11「グッズ商品CSV登録」\n★スマレジ商品コードの追加\n> ・**登録・更新時にスマレジサーバに通信し、スマレジ商品コードの登録状況を確認する**\n> ・更新時、スマレジ商品情報がない場合はエラー扱い\n\n■実装の現状\nProductGoodsImportHandler.php:320-339 の `getRowValidators()` は、買取/販売価格整合・スマレジ連携ON時の条件付き必須・廃止時在庫・連携OFF時のスマレジ在庫 の4種のみで、**スマレジ商品情報の存在確認がありません**。更新パス（:582-638）も事前照会なしで `updateProductClass()` を実行します。\n\n**反証**: `SmaregiProductApiClient::listByProductCode()` は実在しますが、呼び出し元は MessageHandler 2件と Smaregi/Otc 系 2件のみで、**CSV取込ハンドラからの呼び出しは0件**です。ProductGoodsImportHandler のコンストラクタにも API クライアントは注入されていません。\n\n■次の対応\n要確認+実装対応: 同シートの詳細設計書は「スマレジ商品コードの一意制約違反　当該行 skipRow」と、**DB一意制約による検出**を前提に記述しており、★カスタマイズの「スマレジサーバへ照会」と食い違います。実装は詳細設計書側に一致しています。どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html / sheet-11「グッズ商品CSV登録」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php",
+        "src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php"
+      ],
+      "book": "0204"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2241",
+      "設計書": "0208_基本設計仕様書(カード管理).html",
+      "設計シート": [
+        "sheet-4:カード一覧(検索結果)",
+        "sheet-3:カード一覧(検索入力)"
+      ],
+      "課題タイトル": "【実装乖離】カード管理_カード一覧(検索結果)_カード一覧(検索結果)にて、3点リーダーによる削除メニューが実装されておらず、削除確認ポップアップの文言も設計と異なる",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "3点リーダーでなくアイコン直置き。削除文言も共通キー。カード名も非リンク",
+      "前回書いた次にすること": "実装対応: 3点リーダー化と専用確認文言。カード名のリンク化も併せて対応",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0208_基本設計仕様書(カード管理) sheet-4「カード一覧(検索結果)」\n画面部品仕様\n> 12 3点リーダー　カード削除表示ボタン　・押下すると、(13)を表示する\n> 13 削除　・押下すると、動的に以下文言のポップアップを表示「**このカードを削除してもよろしいですか？**」\n\n■実装の現状\nadmin/Card/index.twig:426-437 は3点リーダー（dropdown）ではなく編集・削除のアイコンを直置きしています。\n削除確認の文言も共通キー `admin.common.delete_modal__message`（messages.ja.yaml:1786「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」）で、設計文言と異なります。\n\n**チケット未指摘の追加乖離**: 同:423-425 のカード名は `{{ card.getNameJpWithEn }}` のプレーンテキストで、設計 識別ID 11「カード名　**リンク**」を満たしていません。\n対照として、デッキ一覧（admin/Deck/index.twig:592-600）には3点リーダーが実装されています。\n\n■次の対応\n実装対応: 3点リーダー化と専用の確認文言を実装する。あわせてカード名のリンク化も対応してください（別途起票が必要なら申し送りとしてご検討ください）。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html / sheet-4「カード一覧(検索結果)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "src/Eccube/Resource/locale/messages.ja.yaml",
+        "src/Eccube/Resource/template/admin/Card/delete_modal.twig",
+        "src/Eccube/Resource/template/admin/Card/index.twig"
+      ],
+      "book": "0208"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2254",
+      "設計書": "0208_基本設計仕様書(カード管理).html",
+      "設計シート": [
+        "sheet-13:フォーマット一覧"
+      ],
+      "課題タイトル": "【実装乖離】カード管理_フォーマット一覧_フォーマット一覧にて、フォーマット名がリンクになっておらずプレーンテキストで表示されている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "フォーマット名が非リンク。3点リーダーと削除文言も未達",
+      "前回書いた次にすること": "実装対応: フォーマット名のリンク化に加え3点リーダー化と専用確認文言も対応",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0208_基本設計仕様書(カード管理) sheet-13「フォーマット一覧」\n画面部品仕様\n> 2 フォーマット名　**リンク**\n> 5 3点リーダー　編集削除表示ボタン　・押下すると、(6)と(7)を表示する\n> 7 削除　・押下すると、動的に以下文言のポップアップを表示「このカードセットを削除してもよろしいですか？」\n\n■実装の現状\napp/template/admin/Format/format_list.twig:48 は `{{ Format.nameJp }} / {{ Format.nameEn }}` のプレーンテキストで、アンカー要素がありません。編集画面への遷移は :56-59 の編集アイコンのみです。\n\n**チケット未指摘の追加乖離**: :60-68 も3点リーダーではなく削除アイコンの直置きで、削除文言も共通の `admin.common.delete_modal__message` です。設計の (5)(7) も未達です。\n\n■次の対応\n実装対応: フォーマット名のリンク化に加え、3点リーダー化と専用の確認文言も対応してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html / sheet-13「フォーマット一覧」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M14_card_management_basedesign.md",
+        "app/template/admin/Format/format_list.twig"
+      ],
+      "book": "0208"
+    }
+  ],
+  "count": 47
+}

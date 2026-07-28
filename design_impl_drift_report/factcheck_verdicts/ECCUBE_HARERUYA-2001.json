@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2001",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 部分一致に変更し trim も揃える",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "リコメンド側の商品IDが完全一致。在庫一覧は部分一致で同条件でも件数が食い違う",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-21「在庫リコメンドCSV出力」（部分一致の要求元は sheet-4）\nsheet-4\n> ・商品名、カード名、**ID**、コードは**部分一致検索**とする\n\nsheet-4 各種CSV出力ボタン\n> ・押下時、検索結果一覧の表示条件で（機能ID: M04-16）在庫リコメンドCSV出力を出力する\n\n■実装の現状\nStockRecommendCsvExportService.php:220-222 は `'p.id = :productId'` で**完全一致**です（同ファイルの商品名:209・カード名:216・商品コード:227 は LIKE）。\n在庫一覧側は ProductStockRepository.php:79-82 の `CONCAT(p.id, '') LIKE` で部分一致です。両者は同一の `StockListSearchInput` を受け、StockListController.php:249-270 が同一セッションキーから条件を復元するため、**同じ条件で件数が食い違います**。\n\n**起票未指摘の追加事実**: リコメンド側は `productId` を `trim()` していません（在庫一覧側は trim します）。前後空白入りの入力で挙動が異なります。\n\n■次の対応\n実装対応: 商品IDを部分一致（LIKE）に変更し、trim も揃える。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-21「在庫リコメンドCSV出力」（部分一致の要求元は sheet-4）\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:23:58+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:24:03+09:00",
+  "appliedStatus": "処理中"
+}

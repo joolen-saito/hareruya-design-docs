@@ -1,0 +1,736 @@
+{
+  "book": "0306",
+  "count": 41,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-1863",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-3:新規会員登録"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_新規会員登録_新規会員登録にて、メールアドレスの最大文字数が設計の255文字ではなく254文字になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "eccube_email_len=254。設計部品表は255",
+      "前回書いた次にすること": "要確認: リバース詳細設計は共通部品へ委譲しており数値を持たない。どちらを正とするか確認が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-3「新規会員登録」\n画面部品仕様\n> 1-10 メールアドレス　半角　◯　**255**\n> 1-11 メールアドレス(確認)　半角　◯　**255**\n\n■実装の現状\nRepeatedEmailType.php:47-49 が `Length(max: eccube_email_len)` を使用し、eccube.yaml:235 の `eccube_email_len: 254` により実効は**254**です。\nDBカラム（Customer.php:83）は `length: 255` なので、254はバリデーション由来です。設定値の上書きもテンプレートの maxlength 緩和もありません。\n\n■次の対応\n要確認: 同シートのリバース詳細設計は数値を持たず共通部品へ委譲しています（「メール用フォーム部品の上限に従う」「具体文字数は constant.yml.dist の該当キーを確認値とする」）。この委譲記述を採れば254は逸脱になりません。どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-3「新規会員登録」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Form/Type/Front/EntryType.php",
+        "src/Eccube/Form/Type/RepeatedEmailType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1864",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-3:新規会員登録"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_新規会員登録_新規会員登録にて、メールアドレスのRFC準拠チェックが無効化されており、RFC上不正なメールアドレスが登録できてしまう",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "eccube_rfc_email_check=false でRFC準拠チェックが効かない",
+      "前回書いた次にすること": "実装対応: RFC準拠チェックを有効化。国内キャリアメール互換への影響を要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-3「新規会員登録」\n機能仕様処理概要\n> ・(1-26)同意するを押下すると、**RFC準拠の形式チェック**を行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する\n\n■実装の現状\neccube.yaml:234 が `eccube_rfc_email_check: false` のため、RepeatedEmailType.php:46 の `new Email(null, null, ... ? 'strict' : null)` は mode=null となり、`NoRFCEmailValidator` の緩い正規表現が使われます。`-example.com` や `exam_ple.com` が通過します。\n追加の `Assert\\Regex('/\\.{2,}|\\.@/', match:false)` により `..` `.@` のみ拒否されます。エラー文言は validators.ja.yaml:141 で設計どおりです。\n設定値の上書きも、EventSubscriber・別FormTypeによる Email 制約追加もありません。\n\n■次の対応\n実装対応: RFC準拠チェックを有効にする。ただし strict 化は国内キャリアメールの互換性に影響するため、影響範囲をご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-3「新規会員登録」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Form/Type/RepeatedEmailType.php",
+        "src/Eccube/Validator/EmailValidator/NoRFCEmailValidator.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1865",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-4:本会員登録"
+      ],
+      "課題タイトル": "【未実装】フロント会員_本会員登録_本会員登録にて、仮会員が既にスマレジIDを保有している場合の「登録済みエラー」判定が実装されておらず、エラーにならずに本会員登録が完了してしまう",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "スマレジID判定が無く冪等returnで完了まで進む。ステータス更新もトランザクション外で先行",
+      "前回書いた次にすること": "実装対応: エラー判定の追加と同一トランザクション化。再現条件は限定的",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-4「本会員登録」\n機能仕様処理概要\n> 3　2のチェックで存在したユーザーが**すでにスマレジIDを持っていないか**を確認\n> ・スマレジIDを持っていたら、すでに会員登録済みとみなし**エラーとする**\n\nリバース詳細設計も同旨（「既にあるなら『完了済みです。』エラー画面（再登録しない）」「二重本登録の防止」）で一致しています。\n\n■実装の現状\n3点の乖離があります。\n1. **スマレジID判定が存在しません。** EntryController.php:273-280 の判定は仮会員の有無のみです。\n2. **冪等returnでエラーになりません。** 同:348-352 は `if ($smaregiId !== null && $smaregiId !== '') { return $Customer; }` で例外を投げないため、会員登録完了メール送信（:305）と自動ログイン（:314-316）まで到達します。\n3. **ステータス更新が先行します。** :283-289 の生SQL（本会員化）は `beginTransaction` の外で発行され、スマレジ連携（:302）はその後です。設計の「同一トランザクション」「失敗時はDBを変更しない」を満たしていません（コード内コメント自身も「本会員化は完了済み」と認めています）。\n\n■次の対応\n実装対応: スマレジID保有時のエラー判定を追加し、本会員化とスマレジ連携を同一トランザクションにする。\n\n付記: 「仮会員かつスマレジID保有」は通常フローでは発生しにくく、実際に到達するのはデータ移行や管理画面でのステータス差し戻し等に限られます。要求としては未実装で確定ですが、実害の再現条件は限定的です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-4「本会員登録」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/EntryController.php",
+        "src/Eccube/Repository/Views/RegisterCustomerViewRepository.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1866",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-4:本会員登録"
+      ],
+      "課題タイトル": "【一部実装】フロント会員_本会員登録_本会員登録にて、既にスマレジIDを持つユーザーの場合に E-2. ユーザー存在チェックエラー画面が表示されない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "エラー画面は実装済み。仮会員不在時が forbidden になる点のみ乖離",
+      "前回書いた次にすること": "要確認: 設計自身が理由を画面上で区別しないと明記。画面分離の要否確定が先",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-4「本会員登録」\nE-2 機能仕様処理概要\n> ・秘密鍵文字列でユーザー情報を検索し、仮会員のユーザーが存在しない\n> もしくは、既にスマレジIDを持っているユーザーの場合に表示する\n\n■実装の現状\nエラー画面自体は実装済みです（Entry/activate_error.twig が `error_type` により3種の文言を切替、「トップページへ」ボタンも実装済み）。\n実際に残る乖離は「**仮会員も本会員も見つからない**ケースが `forbidden`（アクセスできません）になる」点で、リバース詳細設計の判定順序2は「完了済みです。」であるべきところです。\nスマレジID保有ケースは 1865 のとおり判定自体が無く、エラー画面に到達しません。\n\n■次の対応\n要確認: **設計自身が画面の作り分けを否定しています。** リバース詳細設計は「エラー画面はタイトルと本文の組で表示する」「判定順序2・3の理由は**画面上で区別しない**」と明記しており、E-1/E-2を独立した専用画面として用意すべきという前提はレイアウト図レベルの記述にのみ依拠します。\n設計担当者に画面分離の要否をご確認ください。分離不要であれば、残る是正対象は「仮会員不在時の文言」に絞られます。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-4「本会員登録」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/EntryController.php",
+        "src/Eccube/Resource/locale/messages.ja.yaml",
+        "src/Eccube/Resource/template/default/Entry/activate_error.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1867",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-6:パスワード再発行"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_パスワード再発行_パスワード再発行にて、メールアドレスのRFC準拠チェックが行われておらず、最大文字数(255)のサーバ側チェックも無い",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "サーバ側 Length が無くRFC準拠チェックも効かない。RepeatedEmailType には両方ある",
+      "前回書いた次にすること": "実装対応: Length とRFC準拠チェックを追加。既存テストが非RFC許容を固定している点に留意",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-6「パスワード再発行」\n機能仕様処理概要\n> ・フォーム送信後メールアドレスの形式(**RFC**)に問題がある場合、パスワード再発行のメールアドレス入力画面を表示する\n\n画面部品仕様\n> 1-2 メールアドレス　半角　◯　**255**\n\n■実装の現状\nForgotType.php:43-51 と PasswordResetType.php:44-52 はいずれも `NotBlank` と `Email(mode: null)` のみで、**サーバ側の `Assert\\Length` がありません**（255はHTMLの `maxlength` 属性のみ）。`eccube_rfc_email_check: false` のため RFC準拠チェックも効きません。\n\n**対照実装があります。** RepeatedEmailType.php:44-56 は `Assert\\Length` と `Assert\\Regex('/\\.{2,}|\\.@/')` の両方を持ちます。Forgot系だけが両方を欠いています。\nなお Forgot/reset.twig:25 は `novalidate` 付きでブラウザ検証も効きません。\n\n■次の対応\n実装対応: サーバ側の Length と RFC準拠チェックを追加する。\n\n留意点: 非RFC許容はEC-CUBE側の意図的仕様で、既存テスト（ForgotTypeTest.php:94-99 の `testMailNoRFC()`）が `'aa..@example.com'` の通過を固定しています。strict化は国内キャリアメール互換に影響するため、影響範囲をご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-6「パスワード再発行」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Form/Type/Front/ForgotType.php",
+        "src/Eccube/Form/Type/Front/PasswordResetType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1868",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-6:パスワード再発行"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_パスワード再発行_パスワード再発行にて、リセットキーの有効期限が設計の24時間ではなく10分になっており、メール文面には「10時間」と表示される",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "有効期限が分単位で実効10分。かつメール文面が同じ値を時間として案内し10時間と表示",
+      "前回書いた次にすること": "実装対応: 24時間にする。文面の単位表記も修正。文面の不整合は設定値に関わらず残る",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-6「パスワード再発行」\n機能仕様処理概要\n> ・時間制限(**有効時間:24時間**)のリセットキーを発行し、ユーザー情報に保存する\n\n■実装の現状\n**二重の不整合があります。**\n1. 有効期限が10分です。ForgotController.php:78-85 は `'+'.$this->eccubeConfig['eccube_customer_reset_expire'].' min'` と**分**単位で計算し、eccube.yaml:150 の `eccube_customer_reset_expire: 10` により**実効10分**です。\n2. メール文面が同じ値を「時間」として案内しています。forgot_mail.twig:2 `※URLの有効期限は、メール配信時刻から{{ eccube_config.eccube_customer_reset_expire }}時間になります。` → **「10時間」**と表示されます（英語版も `10 hours`）。\n\n`reset_expire` を src/app 全走査しましたが、設定値を読むのは上記と MailService の受け渡しのみで、24時間を作る別経路は存在しません。\n\n■次の対応\n実装対応: 有効期限を24時間にする（設定値と単位の両方）。メール文面の単位表記も併せて修正してください。文面の不整合は設定値が何であっても残る問題です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-6「パスワード再発行」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Controller/Front/ForgotController.php",
+        "src/Eccube/Resource/template/default/Mail/Mall/forgot_mail.en.twig",
+        "src/Eccube/Resource/template/default/Mail/Mall/forgot_mail.twig",
+        "src/Eccube/Service/MailService.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1869",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-6:パスワード再発行"
+      ],
+      "課題タイトル": "【未実装】フロント会員_パスワード再発行_パスワード再発行にて、E-1. リセットキー書式エラー画面と E-2. ユーザー存在チェックエラー画面が実装されておらず、いずれも汎用の404エラーページになる",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "E-1/E-2とも同一の汎用404。E-2相当の翻訳キーは定義のみで参照0件",
+      "前回書いた次にすること": "要確認: リバース詳細設計は共通エラー画面の文言差として記述。画面を分けるかの確定が先",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-6「パスワード再発行」\n機能仕様処理概要\n> ・1の条件でエラーになった場合、**E-1. リセットキー書式エラー画面**を表示\n> ・2の条件でエラーになった場合、**E-2.ユーザー存在チェックエラー画面**を表示\n\nE-1・E-2はそれぞれ独立したレイアウト図と識別ID（5-1 / 6-1 トップページへ）を持ちます。\n\n■実装の現状\nForgotController.php:172-195 はどちらの条件でも `NotFoundHttpException` を投げ、ExceptionListener 経由で**完全に同一の汎用404ページ**（error.twig）が表示されます。`Forgot/` 配下にエラー画面用テンプレートはありません。\n条件2の3要件（リセットキー一致・本会員・有効期限内）自体は RegisterCustomerViewRepository.php:143-152 で設計どおり実装済みです。\n\n**有力な傍証**: messages.ja.yaml:508 に `front.forgot.reset_error: 有効期限が切れているか、無効なURLです。`（E-2相当の文言）が定義されていますが、**参照0件**です。文言だけ移植され描画経路が未接続の状態です。\n設計適用済みの前例も存在します（Entry/activate_error.twig が3種を出し分け）。\n\n**起票を1点補正します。** 「トップページへ」ボタン自体は汎用エラー画面に実装されており、識別ID 5-1/6-1 は形式上満たされます。\n\n■次の対応\n要確認: 同シートのリバース詳細設計は同じ分岐を**共通エラー画面の文言差**として記述しており（「不正なら『アクセスできません。』」「取得不可なら『…有効期限が切れているか、無効なURLです。』」）、E-1/E-2を別画面として作り分ける要求とは粒度が異なります。争点は画面を分けるかどうかに絞られるため、設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-6「パスワード再発行」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/ForgotController.php",
+        "src/Eccube/Resource/template/default/error.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1870",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-6:パスワード再発行"
+      ],
+      "課題タイトル": "【一部実装】フロント会員_パスワード再発行_パスワード再設定完了にて、パスワードリセット完了のログ(ユーザーID・メールアドレス・グローバルIP)が保存されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "完了処理にログ出力が一切無い。監査ログ機構もadmin.*のみ対象で項目も不足",
+      "前回書いた次にすること": "実装対応: 完了処理にログ出力を追加",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-6「パスワード再発行」\n機能仕様処理概要\n> ・**パスワードリセット完了をログに保存する**\n> 　※この時、ユーザーID,メールアドレス,アクセスしてきたグローバルIPもログに保存する\n\nリバース詳細設計の「ログ・監査」も同粒度で要求しています（「完了ログ（会員ID・メール・接続元IP）」）。\n\n■実装の現状\nForgotController.php:204-234 の完了処理に **`log_info` 等のログ出力が一切ありません**（同ファイルのログは :103 送信時と :105 ユーザー不在時の2箇所のみ）。\n`FRONT_FORGOT_RESET_COMPLETE` の dispatch はありますが、**購読リスナが存在しません**。\n包括的監査ログ機構（AuditLogListener）も個別に検証しました。eccube_audit_log.yaml の `include_events: - admin.*` により `'front.reset.index.complete'` は**記録されず**、仮に記録されても context は controller / eventName / status / loginId のみで**ユーザーID・メールアドレス・IPを含みません**。\n設計どおりの部分（暗号化登録・リセットキー削除・完了画面・非ログイン）は実装済みです。\n\n■次の対応\n実装対応: 完了処理にログ出力を追加する。\n\n付記: 実装済みの :103 送信ログは「ユーザーID」ではなく `getSecretKey()` を出力しており、設計の「ユーザーID」とは別物です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-6「パスワード再発行」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/ForgotController.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1871",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-7:マイページ"
+      ],
+      "課題タイトル": "【一部実装】フロント会員_マイページ_マイページの各メニュー遷移後の画面上部のユーザ名表示が、買取履歴一覧・買取履歴詳細・購入履歴詳細(旧テンプレート)に残っている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "3画面で氏名表示が残存。ポイント履歴のみ除去済み",
+      "前回書いた次にすること": "実装対応: 3画面の氏名表示を除去",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-7「マイページ」\nカスタマイズ説明および機能仕様処理概要（★）\n> ・各メニュー遷移後の画面上部の**ユーザ名表示を削除する**（お気に入り登録商品一覧画面上部のユーザ名表示等）\n\n■実装の現状\n3画面で氏名表示が残存しています。\n- purchase_history.twig:54-55 `{{ Customer.name01 }} {{ Customer.name02 }}{{ 'common.name.suffix'|trans }}`\n- purchase_history_detail.twig:91 `{{ Customer.name01 }} {{ Customer.name02 }} 様`\n- history.twig:23 が include する navi.twig:33-34 の `ec-welcomeMsg`\n\nポイント履歴（point_history.twig）は設計どおり除去済みです。CSS/JSによる非表示化も見つかりませんでした。\n到達経路も確認しました。`Mypage/navi.twig` の include 元は history.twig:23 の1箇所のみ、`mypage_history` へのリンク元は point_history.twig:112 の1箇所のみで、起票の説明は正確です。\n\n■次の対応\n実装対応: 3画面の氏名表示を除去する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-7「マイページ」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Resource/template/default/Mypage/history.twig",
+        "src/Eccube/Resource/template/default/Mypage/navi.twig",
+        "src/Eccube/Resource/template/default/Mypage/point_history.twig",
+        "src/Eccube/Resource/template/default/Mypage/purchase_history.twig",
+        "src/Eccube/Resource/template/default/Mypage/purchase_history_detail.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1872",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-7:マイページ"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_マイページ_マイページのバーコードが会員ごとのスマレジ会員コードではなく固定値でハードコードされており、店頭で読み取っても会員を特定できない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "バーコード値が固定値にハードコード。起票のDtbPlayer実装済みという説明は誤り",
+      "前回書いた次にすること": "実装対応: Customer.getSmaregiMemberCode を使う。smaregi_id未設定時の表示も要検討",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-7「マイページ」\n画面部品仕様\n> 5 バーコード　・**店頭受取注文の際にバーコードを店頭で読み取ると、スマレジと連携して会員の注文履歴に登録する**　※ポイントも付与される\n\n■実装の現状\nBlock/js/point_barcode_js.twig:22-23 でバーコード値が**固定値にハードコード**されています。\n```\n{#$(\"#js-ec_point_barcode\").barcode('{{ Customer.getSmaregiMemberCode }}', \"ean13\", …);#}\n$(\"#js-ec_point_barcode\").barcode('2900065596792', \"ean13\", …);\n```\n会員を特定できないため、読み取っても当該会員の注文履歴に登録できません。5分タイマーと「再表示する」への切替（同:3-19）は設計どおりです。\n\n**起票の説明を1点補正します。** 「`DtbPlayer::getSmaregiMemberCode()` も実装済みで呼び出しを戻すだけで解消できる」とありますが、DtbPlayer.php:532-545 は**本体が全行コメントアウトされ `return '';` を返すスタブ**です。ただし Twig が呼ぶのは `Customer.getSmaregiMemberCode` で、Customer.php:1075-1088 は実装済み（`getPlayer()->getSmaregiId()` から13桁を生成）のため**この経路は生きています**。\n\n■次の対応\n実装対応: コメントアウトを戻して `Customer.getSmaregiMemberCode` を使う。ただし smaregi_id 未設定の会員では空文字が返り `barcode('')` になるため、その場合の表示も併せてご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-7「マイページ」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Entity/Customer.php",
+        "src/Eccube/Entity/DtbPlayer.php",
+        "src/Eccube/Resource/template/default/Block/js/point_barcode_js.twig",
+        "src/Eccube/Resource/template/default/Mypage/index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1873",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-7:マイページ"
+      ],
+      "課題タイトル": "【未実装】フロント会員_マイページ_マイページの「マイデッキ」メニューのリンク先が未設定(href が空)で、押下してもマイデッキ画面へ遷移しない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "href が空でマイデッキ画面のルート定義も0件",
+      "前回書いた次にすること": "実装対応: マイデッキ画面の実装とルート定義が必要。仕様の所在も要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-7「マイページ」\n画面部品仕様\n> 19 マイデッキ　リンク　・押下すると、**マイデッキ画面へ遷移する**\n\n■実装の現状\nMypage/index.twig:172-175（英語版も同一）の href が空です。\n```\n{# TODO: 「マイデッキ」機能の遷移先URLが未確定のため空リンク。決まり次第 href を設定する #}\n<a class=\"p-hareruya-mypage__menu-link\" href=\"\">\n```\n`my_deck` / `mydeck` を Controller と app 配下で検索しましたが**ルート定義は0件**で、マイデッキ画面に相当する Controller・テンプレート・ルートは現HEADに存在しません。JSによる遷移もありません。\n\n■次の対応\n実装対応: マイデッキ画面の実装とルート定義が必要です。\n\n付記: 0306 内に「マイデッキ」画面自体の設計シートが存在せず、遷移先画面の仕様が本ブックでは定義されていません。仕様の所在をご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-7「マイページ」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Resource/locale/messages.ja.yaml",
+        "src/Eccube/Resource/template/default/Mypage/index.en.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1874",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-7:マイページ"
+      ],
+      "課題タイトル": "【一部実装】フロント会員_マイページ_マイページの「あなたへのおすすめアイテム」が常に空表示になり、リコメンド商品が一件も表示されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "recommendProducts が未供給。recommend_js.twig は実在するが参照ルートが不在で復活させると画面が落ちる",
+      "前回書いた次にすること": "実装対応: block_product_recommend でマイページに接続する。コメントアウトを戻す方法は取らないこと",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-7「マイページ」\n画面部品仕様\n> 27 あなたへのおすすめアイテム　・機能については、別紙「0303_基本設計仕様書(フロント_商品)」のシート「商品リコメンド」を参照\n\n■実装の現状\nMypageController.php:127-138 が `recommendProducts` を渡していないため、Mypage/index.twig:247 の条件が常に偽になり :267 の「表示するおすすめ商品はまだありません。」が出ます。:21 の `recommend_js.twig` の include もコメントアウトされています。\n\n**起票が想定するより状態は悪いです。** 起票が `file_not_found` とした `Block/js/recommend_js.twig` は**実在**（42行）しますが、その7行目が参照する `user_recommend_get` ルートは**コードベース全体に1件も存在しません**。コメントアウトを外すと `RouteNotFoundException` で画面が落ちます。\n一方、リコメンド機能自体は `block_product_recommend`（ProductRecommendController.php:42-43）として稼働中で、商品詳細・カート・注文完了から利用されています。**マイページへの接続だけが欠落**しています。\n\n■次の対応\n実装対応: 他3画面と同じく `render(url('block_product_recommend', …))` でマイページに接続する。**コメントアウトを戻す方法は取らないでください**（ルート不在で画面が落ちます）。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-7「マイページ」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/Mypage/MypageController.php",
+        "src/Eccube/Resource/template/default/Mypage/index.en.twig",
+        "src/Eccube/Resource/template/default/Mypage/index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1875",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-10:ポイント履歴"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_ポイント履歴_ポイント履歴の並び順が、設計のポイント履歴ID降順ではなく発行日降順(第2キーがID降順)になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "発行日降順・第2キーID降順。実装はリバース詳細設計と完全一致",
+      "前回書いた次にすること": "要確認: 機能仕様処理概要(ID降順)との間だけが乖離。打ち消し注記の対象は氏名表示のみ",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-10「ポイント履歴」\n機能仕様処理概要\n> ・ポイント履歴は、**ポイント履歴IDの降順**で表示する\n\n■実装の現状\nDtbPointHistoryRepository.php:83-90 は `orderBy('p.issueDate', 'DESC')->addOrderBy('p.id', 'DESC')` で、**発行日降順・第2キーID降順**です。フロント一覧はこの1経路のみで、Twig側の再ソートもありません。\n\n■次の対応\n要確認: **実装は同一シートのリバース詳細設計と完全に一致しています。** 同節は「発行日の新しい順（同日は履歴識別子の新しい順）」「並びは発行日の降順、同日は履歴識別子の降順」と5箇所で記述しています。\n乖離しているのは機能仕様処理概要（ID降順）との間だけです。なお同節冒頭の「刷新後は実装不要」という打ち消し注記が名指ししているのは**識別ID2の氏名表示のみ**で、並び順は打ち消されていません。どちらを要求とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-10「ポイント履歴」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/Mypage/MypageController.php",
+        "src/Eccube/Repository/DtbPointHistoryRepository.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1876",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-10:ポイント履歴"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_ポイント履歴_ポイント履歴のページネーションで、現在ページの前後4ページ分のページ番号が表示されず、前後2ページ分(計5件)しか表示されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "pageRange 未指定で既定5(前後2)。最初/最後リンクも数字ラベル",
+      "前回書いた次にすること": "実装対応: pageRange=9 の指定とラベル・表示条件の是正(1881と一括対応可)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-10「ポイント履歴」\n画面部品仕様\n> 10 ページ番号　・ページ番号は現在表示しているページ番号から**前後最大4つまで**表示できる\n> 9 最初 / 11 最後　・（それぞれ最初/最後のページの場合は表示しない）\n\n■実装の現状\nMypageController.php:402-409 の `paginate()` に **`pageRange` オプションを渡していません**。knp_paginator の設定ファイルも存在しないため既定値5（前後2ページ）が適用され、設計の「前後最大4つ」（計9件）を満たしません。\nまた pager.twig:22-26 / :56-60 の最初・最後リンクは**数字ラベル**（「1」「最終ページ番号」）で、表示条件もページ1がレンジ内かどうかによる判定です。設計の「最初」「最後」というラベルや表示条件とは異なります。\n\n**同一プロジェクト内に「前後4」の実装が存在します** — Block/js/product_detail_same_name_js.twig:29-31 等の `const pageRange = 4;`（本画面では未使用）。要求が実現可能である傍証です。\n\n■次の対応\n実装対応: `paginate()` に `pageRange => 9`（前後4）を指定し、最初・最後リンクのラベルと表示条件を設計に合わせる。1881と同種のためあわせて対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-10「ポイント履歴」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/Mypage/MypageController.php",
+        "src/Eccube/Resource/template/default/Mypage/point_history.twig",
+        "src/Eccube/Resource/template/default/pager.twig",
+        "vendor/knplabs/knp-paginator-bundle/src/DependencyInjection/Configuration.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1877",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-10:ポイント履歴"
+      ],
+      "課題タイトル": "【未実装】フロント会員_ポイント履歴_ポイント履歴の「内容」が英語サイトでも日本語のまま表示され、英語の内容が表示されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "ロケール分岐が無く note_en 等の英語用カラムも存在しない",
+      "前回書いた次にすること": "実装対応: 多言語保持の方式決定から必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-10「ポイント履歴」\n画面部品仕様\n> 16 内容　※カスタマイズ対応、「備考」の項目名を「内容」に変更する\n> ・**英語サイトの場合は英語の内容を表示する**\n\n■実装の現状\npoint_history.twig:139-140 は `{{ PointHistory.note }}` をロケール分岐なしで出力します（同ファイル:48,101,130 では `{% if isLocaleJa %}` による日付書式の出し分けを行っており、ロケール判定の仕組み自体は存在します）。\nDtbPointHistory.php:49-50 に `note` はありますが **`note_en` 等の英語用カラムがありません**。格納値も日本語固定文言です（LostPointsAction.php:29 `'有効期限切れによる失効'`）。\n`Mypage/` 配下のポイント履歴テンプレートは1枚のみで `.en.twig` は存在しません。翻訳キー化・多言語カラム・Twig拡張のいずれも見つかりませんでした。\n\n■次の対応\n実装対応: 英語表示の手段がデータモデルとテンプレートの双方に存在しないため、多言語保持の方式決定（カラム追加か翻訳キー化か）から必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-10「ポイント履歴」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Entity/DtbPointHistory.php",
+        "src/Eccube/Resource/template/default/Mypage/point_history.twig",
+        "src/Eccube/Service/Admin/Customer/LostPointsAction.php",
+        "src/Eccube/Service/EntityManager/PointHistoryEntityManager.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1878",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-11:オンライン本人確認"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_オンライン本人確認_オンライン本人確認の「撮影する身分証明書の種類」に、設計で除外された「住民基本台帳カード」「健康保険被保険者証」が選択肢として残っている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "マスタ8件で設計が除外した住民基本台帳カードと設計に無い健康保険被保険者証を含む。除外フィルタも無し",
+      "前回書いた次にすること": "実装対応: 選択肢を6種類に絞る。学生証の表記差も要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-11「オンライン本人確認」\n機能仕様処理概要（★）\n> ★申請可能な身分証明書は「自動車運転免許証」「パスポート」「外国人登録証明書」「学生証・社員証」「身体障害者手帳」「マイナンバーカード」の**6種類**から1つ選択する\n> ※現行システムでは「住民基本台帳カード」が含まれていたが、2025/12/31で全カードの有効期限が切れるため**除外**\n\n■実装の現状\nマスタに**8件**投入されています（Version20251125145015.php:62-95）。\n```\n1 自動車運転免許証 / 2 パスポート / 3 健康保険被保険者証 / 4 外国人登録証明書\n5 住民基本台帳カード / 6 学生証、会社員証 / 7 身体障害者手帳 / 8 マイナンバーカード\n```\n設計に無い「健康保険被保険者証」と、設計が明示的に除外した「**住民基本台帳カード**」を含みます。\nIdentificationType.php:32-38 の `query_builder` は id昇順で全件取得するだけで、**除外フィルタがありません**。マスタから削除・無効化するマイグレーションも存在せず、有効フラグ列もありません。\n\n■次の対応\n実装対応: 選択肢を設計の6種類に絞る（`query_builder` での除外か、マスタの整理）。\n\n付記: 設計の「学生証・社員証」に対しマスタは「学生証、会社員証」と表記が異なります。あわせてご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-11「オンライン本人確認」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "app/DoctrineMigrations/Version20251125145015.php",
+        "src/Eccube/Form/Type/Front/IdentificationSelectType.php",
+        "src/Eccube/Form/Type/Master/IdentificationType.php",
+        "src/Eccube/Resource/template/default/Mypage/online_identification.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1879",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-12:マイイベント・デッキ登録"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_マイイベント・デッキ登録_マイイベント・デッキ登録にて、開催日当日でも開始時刻を過ぎると処理状態が「イベント終了」になる",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "hasFinished が startDate<now で開催開始を過ぎたら終了扱い。end_date は未使用",
+      "前回書いた次にすること": "実装対応: 23:59:59基準に変更。end_dateの活用も含め判定基準を要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-12「マイイベント・デッキ登録」\n機能仕様処理概要\n> ・**開催日の23:59:59を過ぎた**イベントは処理状態に「イベント終了」と表示する\n\n■実装の現状\nDtbEventDetail.php:554-557 の `hasFinished()` は `$this->startDate < new \\DateTime()` で、**開催開始日時を1秒でも過ぎれば終了扱い**です。\n同じ値でボタン表示も制御されるため（event_history.twig:148）、開催開始時刻を過ぎるとデッキ登録・編集ボタンも消えます。\n\n**要求を実装できる材料は存在します。** DtbEventDetail.php:50-51 に `end_date`（終了予定時刻）があり、リバース詳細設計も「開催日時（start_date）・**終了予定（end_date）**　並び順とイベント終了判定」と end_date を終了判定に使う前提で記述していますが、実装は使っていません。\n\n■次の対応\n実装対応: 終了判定を「開催日の23:59:59を過ぎたら」に変更する。`end_date` の活用も含めて判定基準をご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-12「マイイベント・デッキ登録」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Entity/DtbEventDetail.php",
+        "src/Eccube/Resource/template/default/Mypage/event_history.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1880",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-12:マイイベント・デッキ登録"
+      ],
+      "課題タイトル": "【一部実装】フロント会員_マイイベント・デッキ登録_マイイベント・デッキ登録にて、デッキ登録状況ラベルが非表示条件に該当しても常に表示される",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "ボタン側は4条件を満たすがデッキ登録状況ラベルが無条件表示",
+      "前回書いた次にすること": "実装対応: ラベル側にも同条件を適用",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-12「マイイベント・デッキ登録」\n機能仕様処理概要（★）\n> ★デッキステータス、デッキ登録/編集は、以下のいずれかに該当する場合は**表示しない**\n> ・ステータスが「イベント終了」／・デッキ登録締切の日時を過ぎている／・「デッキ登録を終了する」にチェック／・「デッキ登録あり」にチェックがついていない\n\n■実装の現状\n**ボタン側は設計どおりです。** event_history.twig:148 の `{% if not isFinished and detail.canBeRegisteredDeck() %}` と `canBeRegisteredDeck()`（DtbEventDetail.php:508-511）で4条件を満たしています。\n**デッキ登録状況ラベル側だけが無条件表示です。** 同:142-144 に `{% if %}` がなく常に描画されます。CSS/JSによる条件付き非表示も見つかりませんでした。\n\n■次の対応\n実装対応: ラベル側にもボタンと同じ条件を適用する。\n\n付記: 設計本文の識別ID参照にずれがあります（本文の「(6)デッキステータス、(7)デッキ登録/編集」は表では 7 と 8、「(4)ステータス」は表では 5）。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-12「マイイベント・デッキ登録」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Entity/DtbEventDetail.php",
+        "src/Eccube/Resource/template/default/Mypage/event_history.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1881",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-12:マイイベント・デッキ登録"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_マイイベント・デッキ登録_マイイベント・デッキ登録のページネーションで、現在ページの前後4ページ分のリンクが表示されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "pageRange 未指定で既定5。＜最初/最後＞ のラベルも存在しない",
+      "前回書いた次にすること": "実装対応: pageRange=9 とラベルの実装(1876と一括対応可)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-12「マイイベント・デッキ登録」\n画面部品仕様\n> 10 ページネーション　・**前後に4ページ分**のリンクを表示する（例）8ページを選択している場合は4〜12ページのリンクを表示する\n> ・表示しきれないページが存在する場合、先頭方向には「**＜最初**」、末尾方向には「**最後＞**」のリンクを表示する\n\n■実装の現状\nEventHistoryController.php:99 の `paginate()` に `pageRange` を渡しておらず、既定値5（前後2ページ）が適用されます。\npager.twig は先頭・末尾ページを**数字リンク**で出しており、「＜最初」「最後＞」というラベルは翻訳キー・テンプレートとも**存在しません**。\n\n■次の対応\n実装対応: `pageRange => 9`（前後4）の指定と、「＜最初」「最後＞」ラベルの実装。1876と同種のためあわせて対応可。\n\n付記: リバース詳細設計は「本一覧はページングを持たず、申込全件を一覧表示する」としており、ページネーション自体が★カスタマイズで新規追加された要求です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-12「マイイベント・デッキ登録」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/Mypage/EventHistoryController.php",
+        "src/Eccube/Resource/template/default/pager.twig",
+        "vendor/knplabs/knp-paginator-bundle/src/DependencyInjection/Configuration.php",
+        "vendor/knplabs/knp-paginator-bundle/src/Pagination/SlidingPagination.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1882",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-13:大会デッキ登録編集"
+      ],
+      "課題タイトル": "【未実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集にて、開催店舗が表示されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "開催店舗が未表示。ただし起票の原因分析は誤りでTwig1箇所の追加で足りる",
+      "前回書いた次にすること": "実装対応: deck_entry_edit.twig に開催店舗の表示を追加。修正規模は起票の見積もりより小さい",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-13「大会デッキ登録編集」\nカスタマイズ要件\n> ・**開催店舗を表示する**\n\n画面部品仕様\n> 5 開催店舗　ラベル　※カスタマイズ対応、開催店舗を表示する\n\nSP版・PC版のレイアウト図の双方にも (5) が配置されています（3箇所で一致）。\n\n■実装の現状\nMypage/deck_entry_edit.twig:164-176 のイベント情報エリアは大会名・開催日時・お名前の3項目のみで、開催店舗を出力する要素がありません。\n\n**起票の原因分析を1点補正します。** 起票は「Controller が店舗情報を渡していない」としていますが、`DtbEvent::getBaseInfo()` と `DtbEventDetail::getEvent()` はいずれも public のため、既に渡っている `EventDetail` から Twig で `EventDetail.event.BaseInfo.shopName` に到達できます。**Controller の改修は不要で、Twig 1箇所の追加で足ります。**\n表示実装の参考は Event/detail.twig:20,92-97（翻訳キー `front.event.detail.info.shop: 開催店舗` も既存）です。\n\n■次の対応\n実装対応: deck_entry_edit.twig に開催店舗の表示を追加する。修正規模は起票の見積もりより小さく、Twig 1箇所です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-13「大会デッキ登録編集」\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/Mypage/DeckEntryController.php",
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1883",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-13:大会デッキ登録編集"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_大会デッキ登録編集_大会デッキ登録編集にて、削除要件である「MTGアリーナからデッキリストをインポートする方法」が残存している",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "残存は事実だが別チケット980で意図的に追加されたもの。設計は削除と存置が同一シートで矛盾",
+      "前回書いた次にすること": "要確認: 識別ID23/10が存置側にあり設計が自己矛盾。980との整合確認が先決",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-13「大会デッキ登録編集」\nカスタマイズ要件\n> ・「MTGアリーナからデッキリストをインポートする方法」を**削除**\n\n■実装の現状\nMypage/deck_entry_edit.twig:316-318 が `Block/deck_entry_how_to_import.twig` を include しており、当該コンテンツ（全52行、手順1〜5と画像）が残存しています。:219 の「使い方」ヘルプアイコンも `#how-to-import` へのページ内リンクとして残っています。\n\n**ただし「削除漏れ」ではなく、別チケットで意図的に追加された証跡があります。**\napp/DoctrineMigrations/Version20260601000000.php:22-36\n> 大会デッキ登録編集画面 (deck_entry_edit.twig) の how-to-import フリーエリアを管理画面から編集可能なブロックとして dtb_block に登録する。\n> `Add dtb_block row for **ECCUBE_HARERUYA-980** …`\n\ngit履歴でも `Merge pull request #1541 from hareruya-mtg/feature/ECCUBE_HARERUYA-980` およびブロック新規作成・組み込みのコミットが確認できます。\n\n■次の対応\n要確認: **設計が同一シート内で自己矛盾しています。**\n- 「削除」側: カスタマイズ要件の当該行、およびレイアウト図の注釈が (1)〜(22) までで **(23) が存在しない**\n- 「存置」側: 画面部品仕様表 **識別ID 23**「MTGアリーナからデッキリストをインポートする方法」が定義され、**識別ID 10「使い方」がその (23) へのページ内リンク**として定義されている。レイアウト図にも (10) は存在する\n\n削除するなら識別ID 23 と 10 の行も落ちるはずですが落ちていません。\n**設計側の矛盾解消と ECCUBE_HARERUYA-980 との整合確認が先決**で、実装是正案件として扱う前に判断が必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-13「大会デッキ登録編集」\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Resource/template/default/Block/deck_entry_how_to_import.twig",
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1884",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-13:大会デッキ登録編集"
+      ],
+      "課題タイトル": "【一部実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集のマイデッキ取得ポップアップに、1ページ20件のページングと件数表示が無い",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "findBy に limit/offset が無く全件取得。検索結果総数・表示件数・ページングとも未実装",
+      "前回書いた次にすること": "実装対応: 20件ページングと総数・表示件数の表示を実装",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-13「大会デッキ登録編集」／マイデッキを取得ポップアップ\n画面部品仕様\n> 2 検索結果総数　ラベル\n> 3 表示件数　ラベル\n> 4 ページング　リンク　**1ページあたりの最大表示数は20件**ページ切り替えは動的に処理する\n\nレイアウト図（SP版・PC版）にも (2)(3)(4) が配置され、リバース詳細設計も「マイデッキ一覧モーダル（フォーマット絞り込み・**ページング付き**）」と記載しています。\n\n■実装の現状\nDeckEntryController.php:80-83 の `findBy()` は limit / offset を渡しておらず**全件取得**です（同ファイルに `paginate` / `Paginator` の出現は0件）。\ndeck_entry_edit.twig:386-416 も `{% for MyDeck in MyDecks %}` の単純ループのみで、検索結果総数・表示件数・ページング要素がありません。:138-148 のモーダル内JSもフォーマット絞り込みのみです。\nバンドルJS（hareruya-event.js）の deckentry 関連コードを復元して確認しましたが、ボード選択連携とサジェスト表示制御のみでページング処理は含まれません。マイデッキ一覧用の Ajax エンドポイントも存在しません。\n\n■次の対応\n実装対応: 20件ページングと検索結果総数・表示件数の表示を実装する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-13「大会デッキ登録編集」／マイデッキを取得ポップアップ\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/Mypage/DeckEntryController.php",
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1885",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-13:大会デッキ登録編集"
+      ],
+      "課題タイトル": "【一部実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集にて、カード名入力時のサジェスト候補が取得・表示されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "候補取得処理がサーバ側・クライアント側とも不在でサジェストは常に空",
+      "前回書いた次にすること": "要確認+実装対応: API方式かフォーマット別サジェストファイル方式かを確定のうえ実装",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-13「大会デッキ登録編集」\n機能仕様処理概要\n> ・カード名(13)を入力すると、**カード名が部分一致するカードがサジェスト表示される**\n> サジェスト表示されたものを選択して自動入力できるが、サジェストを無視して存在しないカード名を入力することもできる\n\n■実装の現状\n候補取得処理がサーバ側・クライアント側とも存在しません。\ndeck_entry_edit.twig:235-238 の候補格納 `ul` は**常に空**（サーバ側描画なし）で、:71-73 のインラインJSは `aria-hidden` の切替のみで fetch/Ajax がありません。DeckEntryController.php:85-92 もカード検索用データもサジェストファイルパスも渡していません。\n候補クリック時の自動入力ハンドラ（:75-78）は実装済みですが、候補が生成されないため到達しません。\n\n**反証**: カード検索APIは実在します（CardController.php:71-72 の `api_deck_builder_cards_search`）が、`api/cards` / 当該ルート名を参照する twig / js は **0件**でした（デッキビルダーアプリ向けCORS API配下）。設計が言及する「フォーマット別サジェストファイル」に相当する静的ファイルも0件です。\n\n■次の対応\n要確認+実装対応: サジェスト機能の実装が必要です。取得方式について、基本設計本文は「部分一致でサジェスト表示」とだけ規定し、リバース詳細設計は「**フォーマット別のサジェストファイルを参照**」と具体化しています（現行 pf-eccube3 はファイル方式）。API方式かファイル方式かを設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-13「大会デッキ登録編集」\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/App/DeckBuilder/CardController.php",
+        "src/Eccube/Controller/Front/Mypage/DeckEntryController.php",
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1886",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-13:大会デッキ登録編集"
+      ],
+      "課題タイトル": "【一部実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集にて、ボード選択ボタンとメイン/サイドボード入力欄の選択状態が相互に連携・強調表示されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "未実装ではなく hareruya-event.js の読み込み漏れ。双方向連携はJSに実装済み",
+      "前回書いた次にすること": "実装対応: JSの読み込みを追加。インラインJSとの二重実装の整理が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-13「大会デッキ登録編集」\n機能仕様処理概要\n> ・ボード選択ボタン(14)とデッキリストのメインボード(18)サイドボード(19)入力欄は、選択している方が強調表示される\n> **選択ボタンとボード入力欄の選択状態は相互に連携**して、一方の選択がもう一方の選択に反映(強調表示)される\n\n■実装の現状\n**未実装ではなく、実装済みJSの読み込み漏れです。**\n\n要求どおりの双方向連携は `html/template/default/assets/hareruya/js/hareruya-event.js` に実装済みです。ラジオ change → textarea へ `p-hareruya-deckentry-edit__deck-textarea--active` を付与、textarea focus → ラジオを選択、という双方向のハンドラと初期化処理を持ちます。\nしかし deck_entry_edit.twig の `{% block javascript %}`（11-151行）は**このJSを読み込んでいません**（`{% block stylesheet %}` は hareruya-deck.css と hareruya-event.css を読むのに、JS側だけ欠落）。読み込み元は Event/index.twig:278 / list.twig:105 / entry.twig:23 の3ファイルのみです。\n代わりに :37-40 のインラインJSが `selectedBoard` 変数を書き換えるだけで、強調表示も相互連携も行いません。\n`deck-textarea--active` を含むJSは全 hareruya-*.js 中このファイルのみで、代替実装はありません。\n\n■次の対応\n実装対応: deck_entry_edit.twig に `hareruya-event.js` の読み込みを追加する。**修正コストは小さいです。**\nただし :37-40 のインラインJS（`selectedBoard` 変数方式）と二重実装になるため、競合の整理が必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-13「大会デッキ登録編集」\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "html/template/default/assets/hareruya/js/hareruya-event.js",
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1887",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-13:大会デッキ登録編集"
+      ],
+      "課題タイトル": "【未実装】フロント会員_大会デッキ登録編集_大会デッキ登録編集のデッキ登録処理で、デッキを構築するカード情報（デッキカード）が保存されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "DtbDeckCard の生成も既存除去も無くトランザクションも無い。設計は5箇所で一貫要求",
+      "前回書いた次にすること": "実装対応: カード登録をトランザクション内で追加。DeckStoreAction:128-140 を参考にできる。下流集計に未反映のため優先度高め",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-13「大会デッキ登録編集」\n機能仕様処理概要（「デッキリストを提出する」ボタン(21)の処理）\n> ・エラーがなければデッキにプレイヤー名、大会情報、デッキリストの内容テキスト、フォーマット、公開設定(非公開)、デッキタイプ(イベント)を設定して保存する\n> ・**デッキを構築するカード情報を保存する**\n\nリバース詳細設計も5箇所で一貫して要求しています（処理フロー「メイン・サイドのカードをデッキに登録し」、DBカラム節「デッキカード（dtb_deck_card）… 解析結果をメイン・サイドのボードごとに登録する。上書き時は既存を除去する」、DB操作節、データ整合性節「**同一トランザクションで保存を確定する**」）。\n\n■実装の現状\nDeckEntryAction.php:37-83 の `handle()` は `setTextMain` / `setTextSide` と `persist` / `flush` のみで、**`DtbDeckCard` の生成も既存カードの除去も一切ありません**。`beginTransaction` / `commit` も張っておらず、設計の「同一トランザクションで確定」も未充足です。\n\n設計どおりの処理は**管理画面側にのみ存在**します（DeckStoreAction.php:128-140 が既存除去 → `setDeckCards()` × 3ボード → commit）。`setDeckCards` の全文検索でもフロント側からの呼び出しは0件、`DtbDeckCard` を扱う14ファイルのいずれも `mypage_deckentry_update` 経路からは呼ばれていません。Doctrine ライフサイクルリスナや補完バッチもありません。\n\n**画面上は顕在化しにくい構造です。** 直後のデッキ確認画面は DeckValidationService.php:97-101 の `getCheckData()` が text_main / text_side を都度パースするため、dtb_deck_card が無くても成立します。一方で `DtbDeckCardRepository`（カード単位の集計・検索）や `RankingBlockPayloadBuilder` 等の下流機能には一切反映されません。\n\n■次の対応\n実装対応: フロント側の保存処理に、既存カードの除去とカード登録（`setDeckCards()`）をトランザクション内で追加する。DeckStoreAction.php:128-140 の実装をそのまま参考にできます。\n**下流のランキング・集計機能にデータが反映されていない状態のため、優先度は高めです。**\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-13「大会デッキ登録編集」\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Service/Admin/Deck/DeckStoreAction.php",
+        "src/Eccube/Service/Deck/CardListParserService.php",
+        "src/Eccube/Service/Front/Mypage/DeckEntryAction.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1888",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-14:大会デッキ登録確認～完了"
+      ],
+      "課題タイトル": "【未実装】フロント会員_大会デッキ登録確認～完了_大会デッキ登録確認～完了にて、開催店舗が表示されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "開催店舗が未表示。起票の根拠(Controllerが渡していない)は誤りでTwig修正のみで可能",
+      "前回書いた次にすること": "実装対応: 開催店舗の表示を追加(1882と一括対応可)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-14「大会デッキ登録確認～完了」\nカスタマイズ説明\n> ・**開催店舗を表示する**\n\n画面部品仕様\n> 4 開催店舗　ラベル　※カスタマイズ対応、開催店舗を表示する\n\n■実装の現状\ndeck_entry_check.twig（全100行）に開催店舗の出力要素がありません（イベント情報エリアは大会名とお名前のみ）。DCIナンバーの削除側は満たされています。\n\n**起票の根拠を1点補正します。** 「店舗情報（EventのBaseInfo）を渡していない」は不正確で、`EventDetail` は渡されており `DtbEvent::getBaseInfo()` があるため `EventDetail.event.baseInfo.shopName` で到達できます。**Twig修正のみで実装可能**です。\n\n付記: Event/detail.twig:93-98 の `{% if shopName %}` も Controller が `shopName` を渡さないため、イベント詳細画面でも開催店舗は表示されていません。流用可能な既存実装はありません。\n\n■次の対応\n実装対応: deck_entry_check.twig に開催店舗の表示を追加する。1882（デッキ登録編集）と同種のためあわせて対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-14「大会デッキ登録確認～完了」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/Mypage/DeckEntryController.php",
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_check.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1889",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-14:大会デッキ登録確認～完了"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_大会デッキ登録確認～完了_大会デッキ登録確認～完了の「大会一覧に戻る」ボタンの遷移先がイベント・大会トップページになっていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "遷移先が mypage_event_history でマイページ内の別画面",
+      "前回書いた次にすること": "実装対応: 遷移先を url('event_top') に変更",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-14「大会デッキ登録確認～完了」\n画面部品仕様\n> 15 大会一覧に戻る　ボタン　**イベント・大会のトップページに遷移する**\n\n■実装の現状\ndeck_entry_check.twig:92 の遷移先が `url('mypage_event_history')`（`/mypage/event_history`、見出しは「マイイベント・デッキ登録」）で、**マイページ内の別画面**です。\nイベント・大会トップは `event_top`（`/events`）で、header・mega_menu・footer_sitemap 等では使われていますが、**deck_entry_check.twig からは一切使われていません**。\n\n■次の対応\n実装対応: 遷移先を `url('event_top')` に変更する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-14「大会デッキ登録確認～完了」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Resource/template/default/Mypage/deck_entry_check.twig",
+        "src/Eccube/Resource/template/default/Mypage/event_history.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1890",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-15:会員情報変更"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_会員情報変更_会員情報変更にて、メールアドレスの最大文字数が255ではなく254で、RFC準拠チェックも無効化されている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "eccube_email_len=254で設計255と不一致。RFC無効の主張は過大でRegexが設計文言を出す",
+      "前回書いた次にすること": "実装対応: 255にする。RFC strict化の要否は影響範囲とあわせて判断",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-15「会員情報変更」\n画面部品仕様\n> 1-10 メールアドレス　半角　◯　**255**　・RFC準拠の形式チェックを行い、不正な形式の場合は「有効なメールアドレスではありません。」とエラーメッセージを表示する\n\n■実装の現状\n最大文字数は `eccube_email_len: 254` で**254**です（sheet-3・sheet-6 と併せて255は3シートで一致しており、254との差は明確です）。change.twig にも maxlength 属性はありません。\n\n**RFC準拠についての起票の主張は過大です。** 設定フラグ `eccube_rfc_email_check` は false ですが、同じ constraints 配列の `Assert\\Regex('/\\.{2,}|\\.@/', match:false)` が `..` `.@` を拒否し、**設計が指定した文言そのもの**（validators.ja.yaml:141「有効なメールアドレスではありません。」）を表示します。strict との差はそれ以外のRFC細目（ハイフン始まりドメイン等）に限られます。\n\n■次の対応\n実装対応: 最大文字数を255にする。RFC準拠チェックについては、実効的に一部が機能しているため、strict化の要否を影響範囲とあわせてご判断ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-15「会員情報変更」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Form/Type/Front/EntryType.php",
+        "src/Eccube/Form/Type/RepeatedEmailType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1891",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-15:会員情報変更"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_会員情報変更_会員情報変更にて、パスワードの文字数制限が設計（最小8・最大32）と異なり最小12・最大50になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "実装12-50はsheet-5★/sheet-23の新ポリシーと一致。設計書内に新旧2ポリシーが併存",
+      "前回書いた次にすること": "要確認: 誤検出とは判断せず。sheet-17の更新日がsheet-5作成日より後で旧値と断定できない。設計責任者による廃止値の確定が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-15「会員情報変更」\n画面部品仕様\n> 1-12 パスワード　半角　◯　**32**　・最低文字数: **8**\n\n■実装の現状\nRepeatedPasswordType.php:47-57 は `min: eccube_password_min_len`(12) / `max: eccube_password_max_len`(50) で、実効は**12〜50文字**です。8/32 を実装する箇所はコードベースに存在しません。\n\n■次の対応\n要確認: **設計書 0306 内で新旧2つのパスワードポリシーが併存しています。**\n- 12〜50側: sheet-5「ログイン」の★カスタマイズ「ECCUBE4のパスワードは半角英数記号**12～50文字**」、および sheet-23「【新規】パスワード設定（ポリシー違反用）」（作成・更新とも2026-04-16）の「50」「最低文字数: 12」\n- 8〜32側: 本シート 1-12/1-13、sheet-3、sheet-6\n\n実装は12〜50側と一致し、ポリシー違反者をパスワード変更画面へ誘導する仕組み（F06-27）まで実装済みです。\n**ただし誤検出とは判断しませんでした。** 独立レビューで次の反対材料が出たためです。(1) sheet-17 の更新日2025-10-07 は sheet-5 の作成日2025-08-27 より後で、8/32側を単純に「移行前の残骸」と断定できない。(2) sheet-23 自身が「パスワード変更の処理については**会員情報変更と同様とする**」と書いており、逆方向にも読める。(3) 8/32 は sheet-3 にも反復している。\n設計責任者に「8/32は廃止値である」旨を明示的に確定いただく必要があります。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-15「会員情報変更」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Form/Type/Front/EntryType.php",
+        "src/Eccube/Form/Type/RepeatedPasswordType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1892",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-15:会員情報変更"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_会員情報変更_会員情報変更にて、ブラックリスト該当時に会員情報更新エラー画面へ遷移しない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "判定はflush前に実装済みだがflashのみで画面遷移しない。エラー画面のテンプレートもルートも不在",
+      "前回書いた次にすること": "実装対応: エラー画面の作成と遷移処理の追加。判定ロジックは既に正しく動作",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-15「会員情報変更」\n機能仕様処理概要\n> ・ブラックリストに以下1~3に変更されている場合に変更するを押下すると、**会員情報更新エラー画面に遷移する**\n> 1 お名前／2 住所／3 電話番号\n\n■実装の現状\n判定自体は実装済みで、しかも `flush()` の**前**に走るためDB更新は発生しません（データ保全は満たしています）。判定対象も `FindBlacklistByCustomer()` が氏名・電話番号・住所を照合し設計の3項目を網羅します。\n**しかし画面遷移しません。** ChangeController.php:116-133 は `addFlash('error', ...)` で change.twig を再描画するだけです（表示先はフォーム上部のアラート枠のみ）。\nMypage 配下に会員情報更新エラー相当のテンプレートは存在せず、ChangeController のルートも2本のみです。既存の `entry_regist_error` からの参照も0件でした。\n\n■次の対応\n実装対応: 会員情報更新エラー画面の作成と遷移処理の追加が必要です。判定ロジックは既に正しく動作しているため、遷移部分のみの対応で済みます。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-15「会員情報変更」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/Mypage/ChangeController.php",
+        "src/Eccube/Resource/locale/messages.ja.yaml",
+        "src/Eccube/Resource/template/default/Mypage/change.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1893",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-16:配送先新規登録・変更"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_配送先新規登録・変更_配送先新規登録・変更画面にて、会社名の最大文字数が設計の100文字ではなく255文字になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "eccube_stext_len=255。設計は100だがリバース詳細設計は50で自己矛盾",
+      "前回書いた次にすること": "要確認+実装対応: eccube_company_len_max=100 が既存で100が意図値の傍証。設計側の確定をお願いしたい",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-16「配送先新規登録・変更」\n画面部品仕様\n> 2-15 会社名　半角・全角　**100**\n\n■実装の現状\nCustomerAddressType.php:95-102 は `Length(max: eccube_stext_len)` を使用し、eccube.yaml:137 の `eccube_stext_len: 255` により実効は**255**です。DBカラムも255、テンプレートにも maxlength 属性がありません。\n\n**100用の定数は既に存在します。** 同じ「会社名100文字」を要求する会員情報変更（sheet-15 識別ID1-21）側は `eccube_company_len_max`（=100）で**100で実装済み**です。配送先フォームだけが `eccube_stext_len` を引いています。\n\n■次の対応\n要確認+実装対応: **設計自体が100と50で矛盾しています。** 同シートのリバース詳細設計は「会社名　任意　**50文字（stext_len）**」とし、末尾で「最大長の根拠は constant.yml.dist（stext_len=50）」と EC-CUBE3系由来であることを自認しています。\n`eccube_company_len_max: 100` が既に存在することは100が意図値である傍証ですが、設計側の確定をお願いします。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-16「配送先新規登録・変更」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Entity/CustomerAddress.php",
+        "src/Eccube/Resource/template/default/Mypage/delivery_edit.en.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1894",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-16:配送先新規登録・変更"
+      ],
+      "課題タイトル": "【未実装】フロント会員_配送先新規登録・変更_配送先新規登録・変更の確認画面で「登録する」を押下した際に、ブラックリスト判定（氏名・住所・電話番号）が行われず、会員情報登録エラー画面へ遷移しない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "判定処理が皆無でCustomerAddressを照合する手段もリポジトリに無い",
+      "前回書いた次にすること": "実装対応: 照合メソッドの追加と判定・遷移の実装",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-16「配送先新規登録・変更」\n機能仕様処理概要および画面部品仕様（3-14）の**2箇所に重複記載**\n> ・ブラックリストに以下1~3が登録されている場合に登録を押下すると、**会員情報登録エラー画面に遷移する**\n> 1 配送先氏名／2 住所／3 電話番号\n\n■実装の現状\nDeliveryController.php:197-208 の `complete()` は、フォーム検証通過後**間に何の判定も挟まず即 persist / flush** します。コンストラクタに `DtbBlacklistRepository` の注入もありません。\nさらに `DtbBlacklistRepository` の public メソッドは `FindBlacklistByCustomer(Customer $Customer)` の1本のみで、**`CustomerAddress` の氏名・住所・電話番号を照合する手段がリポジトリに存在しません**。\nフロントでブラックリスト判定を行うのは EntryController / ChangeController / OtcBuyController の3画面のみで、DeliveryController からの参照はゼロです。Validator・EventSubscriber・JS・バッチによる判定も存在しません。\n\n■次の対応\n実装対応: `CustomerAddress` を対象とする照合メソッドの追加と、判定・エラー画面遷移の実装が必要です。\n\n付記: 設計の識別ID参照に誤記があります（本文の「(3-3)配送先氏名」は表では 3-3=配送先名称で、配送先氏名は 3-4）。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-16「配送先新規登録・変更」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/EntryController.php",
+        "src/Eccube/Controller/Front/Mypage/DeliveryController.php",
+        "src/Eccube/Repository/DtbBlacklistRepository.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1895",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-17:退会"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_退会_退会手続き画面のパスワード入力欄の最大文字数が、設計の32文字ではなく50文字になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "maxlength=50。設計は32だがsheet-5★/sheet-23は12-50。32にすると33-50文字の会員が退会不能になる",
+      "前回書いた次にすること": "要確認: 誤検出とは判断せず。設計責任者による廃止値の確定が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-17「退会」\n画面部品仕様\n> 2-3 パスワード　半角　◯　**32**　・未入力、登録パスワード不一致の場合、「退会する」ボタンを押下した場合はエラーメッセージを表示する\n\n■実装の現状\nWithdrawType.php:37-43 の `maxlength` は `eccube_password_max_len`(=50) で、最終出力は `maxlength=\"50\"` です。サーバ側の `Assert\\Length` はなく、WithdrawController.php:95-98 は照合のみで文字数判定を行いません。\n\n■次の対応\n要確認: 1891 と同一構造で、**設計書内に新旧2つのパスワードポリシーが併存**しています（sheet-5★・sheet-23【新規】が12〜50、本シートほかが8/32）。実装値50は12〜50側と一致します。\n\n**加えて、maxlength を32にすると実害が生じます。** 本欄は「新しいパスワード」ではなく**既存パスワードの再入力**（`autocomplete: 'current-password'`）であり、実ポリシー上限が50である以上、32に制限すると**33〜50文字のパスワードを持つ会員が自分のパスワードを入力しきれず退会できなくなります**。\n\n**ただし誤検出とは判断しませんでした。** 独立レビューで、本シートの更新日（2025-10-07）が sheet-5 の作成日（2025-08-27）より後であり、8/32側を単純な旧値と断定できないという反対材料が出たためです。設計責任者による「8/32は廃止値」との明示的な確定をお願いします。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-17「退会」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/Mypage/WithdrawController.php",
+        "src/Eccube/Form/Type/Front/WithdrawType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1896",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-18:お問い合わせ",
+        "sheet-19:お問い合わせ履歴"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_お問い合わせ_お問い合わせ画面の件名の選択肢マスタに「協賛関連」が投入されておらず、設計の8件に対して7件しか存在しない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "マスタ投入が7件で協賛関連が無い。リポジトリ全体でも0件",
+      "前回書いた次にすること": "実装対応: マスタに追加。管理画面から運用で追加することも可能",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-18「お問い合わせ」\n画面部品仕様\n> 1-3 件名（タイトル）　単一選択(セレクトボックス)　◯　初期値: 通販に関するお問い合わせ　・マスターデータから選択肢を取得する。\n> 1 通販 / 2 ネット買取 / 3 店舗でのお買い物・イベント / 4 委託販売 / 5 デッキ構築機能 / 6 記事・動画 / 7 その他 / **8 協賛関連**\n\n■実装の現状\n選択肢はマスタから動的取得しており（ContactType.php:88-102）実装方式は設計どおりですが、投入データが7件です。\nVersion20251125141030.php:60-127 の `getRecords()` は id=1〜7 のみで、**「協賛関連」がありません**。もう1本の Version20260330185548.php:33 は `sort_no` の UPDATE のみです。\nリポジトリ全体で `協賛関連` を検索しましたが **0件**でした（`協賛` のヒットはイベント協賛企業様一覧ブロックのみで無関係）。CSV・SQL・Fixtures のいずれにも投入がありません。\n\n■次の対応\n実装対応: マスタに「協賛関連」を追加する。\n\n付記: MtgMasterDataController.php:239-254 で `'contact_subject'` は `'fixed_form_num' => -1`（増減可）として管理画面から編集できるため、**コード修正なしでマスタ運用での追加も可能**です。運用で追加するか投入マイグレーションを足すかをご判断ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-18「お問い合わせ」\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "app/DoctrineMigrations/Version20251125141030.php",
+        "src/Eccube/Controller/Admin/Data/MtgMasterDataController.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1897",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-18:お問い合わせ",
+        "sheet-19:お問い合わせ履歴"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_お問い合わせ_お問い合わせ画面の「戻る」がブラウザ履歴の1つ前ではなく、ECTOP（ホーム）への固定遷移になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "ECTOPへの固定リンク。history関連の処理は全JSで0件",
+      "前回書いた次にすること": "実装対応: ブラウザ履歴による遷移に変更",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-18「お問い合わせ」\n画面部品仕様\n> 1-10 戻る　ボタン　・押下すると、**ブラウザの履歴から1つ前のページに遷移する**\n\n■実装の現状\nContact/index.twig:387 は ECTOP への固定リンクです。\n```\n<a class=\"c-hareruya-btn c-hareruya-btn--lg\" href=\"{{ url('homepage') }}\">{{ 'common.back'|trans }}</a>\n```\n英語版 index.en.twig:380 も同じ `url('homepage')` です。\n`history.back` / `history.go(-1)` / `window.history` を全テンプレートと全JSバンドルで検索しましたが、**お問い合わせ関連は0件**でした（`hareruya-contact.js` に `history` の文字列自体が存在しません）。当該 `<a>` に id / data 属性もなく、JSからの後付けの取っ掛かりもありません。\n\n参考として、確認画面の戻る（6-7、設計は「お問い合わせ画面へ遷移する」）は confirm.twig:303 で `mode=back` の POST として設計どおり実装されています。\n\n■次の対応\n実装対応: 1-10 の戻るをブラウザ履歴による遷移に変更する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-18「お問い合わせ」\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "html/template/default/assets/hareruya/js/hareruya-contact.js",
+        "src/Eccube/Resource/template/default/Contact/index.en.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1898",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-18:お問い合わせ",
+        "sheet-19:お問い合わせ履歴"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_お問い合わせ_お問い合わせ確認画面の「送信をする」で、店舗ごとに設定された問い合わせ受付メールアドレスではなく、件名マスタのメールアドレス（未設定時は本店の受付アドレス）宛に送信している",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "宛先が件名マスタemailまたは本店email02で選択店舗を参照しない",
+      "前回書いた次にすること": "実装対応: 選択店舗のBaseInfoからemail02を引く。店舗はContactCreateInputに既に渡っている",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-18「お問い合わせ」\n画面部品仕様\n> 1-6 送信をする　ボタン　・押下すると、**店舗ごとに設定している問い合わせ受付メールアドレス**当てにメールを送信し、お問い合わせ完了画面へ遷移する\n\n（4-2 お問い合わせ店舗選択で店舗を選ぶ設計です）\n\n■実装の現状\nMailService.php:336-351 の宛先決定は「件名マスタの email、空なら BaseInfo の email02」で、**選択店舗を参照していません**。\n```\n$adminEmail = ($subjectEmail !== null && $subjectEmail !== '') ? $subjectEmail : $baseEmail02;\n```\nこの `$this->BaseInfo` は BaseInfoRepository::get() が返すもので、テナント差し替えは**管理画面URLかつ tenant ロールのセッションがある場合のみ**のため、フロント `/contact` では常に id=1（本店）になります。\n選択店舗（`$formData['shop']`）は ContactCreateAction.php:49-62 で `dtb_contact.base_info_id` の保存にのみ使われ、`sendContactMail()` には渡されていません。イベント実施店舗（4-5）も宛先に使われません。\n\n**データは揃っています。** BaseInfo.php:78-79 に `email02`（テーブル定義書上の「問い合わせ受付メールアドレス」）があり、店舗ごとの編集UIも tenant/detail.twig:450 に存在します。**選択店舗の BaseInfo を引く経路だけが実装されていません。**\n`sendContactMail` の呼び出し元は1箇所のみで、`EccubeEvents::MAIL_CONTACT` の購読者も存在しません。\n\n■次の対応\n実装対応: 選択店舗の BaseInfo から `email02` を引いて宛先にする。`ContactCreateInput` には既に店舗が渡っているため、`sendContactMail()` へ受け渡す改修で足ります。\n\n付記: 本文テンプレート contact_mail.twig:24 の `{{ BaseInfo.email02 }}` も本店の値になるため、併せて是正が必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-18「お問い合わせ」\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "app/DoctrineMigrations/Version20251125141030.php",
+        "src/Eccube/Service/Front/Mypage/ContactCreateAction.php",
+        "src/Eccube/Service/MailService.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1901",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-23:【新規】パスワード設定（ポリシー違反用）"
+      ],
+      "課題タイトル": "【一部実装】フロント会員_パスワード設定(ポリシー違反用)_ログイン時のパスワードポリシー未準拠判定に「IDと同一のパスワードは許可しない」という条件が含まれておらず、メールアドレスと同一のパスワードの会員がパスワード設定画面へ誘導されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "ログイン時判定にID同一の条件が無く変更フォームにも同チェックが無い",
+      "前回書いた次にすること": "実装対応: ID同一チェックを追加。max_len超過の判定も検討。起票のシート特定と3箇所の件は本文で補正済み",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-5「ログイン」（★ECCUBE4系のポリシーに合わないパスワードについて）\n機能仕様処理概要（★）\n> ・ECCUBE4のパスワードは半角英数記号12～50文字、**IDと同一は許可しない**が、ECCUBE4系のポリシーに合わないパスワードについてはパスワード変更を促すため、専用のパスワード設定画面へ遷移する\n> ・パスワードポリシーに準拠していないパスワードかつ、ログインが成功した場合は、セッション情報にフラグを立てる\n\n■実装の現状\nログイン時の判定に「IDと同一」の条件がありません。\nEccubeAuthenticationSuccessHandler.php:88-95 は文字数（`eccube_password_min_len`=12）と正規表現（`eccube_password_pattern`）のみを判定し、**メールアドレス（`login_email` / `$user->getEmail()`）との比較がありません**。`eccube_password_max_len`(50) 超過も未判定です。\nポリシー違反用の変更フォーム（PasswordChangeType.php:35-38 → RepeatedPasswordType.php:44-58）にも Length と Regex のみで、メール同一チェックの POST_SUBMIT リスナーがありません。\n\n`PasswordPolicyListener::SESSION_KEY` を **set** している箇所は全リポジトリで上記1箇所のみです。既存テスト（EccubeAuthenticationSuccessHandlerTest.php:73-81）のデータプロバイダも empty / short / no_digit / no_alpha / valid の5ケースのみで、**メールアドレス同一ケースが存在しません**。\n画面制御とフラグ解除（PasswordPolicyListener.php:64-92、PasswordChangeController.php:55-73）は設計どおり実装済みです。\n\n■次の対応\n実装対応: ログイン時の判定に「IDと同一」の条件を追加し、ポリシー違反用の変更フォームにも同チェックを追加する。`eccube_password_max_len`(50) 超過の判定も併せてご検討ください。\n\n付記（起票本文の補正2点）:\n1. 設計上の「IDと同一は許可しない」は sheet-23 ではなく **sheet-5「ログイン」の機能仕様処理概要（★）**に記載されています。sheet-23 単体には該当記述がありません。\n2. 起票の「EntryType の POST_SUBMIT リスナーに**のみ**存在し」は不正確です。実際は EntryType（会員登録・会員情報変更）／ PasswordResetType（パスワード再発行）／ Admin CustomerType の**3箇所**に存在します。sheet-23 が「パスワード変更の処理については会員情報変更と同様とする」と定める以上、EntryType にあるチェックが PasswordChangeType に無いことは乖離の補強材料になります。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-5「ログイン」（★ECCUBE4系のポリシーに合わないパスワードについて）\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/Mypage/PasswordChangeController.php",
+        "src/Eccube/EventListener/PasswordPolicyListener.php",
+        "src/Eccube/Form/Type/RepeatedPasswordType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1902",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-3:新規会員登録"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_新規会員登録_新規会員登録画面のパスワード入力補助文が「8文字以上、32文字以内」と表示されるが、実際の入力チェックは12〜50文字であり、画面表示と実装のどちらもが設計書内で整合していない。",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "案内文が8-32、実装は12-50。同一画面のplaceholderとJS属性は既に12-50で画面内も不整合",
+      "前回書いた次にすること": "実装対応: 固定文言を他画面と同じ動的文言に変更",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-3「新規会員登録」\n画面部品仕様\n> 1-12 パスワード　半角　◯　**32**　・最低文字数: **8**\n\n■実装の現状\n案内文が実装と一致していません。\nmessages.ja.yaml:462 `front.entry.password.note: \"半角英数字記号 8文字以上、32文字以内で入力してください。…\"`（英語版も 8–32）\n実際のサーバ制約は RepeatedPasswordType.php:49-56 の `min: eccube_password_min_len`(12) / `max: eccube_password_max_len`(50) です。\n\n**同一画面内でも矛盾しています。** 同じ欄の placeholder（`common.password_sample`）は「半角英数記号12〜50文字」を表示し、Entry/index.twig:306,308,333,335 の `data-minlength` / `data-error-minlength` も **12** を使っています。**同一フィールドで 8 と 12 が同時に表示されている状態**です。\n他画面（Forgot/reset.twig:63、Mypage/change.twig:331）は `%min%` / `%max%` を使った動的文言に移行済みで、**Entry/index.twig だけが固定文言**です。\n\n■次の対応\n実装対応: 固定文言を他画面と同じ動的文言（`%min%` / `%max%`）に変更する。少なくとも同一画面内の placeholder・JS属性との不整合は解消が必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-3「新規会員登録」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Form/Type/RepeatedPasswordType.php",
+        "src/Eccube/Resource/locale/messages.en.yaml",
+        "src/Eccube/Resource/locale/messages.ja.yaml",
+        "src/Eccube/Resource/template/default/Forgot/reset.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1903",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-3:新規会員登録"
+      ],
+      "課題タイトル": "【一部実装】フロント会員_新規会員登録_新規会員登録のMTG Campaign登録名(姓/名)は最大128文字がHTMLのmaxlength属性のみで制限されており、サーバ側の文字数バリデーションが無いため、129文字以上を送信するとバリデーションエラーではなくDBエラーになる。",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "firstNameEn/lastNameEn に constraints が無くmaxlengthはHTML属性のみ。確認画面経由で回避可能",
+      "前回書いた次にすること": "実装対応: サーバ側の Length(max:128) を追加",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-3「新規会員登録」\n画面部品仕様\n> 1-23 MTG Campaign 登録名(姓)　半角・全角　**128**\n> 1-24 MTG Campaign 登録名(名)　半角・全角　**128**\n\nリバース詳細設計の「入力項目」「**バリデーション**」両節も「各欄128文字」で一致しています（3箇所一致）。\n\n■実装の現状\nPlayerType.php:34-51 の `firstNameEn` / `lastNameEn` に **`constraints` が一切ありません**。`attr` の `maxlength => 128` はHTML属性のみです。\nDtbPlayer.php:57,63 は `length: 128` ですが Assert は0件で、validation.yaml 等の外部定義もありません。\nEntry/confirm.twig:244-246 は hidden で再POSTするため maxlength が効かず、**確認画面経由で129文字以上を送信するとサーバ側で止められません**。\n対比として、同 EntryType の `company_name` には `Assert\\Length` があります。\n\n■次の対応\n実装対応: `firstNameEn` / `lastNameEn` にサーバ側の `Length(max: 128)` を追加する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-3「新規会員登録」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Entity/DtbPlayer.php",
+        "src/Eccube/Form/Type/Front/EntryType.php",
+        "src/Eccube/Form/Type/Front/PlayerType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1904",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-4:本会員登録"
+      ],
+      "課題タイトル": "【一部実装】フロント会員_本会員登録_本会員登録のE-1.秘密鍵書式エラー画面が専用画面として用意されておらず、E-2.ユーザー存在チェックエラーと同一のerror_type=forbiddenのテンプレート・同一文言を共用している。",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "3種のerror_typeは設計3文言と1対1対応で起票の主張は一部誤り。秘密鍵欠落URLは404",
+      "前回書いた次にすること": "要確認: 設計自身がタイトルと本文の組で表示すると明記。qtyInCart付きURLで検証を回避できる別懸念もあり",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-4「本会員登録」\n機能仕様処理概要\n> ・1の条件でエラーになった場合、**E-1. 秘密鍵書式エラー画面**を表示\n> ・2,3の条件でエラーになった場合、**E-2.ユーザー存在チェックエラー画面**を表示\n\n■実装の現状\nエラー画面自体は実装済みです（Entry/activate_error.twig が `error_type` により3種の文言を切替、「トップページへ」ボタンも実装済み）。\n実際に残る乖離は「**仮会員も本会員も見つからない**ケースが `forbidden`（アクセスできません）になる」点で、リバース詳細設計の判定順序2は「完了済みです。」であるべきところです。\nスマレジID保有ケースは 1865 のとおり判定自体が無く、エラー画面に到達しません。\n\n**起票の主張のうち事実でない部分があります。** 「実装の3種が設計のE-1/E-2/E-3と対応が取れていない」「`already_activated` がスマレジID保有ケースに対応している」とありますが、リバース詳細設計の3文言と実装の3 error_type は**1対1で対応**しており、`already_activated` が対応するのは「既に本会員化済み」です。\nまた「秘密鍵パラメータが存在しないURLは404でE-1に到達しない」は事実で、`Assert\\NotBlank()` は到達不能なデッドコードです。\n\n**別の懸念**: EntryController.php:238-241 の `if (!is_null($qtyInCart)) { return ['qtyInCart' => $qtyInCart]; }` は、URLに `qtyInCart` を付けるだけで書式検証もアクティベート処理も行わず本登録完了画面を描画します。設計の判定順序を通らない経路です。\n\n■次の対応\n要確認: **設計自身が画面の作り分けを否定しています。** リバース詳細設計は「エラー画面はタイトルと本文の組で表示する」「判定順序2・3の理由は**画面上で区別しない**」と明記しており、E-1/E-2を独立した専用画面として用意すべきという前提はレイアウト図レベルの記述にのみ依拠します。\n設計担当者に画面分離の要否をご確認ください。分離不要であれば、残る是正対象は「仮会員不在時の文言」に絞られます。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-4「本会員登録」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Controller/Front/EntryController.php",
+        "src/Eccube/Resource/locale/messages.ja.yaml",
+        "src/Eccube/Resource/template/default/Entry/activate_error.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1906",
+      "設計書": "0306_基本設計仕様書(フロント_会員).html",
+      "設計シート": [
+        "sheet-7:マイページ"
+      ],
+      "課題タイトル": "【実装乖離】フロント会員_マイページ_マイページの「買取履歴」メニューおよび遷移先画面の名称が、設計書のカスタマイズ要件「買取履歴を買取一覧に名称変更する」に沿った「買取一覧」になっていない。",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "買取一覧という表示名は不在。ただし画面部品仕様のラベル欄は買取履歴で実装と一致",
+      "前回書いた次にすること": "要確認: 設計が三重に食い違う。乖離は遷移先画面名に限定される可能性",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-7「マイページ」\nカスタマイズ説明\n> ・買取履歴を**買取一覧**に名称変更する\n\n画面部品仕様\n> 16 **買取履歴**　リンク　※カスタマイズ対応、ネット買取履歴を買取歴に名称変更する ・押下すると、**買取一覧画面**へ遷移する\n\n■実装の現状\nメニューラベルは messages.ja.yaml:834 `front.mypage.nav__purchase_history: 買取履歴`、遷移先の見出しは :835 `front.mypage.purchase_history.title: 買取履歴一覧` です。\n`買取一覧` をリポジトリ全体で検索しましたが、ヒットはPHPコメント内のみで**表示文言・翻訳キーとしては存在しません**。旧称「ネット買取履歴」からの改名は一段階分は反映済みです。\n\n■次の対応\n要確認: **設計が三重に食い違っています。** カスタマイズ説明は「買取一覧」、画面部品仕様の**ラベル欄は「買取履歴」**（実装と一致）、説明欄の改名先は「買取歴」（誤記と思われる）、遷移先画面名は「買取一覧画面」、リバース詳細設計は旧称「ネット買取履歴」のままです。\n**メニューラベルの実装は画面部品仕様表のラベル欄と一致**しており、乖離と言えるのは遷移先画面名（買取履歴一覧 vs 買取一覧画面）に限定される可能性が高いです。\nなお起票が引用する「アクセス制限画面一覧（買取履歴一覧／買取履歴詳細）」は `.cursor/docs/MDfile/F06_customer_basedesign.md` からの引用で、正本 sheet-7 には該当記述がありません。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-7「マイページ」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F06_customer_basedesign.md",
+        "src/Eccube/Resource/locale/messages.en.yaml",
+        "src/Eccube/Resource/locale/messages.ja.yaml",
+        "src/Eccube/Resource/template/default/Mypage/index.en.twig"
+      ]
+    }
+  ]
+}

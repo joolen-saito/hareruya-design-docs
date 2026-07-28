@@ -1,0 +1,366 @@
+{
+  "book": "0301",
+  "count": 14,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-1773",
+      "summary": "【実装乖離】フロントトップ_ECTOP（本店トップ）_本店トップ「おすすめ特集」ブロックが、管理画面のブロック管理で編集も削除もできない設定になっている",
+      "feature": "ECTOP（本店トップ）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- 本店トップの「おすすめ特集」は、管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集/削除可能なブロックとして表示されること。\n- (7-1)バナー画像は管理画面のブロックHTML内で各画像にURLを設定できる必要があるため、当該ブロックは管理画面から編集可能であること。",
+      "現在の挙動": "- 「おすすめ特集」ブロック（file_name = recommend）は、マイグレーションで deletable = false として dtb_block に登録されている。\n- 本フォークの管理画面では deletable = false のブロックは編集リンク・削除ボタンともに非表示となり、ブロック編集画面へ直接アクセスしても NotFoundHttpException となるため、編集も削除もできない。",
+      "引用": [
+        "app/DoctrineMigrations/Version20260416190000.php:40-40",
+        "app/DoctrineMigrations/Version20260416190000.php:68-68",
+        "app/DoctrineMigrations/Version20260424110000.php:35-35",
+        "src/Eccube/Controller/Admin/Content/BlockController.php:118-118",
+        "src/Eccube/Resource/template/admin/Content/block.twig:71-71",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:367-367",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:370-370"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1774",
+      "summary": "【実装乖離】フロントトップ_ECTOP（本店トップ）_デッキ採用枚数ランキングの(10-9)週間販売数が、過去1週間の販売数が0でも「0点」と表示される",
+      "feature": "ECTOP（本店トップ）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- (10-9)週間販売数は、期間別販売数集計バッチで出力された過去1週間の本店サイト注文数を表示すること。\n- 過去1週間のうちに本店サイトで注文されていない場合（週間販売数が0の場合）は、週間販売数のラベル自体を非表示にすること。",
+      "現在の挙動": "- ranking.twig のデッキ採用枚数ランキング部では、週間販売数のラベルが条件分岐なしで常に出力され、値がない場合は `card.weeklySales ?? 0` により「0」が表示される。\n- 取得SQLも `COALESCE(SUM(sq.sales_quantity_04), 0)` で0を返すため、1週間の販売実績がない商品でも週間販売数「0」が描画される。\n- 同じ週間販売数を表示する Block/_product_card.twig・_product_card_simple.twig では `{% if weeklySales > 0 %}` で0件時に非表示としており、ranking.twig だけこのガードが欠けている。\n- バンドルCSS/JSにも値0のときに当該要素を隠す処理はない。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Block/ranking.twig:69-69",
+        "src/Eccube/Repository/DtbDeckCardRepository.php:292-292",
+        "src/Eccube/Resource/template/default/Block/_product_card.twig:94-94",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:491-491"
+      ],
+      "引用_不在または範囲外": [
+        "Block/_product_card.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1775",
+      "summary": "【実装乖離】フロントトップ_ECTOP（本店トップ）_売れ筋アイテムランキングの(11-8)週間販売数が、週間販売数0のときも非表示にならず「0点」と表示され得る",
+      "feature": "ECTOP（本店トップ）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- (11-8)週間販売数は、期間別販売数集計バッチで出力された過去1週間の本店サイト注文数を表示すること。\n- 過去1週間のうちに本店サイトで注文されていない場合（週間販売数が0の場合）は、週間販売数のラベル自体を非表示にすること。",
+      "現在の挙動": "- ranking.twig の売れ筋アイテムランキング部では、週間販売数のラベルを条件分岐なしで常に出力しており、`item.sum` が0でもそのまま「0」が表示される。\n- 取得元の DtbSalesQuantityRepository::getPopularProductRecommend() は SUM(sqs.sales_quantity_04) を降順に最大30件取得するだけで、HAVING などで0件を除外していない。\n- dtb_sales_quantity の集計行は過去366日以内に販売があった商品分が作られ、週間販売数(sales_quantity_04)は0になり得るため、週間販売実績のある商品が30件未満の場合は週間販売数0の商品がランキングに載り「0点」表示となる。\n- 同じ週間販売数を表示する Block/_product_card.twig:94 では `{% if weeklySales > 0 %}` で0件時に非表示としている。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Block/ranking.twig:127-127",
+        "src/Eccube/Repository/DtbSalesQuantityRepository.php:210-210",
+        "src/Eccube/Repository/DtbSalesQuantityRepository.php:441-441",
+        "src/Eccube/Resource/template/default/Block/_product_card.twig:94-94",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:529-529"
+      ],
+      "引用_不在または範囲外": [
+        "Block/_product_card.twig:94 [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1776",
+      "summary": "【実装乖離】フロントトップ_ECTOP（本店トップ）_本店トップ「体験会バナー」ブロックが、管理画面のブロック管理で編集も削除もできない設定になっている",
+      "feature": "ECTOP（本店トップ）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- 本店トップの「体験会バナー」は、管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集/削除可能なブロックとして表示されること。\n- (12-1)体験会バナーは管理画面＞コンテンツ管理＞ブロック管理でブロックのHTML内に各画像のリンク先URLを設定できる必要があるため、当該ブロックは管理画面から編集可能であること。",
+      "現在の挙動": "- 「体験会バナー」ブロック（file_name = experience_banner）は、マイグレーションで deletable = false として dtb_block に登録されている。\n- 本フォークの管理画面では deletable = false のブロックは編集リンク・削除ボタンともに非表示となり、ブロック編集画面へ直接アクセスしても NotFoundHttpException となるため、HTML の編集も削除もできない。",
+      "引用": [
+        "app/DoctrineMigrations/Version20260416190000.php:44-44",
+        "app/DoctrineMigrations/Version20260424100000.php:35-35",
+        "src/Eccube/Controller/Admin/Content/BlockController.php:118-118",
+        "src/Eccube/Resource/template/admin/Content/block.twig:71-71",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:544-544",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:547-547"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1777",
+      "summary": "【実装乖離】フロントトップ_ECTOP（本店トップ）_本店トップ「最新記事」ブロックが、管理画面のブロック管理で編集も削除もできない設定になっている",
+      "feature": "ECTOP（本店トップ）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- 本店トップの「最新記事」は、管理画面＞コンテンツ管理＞ブロック管理に設定されている、編集/削除可能なブロックとして表示されること。",
+      "現在の挙動": "- 「最新記事」ブロック（file_name = latest_articles）は、マイグレーションで deletable = false として dtb_block に登録されている。\n- 本フォークの管理画面では deletable = false のブロックは編集リンク・削除ボタンともに非表示となり、ブロック編集画面へ直接アクセスしても NotFoundHttpException となるため、編集も削除もできない。",
+      "引用": [
+        "app/DoctrineMigrations/Version20260416190000.php:45-45",
+        "app/DoctrineMigrations/Version20260424130000.php:34-34",
+        "src/Eccube/Controller/Admin/Content/BlockController.php:118-118",
+        "src/Eccube/Resource/template/admin/Content/block.twig:71-71",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:560-560"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1778",
+      "summary": "【実装乖離】フロントトップ_ECTOP（本店トップ）_ECTOP（本店トップ）にて、設計上「編集/削除可能」とされたブロック（おすすめ特集・体験会バナー・最新記事・晴れる屋チャンネル）が deletable=false で登録されており、ブロック管理から編集も削除もできない",
+      "feature": "ECTOP（本店トップ）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- ECTOP（本店トップ）の「おすすめ特集」「体験会バナー」「最新記事」「晴れる屋チャンネル」は、管理画面＞コンテンツ管理＞ブロック管理に設定されている「編集/削除可能」なブロックとして表示されること。\n- したがって運用担当者は、ブロック管理の一覧からこれらのブロックの編集（HTML書き換え）および削除が行えること。",
+      "現在の挙動": "- トップページ用ブロックを dtb_block に投入するマイグレーションは、対象15ブロック（recommend／experience_banner／latest_articles／hareruya_channel を含む）を一律 deletable=false で INSERT しており、「編集/削除可能」であるべきブロックも削除不可として登録されている。\n- 管理画面のブロック管理一覧テンプレートは Block.deletable が false のブロックについて編集リンクも削除ボタンも描画しない。\n- さらに BlockController::edit() は既存ブロックで isDeletable() が false の場合に NotFoundHttpException を投げるため、URLを直接叩いても編集画面に到達できない。\n- 結果として、設計で「編集/削除可能」とされた4ブロックは管理画面から一切編集・削除ができず、おすすめ特集ブロックの中身は href=\"#\" のダミーバナーのまま運用で修正できない状態になっている。",
+      "引用": [
+        "app/DoctrineMigrations/Version20260416190000.php:32-48",
+        "app/DoctrineMigrations/Version20260416190000.php:68-68",
+        "app/DoctrineMigrations/Version20260424100000.php:50-50",
+        "app/DoctrineMigrations/Version20260424110000.php:50-50",
+        "src/Eccube/Controller/Admin/Content/BlockController.php:118-118",
+        "src/Eccube/Resource/template/admin/Content/block.twig:71-71",
+        "src/Eccube/Resource/template/default/Block/recommend.twig:7-14",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:367-367"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1779",
+      "summary": "【実装乖離】フロントトップ_支店ECTOP_支店ECTOPの(1)注文方法ラベルにて、非会員・支店店内アカウント以外向けの文言が「承っています。」となっており、設計書の「承っております。」と表記が異なる",
+      "feature": "支店ECTOP",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "支店ECTOP"
+        },
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- 会員の顧客グループが「支店店内アカウント」以外（非会員も含む）の場合、「このサイトでは、晴れる屋{支店名}での店頭受け取り注文を承っております。配送をご希望の方は、通販サイトをご利用ください。」と表示すること。\n- 会員の顧客グループが「支店店内アカウント」（支店店頭PC）の場合、「商品をお選びいただき、カート画面へお進みください。ご注文完了後、番号でお呼びいたします。」と表示すること。\n- {支店名}には、各支店サイトに応じた支店名を表示すること。",
+      "現在の挙動": "- 支店店内アカウント以外向けの文言は messages.ja.yaml の shop_top.order_method.public.prefix1 で「このサイトでは、晴れる屋%shop_name%での店頭受け取り注文を承っています。」と定義されており、設計書の「承っております。」に対して「承っています。」となっている。\n- 後半の「配送をご希望の方は、」「通販サイト」（リンク）「をご利用ください。」および支店名の差し込み（%shop_name%）は設計どおり実装されている。\n- 支店店内アカウント向けの文言 shop_top.order_method.in_store は設計書と完全一致している。\n- 顧客グループによる出し分けは ShopTopController::isBranchShopFrontCustomer() が会員の Player→CustomerGroup の branchShopFrontFlg を参照して行っており、設計どおり動作する。",
+      "引用": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:1262-1262",
+        "src/Eccube/Resource/locale/messages.ja.yaml:1261-1261",
+        "src/Eccube/Resource/template/default/Block/shop_order_method.twig:11-11",
+        "src/Eccube/Controller/Shop/ShopTopController.php:177-189",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:659-661",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:668-668"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1780",
+      "summary": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPにて、支店の公開ステータスが非公開でも支店トップ以外の支店サイト配下ページ（商品一覧・商品詳細・カート等）が閲覧できてしまい、支店サイト全体の非表示制御になっていない",
+      "feature": "支店ECTOP",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "支店ECTOP"
+        },
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- 管理画面＞モール設定＞店舗登録で登録されている支店の公開ステータス（is_open_shop）に応じて、支店サイトの表示/非表示を制御すること。\n- 支店の公開ステータスが「非公開」の場合、支店トップだけでなく当該支店サイト全体（/{locale}/{支店スラッグ}/ 配下の全ページ）が表示されないこと。",
+      "現在の挙動": "- 公開ステータスの判定は ShopTopController::index() の1箇所のみで、支店トップ（ルート shop_top）へのアクセス時に BaseInfo::getIsOpenShop() が false なら 404 を返す実装になっている。\n- 支店サイト配下の他ページはすべて routes.yaml の prefix /{_locale}{_shop} 経由で解決されるが、その妥当性チェックを行う InvalidShopRedirectListener は BaseInfoService::isValidShop() を呼ぶだけで、isValidShop() は html_class_name に一致する BaseInfo が存在するかどうかしか見ておらず、is_open_shop を参照していない。\n- ルート condition に使われる ShopRouteConditionService::isShopByPath() も findOneBy(['html_class_name' => $slug]) の存在確認のみで、公開ステータスを見ていない。\n- 結果として、非公開の支店でも /{locale}/{支店スラッグ}/products/... などの配下ページはそのまま表示され、支店サイト全体の非表示制御が成立していない。",
+      "引用": [
+        "src/Eccube/Controller/Shop/ShopTopController.php:69-71",
+        "src/Eccube/Service/BaseInfoService.php:63-77",
+        "src/Eccube/EventListener/InvalidShopRedirectListener.php:87-90",
+        "src/Eccube/Service/ShopRouteConditionService.php:29-37",
+        "app/config/eccube/routes.yaml:20-20",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:619-620",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:665-665"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1781",
+      "summary": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(2)SALE中の商品にて、支店の商品公開ステータス（is_branch_published）による絞り込みが行われておらず、支店非公開の商品も表示される",
+      "feature": "支店ECTOP",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "支店ECTOP"
+        },
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- 支店ECTOPの「SALE中の商品」では、条件1として「支店の商品公開ステータスが『公開』であること」で商品を絞り込むこと。\n- 併せて、システム廃止していない商品・表示店舗の在庫1以上・セールタグ・セールフラグ1・販売価格1円以上・状態が最も良いもの・ランダム順・最大30件・0件なら非表示、の各条件を満たすこと。",
+      "現在の挙動": "- ProductRepository::findTopSaleProductsByBaseInfo() の抽出SQLは dtb_product.product_status_id（本店の商品公開ステータス）しか見ておらず、支店の商品公開ステータスを保持する dtb_product.is_branch_published 列を WHERE 条件に含めていない。\n- 後段の ProductClass 絞り込みDQL（同メソッド内）にも p.isBranchPublished の条件が無い。\n- 同リポジトリの findPublicByIds() は支店（root 以外の base_info）の場合に p.isBranchPublished = true を追加しており、支店公開フィルタの実装パターン自体は存在するため、SALE中の商品クエリにだけ適用漏れがある。\n- 支店の商品公開ステータス以外の条件（廃止除外・店舗在庫1以上・セールタグ・sale_flg・price02>=1・カード状態最良の選出・ORDER BY RANDOM()・LIMIT 30・0件時のブロック非表示）はいずれも実装されている。",
+      "引用": [
+        "src/Eccube/Controller/Shop/ShopTopController.php:81-85",
+        "src/Eccube/Resource/template/default/Block/shop_sale.twig:11-11",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:701-703",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:683-684"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Repository/ProductRepository.php:397 [line_out_of_range]",
+        "src/Eccube/Repository/ProductRepository.php:433 [line_out_of_range]",
+        "src/Eccube/Repository/ProductRepository.php:717 [line_out_of_range]",
+        "src/Eccube/Entity/Product.php:1274 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1782",
+      "summary": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(4)タイルにて、商品ごとの支店の商品公開ステータス（is_branch_published）による公開/非公開制御が行われていない",
+      "feature": "支店ECTOP",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "支店ECTOP"
+        },
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- 支店ECTOPのタイルは管理画面＞コンテンツ管理＞トップページ管理の設定に従って表示し、(4-8)もっと見るから設定に応じた条件で絞り込まれた商品一覧へ遷移できること。\n- タイルに表示する商品は、商品ごとに支店の商品公開ステータスを取得し、公開/非公開を制御すること（「M03-02商品登録/編集」の商品公開ステータスに応じて表示・非表示にすること）。",
+      "現在の挙動": "- タイル自体はトップページ管理で登録された DtbTile を section 順に読み出して描画しており、各タイルに「もっと見る」リンク（PICKUP は商品一覧、その他はタグ絞り込み商品一覧）も実装されている。\n- しかしピックアップ商品タイルの取得メソッド ProductRepository::findTopPickUpProductsByBaseInfo() は pc.visible / p.Status / 支店在庫 / 地域制限しか条件に持たず、p.isBranchPublished を参照していない。\n- タグ紐付けタイルの取得メソッド ProductRepository::findTopPublicProductsByTag() が使う buildPublicProductClassesByTagQueryBuilder() にも p.isBranchPublished の条件が無く、支店IDは在庫の EXISTS 条件にしか使われていない。\n- その結果、支店で非公開に設定された商品もタイル内に表示されてしまい、設計の「商品ごとに支店の商品公開ステータスを取得し、公開/非公開を制御する」が満たされていない。",
+      "引用": [
+        "src/Eccube/Controller/Shop/ShopTopController.php:127-162",
+        "src/Eccube/Resource/template/default/Block/shop_item_list.twig:25-52",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:773-773",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:761-762",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:769-769"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Repository/ProductRepository.php:476 [line_out_of_range]",
+        "src/Eccube/Repository/ProductRepository.php:559 [line_out_of_range]",
+        "src/Eccube/Repository/ProductRepository.php:717 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1783",
+      "summary": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(6)アイテムを探すが、リンク先を持たないダミーの静的HTMLのままで、カテゴリ・通常盤以外のカードセットを押下しても商品一覧画面へ遷移しない",
+      "feature": "支店ECTOP",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "支店ECTOP"
+        },
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- 支店ECTOPの「アイテムを探す」は、管理画面＞コンテンツ管理＞ブロック管理に設定されている編集可能なブロックとして表示し、本店と支店（支店は全て共通）で異なるブロックを表示すること。\n- (6-5)カテゴリを押下すると、押下したカテゴリで絞り込まれた商品一覧画面へ遷移すること。\n- (6-6)通常盤以外のカードセットを押下すると、押下したカードセットで絞り込まれた商品一覧画面へ遷移すること。",
+      "現在の挙動": "- 支店トップは Block/search_items.twig を直接 include しており、その内容は「ファイナルファンタジー 通常版」「霊気走破 通常版」等のダミー3枚が直書きされた静的HTMLになっている。\n- カテゴリ・カードセットのタグはいずれも <a class=\"c-hareruya-tag\" aria-disabled=\"true\"> で href 属性を一切持たず（search_items.twig／search_items.en.twig ともに href の出現数は0）、押下しても商品一覧画面へ遷移しない。遷移を担うJSハンドラも存在しない。\n- 表示しているブロックは本店トップと同一の search_items ブロック（dtb_block の file_name='search_items'）であり、設計が求める「本店と支店で異なるブロック」になっていない。\n- search_items ブロックは deletable=false で登録されているため、管理画面＞コンテンツ管理＞ブロック管理から編集することもできない（編集リンク非表示、編集画面は404）。",
+      "引用": [
+        "src/Eccube/Resource/template/default/shop_top.twig:45-45",
+        "src/Eccube/Resource/template/default/Block/search_items.twig:22-34",
+        "src/Eccube/Resource/template/default/Block/search_items.en.twig:None-None",
+        "app/DoctrineMigrations/Version20260424110000.php:33-33",
+        "src/Eccube/Controller/Admin/Content/BlockController.php:118-118",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:821-822",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:826-828",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:835-836"
+      ],
+      "引用_不在または範囲外": [
+        "Block/search_items.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1784",
+      "summary": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(8)おすすめ特集が、ブロック管理に登録されていない固定テンプレートで、全バナーのリンク先が href=\"#\" のプレースホルダのままになっている",
+      "feature": "支店ECTOP",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "支店ECTOP"
+        },
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- 支店ECTOPの「おすすめ特集」は、管理画面＞コンテンツ管理＞ブロック管理に設定されている編集可能なブロックとして表示すること。\n- (8-1)バナー画像を押下すると、html内で各画像に設定しているURLに遷移すること。",
+      "現在の挙動": "- 支店トップは Block/shop_recommend.twig を直接 include しているが、この shop_recommend は dtb_block に登録されておらず（マイグレーションのブロック定義一覧に file_name='shop_recommend' は存在しない）、管理画面＞コンテンツ管理＞ブロック管理には表示されない＝編集できない。\n- テンプレートにはスタンダード/パイオニア/モダン/レガシー/統率者/プロモの6枚のバナー画像が固定で直書きされている。\n- 6枚すべてのリンクが href=\"#\" のプレースホルダであり、押下しても画像ごとに設定されたURLへ遷移しない。\n- 画像・ラベルの表示自体は実装されているため、表示のみ実装・遷移とブロック管理化が未実装の状態である。",
+      "引用": [
+        "src/Eccube/Resource/template/default/shop_top.twig:47-47",
+        "src/Eccube/Resource/template/default/Block/shop_recommend.twig:18-18",
+        "app/DoctrineMigrations/Version20260416190000.php:32-48",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:870-872",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F01_top_basedesign.md:875-875"
+      ],
+      "引用_不在または範囲外": [
+        "Block/shop_recommend.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1785",
+      "summary": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPのQRコード＆採用情報にて、採用情報バナー(9-2)がPC版のみ表示となっておらず、スマートフォン表示でも表示されている",
+      "feature": "支店ECTOP",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "支店ECTOP"
+        },
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- 支店ECTOP(F01-02)の「QRコード & 採用情報」欄の(9-2)採用情報バナーは、PC版のみに表示されること。\n- 採用情報バナーを押下すると、ブラウザの新しいタブで https://corp.hareruyamtg.com/recruit の採用ページを開くこと。\n- (9-1)店舗のX公式アカウントQRコードは店舗登録の「X公式アカウントURL」から生成し、(9-3)ご自宅から簡単予約QRコードは顧客グループが「支店店内アカウント」の場合のみ支店ECTOPのURLから生成して表示し、支店店内アカウントでない場合はX公式アカウントQRコードがセンターに来るよう調整すること。",
+      "現在の挙動": "- 採用情報バナーは Block/shop_recruit.twig に実装されており、shop_top.twig:49 から無条件に include されているため、PC/スマートフォンの区別なく常に表示される。\n- shop_recruit.twig には表示条件(if/デバイス判定)が一切なく、バンドルCSS hareruya-top.css の .p-hareruya-branch-top__recruit / .p-hareruya-branch-top__recruit-banner にも display:none やメディアクエリによる非表示指定は存在しない（max-width:1023px のメディアクエリ内では padding の指定のみ）。\n- JS バンドル html/template/default/assets/hareruya/js/*.js にも recruit ブロックを制御するコードは存在しない（grep でヒット0件）。すなわちTwig・CSS・JSの3層いずれにもPC限定表示の制御が無い。\n- 一方で(9-1)X公式アカウントQRコード（Shop.xAccountUrl からQR生成）、(9-3)簡単予約QRコード（isBranchShopFront 時のみ・支店ECTOP URLからQR生成）、採用リンクの target=\"_blank\" による別タブ遷移、非支店店内アカウント時のX QRコードのセンター表示（PC時 grid の auto-fit + justify-content:center により1枚のカードが中央寄せになる）は実装済みで設計どおりである。",
+      "引用": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md:915-915",
+        ".cursor/docs/MDfile/F01_top_basedesign.md:910-910",
+        ".cursor/docs/MDfile/F01_top_basedesign.md:902-902",
+        "src/Eccube/Resource/template/default/shop_top.twig:49-49",
+        "src/Eccube/Resource/template/default/Block/shop_recruit.twig:11-15",
+        "src/Eccube/Resource/template/default/Block/shop_promo.twig:14-45",
+        "src/Eccube/Controller/Shop/ShopTopController.php:97-121"
+      ],
+      "引用_不在または範囲外": [
+        "Block/shop_recruit.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1787",
+      "summary": "【実装乖離】フロントトップ_ECTOP（本店トップ）_本店ECTOP＞最新記事ブロック(13-2〜13-5)にて、設計で指定された「最新記事jsonファイル作成バッチが出力したjsonファイル」ではなく、別の外部API（ソース上のTODOで404と明記）を参照しているため、記事が1件も表示されない。",
+      "feature": "ECTOP（本店トップ）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "ECTOP"
+        }
+      ],
+      "期待される挙動": "- 最新記事ブロックの(13-2)サムネイル画像・(13-3)カテゴリ・(13-4)タイトル・(13-5)著者は、最新記事jsonファイル作成バッチによって作成されたjsonファイルから動的に取得すること。\n    -  **【2026/7/24 石川追記】** 最新記事jsonはそれぞれのWEBサーバのローカルに配置されるため、ローカルの/user_data/list/latestArticleList.jsonを参照する。\n    - 詳しい動きは[こちら](https://joolen.slack.com/archives/C0B9FKNF04W/p1784802027663459)を参照。\n- 記事を4件表示し、押下すると当該記事の記事詳細画面へ遷移すること。",
+      "現在の挙動": "- 最新記事ブロックの payload は LatestArticlesBlockPayloadBuilder が外部URL https://api.corp.hareruyamtg.com/user_data/lp/json/latest_articles.json を Guzzle で取得して構築しており、バッチが生成した json ファイルを参照していない。\n- 最新記事jsonファイル作成バッチ（eccube:create:latest-article-list / CreateLatestArticleListAction）は WordPress API から取得した記事一覧を user_data 配下の list/latestArticleList.json として保存しており、ブロックが読む latest_articles.json とはファイル名も配置先も一致しない。\n- ソース上のTODOコメントに「正しい最新記事APIエンドポイントに差し替え（現在のURL latest_articles.json は404）」と明記されており、取得に失敗すると articles が空配列となり、latest_articles.twig:2 の `{% if articles|length > 0 %}` によりブロック自体が描画されない。\n- 表示件数の最大4件（MAX_ARTICLES = 4）、Redis キャッシュ（300秒）、記事詳細へのリンク（latest_articles.twig:10 以降）は実装済みである。",
+      "引用": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md:562-562",
+        ".cursor/docs/MDfile/F01_top_basedesign.md:563-565",
+        "src/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php:27-28",
+        "src/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php:68-88",
+        "src/Eccube/Service/CreateLatestArticleListAction.php:25-29",
+        "src/Eccube/Resource/template/default/Block/latest_articles.twig:2-2",
+        "src/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php:27-27",
+        "src/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php:28-28"
+      ],
+      "引用_不在または範囲外": [
+        "ローカルの/user_data/list/latestArticleList.json:None [file_not_found]",
+        "list/latestArticleList.json:None [file_not_found]",
+        "user_data/list/latestArticleList.json:None [file_not_found]"
+      ]
+    }
+  ]
+}

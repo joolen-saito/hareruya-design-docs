@@ -1,0 +1,274 @@
+{
+  "book": "0301",
+  "count": 14,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-1773",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【実装乖離】フロントトップ_ECTOP（本店トップ）_本店トップ「おすすめ特集」ブロックが、管理画面のブロック管理で編集も削除もできない設定になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "recommend が deletable=false 固定で編集リンク非表示かつ編集画面404",
+      "前回書いた次にすること": "実装対応: deletable=true 化(1778と一括対応可)。バナーは href=# のダミーのためコンテンツ設定も必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-3「ECTOP」\n「おすすめ特集」欄 機能仕様処理概要\n> ・管理画面＞コンテンツ管理＞ブロック管理に設定されている、**編集/削除可能**なブロックを表示する\n\n■実装の現状\nブロック `recommend` は Version20260416190000.php で登録されますが `deletable` が false 固定です。管理画面の一覧でブロック名がリンクにならず、編集アイコンも削除ボタンも表示されません。編集画面のURLを直打ちしても404になります。\n\n■共通の背景（ブロック編集可否の4件に共通）\napp/DoctrineMigrations/Version20260416190000.php:32-48 がトップ用15ブロックを定義し、:67-69 の INSERT が `deletable` を **SQLリテラル false でハードコード**しています。後続の Version20260424100000 / 110000 / 130000 も `ON CONFLICT DO UPDATE SET deletable = EXCLUDED.deletable`（=false）で上書きするため、常に false のままです。\nその結果、admin/Content/block.twig:71/85/93 が編集リンク・編集アイコン・削除ボタンをいずれも非表示にし、BlockController.php:118 が `if ($id && !$Block->isDeletable()) { throw new NotFoundHttpException(); }` でURL直打ちも拒否します。\n全マイグレーションを走査しましたが、トップ用ブロックを deletable=true にするものは存在しません（Version20260711100000 は購入確認/完了フリーエリア専用）。\n\n**設計は3区分を明確に書き分けています。** スライドバナー・最新入荷アイテム・SALE開催中・お気に入り・値下げ・補充は「編集/削除**不可**」、おすすめ特集・体験会バナー・最新記事・晴れる屋チャンネルは「編集/削除**可能**」、アイテムを探すは「**編集可能**」。実装は15ブロック一律 false でこの書き分けが反映されていません。\n\n**あわせて検討が必要な点**: 仮に deletable=true にしても、管理画面の保存先は BlockController.php:172-178 の `Block/{file_name}.{locale}.twig`（例 `recommend.ja.twig`）である一方、フロントの読込は block.twig:16 の `include_dispatch('Block/' ~ Block.file_name ~ '.twig')` で、LocaleFilesystemLoader.php:134-139 が**デフォルトロケール(ja)ではロケールサフィックスを付けません**。つまり ja では管理画面の編集内容がフロントに反映されません（en は反映されます）。\n\n■次の対応\n実装対応: `recommend` の deletable を true にするマイグレーションを追加する。1778 と根本原因が同一のため一括対応可。\n\n付記: Block/recommend.twig:7-14 の6枚のバナーはすべて `href=\"#\"` かつダミー画像（top-banner-dammy01〜04.webp）です。編集可能化とあわせてコンテンツの設定も必要になります。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-3「ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "app/DoctrineMigrations/Version20260416190000.php",
+        "app/DoctrineMigrations/Version20260424110000.php",
+        "src/Eccube/Controller/Admin/Content/BlockController.php",
+        "src/Eccube/Resource/template/admin/Content/block.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1774",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【実装乖離】フロントトップ_ECTOP（本店トップ）_デッキ採用枚数ランキングの(10-9)週間販売数が、過去1週間の販売数が0でも「0点」と表示される",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "ranking.twig:69 に0件ガードが無く0点と表示。_product_card.twig には同ガードがある",
+      "前回書いた次にすること": "実装対応: ranking.twig:69 に weeklySales>0 のガードを追加",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-3「ECTOP」\n画面部品仕様\n> 10-9 週間販売数　ラベル　・期間別販売数集計バッチで出力された過去1週間のうちに本店サイトで注文された商品数を表示する\n> ・**過去1週間のうちに本店サイトで注文されていない場合、非表示にする**\n\n■実装の現状\nBlock/ranking.twig:69 は条件分岐なしで `(card.weeklySales ?? 0)|number_format` を出力するため、0件でも「週間販売数0点」と表示されます。\n\n**対照実装があります。** 同じ payload を使う Block/_product_card.twig:94 と Block/_product_card_simple.twig:44 には `{% if weeklySales > 0 %}` のガードがあり、ranking.twig にだけ欠落しています。\nCSS にも `display:none` 系の指定はなく（値が \"0\" のため `:empty` でも隠せません）、JSにも該当処理は0件でした。\n集計期間は設計どおり7日です（DtbSalesQuantityRepository.php:441 の `INTERVAL '7 days'` → `sales_quantity_04`）。\n\n■次の対応\n実装対応: ranking.twig:69 に `{% if ... > 0 %}` のガードを追加する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-3「ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "src/Eccube/Repository/DtbDeckCardRepository.php",
+        "src/Eccube/Resource/template/default/Block/_product_card.twig",
+        "src/Eccube/Resource/template/default/Block/ranking.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1775",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【実装乖離】フロントトップ_ECTOP（本店トップ）_売れ筋アイテムランキングの(11-8)週間販売数が、週間販売数0のときも非表示にならず「0点」と表示され得る",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "0件ガード不在は事実だが、起票の発生機序は誤り。base_info_id=0 の投入処理が未配線でランキング自体が0件の可能性",
+      "前回書いた次にすること": "要確認+実装対応: まず実環境で売れ筋ランキングが表示されているか確認。未表示なら updateRecommend の未配線が主問題",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。起票の根拠に誤りがあり、扱いの判断が必要です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-3「ECTOP」\n画面部品仕様\n> 11-8 週間販売数　ラベル　・**過去1週間のうちに本店サイトで注文されていない場合、非表示にする**\n\n■実装の現状\nコード上の指摘は事実です。Block/ranking.twig:127 に0件ガードがなく、DtbSalesQuantityRepository.php:200-229 の `getPopularProductRecommend()` にも HAVING による0除外がありません（対照として支店側 `findTopSellingProductsByBaseInfo()` の :253 には `sq.sales_quantity_04 > 0` があります）。\n\n**ただし起票の発生機序の説明は誤りです。** このクエリが読むのは `base_info_id = 0`（POPULAR_PRODUCT_RECOMMEND_SHOP_ID）の行のみで、期間別販売数集計バッチは `clearSalesQuantityForAggregate()` のコメントどおり base_info_id=0 を**対象外**にしています。base_info_id=0 を投入する唯一の処理 `updateRecommend()`（:308-376）は**呼び出し元が存在せず**、参照する設定キー `popular_product_recommend_csv_path` も app/config に定義されていません。\nつまり現状は売れ筋アイテムランキング自体が0件になり、ranking.twig:90 の `{% if salesRanking|length > 0 %}` でブロックごと非表示になる公算が高いです。\n\n■次の対応\n要確認+実装対応: 0件ガードの追加自体は必要です。ただし起票が想定した「実績ある商品が30件未満なら0の商品が載る」という状況は、現状のデータ投入経路では発生しません。**まず売れ筋アイテムランキングが実環境で表示されているか**をご確認ください。表示されていない場合は、`updateRecommend()` の未配線という別の乖離が主問題になります。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-3「ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "src/Eccube/Repository/DtbSalesQuantityRepository.php",
+        "src/Eccube/Resource/template/default/Block/_product_card.twig",
+        "src/Eccube/Resource/template/default/Block/ranking.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1776",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【実装乖離】フロントトップ_ECTOP（本店トップ）_本店トップ「体験会バナー」ブロックが、管理画面のブロック管理で編集も削除もできない設定になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "experience_banner が deletable=false 固定",
+      "前回書いた次にすること": "実装対応: deletable=true 化(1778と一括対応可)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-3「ECTOP」\n「体験会バナー」欄 機能仕様処理概要\n> ・管理画面＞コンテンツ管理＞ブロック管理に設定されている、**編集/削除可能**なブロックを表示する\n\n■実装の現状\nブロック `experience_banner` は Version20260416190000.php で登録されますが `deletable` が false 固定です。管理画面の一覧でブロック名がリンクにならず、編集アイコンも削除ボタンも表示されません。編集画面のURLを直打ちしても404になります。\n\n■共通の背景（ブロック編集可否の4件に共通）\napp/DoctrineMigrations/Version20260416190000.php:32-48 がトップ用15ブロックを定義し、:67-69 の INSERT が `deletable` を **SQLリテラル false でハードコード**しています。後続の Version20260424100000 / 110000 / 130000 も `ON CONFLICT DO UPDATE SET deletable = EXCLUDED.deletable`（=false）で上書きするため、常に false のままです。\nその結果、admin/Content/block.twig:71/85/93 が編集リンク・編集アイコン・削除ボタンをいずれも非表示にし、BlockController.php:118 が `if ($id && !$Block->isDeletable()) { throw new NotFoundHttpException(); }` でURL直打ちも拒否します。\n全マイグレーションを走査しましたが、トップ用ブロックを deletable=true にするものは存在しません（Version20260711100000 は購入確認/完了フリーエリア専用）。\n\n**設計は3区分を明確に書き分けています。** スライドバナー・最新入荷アイテム・SALE開催中・お気に入り・値下げ・補充は「編集/削除**不可**」、おすすめ特集・体験会バナー・最新記事・晴れる屋チャンネルは「編集/削除**可能**」、アイテムを探すは「**編集可能**」。実装は15ブロック一律 false でこの書き分けが反映されていません。\n\n**あわせて検討が必要な点**: 仮に deletable=true にしても、管理画面の保存先は BlockController.php:172-178 の `Block/{file_name}.{locale}.twig`（例 `recommend.ja.twig`）である一方、フロントの読込は block.twig:16 の `include_dispatch('Block/' ~ Block.file_name ~ '.twig')` で、LocaleFilesystemLoader.php:134-139 が**デフォルトロケール(ja)ではロケールサフィックスを付けません**。つまり ja では管理画面の編集内容がフロントに反映されません（en は反映されます）。\n\n■次の対応\n実装対応: `experience_banner` の deletable を true にするマイグレーションを追加する。1778 と根本原因が同一のため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-3「ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "app/DoctrineMigrations/Version20260416190000.php",
+        "app/DoctrineMigrations/Version20260424100000.php",
+        "src/Eccube/Controller/Admin/Content/BlockController.php",
+        "src/Eccube/Resource/template/admin/Content/block.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1777",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【実装乖離】フロントトップ_ECTOP（本店トップ）_本店トップ「最新記事」ブロックが、管理画面のブロック管理で編集も削除もできない設定になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "latest_articles が deletable=false 固定。use_controller のみ変更する後続マイグレーションはある",
+      "前回書いた次にすること": "実装対応: deletable=true 化(1778と一括対応可)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-3「ECTOP」\n「最新記事」欄 機能仕様処理概要\n> ・管理画面＞コンテンツ管理＞ブロック管理に設定されている、**編集/削除可能**なブロックを表示する\n\n■実装の現状\nブロック `latest_articles` は Version20260416190000.php で登録されますが `deletable` が false 固定です。管理画面の一覧でブロック名がリンクにならず、編集アイコンも削除ボタンも表示されません。編集画面のURLを直打ちしても404になります。\n\n■共通の背景（ブロック編集可否の4件に共通）\napp/DoctrineMigrations/Version20260416190000.php:32-48 がトップ用15ブロックを定義し、:67-69 の INSERT が `deletable` を **SQLリテラル false でハードコード**しています。後続の Version20260424100000 / 110000 / 130000 も `ON CONFLICT DO UPDATE SET deletable = EXCLUDED.deletable`（=false）で上書きするため、常に false のままです。\nその結果、admin/Content/block.twig:71/85/93 が編集リンク・編集アイコン・削除ボタンをいずれも非表示にし、BlockController.php:118 が `if ($id && !$Block->isDeletable()) { throw new NotFoundHttpException(); }` でURL直打ちも拒否します。\n全マイグレーションを走査しましたが、トップ用ブロックを deletable=true にするものは存在しません（Version20260711100000 は購入確認/完了フリーエリア専用）。\n\n**設計は3区分を明確に書き分けています。** スライドバナー・最新入荷アイテム・SALE開催中・お気に入り・値下げ・補充は「編集/削除**不可**」、おすすめ特集・体験会バナー・最新記事・晴れる屋チャンネルは「編集/削除**可能**」、アイテムを探すは「**編集可能**」。実装は15ブロック一律 false でこの書き分けが反映されていません。\n\n**あわせて検討が必要な点**: 仮に deletable=true にしても、管理画面の保存先は BlockController.php:172-178 の `Block/{file_name}.{locale}.twig`（例 `recommend.ja.twig`）である一方、フロントの読込は block.twig:16 の `include_dispatch('Block/' ~ Block.file_name ~ '.twig')` で、LocaleFilesystemLoader.php:134-139 が**デフォルトロケール(ja)ではロケールサフィックスを付けません**。つまり ja では管理画面の編集内容がフロントに反映されません（en は反映されます）。\n\n■次の対応\n実装対応: `latest_articles` の deletable を true にするマイグレーションを追加する。1778 と根本原因が同一のため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-3「ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "app/DoctrineMigrations/Version20260416190000.php",
+        "app/DoctrineMigrations/Version20260424130000.php",
+        "src/Eccube/Controller/Admin/Content/BlockController.php",
+        "src/Eccube/Resource/template/admin/Content/block.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1778",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【実装乖離】フロントトップ_ECTOP（本店トップ）_ECTOP（本店トップ）にて、設計上「編集/削除可能」とされたブロック（おすすめ特集・体験会バナー・最新記事・晴れる屋チャンネル）が deletable=false で登録されており、ブロック管理から編集も削除もできない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "4ブロックとも deletable=false。設計の3区分の書き分けが実装に一切反映されていない",
+      "前回書いた次にすること": "実装対応: 4ブロックの deletable=true 化。設計の3区分の反映も併せて検討",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-3「ECTOP」\nおすすめ特集・体験会バナー・最新記事・晴れる屋チャンネルの4欄すべてに同一文言\n> ・管理画面＞コンテンツ管理＞ブロック管理に設定されている、**編集/削除可能**なブロックを表示する\n\n■実装の現状\n4ブロックとも deletable=false 固定で、編集・削除のいずれも不可能です。\n\n■共通の背景（ブロック編集可否の4件に共通）\napp/DoctrineMigrations/Version20260416190000.php:32-48 がトップ用15ブロックを定義し、:67-69 の INSERT が `deletable` を **SQLリテラル false でハードコード**しています。後続の Version20260424100000 / 110000 / 130000 も `ON CONFLICT DO UPDATE SET deletable = EXCLUDED.deletable`（=false）で上書きするため、常に false のままです。\nその結果、admin/Content/block.twig:71/85/93 が編集リンク・編集アイコン・削除ボタンをいずれも非表示にし、BlockController.php:118 が `if ($id && !$Block->isDeletable()) { throw new NotFoundHttpException(); }` でURL直打ちも拒否します。\n全マイグレーションを走査しましたが、トップ用ブロックを deletable=true にするものは存在しません（Version20260711100000 は購入確認/完了フリーエリア専用）。\n\n**設計は3区分を明確に書き分けています。** スライドバナー・最新入荷アイテム・SALE開催中・お気に入り・値下げ・補充は「編集/削除**不可**」、おすすめ特集・体験会バナー・最新記事・晴れる屋チャンネルは「編集/削除**可能**」、アイテムを探すは「**編集可能**」。実装は15ブロック一律 false でこの書き分けが反映されていません。\n\n**あわせて検討が必要な点**: 仮に deletable=true にしても、管理画面の保存先は BlockController.php:172-178 の `Block/{file_name}.{locale}.twig`（例 `recommend.ja.twig`）である一方、フロントの読込は block.twig:16 の `include_dispatch('Block/' ~ Block.file_name ~ '.twig')` で、LocaleFilesystemLoader.php:134-139 が**デフォルトロケール(ja)ではロケールサフィックスを付けません**。つまり ja では管理画面の編集内容がフロントに反映されません（en は反映されます）。\n\n■次の対応\n実装対応: 4ブロックの deletable を true にする。1773・1776・1777 と同一原因です。\n\nあわせて、設計の3区分（編集/削除不可・編集/削除可能・編集可能）が実装に一切反映されていない点も是正対象としてご検討ください。本チケットより広い範囲の乖離です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-3「ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "app/DoctrineMigrations/Version20260416190000.php",
+        "app/DoctrineMigrations/Version20260424100000.php",
+        "app/DoctrineMigrations/Version20260424110000.php",
+        "src/Eccube/Controller/Admin/Content/BlockController.php",
+        "src/Eccube/Resource/template/admin/Content/block.twig",
+        "src/Eccube/Resource/template/default/Block/recommend.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1779",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-4:支店ECTOP",
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【実装乖離】フロントトップ_支店ECTOP_支店ECTOPの(1)注文方法ラベルにて、非会員・支店店内アカウント以外向けの文言が「承っています。」となっており、設計書の「承っております。」と表記が異なる",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "翻訳値が「承っています。」で設計の「承っております。」と不一致",
+      "前回書いた次にすること": "実装対応: 翻訳値を修正",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-4「支店ECTOP」\n機能仕様処理概要（★）および画面部品仕様（識別ID 1）で同一文言\n> 「このサイトでは、晴れる屋{支店名}での店頭受け取り注文を**承っております**。配送をご希望の方は、通販サイトをご利用ください。」\n\n■実装の現状\nmessages.ja.yaml:1268\n```\nshop_top.order_method.public.prefix1: 'このサイトでは、晴れる屋%shop_name%での店頭受け取り注文を承っています。'\n```\n「承っております。」ではなく「**承っています。**」です。\nshop_top 系キー（1266-1293行）を全件確認しましたが「承っております」を持つキーは存在せず、Twigのハードコードもありません。\n店内アカウント向け文言（:1267）、後続の3キー（:1269-1271）、出し分け（ShopTopController.php:110,177-189）はいずれも設計どおりです。\n\n■次の対応\n実装対応: 翻訳値を「承っております。」に修正する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-4「支店ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "src/Eccube/Controller/Shop/ShopTopController.php",
+        "src/Eccube/Resource/locale/messages.ja.yaml",
+        "src/Eccube/Resource/template/default/Block/shop_order_method.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1780",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-4:支店ECTOP",
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPにて、支店の公開ステータスが非公開でも支店トップ以外の支店サイト配下ページ（商品一覧・商品詳細・カート等）が閲覧できてしまい、支店サイト全体の非表示制御になっていない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "公開判定は ShopTopController の1箇所のみで配下ページは閲覧可能。ただし設計は制御範囲を明記していない",
+      "前回書いた次にすること": "要確認: 制御範囲(支店トップのみか配下全ページか)を設計担当者に確定いただく",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。起票の根拠に誤りがあり、扱いの判断が必要です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-4「支店ECTOP」\nカスタマイズ説明および機能仕様処理概要（★）\n> ・支店の公開ステータスを確認の上、**支店サイト**を表示、または非表示にする\n> ★管理画面＞モール設定＞店舗登録で登録されている支店の公開ステータスに応じて、**支店サイトの表示/非表示**を制御する\n\n■実装の現状\n公開ステータスの判定は ShopTopController.php:69-71 の**1箇所のみ**です。\n```\nif (!$Shop instanceof BaseInfo || !$Shop->getIsOpenShop()) { throw $this->createNotFoundException(); }\n```\nBaseInfoService.php:63-77 の `isValidShop()`、InvalidShopRedirectListener.php:87-90、ShopRouteConditionService.php:29-37 のいずれも**存在チェックのみ**で公開ステータスを見ていません。routes.yaml の `prefix: /{_locale}{_shop}` が全フロントページを解決するため、支店トップ以外は非公開でも閲覧できます。\n`getIsOpenShop` の全文検索でも、フロントのアクセス制御での使用は上記1箇所のみでした。\n\n■次の対応\n要確認+実装作業: コード上の事実は確認しました。ただし設計の記述は「**支店サイト**を表示/非表示」という粒度どまりで、**「配下の全ページ」に相当する記述はありません**。制御範囲（支店トップのみか、/{locale}/{slug}/ 配下の全ページか）を設計担当者に確定いただいたうえで対応してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-4「支店ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "app/config/eccube/routes.yaml",
+        "src/Eccube/Controller/Shop/ShopTopController.php",
+        "src/Eccube/EventListener/InvalidShopRedirectListener.php",
+        "src/Eccube/Service/BaseInfoService.php",
+        "src/Eccube/Service/ShopRouteConditionService.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1781",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-4:支店ECTOP",
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(2)SALE中の商品にて、支店の商品公開ステータス（is_branch_published）による絞り込みが行われておらず、支店非公開の商品も表示される",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "SALE中の商品の抽出に is_branch_published の条件が無い",
+      "前回書いた次にすること": "実装対応: 抽出条件に isBranchPublished=true を追加(1782と一括対応可)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-4「支店ECTOP」\nカスタマイズ説明\n> 支店商品の公開と非公開の制御\n> ・「M03-02商品登録/編集」機能の商品公開ステータスに応じて、商品を表示、または非表示にする\n\n機能仕様処理概要（★）\n> ★「SALE中の商品」では、以下1~10の条件で商品を表示する\n> 1　**支店の商品公開ステータスが「公開」であること**\n> ※カスタマイズ要件より追加\n\n■実装の現状\nProductRepository.php:395-467 の `findTopSaleProductsByBaseInfo()` の抽出SQLに `p.is_branch_published` の条件がありません。後段の ProductClass 絞り込みDQLにもありません。\n他の条件（廃止除外・在庫1以上・セールタグ・セールフラグ・販売価格1円以上・状態最良選出・ランダム・30件・0件時非表示）はすべて設計どおり実装済みです。\n\n**反証**: `isBranchPublished` をフロント商品取得で使っているのは ProductRepository.php:718（`findPublicByIds()` 内）の**1箇所のみ**で、同じパターンが本クエリには適用されていません。Twig側にもフィルタはなく、Doctrine の SQLFilter による大域フィルタも存在しません。\n\n■次の対応\n実装対応: 抽出条件に `p.isBranchPublished = true` を追加する。1782 と同種の欠落のため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-4「支店ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "src/Eccube/Controller/Shop/ShopTopController.php",
+        "src/Eccube/Resource/template/default/Block/shop_sale.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1782",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-4:支店ECTOP",
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(4)タイルにて、商品ごとの支店の商品公開ステータス（is_branch_published）による公開/非公開制御が行われていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "タイルの2クエリとも is_branch_published の条件が無い",
+      "前回書いた次にすること": "実装対応: 1781と一括対応",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-4「支店ECTOP」\nカスタマイズ説明\n> 支店商品の公開と非公開の制御\n> ・「M03-02商品登録/編集」機能の商品公開ステータスに応じて、商品を表示、または非表示にする\n\n「タイル」欄 機能仕様処理概要\n> ★**商品ごとに支店の商品公開ステータスを取得し、公開/非公開を制御する**\n\n■実装の現状\nShopTopController.php:127-162 の `buildTiles()` が呼ぶ `findTopPickUpProductsByBaseInfo()`（ProductRepository.php:476-512）と `buildPublicProductClassesByTagQueryBuilder()`（同:559-583）のいずれにも `p.isBranchPublished` の条件がありません。支店IDは在庫の EXISTS 条件にしか使われていません。\n「もっと見る」（Block/shop_item_list.twig:26-34,46-48）は実装済みです。\n\n**反証**: `isBranchPublished` をフロント商品取得で使っているのは ProductRepository.php:718（`findPublicByIds()` 内）の**1箇所のみ**で、同じパターンが本クエリには適用されていません。Twig側にもフィルタはなく、Doctrine の SQLFilter による大域フィルタも存在しません。\n\n■次の対応\n実装対応: 抽出条件に `p.isBranchPublished = true` を追加する。1781 と同種の欠落のため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-4「支店ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "src/Eccube/Controller/Shop/ShopTopController.php",
+        "src/Eccube/Resource/template/default/Block/shop_item_list.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1783",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-4:支店ECTOP",
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(6)アイテムを探すが、リンク先を持たないダミーの静的HTMLのままで、カテゴリ・通常盤以外のカードセットを押下しても商品一覧画面へ遷移しない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "本店と同一ブロックを直接include。全タグ href 0件。deletable=false で編集不可",
+      "前回書いた次にすること": "実装対応: 支店専用ブロックの登録・遷移リンク付与・deletable=true 化の3点",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-4「支店ECTOP」\n「アイテムを探す」欄 機能仕様処理概要（★）\n> ★管理画面＞コンテンツ管理＞ブロック管理に設定されている、**編集可能なブロック**を表示する\n> ※**本店と支店（支店は全て共通）で異なるブロック**を表示する\n> ★(6-5)カテゴリを押下すると、押下したカテゴリで絞り込まれた商品一覧画面へ遷移する\n> ★(6-6)通常盤以外のカードセットを押下すると、押下したカードセットで絞り込まれた商品一覧画面へ遷移する\n\n■実装の現状\nshop_top.twig:45 は `{% include 'Block/search_items.twig' %}` で**本店と同一ファイル**を直接 include しています（支店専用の `shop_search_items` 等は dtb_block にも存在しません）。\nBlock/search_items.twig は全80行が静的HTMLで、カード3枚はダミー画像（dammy-feature01〜03.webp）、タグはすべて `<a class=\"c-hareruya-tag\" aria-disabled=\"true\">` で **href 属性が0件**です（英語版も0件）。\nブロック `search_items` も deletable=false 固定で編集不可です。\n\n■共通の背景（ブロック編集可否の4件に共通）\napp/DoctrineMigrations/Version20260416190000.php:32-48 がトップ用15ブロックを定義し、:67-69 の INSERT が `deletable` を **SQLリテラル false でハードコード**しています。後続の Version20260424100000 / 110000 / 130000 も `ON CONFLICT DO UPDATE SET deletable = EXCLUDED.deletable`（=false）で上書きするため、常に false のままです。\nその結果、admin/Content/block.twig:71/85/93 が編集リンク・編集アイコン・削除ボタンをいずれも非表示にし、BlockController.php:118 が `if ($id && !$Block->isDeletable()) { throw new NotFoundHttpException(); }` でURL直打ちも拒否します。\n全マイグレーションを走査しましたが、トップ用ブロックを deletable=true にするものは存在しません（Version20260711100000 は購入確認/完了フリーエリア専用）。\n\n**設計は3区分を明確に書き分けています。** スライドバナー・最新入荷アイテム・SALE開催中・お気に入り・値下げ・補充は「編集/削除**不可**」、おすすめ特集・体験会バナー・最新記事・晴れる屋チャンネルは「編集/削除**可能**」、アイテムを探すは「**編集可能**」。実装は15ブロック一律 false でこの書き分けが反映されていません。\n\n**あわせて検討が必要な点**: 仮に deletable=true にしても、管理画面の保存先は BlockController.php:172-178 の `Block/{file_name}.{locale}.twig`（例 `recommend.ja.twig`）である一方、フロントの読込は block.twig:16 の `include_dispatch('Block/' ~ Block.file_name ~ '.twig')` で、LocaleFilesystemLoader.php:134-139 が**デフォルトロケール(ja)ではロケールサフィックスを付けません**。つまり ja では管理画面の編集内容がフロントに反映されません（en は反映されます）。\n\n■次の対応\n実装対応: 支店専用ブロックの登録、タグへの遷移リンク付与、deletable=true 化の3点が必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-4「支店ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "app/DoctrineMigrations/Version20260424110000.php",
+        "src/Eccube/Controller/Admin/Content/BlockController.php",
+        "src/Eccube/Resource/template/default/Block/search_items.en.twig",
+        "src/Eccube/Resource/template/default/Block/search_items.twig",
+        "src/Eccube/Resource/template/default/shop_top.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1784",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-4:支店ECTOP",
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPの(8)おすすめ特集が、ブロック管理に登録されていない固定テンプレートで、全バナーのリンク先が href=\"#\" のプレースホルダのままになっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "shop_recommend が dtb_block に未登録。6バナーすべて href=#",
+      "前回書いた次にすること": "実装対応: dtb_block へ登録して編集可能化し遷移先URLを設定",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-4「支店ECTOP」\n「おすすめ特集」欄 機能仕様処理概要（★）\n> ★新規機能として追加する\n> ★管理画面＞コンテンツ管理＞ブロック管理に設定されている、**編集可能なブロック**を表示する\n\n画面部品仕様\n> 8-1 バナー画像　・押下すると、html内で各画像に設定しているURLに遷移する\n\n■実装の現状\nshop_top.twig:47 は `{% include 'Block/shop_recommend.twig' %}` で直接 include しており、`shop_recommend` は **dtb_block に未登録**です（全マイグレーションを検索してヒット0件。ヒットするのは本店用の `recommend` のみ）。ブロック管理の一覧に現れません。\nBlock/shop_recommend.twig:17-76 の6枚（スタンダード/パイオニア/モダン/レガシー/統率者/プロモ）は固定直書きで、リンクは **6箇所すべて `href=\"#\"`** です。表示自体（画像・翻訳キー化されたラベル）は実装済みです。\n\n■次の対応\n実装対応: `shop_recommend` を dtb_block に登録して編集可能にし、各バナーの遷移先URLを設定する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-4「支店ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "app/DoctrineMigrations/Version20260416190000.php",
+        "src/Eccube/Resource/template/default/Block/shop_recommend.twig",
+        "src/Eccube/Resource/template/default/shop_top.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1785",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-4:支店ECTOP",
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【一部実装】フロントトップ_支店ECTOP_支店ECTOPのQRコード＆採用情報にて、採用情報バナー(9-2)がPC版のみ表示となっておらず、スマートフォン表示でも表示されている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "PC限定表示の制御が Twig/CSS/JS の3層いずれにも無い",
+      "前回書いた次にすること": "実装対応: PC限定表示の制御を追加。デッドクラス promo-cards--center の整理も併せて検討",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-4「支店ECTOP」\n画面部品仕様\n> 9-2 採用情報　画像　・**PC版のみに表示される**\n> ・押下すると、以下URLの採用ページ遷移する https://corp.hareruyamtg.com/recruit\n\n■実装の現状\nshop_top.twig:49 は条件なしで `Block/shop_recruit.twig` を include しており、同ファイル全17行に `{% if %}` やデバイス判定が一切ありません。\nCSS（hareruya-top.css）も `@media screen and (max-width:1023px)` 内の recruit 関連指定は padding のみで `display:none` がありません。JSにも該当処理は0件でした（Twig・CSS・JSの3層いずれにも制御なし）。\n別タブ遷移（`target=\"_blank\" rel=\"noopener noreferrer\"`）は設計どおり実装済みです。(9-1) X公式アカウントQR・(9-3) 簡単予約QRも実装済みです。\n\n■次の対応\n実装対応: PC限定表示の制御を追加する。\n\n付記: shop_promo.twig:13 が付けている修飾クラス `p-hareruya-branch-top__promo-cards--center` は、**全CSSファイルに定義が0件のデッドクラス**です（センター寄せはベースクラスの auto-fit + justify-content で成立しています）。あわせて整理をご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-4「支店ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "src/Eccube/Controller/Shop/ShopTopController.php",
+        "src/Eccube/Resource/template/default/Block/shop_promo.twig",
+        "src/Eccube/Resource/template/default/Block/shop_recruit.twig",
+        "src/Eccube/Resource/template/default/shop_top.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1787",
+      "設計書": "0301_基本設計仕様書(フロント_トップ).html",
+      "設計シート": [
+        "sheet-3:ECTOP"
+      ],
+      "課題タイトル": "【実装乖離】フロントトップ_ECTOP（本店トップ）_本店ECTOP＞最新記事ブロック(13-2〜13-5)にて、設計で指定された「最新記事jsonファイル作成バッチが出力したjsonファイル」ではなく、別の外部API（ソース上のTODOで404と明記）を参照しているため、記事が1件も表示されない。",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "外部APIを直接参照しバッチ出力jsonと不一致。ただし起票が引く2026/7/24追記は正本設計書に存在しない",
+      "前回書いた次にすること": "要確認: 追記の設計反映状況を確認し参照先を確定。実環境のHTTPレスポンス確認も未実施",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。起票の根拠に誤りがあり、扱いの判断が必要です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-3「ECTOP」\n「最新記事」欄 機能仕様処理概要\n> ・(13-2)~(13-5)の記事情報について\n> ・**最新記事jsonファイル作成バッチによって作成されたjsonファイルから動的に取得する**\n> ※最新記事jsonファイル作成バッチは、別紙「0417_基本設計仕様書(バッチ_その他)」のシート「最新記事jsonファイル作成」を参照\n\n■実装の現状\nLatestArticlesBlockPayloadBuilder.php:27-28 は外部APIを直接叩いています。\n```\n// TODO: ECCUBE_HARERUYA-126 正しい最新記事APIエンドポイントに差し替え（現在のURL latest_articles.json は404）\nprivate const API_URL = 'https://api.corp.hareruyamtg.com/user_data/lp/json/latest_articles.json';\n```\n一方、バッチ `CreateLatestArticleListAction.php:25-29` が書き出すのは `eccube_html_user_data_dir . '/list/latestArticleList.json'` で、**ファイル名も配置先も一致しません**。全文検索でも `latestArticleList.json` をフロントから読む実装は0件でした。\n\n設計の書き分けとも食い違います。隣接する (14)晴れる屋チャンネル欄は「以下のURLから動的に取得する https://api.corp.hareruyamtg.com/user_data/lp/json/latest_videos.json」と**外部URLを明示**しているのに対し、(13)最新記事は「バッチ生成json」と書き分けられています。\n\n■次の対応\n要確認+実装対応: 実装乖離は事実です。ただし起票の「期待される挙動」にある**【2026/7/24 石川追記】（ローカルの /user_data/list/latestArticleList.json を参照する旨とSlackリンク）は、正本設計書 0301 に存在しません**（`--grep` で該当なし）。参照元は `.cursor/docs/MDfile/F01_top_basedesign.md` 側と思われます。\nこの追記が正式に設計へ反映されているかをご確認のうえ、参照先を確定してください。あわせて「記事が1件も表示されない」の断定は TODO コメントの記述に依存しており、実環境でのHTTPレスポンス確認が未実施です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-3「ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/F01_top_basedesign.md",
+        "src/Eccube/Resource/template/default/Block/latest_articles.twig",
+        "src/Eccube/Service/Block/LatestArticlesBlockPayloadBuilder.php",
+        "src/Eccube/Service/CreateLatestArticleListAction.php"
+      ]
+    }
+  ]
+}

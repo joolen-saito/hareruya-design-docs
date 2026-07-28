@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1887",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: カード登録をトランザクション内で追加。DeckStoreAction:128-140 を参考にできる。下流集計に未反映のため優先度高め",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "DtbDeckCard の生成も既存除去も無くトランザクションも無い。設計は5箇所で一貫要求",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-13「大会デッキ登録編集」\n機能仕様処理概要（「デッキリストを提出する」ボタン(21)の処理）\n> ・エラーがなければデッキにプレイヤー名、大会情報、デッキリストの内容テキスト、フォーマット、公開設定(非公開)、デッキタイプ(イベント)を設定して保存する\n> ・**デッキを構築するカード情報を保存する**\n\nリバース詳細設計も5箇所で一貫して要求しています（処理フロー「メイン・サイドのカードをデッキに登録し」、DBカラム節「デッキカード（dtb_deck_card）… 解析結果をメイン・サイドのボードごとに登録する。上書き時は既存を除去する」、DB操作節、データ整合性節「**同一トランザクションで保存を確定する**」）。\n\n■実装の現状\nDeckEntryAction.php:37-83 の `handle()` は `setTextMain` / `setTextSide` と `persist` / `flush` のみで、**`DtbDeckCard` の生成も既存カードの除去も一切ありません**。`beginTransaction` / `commit` も張っておらず、設計の「同一トランザクションで確定」も未充足です。\n\n設計どおりの処理は**管理画面側にのみ存在**します（DeckStoreAction.php:128-140 が既存除去 → `setDeckCards()` × 3ボード → commit）。`setDeckCards` の全文検索でもフロント側からの呼び出しは0件、`DtbDeckCard` を扱う14ファイルのいずれも `mypage_deckentry_update` 経路からは呼ばれていません。Doctrine ライフサイクルリスナや補完バッチもありません。\n\n**画面上は顕在化しにくい構造です。** 直後のデッキ確認画面は DeckValidationService.php:97-101 の `getCheckData()` が text_main / text_side を都度パースするため、dtb_deck_card が無くても成立します。一方で `DtbDeckCardRepository`（カード単位の集計・検索）や `RankingBlockPayloadBuilder` 等の下流機能には一切反映されません。\n\n■次の対応\n実装対応: フロント側の保存処理に、既存カードの除去とカード登録（`setDeckCards()`）をトランザクション内で追加する。DeckStoreAction.php:128-140 の実装をそのまま参考にできます。\n**下流のランキング・集計機能にデータが反映されていない状態のため、優先度は高めです。**\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-13「大会デッキ登録編集」\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:27:00+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:27:02+09:00",
+  "appliedStatus": "処理中"
+}

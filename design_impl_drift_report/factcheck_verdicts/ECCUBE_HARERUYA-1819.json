@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1819",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 頭打ちを外す。ただし支払総額超過の初期表示になるため設計意図を要確認",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "初期値が保有ポイントと支払総額の小さい方。設計は保有ポイント",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-4「ご注文方法指定」\n画面部品仕様\n> 6-6 使用ポイント　数値（整数）　初期値: **会員の保有ポイント**\n> ・ポイント使用ラジオボタンで「ポイントを使う」を選択した場合のみ活性化する\n\n■実装の現状\nOrderType.php:403-414 の `getDefaultUsePoint()` は保有ポイントと支払総額の**小さい方**を初期値にします。\n```\nreturn max(0, min($pointBalance, $this->getPaymentTotalBeforePoint($Order)));\n```\n設計は「会員の保有ポイント」であり、支払総額での頭打ちは指定されていません。\nラジオ連動の活性化制御（hareruya-checkout.js の `data-point-use` / `data-point-input` ハンドラ、末尾の初期実行含む）は設計どおり実装済みです。\n\n■次の対応\n実装対応: 初期値を保有ポイントそのままにする。ただし「保有ポイント > 支払総額」の場合に差が出るため、頭打ちを外すと入力値が支払総額を超える状態が初期表示されます。設計意図を確認のうえ対応してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-4「ご注文方法指定」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:13:46+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:13:49+09:00",
+  "appliedStatus": "処理中"
+}

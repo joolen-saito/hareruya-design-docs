@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2032",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 実行エンドポイントにもチェックを追加。設計はボタン非活性と登録エラーの両方を要求。CSRF検証も検討",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "実行エンドポイントに差異未確認チェックが無く直接POSTで在庫反映が可能。CSRF検証も不在",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-43「棚卸在庫反映」\n登録処理について ○エラー条件\n> ・在庫反映済み／・商品数が0／・計上済み商品数が0／・商品数と計上済み商品数が一致しない\n> ・**「在庫差異」が存在し、かつ「差異確認」が行われていない商品が存在する**\n\n■実装の現状\nInventoryPlanController.php:751-778 の `stockReflect()`（実行エンドポイント）の検査は3つのみで、**差異未確認チェックがありません**。\n当該チェックは**確認画面への遷移処理**にのみ存在します（同:731-735 の `stockReflectConfirm()`）。`checkUnconfirmedStockDifferenceDetailExists` の全文検索でも、呼び出しは :264（ボタン活性判定）と :731（確認画面遷移）の**2箇所のみ**で、`stockReflect()` からの呼び出しはありません。\n実行ルート（:745-750、POST）へは確認画面 inventory_plan_stock_reflect_confirm.twig:18-19 が直接POSTする構造のため、**確認画面を経由せず直接POSTすれば差異未確認商品が残っていても在庫反映が実行されます**。\n\n**起票未指摘の追加事実**: 当該エンドポイントには `isTokenValid()` によるCSRF検証も見当たらず、防御は `isEditableBy()` の権限チェックのみです。\n\n■次の対応\n実装対応: 実行エンドポイントにも差異未確認チェックを追加する。設計は sheet-39 で「ボタン非活性」、sheet-43 で「登録処理のエラー」の**両方**を要求しており、どちらか一方では要求を満たしません。CSRF検証の追加も併せてご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-43「棚卸在庫反映」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:24:00+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:24:07+09:00",
+  "appliedStatus": "処理中"
+}

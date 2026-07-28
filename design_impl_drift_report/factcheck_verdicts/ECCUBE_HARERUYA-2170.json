@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2170",
+  "verdict": "SUSPECT",
+  "reasonCode": "DESIGN_AMBIGUOUS",
+  "reasonLabel": "設計内に解釈の分岐・矛盾があり設計判断待ち",
+  "nextAction": "要確認+実装対応: 正規表現は詳細設計書と一致するため設計判断が必要。保存キー取り違えは設計解釈と独立した不具合として別途対応",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施。主要3点は独立に抜き取り再検証済み",
+  "summary": "Regex は [!-~] で記号過剰許容かつスペース不許容。加えて保存キーが smaregi_store_id で取り違えの疑い",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0209_基本設計仕様書(基本情報設定) sheet-14「追加システム設定」\n画面部品仕様\n> 5 スマレジ契約ID　**半角英数、スペース**\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/AdditionalSystemFormType.php の当該項目は `Regex(['pattern' => '/^([!-~]*)$/'])` です。`[!-~]` は ASCII 0x21〜0x7E（英数に加えて全記号）を許容し、**スペース(0x20)を含みません**。設計の「半角英数、スペース」に対し、記号を過剰に許容しスペースを許容しない状態です。\n\n**チケット未指摘の追加不具合**: 保存キーの取り違えが疑われます。当該フォームは `Option::SMAREGI_STORE_ID`（`smaregi_store_id`）を更新しますが、設計の「スマレジ契約ID」に対応する論理キーは `smaregi_contract_id` です（MtbOption.php:42 に定数あり、フォーム未使用）。マイグレーション Version20251125161057.php では id=12 が `smaregi_contract_id`（値 `sey015t3`）、id=15 が `smaregi_store_id`（値 `1`）で、値の性質からも取り違えの可能性が高いです。設計は「スマレジ店舗ID」を削除対象としています。\n\n■次の対応\n要確認: 同シートの詳細設計書は「印字可能 ASCII 範囲（[!-~]）のみ許す正規表現」と、実装と同じ内容を現行仕様として明記しています。画面部品仕様表の「半角英数、スペース」とだけ食い違うため、どちらを要求とするか設計担当者にご確認ください。\nあわせて上記の保存キー取り違えは、設計解釈と独立した不具合として別途対応が必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html / sheet-14「追加システム設定」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / 翻訳ファイル / マイグレーション / JS）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T09:40:53+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T09:40:56+09:00",
+  "appliedStatus": "処理中"
+}

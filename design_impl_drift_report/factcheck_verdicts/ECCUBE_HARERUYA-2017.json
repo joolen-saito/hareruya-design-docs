@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2017",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 一覧用とCSV用の両方を基準日時に変更。既存実装を流用可能",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "第三ソートが createDate。基準日時方式は同Repositoryの別メソッドに実装済み。CSV出力も同問題",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-23「在庫履歴検索一覧(検索結果)」\n1-2.在庫履歴情報の一覧は、下記ソート順とする\n> 1-2-1.第一ソートを商品コードの降順とする\n> 1-2-2.第二ソートを店舗のIDを降順とする\n> 1-2-3.第三ソートを各レコードの「登録日時」と「承認日時」のうち**後の日時（基準日時）**をソートキーとし、基準日時の降順で表示する\n> 1-3.承認日時が未設定の場合は、登録日時を基準日時とする\n\n■実装の現状\nDtbStockHistoryRepository.php:333-335 の第三ソートは `sh.createDate` で、基準日時方式ではありません。\n```\n$qb->addOrderBy('pc.code', 'DESC');\n$qb->addOrderBy('ps.baseInfo', 'DESC');\n$qb->addOrderBy('sh.createDate', 'DESC');\n```\n**基準日時方式は同 Repository 内に実装済みです** — `findLatestByProductStockId()`（:358-360）が `COALESCE(sh.approvalAt, sh.registeredAt, sh.createDate) AS HIDDEN sortDate` を使っています。一覧用だけが未適用です。\n\n**起票未指摘の追加事実**: CSV出力用の `getStockHistories()`（:411-413）も同じ `sh.createDate` ソートで、同じ問題を持ちます。\n\n■次の対応\n実装対応: 一覧用とCSV出力用の両方を `COALESCE(sh.approvalAt, sh.registeredAt, sh.createDate)` 基準に変更する。既存の `findLatestByProductStockId()` の実装をそのまま流用できます。\n\n付記: 同じ画面の欠品履歴一覧（sheet-25 1-2-3）は第三ソートを「**登録日時**の降順」と規定しており、2つの一覧で定義が異なります。実装時にご注意ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-23「在庫履歴検索一覧(検索結果)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:23:59+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:24:06+09:00",
+  "appliedStatus": "処理中"
+}

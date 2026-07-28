@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2173",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 入力欄を追加。上書きによる設定消失の可能性があるため現在のDB値の確認を先に行うこと",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施。主要3点は独立に抜き取り再検証済み",
+  "summary": "入力欄が画面に無く、登録のたびに空文字で上書きされる。初期値が消失する",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0209_基本設計仕様書(基本情報設定) sheet-14「追加システム設定」\n画面部品仕様\n> 17 イベント決済確認エラー通知メールアドレス　Eメール形式で許容された文字　最大255文字\n\n■実装の現状\n入力欄が画面に存在しません。additional_system.twig 全体を検索しても `form.check_payment_error_mail_address` の描画は**0件**です（:184 は翻訳キー文字列としてのヒットのみ）。\n\n**データ消失の副作用があります。** フォーム定義自体は AdditionalSystemFormType.php:174-180 に存在するため `$formData` にキーが含まれ、未描画ゆえ値は null になります。AdditionalSystemController.php:88-98 のループは\n```\nif (array_key_exists($keyName, $formData) && (string) $formData[$keyName] !== (string) $Option->getOptionValue()) {\n    $Option->setOptionValue((string) $formData[$keyName]);\n```\nという条件のため、`'' !== '既存値'` が成立し、**追加システム設定を登録するたびに空文字で上書き**されます。初期値は Version20251125161057.php:266-272 で `it_common@hareruyamtg.com` が投入されています。\n\n■次の対応\n実装対応: 入力欄を画面に追加する。上書きによる設定消失が既に発生している可能性があるため、現在のDB値の確認を先に行ってください。2172 と同一箇所です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html / sheet-14「追加システム設定」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / 翻訳ファイル / マイグレーション / JS）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T09:40:53+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T09:40:57+09:00",
+  "appliedStatus": "処理中"
+}

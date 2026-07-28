@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1775",
+  "verdict": "SUSPECT",
+  "reasonCode": "DESIGN_AMBIGUOUS",
+  "reasonLabel": "設計内に解釈の分岐・矛盾があり設計判断待ち",
+  "nextAction": "要確認+実装対応: まず実環境で売れ筋ランキングが表示されているか確認。未表示なら updateRecommend の未配線が主問題",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "0件ガード不在は事実だが、起票の発生機序は誤り。base_info_id=0 の投入処理が未配線でランキング自体が0件の可能性",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。起票の根拠に誤りがあり、扱いの判断が必要です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-3「ECTOP」\n画面部品仕様\n> 11-8 週間販売数　ラベル　・**過去1週間のうちに本店サイトで注文されていない場合、非表示にする**\n\n■実装の現状\nコード上の指摘は事実です。Block/ranking.twig:127 に0件ガードがなく、DtbSalesQuantityRepository.php:200-229 の `getPopularProductRecommend()` にも HAVING による0除外がありません（対照として支店側 `findTopSellingProductsByBaseInfo()` の :253 には `sq.sales_quantity_04 > 0` があります）。\n\n**ただし起票の発生機序の説明は誤りです。** このクエリが読むのは `base_info_id = 0`（POPULAR_PRODUCT_RECOMMEND_SHOP_ID）の行のみで、期間別販売数集計バッチは `clearSalesQuantityForAggregate()` のコメントどおり base_info_id=0 を**対象外**にしています。base_info_id=0 を投入する唯一の処理 `updateRecommend()`（:308-376）は**呼び出し元が存在せず**、参照する設定キー `popular_product_recommend_csv_path` も app/config に定義されていません。\nつまり現状は売れ筋アイテムランキング自体が0件になり、ranking.twig:90 の `{% if salesRanking|length > 0 %}` でブロックごと非表示になる公算が高いです。\n\n■次の対応\n要確認+実装対応: 0件ガードの追加自体は必要です。ただし起票が想定した「実績ある商品が30件未満なら0の商品が載る」という状況は、現状のデータ投入経路では発生しません。**まず売れ筋アイテムランキングが実環境で表示されているか**をご確認ください。表示されていない場合は、`updateRecommend()` の未配線という別の乖離が主問題になります。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-3「ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:16:05+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:16:08+09:00",
+  "appliedStatus": "処理中"
+}

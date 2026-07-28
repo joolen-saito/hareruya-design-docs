@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2010",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 移動タイプ判定を追加。2030と実質同一箇所で1箇所の修正で両方解消",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "validateReturnListExportIds に moveTransferType の参照が1箇所も無い。バーコードCSVには実装済み",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-13「在庫移動・振替検索一覧(検索・結果)」\nsheet-13\n> ・戻しリストCSV出力 … ・**在庫移動である場合にのみ出力を可能とする**\n> ・戻しリストPDF出力 … ・在庫移動である場合にのみ出力を可能とする\n\n■実装の現状\nStockMoveTransferReturnListCsvExportService.php:115-171 の `validateReturnListExportIds()` は入庫先店舗null・編集可能店舗・ステータス・存在有無・複数店舗混在のみを検査し、**`moveTransferType` への参照がファイル内に1箇所もありません**。取得側 `getMoveToBaseInfoAndStatusByIds()`（:326-344）も移動タイプを select していません。\nCSV出力・PDF出力の両方とも同 Service を呼びます。\n\n**対照実装があります。** バーコードCSV（StockMoveTransferBarcodeCsvExportService.php:115-129）は `moveTransferType !== MOVE_TRANSFER_TYPE_MOVE` を判定済みで、SQL側（DtbStockMoveTransferRepository.php:441-442）にも `AND smt.move_transfer_type = :move_transfer_type` があります。\n戻しリスト用の「移動でない」翻訳キーは ja/en とも存在せず、フロントJSも `ids.length === 0` しか判定しません。\n\n■次の対応\n実装対応: `validateReturnListExportIds()` に移動タイプ判定を追加する。\n\n付記: ECCUBE_HARERUYA-2030 と**実質同一の欠陥箇所**です（起点シートと対象がCSV/PDFか否かの違いのみ）。1箇所の修正で両方解消するため、片方で対応し他方は重複としてクローズすることを推奨します。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-13「在庫移動・振替検索一覧(検索・結果)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:23:59+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:24:04+09:00",
+  "appliedStatus": "処理中"
+}

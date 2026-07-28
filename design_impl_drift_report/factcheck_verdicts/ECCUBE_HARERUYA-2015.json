@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2015",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: ステータス追加と却下時の計算式是正。却下理由の上限未実装も併せて対応",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "承認で入庫済みへ直行し二段階承認が不在。却下時の原価計算が出庫側と非対称",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-19「在庫分割結合登録編集（結合)」§結合計画承認画面\n> ・承認後、ステータスは**結合計画承認済み**となる\n> ・承認処理後、在庫分割結合（結合5（結合完了承認申請））の画面へ遷移する\n> 却下時 … ・仕入総価格：結合元商品のそれぞれの**移動総原価**／・欠品がある場合 結合元総原価 ×（（移動数 - 欠品数）/ 移動数）とする\n\n■実装の現状\n1) ステータス: StockJoinApprovalApproveAction.php:58 が `RECEIPT_COMPLETED`（入庫済み）へ直接更新します。「結合計画承認済み」「結合完了承認待ち」はマスタに存在せず（Entity定数6件・マイグレーション投入6件で確認）、二段階承認のルート・Action・Twigも不在です。\n2) 却下時の原価: StockJoinApprovalRejectAction.php:101-106 は `bcmul($costPrice, $effQtyStr, 2)`＝**原価単価 × 戻し数量**です。一方**出庫側**は StockJoinMoveToShortageEntryAction.php:211-213 が `getMovementTotalCost()`（総原価×(数量÷在庫数)）を使っており、**出庫と戻しで計算式が非対称**です。`getMovementTotalCost` の全文検索でも却下Actionからの呼び出しは0件でした。\n\n欠品控除（`max(0, splitJoinQuantity - shortageQuantity)`）と却下理由必須（StockJoinApprovalSubmitAction.php:60-67）は設計どおりです。\n\n**起票未指摘の追加事実**: 設計 8-1 の「却下理由 65535byte」の上限バリデーションが全経路で未実装です（`65535` の全文検索0ヒット、DBはTEXT型で実質無制限）。\n\n■次の対応\n実装対応: 二段階承認のステータス追加と、却下時の原価計算式の是正（出庫側と同じ `getMovementTotalCost()` 基準へ）が必要です。\n\n付記: 別添資料 sheet-51 の【出庫時】に「総原価×(数量÷在庫数)」「※原価単価 × 出庫数としないのは、原価単価を出すタイミングで端数処理を行うと誤差が大きくなるため」と明記されており、戻し側も同基準であるべきことを補強しています。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-19「在庫分割結合登録編集（結合)」§結合計画承認画面\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:23:59+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:24:05+09:00",
+  "appliedStatus": "処理中"
+}

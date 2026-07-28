@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1774",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: ranking.twig:69 に weeklySales>0 のガードを追加",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "ranking.twig:69 に0件ガードが無く0点と表示。_product_card.twig には同ガードがある",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-3「ECTOP」\n画面部品仕様\n> 10-9 週間販売数　ラベル　・期間別販売数集計バッチで出力された過去1週間のうちに本店サイトで注文された商品数を表示する\n> ・**過去1週間のうちに本店サイトで注文されていない場合、非表示にする**\n\n■実装の現状\nBlock/ranking.twig:69 は条件分岐なしで `(card.weeklySales ?? 0)|number_format` を出力するため、0件でも「週間販売数0点」と表示されます。\n\n**対照実装があります。** 同じ payload を使う Block/_product_card.twig:94 と Block/_product_card_simple.twig:44 には `{% if weeklySales > 0 %}` のガードがあり、ranking.twig にだけ欠落しています。\nCSS にも `display:none` 系の指定はなく（値が \"0\" のため `:empty` でも隠せません）、JSにも該当処理は0件でした。\n集計期間は設計どおり7日です（DtbSalesQuantityRepository.php:441 の `INTERVAL '7 days'` → `sales_quantity_04`）。\n\n■次の対応\n実装対応: ranking.twig:69 に `{% if ... > 0 %}` のガードを追加する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-3「ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:16:05+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:16:07+09:00",
+  "appliedStatus": "処理中"
+}

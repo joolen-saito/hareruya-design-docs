@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2077",
+  "verdict": "SUSPECT",
+  "reasonCode": "DESIGN_AMBIGUOUS",
+  "reasonLabel": "設計内に解釈の分岐・矛盾があり設計判断待ち",
+  "nextAction": "要確認: 判定基準を設計担当者に確定いただく。同シート内で識別IDのズレもあり",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "name01 をそのまま出力。ただし非会員の判定基準が設計に定義されていない",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-5「受注一覧CSV出力」\n項目一覧\n> 6 お名前(姓)　**非会員である場合は非会員と表示する**\n\nカスタマイズ説明・機能仕様処理概要（★）\n> ・非会員である場合、非会員と表現する ※スマレジでの非会員による取引データを考慮\n\n■実装の現状\nOrderController.php:386-455 の `exportOrder()` は `dtb_csv` 定義に従う汎用処理で、CsvExportService.php:213-235 の `getData()` がエンティティのフィールドをそのまま返すだけです。`dtb_csv.csv:61` は `Order.name01` をそのまま出力する定義で、姓に対する特別扱いはありません。\nスマレジ取込時は SmaregiOrderFactory.php:49 の `GUEST_NAME01 = '非会員'` により `name01` 自体に「非会員」が入るため、結果的にCSVにも出力されます（設計の※注記は充足）。\n一覧画面は index.twig:1217-1223 で `{% if Order.Customer is null %}非会員{% else %}...{% endif %}` と判定しています。\n\n■次の対応\n要確認: **「非会員」の判定基準が設計に定義されていません。** 起票の「非会員の判定は受注一覧画面と同一の基準とし…」は起票側の解釈です。\nまた同シート内で識別IDにズレがあります（項目一覧では「お名前(姓)」= 6、機能仕様処理概要では 4）。\n判定基準（Order.Customer が null かどうか等）を設計担当者に確定いただいたうえで対応してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-5「受注一覧CSV出力」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:19:42+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:19:44+09:00",
+  "appliedStatus": "処理中"
+}

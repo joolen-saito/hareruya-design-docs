@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1821",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 会員時も選択中の配送情報を設定。遷移先が設計どおりかも要確認",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "会員時に setFromShipping が呼ばれず空フォーム。変更ボタンの遷移先も選択画面",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0304_基本設計仕様書(フロント_注文) sheet-5「配送先の新規登録_変更」\n機能仕様処理概要（★印なし＝現行踏襲）\n> ・初期表示\n> ・**ご注文方法指定画面で選択していた配送情報を項目に設定する**\n\n（会員／非会員の区別は記載されていません）\n\nsheet-4 画面部品仕様\n> 3-9 お届け先情報を変更するボタン　・クリックすると**選択している配送情報を設定した**「配送先の新規登録・変更」画面へ遷移する\n\n■実装の現状\nShoppingController.php:813-829 は会員と非会員で分岐し、**非会員のみ** `setFromShipping($Shipping)` を実行します。会員時は空の `CustomerAddress` のままフォームにバインドされます（:912-921 の `shippingEditComplete()` も同構造）。\nさらに Shopping/index.twig:255 の「お届け先情報を変更する」ボタンの遷移先は `shopping_shipping`（お届け先**選択**画面）で、設計が指す編集画面ではありません。`shopping_shipping_edit` へ遷移するのは :257 の「新しいお届け先を追加する」のみです。\n`setFromShipping` の呼び出しは上記2箇所のみで、会員向けに初期値を詰める Subscriber / FormType もありません。\n\n■次の対応\n実装対応: 会員時も選択中の配送情報をフォームへ設定する。あわせて「お届け先情報を変更する」の遷移先が設計どおりか（選択画面か編集画面か）をご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0304_基本設計仕様書(フロント_注文).html / sheet-5「配送先の新規登録_変更」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:13:46+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:13:49+09:00",
+  "appliedStatus": "処理中"
+}

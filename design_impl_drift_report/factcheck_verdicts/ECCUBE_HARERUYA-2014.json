@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2014",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 上限10000件とページング20件を追加。0の扱いも是正。上限3系統併存は要確認",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "CSV行数上限の定数・判定が無くページングも未実装。CSV取込では設計に反して0がエラー",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-19「在庫分割結合登録編集（結合)」\n> ・結合元商品が多い場合は**ページングを行う（1ページ20件とする）**\n> ・CSVは**10,000件**を登録上限とする\n> ・結合元在庫数は**0を許容**し、0の場合は結合元商品から削除すること\n\n■実装の現状\n1) CSV上限: StockJoinEditReplaceSourcesImportHandler.php:44-46 の定数は COLUMN_PRODUCT_CODE / COLUMN_SOURCE_QTY / MAX_ERROR_COUNT の3つのみで、**行数上限の定数・判定が存在しません**。\n2) ページング: `#product_pagination`（stock_join_edit.twig:1038）は商品検索モーダル用で、StockJoinController に paginate / per_page はありません。\n3) 固定文言（:257-262）とセッション全置換（:265-266）は実装済みです。\n\n**起票未指摘の追加乖離**: 結合元CSV :223 の `if ($qtyRaw === '' || !ctype_digit($qtyRaw) || (int) $qtyRaw < 1)` により、**CSV取込では0がエラー**になります。設計の「0を許容」と不一致です。\nまた `details_were_removed` の全文検索は stock_join_edit.twig:733 の1ヒットのみで、これを返すPHPが存在しないため `location.reload()` は発火しません。\n\n■次の対応\n実装対応: CSV行数上限（10,000件）と結合元商品一覧のページング（20件）を追加する。あわせてCSV取込で0が弾かれる点も是正してください。\n\n要確認: CSV上限が**分割2,000件／結合10,000件／一覧一括CSV登録2,000件**の3系統で併存しています。設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-19「在庫分割結合登録編集（結合)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:23:59+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:24:05+09:00",
+  "appliedStatus": "処理中"
+}

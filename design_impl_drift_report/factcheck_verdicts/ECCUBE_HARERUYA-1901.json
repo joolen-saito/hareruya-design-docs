@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1901",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: ID同一チェックを追加。max_len超過の判定も検討。起票のシート特定と3箇所の件は本文で補正済み",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "ログイン時判定にID同一の条件が無く変更フォームにも同チェックが無い",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-5「ログイン」（★ECCUBE4系のポリシーに合わないパスワードについて）\n機能仕様処理概要（★）\n> ・ECCUBE4のパスワードは半角英数記号12～50文字、**IDと同一は許可しない**が、ECCUBE4系のポリシーに合わないパスワードについてはパスワード変更を促すため、専用のパスワード設定画面へ遷移する\n> ・パスワードポリシーに準拠していないパスワードかつ、ログインが成功した場合は、セッション情報にフラグを立てる\n\n■実装の現状\nログイン時の判定に「IDと同一」の条件がありません。\nEccubeAuthenticationSuccessHandler.php:88-95 は文字数（`eccube_password_min_len`=12）と正規表現（`eccube_password_pattern`）のみを判定し、**メールアドレス（`login_email` / `$user->getEmail()`）との比較がありません**。`eccube_password_max_len`(50) 超過も未判定です。\nポリシー違反用の変更フォーム（PasswordChangeType.php:35-38 → RepeatedPasswordType.php:44-58）にも Length と Regex のみで、メール同一チェックの POST_SUBMIT リスナーがありません。\n\n`PasswordPolicyListener::SESSION_KEY` を **set** している箇所は全リポジトリで上記1箇所のみです。既存テスト（EccubeAuthenticationSuccessHandlerTest.php:73-81）のデータプロバイダも empty / short / no_digit / no_alpha / valid の5ケースのみで、**メールアドレス同一ケースが存在しません**。\n画面制御とフラグ解除（PasswordPolicyListener.php:64-92、PasswordChangeController.php:55-73）は設計どおり実装済みです。\n\n■次の対応\n実装対応: ログイン時の判定に「IDと同一」の条件を追加し、ポリシー違反用の変更フォームにも同チェックを追加する。`eccube_password_max_len`(50) 超過の判定も併せてご検討ください。\n\n付記（起票本文の補正2点）:\n1. 設計上の「IDと同一は許可しない」は sheet-23 ではなく **sheet-5「ログイン」の機能仕様処理概要（★）**に記載されています。sheet-23 単体には該当記述がありません。\n2. 起票の「EntryType の POST_SUBMIT リスナーに**のみ**存在し」は不正確です。実際は EntryType（会員登録・会員情報変更）／ PasswordResetType（パスワード再発行）／ Admin CustomerType の**3箇所**に存在します。sheet-23 が「パスワード変更の処理については会員情報変更と同様とする」と定める以上、EntryType にあるチェックが PasswordChangeType に無いことは乖離の補強材料になります。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-5「ログイン」（★ECCUBE4系のポリシーに合わないパスワードについて）\n- 実装: ec-cube-enterprise（Controller / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:27:01+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:27:03+09:00",
+  "appliedStatus": "処理中"
+}

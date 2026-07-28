@@ -1,0 +1,41 @@
+{
+  "book": "0204",
+  "count": 2,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-1958",
+      "設計書": "0204_基本設計仕様書(商品管理).html",
+      "設計シート": [
+        "sheet-11:グッズ商品CSV登録"
+      ],
+      "課題タイトル": "【一部実装】商品管理_グッズ商品CSV登録/フォーマット_グッズ商品CSV登録にて、スマレジサーバへ照会したうえでの重複スマレジ商品コードのエラー判定が実装されていない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "DB一意制約違反の捕捉のみでスマレジサーバ照会なし",
+      "前回書いた次にすること": "要確認: 詳細設計書は「一意制約違反→skipRow」と規定し実装と一致。基本設計★との矛盾解消が先",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0204_基本設計仕様書(商品管理) sheet-11「グッズ商品CSV登録」\n★スマレジ商品コードの追加\n> ・**登録・更新時にスマレジサーバに通信し、スマレジ商品コードの登録状況を確認する**\n> ・登録時、重複するスマレジ商品コードがある場合はエラー扱い\n\n■実装の現状\nProductGoodsImportHandler.php:604-613（更新時）および :658-667（新規時）は `UniqueConstraintViolationException` を捕捉しているだけで、**EC-CUBE の DB 一意制約違反**（ProductClass.php:36-40 の `uniq_smaregi_product_code_partial`）の検出にとどまります。スマレジサーバへの照会は行っていません。\n同:616-619 / :674-678 に「TODO:スマレジ連携状態の確認後、更新するか決める」というコメントが残っています。\n\n**反証**: `SmaregiProductApiClient::listByProductCode()` は実在しますが、呼び出し元は MessageHandler 2件と Smaregi/Otc 系 2件のみで、**CSV取込ハンドラからの呼び出しは0件**です。ProductGoodsImportHandler のコンストラクタにも API クライアントは注入されていません。\n\n■次の対応\n要確認+実装対応: 同シートの詳細設計書は「スマレジ商品コードの一意制約違反　当該行 skipRow」と、**DB一意制約による検出**を前提に記述しており、★カスタマイズの「スマレジサーバへ照会」と食い違います。実装は詳細設計書側に一致しています。どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html / sheet-11「グッズ商品CSV登録」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "src/Eccube/Entity/ProductClass.php",
+        "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php",
+        "src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1959",
+      "設計書": "0204_基本設計仕様書(商品管理).html",
+      "設計シート": [
+        "sheet-11:グッズ商品CSV登録"
+      ],
+      "課題タイトル": "【未実装】商品管理_グッズ商品CSV登録/フォーマット_グッズ商品CSV登録にて、更新時にスマレジ商品情報が存在しない場合のエラー判定が実装されていない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "getRowValidators に存在確認が無く更新パスも事前照会なし",
+      "前回書いた次にすること": "要確認: 1958と同じ論点",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0204_基本設計仕様書(商品管理) sheet-11「グッズ商品CSV登録」\n★スマレジ商品コードの追加\n> ・**登録・更新時にスマレジサーバに通信し、スマレジ商品コードの登録状況を確認する**\n> ・更新時、スマレジ商品情報がない場合はエラー扱い\n\n■実装の現状\nProductGoodsImportHandler.php:320-339 の `getRowValidators()` は、買取/販売価格整合・スマレジ連携ON時の条件付き必須・廃止時在庫・連携OFF時のスマレジ在庫 の4種のみで、**スマレジ商品情報の存在確認がありません**。更新パス（:582-638）も事前照会なしで `updateProductClass()` を実行します。\n\n**反証**: `SmaregiProductApiClient::listByProductCode()` は実在しますが、呼び出し元は MessageHandler 2件と Smaregi/Otc 系 2件のみで、**CSV取込ハンドラからの呼び出しは0件**です。ProductGoodsImportHandler のコンストラクタにも API クライアントは注入されていません。\n\n■次の対応\n要確認+実装対応: 同シートの詳細設計書は「スマレジ商品コードの一意制約違反　当該行 skipRow」と、**DB一意制約による検出**を前提に記述しており、★カスタマイズの「スマレジサーバへ照会」と食い違います。実装は詳細設計書側に一致しています。どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0204_基本設計仕様書(商品管理).html / sheet-11「グッズ商品CSV登録」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M03_product_management_basedesign.md",
+        "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php",
+        "src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php"
+      ]
+    }
+  ]
+}

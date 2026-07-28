@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2220",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: フォーム処理前に isEditableShop ガードを追加。権限外店舗へ直接POSTできるため優先度高め",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "create/edit にサーバ側の権限ガードが無い。delete/bulkDelete と RepeatSchedule にはある",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-7「日程登録」\n★権限による制御\n> ・メンバーが権限を保持している店舗のイベントのみ日程追加が可能にする\n\nカスタマイズ要件\n> ・編集権限を保持している店舗のイベントのみ編集を可能とする\n\n■実装の現状\nsrc/Eccube/Controller/Admin/Event/ScheduleController.php の `create`(47-80) と `edit`(89-124) は、`$form->isValid()` で即座に保存処理を実行し、`$isEditableBaseInfo` は**保存の後に**計算して戻り値配列へ渡すだけです。サーバ側のガードになっていません。\nScheduleStoreAction / ScheduleUpdateAction / EventDetailEntityManager にも権限判定はありません（`isEditableShop` の grep が0件）。\n\n**同一ファイル内に対照実装があります。** `delete`(132-137) と `bulkDelete`(174-179) には `isEditableShop` ガードがあり、RepeatScheduleController::create(47-53) もフォーム処理の**前**にガードして early return します。create/edit にだけガードがない状態です。\n\n■次の対応\n実装対応: `admin_schedule_create` / `admin_schedule_edit` にフォーム処理前の `isEditableShop` ガードを追加する。RepeatScheduleController::create と同じ実装で揃えられます。権限外店舗のイベントへ直接POSTで日程を追加・更新できる状態のため、優先度は高めです。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-7「日程登録」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T09:46:03+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T09:46:08+09:00",
+  "appliedStatus": "処理中"
+}

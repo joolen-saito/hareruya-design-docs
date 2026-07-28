@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1874",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: block_product_recommend でマイページに接続する。コメントアウトを戻す方法は取らないこと",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "recommendProducts が未供給。recommend_js.twig は実在するが参照ルートが不在で復活させると画面が落ちる",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0306_基本設計仕様書(フロント_会員) sheet-7「マイページ」\n画面部品仕様\n> 27 あなたへのおすすめアイテム　・機能については、別紙「0303_基本設計仕様書(フロント_商品)」のシート「商品リコメンド」を参照\n\n■実装の現状\nMypageController.php:127-138 が `recommendProducts` を渡していないため、Mypage/index.twig:247 の条件が常に偽になり :267 の「表示するおすすめ商品はまだありません。」が出ます。:21 の `recommend_js.twig` の include もコメントアウトされています。\n\n**起票が想定するより状態は悪いです。** 起票が `file_not_found` とした `Block/js/recommend_js.twig` は**実在**（42行）しますが、その7行目が参照する `user_recommend_get` ルートは**コードベース全体に1件も存在しません**。コメントアウトを外すと `RouteNotFoundException` で画面が落ちます。\n一方、リコメンド機能自体は `block_product_recommend`（ProductRecommendController.php:42-43）として稼働中で、商品詳細・カート・注文完了から利用されています。**マイページへの接続だけが欠落**しています。\n\n■次の対応\n実装対応: 他3画面と同じく `render(url('block_product_recommend', …))` でマイページに接続する。**コメントアウトを戻す方法は取らないでください**（ルート不在で画面が落ちます）。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0306_基本設計仕様書(フロント_会員).html / sheet-7「マイページ」\n- 実装: ec-cube-enterprise（Controller / Form / Service / Twig / Repository / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:43:47+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:43:53+09:00",
+  "appliedStatus": "処理中"
+}

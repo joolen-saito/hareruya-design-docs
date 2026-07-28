@@ -1,0 +1,739 @@
+{
+  "group": "groupB",
+  "books": [
+    "0303",
+    "0212",
+    "0302",
+    "0307",
+    "0308",
+    "0204",
+    "0208"
+  ],
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-1809",
+      "summary": "【一部実装】フロント商品_商品リコメンド_マイページにおすすめ商品が表示されない",
+      "feature": "商品リコメンド",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "商品リコメンド"
+        }
+      ],
+      "期待される挙動": "- マイページでは、直近の注文に含まれる明細のうち販売価格が最も高い商品を起点に、おすすめ商品を10件表示すること。",
+      "現在の挙動": "- マイページのテンプレートが参照する変数 recommendProducts をセットする実装がリポジトリ内に一切存在しない（MypageController は Customer と nextDeadlinePointHistory のみ返す）。\n- 商品詳細・カート・購入完了の3画面は render(url('block_product_recommend')) でおすすめ商品ブロックを呼び出しているが、マイページだけこの呼び出しが無い。\n- 結果、マイページには常に「表示するおすすめ商品はまだありません。」だけが表示され、おすすめ商品が存在する会員にも空状態が出続ける。\n- 起点商品を選ぶロジック（product_id 未指定時に直近注文の最高価格明細へフォールバックする分岐、OrderItemRepository::findLatestExpensiveItem）は実装済みだが、呼び出し元が無いため到達不能。",
+      "引用": [
+        "src/Eccube/Controller/Front/Mypage/MypageController.php:134-137",
+        "src/Eccube/Controller/Block/ProductRecommendController.php:42-43",
+        "src/Eccube/Resource/template/default/Block/user_recommend_product.twig:2-2",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md:710-718"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/template/default/Mypage/index.twig:247 [line_out_of_range]",
+        "src/Eccube/Repository/OrderItemRepository.php:139 [line_out_of_range]",
+        "Block/js/recommend_js.twig:None [file_not_found]"
+      ],
+      "book": "0303"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1810",
+      "summary": "【実装乖離】フロント商品_最近チェックした商品_本店ECTOPの「最近チェックした商品」がスライダー表示になっている",
+      "feature": "最近チェックした商品",
+      "sheetCandidates": [
+        {
+          "id": "sheet-8",
+          "title": "最近チェックした商品"
+        }
+      ],
+      "期待される挙動": "- 最近チェックした商品は、最大15件をスライダーなしで表示し、表示順は最近見た順（新しい順）とすること。",
+      "現在の挙動": "- 商品一覧・商品詳細はグリッド表示だが、本店ECTOP（layout=='top'）だけカルーセルとして描画され、前後ナビゲーションとともに Slick スライダー（slidesToShow:6）として初期化される。\n- 最大15件・新しい順の要件自体は満たしている。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Block/recently_viewed.twig:25-25",
+        "html/template/default/assets/hareruya/js/hareruya-top.js:None-None",
+        "src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php:27-27",
+        "src/Eccube/Controller/Front/ProductController.php:91-91",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md:758-765"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0303"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1811",
+      "summary": "【実装乖離】フロント商品_入荷時通知_商品一覧のSOLDOUT商品の入荷通知が、商品単位でなく規格単位で登録される",
+      "feature": "入荷時通知",
+      "sheetCandidates": [
+        {
+          "id": "sheet-9",
+          "title": "入荷時通知"
+        }
+      ],
+      "期待される挙動": "- 商品一覧画面でSOLDOUTとなっている商品に入荷通知を登録する場合、商品単位の入荷通知とすること。",
+      "現在の挙動": "- 一覧の通知ボタンは押下された product_class_id を1件だけ送信し、dtb_product_request を1行だけ作成する。SOLDOUT カードのメインボタンも代表規格（lead）の ID を送るだけで、商品全体の登録にならない。\n- 商品単位で全規格を登録するルート（push_all_receive）は存在するが、どのテンプレート・JS からも呼ばれていないデッドコードになっている。\n- UniSearch 経路も遅延読込後に同じ商品カードブロックを描画するため挙動は同一。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Block/product.twig:293-294",
+        "src/Eccube/Resource/template/default/Block/product.en.twig:252-253",
+        "src/Eccube/Resource/template/default/Block/js/product_js.twig:70-88",
+        "src/Eccube/Controller/Front/CartController.php:436-437",
+        "src/Eccube/Controller/Front/Mypage/NotifylistController.php:187-187",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md:788-788"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0303"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1812",
+      "summary": "【未実装】フロント商品_入荷時通知_商品詳細に、NM／SP以下／全状態の3種類の入荷通知ボタンが無い",
+      "feature": "入荷時通知",
+      "sheetCandidates": [
+        {
+          "id": "sheet-9",
+          "title": "入荷時通知"
+        }
+      ],
+      "期待される挙動": "- 商品詳細画面にて、NMとSP以下と全状態の通知ボタンを表示すること。",
+      "現在の挙動": "- 商品詳細にあるのは、価格表の状態行ごと（NM / SP / MP / HP …）の通知ボタンと、表示中言語の全状態を一括登録する「まとめて入荷通知」ボタンの2系統のみ。\n- 「SP以下」をひとまとめにするボタンや、対象区分を示す data 属性、条件別に登録するサービス／コントローラ処理は存在しない（日本語版・英語版とも）。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Product/detail.twig:262-262",
+        "src/Eccube/Resource/template/default/Product/detail.twig:352-353",
+        "src/Eccube/Resource/template/default/Block/js/product_js.twig:328-337",
+        "src/Eccube/Entity/Master/MtbCardCondition.php:41-45",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md:789-789"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0303"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1813",
+      "summary": "【実装乖離】フロント商品_入荷時通知_入荷通知の登録上限値・カウント単位・まとめて登録時のエラー表示が設計と相違している",
+      "feature": "入荷時通知",
+      "sheetCandidates": [
+        {
+          "id": "sheet-9",
+          "title": "入荷時通知"
+        }
+      ],
+      "期待される挙動": "- 登録上限は管理画面で設定されている入荷通知登録上限数（設計時点で20件）とすること。\n- 上限件数は「まとめて入荷通知」で登録している場合でも1件、商品規格単位でも1件としてカウントすること。\n- 登録上限数以上の登録をしようとした場合はエラーを表示すること。",
+      "現在の挙動": "- (1) 実際に効く上限値は mtb_option.arrival_alert_max の投入値25で、設計の20と異なる。定数 MtbOption::ARRIVAL_ALERT_MAX_DEFAULT = 5 は管理画面フォームの初期表示用のフォールバックにすぎず上限判定には使われない。なお mtb_option の該当行が無い場合は上限が一切効かない。\n- (2) dtb_product_request は ProductClass ごとに1行作られるため、「まとめて入荷通知」は規格数ぶん上限を消費する（規格が5件あれば5件消費）。設計の「まとめて登録でも1件」を満たさない。\n- (3) 「まとめて入荷通知」はモーダル抑止フラグ付きで個別リクエストを呼ぶため、上限超過の失敗メッセージが表示されず、最後に一律の成功ポップアップが出る（登録されていないのに登録済みの見た目になる）。規格単位ボタンでは超過エラーは表示される。",
+      "引用": [
+        "app/DoctrineMigrations/Version20251125161057.php:63-66",
+        "src/Eccube/Entity/Master/MtbOption.php:49-50",
+        "src/Eccube/Repository/DtbProductRequestRepository.php:504-524",
+        "src/Eccube/Controller/Front/CartController.php:479-485",
+        "src/Eccube/Resource/template/default/Block/js/product_js.twig:105-114",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md:803-805"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0303"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1814",
+      "summary": "【一部実装】フロント商品_商品詳細_商品詳細の英語版にて、「他のバージョンも見る」の並び替えが動作しない",
+      "feature": "商品詳細",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "商品詳細"
+        },
+        {
+          "id": "sheet-5",
+          "title": "商品詳細検索"
+        }
+      ],
+      "期待される挙動": "- 「他のバージョンも見る」の並び順は、選択すると選択した並び順で一覧を表示し、表示している並び順は太字にして押下不可とすること。",
+      "現在の挙動": "- 日本語版は現在の並び順が太字になり、同じ並び順を押下しても JS が早期 return するため再読込されない（設計を満たす）。\n- しかし英語版 detail.en.twig は旧マークアップ（sortButton / data-order）のままで、読み込まれる JS は same-name-sort / data-sort-key しか対象にしないため、クリックハンドラが結び付かず並び替えが一切動作しない。\n- さらに非・基本土地の場合、コントローラは UniSearch 経路になり sameNameProducts を空のまま返すため、英語版の「他のバージョンも見る」は一覧自体が空になる。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Product/detail.en.twig:520-521",
+        "src/Eccube/Controller/Front/ProductController.php:632-632",
+        "src/Eccube/Resource/template/default/Block/js/product_detail_unisearch_same_name_js.twig:111-123",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F03_product_basedesign.md:527-527"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/template/default/Product/detail.twig:486 [line_out_of_range]"
+      ],
+      "book": "0303"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2258",
+      "summary": "【実装乖離】デッキ管理_デッキ一覧(検索入力/検索結果)_デッキ一覧の検索条件にて、デッキID・デッキ名・イベント名・成績・プレイヤー名の最大文字数が設計の50文字ではなく255文字になっている",
+      "feature": "デッキ一覧(検索入力/検索結果)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "デッキ一覧(検索入力)"
+        },
+        {
+          "id": "sheet-4",
+          "title": "デッキ一覧(検索結果)"
+        },
+        {
+          "id": "sheet-10",
+          "title": "アーキタイプ管理(検索結果)"
+        }
+      ],
+      "期待される挙動": "- デッキ一覧(検索入力)の識別ID 3「デッキID」、12「イベント名」、16「成績」、23「デッキ名」、25「プレイヤー名」はいずれも最大50文字とする。",
+      "現在の挙動": "- SearchDeckType では deck_id / deck_name / event_name / result / player_name のいずれも Assert\\Length の max に eccube_stext_len を指定している。\n- eccube_stext_len は eccube.yaml で 255 と定義されているため、実際に効く上限は255文字であり、設計の50文字を大きく超える入力が許容される。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/SearchDeckType.php:47-54",
+        "src/Eccube/Form/Type/Admin/SearchDeckType.php:55-61",
+        "src/Eccube/Form/Type/Admin/SearchDeckType.php:125-131",
+        "src/Eccube/Form/Type/Admin/SearchDeckType.php:142-155",
+        "app/config/eccube/packages/eccube.yaml:137-137",
+        "src/Eccube/Resource/template/admin/Deck/index.twig:None-None",
+        "app/config/eccube/packages/eccube.yaml:None-None",
+        "src/Eccube/Form/Type/Admin/SearchDeckType.php:None-None"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0212"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2259",
+      "summary": "【実装乖離】デッキ管理_デッキ一覧(検索入力/検索結果)_デッキ一覧の検索条件にて、カード名の最大文字数が設計の100文字ではなく200文字になっている",
+      "feature": "デッキ一覧(検索入力/検索結果)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "デッキ一覧(検索入力)"
+        },
+        {
+          "id": "sheet-4",
+          "title": "デッキ一覧(検索結果)"
+        },
+        {
+          "id": "sheet-10",
+          "title": "アーキタイプ管理(検索結果)"
+        }
+      ],
+      "期待される挙動": "- デッキ一覧(検索入力)の識別ID 27「カード名」は最大100文字とする。",
+      "現在の挙動": "- SearchDeckType の card は Assert\\Length の max に eccube_mtext_len を指定している。\n- eccube_mtext_len は eccube.yaml で 200 と定義されているため、実際に効く上限は200文字であり設計の100文字と一致しない。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/SearchDeckType.php:164-170",
+        "app/config/eccube/packages/eccube.yaml:118-118",
+        "src/Eccube/Form/Type/Admin/SearchDeckType.php:None-None",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md:78-78"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0212"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2260",
+      "summary": "【実装乖離】デッキ管理_デッキ一覧(検索入力/検索結果)_デッキ一覧の検索条件にて、イベント詳細IDの最大文字数が設計の50文字ではなく255文字になっている",
+      "feature": "デッキ一覧(検索入力/検索結果)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "デッキ一覧(検索入力)"
+        },
+        {
+          "id": "sheet-4",
+          "title": "デッキ一覧(検索結果)"
+        },
+        {
+          "id": "sheet-10",
+          "title": "アーキタイプ管理(検索結果)"
+        }
+      ],
+      "期待される挙動": "- デッキ一覧(検索入力)の識別ID 28「イベント詳細ID」は、数値・スペース・カンマ区切りの入力で最大50文字とする（現行の「イベントID」を除去して差し替える）。",
+      "現在の挙動": "- SearchDeckType の event_detail_id は Assert\\Length の max に eccube_stext_len（=255）を指定しており、設計の50文字と一致しない。\n- 書式チェック（数値・半角スペース・全角スペース・カンマのみ許可）は Assert\\Regex '/^[\\d,\\s　]+$/' で実装済みであり、この点は設計どおりである。\n- 検索項目自体は「イベント詳細ID」に差し替え済みで、旧「イベントID」は存在しない。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/SearchDeckType.php:171-178",
+        "app/config/eccube/packages/eccube.yaml:137-137",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md:79-79"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0212"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2261",
+      "summary": "【実装乖離】デッキ管理_デッキ編集_デッキ編集にて、引用元URLの最大文字数が設計の255文字ではなく2048文字になっている",
+      "feature": "デッキ編集",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "デッキ編集"
+        }
+      ],
+      "期待される挙動": "- デッキ編集の識別ID 22「引用元URL」は最大255文字とする。",
+      "現在の挙動": "- DeckType の sourceUrl は Assert\\Length(['max' => 2048]) で定義されており、2048文字まで入力できる。\n- エンティティ DtbDeck の source_url カラムも length=2048 で定義されている。\n- 一方、同じ引用元URLを扱う一括編集フォーム(DeckBulkUpdateType)は max=255 であり、画面間で上限が食い違っている。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/DeckType.php:143-148",
+        "src/Eccube/Entity/DtbDeck.php:78-78",
+        "src/Eccube/Form/Type/Admin/DeckBulkUpdateType.php:109-113",
+        "src/Eccube/Form/Type/Admin/DeckType.php:None-None",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md:256-256",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md:157-157"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0212"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2262",
+      "summary": "【未実装】デッキ管理_デッキ登録CSVアップロード / デッキ登録CSV_デッキ登録CSVアップロードにて、メインリスト・サイドリストのカード枚数がフォーマット規定の上限・下限を外れてもエラーにならない",
+      "feature": "デッキ登録CSVアップロード / デッキ登録CSV",
+      "sheetCandidates": [
+        {
+          "id": "sheet-6",
+          "title": "デッキ登録CSVアップロード"
+        },
+        {
+          "id": "sheet-7",
+          "title": "デッキ登録CSV"
+        }
+      ],
+      "期待される挙動": "- デッキ登録CSVの取込時、メインリスト・サイドリストのカード枚数がフォーマットで規定されている最大数を超えるか最小数に満たない場合はエラーとする。",
+      "現在の挙動": "- DeckUpdateImportHandler::onValidateRow() には、メインリスト必須チェック・フォーマット存在チェック・アーキタイプ存在チェック・イベント詳細ID存在チェック・日付形式チェック・表示フラグ/非公開フラグの形式チェック・統率者チェック・デッキID存在チェックのみが実装されており、ボードごとのカード枚数の上下限検証が存在しない。\n- 枚数上下限の検証ロジック（MtbFormat の main_max/main_min/side_max/side_min を用いる DeckValidationService::validateBoardCounts()）は存在するが、呼び出し元は管理画面のデッキ登録(DeckStoreAction)とフロントのデッキ登録(DeckEntryController)のみで、CSV取込ハンドラからは呼ばれていない。\n- そのため、フォーマットの規定枚数を外れたデッキリストを含むCSVでもエラーにならずに登録される。",
+      "引用": [
+        "src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:97-240",
+        "src/Eccube/Service/Deck/DeckValidationService.php:271-334",
+        "src/Eccube/Service/Admin/Deck/DeckStoreAction.php:25-25",
+        "src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:242-371",
+        "src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:None-None",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md:341-341"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0212"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2263",
+      "summary": "【一部実装】デッキ管理_アーキタイプ登録CSVアップロード / アーキタイプ登録CSV_アーキタイプ登録CSVアップロードにて、拡張子TSVのファイルをエラーにする処理が実装されておらず、TSVファイルがそのまま取り込まれる",
+      "feature": "アーキタイプ登録CSVアップロード / アーキタイプ登録CSV",
+      "sheetCandidates": [
+        {
+          "id": "sheet-12",
+          "title": "アーキタイプ登録CSVアップロード"
+        },
+        {
+          "id": "sheet-13",
+          "title": "アーキタイプ登録CSV"
+        }
+      ],
+      "期待される挙動": "- アーキタイプ登録CSVアップロードではTSVアップロードを廃止し、画面上の「TSV」表記を除去する。\n- CSVアップロード実行ロジックに、ファイル拡張子「TSV」をエラー扱いにする処理を追加する。",
+      "現在の挙動": "- ArchetypeCsvController::csv() にはアップロードファイルの拡張子チェックが存在せず、TSVファイルをアップロードしてもエラーにならない。\n- 取込処理の CsvImporter は拡張子が tsv の場合に区切り文字をタブに切り替える実装になっているため、TSVファイルは正常に取り込まれてしまう。\n- 画面テンプレートには accept=\"text/csv,.csv\" が指定されているのみで、これはOSのファイル選択ダイアログでの絞り込み（クライアント側のヒント）に過ぎず、サーバ側の防止策になっていない。\n- 同等機能のデッキ登録CSVアップロード(DeckCsvController::csv())では、拡張子が csv でない場合にエラーとする処理が実装されており、アーキタイプ側だけが未対応である。",
+      "引用": [
+        "src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php:49-109",
+        "src/Eccube/Service/Csv/Importer/CsvImporter.php:172-175",
+        "src/Eccube/Resource/template/admin/Archetype/csv_import.twig:84-84",
+        "src/Eccube/Controller/Admin/Deck/DeckCsvController.php:90-93",
+        "src/Eccube/Form/Type/Admin/CsvImportType.php:47-56",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md:541-541",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M15_deck_management_basedesign.md:556-557"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0212"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1788",
+      "summary": "【未実装】フロントグローバルナビ_PC版ナビゲーション_PC版ナビゲーションのメニュー内「デッキ構築」リンクが href=\"#\" のままで、デッキTOP画面へ遷移しない",
+      "feature": "PC版ナビゲーション",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "PC版ナビゲーション"
+        },
+        {
+          "id": "sheet-5",
+          "title": "支店PC版ナビゲーション"
+        }
+      ],
+      "期待される挙動": "- PC版ナビゲーションのメニュー(1-1)をマウスオーバーして表示されるメニュー項目のうち、(1-6)「デッキ構築」を押下すると、デッキTOP画面へ遷移すること。",
+      "現在の挙動": "- メニューを描画する Block/mega_menu.twig の「デッキ構築」項目は href=\"#\" のプレースホルダのままで、押下しても同一ページに留まり、デッキTOP画面へ遷移しない。\n- 同ファイルの該当行の直前に「TODO: ECCUBE_HARERUYA-XXX デッキ構築 TOP ルート実装後に href を差し替え」というTODOコメントが残っている。\n- 同じ「デッキ構築」でも、ヘッダーのナビ本体(Block/header.twig)とフッターのサイトマップ(Block/footer_sitemap.twig)では href=\"/decks\" が指定されており、メニュー内のみリンク先が未設定という不整合が生じている。\n- デッキ構築TOPに相当する Symfony ルートは src/Eccube/Controller 配下に存在せず(/decks を返すルートは未定義、Deck 系は deck_index などの一覧・検索系のみ)、JS 側でも href を書き換えていない。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Block/mega_menu.twig:42-48",
+        "src/Eccube/Resource/template/default/Block/footer_sitemap.twig:36-36",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md:150-150",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md:142-142"
+      ],
+      "引用_不在または範囲外": [
+        "Block/mega_menu.twig:None [file_not_found]",
+        "Block/header.twig:None [file_not_found]",
+        "Block/footer_sitemap.twig:None [file_not_found]",
+        "src/Eccube/Resource/template/default/Block/header.twig:92 [line_out_of_range]",
+        "Block/mega_menu.en.twig:None [file_not_found]"
+      ],
+      "book": "0302"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1789",
+      "summary": "【実装乖離】フロントグローバルナビ_PC版ナビゲーション_カートのマウスオーバー一覧が「追加日時の昇順」ではなく CartItem.id 昇順で並べられており、数量を直接設定した明細が末尾へ移動する",
+      "feature": "PC版ナビゲーション",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "PC版ナビゲーション"
+        },
+        {
+          "id": "sheet-5",
+          "title": "支店PC版ナビゲーション"
+        }
+      ],
+      "期待される挙動": "- PC版ナビゲーションの(18-1)カートをマウスオーバーした際、カート内商品を「カートに商品を追加した日時の昇順」で一覧表示すること。",
+      "現在の挙動": "- カートポップアップの表示モデルを組み立てる CartHeaderViewService::buildItemViews は CartItem.id の昇順で並べ替えており、追加日時による並べ替えは行っていない。\n- CartItem エンティティ(dtb_cart_item)には追加日時を保持する create_date 相当のカラムが存在せず、追加日時での並べ替え自体が現状のデータ構造では不可能である。\n- カート数量の直接指定(cart_handle_item の operation=set)は CartService::setProductQuantity が removeProduct→addProduct を実行するため、該当明細が配列末尾に付け直され、さらに CartService::restoreCarts が全 CartItem を削除・再INSERTして id を採番し直す。その結果、数量を変更した商品が一覧の末尾に移動し、実際の追加日時の昇順にならない。",
+      "引用": [
+        "src/Eccube/Service/Cart/CartHeaderViewService.php:40-41",
+        "src/Eccube/Entity/CartItem.php:39-56",
+        "src/Eccube/Service/CartService.php:388-397",
+        "src/Eccube/Service/CartService.php:237-246",
+        "src/Eccube/Controller/Front/CartController.php:326-326",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md:172-172",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md:176-176"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0302"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1790",
+      "summary": "【一部実装】フロントグローバルナビ_PC版ナビゲーション_フッター(24)サイトマップの「FAQ」リンクが href=\"#\" のままで、FAQ画面へ遷移しない",
+      "feature": "PC版ナビゲーション",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "PC版ナビゲーション"
+        },
+        {
+          "id": "sheet-5",
+          "title": "支店PC版ナビゲーション"
+        }
+      ],
+      "期待される挙動": "- フッターの(24)サイトマップに 24-1〜24-11 の11リンクを表示し、(24-11)「FAQ」を押下するとFAQ画面へ遷移すること。",
+      "現在の挙動": "- Block/footer_sitemap.twig には11件のリンクが実装されているが、そのうち(24-11)FAQ のみ href=\"#\" のプレースホルダで、押下してもFAQ画面へ遷移しない。\n- 該当行の直前に「TODO: ECCUBE_HARERUYA-XXX FAQ ページ (user_data/hareruya_faq) 実装後に href を差し替え」というTODOコメントが残っている。\n- 遷移先となるFAQページ app/template/user_data/hareruya_faq.twig は既に存在し、user_data ルート(/{eccube_user_data_route}/{route})で表示可能であるため、href を url('user_data', {route: 'hareruya_faq'}) に差し替えるだけで要件を満たせる状態である。",
+      "引用": [
+        "app/template/user_data/hareruya_faq.twig:None-None",
+        "src/Eccube/Resource/template/default/Block/footer_sitemap.twig:50-53",
+        "src/Eccube/Resource/template/default/Block/footer_sitemap.twig:20-49",
+        "app/template/user_data/hareruya_faq.twig:1-1",
+        "src/Eccube/Controller/Front/UserDataController.php:41-41",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md:243-243",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md:233-243"
+      ],
+      "引用_不在または範囲外": [
+        "Block/footer_sitemap.twig:None [file_not_found]"
+      ],
+      "book": "0302"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1791",
+      "summary": "【実装乖離】フロントグローバルナビ_PC版ナビゲーション_フッターのサイトマップ／会社情報／お得な情報が、管理画面＞コンテンツ管理＞ブロック管理から編集できない",
+      "feature": "PC版ナビゲーション",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "PC版ナビゲーション"
+        },
+        {
+          "id": "sheet-5",
+          "title": "支店PC版ナビゲーション"
+        }
+      ],
+      "期待される挙動": "- フッターの(24)サイトマップ・(25)会社情報・(26)お得な情報は、管理画面＞コンテンツ管理＞ブロック管理にて編集可能であること。",
+      "現在の挙動": "- Migration Version20260508120000 が footer_sitemap／footer_company／footer_promo を dtb_block に登録しているが、deletable を false で INSERT しているため、ブロック管理から編集できない。\n- ブロック管理一覧テンプレート(admin/Content/block.twig)は deletable が false のブロックについて編集リンク自体を描画せず、ブロック名がテキスト表示されるだけである。\n- 編集アクション admin_content_block_edit も、対象ブロックが deletable でない場合は NotFoundHttpException を投げるため、URL を直接叩いても編集できない。\n- 結果として、これら3ブロックの内容(リンク文言・URL)を変更するには src/Eccube/Resource/template/default/Block/*.twig をコード修正するしかない状態になっている。",
+      "引用": [
+        "app/DoctrineMigrations/Version20260508120000.php:32-36",
+        "app/DoctrineMigrations/Version20260508120000.php:59-60",
+        "src/Eccube/Controller/Admin/Content/BlockController.php:118-120",
+        "src/Eccube/Resource/template/admin/Content/block.twig:71-77",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md:230-230",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md:252-252",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md:268-268"
+      ],
+      "引用_不在または範囲外": [
+        "admin/Content/block.twig:None [file_not_found]",
+        "src/Eccube/Resource/template/default/Block/footer.twig:57 [line_out_of_range]"
+      ],
+      "book": "0302"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1792",
+      "summary": "【一部実装】フロントグローバルナビ_スマホ版ナビゲーション_スマホ版ナビゲーションの(4)メニュー内「デッキ構築」リンクが href=\"#\" のままで、デッキTOP画面へ遷移しない",
+      "feature": "スマホ版ナビゲーション",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "スマホ版ナビゲーション"
+        },
+        {
+          "id": "sheet-6",
+          "title": "支店スマホ版ナビゲーション"
+        }
+      ],
+      "期待される挙動": "- スマホ版ナビゲーションの(4-1)メニュー表示ボタン押下で表示される(4-2)〜(4-11)の各リンク（ショップ・買取・記事・デッキ検索・デッキ構築・選手一覧・店舗一覧・イベント・ヘルプ・お問い合わせ）が、それぞれ設計どおりの画面へ遷移すること。\n- (4-6)「デッキ構築」を押下すると、デッキTOP画面へ遷移すること。",
+      "現在の挙動": "- スマホ版のメニューはPC版と同じ Block/mega_menu.twig で描画されており、ショップ・買取・記事・デッキ検索・選手一覧・店舗一覧・イベント・ヘルプ・お問い合わせの9リンクは実装済みである。\n- 「デッキ構築」のみ href=\"#\" のプレースホルダのままで、押下してもデッキTOP画面へ遷移しない（TODOコメント付き）。",
+      "引用": [
+        "src/Eccube/Resource/template/default/Block/mega_menu.twig:42-48",
+        "src/Eccube/Resource/template/default/Block/mega_menu.twig:18-78",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md:456-456",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md:448-448",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F02_global_nav_basedesign.md:451-461"
+      ],
+      "引用_不在または範囲外": [
+        "Block/mega_menu.twig:None [file_not_found]",
+        "src/Eccube/Resource/template/default/Block/header.twig:33 [line_out_of_range]"
+      ],
+      "book": "0302"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1924",
+      "summary": "【実装乖離】フロントイベント_大会詳細_大会詳細のパンくずリストにて、末尾がイベント開催日付でなくイベント名になっており、店舗名・フォーマットのリンクも絞り込み条件を持たないイベント一覧へ遷移する",
+      "feature": "大会詳細",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "大会詳細"
+        },
+        {
+          "id": "sheet-4",
+          "title": "大会詳細検索"
+        }
+      ],
+      "期待される挙動": "- 大会詳細のパンくずリスト(1-1)は「ホーム > イベントTOP > [店舗名] > [フォーマット] > [イベント開催日付]」の形式で表示すること。\n- パンくずリスト内の「店舗名」「フォーマット」「イベント開催日付」はそれぞれ押下可能とし、押下するとその内容で絞り込んだ検索結果画面に遷移すること。",
+      "現在の挙動": "- パンくずの末尾要素はイベント開催日付ではなくイベント名（eventName）であり、span で出力されているためリンクにもなっていない。\n- 店舗名のパンくずは href=\"{{ url('event_search') }}\" となっており、店舗の絞り込みクエリ（venues[] 等）が一切付与されないため、押下しても条件なしのイベント検索結果画面 /events/list に遷移する。\n- フォーマットのパンくずも同様に href=\"{{ url('event_search') }}\" のみで、フォーマットの絞り込みクエリ（formats[] 等）が付与されない。\n- event_search ルート(/events/list)自体は formats[] や venues[] 等のクエリによる絞り込みに対応しているが、大会詳細のパンくずからはそれらを渡していない。",
+      "引用": [
+        ".cursor/docs/MDfile/F07_event_basedesign.md:420-422",
+        ".cursor/docs/MDfile/F07_event_basedesign.md:425-425",
+        "src/Eccube/Resource/template/default/Event/detail.twig:50-50",
+        "src/Eccube/Resource/template/default/Event/detail.twig:60-60",
+        "src/Eccube/Resource/template/default/Event/detail.twig:67-72",
+        "src/Eccube/Controller/Front/EventSearchController.php:37-37"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0307"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1925",
+      "summary": "【一部実装】フロントイベント_大会詳細_大会詳細のルール適用度にて、適用度名は表示されるがアイコンが固定クラスであり、適用度ごとのアイコンになっていない",
+      "feature": "大会詳細",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "大会詳細"
+        },
+        {
+          "id": "sheet-4",
+          "title": "大会詳細検索"
+        }
+      ],
+      "期待される挙動": "- 大会詳細のルール適用度(1-4)には、イベントに設定されているルール適用度のアイコンと適用度名を表示すること。\n- アイコンは設定されているルール適用度に応じたものを表示すること。",
+      "現在の挙動": "- detail.twig ではルール適用度のアイコンが <i class=\"icon-hareruya-player c-hareruya-icon--sm\"> と固定クラスでハードコードされており、Event.Rel の値に依存していない。\n- 適用度名（Rel.nameJp / Rel.nameEn）は同ブロック内で表示されているため、名称のみ要件を満たしている。\n- 同一リポジトリ内の検索結果カード(_search_event_card.twig)や、イベント大会TOPのJSでは rel_id に応じて icon-hareruya-wakaba / icon-hareruya-player / icon-hareruya-fire を出し分けており、適用度別アイコンの仕組み自体は存在するが、大会詳細では使われていない。\n- マスタ mtb_rel（Migration Version20251125164616 で「プロ」「競技」「一般」「カジュアル」「その他」「初心者歓迎」「カジュアル対戦」「上級者向け」の8件を投入）にはアイコン列が無く、Entity MtbRel も id / name_jp / name_en のみのため、アイコンはコード側で出し分ける必要がある。",
+      "引用": [
+        ".cursor/docs/MDfile/F07_event_basedesign.md:428-428",
+        "src/Eccube/Resource/template/default/Event/detail.twig:87-87",
+        "src/Eccube/Resource/template/default/Event/detail.twig:88-88",
+        "src/Eccube/Resource/template/default/Event/_search_event_card.twig:27-40",
+        "html/template/default/assets/hareruya/js/hareruya-event.js:1-1",
+        "src/Eccube/Entity/Master/MtbRel.php:31-40"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0307"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1927",
+      "summary": "【一部実装】フロントイベント_大会申込～完了_大会申込画面の選択済みイベントにて、別日程の同イベントが存在する場合でもチェックを変更できず、常にチェック済み・変更不可になっている",
+      "feature": "大会申込～完了",
+      "sheetCandidates": [
+        {
+          "id": "sheet-6",
+          "title": "大会申込～完了"
+        }
+      ],
+      "期待される挙動": "- 別日程の同イベントが存在する場合、大会詳細画面で申込をしたイベントの選択済みイベント選択(1-1)は選択済みの状態で変更可能とし、イベントが未選択の状態では次の画面に遷移させないこと。\n- 別日程の同イベントが存在しない場合のみ、選択済みイベント選択(1-1)はデフォルトでチェックが入っている状態で変更不可とすること。",
+      "現在の挙動": "- entry.twig の選択済みイベントのチェックボックスは、別日程の同イベント（others）の有無に関わらず常に checked disabled で出力されており、ユーザーがチェックを外すことができない。\n- 当該チェックボックスには name 属性が無く、そもそもフォーム送信されない。申込対象の主イベントは hidden の <input type=\"hidden\" name=\"detail\" value=\"{{ Detail.id }}\"> で常に送信される。\n- EventEntryController::confirm() も $detailId = (int) $request->request->get('detail') として主イベントを無条件に申込対象に含めるため、主イベントを外して別日程のみを申し込むことはできない。\n- 結果として「別日程が存在しない場合はチェック済み・変更不可」という条件のみ満たしており、「別日程が存在する場合は変更可」および「未選択では次の画面へ進ませない」という要件は実装されていない。",
+      "引用": [
+        ".cursor/docs/MDfile/F07_event_basedesign.md:554-556",
+        ".cursor/docs/MDfile/F07_event_basedesign.md:560-560",
+        "src/Eccube/Resource/template/default/Event/entry.twig:37-37",
+        "src/Eccube/Resource/template/default/Event/entry.twig:32-32",
+        "src/Eccube/Resource/template/default/Event/entry.twig:54-78",
+        "src/Eccube/Controller/Front/Event/EventEntryController.php:100-104"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0307"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1928",
+      "summary": "【一部実装】フロントイベント_大会申込～完了_大会申込画面の申込同意にて、未チェック時に動的なエラー表示が行われず、支払いへ進むボタンのdisableのみで制御している",
+      "feature": "大会申込～完了",
+      "sheetCandidates": [
+        {
+          "id": "sheet-6",
+          "title": "大会申込～完了"
+        }
+      ],
+      "期待される挙動": "- 申込同意(1-10)にチェックが入っていない状態で「支払いへ進む」(1-11)を押しても次の画面には遷移させないこと。\n- その際、エラーを動的に表示すること。",
+      "現在の挙動": "- 「支払いへ進む」ボタンは初期状態で disabled 属性が付与されており、hareruya-event.js が申込同意チェックボックスの change を監視して submit.disabled = !checked を切り替えるだけの実装になっている。\n- 同JSにはエラーメッセージを表示する処理が無く（未チェック時の分岐 if(!e)return は何も行わない）、entry.twig にもエラー表示用の要素は存在せず、CSSにも申込同意まわりのエラー用クラスは定義されていない。\n- そのため未チェック時はボタン自体が押せず、設計が求める「押下時に動的にエラーを表示する」挙動が発生しない。\n- サーバ側の EventEntryController::confirm() も agree が無い場合は申込画面へリダイレクトするだけで、エラーメッセージ（フラッシュメッセージ等）を一切出力しない。",
+      "引用": [
+        ".cursor/docs/MDfile/F07_event_basedesign.md:557-557",
+        ".cursor/docs/MDfile/F07_event_basedesign.md:569-570",
+        "src/Eccube/Resource/template/default/Event/entry.twig:109-109",
+        "src/Eccube/Resource/template/default/Event/entry.twig:103-106",
+        "html/template/default/assets/hareruya/js/hareruya-event.js:1-1",
+        "src/Eccube/Controller/Front/Event/EventEntryController.php:106-108"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0307"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1932",
+      "summary": "【実装乖離】フロント店頭買取_店頭買取査定申込前ログイン_店頭買取査定申込前ログインにて、メールアドレス入力欄の最大文字数が設計値320文字ではなく255文字になっている",
+      "feature": "店頭買取査定申込前ログイン",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "店頭買取査定申込前ログイン"
+        }
+      ],
+      "期待される挙動": "- 店頭買取査定申込前ログイン画面（F08-01）のメールアドレス欄は、最大320文字まで入力できること。\n- 同画面のパスワード欄も最大320文字まで入力できること。",
+      "現在の挙動": "- ログインフォームは CustomerLoginType を利用しており、login_email・login_pass の maxlength 属性に eccube_stext_len が設定されている。\n- eccube_stext_len は 255 のため、メールアドレス欄・パスワード欄とも 255 文字を超える入力ができず、設計の 320 文字を満たしていない。",
+      "引用": [
+        "src/Eccube/Controller/Front/Purchase/OtcBuyController.php:225-227",
+        "src/Eccube/Form/Type/Front/CustomerLoginType.php:39-56",
+        "app/config/eccube/packages/eccube.yaml:137-137",
+        "src/Eccube/Resource/template/default/OtcBuy/entry.twig:31-37",
+        "src/Eccube/Resource/template/default/OtcBuy/entry.en.twig:30-36",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md:38-38",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md:39-39"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0308"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1938",
+      "summary": "【実装乖離】フロント店頭買取_会員登録フォーム_店頭買取の会員登録フォームにて、パスワードの文字数チェックが設計の8〜32文字ではなく12〜50文字になっている",
+      "feature": "会員登録フォーム",
+      "sheetCandidates": [
+        {
+          "id": "sheet-6",
+          "title": "会員登録フォーム"
+        }
+      ],
+      "期待される挙動": "- 会員登録フォーム画面（F08-04）のパスワード（項目4）およびパスワード（確認用）（項目5）は、最大文字数32文字であること。\n- パスワードは8〜32文字であるかのチェックを行うこと。",
+      "現在の挙動": "- パスワード欄は OtcBuyRepeatedPasswordType が使われており、Assert\\Length の min に eccube_password_min_len（12）、max に eccube_password_max_len（50）が設定されている。\n- そのため 8〜11 文字のパスワードは設計上は許容されるのにエラーとなり、逆に 33〜50 文字のパスワードは設計上は不可のはずが登録できてしまう。\n- 入力欄に maxlength 属性は付与されておらず、32文字を超える入力を抑止する仕組みもない。",
+      "引用": [
+        "src/Eccube/Form/Type/Front/OtcBuy/OtcBuyRepeatedPasswordType.php:44-55",
+        "src/Eccube/Form/Type/Front/OtcBuy/OtcBuyOrderType.php:255-257",
+        "src/Eccube/Resource/template/default/OtcBuy/register_customer.twig:55-55",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md:187-187",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md:188-188"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/eccube.yaml:195 [line_out_of_range]"
+      ],
+      "book": "0308"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1939",
+      "summary": "【実装乖離】フロント店頭買取_会員登録フォーム_店頭買取の会員登録フォームにて、パスワードの注意書き（12文字以上32文字以内）と実際のバリデーション（12〜50文字）が一致していない",
+      "feature": "会員登録フォーム",
+      "sheetCandidates": [
+        {
+          "id": "sheet-6",
+          "title": "会員登録フォーム"
+        }
+      ],
+      "期待される挙動": "- 会員登録フォーム画面（F08-04）のパスワードは最大32文字であり、8〜32文字であるかのチェックを行うこと。\n- 画面の注意書きは実際に適用されるチェック内容と一致していること。",
+      "現在の挙動": "- 日本語版の注意書きは「（半角英数字記号 12文字以上,32文字以内で入力してください。IDと同様のパスワードは入力できません。）」と固定文言でハードコードされている。\n- 英語版の注意書きも「Please enter your password using 12 - 32 half-width alphanumeric symbols.」と同じ内容でハードコードされている。\n- 一方で実際に適用される Assert\\Length は min=12 / max=50 であり、33〜50文字のパスワードが注意書きに反して登録できてしまう。\n- 注意書きの下限「12文字以上」も設計の「8〜32文字」と一致していない。",
+      "引用": [
+        "src/Eccube/Resource/template/default/OtcBuy/register_customer.twig:56-56",
+        "src/Eccube/Resource/template/default/OtcBuy/register_customer.en.twig:56-56",
+        "src/Eccube/Form/Type/Front/OtcBuy/OtcBuyRepeatedPasswordType.php:44-55",
+        "ec-cube-enterprise/.cursor/docs/MDfile/F08_otc_buy_basedesign.md:187-187"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/eccube.yaml:195 [line_out_of_range]"
+      ],
+      "book": "0308"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1958",
+      "summary": "【一部実装】商品管理_グッズ商品CSV登録/フォーマット_グッズ商品CSV登録にて、スマレジサーバへ照会したうえでの重複スマレジ商品コードのエラー判定が実装されていない",
+      "feature": "グッズ商品CSV登録/フォーマット",
+      "sheetCandidates": [
+        {
+          "id": "sheet-11",
+          "title": "グッズ商品CSV登録"
+        }
+      ],
+      "期待される挙動": "- グッズ商品CSV登録では、登録・更新時にスマレジサーバに通信し、スマレジ商品コードの登録状況を確認すること。\n- 登録時、重複するスマレジ商品コードがある場合はエラー扱いとすること。",
+      "現在の挙動": "- 取込処理はスマレジサーバへ照会を行っておらず、dtb_product_class の部分ユニークインデックス(uniq_smaregi_product_code_partial)違反(UniqueConstraintViolationException)を捕捉して重複エラーメッセージを出力しているのみである。\n- したがって重複判定はEC-CUBEのDB内に同一コードが存在する場合に限られ、EC-CUBEに未登録でスマレジ側にのみ存在するコードは重複として検出されない。\n- スマレジ連携は取込完了後に SmaregiProductClassCsvImportUpsertCoordinator が非同期の upsert ジョブを投入する方式で、取込中にスマレジ商品の登録状況を照会する処理は存在しない。\n- 実装内にも『スマレジ連携状態の確認後、更新するか決める』旨のTODOコメントが残っている。",
+      "引用": [
+        "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:658-666",
+        "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:616-620",
+        "src/Eccube/Entity/ProductClass.php:36-40",
+        "src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:65-108",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md:773-776"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0204"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1959",
+      "summary": "【未実装】商品管理_グッズ商品CSV登録/フォーマット_グッズ商品CSV登録にて、更新時にスマレジ商品情報が存在しない場合のエラー判定が実装されていない",
+      "feature": "グッズ商品CSV登録/フォーマット",
+      "sheetCandidates": [
+        {
+          "id": "sheet-11",
+          "title": "グッズ商品CSV登録"
+        }
+      ],
+      "期待される挙動": "- グッズ商品CSV登録では、登録・更新時にスマレジサーバに通信し、スマレジ商品コードの登録状況を確認すること。\n- 更新時、スマレジ商品情報がない場合はエラー扱いとすること。",
+      "現在の挙動": "- グッズ商品CSV取込の更新処理では、スマレジサーバへ商品情報の存在確認を行う処理が一切存在しない。\n- 更新時に実行される行バリデータは、買取価格と販売価格の整合、スマレジ連携フラグON時の必須項目、廃止時の在庫チェック、連携フラグOFF時のスマレジ在庫チェックのみで、スマレジ商品情報の存在確認は含まれていない。\n- スマレジへの反映は取込完了後の非同期 upsert ジョブに委ねられており、取込時点でのエラー判定は行われない（実装にも『スマレジ連携状態の確認後、更新するか決める』というTODOが残っている）。",
+      "引用": [
+        "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:583-620",
+        "src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:320-340",
+        "src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:47-56",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md:775-775",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M03_product_management_basedesign.md:777-777"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0204"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2241",
+      "summary": "【実装乖離】カード管理_カード一覧(検索結果)_カード一覧(検索結果)にて、3点リーダーによる削除メニューが実装されておらず、削除確認ポップアップの文言も設計と異なる",
+      "feature": "カード一覧(検索結果)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "カード一覧(検索結果)"
+        },
+        {
+          "id": "sheet-3",
+          "title": "カード一覧(検索入力)"
+        }
+      ],
+      "期待される挙動": "- カード一覧(検索結果)の各行には3点リーダー(識別ID 12)を配置し、押下すると削除ボタン(識別ID 13)を表示する。\n- 削除ボタン(識別ID 13)を押下すると、動的に「このカードを削除してもよろしいですか？」という文言のポップアップを表示し、「実行」を選択すると削除を実行する。",
+      "現在の挙動": "- カード一覧の各行には3点リーダーが存在せず、編集アイコン(鉛筆)と削除アイコン(×)が直接並べて表示されている。\n- 削除アイコンを押下すると共通削除モーダルが開き、表示される文言は「この操作はあとから取り消すことができません。「{カード名}」を削除してよろしいですか？」(admin.common.delete_modal__message)であり、設計の「このカードを削除してもよろしいですか？」と一致しない。\n- 同一管理画面のデッキ一覧(admin/Deck/index.twig:593)では3点リーダー(fa-ellipsis + dropdown)が実装されており、カード一覧のみ実装パターンが異なる。",
+      "引用": [
+        "src/Eccube/Resource/template/admin/Card/index.twig:426-437",
+        "src/Eccube/Resource/template/admin/Card/index.twig:434-434",
+        "src/Eccube/Resource/locale/messages.ja.yaml:1780-1780",
+        "src/Eccube/Resource/template/admin/Card/delete_modal.twig:15-15",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md:139-139",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md:140-140"
+      ],
+      "引用_不在または範囲外": [
+        "admin/Deck/index.twig:593 [file_not_found]"
+      ],
+      "book": "0208"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2254",
+      "summary": "【実装乖離】カード管理_フォーマット一覧_フォーマット一覧にて、フォーマット名がリンクになっておらずプレーンテキストで表示されている",
+      "feature": "フォーマット一覧",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "フォーマット一覧"
+        }
+      ],
+      "期待される挙動": "- フォーマット一覧の識別ID 2「フォーマット名」はリンクの画面部品である。",
+      "現在の挙動": "- フォーマット一覧のフォーマット名セルは {{ Format.nameJp }} / {{ Format.nameEn }} をそのまま出力するだけのプレーンテキストであり、アンカー要素(a タグ)が存在しない。\n- フォーマット詳細への遷移は行末の鉛筆アイコン(編集リンク)からのみ可能である。\n- 同一設計書内のカード一覧(識別ID 11 カード名 リンク)も同様にカード名がリンクになっていないが、フォーマット一覧については設計上リンクと明記されている。",
+      "引用": [
+        "app/template/admin/Format/format_list.twig:48-48",
+        "app/template/admin/Format/format_list.twig:56-59",
+        "app/template/admin/Format/format_list.twig:None-None",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M14_card_management_basedesign.md:749-749"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0208"
+    }
+  ],
+  "count": 28
+}

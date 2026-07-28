@@ -1,0 +1,102 @@
+{
+  "book": "0307",
+  "count": 4,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-1924",
+      "summary": "【実装乖離】フロントイベント_大会詳細_大会詳細のパンくずリストにて、末尾がイベント開催日付でなくイベント名になっており、店舗名・フォーマットのリンクも絞り込み条件を持たないイベント一覧へ遷移する",
+      "feature": "大会詳細",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "大会詳細"
+        },
+        {
+          "id": "sheet-4",
+          "title": "大会詳細検索"
+        }
+      ],
+      "期待される挙動": "- 大会詳細のパンくずリスト(1-1)は「ホーム > イベントTOP > [店舗名] > [フォーマット] > [イベント開催日付]」の形式で表示すること。\n- パンくずリスト内の「店舗名」「フォーマット」「イベント開催日付」はそれぞれ押下可能とし、押下するとその内容で絞り込んだ検索結果画面に遷移すること。",
+      "現在の挙動": "- パンくずの末尾要素はイベント開催日付ではなくイベント名（eventName）であり、span で出力されているためリンクにもなっていない。\n- 店舗名のパンくずは href=\"{{ url('event_search') }}\" となっており、店舗の絞り込みクエリ（venues[] 等）が一切付与されないため、押下しても条件なしのイベント検索結果画面 /events/list に遷移する。\n- フォーマットのパンくずも同様に href=\"{{ url('event_search') }}\" のみで、フォーマットの絞り込みクエリ（formats[] 等）が付与されない。\n- event_search ルート(/events/list)自体は formats[] や venues[] 等のクエリによる絞り込みに対応しているが、大会詳細のパンくずからはそれらを渡していない。",
+      "引用": [
+        ".cursor/docs/MDfile/F07_event_basedesign.md:420-422",
+        ".cursor/docs/MDfile/F07_event_basedesign.md:425-425",
+        "src/Eccube/Resource/template/default/Event/detail.twig:50-50",
+        "src/Eccube/Resource/template/default/Event/detail.twig:60-60",
+        "src/Eccube/Resource/template/default/Event/detail.twig:67-72",
+        "src/Eccube/Controller/Front/EventSearchController.php:37-37"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1925",
+      "summary": "【一部実装】フロントイベント_大会詳細_大会詳細のルール適用度にて、適用度名は表示されるがアイコンが固定クラスであり、適用度ごとのアイコンになっていない",
+      "feature": "大会詳細",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "大会詳細"
+        },
+        {
+          "id": "sheet-4",
+          "title": "大会詳細検索"
+        }
+      ],
+      "期待される挙動": "- 大会詳細のルール適用度(1-4)には、イベントに設定されているルール適用度のアイコンと適用度名を表示すること。\n- アイコンは設定されているルール適用度に応じたものを表示すること。",
+      "現在の挙動": "- detail.twig ではルール適用度のアイコンが <i class=\"icon-hareruya-player c-hareruya-icon--sm\"> と固定クラスでハードコードされており、Event.Rel の値に依存していない。\n- 適用度名（Rel.nameJp / Rel.nameEn）は同ブロック内で表示されているため、名称のみ要件を満たしている。\n- 同一リポジトリ内の検索結果カード(_search_event_card.twig)や、イベント大会TOPのJSでは rel_id に応じて icon-hareruya-wakaba / icon-hareruya-player / icon-hareruya-fire を出し分けており、適用度別アイコンの仕組み自体は存在するが、大会詳細では使われていない。\n- マスタ mtb_rel（Migration Version20251125164616 で「プロ」「競技」「一般」「カジュアル」「その他」「初心者歓迎」「カジュアル対戦」「上級者向け」の8件を投入）にはアイコン列が無く、Entity MtbRel も id / name_jp / name_en のみのため、アイコンはコード側で出し分ける必要がある。",
+      "引用": [
+        ".cursor/docs/MDfile/F07_event_basedesign.md:428-428",
+        "src/Eccube/Resource/template/default/Event/detail.twig:87-87",
+        "src/Eccube/Resource/template/default/Event/detail.twig:88-88",
+        "src/Eccube/Resource/template/default/Event/_search_event_card.twig:27-40",
+        "html/template/default/assets/hareruya/js/hareruya-event.js:1-1",
+        "src/Eccube/Entity/Master/MtbRel.php:31-40"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1927",
+      "summary": "【一部実装】フロントイベント_大会申込～完了_大会申込画面の選択済みイベントにて、別日程の同イベントが存在する場合でもチェックを変更できず、常にチェック済み・変更不可になっている",
+      "feature": "大会申込～完了",
+      "sheetCandidates": [
+        {
+          "id": "sheet-6",
+          "title": "大会申込～完了"
+        }
+      ],
+      "期待される挙動": "- 別日程の同イベントが存在する場合、大会詳細画面で申込をしたイベントの選択済みイベント選択(1-1)は選択済みの状態で変更可能とし、イベントが未選択の状態では次の画面に遷移させないこと。\n- 別日程の同イベントが存在しない場合のみ、選択済みイベント選択(1-1)はデフォルトでチェックが入っている状態で変更不可とすること。",
+      "現在の挙動": "- entry.twig の選択済みイベントのチェックボックスは、別日程の同イベント（others）の有無に関わらず常に checked disabled で出力されており、ユーザーがチェックを外すことができない。\n- 当該チェックボックスには name 属性が無く、そもそもフォーム送信されない。申込対象の主イベントは hidden の <input type=\"hidden\" name=\"detail\" value=\"{{ Detail.id }}\"> で常に送信される。\n- EventEntryController::confirm() も $detailId = (int) $request->request->get('detail') として主イベントを無条件に申込対象に含めるため、主イベントを外して別日程のみを申し込むことはできない。\n- 結果として「別日程が存在しない場合はチェック済み・変更不可」という条件のみ満たしており、「別日程が存在する場合は変更可」および「未選択では次の画面へ進ませない」という要件は実装されていない。",
+      "引用": [
+        ".cursor/docs/MDfile/F07_event_basedesign.md:554-556",
+        ".cursor/docs/MDfile/F07_event_basedesign.md:560-560",
+        "src/Eccube/Resource/template/default/Event/entry.twig:37-37",
+        "src/Eccube/Resource/template/default/Event/entry.twig:32-32",
+        "src/Eccube/Resource/template/default/Event/entry.twig:54-78",
+        "src/Eccube/Controller/Front/Event/EventEntryController.php:100-104"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1928",
+      "summary": "【一部実装】フロントイベント_大会申込～完了_大会申込画面の申込同意にて、未チェック時に動的なエラー表示が行われず、支払いへ進むボタンのdisableのみで制御している",
+      "feature": "大会申込～完了",
+      "sheetCandidates": [
+        {
+          "id": "sheet-6",
+          "title": "大会申込～完了"
+        }
+      ],
+      "期待される挙動": "- 申込同意(1-10)にチェックが入っていない状態で「支払いへ進む」(1-11)を押しても次の画面には遷移させないこと。\n- その際、エラーを動的に表示すること。",
+      "現在の挙動": "- 「支払いへ進む」ボタンは初期状態で disabled 属性が付与されており、hareruya-event.js が申込同意チェックボックスの change を監視して submit.disabled = !checked を切り替えるだけの実装になっている。\n- 同JSにはエラーメッセージを表示する処理が無く（未チェック時の分岐 if(!e)return は何も行わない）、entry.twig にもエラー表示用の要素は存在せず、CSSにも申込同意まわりのエラー用クラスは定義されていない。\n- そのため未チェック時はボタン自体が押せず、設計が求める「押下時に動的にエラーを表示する」挙動が発生しない。\n- サーバ側の EventEntryController::confirm() も agree が無い場合は申込画面へリダイレクトするだけで、エラーメッセージ（フラッシュメッセージ等）を一切出力しない。",
+      "引用": [
+        ".cursor/docs/MDfile/F07_event_basedesign.md:557-557",
+        ".cursor/docs/MDfile/F07_event_basedesign.md:569-570",
+        "src/Eccube/Resource/template/default/Event/entry.twig:109-109",
+        "src/Eccube/Resource/template/default/Event/entry.twig:103-106",
+        "html/template/default/assets/hareruya/js/hareruya-event.js:1-1",
+        "src/Eccube/Controller/Front/Event/EventEntryController.php:106-108"
+      ],
+      "引用_不在または範囲外": []
+    }
+  ]
+}

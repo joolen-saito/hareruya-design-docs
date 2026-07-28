@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1789",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: dtb_cart_item に追加日時カラムを追加するマイグレーションが必要",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "CartItem.id 昇順。追加日時カラムが存在しない",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0302_基本設計仕様書(フロント_グローバルナビ) sheet-3「PC版ナビゲーション」\n機能仕様処理概要（★）\n> ★カートに商品を追加した**日時の昇順**でカート内商品を一覧表示する\n\n■実装の現状\nCartHeaderViewService.php:38-49 は `CartItem.id` の昇順でソートしています。\n```\nusort($items, fn (CartItem $a, CartItem $b): int => ($a->getId() ?? 0) <=> ($b->getId() ?? 0));\n```\nさらに CartItem エンティティに**追加日時のカラムが存在しません**（`#[ORM\\Column]` は id / price / quantity のみ）。\nCartService.php:388-397 の `setProductQuantity()` は remove→add で再作成し、`restoreCarts()`（237-246）も全削除して再構築するため、idは追加順を保持しません。\n\n■次の対応\n実装対応: `dtb_cart_item` に追加日時カラムを追加するマイグレーションが必要です。現行のデータ構造では設計どおりの並びを実現できません。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0302_基本設計仕様書(フロント_グローバルナビ).html / sheet-3「PC版ナビゲーション」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Entity / Repository / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T09:51:36+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T09:51:39+09:00",
+  "appliedStatus": "処理中"
+}

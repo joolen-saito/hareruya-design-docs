@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2016",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: フォーム連動の実装と絞り込み対象の修正。後者は検索結果自体が誤りのため優先度高め",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "フォーム連動が全く無く、サーバ側も欠品(7)でなく廃棄(6)で絞り込んでいる",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-22「在庫履歴検索一覧(検索入力)」\n画面部品仕様 2-4 欠品検索\n> 選択された場合\n> ・識別ID:2-3在庫変更理由区分を「**欠品/欠品減算（受注）**」・「**欠品/欠品減算(移動)**」に変更し選択できないよう非活性にする\n> ・検索対象項目の欠品履歴の内”－”としている項目は中身を空にし非活性にする\n> ・識別ID2-37欠品理由は活性化し入力できるようにする\n\n■実装の現状\n1) フォーム連動が**全く実装されていません**。StockHistoryType.php:108-115 の `disposal_search` は ChoiceType の定義のみで連動制御の attr/JS フックがなく、history.twig の `{% block javascript %}`（8-176行）にも `disposal_search` の change ハンドラがありません（JS/CSSアセットを含む全文検索で0件）。\n2) **サーバ側の絞り込み対象も誤っています。** DtbStockHistoryRepository.php:143-155 は `MtbStockChangeType::DISPOSAL`（=6「**廃棄**」）配下の子区分で IN/NOT IN しています。設計が指定する「欠品/欠品減算(受注)」「欠品/欠品減算(移動)」は `OUT_OF_STOCK`（=7「**欠品**」）配下の id=19 / id=21 で、絞り込み対象に入っていません。\n\n一覧の表示切替（`has_search_disposal`）は実装済みです。\n\n■次の対応\n実装対応: フォーム連動の実装と、絞り込み対象を「欠品(7)」配下へ修正する。後者は検索結果そのものが誤っているため優先度は高めです。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-22「在庫履歴検索一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:23:59+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:24:05+09:00",
+  "appliedStatus": "処理中"
+}

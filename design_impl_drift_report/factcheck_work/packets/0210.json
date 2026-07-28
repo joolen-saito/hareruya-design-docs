@@ -1,0 +1,70 @@
+{
+  "book": "0210",
+  "count": 3,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-2131",
+      "summary": "【実装乖離】コンテンツ管理_a ページ管理(登録・編集)_ページ管理(登録・編集)にて、日本語ページのtwigファイル名に言語識別子(.ja)が付与されず、画面表示の拡張子(.ja.twig)と実ファイル名が一致しない",
+      "feature": "a ページ管理(登録・編集)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "ページ管理(登録・編集)"
+        }
+      ],
+      "期待される挙動": "- (1-7)twigファイルのテキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する。日本語の場合は .ja.twig、英語の場合は .en.twig とする。",
+      "現在の挙動": "- PageController::edit は $localeSuffix を、日本語の場合は空文字、英語の場合は '.en' としているため、実際に生成・読込されるファイルは日本語が「<ファイル名>.twig」、英語が「<ファイル名>.en.twig」となる。\n- 一方 page_edit.twig は入力欄の右横に「.{{ locale }}.twig」を表示するため、日本語選択時は「.ja.twig」と表示され、実ファイル名(サフィックスなし)と一致しない。\n- 実ファイルでも app/template/user_data 配下には .en.twig が74件存在する一方、.ja.twig は0件であり、日本語版はサフィックスなしで運用されている。",
+      "引用": [
+        "src/Eccube/Controller/Admin/Content/PageController.php:99-100",
+        "src/Eccube/Resource/template/admin/Content/page_edit.twig:186-186",
+        "src/Eccube/Resource/template/admin/Content/page_edit.twig:189-189",
+        "src/Eccube/Controller/Admin/Content/BlockController.php:97-98",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md:90-92",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md:132-135"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2134",
+      "summary": "【実装乖離】コンテンツ管理_a ページ管理(登録・編集)_ページ管理(登録・編集)にて、titleタグのサフィックス固定文言のカギカッコが設計書の『晴れる屋』と異なり「晴れる屋」になっている",
+      "feature": "a ページ管理(登録・編集)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "ページ管理(登録・編集)"
+        }
+      ],
+      "期待される挙動": "- コード内に {% set noShopName = true %} を設定すると、titleタグのサフィックス(末尾)に固定文言「 | 日本最大級 MTG通販サイト『晴れる屋』」が追加されないようにする。\n- noShopNameの設定はページ管理で行うが、固定文言をつけるかどうかの判定はフロントで行う。",
+      "現在の挙動": "- フロントの default_frame.twig で noShopName が未定義または空の場合のみ shopNameSuffix を title に連結しており、noShopName による固定文言の非表示判定はフロント側で設計どおり実装されている。\n- ただし固定文言の実値は翻訳キー front.seo.title_suffix の '日本最大級 MTG通販サイト「晴れる屋」' であり、設計書が記載する『晴れる屋』(二重カギカッコ)ではなく「晴れる屋」(カギカッコ)が使われている。",
+      "引用": [
+        "src/Eccube/Resource/template/default/default_frame.twig:25-33",
+        "src/Eccube/Resource/template/default/default_frame.twig:17-17",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md:107-109",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md:155-156"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:6660 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2136",
+      "summary": "【一部実装】コンテンツ管理_c ブロック管理(登録・編集)_ブロック管理(登録・編集)にて、ファイル名を変更して更新した際に日英2種類のtwigファイルが作成されない",
+      "feature": "c ブロック管理(登録・編集)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-6",
+          "title": "ブロック管理(登録・編集)"
+        }
+      ],
+      "期待される挙動": "- ブロックを新規登録する場合、日英2種類のファイルを作成する。\n- 更新時は(1)言語で選択している言語の(6)ファイル名に該当するtwigファイルのみを更新する。\n- (6)ファイル名を変更して更新する場合、日英2種類のtwigファイルを作成する。",
+      "現在の挙動": "- 新規登録時($previousFileName === null)は、選択中ロケールに加えてもう一方のロケールのファイルも同じ内容で作成しており、設計どおりである。\n- 通常の更新時は選択中ロケールのファイルのみを dumpFile/upload しており、こちらも設計どおりである。\n- ただしファイル名を変更して更新した場合は、選択中ロケールのファイル1本のみが新ファイル名で作成され、もう一方の言語のファイルは新ファイル名で作成されない。旧ファイルも選択中ロケール分のみ削除されるため、もう一方の言語ファイルは旧ファイル名のまま残る。",
+      "引用": [
+        "src/Eccube/Controller/Admin/Content/BlockController.php:196-204",
+        "src/Eccube/Controller/Admin/Content/BlockController.php:174-189",
+        "src/Eccube/Controller/Admin/Content/BlockController.php:206-212",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md:240-244"
+      ],
+      "引用_不在または範囲外": []
+    }
+  ]
+}

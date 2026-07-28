@@ -1,0 +1,203 @@
+{
+  "book": "0211",
+  "count": 7,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-2199",
+      "summary": "【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、販売関連の集計が注文ステータス「出荷完了」に限定されていない",
+      "feature": "日別・月別集計 集計一覧（検索項目/検索結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "入荷通知依頼 一覧表示(検索項目)"
+        },
+        {
+          "id": "sheet-14",
+          "title": "入荷通知依頼 一覧表示(検索結果)"
+        },
+        {
+          "id": "sheet-16",
+          "title": "フォーマット売上分析 集計一覧(検索項目)"
+        }
+      ],
+      "期待される挙動": "- 日別・月別集計の販売関連の集計は、注文データの注文ステータスが「出荷完了」のもののみを計上し、それ以外の注文ステータスは計上しないこと。",
+      "現在の挙動": "- 日次集計バッチが使用する受注集計SQL（aggregateOrderSummaryByBaseInfo）の WHERE 句は「base_info_id IS NOT NULL」と受注日(order_date)の範囲指定のみで、注文ステータス（order_status_id）による絞り込みが一切ない。\n- そのため、キャンセル・入金待ち・新規受付など出荷完了以外のステータスの受注も総売上・原価・粗利益高・販売点数・取引数に計上される。\n- OrderStatus::DELIVERED（出荷完了、値=5）は集計処理側では参照されていない。\n- 月次集計は日次集計（dtb_daily_summary）を合算する実装のため、同じ問題が月別集計にも波及する。",
+      "引用": [
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:62-62",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:42-42",
+        "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:37-37",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:232-232",
+        "src/Eccube/Entity/Master/OrderStatus.php:39-39",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:156-156",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:36-36"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2200",
+      "summary": "【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、買取関連の集計が買取ステータス「買取成立」に限定されていない",
+      "feature": "日別・月別集計 集計一覧（検索項目/検索結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "入荷通知依頼 一覧表示(検索項目)"
+        },
+        {
+          "id": "sheet-14",
+          "title": "入荷通知依頼 一覧表示(検索結果)"
+        },
+        {
+          "id": "sheet-16",
+          "title": "フォーマット売上分析 集計一覧(検索項目)"
+        }
+      ],
+      "期待される挙動": "- 日別・月別集計の買取関連の集計（買取件数・買取金額）は、買取データの買取ステータスが「買取成立」のもののみを計上し、それ以外の買取ステータスは計上しないこと。",
+      "現在の挙動": "- ネット買取(dtb_buy_order)は「auto_approval_flg = TRUE」（自動承認フラグ）と申込日の範囲のみで抽出しており、買取ステータス(mtb_buy_order_status)による絞り込みを行っていない。\n- 店頭買取(dtb_otc_buy_order)は「cancel_date IS NULL」（キャンセル日が未設定）と申込日の範囲のみで抽出しており、買取ステータス(mtb_otc_buy_order_status)による絞り込みを行っていない。そのため査定中・査定保留などキャンセルされていない未成立データも計上される。\n- 店頭買取には「買取成立(STATUS_COMPLETE=1)」を含む集計対象ステータス定数 MtbOtcBuyOrderStatus::SUMMARY_STATUSES が定義されているが、日別・月別集計の買取集計SQLからは参照されていない（別機能の店舗×部門別買取集計でのみ使用）。",
+      "引用": [
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:132-132",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:146-146",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:83-83",
+        "src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:66-66",
+        "src/Eccube/Entity/DtbBuyOrder.php:133-133",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:157-157",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:221-221"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2201",
+      "summary": "【一部実装】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計の検索結果にて、店舗名の「その他」区分が集計・出力されない",
+      "feature": "日別・月別集計 集計一覧（検索項目/検索結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "入荷通知依頼 一覧表示(検索項目)"
+        },
+        {
+          "id": "sheet-14",
+          "title": "入荷通知依頼 一覧表示(検索結果)"
+        },
+        {
+          "id": "sheet-16",
+          "title": "フォーマット売上分析 集計一覧(検索項目)"
+        }
+      ],
+      "期待される挙動": "- 日別・月別集計の検索結果 識別ID2「店舗名」には、「通販」もしくは指定された「店舗名」または「その他」を出力すること。\n- 「その他」には通販・各店舗に該当しない売上を計上すること。",
+      "現在の挙動": "- 店舗名を決定する resolveStoreName() は、通販（root店舗かつ通販チェックON）の場合に「通販」、それ以外は店舗の short_name_jp もしくは shop_name を返すのみで、「その他」を返す分岐が存在しない。\n- 集計元の受注SQLが「o.base_info_id IS NOT NULL」で絞り込んでいるため、店舗が紐づかない（通販・各店舗に該当しない）売上はそもそも集計対象から除外され、どの行にも計上されない。\n- 集計結果は dtb_daily_summary / dtb_monthly_summary に base_info_id 単位で格納されるため、「その他」に相当する区分を保持する構造になっていない。\n- CSV出力(SummaryCsvExporterService)も同じ AnalysisSummaryBuilder を使うため、CSV側にも「その他」行は出力されない。",
+      "引用": [
+        "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:201-201",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:63-63",
+        "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:93-93",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:161-161",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:162-162"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2202",
+      "summary": "【実装乖離】分析・集計管理_日別・月別集計 CSV出力_日別・月別集計CSV出力にて、注文ステータス「出荷完了」のみを計上する集計方式が反映されていない",
+      "feature": "日別・月別集計 CSV出力",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "日別・月別集計 CSV出力"
+        }
+      ],
+      "期待される挙動": "- 日別・月別集計CSV出力の集計値は、注文ステータスが「出荷完了」の受注のみを計上した集計方式に従うこと。",
+      "現在の挙動": "- CSV出力(SummaryCsvExporterService::export)は画面表示と同じ AnalysisSummaryBuilder::build を呼び出し、dtb_daily_summary / dtb_monthly_summary に格納済みの値をそのまま出力している。\n- その集計値を作成する日次集計バッチのSQLに注文ステータスの絞り込みがないため、CSVにも出荷完了以外のステータスの受注が計上される（M12-01と同一原因）。\n- またCSV出力には最終行の「総合計」行が出力されていない（設計書310行目「最終行には「総合計」を追加」）。",
+      "引用": [
+        "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:93-93",
+        "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:109-109",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:62-62",
+        "src/Eccube/Controller/Admin/Analysis/SummaryController.php:130-130",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:37-37",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:156-156",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:310-310"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2203",
+      "summary": "【一部実装】分析・集計管理_入荷通知依頼 一覧表示（検索項目/検索結果）_入荷通知依頼一覧のキーワード検索が商品名(日/英)のみで、会員名で検索できない",
+      "feature": "入荷通知依頼 一覧表示（検索項目/検索結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "入荷通知依頼 一覧表示(検索項目)"
+        },
+        {
+          "id": "sheet-14",
+          "title": "入荷通知依頼 一覧表示(検索結果)"
+        },
+        {
+          "id": "sheet-16",
+          "title": "フォーマット売上分析 集計一覧(検索項目)"
+        }
+      ],
+      "期待される挙動": "- 入荷通知依頼 一覧表示の識別ID1「キーワード検索」は、商品名(日)・商品名(英)・会員名を検索対象とすること。",
+      "現在の挙動": "- 検索SQL（DtbProductRequestRepository::getAnalysisSummary）のキーワード条件は「(p.name LIKE :multi OR p.name_en LIKE :multi)」のみで、会員（dtb_customer / dtb_player）名を検索対象にしていない。\n- SQLのFROM/JOIN も dtb_product_request・dtb_product_class・dtb_product・mtb_language のみで、会員テーブルを結合していないため会員名では検索できない。\n- 画面のキーワード欄のラベル・プレースホルダも「商品名(日/英)」となっており、会員名検索は提供されていない。",
+      "引用": [
+        "src/Eccube/Repository/DtbProductRequestRepository.php:340-340",
+        "src/Eccube/Repository/DtbProductRequestRepository.php:330-330",
+        "src/Eccube/Form/Type/Admin/Analysis/SearchProductRequestType.php:50-50",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:575-575"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:6180 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2205",
+      "summary": "【一部実装】分析・集計管理_入荷通知依頼 CSV出力_入荷通知依頼CSV出力にて、項目「通知済み/削除」が「削除」件数のみとなっている",
+      "feature": "入荷通知依頼 CSV出力",
+      "sheetCandidates": [
+        {
+          "id": "sheet-15",
+          "title": "入荷通知依頼 CSV出力"
+        }
+      ],
+      "期待される挙動": "- 入荷通知依頼CSV出力の識別ID5は項目名「通知済み/削除」とし、検索条件に該当する商品ごとの「通知済み」もしくは「ユーザー自身が通知取り消しを行った」件数を取得すること。\n- 商品規格ごとに設定されている場合、異なる規格であっても同じ商品で登録している場合は1カウントとし、規格ごとにカウントしないこと。",
+      "現在の挙動": "- CSVヘッダーの5列目は「通知済み/削除」ではなく「削除」となっている（ProductRequestCsvExportService::CSV_HEADER の deleted_count => '削除'）。\n- 出力値は getAnalysisSummary が返す deleted_count（グループ内の全リクエストが論理削除済みのユーザー数）のみで、「通知済み」の件数は含まれていない。\n- 入荷通知メール送信処理(RestockNotificationMailSender)は送信後に通知済みを示すフラグや日時を記録しておらず、dtb_product_request にも通知済みを表すカラムが存在しないため、そもそも通知済み件数を集計できるデータが保持されていない。\n- 同一ユーザーの重複を排除する COUNT(DISTINCT pr.player_id) は実装されているため、「異なる規格でも1カウント」の要件は満たしている。",
+      "引用": [
+        "src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:29-29",
+        "src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:43-43",
+        "src/Eccube/Repository/DtbProductRequestRepository.php:327-327",
+        "src/Eccube/Entity/DtbProductRequest.php:45-45",
+        "src/Eccube/Service/Stock/RestockNotificationMailSender.php:114-114",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:645-645",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:668-668",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:669-669"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2206",
+      "summary": "【実装乖離】分析・集計管理_特集タグ編集CSVダウンロード（検索項目）_特集タグ編集CSVダウンロードにて、集計日(From)の初期値が当月1日ではなく2週間前になっている",
+      "feature": "特集タグ編集CSVダウンロード（検索項目）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-19",
+          "title": "特集タグ編集CSVダウンロード(検索項目)"
+        },
+        {
+          "id": "sheet-20",
+          "title": "特集タグ編集CSVダウンロード CSV出力"
+        },
+        {
+          "id": "sheet-13",
+          "title": "入荷通知依頼 一覧表示(検索項目)"
+        }
+      ],
+      "期待される挙動": "- 特集タグ編集CSVダウンロード（検索項目）の識別ID1「集計日(From)」は必須項目であり、初期値として当月1日が設定されていること。",
+      "現在の挙動": "- 集計日(From)に相当する start_date の初期値は 'data' => new \\DateTime('2 weeks ago') となっており、画面表示時に「2週間前の日付」が設定される（設計の当月1日と不一致）。\n- 必須指定は required=true かつ NotBlank 制約が付与されており、必須要件は満たしている。\n- テンプレート(used_card.twig)側でも初期値を上書きする処理はなく、フォームの既定値がそのまま表示される。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/Analysis/SearchUsedCardType.php:47-47",
+        "src/Eccube/Form/Type/Admin/Analysis/SearchUsedCardType.php:48-48",
+        "src/Eccube/Controller/Admin/Analysis/UsedCardController.php:39-39",
+        "src/Eccube/Resource/template/admin/Analysis/used_card.twig:35-35",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:813-813"
+      ],
+      "引用_不在または範囲外": []
+    }
+  ]
+}

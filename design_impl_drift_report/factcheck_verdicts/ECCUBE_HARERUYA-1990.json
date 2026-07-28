@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1990",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: isOpenShop の絞り込みを追加。他6フォームも同時是正を推奨(1994と同一箇所)",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "query_builder が無く閉店店舗も選択肢に出る。同じ未対応が他6フォームにもあり影響範囲は起票より広い",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-3「共通処理」\n4.画面共通部品\n> 1-3 店舗　複数選択(セレクトボックス)　初期値: ログインしているメンバーのデフォルト検索表示店舗\n> ・リスト内容は店舗マスタから**閉店していない店舗のみ**取得\n\n■実装の現状\nSearchStockListType.php:123-132 に `query_builder` がなく、`// TODO: 閉店フラグが BaseInfo に追加された後、query_builder で絞り込む` が残存しています。\nしかし BaseInfo.php:1563 に `is_open_shop` は既に実在し、InventoryPlanListType.php:59-60 は `andWhere('bi.isOpenShop = :isOpenShop')` で絞り込み済み、共通API `BaseInfoRepository::getOpenShops()` も存在します。TODOの前提はすでに解消しています。\n在庫区分のOR条件は ProductStockRepository.php:96-99 で設計どおり実装済みです。\n\n**影響範囲は起票の記載より広いです。** `SearchStockMoveInstructionType` / `StockMoveNewType` / `StockChangeType` / `BarcodeReplacementListType` / `StockTransferCsvImportType` / `StockMoveCsvImportType` にも同じ未対応があります。\n\n■次の対応\n実装対応: `query_builder` で `isOpenShop` による絞り込みを追加する。上記6フォームも同時に是正することを推奨します（1994と同一箇所）。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-3「共通処理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:23:57+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:24:01+09:00",
+  "appliedStatus": "処理中"
+}

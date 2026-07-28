@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2117",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 保存時にステータス遷移(未確認以外→未確認)を検知し身分証有効期限をクリア",
+  "codexReview": "設計値を独立抽出レビュー済み(codex)。全項目一致",
+  "summary": "未確認への遷移時の有効期限クリアが不在。setIdExpirationDate(null) が0件",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）\n\n■結論\n指摘は事実です。設計要求が正本設計書に実在し、実装がそれと異なることを確認しました。\n\n■設計上の根拠\n正本設計書 0207_基本設計仕様書(会員管理機能)「会員登録編集」シート\n> 機能仕様 処理概要\n> ・識別ID:37「本人確認ステータス」が未確認以外から未確認に変更、かつ身分証有効期限が入力済みの場合に身分証有効期限を空欄で更新する\n\n■実装の現状\n会員編集の保存経路に、本人確認ステータスの遷移を検知して身分証有効期限をクリアする処理がありません。\n\n- src/Eccube 配下を全文検索しても `setIdExpirationDate(null)` は0件です。\n- src/Eccube/Controller/Admin/Customer/ 配下に `STATUS_UNCONFIRMED` および「未確認」への遷移判定が存在しません。\n- CustomerEditController.php:231-294 の `completeIdentification()` は身分証有効期限を扱いますが、これは簡易書留確認の完了処理（ステータスを確認済みへ設定する別ルート）であり、未確認へ戻す保存経路ではありません。\n\n■次の対応\n実装対応: 会員情報の保存時に、変更前の本人確認ステータスが未確認以外で、変更後が未確認であり、かつ身分証有効期限が入力済みの場合に有効期限をクリアする処理を追加する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0207_基本設計仕様書(会員管理機能).html / 会員登録編集\n- 実装: src/Eccube/Form/Type/Admin/CustomerType.php ／ app/config/eccube/packages/eccube.yaml ／ CustomerEditController.php ／ NameType.php ／ CustomerStatusType.php\n- 設計値は独立抽出レビュー（codex）で照合済みです。全項目一致しました。",
+  "recordedAt": "2026-07-28T09:20:09+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T09:20:10+09:00",
+  "appliedStatus": "処理中"
+}

@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2236",
+  "verdict": "SUSPECT",
+  "reasonCode": "DESIGN_AMBIGUOUS",
+  "reasonLabel": "設計内に解釈の分岐・矛盾があり設計判断待ち",
+  "nextAction": "要確認: 「/banner/{店舗識別子}」と「TOPと別フォルダ」は同時に満たせない。詳細設計書もパス規約を未確定としている",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "実装は banner/event/{店舗}/。設計の2要求が両立不能",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-22「画像設定」\n機能仕様処理概要（2つの要求が併記されています）\n> ・S3のイベントバナー画像参照先、アップロード先を**イベントバナー用フォルダに変更する（TOPバナー用フォルダとは別）**\n> ・アップロード先は **/banner/{選択店舗の識別子（tc など）}** のフォルダ\n\n■実装の現状\nsrc/Eccube/Service/Admin/Event/EventBannerStorageService.php:26 は `S3_BANNER_PREFIX = 'banner/event/'` で、アップロード先は `banner/event/{店舗HTMLクラス名}/` です。一覧取得・削除キー検証も同一prefix前提で一貫しています。\nTOPバナーは TopBannerUploadAction.php:25 で `'banner/top/'` のため、**「TOPバナー用フォルダとは別」という要求は充足**しています。\n\n■次の対応\n要確認: **設計の2つの要求が両立しません。** 「/banner/{店舗識別子}」を字義どおり取ると TOP バナーと同じ `banner/` 直下になり、「TOPバナー用フォルダとは別」を満たせません。実装の `banner/event/{店舗識別子}/` は後者を満たす形です。\nなお詳細設計書も「保管先のパス規約は ec-cube-enterprise 実装で要確認」としており、移行先のパス規約は未確定です。どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-22「画像設定」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T09:46:05+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T09:46:11+09:00",
+  "appliedStatus": "処理中"
+}

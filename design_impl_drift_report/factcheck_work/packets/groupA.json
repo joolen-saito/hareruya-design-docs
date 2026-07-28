@@ -1,0 +1,678 @@
+{
+  "group": "groupA",
+  "books": [
+    "0201",
+    "0211",
+    "0203",
+    "0210"
+  ],
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-2190",
+      "summary": "【未実装】システム設定_メンバー管理一覧_メンバー管理一覧にて、「デフォルト検索表示店舗」による絞り込みができない",
+      "feature": "メンバー管理一覧",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        },
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        }
+      ],
+      "期待される挙動": "- メンバー管理一覧の識別ID:2-4「デフォルト検索表示店舗」を選択した際に、選択された店舗でメンバー一覧の表示を絞り込むこと。",
+      "現在の挙動": "- メンバー管理一覧の画面上部に用意されている絞り込みセレクトボックスは「所属」(filter_department) と「権限」(filter_authority) の2つのみで、デフォルト検索表示店舗を選択する絞り込み用のセレクトボックスは存在しない。\n- 「デフォルト検索表示店舗」は一覧テーブルの表示列 (Member.DefaultSearchBaseInfo.shopName の出力) としてのみ実装されており、クリック・選択による絞り込み処理は実装されていない。\n- クライアントサイドの絞り込み関数 filterMembers() も data-department-id / data-authority-id の2軸しか参照しておらず、店舗による絞り込み条件を持たない。",
+      "引用": [
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:115-115",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:122-122",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:174-174",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:45-45",
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php:77-77",
+        "html/template/admin/assets/js/function.js:None-None",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:32-32",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:48-48"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2191",
+      "summary": "【一部実装】システム設定_メンバー管理一覧_メンバー管理一覧にて、表示順の上/下移動アイコン押下時に処理前の確認が行われない",
+      "feature": "メンバー管理一覧",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        },
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        }
+      ],
+      "期待される挙動": "- メンバー管理一覧の識別ID:2-8「編集アイコン」は、それぞれのアイコンの処理を実行する前に確認を行うこと。",
+      "現在の挙動": "- 削除アイコンのみ Bootstrap の確認モーダル（member_delete_<id>）が表示され、確認後に削除される。\n- 上移動(action-up)・下移動(action-down)アイコンは、テンプレート内のインラインJSがクリックを捕捉してそのまま $.ajax でリクエストを送信しており、確認ダイアログ・確認モーダルは一切表示されない。\n- 上下移動のアンカーには csrf_token_for_anchor() が付与されていないため、html/template/admin/assets/js/function.js の a[token-for-anchor] に対する既定の確認ダイアログ（data-confirm が false でない場合に confirm を出す仕組み）も発火しない。\n- 編集アイコンは確認なしで編集画面へ遷移するだけとなっている。",
+      "引用": [
+        "html/template/admin/assets/js/function.js:None-None",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:22-22",
+        "html/template/admin/assets/js/function.js:161-161",
+        "html/template/admin/assets/js/function.js:147-147",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:52-52",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:53-53"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:232 [line_out_of_range]",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:268 [line_out_of_range]"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2192",
+      "summary": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、ログインIDの最大文字数が設計の255文字ではなく50文字になっている",
+      "feature": "メンバー管理",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        },
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        }
+      ],
+      "期待される挙動": "- メンバー管理の識別ID:1-3「ログインID」は半角・全角の入力が可能で、必須、最大255文字であること。",
+      "現在の挙動": "- ログインIDの Length 制約は max に eccube_id_max_len を用いており、app/config/eccube/packages/eccube.yaml の設定値は 50 のため、51文字以上は入力エラーとなる（設計の255文字と不一致）。\n- 最小文字数として eccube_id_min_len（4）も課されている。\n- 必須（NotBlank）は新規登録時のみ付与され、編集時は required=false / mapped=false / disabled 属性が付与され入力不可となっている。\n- DBカラム login_id は length 255 で定義されており、フォームの制限値のみが50に絞られている。",
+      "引用": [
+        "app/config/eccube/packages/eccube.yaml:None-None",
+        "app/config/eccube/packages/eccube.yaml:109-109",
+        "src/Eccube/Entity/Member.php:124-124",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:117-117",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:103-103"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Form/Type/Admin/MemberType.php:201 [line_out_of_range]",
+        "src/Eccube/Form/Type/Admin/MemberType.php:215 [line_out_of_range]"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2193",
+      "summary": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、パスワードの最大文字数が設計の255文字ではなく50文字になっている",
+      "feature": "メンバー管理",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        },
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        }
+      ],
+      "期待される挙動": "- メンバー管理の識別ID:1-5「パスワード」は必須で、最大255文字まで入力できること。",
+      "現在の挙動": "- パスワードは RepeatedPasswordType で構築され、Length 制約の max に eccube_password_max_len を使用している。設定値は 50 のため、51文字以上は入力エラーとなる（設計の255文字と不一致）。\n- 最小文字数 eccube_password_min_len（12）および eccube_password_pattern による書式チェックも課されている。\n- 必須指定（NotBlank）は付与されており、必須要件そのものは満たしている。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/MemberType.php:84-84",
+        "src/Eccube/Form/Type/Admin/MemberType.php:89-89",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:119-119",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:103-103"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/eccube.yaml:196 [line_out_of_range]"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2194",
+      "summary": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、パスワード(確認)の最大文字数が設計の255文字ではなく50文字になっている",
+      "feature": "メンバー管理",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        },
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        }
+      ],
+      "期待される挙動": "- メンバー管理の識別ID:1-6「パスワード(確認)」は必須で、最大255文字まで入力できること。",
+      "現在の挙動": "- パスワード(確認)は RepeatedPasswordType の second フィールドであり、MemberType が options で渡す Length 制約（max: eccube_password_max_len = 50）が first/second の両方に適用される。\n- したがってパスワード(確認)も最大50文字となり、設計の255文字と一致しない。\n- NotBlank も options 経由で両フィールドに適用されるため、必須要件は満たしている。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/MemberType.php:84-84",
+        "src/Eccube/Form/Type/RepeatedPasswordType.php:44-44",
+        "src/Eccube/Resource/template/admin/Setting/System/member_edit.twig:171-171",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:120-120",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:103-103"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/eccube.yaml:196 [line_out_of_range]"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2195",
+      "summary": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、権限グループの選択肢が「登録されている全権限」になっていない",
+      "feature": "メンバー管理",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        },
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        }
+      ],
+      "期待される挙動": "- メンバー管理の識別ID:1-7「権限グループ」は単一選択のセレクトボックスで必須であり、選択肢として登録されている全権限を表示すること。",
+      "現在の挙動": "- Authority の query_builder が「a.id >= :current_member_level」で絞り込んでおり、ログイン中メンバー自身の権限レベル以上（=IDが同値以上の下位権限）の権限しか選択肢に表示されない。\n- さらに「a.isViewable = true」で絞り込むため、mtb_authority で is_viewable=0 の「顧客」「ゲスト」は選択肢から除外される。\n- current_member_level はコントローラでログインメンバーの権限IDが渡されるため、例えば店舗オペレーター(ID=5)でログインした場合、システム管理者(ID=1)やモールオーナー(ID=2)等の権限は選択できない。\n- 必須（NotBlank）および単一選択（expanded=false / multiple=false）の要件は満たしている。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/MemberType.php:115-115",
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php:99-99",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:121-121"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/doctrine/import_csv/ja/mtb_authority.csv:7 [line_out_of_range]",
+        "src/Eccube/Entity/Master/Authority.php:51 [line_out_of_range]"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2197",
+      "summary": "【実装乖離】システム設定_メンバー管理_メンバー管理の新規登録時に、稼働ラジオボタンの初期値「非稼働」が選択されていない",
+      "feature": "メンバー管理",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        },
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        }
+      ],
+      "期待される挙動": "- メンバー管理の識別ID:1-10「稼働」は単一選択(ラジオボタン)で、初期値として「非稼働」が選択された状態で表示されること。",
+      "現在の挙動": "- MemberType の 'Work' は EntityType（expanded=true のラジオボタン）で定義されているが、'data' や既定値の指定がなく、初期選択値が設定されていない。\n- MemberController::create() は new Member() を生成した後に setBaseInfo() のみを実行しており、setWork() を呼び出していない（リポジトリ全体を grep しても Member エンティティ以外に setWork( の呼び出しは存在しない）。\n- Member エンティティの $Work プロパティ初期値は null であり、コンストラクタでも設定されないため、新規登録画面ではラジオボタンがどちらも未選択の状態で表示される。\n- その結果、稼働/非稼働を選択せずに登録しようとすると NotBlank でエラーとなり、設計の「初期値: 非稼働」を満たしていない。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/MemberType.php:130-130",
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php:95-95",
+        "src/Eccube/Entity/Member.php:169-169",
+        "src/Eccube/Resource/doctrine/import_csv/ja/mtb_work.csv:2-2",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:124-124"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2198",
+      "summary": "【実装乖離】システム設定_権限管理_権限管理画面にて、複製操作が設計書指定の「リンク」ではなく通常ボタン（button要素）で実装されている",
+      "feature": "権限管理",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "権限管理"
+        }
+      ],
+      "期待される挙動": "- 権限管理画面（M11-03）の識別ID:1-9「複製リンク」は、画面部品としてリンクであること。\n- クリック時に該当行と同権限の複製行（1-10）を追加し、複製行には権限名入力（1-11、必須・重複不可）を設けること。",
+      "現在の挙動": "- 複製操作は <button type=\"button\" class=\"btn btn-ec-regular btn-copy\"> として描画されており、アンカー（a要素）のリンクではなく通常ボタン表示である。管理画面Twig・バンドルCSS/JS のいずれにも、このボタンをリンク表示へ変換する実装は存在しない。\n- 機能面では、handleCopyClick() が対象行を cloneNode して権限チェック状態を引き継いだ複製行を tbody 末尾に追加し（1-9/1-10 充足）、複製行の先頭セルに required 付きの権限名テキスト入力を動的生成する。\n- 権限名の重複は AuthorityIndexAction で、同一リクエスト内の重複および既存 mtb_authority の同名レコードを検出して例外送出により拒否している（1-11 の重複不可は充足）。\n- ただし権限名の必須チェックはクライアント側の required 属性のみで、サーバ側に NotBlank 相当のチェックがなく、空文字を直接POSTした場合は空名の権限が作成され得る。",
+      "引用": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md:220-220",
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md:221-222",
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md:185-189",
+        "src/Eccube/Service/Admin/Setting/System/AuthorityIndexAction.php:73-75"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/template/admin/Setting/System/authority.twig:329 [line_out_of_range]",
+        "src/Eccube/Resource/template/admin/Setting/System/authority.twig:165 [line_out_of_range]",
+        "src/Eccube/Resource/template/admin/Setting/System/authority.twig:182 [line_out_of_range]",
+        "src/Eccube/Resource/template/admin/Setting/System/authority.twig:329 [line_out_of_range]"
+      ],
+      "book": "0201"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2199",
+      "summary": "【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、販売関連の集計が注文ステータス「出荷完了」に限定されていない",
+      "feature": "日別・月別集計 集計一覧（検索項目/検索結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "入荷通知依頼 一覧表示(検索項目)"
+        },
+        {
+          "id": "sheet-14",
+          "title": "入荷通知依頼 一覧表示(検索結果)"
+        },
+        {
+          "id": "sheet-16",
+          "title": "フォーマット売上分析 集計一覧(検索項目)"
+        }
+      ],
+      "期待される挙動": "- 日別・月別集計の販売関連の集計は、注文データの注文ステータスが「出荷完了」のもののみを計上し、それ以外の注文ステータスは計上しないこと。",
+      "現在の挙動": "- 日次集計バッチが使用する受注集計SQL（aggregateOrderSummaryByBaseInfo）の WHERE 句は「base_info_id IS NOT NULL」と受注日(order_date)の範囲指定のみで、注文ステータス（order_status_id）による絞り込みが一切ない。\n- そのため、キャンセル・入金待ち・新規受付など出荷完了以外のステータスの受注も総売上・原価・粗利益高・販売点数・取引数に計上される。\n- OrderStatus::DELIVERED（出荷完了、値=5）は集計処理側では参照されていない。\n- 月次集計は日次集計（dtb_daily_summary）を合算する実装のため、同じ問題が月別集計にも波及する。",
+      "引用": [
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:62-62",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:42-42",
+        "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:37-37",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:232-232",
+        "src/Eccube/Entity/Master/OrderStatus.php:39-39",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:156-156",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:36-36"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2200",
+      "summary": "【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、買取関連の集計が買取ステータス「買取成立」に限定されていない",
+      "feature": "日別・月別集計 集計一覧（検索項目/検索結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "入荷通知依頼 一覧表示(検索項目)"
+        },
+        {
+          "id": "sheet-14",
+          "title": "入荷通知依頼 一覧表示(検索結果)"
+        },
+        {
+          "id": "sheet-16",
+          "title": "フォーマット売上分析 集計一覧(検索項目)"
+        }
+      ],
+      "期待される挙動": "- 日別・月別集計の買取関連の集計（買取件数・買取金額）は、買取データの買取ステータスが「買取成立」のもののみを計上し、それ以外の買取ステータスは計上しないこと。",
+      "現在の挙動": "- ネット買取(dtb_buy_order)は「auto_approval_flg = TRUE」（自動承認フラグ）と申込日の範囲のみで抽出しており、買取ステータス(mtb_buy_order_status)による絞り込みを行っていない。\n- 店頭買取(dtb_otc_buy_order)は「cancel_date IS NULL」（キャンセル日が未設定）と申込日の範囲のみで抽出しており、買取ステータス(mtb_otc_buy_order_status)による絞り込みを行っていない。そのため査定中・査定保留などキャンセルされていない未成立データも計上される。\n- 店頭買取には「買取成立(STATUS_COMPLETE=1)」を含む集計対象ステータス定数 MtbOtcBuyOrderStatus::SUMMARY_STATUSES が定義されているが、日別・月別集計の買取集計SQLからは参照されていない（別機能の店舗×部門別買取集計でのみ使用）。",
+      "引用": [
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:132-132",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:146-146",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:83-83",
+        "src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:66-66",
+        "src/Eccube/Entity/DtbBuyOrder.php:133-133",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:157-157",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:221-221"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2201",
+      "summary": "【一部実装】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計の検索結果にて、店舗名の「その他」区分が集計・出力されない",
+      "feature": "日別・月別集計 集計一覧（検索項目/検索結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "入荷通知依頼 一覧表示(検索項目)"
+        },
+        {
+          "id": "sheet-14",
+          "title": "入荷通知依頼 一覧表示(検索結果)"
+        },
+        {
+          "id": "sheet-16",
+          "title": "フォーマット売上分析 集計一覧(検索項目)"
+        }
+      ],
+      "期待される挙動": "- 日別・月別集計の検索結果 識別ID2「店舗名」には、「通販」もしくは指定された「店舗名」または「その他」を出力すること。\n- 「その他」には通販・各店舗に該当しない売上を計上すること。",
+      "現在の挙動": "- 店舗名を決定する resolveStoreName() は、通販（root店舗かつ通販チェックON）の場合に「通販」、それ以外は店舗の short_name_jp もしくは shop_name を返すのみで、「その他」を返す分岐が存在しない。\n- 集計元の受注SQLが「o.base_info_id IS NOT NULL」で絞り込んでいるため、店舗が紐づかない（通販・各店舗に該当しない）売上はそもそも集計対象から除外され、どの行にも計上されない。\n- 集計結果は dtb_daily_summary / dtb_monthly_summary に base_info_id 単位で格納されるため、「その他」に相当する区分を保持する構造になっていない。\n- CSV出力(SummaryCsvExporterService)も同じ AnalysisSummaryBuilder を使うため、CSV側にも「その他」行は出力されない。",
+      "引用": [
+        "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:201-201",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:63-63",
+        "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:93-93",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:161-161",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:162-162"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2202",
+      "summary": "【実装乖離】分析・集計管理_日別・月別集計 CSV出力_日別・月別集計CSV出力にて、注文ステータス「出荷完了」のみを計上する集計方式が反映されていない",
+      "feature": "日別・月別集計 CSV出力",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "日別・月別集計 CSV出力"
+        }
+      ],
+      "期待される挙動": "- 日別・月別集計CSV出力の集計値は、注文ステータスが「出荷完了」の受注のみを計上した集計方式に従うこと。",
+      "現在の挙動": "- CSV出力(SummaryCsvExporterService::export)は画面表示と同じ AnalysisSummaryBuilder::build を呼び出し、dtb_daily_summary / dtb_monthly_summary に格納済みの値をそのまま出力している。\n- その集計値を作成する日次集計バッチのSQLに注文ステータスの絞り込みがないため、CSVにも出荷完了以外のステータスの受注が計上される（M12-01と同一原因）。\n- またCSV出力には最終行の「総合計」行が出力されていない（設計書310行目「最終行には「総合計」を追加」）。",
+      "引用": [
+        "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:93-93",
+        "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:109-109",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php:62-62",
+        "src/Eccube/Controller/Admin/Analysis/SummaryController.php:130-130",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:37-37",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:156-156",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:310-310"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2203",
+      "summary": "【一部実装】分析・集計管理_入荷通知依頼 一覧表示（検索項目/検索結果）_入荷通知依頼一覧のキーワード検索が商品名(日/英)のみで、会員名で検索できない",
+      "feature": "入荷通知依頼 一覧表示（検索項目/検索結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "入荷通知依頼 一覧表示(検索項目)"
+        },
+        {
+          "id": "sheet-14",
+          "title": "入荷通知依頼 一覧表示(検索結果)"
+        },
+        {
+          "id": "sheet-16",
+          "title": "フォーマット売上分析 集計一覧(検索項目)"
+        }
+      ],
+      "期待される挙動": "- 入荷通知依頼 一覧表示の識別ID1「キーワード検索」は、商品名(日)・商品名(英)・会員名を検索対象とすること。",
+      "現在の挙動": "- 検索SQL（DtbProductRequestRepository::getAnalysisSummary）のキーワード条件は「(p.name LIKE :multi OR p.name_en LIKE :multi)」のみで、会員（dtb_customer / dtb_player）名を検索対象にしていない。\n- SQLのFROM/JOIN も dtb_product_request・dtb_product_class・dtb_product・mtb_language のみで、会員テーブルを結合していないため会員名では検索できない。\n- 画面のキーワード欄のラベル・プレースホルダも「商品名(日/英)」となっており、会員名検索は提供されていない。",
+      "引用": [
+        "src/Eccube/Repository/DtbProductRequestRepository.php:340-340",
+        "src/Eccube/Repository/DtbProductRequestRepository.php:330-330",
+        "src/Eccube/Form/Type/Admin/Analysis/SearchProductRequestType.php:50-50",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:575-575"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:6180 [line_out_of_range]"
+      ],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2205",
+      "summary": "【一部実装】分析・集計管理_入荷通知依頼 CSV出力_入荷通知依頼CSV出力にて、項目「通知済み/削除」が「削除」件数のみとなっている",
+      "feature": "入荷通知依頼 CSV出力",
+      "sheetCandidates": [
+        {
+          "id": "sheet-15",
+          "title": "入荷通知依頼 CSV出力"
+        }
+      ],
+      "期待される挙動": "- 入荷通知依頼CSV出力の識別ID5は項目名「通知済み/削除」とし、検索条件に該当する商品ごとの「通知済み」もしくは「ユーザー自身が通知取り消しを行った」件数を取得すること。\n- 商品規格ごとに設定されている場合、異なる規格であっても同じ商品で登録している場合は1カウントとし、規格ごとにカウントしないこと。",
+      "現在の挙動": "- CSVヘッダーの5列目は「通知済み/削除」ではなく「削除」となっている（ProductRequestCsvExportService::CSV_HEADER の deleted_count => '削除'）。\n- 出力値は getAnalysisSummary が返す deleted_count（グループ内の全リクエストが論理削除済みのユーザー数）のみで、「通知済み」の件数は含まれていない。\n- 入荷通知メール送信処理(RestockNotificationMailSender)は送信後に通知済みを示すフラグや日時を記録しておらず、dtb_product_request にも通知済みを表すカラムが存在しないため、そもそも通知済み件数を集計できるデータが保持されていない。\n- 同一ユーザーの重複を排除する COUNT(DISTINCT pr.player_id) は実装されているため、「異なる規格でも1カウント」の要件は満たしている。",
+      "引用": [
+        "src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:29-29",
+        "src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:43-43",
+        "src/Eccube/Repository/DtbProductRequestRepository.php:327-327",
+        "src/Eccube/Entity/DtbProductRequest.php:45-45",
+        "src/Eccube/Service/Stock/RestockNotificationMailSender.php:114-114",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:645-645",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:668-668",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:669-669"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2206",
+      "summary": "【実装乖離】分析・集計管理_特集タグ編集CSVダウンロード（検索項目）_特集タグ編集CSVダウンロードにて、集計日(From)の初期値が当月1日ではなく2週間前になっている",
+      "feature": "特集タグ編集CSVダウンロード（検索項目）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-19",
+          "title": "特集タグ編集CSVダウンロード(検索項目)"
+        },
+        {
+          "id": "sheet-20",
+          "title": "特集タグ編集CSVダウンロード CSV出力"
+        },
+        {
+          "id": "sheet-13",
+          "title": "入荷通知依頼 一覧表示(検索項目)"
+        }
+      ],
+      "期待される挙動": "- 特集タグ編集CSVダウンロード（検索項目）の識別ID1「集計日(From)」は必須項目であり、初期値として当月1日が設定されていること。",
+      "現在の挙動": "- 集計日(From)に相当する start_date の初期値は 'data' => new \\DateTime('2 weeks ago') となっており、画面表示時に「2週間前の日付」が設定される（設計の当月1日と不一致）。\n- 必須指定は required=true かつ NotBlank 制約が付与されており、必須要件は満たしている。\n- テンプレート(used_card.twig)側でも初期値を上書きする処理はなく、フォームの既定値がそのまま表示される。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/Analysis/SearchUsedCardType.php:47-47",
+        "src/Eccube/Form/Type/Admin/Analysis/SearchUsedCardType.php:48-48",
+        "src/Eccube/Controller/Admin/Analysis/UsedCardController.php:39-39",
+        "src/Eccube/Resource/template/admin/Analysis/used_card.twig:35-35",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M12_analysis_management_basedesign.md:813-813"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0211"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2039",
+      "summary": "【実装乖離】受注管理_受注検索一覧(検索入力/検索結果)_受注検索一覧の「対応状況」チェックボックスに、設計書のチェック項目に無い「対応中」「返品」が選択肢として表示される",
+      "feature": "受注検索一覧(検索入力/検索結果)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "受注情報検索 一覧(検索入力)"
+        },
+        {
+          "id": "sheet-4",
+          "title": "受注情報検索 一覧(検索結果)"
+        }
+      ],
+      "期待される挙動": "- 受注検索一覧の対応状況（識別ID 2-3）は複数選択のチェックボックスであり、選択肢は「決済処理中、注文受領、入金待ち、入金済み、キャンセル、出荷指示、出荷完了、購入処理中、ピック中、ピック完了、店頭予約」の11項目であること。",
+      "現在の挙動": "- SearchOrderType の status フィールドは expanded=true / multiple=true のチェックボックスとして実装され、query_builder で mtb_order_status から OrderStatus::PASSED（引渡し済み、id=14）のみを除外している。\n- mtb_order_status には基本マスタ由来の id=4「対応中」と、マイグレーション Version20260220000001 で追加された id=15「返品」が残存しており、これらは除外されていないため、対応状況チェックボックスには設計書に無い「対応中」「返品」を含む13項目が表示される。\n- 設計書が列挙する11項目（決済処理中=7、注文受領=1、入金待ち=2、入金済み=6、キャンセル=3、出荷指示=9、出荷完了=5、購入処理中=8、ピック中=10、ピック完了=13、店頭予約=12）はすべて選択肢に含まれている。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/SearchOrderType.php:141-156",
+        "src/Eccube/Resource/doctrine/import_csv/ja/mtb_order_status.csv:4-4",
+        "app/DoctrineMigrations/Version20260220000001.php:70-74",
+        "src/Eccube/Resource/template/admin/Order/index.twig:411-427",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:71-71"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/doctrine.yaml:78 [line_out_of_range]"
+      ],
+      "book": "0203"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2045",
+      "summary": "【実装乖離】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_メール一括送信のテンプレ選択が、メール管理で作成されたテンプレート一覧ではなく特定ベースファイル（sell_order / sell_order.en / no_base）のテンプレートのみに限定されている",
+      "feature": "メール一括送信 / 【新規】手動メール通知(確認画面)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-10",
+          "title": "【新規】手動メール通知(確認画面)"
+        },
+        {
+          "id": "sheet-9",
+          "title": "メール一括送信"
+        }
+      ],
+      "期待される挙動": "- メール一括送信（M05-06）のテンプレ選択（識別ID 1）の選択肢は、ショップ設定＞メール管理で作成されているテンプレート一覧が表示されること。",
+      "現在の挙動": "- OrderManualMailAllType の template フィールドの query_builder は mt.file_name IN (:fileNames) で絞り込んでおり、MailController::manualMailAll() から渡される baseFiles は MailTemplate::BASE_SELL_ORDER / BASE_SELL_ORDER_EN / BASE_NO_BASE の3種のみである。\n- そのため選択肢は file_name が 'Mail/sell_order.twig' / 'Mail/sell_order.en.twig' / 'Mail/no_base.twig' のテンプレートに限定される。\n- ショップ設定＞メール管理（MailType）でテンプレートを新規作成すると file_name は 'Mail/Mall/<入力名>.twig' となるため、メール管理で新規作成したテンプレートはメール一括送信のテンプレ選択に一切表示されない。\n- また、メール管理の一覧は baseInfo と isAutoSend=false で絞り込んでいるのに対し、メール一括送信側はこれらの条件で絞り込んでいないため、両者の一覧は一致しない。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/OrderManualMailAllType.php:38-55",
+        "src/Eccube/Entity/MailTemplate.php:98-110",
+        "src/Eccube/Form/Type/Admin/MailType.php:49-57",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:738-738"
+      ],
+      "引用_不在または範囲外": [
+        "Mail/sell_order.twig:None [file_not_found]",
+        "Mail/sell_order.en.twig:None [file_not_found]",
+        "Mail/no_base.twig:None [file_not_found]",
+        "src/Eccube/Controller/Admin/Order/MailController.php:345 [line_out_of_range]",
+        "src/Eccube/Form/Type/Admin/MailType.php:118 [line_out_of_range]"
+      ],
+      "book": "0203"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2047",
+      "summary": "【一部実装】受注管理_納品書印刷(日本語)_納品書印刷(日本語)のデータ取得クエリが会員(Customer/Player)を内部結合しているため、ゲスト(非会員)受注が納品書の対象から外れる",
+      "feature": "納品書印刷(日本語)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "納品書印刷（日本語）"
+        },
+        {
+          "id": "sheet-21",
+          "title": "出荷指示ー納品書印刷（日本語）"
+        },
+        {
+          "id": "sheet-14",
+          "title": "納品書印刷（英語）"
+        }
+      ],
+      "期待される挙動": "- 納品書印刷(日本語)の「送り主-会員番号」（識別ID 16）はゲストの場合に「非会員」と表示すること。\n- 本店のほか支店もスマレジも納品書の出力対象とすること（スマレジには非会員による取引データが存在する）。",
+      "現在の挙動": "- テンプレート delivery_slips.ja.twig には smaregi_id が無い場合に「非会員」と表示するフォールバックが実装されている。\n- 一方 DtbShippingStandbyRepository::generateDeliverySlips() の注文単位サマリ取得クエリは ->join('o.Customer', 'cus') および ->join('cus.Player', 'player') と内部結合しており、Order.Customer が null のゲスト受注（Order エンティティ上 Customer は nullable）はサマリ結果 $summary から欠落する。\n- 明細取得用の $qb2 は Customer 結合を追加する前の $qb を clone しているためゲスト受注も含まれる。その結果 foreach で $result[$key] = array_merge($summary[$key], $items[$key]) を行う際、ゲスト受注の $summary[$key] が未定義となり納品書を生成できない。\n- そのため「非会員」表示のフォールバックはゲスト受注に対して到達せず、スマレジの非会員取引の納品書が出力できない。",
+      "引用": [
+        "src/Eccube/Repository/DtbShippingStandbyRepository.php:303-304",
+        "src/Eccube/Repository/DtbShippingStandbyRepository.php:263-263",
+        "src/Eccube/Repository/DtbShippingStandbyRepository.php:343-343",
+        "src/Eccube/Entity/Order.php:600-600",
+        "src/Eccube/Resource/template/admin/ShippingStandby/delivery_slips.ja.twig:86-92",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:932-932",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:899-899"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0203"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2061",
+      "summary": "【未実装】受注管理_受注情報編集 / 受注情報履歴_受注情報編集（受注商品情報）にて、小計値引き/割引区分・クーポン値引き・免税額が表示されない",
+      "feature": "受注情報編集 / 受注情報履歴",
+      "sheetCandidates": [
+        {
+          "id": "sheet-15",
+          "title": "受注情報編集"
+        }
+      ],
+      "期待される挙動": "- 受注情報編集の受注商品情報の金額欄に、識別ID 6-20「小計値引き/割引区分」、6-21「クーポン値引き」、6-22「免税額」（いずれもスマレジ連携項目）をラベルとして表示すること。",
+      "現在の挙動": "- 受注情報編集テンプレートの金額欄には、3項目とも「TODO: … - スマレジ連携後」というコメントが置かれているだけで、表示するマークアップが存在しない。\n- Order エンティティには tax_free（免税額）、coupon_discount（クーポン値引き）、subtotal_discount_division（小計値引き/割引区分）のカラムが定義済みで、データを保持する受け皿は存在する。\n- テンプレート1226行目の Order.tax_free_discount_items のループは、Order::getTaxFreeDiscountItems()（EC-CUBE標準の「非課税・不課税の値引き明細」）を表示しているものであり、設計6-22のスマレジ「免税額」とは別物である。",
+      "引用": [
+        "src/Eccube/Entity/Order.php:753-760",
+        "src/Eccube/Entity/Order.php:331-337",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:1295-1295",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:1296-1296",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:1297-1297"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/template/admin/Order/edit.twig:1238 [line_out_of_range]"
+      ],
+      "book": "0203"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2077",
+      "summary": "【一部実装】受注管理_受注一覧CSV出力_受注一覧CSV出力にて、非会員（会員未紐付け）の受注の「お名前(姓)」を「非会員」と出力する変換処理が実装されておらず、受注一覧画面の表示と食い違う",
+      "feature": "受注一覧CSV出力",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "受注一覧CSV出力"
+        }
+      ],
+      "期待される挙動": "- 受注一覧CSV出力の識別ID:6「お名前(姓)」は、非会員の受注である場合に「非会員」と出力すること。\n- 非会員の判定は受注一覧画面と同一の基準（受注に会員が紐づいていない＝Order.Customer が null）とし、画面表示とCSV出力で結果が一致すること。",
+      "現在の挙動": "- 受注一覧CSV出力は CsvExportService の汎用処理で dtb_csv の定義に従い Order.name01 の値をそのまま出力しており、非会員かどうかを判定して「非会員」へ変換する処理が存在しない。\n- スマレジ（実店頭）の非会員取引については、取込時に SmaregiOrderFactory が Order.name01 に定数 '非会員' を設定しているため、結果としてCSVにも「非会員」と出力される（設計の注記「※スマレジでの非会員による取引データを考慮」は満たされている）。\n- 一方、受注一覧画面は Order.Customer が null かどうかで判定して「非会員」と表示しており、CSV側にはこの判定が無い。管理画面から会員を紐付けずに登録した受注（Admin/OrderType の Customer は HiddenType で必須制約なし）や、会員が紐づかない既存データでは、画面には「非会員」と表示される一方、CSVには入力された姓がそのまま出力され、画面とCSVで内容が食い違う。",
+      "引用": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:247-247",
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:316-317",
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:323-323",
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:221-221",
+        "src/Eccube/Service/CsvExportService.php:213-230",
+        "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php:49-49",
+        "src/Eccube/Form/Type/Admin/OrderType.php:319-324",
+        "src/Eccube/Controller/Front/NonMemberShoppingController.php:51-51"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/template/admin/Order/index.twig:1218 [line_out_of_range]"
+      ],
+      "book": "0203"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2078",
+      "summary": "【一部実装】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_手動メール通知(確認画面)のメール一括送信にて、送信失敗時のメッセージ表示が実装されていない",
+      "feature": "メール一括送信 / 【新規】手動メール通知(確認画面)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-10",
+          "title": "【新規】手動メール通知(確認画面)"
+        },
+        {
+          "id": "sheet-9",
+          "title": "メール一括送信"
+        }
+      ],
+      "期待される挙動": "- 手動メール通知(確認画面)で送信ボタンを押下すると確認ダイアログを表示し、OKなら送信を実行すること。\n- 送信の成功／失敗に応じて、当該画面に対応するメッセージを表示すること（失敗時は失敗した旨のメッセージを表示すること）。",
+      "現在の挙動": "- 確認ダイアログは manual_mail.js の #send_mail クリックハンドラで confirm() により実装済み。\n- 送信成功時は MailController::manualMailAll() の complete モードで addSuccess('admin.order.mail_send_complete') により成功メッセージが表示される。\n- 一方、失敗時のメッセージ表示処理が存在しない。complete モードでフォームが不正、またはメールテンプレートが取得できない場合は switch を break して manual_mail_all.twig（入力画面）を再描画するだけで、addError 等の失敗メッセージを一切出さない（利用者には何が起きたか分からない）。\n- MailService::sendManualMailForBulk() の $this->mailer->send() は try/catch されておらず、送信例外は捕捉されない。SMTP障害等では共通の ExceptionListener による「システムエラーが発生しました」の500エラー画面となり、当該画面上の失敗メッセージにはならない。また複数件をループ送信しているため、途中で例外が発生すると何件目まで送信済みかが利用者に伝わらない。\n- 同じ MailController 内では addError による失敗メッセージが他の箇所（テンプレート未取得時・配送ID不正時）で使われており、一括送信の失敗系だけが欠落している。",
+      "引用": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:769-769",
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:770-770",
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:778-780",
+        "html/template/admin/assets/js/manual_mail.js:3-7",
+        "src/Eccube/Resource/template/admin/Order/manual_mail_all_confirm.twig:161-168",
+        "src/Eccube/Controller/Admin/Order/MailController.php:200-200",
+        "src/Eccube/EventListener/ExceptionListener.php:36-40"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Controller/Admin/Order/MailController.php:389 [line_out_of_range]",
+        "src/Eccube/Service/MailService.php:2092 [line_out_of_range]"
+      ],
+      "book": "0203"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2131",
+      "summary": "【実装乖離】コンテンツ管理_a ページ管理(登録・編集)_ページ管理(登録・編集)にて、日本語ページのtwigファイル名に言語識別子(.ja)が付与されず、画面表示の拡張子(.ja.twig)と実ファイル名が一致しない",
+      "feature": "a ページ管理(登録・編集)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "ページ管理(登録・編集)"
+        }
+      ],
+      "期待される挙動": "- (1-7)twigファイルのテキストボックス右横のファイル拡張子に、言語に応じた識別子を追加する。日本語の場合は .ja.twig、英語の場合は .en.twig とする。",
+      "現在の挙動": "- PageController::edit は $localeSuffix を、日本語の場合は空文字、英語の場合は '.en' としているため、実際に生成・読込されるファイルは日本語が「<ファイル名>.twig」、英語が「<ファイル名>.en.twig」となる。\n- 一方 page_edit.twig は入力欄の右横に「.{{ locale }}.twig」を表示するため、日本語選択時は「.ja.twig」と表示され、実ファイル名(サフィックスなし)と一致しない。\n- 実ファイルでも app/template/user_data 配下には .en.twig が74件存在する一方、.ja.twig は0件であり、日本語版はサフィックスなしで運用されている。",
+      "引用": [
+        "src/Eccube/Controller/Admin/Content/PageController.php:99-100",
+        "src/Eccube/Resource/template/admin/Content/page_edit.twig:186-186",
+        "src/Eccube/Resource/template/admin/Content/page_edit.twig:189-189",
+        "src/Eccube/Controller/Admin/Content/BlockController.php:97-98",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md:90-92",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md:132-135"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0210"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2134",
+      "summary": "【実装乖離】コンテンツ管理_a ページ管理(登録・編集)_ページ管理(登録・編集)にて、titleタグのサフィックス固定文言のカギカッコが設計書の『晴れる屋』と異なり「晴れる屋」になっている",
+      "feature": "a ページ管理(登録・編集)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "ページ管理(登録・編集)"
+        }
+      ],
+      "期待される挙動": "- コード内に {% set noShopName = true %} を設定すると、titleタグのサフィックス(末尾)に固定文言「 | 日本最大級 MTG通販サイト『晴れる屋』」が追加されないようにする。\n- noShopNameの設定はページ管理で行うが、固定文言をつけるかどうかの判定はフロントで行う。",
+      "現在の挙動": "- フロントの default_frame.twig で noShopName が未定義または空の場合のみ shopNameSuffix を title に連結しており、noShopName による固定文言の非表示判定はフロント側で設計どおり実装されている。\n- ただし固定文言の実値は翻訳キー front.seo.title_suffix の '日本最大級 MTG通販サイト「晴れる屋」' であり、設計書が記載する『晴れる屋』(二重カギカッコ)ではなく「晴れる屋」(カギカッコ)が使われている。",
+      "引用": [
+        "src/Eccube/Resource/template/default/default_frame.twig:25-33",
+        "src/Eccube/Resource/template/default/default_frame.twig:17-17",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md:107-109",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md:155-156"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:6660 [line_out_of_range]"
+      ],
+      "book": "0210"
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2136",
+      "summary": "【一部実装】コンテンツ管理_c ブロック管理(登録・編集)_ブロック管理(登録・編集)にて、ファイル名を変更して更新した際に日英2種類のtwigファイルが作成されない",
+      "feature": "c ブロック管理(登録・編集)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-6",
+          "title": "ブロック管理(登録・編集)"
+        }
+      ],
+      "期待される挙動": "- ブロックを新規登録する場合、日英2種類のファイルを作成する。\n- 更新時は(1)言語で選択している言語の(6)ファイル名に該当するtwigファイルのみを更新する。\n- (6)ファイル名を変更して更新する場合、日英2種類のtwigファイルを作成する。",
+      "現在の挙動": "- 新規登録時($previousFileName === null)は、選択中ロケールに加えてもう一方のロケールのファイルも同じ内容で作成しており、設計どおりである。\n- 通常の更新時は選択中ロケールのファイルのみを dumpFile/upload しており、こちらも設計どおりである。\n- ただしファイル名を変更して更新した場合は、選択中ロケールのファイル1本のみが新ファイル名で作成され、もう一方の言語のファイルは新ファイル名で作成されない。旧ファイルも選択中ロケール分のみ削除されるため、もう一方の言語ファイルは旧ファイル名のまま残る。",
+      "引用": [
+        "src/Eccube/Controller/Admin/Content/BlockController.php:196-204",
+        "src/Eccube/Controller/Admin/Content/BlockController.php:174-189",
+        "src/Eccube/Controller/Admin/Content/BlockController.php:206-212",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M09_content_management_basedesign.md:240-244"
+      ],
+      "引用_不在または範囲外": [],
+      "book": "0210"
+    }
+  ],
+  "count": 24
+}

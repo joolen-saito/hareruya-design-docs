@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2000",
+  "verdict": "SUSPECT",
+  "reasonCode": "DESIGN_AMBIGUOUS",
+  "reasonLabel": "設計内に解釈の分岐・矛盾があり設計判断待ち",
+  "nextAction": "要確認: sheet-8の行順・識別ID順、sheet-5、sheet-4で計4通り。実装はsheet-8識別ID順と一致。正順序の確定が先",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "列順は買取価格→在庫→原価単価→総原価。設計側に4通りの順序が併存し正順序が確定できない",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-8「在庫情報CSV出力」\nCSV出力項目表の行順\n> … 12 買取価格 / **14 原価単価 / 15 総原価 / 13 在庫** / 16 当日販売数 …\n\n■実装の現状\nStockListCsvExportService.php:43-46 のヘッダ定義が `buy_price → stock → unit_cost → total_cost` の順で、:83-92 でこの順がそのまま列順になります。\n出力後に並べ替える経路はなく、参照元も StockListController.php:30,62 のみです。\n\n■次の対応\n要確認: **設計側で順序が一枚岩ではありません。** 同一ブック内に4通りの順序が併存しています。\n1. sheet-8 の**行順**: 買取価格→原価単価→総原価→在庫\n2. sheet-8 の**識別ID採番**: 12=買取価格, **13=在庫, 14=原価単価, 15=総原価**（他項目のIDは単調増加なのにここだけ逆転）\n3. sheet-5 一覧項目: 2-11買取価格 / 2-12在庫 / 2-13原価単価 / 2-14総原価（＝実装と同順）\n4. sheet-4 の一覧ラベル定義: 5-11買取価格 / 5-12原価単価 / 5-13在庫 / 5-14総原価\n\n実装は sheet-8 の識別ID順・sheet-5 の画面一覧順と一致しています。**正順序の確定が先に必要です。**\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-8「在庫情報CSV出力」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:23:58+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:24:02+09:00",
+  "appliedStatus": "処理中"
+}

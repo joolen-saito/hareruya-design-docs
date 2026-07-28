@@ -1,0 +1,515 @@
+{
+  "book": "0214",
+  "count": 28,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-2207",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-3:イベント一覧(検索入力)",
+        "sheet-4:イベント一覧(検索結果)"
+      ],
+      "課題タイトル": "【未実装】イベント管理_イベント一覧(検索入力/検索結果)_イベント一覧（検索入力）の検索キーワード「イベント名、略称」に、設計書で定められた最大50文字の入力制限が実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "multi に Length 制約なし。maxlength も0件",
+      "前回書いた次にすること": "実装対応: 最大長制約を追加。設計の50は現行stext_len由来で移行先定数は255のため適用値を要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-3「イベント一覧(検索入力)」\n画面部品仕様\n> 2 イベント名、略称　全角・半角　最大50　部分一致\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/SearchEventType.php:40-43 の `multi` は `'required' => false` のみで Length 制約がありません。admin/Event/index.twig:47 にも maxlength の出力がなく、DtbEventRepository.php:66-91 は長さ無制限で LIKE 検索します。\n\n■次の対応\n実装対応: 最大長の制約を追加する。ただし設計の「50」は現行(pf-eccube3)の stext_len 確認値に由来し、移行先の同名定数 `eccube_stext_len` は255です。適用すべき値を設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-3「イベント一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/SearchEventType.php",
+        "src/Eccube/Repository/DtbEventRepository.php",
+        "src/Eccube/Resource/template/admin/Event/index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2208",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-5:イベント編集",
+        "sheet-6:イベント削除"
+      ],
+      "課題タイトル": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント名(日)」はフォーム上255文字まで入力できるが、DB列が155文字のため156文字以上を登録するとDB書き込みエラーになる",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "フォーム255 vs DB155。移行仕様表は155を明記",
+      "前回書いた次にすること": "要確認: DB155が設計どおり。部品表255との矛盾解消が先。フォームを155に合わせるのが正解の可能性",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-5「イベント編集」\n画面部品仕様\n> 1-1 イベント名(日)　全角・半角　〇　**255字**\n\n一方、同シートの「リニューアル移行時の扱い」表とDBカラム表は移行先を155文字と明記しています。\n> イベント名の桁　name_jp・name_enは最大255文字　→　**name_jp・name_enは最大155文字。桁が縮小する。**\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/EventType.php の `nameJp` は `Length(max: eccube_stext_len)`（=255）ですが、src/Eccube/Entity/DtbEvent.php の同カラムは `length: 155` です。\n156〜255文字はバリデーションを通過してDB書込で例外となり、EventController の catch で汎用エラー「admin.common.save_error」が表示されます。切り詰め処理やカスタムValidatorはありません。\n\n■次の対応\n要確認: **DB列155は設計どおり**です（移行仕様表が明記）。乖離は「部品表255 vs 移行仕様155」という設計内矛盾であり、フォーム側を155に合わせるのが正解の可能性があります。どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-5「イベント編集」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Controller/Admin/Event/EventController.php",
+        "src/Eccube/Entity/DtbEvent.php",
+        "src/Eccube/Form/Type/Admin/EventType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2209",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-5:イベント編集",
+        "sheet-6:イベント削除"
+      ],
+      "課題タイトル": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント名(英)」はフォーム上255文字まで入力できるが、DB列が155文字のため156文字以上を登録するとDB書き込みエラーになる",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "フォーム255/NotBlank vs DB155/nullable。必須任意も部品表と詳細設計で食い違い",
+      "前回書いた次にすること": "要確認: 2208と同じ論点に加え必須/任意の矛盾も。設計担当者の確定が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-5「イベント編集」\n画面部品仕様\n> 1-2 イベント名(英)　全角・半角　〇　**255字**\n\n一方、同シートの「リニューアル移行時の扱い」表とDBカラム表は移行先を155文字と明記しています。\n> イベント名の桁　name_jp・name_enは最大255文字　→　**name_jp・name_enは最大155文字。桁が縮小する。**\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/EventType.php の `nameEn` は `Length(max: eccube_stext_len)`（=255）ですが、src/Eccube/Entity/DtbEvent.php の同カラムは `length: 155` です。\n156〜255文字はバリデーションを通過してDB書込で例外となり、EventController の catch で汎用エラー「admin.common.save_error」が表示されます。切り詰め処理やカスタムValidatorはありません。\n\nさらに必須／任意も食い違います。部品表は必須「〇」ですが、詳細設計書の入力項目表・バリデーション表は「任意」としています。実装は `NotBlank` を付けており部品表準拠、DBは `nullable: true` で詳細設計書準拠と、**設計内の矛盾がそのまま実装に写っています**。\n\n■次の対応\n要確認: **DB列155は設計どおり**です（移行仕様表が明記）。乖離は「部品表255 vs 移行仕様155」という設計内矛盾であり、フォーム側を155に合わせるのが正解の可能性があります。どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-5「イベント編集」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Entity/DtbEvent.php",
+        "src/Eccube/Form/Type/Admin/EventType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2210",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-5:イベント編集",
+        "sheet-6:イベント削除"
+      ],
+      "課題タイトル": "【未実装】イベント管理_イベント編集 / イベント削除_イベント編集画面に、設計書で必須項目とされている「会場」の単一選択フィールドが存在しない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "会場はDB列もマスタも削除済み。部品表にのみ残存",
+      "前回書いた次にすること": "要確認: 設計側の更新漏れが疑われる。sheet-3の部品表からは削除済みで会場→店舗の置換文が散在",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-5「イベント編集」\n画面部品仕様\n> 1-4 会場　単一選択　〇　選択肢:全会場\n\n同様の記載が sheet-9「複製新規」の 1-4、sheet-14 のCSV出力項目23「会場ID」にもあります。\n\n■実装の現状\n会場は完全に撤去されています。app/DoctrineMigrations/Version20260611000000.php が `dtb_event.venue_id` と `mtb_venue` テーブルを削除し、`dtb_csv` からも該当行を DELETE しています。EventType にも DtbEvent にも会場のフィールドはありません。\n全文検索でも `MtbVenue` は0件（エンティティ自体が存在しない）です。\n\n■次の対応\n要確認: **設計側の更新漏れが疑われます。** sheet-3 の部品表からは既に会場が削除されており、sheet-3/9/10/16/22 の★記述には「識別ID:5『会場』にメンバーのデフォルト表示の店舗を設定する → 識別ID:6『店舗』の初期値に…」という**会場→店舗への置換文**が横断的に残っています。一方 sheet-5/9 の部品表と sheet-14 のCSV項目にだけ会場が残存しています。設計担当者に会場廃止の是非をご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-5「イベント編集」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "app/DoctrineMigrations/Version20260611000000.php",
+        "src/Eccube/Form/Type/Admin/EventType.php",
+        "src/Eccube/Resource/template/admin/Event/edit.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2211",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-5:イベント編集",
+        "sheet-6:イベント削除"
+      ],
+      "課題タイトル": "【一部実装】イベント管理_イベント編集 / イベント削除_イベント編集の「フォーマット」に必須のサーバサイドバリデーション（NotBlank）が無く、未選択のままイベントを登録できてしまう",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "formats に constraints が無く必須チェックが存在しない",
+      "前回書いた次にすること": "実装対応: formats に NotBlank もしくは Count(min:1) を追加",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-5「イベント編集」\n画面部品仕様\n> 1-5 フォーマット　複数選択　**〇**（必須）\n\n詳細設計書の入力項目表も「フォーマット　必須」で一致しています。\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/EventType.php:93-99 の `formats` に `constraints` がありません。同ファイルの `eventScale`(100-109) / `rel`(110-117) / `disp`(118-126) には `NotBlank()` が付いています。\nテンプレート edit.twig:113-118 は必須バッジを表示するのみで、POST_SUBMIT リスナー(272-299)にも未選択チェックはありません。EventEntityManager.php:108 は空のコレクションでもそのまま保存します。\n\n■次の対応\n実装対応: `formats` に NotBlank（もしくは Count(min:1)）を追加する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-5「イベント編集」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/EventType.php",
+        "src/Eccube/Resource/template/admin/Event/edit.twig",
+        "src/Eccube/Service/EntityManager/EventEntityManager.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2212",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-5:イベント編集",
+        "sheet-6:イベント削除"
+      ],
+      "課題タイトル": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「イベント規模」は設計上は任意項目だが、実装では NotBlank により必須項目になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "設計は任意だが eventScale に NotBlank。DBは nullable",
+      "前回書いた次にすること": "実装対応: NotBlank を外し必須バッジも外す",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-5「イベント編集」\n画面部品仕様\n> 1-8 イベント規模　単一選択　必須欄は空欄（＝**任意**）　選択肢:大型イベント 特別イベント デイリーイベント おすすめイベント\n\nsheet-9「複製新規」も必須欄は空欄で一致しています。\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/EventType.php:100-109 の `eventScale` に `NotBlank()` が付いており必須です。テンプレート edit.twig:148-158 も必須バッジを表示します。\n一方 src/Eccube/Entity/DtbEvent.php:81-82 は `?MtbEventScale $EventScale = null` で NULL 許容であり、内部的にも任意扱いです。\n設計に「イベント規模を必須にする」と読める記述は sheet-5 / sheet-9 のいずれにも見つかりませんでした。\n\n■次の対応\n実装対応: `NotBlank()` を外して任意にする。あわせて必須バッジの表示も外すこと。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-5「イベント編集」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Entity/DtbEvent.php",
+        "src/Eccube/Form/Type/Admin/EventType.php",
+        "src/Eccube/Resource/template/admin/Event/edit.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2213",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-5:イベント編集",
+        "sheet-6:イベント削除"
+      ],
+      "課題タイトル": "【実装乖離】イベント管理_イベント編集 / イベント削除_イベント編集の「定員」の最大桁数が、設計書の8字に対して実装では9字まで入力できる",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "設計8字に対し eccube_int_len=9 で9桁",
+      "前回書いた次にすること": "実装対応: 8桁にする(参加費と同じ eccube_price_len の使用か専用定数)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-5「イベント編集」\n画面部品仕様\n> 1-11 定員　数値(整数)　〇　**8字**\n\n詳細設計書も「Lengthの最大はevent.length.number、確認値8」で一致しています。\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/EventType.php:149-154 の `capacity` は `Length(max: eccube_int_len)` で、app/config/eccube/packages/eccube.yaml:111 の `eccube_int_len: 9` により**9桁**です。\n同画面の参加費は `eccube_price_len`（=8）を使っており設計8字と一致しているため、定員だけ定数の選択が異なっています。\n\n■次の対応\n実装対応: 定員の最大長を8桁にする（参加費と同じ `eccube_price_len` の使用、または専用定数の新設）。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-5「イベント編集」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Form/Type/Admin/EventType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2214",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-7:日程登録"
+      ],
+      "課題タイトル": "【一部実装】イベント管理_日程登録_日程登録の「受付開始時間」に、サーバ側の条件必須チェックと初期値00:00が実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "初期値00:00なし。条件必須はJSのみでサーバ側チェックなし",
+      "前回書いた次にすること": "実装対応: 初期値設定とサーバ側条件必須を追加(2215と一括対応可)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-7「日程登録」\n画面部品仕様\n> 7 受付開始時間　時刻　△（条件必須）　**初期値 00:00**　受付ありの場合必須\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/ScheduleType.php の `entryStartDate` は `'required' => false` のみで、`constraints` も `data`（初期値）もありません。DtbEventDetail の同プロパティもコンストラクタで初期化されません。\nPOST_SUBMIT リスナー(187-266)にも `offlineEntryFlg` オン時の必須チェックがありません。\n**表示/非表示の切替と required 付与はクライアント側のみ**です（Schedule/edit.twig:26-33 の `offlineRegist()`）。JSを介さない送信では検証されません。\n相関チェック（受付開始 < 受付終了 等）は ScheduleType.php:50-59 の DATE_RELATION_RULES に実装済みです。\n\n■次の対応\n実装対応: 初期値00:00の設定と、`offlineEntryFlg` オン時のサーバ側必須チェックを追加する。2215と一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-7「日程登録」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Entity/DtbEventDetail.php",
+        "src/Eccube/Form/Type/Admin/ScheduleType.php",
+        "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2215",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-7:日程登録"
+      ],
+      "課題タイトル": "【一部実装】イベント管理_日程登録_日程登録の「受付終了時間」に、サーバ側の条件必須チェックと初期値00:00が実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "初期値00:00なし。条件必須はJSのみ",
+      "前回書いた次にすること": "実装対応: 2214と一括対応",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-7「日程登録」\n画面部品仕様\n> 8 受付終了時間　時刻　△（条件必須）　**初期値 00:00**　受付ありの場合必須\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/ScheduleType.php の `entryEndDate` は `'required' => false` のみで、`constraints` も `data`（初期値）もありません。DtbEventDetail の同プロパティもコンストラクタで初期化されません。\nPOST_SUBMIT リスナー(187-266)にも `offlineEntryFlg` オン時の必須チェックがありません。\n**表示/非表示の切替と required 付与はクライアント側のみ**です（Schedule/edit.twig:26-33 の `offlineRegist()`）。JSを介さない送信では検証されません。\n相関チェック（受付開始 < 受付終了 等）は ScheduleType.php:50-59 の DATE_RELATION_RULES に実装済みです。\n\n■次の対応\n実装対応: 初期値00:00の設定と、`offlineEntryFlg` オン時のサーバ側必須チェックを追加する。2214と一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-7「日程登録」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Entity/DtbEventDetail.php",
+        "src/Eccube/Form/Type/Admin/ScheduleType.php",
+        "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2216",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-7:日程登録"
+      ],
+      "課題タイトル": "【一部実装】イベント管理_日程登録_日程登録の「デッキ登録締め切り」に、デッキ登録ありがオンの場合の必須チェックが実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "サーバ側必須チェックなし。JSも disabled のみで required 付与なし",
+      "前回書いた次にすること": "実装対応: サーバ側条件必須を追加。JSのrequired付与も受付時間側と揃えること",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-7「日程登録」\n画面部品仕様\n> 10 デッキ登録締め切り　日付時刻　△（条件必須）　デッキ登録ありの場合必須\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/ScheduleType.php:131-136 の `deckRegistDeadline` に `constraints` がなく、POST_SUBMIT にも `deckRegistFlg` 連動の必須チェックがありません。\nさらに Schedule/edit.twig:35-39 の `changeRegist()` は **disabled を切り替えるだけで required を付けません**（受付時間側の `offlineRegist()` とは非対称）。\nなお同 twig:54-66 の `setDeckRegisterLimit()` がチェックオン時・開始日入力時に「開始日 23:59」を自動セットするため通常操作では空になりにくいですが、手動クリアで空保存が可能です。\n\n■次の対応\n実装対応: サーバ側の条件必須チェックを追加する。クライアント側の required 付与も受付時間側と揃えること。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-7「日程登録」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Entity/DtbEventDetail.php",
+        "src/Eccube/Form/Type/Admin/ScheduleType.php",
+        "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2217",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-7:日程登録"
+      ],
+      "課題タイトル": "【実装乖離】イベント管理_日程登録_日程登録の「定員」の最大桁数が設計書の50文字に対して9桁であり、初期値も設計書の10ではなく親イベントの定員が設定される",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "設計50文字だが実装9桁。初期値は親イベント継承",
+      "前回書いた次にすること": "要確認: sheet-5/9は同項目を8字としており設計内で矛盾。sheet-8は親イベント継承を明記",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-7「日程登録」\n画面部品仕様\n> 15 定員　数値(整数)　〇　**50文字**　初期値 10\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/ScheduleType.php の `capacity` は `Length(max: eccube_int_len)` で **9桁**です。\n初期値は src/Eccube/Entity/DtbEventDetail.php:129-143 のコンストラクタが **親イベントの値**を引き継ぎます（ScheduleController::create が `new DtbEventDetail($Event)` を渡すため）。設計の初期値10を設定する箇所はありません。\n\n■次の対応\n要確認: **設計内で値が矛盾しています。** 同ブックの sheet-5「イベント編集」と sheet-9「複製新規」は同項目を「8字」としており、日程側だけ「50文字」です。また初期値についても sheet-8「繰返日程追加」が「定員、参加費、公開状態、商品（日・英）は、**親イベントのものがセットされる**」と明記しており、実装の親イベント継承を支持しています。設計側の整合を先に取っていただく必要があります。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-7「日程登録」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Entity/DtbEventDetail.php",
+        "src/Eccube/Form/Type/Admin/ScheduleType.php",
+        "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2218",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-7:日程登録"
+      ],
+      "課題タイトル": "【実装乖離】イベント管理_日程登録_日程登録の「参加費」の最大桁数が設計書の50文字に対して8桁であり、初期値も設計書の0ではなく親イベントの参加費が設定される",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "設計50文字だが実装8桁。初期値は親イベント継承",
+      "前回書いた次にすること": "要確認: 2217と同じ設計内矛盾。あわせて確定が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-7「日程登録」\n画面部品仕様\n> 16 参加費　数値(整数)　〇　**50文字**　初期値 0\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/ScheduleType.php の `entryFee` は `Length(max: eccube_price_len)` で **8桁**です。\n初期値は src/Eccube/Entity/DtbEventDetail.php:129-143 のコンストラクタが **親イベントの値**を引き継ぎます（ScheduleController::create が `new DtbEventDetail($Event)` を渡すため）。設計の初期値0を設定する箇所はありません。\n\n■次の対応\n要確認: **設計内で値が矛盾しています。** 同ブックの sheet-5「イベント編集」と sheet-9「複製新規」は同項目を「8字」としており、日程側だけ「50文字」です。また初期値についても sheet-8「繰返日程追加」が「定員、参加費、公開状態、商品（日・英）は、**親イベントのものがセットされる**」と明記しており、実装の親イベント継承を支持しています。設計側の整合を先に取っていただく必要があります。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-7「日程登録」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Entity/DtbEventDetail.php",
+        "src/Eccube/Form/Type/Admin/ScheduleType.php",
+        "src/Eccube/Resource/template/admin/Event/Schedule/edit.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2220",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-7:日程登録"
+      ],
+      "課題タイトル": "【一部実装】イベント管理_日程登録_日程登録・日程編集のサーバ側処理に店舗権限のチェックが無く、編集権限のない店舗のイベントにも日程を追加・更新できる",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "create/edit にサーバ側の権限ガードが無い。delete/bulkDelete と RepeatSchedule にはある",
+      "前回書いた次にすること": "実装対応: フォーム処理前に isEditableShop ガードを追加。権限外店舗へ直接POSTできるため優先度高め",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-7「日程登録」\n★権限による制御\n> ・メンバーが権限を保持している店舗のイベントのみ日程追加が可能にする\n\nカスタマイズ要件\n> ・編集権限を保持している店舗のイベントのみ編集を可能とする\n\n■実装の現状\nsrc/Eccube/Controller/Admin/Event/ScheduleController.php の `create`(47-80) と `edit`(89-124) は、`$form->isValid()` で即座に保存処理を実行し、`$isEditableBaseInfo` は**保存の後に**計算して戻り値配列へ渡すだけです。サーバ側のガードになっていません。\nScheduleStoreAction / ScheduleUpdateAction / EventDetailEntityManager にも権限判定はありません（`isEditableShop` の grep が0件）。\n\n**同一ファイル内に対照実装があります。** `delete`(132-137) と `bulkDelete`(174-179) には `isEditableShop` ガードがあり、RepeatScheduleController::create(47-53) もフォーム処理の**前**にガードして early return します。create/edit にだけガードがない状態です。\n\n■次の対応\n実装対応: `admin_schedule_create` / `admin_schedule_edit` にフォーム処理前の `isEditableShop` ガードを追加する。RepeatScheduleController::create と同じ実装で揃えられます。権限外店舗のイベントへ直接POSTで日程を追加・更新できる状態のため、優先度は高めです。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-7「日程登録」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Event/RepeatScheduleController.php",
+        "src/Eccube/Controller/Admin/Event/ScheduleController.php",
+        "src/Eccube/Resource/template/admin/Event/edit.twig",
+        "src/Eccube/Service/Admin/Event/ScheduleStoreAction.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2221",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-8:繰返日程追加"
+      ],
+      "課題タイトル": "【実装乖離】イベント管理_繰返日程追加_繰返日程追加の「曜日選択」は設計上は任意項目だが、実装では NotBlank により必須項目になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "部品表は任意だが week に NotBlank",
+      "前回書いた次にすること": "要確認: 曜日未選択では日程が1件も作られず処理概要と矛盾。部品表の必須列が誤記の可能性",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-8「繰返日程追加」\n画面部品仕様\n> 7 曜日選択　複数選択　必須欄は空欄（＝**任意**）\n\n同シートの 5/6/8（期間From・期間To・開始時間）は「〇」であり、記法上の区別は明確です。\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/RepeatScheduleType.php:103-119 の `week` に `NotBlank()` が付いており必須です。\n\n■次の対応\n要確認: **部品表の必須列が誤記の可能性があります。** 同シートの機能仕様処理概要は「指定した期間のうち、選択した曜日に該当する日に日程登録する」としており、曜日未選択では1件も日程が作られず処理概要と矛盾します。任意とすべきか必須とすべきかを設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-8「繰返日程追加」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/RepeatScheduleType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2222",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-8:繰返日程追加"
+      ],
+      "課題タイトル": "【一部実装】イベント管理_繰返日程追加_繰返日程追加の「受付開始時間」「受付終了時間」に、初期値00:00と受付ありの場合の必須チェックが実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "受付時間の初期値00:00なし。deckRegistDeadlineTime にはdata指定があり非対称",
+      "前回書いた次にすること": "実装対応: 初期値とサーバ側条件必須を追加(2223/2224と一括対応可)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-8「繰返日程追加」\n画面部品仕様\n> 10 受付開始時間 / 11 受付終了時間　△（条件必須）　**初期値 00:00**（時刻項目）　オンライン受付/受付ありの場合必須\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/RepeatScheduleType.php:132-141 の `entryStartTime` / `entryEndTime` は `data` も `constraints` もありません。\n対照的に同ファイル152-157 の `deckRegistDeadlineTime` には `'data' => Carbon::now()->setTime(23, 59, 59)` があり、設計の「初期値23:59」に対応しています。**受付時間側だけ初期値設定が漏れています。**\n順序チェック（:43-47 の DATE_RELATION_RULES）は実装済み、required 付与はクライアント側のみ（RepeatSchedule/create.twig:31-33）です。\n\n■次の対応\n実装対応: 時刻項目の初期値00:00の設定と、サーバ側の条件必須チェックを追加する。2222・2223・2224 は同一パターンのため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-8「繰返日程追加」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/RepeatScheduleType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2223",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-8:繰返日程追加"
+      ],
+      "課題タイトル": "【一部実装】イベント管理_繰返日程追加_繰返日程追加の「オンライン受付開始時間」の時刻に初期値00:00が設定されておらず、オンライン受付ありの場合の必須チェックも無い",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "日数側は設計どおりだが時刻側に data も constraints も無い",
+      "前回書いた次にすること": "実装対応: 2222/2224と一括対応",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-8「繰返日程追加」\n画面部品仕様\n> 16 オンライン受付開始時間 開始日前日数 / 17 同 時刻　△（条件必須）　**初期値 00:00**（時刻項目）　オンライン受付/受付ありの場合必須\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/RepeatScheduleType.php:163-174 のうち、日数側 `onlineEntryStartDays` は `'data' => 0` と `GreaterThanOrEqual(0)` があり設計どおりです。時刻側 `onlineEntryStartTime` には `data` も `constraints` もありません。\nPOST_SUBMIT に `entryFlg` 連動の必須チェックはなく、required 付与はクライアント側のみ（create.twig:46-48）です。\n\n■次の対応\n実装対応: 時刻項目の初期値00:00の設定と、サーバ側の条件必須チェックを追加する。2222・2223・2224 は同一パターンのため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-8「繰返日程追加」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/RepeatScheduleType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2224",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-8:繰返日程追加"
+      ],
+      "課題タイトル": "【一部実装】イベント管理_繰返日程追加_繰返日程追加の「オンライン受付終了時間」の時刻に初期値00:00が設定されておらず、オンライン受付ありの場合の必須チェックも無い",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "日数側は設計どおりだが時刻側に data も constraints も無い",
+      "前回書いた次にすること": "実装対応: 2222/2223と一括対応",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-8「繰返日程追加」\n画面部品仕様\n> 18 オンライン受付終了時間 開始日前日数 / 19 同 時刻　△（条件必須）　**初期値 00:00**（時刻項目）　オンライン受付/受付ありの場合必須\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/RepeatScheduleType.php:175-186 のうち、日数側 `onlineEntryEndDateDays` は `'data' => 0` と `GreaterThanOrEqual(0)` があり設計どおりです。時刻側 `onlineEntryEndTime` には `data` も `constraints` もありません。\n相関チェックは POST_SUBMIT(251-279)に実装済みで、required 付与はクライアント側のみです。\n\n■次の対応\n実装対応: 時刻項目の初期値00:00の設定と、サーバ側の条件必須チェックを追加する。2222・2223・2224 は同一パターンのため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-8「繰返日程追加」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/RepeatScheduleType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2225",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-10:イベント申込一覧(検索入力)",
+        "sheet-11:イベント申込一覧(検索結果)"
+      ],
+      "課題タイトル": "【一部実装】イベント管理_イベント申込一覧(検索入力/検索結果)_イベント申込一覧の検索条件「支払番号」に、設計書で定められた最大64字の入力制限が実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "支払番号に64字の制限が maxlength/Length のいずれでも存在しない",
+      "前回書いた次にすること": "実装対応: maxlength属性またはLength制約を追加(2226と一括対応可)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-10「イベント申込一覧(検索入力)」\n画面部品仕様\n> 1-5 支払番号　全角・半角　最大64字\n\n詳細設計書は実現手段を「**maxlength属性**による入力長制限」と明記しています。\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/SearchEntryType.php の `payment_no` は `'required' => false` のみで Length 制約がありません。admin/Event/Entry/index.twig も attr 指定がないため maxlength も出力されません（Event配下テンプレートの maxlength grep は0件）。\n対照として、同フォームの `event_detail_id` には `Length(max: eccube_event_detail_id_max_len)`（=10、設計1-10「10字」に一致）が付いています。\n「デッキ登録を検索時は操作不可」は Entry/index.twig:37-56 で実装済みです。\n\n■次の対応\n実装対応: maxlength 属性（もしくは Length 制約）で64字の制限を加える。2225・2226 は同一箇所のため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-10「イベント申込一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/SearchEntryType.php",
+        "src/Eccube/Resource/template/admin/Event/Entry/index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2226",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-10:イベント申込一覧(検索入力)",
+        "sheet-11:イベント申込一覧(検索結果)"
+      ],
+      "課題タイトル": "【未実装】イベント管理_イベント申込一覧(検索入力/検索結果)_イベント申込一覧の検索条件「プレイヤー名」に、設計書で定められた最大255字の入力制限が実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "プレイヤー名に255字の制限が存在しない",
+      "前回書いた次にすること": "実装対応: 2225と一括対応",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-10「イベント申込一覧(検索入力)」\n画面部品仕様\n> 1-6 プレイヤー名　全角・半角　最大255字\n\n詳細設計書は実現手段を「**maxlength属性**による入力長制限」と明記しています。\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/SearchEntryType.php の `player_name` は `'required' => false` のみで Length 制約がありません。admin/Event/Entry/index.twig も attr 指定がないため maxlength も出力されません（Event配下テンプレートの maxlength grep は0件）。\n対照として、同フォームの `event_detail_id` には `Length(max: eccube_event_detail_id_max_len)`（=10、設計1-10「10字」に一致）が付いています。\n\n■次の対応\n実装対応: maxlength 属性（もしくは Length 制約）で255字の制限を加える。2225・2226 は同一箇所のため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-10「イベント申込一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/SearchEntryType.php",
+        "src/Eccube/Repository/DtbEventEntryRepository.php",
+        "src/Eccube/Resource/template/admin/Event/Entry/index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2228",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-10:イベント申込一覧(検索入力)",
+        "sheet-11:イベント申込一覧(検索結果)"
+      ],
+      "課題タイトル": "【一部実装】イベント管理_イベント申込一覧(検索入力/検索結果)_イベント申込一覧のイベント情報検索モーダルにて、「イベント名、略称」の最大50字の入力制限が実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "モーダルのイベント名に50字制限なし。他要件は全て実装済み",
+      "前回書いた次にすること": "実装対応: イベント名に50字制限を追加",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-10「イベント申込一覧(検索入力)」内「イベント情報を検索」モーダル\n画面部品仕様\n> 1-1 イベント名、略称　テキスト　最大50　部分一致\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/SearchEntryEventModalType.php:37-40 の `event_name` に Length 制約がなく、Entry/index.twig:499 にも maxlength の指定がありません。\n他の要件はすべて実装済みです。単一選択＋デフォルト店舗(:41-52)、開催日From の3か月前(:58)、From>To エラー(:88-95)、オンライン受付ありのみ(DtbEventRepository.php:152-153)、イベントID降順(:198)、1ページ10件(EntryController.php:61)、決定時の反映(index.twig:199-213)。\n\n■次の対応\n実装対応: イベント名に50字の制限を加える。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-10「イベント申込一覧(検索入力)」内「イベント情報を検索」モーダル\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Event/EntryController.php",
+        "src/Eccube/Form/Type/Admin/SearchEntryEventModalType.php",
+        "src/Eccube/Repository/DtbEventRepository.php",
+        "src/Eccube/Resource/template/admin/Event/Entry/index.twig",
+        "src/Eccube/Service/Admin/Event/EntryRegistrationScheduleRowBuilder.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2229",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-13:デッキ表示"
+      ],
+      "課題タイトル": "【実装乖離】イベント管理_デッキ表示_デッキ表示画面の「Event」欄に、設計書のイベント名（英）ではなくイベント名（日）が表示されている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "eventName に getNameJp() を使用。設計は3箇所で英語名を指定",
+      "前回書いた次にすること": "実装対応: getNameJp() を getNameEn() に変更",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-13「デッキ表示」\n画面部品仕様\n> 6 Event　ラベル　**イベント名（英）を表示**\n\n詳細設計書の表示要素・DBカラム表も「イベント名（英）」「dtb_event name_en イベント名（英）表示」で一致しており、3箇所で英語名が指定されています。\n\n■実装の現状\nsrc/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php:144 が日本語名を渡しています。\n```\n'eventName' => $eventDetail?->getEvent()?->getNameJp() ?? '',\n```\n同ビルダー内の `getNameEn()` 呼び出しはすべて MtbCard（カード名）に対するもので、DtbEvent には使われていません。テンプレート側に英語名へのフォールバックもありません。\n\n■次の対応\n実装対応: `getNameJp()` を `getNameEn()` に変更する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-13「デッキ表示」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Entity/DtbEvent.php",
+        "src/Eccube/Resource/template/admin/Event/Entry/decklist.twig",
+        "src/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2231",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-16:イベント申込登録(検索入力)",
+        "sheet-17:イベント申込登録(検索結果)"
+      ],
+      "課題タイトル": "【一部実装】イベント管理_イベント申込登録(検索入力/検索結果)_イベント申込登録（検索結果）の「新規登録」ボタンが、編集権限のない店舗のイベントに対しても表示される",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "新規登録ボタンが無条件表示。押下後404の遅延失敗",
+      "前回書いた次にすること": "実装対応: 一覧取得または表示段階で編集権限による絞り込み。EntryController:415-440を参考にできる",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-17「イベント申込登録(検索結果)」\n★権限による制御\n> ・識別ID:4「新規登録」ボタンは権限を保持している店舗のイベントのみ表示する\n\n画面部品仕様\n> 4 新規登録　ボタン　…　権限を保持している店舗のイベントのみ表示\n\n■実装の現状\nadmin/Event/EntryRegistration/index.twig:109-111 は権限判定なしで無条件にボタンを出力しています（同ファイルの `isEditable|EditableShop|editable` grep は0件）。\nEntryRegistrationController.php:117-134 の一覧取得にも権限フィルタがありません。権限チェックは遷移先（同 :152-155）にのみあり、押下後に404となる遅延失敗です。\n\n**対照実装があります。** EntryController.php:415-440（イベント申込一覧のモーダル）は同じリポジトリメソッドを使いつつ編集可能店舗で絞り込んでおり、同等機能の片方だけが未対応です。\n\n■次の対応\n実装対応: 一覧取得または表示段階で編集権限による絞り込みを行う。EntryController.php:415-440 の実装を参考にできます。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-17「イベント申込登録(検索結果)」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Event/EntryController.php",
+        "src/Eccube/Controller/Admin/Event/EntryRegistrationController.php",
+        "src/Eccube/Resource/template/admin/Event/EntryRegistration/index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2233",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-19:イベント一括登録",
+        "sheet-20:イベント一括登録CSV"
+      ],
+      "課題タイトル": "【未実装】イベント管理_イベント一括登録(CSV)_イベント一括登録CSVで、親イベントにクレジットカード決済が無いのに日程がオンライン受付あり・参加費有料の場合のエラーチェックが実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "CSV取込にクレジット決済の相関チェックが無い。画面3経路には実装済み",
+      "前回書いた次にすること": "実装対応: ScheduleType:191-199 の条件をCSV取込へ移植",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-19「イベント一括登録」\n機能仕様処理概要\n> ・親イベント情報に支払方法（クレジットカード決済）の設定がないのに日程情報のオンライン受付が「あり」かつ参加費が有料とされている場合はエラーとする。\n\n■実装の現状\nsrc/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php にこの相関チェックがありません。クレジット列の検証は選択値チェックのみ(289-291)、オンライン受付ありの検証(364-400)は From/To の必須・書式・前後関係のみで、参加費やクレジット設定を参照しません。\n翻訳ファイルの `admin.event.entry.bulk_csv.error.*`（messages.ja.yaml:5912-5921）を全件確認しましたが、クレジット決済未設定に該当するキーは存在しません。\n\n**画面側には同等ルールが3経路とも実装済みです。** ScheduleType.php:191-199、EventType.php:280-290、RepeatScheduleType.php:191-194。CSV取込経路だけが抜けています。\n\n■次の対応\n実装対応: CSV取込にも同じ相関チェックを追加する。画面側 ScheduleType.php:191-199 の条件をそのまま移植できます。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-19「イベント一括登録」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/ScheduleType.php",
+        "src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2234",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-22:画像設定"
+      ],
+      "課題タイトル": "【一部実装】イベント管理_画像設定_画像設定のアップロード先「店舗」の初期値に、メンバーのデフォルト表示の店舗が設定されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "初期値のデフォルト表示店舗が未設定。BannerControllerだけ getDefaultSearchBaseInfo 未使用",
+      "前回書いた次にすること": "実装対応: getDefaultSearchBaseInfo() を初期値に設定",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-22「画像設定」\n画面部品仕様\n> 1 店舗　単一選択　〇　**初期値: デフォルト表示の店舗**　編集権限のある店舗のみ表示 / 編集権限のない店舗が選択された場合エラー\n\n■実装の現状\nsrc/Eccube/Controller/Admin/Event/BannerController.php:174-194 の `createFreshBannerPageState` は、URLの `{html_class}` から解決した店舗のみを初期選択に使います。店舗絞り込みなしの `admin_event_banner` では初期選択が null になります。\n`getDefaultSearchBaseInfo()` の全文検索でも BannerController は一件もヒットせず、他のイベント系画面（EntryController / EventController 等）は使っているためこの画面だけ未対応です。\n他3要件は実装済みです。単一選択・必須(EventBannerUploadType.php:41-53)、編集権限店舗のみ選択肢(BannerController::filterBaseInfosEditableByMember)、権限外選択時エラー(EventBannerStorageService.php:71-73)。\n\n■次の対応\n実装対応: メンバーの `getDefaultSearchBaseInfo()` を初期値に設定する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-22「画像設定」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Event/BannerController.php",
+        "src/Eccube/Form/Type/Admin/Event/EventBannerUploadType.php",
+        "src/Eccube/Service/Admin/Event/EventBannerStorageService.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2235",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-22:画像設定"
+      ],
+      "課題タイトル": "【実装乖離】イベント管理_画像設定_画像設定の削除リンクの確認メッセージが、設計書で指定された文言と異なる",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "削除確認文言が設計と異なる。設計文言のキーはTOPバナー用にのみ存在",
+      "前回書いた次にすること": "実装対応: 確認文言を設計指定に揃える",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-22「画像設定」\n画面部品仕様\n> 8 削除　リンク　…　「**一度削除したデータは元に戻せません。削除してもよろしいですか？**」を表示し「OK」を選択で削除\n\n詳細設計書の表示メッセージ節にも同一文言があります。\n\n■実装の現状\nadmin/Event/banner.twig:327,329 が使う翻訳キーの文言が異なります。\nmessages.ja.yaml:5967 `admin.event.banner.delete_confirm: この画像を削除します。よろしいですか？`\n設計と同一文言のキーは `admin.data.top_banner.delete_confirm`（同6141行、TOPバナー用）にのみ存在し、イベント画像設定では使われていません。\n「編集権限のある店舗の画像のみ表示」は banner.twig:322-331 で実装済みです。\n\n■次の対応\n実装対応: 確認文言を設計指定のものに揃える。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-22「画像設定」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Event/BannerController.php",
+        "src/Eccube/Resource/template/admin/Event/banner.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2236",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-22:画像設定"
+      ],
+      "課題タイトル": "【実装乖離】イベント管理_画像設定_画像設定のS3アップロード先フォルダが、設計書の /banner/{店舗識別子} ではなく banner/event/{店舗識別子} になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "実装は banner/event/{店舗}/。設計の2要求が両立不能",
+      "前回書いた次にすること": "要確認: 「/banner/{店舗識別子}」と「TOPと別フォルダ」は同時に満たせない。詳細設計書もパス規約を未確定としている",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-22「画像設定」\n機能仕様処理概要（2つの要求が併記されています）\n> ・S3のイベントバナー画像参照先、アップロード先を**イベントバナー用フォルダに変更する（TOPバナー用フォルダとは別）**\n> ・アップロード先は **/banner/{選択店舗の識別子（tc など）}** のフォルダ\n\n■実装の現状\nsrc/Eccube/Service/Admin/Event/EventBannerStorageService.php:26 は `S3_BANNER_PREFIX = 'banner/event/'` で、アップロード先は `banner/event/{店舗HTMLクラス名}/` です。一覧取得・削除キー検証も同一prefix前提で一貫しています。\nTOPバナーは TopBannerUploadAction.php:25 で `'banner/top/'` のため、**「TOPバナー用フォルダとは別」という要求は充足**しています。\n\n■次の対応\n要確認: **設計の2つの要求が両立しません。** 「/banner/{店舗識別子}」を字義どおり取ると TOP バナーと同じ `banner/` 直下になり、「TOPバナー用フォルダとは別」を満たせません。実装の `banner/event/{店舗識別子}/` は後者を満たす形です。\nなお詳細設計書も「保管先のパス規約は ec-cube-enterprise 実装で要確認」としており、移行先のパス規約は未確定です。どちらを正とするか設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-22「画像設定」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Service/Admin/Data/TopBannerUploadAction.php",
+        "src/Eccube/Service/Admin/Event/EventBannerStorageService.php",
+        "src/Eccube/Service/S3AccessService.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2238",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-9:複製新規"
+      ],
+      "課題タイトル": "【一部実装】イベント管理_複製新規_イベント複製新規・新規登録画面にて、「店舗」の選択肢が編集権限のある店舗に絞り込まれず全店舗が表示される",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "店舗選択肢の絞り込みが未実装。他要件は実装済み",
+      "前回書いた次にすること": "要確認: sheet-5は「全店舗」、sheet-9は「編集権限のみ」で要求が正反対。同一EventTypeを共有するため同時充足不可",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾があり、実装是正か設計是正かの判断が必要です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-9「複製新規」\n★権限による制御\n> ・識別ID:1-3「店舗」は**編集権限のある店舗のみ表示する**\n\n画面部品仕様\n> 1-3 店舗　単一選択　〇　デフォルト表示の店舗　編集権限のある店舗のみ表示 / 編集権限のない店舗が選択された場合エラー\n\n■実装の現状\n選択肢の絞り込みのみ未実装です。src/Eccube/Form/Type/Admin/EventType.php:88-92 の `baseInfo` は全店舗を `orderBy('b.id','ASC')` で返すだけで、`isEditableShop` による絞り込みがありません（`Member` オプションは :311 で受け取っているため技術的には可能）。\n他の要件は実装済みです。権限外選択時エラー(同 :292-298)、新規登録時のデフォルト店舗初期値(EventController.php:206-212)、複製時の複製元引き継ぎ(同 :244-256)。\n\n■次の対応\n要確認: **設計内で要求が正反対です。** sheet-5「イベント編集」の同項目は「選択肢:**全店舗**」、sheet-9「複製新規」は「編集権限のある店舗のみ表示」としています。両画面は同一の `EventType` を共有するため同時には満たせません。画面ごとにフォームを分けるか、どちらかに寄せるかを設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-9「複製新規」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Event/EventController.php",
+        "src/Eccube/Form/Type/Admin/EventType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2240",
+      "設計書": "0214_基本設計仕様書(イベント管理).html",
+      "設計シート": [
+        "sheet-15:イベント申込詳細・編集"
+      ],
+      "課題タイトル": "【実装乖離】イベント管理_イベント申込詳細・編集(＋プレイヤー検索)_イベント申込詳細・編集(M13-10)の「支払金額」が、設計指定の「ラベル(参照表示)」ではなく disabled 入力欄として描画されている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "支払金額が disabled 入力欄。設計はラベル。機能要件は充足",
+      "前回書いた次にすること": "実装対応: ラベル表示(col-form-plain)に変更。影響度は低く優先度低めで可",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0214_基本設計仕様書(イベント管理) sheet-15「イベント申込詳細・編集」\n画面部品仕様\n> 1-9 支払金額　**ラベル**\n\n★入力項目の変更について\n> ・識別ID:1-9「支払金額」は参照のみのため操作不可\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/EventEntryDetailType.php:109-116 は `IntegerType` に `'disabled' => true` を付けており、グレーアウトした入力欄として描画されます（EntryRegistration/edit.twig:314-320）。\n対照として、同テンプレートの参照専用項目（支払会員 :291-299、支払番号 :322-326）は `col-form-plain` のテキスト表示です。設計は 1-8 支払方法を「単一選択＋操作不可」、1-9 支払金額を「ラベル」と書き分けています。\n\n■次の対応\n実装対応: 支払金額をラベル表示（`col-form-plain`）に変更する。\n\n付記: 乖離は表示形式に限定され、「参照のみ・操作不可」という機能要件は満たしています（Symfony の disabled フィールドは送信値を無視するため改ざんによる更新も不可）。影響度は低く、優先度は低めで差し支えありません。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html / sheet-15「イベント申込詳細・編集」\n- 実装: ec-cube-enterprise（Controller / FormType / Entity / Twig / Repository / マイグレーション / 翻訳ファイル）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M13_event_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Event/EntryController.php",
+        "src/Eccube/Form/Type/Admin/EventEntryDetailType.php",
+        "src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig"
+      ]
+    }
+  ]
+}

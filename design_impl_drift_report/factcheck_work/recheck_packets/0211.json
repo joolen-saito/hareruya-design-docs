@@ -1,0 +1,137 @@
+{
+  "book": "0211",
+  "count": 7,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-2199",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-13:入荷通知依頼 一覧表示(検索項目)",
+        "sheet-14:入荷通知依頼 一覧表示(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、販売関連の集計が注文ステータス「出荷完了」に限定されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "集計SQLに order_status_id の絞り込みが一切無い",
+      "前回書いた次にすること": "実装対応: 出荷完了の条件を追加。既存集計データの再作成要否も検討",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-3/sheet-5「日別・月別集計 集計一覧」\n機能仕様処理概要（★カスタマイズ）\n> ・集計は売上として計上できるものとし、それ以外の対応状況は計上しない\n> (**注文ステータスが「出荷完了」のみ集計対象とする**)\n> ・販売関連の集計は注文データの注文ステータスが「出荷完了」のみ計上し、それ以外の注文ステータスは計上しない\n\n■実装の現状\nDtbDailySummaryRepository.php:42-73 の `aggregateOrderSummaryByBaseInfo()` の WHERE 句は `base_info_id IS NOT NULL` と集計日範囲のみで、**`order_status_id` による絞り込みが一切ありません**。\nBatchAggregateDailySummaryAction.php:31-59 の日次バッチもこのメソッドを呼ぶだけで、前後にステータス除外処理はありません。\n`DtbDailySummaryRepository` / `DtbMonthlySummaryRepository` / `Service/Admin/Analysis/*` の全ファイルで `order_status` / `OrderStatus` を検索しましたが**ヒット0件**でした。月次集計も日次テーブルの合算です。\n\n■次の対応\n実装対応: 集計SQLに `order_status_id = 5`（出荷完了）の条件を追加する。既存の集計データの再作成要否も併せてご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-3/sheet-5「日別・月別集計 集計一覧」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Entity/Master/OrderStatus.php",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php",
+        "src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2200",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-13:入荷通知依頼 一覧表示(検索項目)",
+        "sheet-14:入荷通知依頼 一覧表示(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計にて、買取関連の集計が買取ステータス「買取成立」に限定されていない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "買取ステータスの絞り込みが無い。SUMMARY_STATUSES も日別月別集計からは未使用",
+      "前回書いた次にすること": "要確認: 機能仕様処理概要(ステータス基準)と各項目の詳細説明(日付有無基準)で判定軸が食い違う",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-5「日別・月別集計 集計一覧(検索結果-日別)」\n機能仕様処理概要（★カスタマイズ）\n> ・買取関連の集計は買取データの**買取ステータスが「買取成立」のみ**計上し、それ以外の買取ステータスは計上しない\n\n■実装の現状\nDtbDailySummaryRepository.php:83-152 の `aggregatePurchaseSummaryByBaseInfo()` は、ネット買取が `auto_approval_flg = TRUE` ＋日付範囲、店頭買取が `cancel_date IS NULL` ＋日付範囲で、いずれも**買取ステータスによる絞り込みがありません**。\n`MtbOtcBuyOrderStatus::SUMMARY_STATUSES` は実在しますが、参照は RecalculateSummaryAction.php:36-37 と DtbOtcBuyOrderRepository.php:830 の2箇所のみで、日別・月別集計からは使われていません。なお同定数は買取成立以外に3ステータスを含むため、流用しても設計の「買取成立のみ」は満たしません。\n\n■次の対応\n要確認: **設計内で判定軸が食い違います。** 同シートの「各項目の詳細説明」は\n> (9)買取件数 … ネット買取は**査定承諾日が入っているもの**を集計対象とする ※キャンセルは含まない／店頭買取の場合は**買取成立日が入っているもの**を集計対象とする ※管理者取消は含まない\n\nとしており、「買取ステータス＝買取成立のみ」（機能仕様処理概要）と「日付の有無で判定」（各項目の詳細説明）の2軸が併存しています。正しい実装が設計から一意に定まらないため、設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-5「日別・月別集計 集計一覧(検索結果-日別)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Entity/DtbBuyOrder.php",
+        "src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2201",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-13:入荷通知依頼 一覧表示(検索項目)",
+        "sheet-14:入荷通知依頼 一覧表示(検索結果)"
+      ],
+      "課題タイトル": "【一部実装】分析・集計管理_日別・月別集計 集計一覧（検索項目/検索結果）_日別・月別集計の検索結果にて、店舗名の「その他」区分が集計・出力されない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "その他を返す分岐が無い。ただし同シートに「その他は不要」と明記されている",
+      "前回書いた次にすること": "要確認: 起票の前提が設計内で否定されている。乖離として対応すべきかの判断が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-5「日別・月別集計 集計一覧(検索結果-日別)」\n機能仕様処理概要（★集計項目の固定）\n> ・識別ID 2:「支店名」を追加。「通販」もしくは指定された「店舗名」または**「その他」**を出力\n> ※「その他」は通販・各店舗に該当しない売上を計上\n\n■実装の現状\nAnalysisSummaryBuilder.php:200-211 の `resolveStoreName()` は「通販」「略称」「店舗名」を返すのみで、**「その他」を返す分岐がありません**。DtbDailySummaryRepository.php:62-64 の集計元SQLが `base_info_id IS NOT NULL` で絞るため、店舗未紐付けの受注は集計対象から除外されます。\n`その他` を Analysis 関連のService・CSV・テンプレートで検索しましたが**0件**でした。\n\n■次の対応\n要確認: **設計自体が「その他」を否定しています。** 同シートの「各項目の詳細説明」に\n> (2)店舗名　集計対象の店舗\n> **その他は不要**\n\nと明記されており、同シート下部の機能仕様処理概要の「その他を出力」と正反対です。シートの更新日（2025-10-28、作成 2025-07-09）から、「その他は不要」が後から追記された仕様変更である可能性があります。\n**起票の前提が設計内で否定されているため、乖離として対応すべきかの判断が必要です。** 設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-5「日別・月別集計 集計一覧(検索結果-日別)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php",
+        "src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php",
+        "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2202",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-7:日別・月別集計 CSV出力"
+      ],
+      "課題タイトル": "【実装乖離】分析・集計管理_日別・月別集計 CSV出力_日別・月別集計CSV出力にて、注文ステータス「出荷完了」のみを計上する集計方式が反映されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "CSV出力が total を捨てており総合計行が無い。画面側は total を使用",
+      "前回書いた次にすること": "実装対応: 総合計行を追加。total は計算済みのため出力側のみで解消。出荷完了の件は2199に集約推奨",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-7「日別・月別集計 CSV出力」\n機能仕様処理概要（★集計項目の固定）\n> ・**最終行には「総合計」を追加**。識別ID3～12各列のそれぞれの総合計を出力\n\n■実装の現状\nSummaryCsvExporterService.php:85-125 の `export()` は `AnalysisSummaryBuilder::build()` の戻り値のうち **`$summaryData['summary']` だけを使用**し、総合計行を出力しません。\n\n**総合計は既に計算済みです。** AnalysisSummaryBuilder.php:40-56 の `build()` は `['summary' => ..., 'total' => $this->buildTotal(...)]` を返しており、画面側（Analysis/summary.twig:236-243）は `total` を使って総合計行を描画しています。**CSVだけが `total` を捨てている**という明確な非対称です（`src/Eccube/Service/Csv/` 全体で `grand_total` / `総合計` は0件）。\n\n■次の対応\n実装対応: CSV出力に総合計行を追加する。`total` は既に計算されているため、出力側の対応のみで解消します。\n\n要確認: 起票が併せて指摘する「出荷完了のみ計上」については、**sheet-7 のカスタマイズ説明に「集計方式の変更」が列挙されておらず、機能仕様処理概要にも「出荷完了」の語が一度も出てきません**。この要求は sheet-3 / sheet-5（M12-01）側の記載です。2199 として別途起票されているため、本件は総合計行の欠落に絞ることを推奨します。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-7「日別・月別集計 CSV出力」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Analysis/SummaryController.php",
+        "src/Eccube/Repository/DtbDailySummaryRepository.php",
+        "src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2203",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-13:入荷通知依頼 一覧表示(検索項目)",
+        "sheet-14:入荷通知依頼 一覧表示(検索結果)"
+      ],
+      "課題タイトル": "【一部実装】分析・集計管理_入荷通知依頼 一覧表示（検索項目/検索結果）_入荷通知依頼一覧のキーワード検索が商品名(日/英)のみで、会員名で検索できない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "キーワード検索が商品名のみで会員テーブルを結合していない",
+      "前回書いた次にすること": "実装対応: 会員テーブルを結合し会員名を検索対象に追加。プレースホルダ文言も修正",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-13「入荷通知依頼 一覧表示(検索項目)」\n画面部品仕様\n> 1 キーワード検索　テキストボックス　検索対象 : **商品名(日/英)・会員名**\n\n■実装の現状\nDtbProductRequestRepository.php:317-341 の `getAnalysisSummary()` は、キーワード条件が `(p.name LIKE :multi OR p.name_en LIKE :multi)` のみで、**会員テーブル（dtb_customer / dtb_player）が結合すらされていません**。\n翻訳側も messages.ja.yaml:6187 の `admin.analysis.product_request.form.multi.placeholder: 商品名(日/英)` で会員名の記載がありません。\n\n■次の対応\n実装対応: 会員テーブルを結合し、キーワード検索の対象に会員名を追加する。プレースホルダの文言も併せて修正してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-13「入荷通知依頼 一覧表示(検索項目)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/Analysis/SearchProductRequestType.php",
+        "src/Eccube/Repository/DtbProductRequestRepository.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2205",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-15:入荷通知依頼 CSV出力"
+      ],
+      "課題タイトル": "【一部実装】分析・集計管理_入荷通知依頼 CSV出力_入荷通知依頼CSV出力にて、項目「通知済み/削除」が「削除」件数のみとなっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "ヘッダー名が「削除」。通知済みを記録するカラムが存在せず集計不能",
+      "前回書いた次にすること": "実装対応: 通知済みを記録するカラム/テーブルの追加が必要。ヘッダー名修正だけでは要求を満たさない",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-15「入荷通知依頼 CSV出力」\n項目一覧\n> 5 **通知済み/削除**　※カスタマイズ対応\n\n機能仕様処理概要\n> ・識別ID 5:「通知済み/削除」の追加\n> 検索項目で指定した条件に該当する商品ごとの**通知済み**もしくはユーザー自身が通知取り消しを行った件数を取得\n\n■実装の現状\n1) ヘッダー名: ProductRequestCsvExportService.php:24-30 の `CSV_HEADER` は `'deleted_count' => '削除'` で、設計の「通知済み/削除」と異なります。\n2) 通知済み件数が集計できません。DtbProductRequest エンティティに**「通知済み」を表すカラムが存在せず**、RestockNotificationMailSender.php:112-124 は送信成功時に何も記録しません（フラグ更新も deletedAt 設定もなし）。`setDeletedAt` / `remove(` の呼び出しは NotifylistController.php:142,221（**フロントでユーザー自身が通知を取り消した場合**）の2箇所のみです。\nつまり `deleted_count` は「ユーザー自身の取り消し」だけを表し、通知済みを一切含みません。\n重複排除（`COUNT(DISTINCT pr.player_id)` により異なる規格でも1カウント）は設計どおり実装済みです。\n\n■次の対応\n実装対応: 通知済みを記録するカラムまたはテーブルの追加が必要です（現状データを保持していないため、ヘッダー名の修正だけでは要求を満たしません）。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-15「入荷通知依頼 CSV出力」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Entity/DtbProductRequest.php",
+        "src/Eccube/Repository/DtbProductRequestRepository.php",
+        "src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php",
+        "src/Eccube/Service/Stock/RestockNotificationMailSender.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2206",
+      "設計書": "0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html",
+      "設計シート": [
+        "sheet-19:特集タグ編集CSVダウンロード(検索項目)",
+        "sheet-20:特集タグ編集CSVダウンロード CSV出力"
+      ],
+      "課題タイトル": "【実装乖離】分析・集計管理_特集タグ編集CSVダウンロード（検索項目）_特集タグ編集CSVダウンロードにて、集計日(From)の初期値が当月1日ではなく2週間前になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "初期値が2週間前。設計部品表は当月1日",
+      "前回書いた次にすること": "要確認: 機能仕様処理概要が「現行踏襲」としており部品表の当月1日が新規要求か現行値の記録か判別できない",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-19「特集タグ編集CSVダウンロード(検索項目)」\n画面部品仕様\n> 1 集計日(From)　日付(yyyy/mm/dd)　〇　初期値: **当月1日**\n\n■実装の現状\nSearchUsedCardType.php:43-49 の `start_date` は `'data' => new \\DateTime('2 weeks ago')` で初期値が**2週間前**です。UsedCardController.php:42-46 にも上書きはなく、used_card.twig の JS はクリア時に元の値へ戻すだけです。\n必須（required=true + NotBlank）は設計どおりです。\n\n参考として、同じ分析機能群の SearchProductRequestType.php:56-61 は `'data' => new \\DateTime('first day of this month')`（当月1日）を使っており、**同一機能群内で初期値の実装方針が不統一**です。\n\n■次の対応\n要確認: 同シートの機能仕様処理概要は「特集タグ編集用CSVダウンロードは**現行踏襲**」としており、部品表の「初期値: 当月1日」が新規要求なのか現行値の記録なのかが判別できません（現行が2週間前であれば両者が衝突します）。設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-19「特集タグ編集CSVダウンロード(検索項目)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M12_analysis_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Analysis/UsedCardController.php",
+        "src/Eccube/Form/Type/Admin/Analysis/SearchUsedCardType.php",
+        "src/Eccube/Resource/template/admin/Analysis/used_card.twig"
+      ]
+    }
+  ]
+}

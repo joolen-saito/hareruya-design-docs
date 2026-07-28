@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2205",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 通知済みを記録するカラム/テーブルの追加が必要。ヘッダー名修正だけでは要求を満たさない",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "ヘッダー名が「削除」。通知済みを記録するカラムが存在せず集計不能",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0211_基本設計仕様書(分析・集計管理機能)_詳細設計 sheet-15「入荷通知依頼 CSV出力」\n項目一覧\n> 5 **通知済み/削除**　※カスタマイズ対応\n\n機能仕様処理概要\n> ・識別ID 5:「通知済み/削除」の追加\n> 検索項目で指定した条件に該当する商品ごとの**通知済み**もしくはユーザー自身が通知取り消しを行った件数を取得\n\n■実装の現状\n1) ヘッダー名: ProductRequestCsvExportService.php:24-30 の `CSV_HEADER` は `'deleted_count' => '削除'` で、設計の「通知済み/削除」と異なります。\n2) 通知済み件数が集計できません。DtbProductRequest エンティティに**「通知済み」を表すカラムが存在せず**、RestockNotificationMailSender.php:112-124 は送信成功時に何も記録しません（フラグ更新も deletedAt 設定もなし）。`setDeletedAt` / `remove(` の呼び出しは NotifylistController.php:142,221（**フロントでユーザー自身が通知を取り消した場合**）の2箇所のみです。\nつまり `deleted_count` は「ユーザー自身の取り消し」だけを表し、通知済みを一切含みません。\n重複排除（`COUNT(DISTINCT pr.player_id)` により異なる規格でも1カウント）は設計どおり実装済みです。\n\n■次の対応\n実装対応: 通知済みを記録するカラムまたはテーブルの追加が必要です（現状データを保持していないため、ヘッダー名の修正だけでは要求を満たしません）。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html / sheet-15「入荷通知依頼 CSV出力」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:19:41+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:19:49+09:00",
+  "appliedStatus": "処理中"
+}

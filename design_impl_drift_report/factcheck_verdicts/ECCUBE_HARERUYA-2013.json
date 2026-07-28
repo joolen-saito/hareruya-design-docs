@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2013",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 上限・超過チェックとステータス追加。分割側4段階との不一致は要確認",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "在庫超過チェックが未接続でデッドキー2件が残存。ステータスも6件のみで結合計画系が不在",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-19「在庫分割結合登録編集（結合)」\n画面部品仕様\n> 2-11 結合数　数値　○　**1～99999999**　・**在庫数を超える数値が入力された場合はエラーとする**\n> 1-5 ステータス … 新規登録、結合元登録、**結合計画承認待ち**、却下、**結合計画承認済み**、**結合完了承認待ち**、入庫完了\n\n■実装の現状\nStockJoinRegisterAction.php:43-45 は `destinationStock <= 0` の下限のみで、上限も在庫数比較もありません。stock_join_new.twig:128 も `min=\"1\" required` のみ、StockJoinController.php:1015-1021 も `min_range => 0` のみです。`destination_stock` はフォーム管理外のため Constraint の適用経路もありません。\n\n**決定的な裏付け**: 翻訳キー `admin.stock.join.quantity_exceeds_stock`（:5099）と `admin.stock.join.source_exceeds_stock`（:5100）は**定義だけ存在し参照0ヒットのデッドキー**で、在庫超過チェックが未接続であることを示しています。\nステータスも MtbStockSplitJoinStatus.php:27-38 の定数6件（新規登録/結合元登録/分割承認待ち/結合承認待ち/入庫済み/却下）のみで、「結合計画承認済み」「結合完了承認待ち」は存在しません（`結合計画` / `JOIN_PLAN` 等の全文検索も実質0ヒット）。\n`99999999` も在庫分割結合の PHP/Twig/JS には不在です。\n\n■次の対応\n実装対応: 結合数の上限・在庫数超過チェックの実装と、ステータス段階の追加が必要です。デッドキー2件はそのまま流用できます。\n\n要確認: ステータス段階数が**結合側 sheet-19（7段階）と分割側 sheet-18（4段階）で不一致**です。同一マスタを共有する前提と衝突するため、設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-19「在庫分割結合登録編集（結合)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:23:59+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:24:05+09:00",
+  "appliedStatus": "処理中"
+}

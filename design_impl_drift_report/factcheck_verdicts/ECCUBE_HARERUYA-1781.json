@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1781",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 抽出条件に isBranchPublished=true を追加(1782と一括対応可)",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "SALE中の商品の抽出に is_branch_published の条件が無い",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-4「支店ECTOP」\nカスタマイズ説明\n> 支店商品の公開と非公開の制御\n> ・「M03-02商品登録/編集」機能の商品公開ステータスに応じて、商品を表示、または非表示にする\n\n機能仕様処理概要（★）\n> ★「SALE中の商品」では、以下1~10の条件で商品を表示する\n> 1　**支店の商品公開ステータスが「公開」であること**\n> ※カスタマイズ要件より追加\n\n■実装の現状\nProductRepository.php:395-467 の `findTopSaleProductsByBaseInfo()` の抽出SQLに `p.is_branch_published` の条件がありません。後段の ProductClass 絞り込みDQLにもありません。\n他の条件（廃止除外・在庫1以上・セールタグ・セールフラグ・販売価格1円以上・状態最良選出・ランダム・30件・0件時非表示）はすべて設計どおり実装済みです。\n\n**反証**: `isBranchPublished` をフロント商品取得で使っているのは ProductRepository.php:718（`findPublicByIds()` 内）の**1箇所のみ**で、同じパターンが本クエリには適用されていません。Twig側にもフィルタはなく、Doctrine の SQLFilter による大域フィルタも存在しません。\n\n■次の対応\n実装対応: 抽出条件に `p.isBranchPublished = true` を追加する。1782 と同種の欠落のため一括対応可。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-4「支店ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:16:06+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:16:09+09:00",
+  "appliedStatus": "処理中"
+}

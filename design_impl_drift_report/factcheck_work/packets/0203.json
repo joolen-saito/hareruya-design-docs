@@ -1,0 +1,173 @@
+{
+  "book": "0203",
+  "count": 6,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-2039",
+      "summary": "【実装乖離】受注管理_受注検索一覧(検索入力/検索結果)_受注検索一覧の「対応状況」チェックボックスに、設計書のチェック項目に無い「対応中」「返品」が選択肢として表示される",
+      "feature": "受注検索一覧(検索入力/検索結果)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "受注情報検索 一覧(検索入力)"
+        },
+        {
+          "id": "sheet-4",
+          "title": "受注情報検索 一覧(検索結果)"
+        }
+      ],
+      "期待される挙動": "- 受注検索一覧の対応状況（識別ID 2-3）は複数選択のチェックボックスであり、選択肢は「決済処理中、注文受領、入金待ち、入金済み、キャンセル、出荷指示、出荷完了、購入処理中、ピック中、ピック完了、店頭予約」の11項目であること。",
+      "現在の挙動": "- SearchOrderType の status フィールドは expanded=true / multiple=true のチェックボックスとして実装され、query_builder で mtb_order_status から OrderStatus::PASSED（引渡し済み、id=14）のみを除外している。\n- mtb_order_status には基本マスタ由来の id=4「対応中」と、マイグレーション Version20260220000001 で追加された id=15「返品」が残存しており、これらは除外されていないため、対応状況チェックボックスには設計書に無い「対応中」「返品」を含む13項目が表示される。\n- 設計書が列挙する11項目（決済処理中=7、注文受領=1、入金待ち=2、入金済み=6、キャンセル=3、出荷指示=9、出荷完了=5、購入処理中=8、ピック中=10、ピック完了=13、店頭予約=12）はすべて選択肢に含まれている。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/SearchOrderType.php:141-156",
+        "src/Eccube/Resource/doctrine/import_csv/ja/mtb_order_status.csv:4-4",
+        "app/DoctrineMigrations/Version20260220000001.php:70-74",
+        "src/Eccube/Resource/template/admin/Order/index.twig:411-427",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:71-71"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/doctrine.yaml:78 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2045",
+      "summary": "【実装乖離】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_メール一括送信のテンプレ選択が、メール管理で作成されたテンプレート一覧ではなく特定ベースファイル（sell_order / sell_order.en / no_base）のテンプレートのみに限定されている",
+      "feature": "メール一括送信 / 【新規】手動メール通知(確認画面)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-10",
+          "title": "【新規】手動メール通知(確認画面)"
+        },
+        {
+          "id": "sheet-9",
+          "title": "メール一括送信"
+        }
+      ],
+      "期待される挙動": "- メール一括送信（M05-06）のテンプレ選択（識別ID 1）の選択肢は、ショップ設定＞メール管理で作成されているテンプレート一覧が表示されること。",
+      "現在の挙動": "- OrderManualMailAllType の template フィールドの query_builder は mt.file_name IN (:fileNames) で絞り込んでおり、MailController::manualMailAll() から渡される baseFiles は MailTemplate::BASE_SELL_ORDER / BASE_SELL_ORDER_EN / BASE_NO_BASE の3種のみである。\n- そのため選択肢は file_name が 'Mail/sell_order.twig' / 'Mail/sell_order.en.twig' / 'Mail/no_base.twig' のテンプレートに限定される。\n- ショップ設定＞メール管理（MailType）でテンプレートを新規作成すると file_name は 'Mail/Mall/<入力名>.twig' となるため、メール管理で新規作成したテンプレートはメール一括送信のテンプレ選択に一切表示されない。\n- また、メール管理の一覧は baseInfo と isAutoSend=false で絞り込んでいるのに対し、メール一括送信側はこれらの条件で絞り込んでいないため、両者の一覧は一致しない。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/OrderManualMailAllType.php:38-55",
+        "src/Eccube/Entity/MailTemplate.php:98-110",
+        "src/Eccube/Form/Type/Admin/MailType.php:49-57",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:738-738"
+      ],
+      "引用_不在または範囲外": [
+        "Mail/sell_order.twig:None [file_not_found]",
+        "Mail/sell_order.en.twig:None [file_not_found]",
+        "Mail/no_base.twig:None [file_not_found]",
+        "src/Eccube/Controller/Admin/Order/MailController.php:345 [line_out_of_range]",
+        "src/Eccube/Form/Type/Admin/MailType.php:118 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2047",
+      "summary": "【一部実装】受注管理_納品書印刷(日本語)_納品書印刷(日本語)のデータ取得クエリが会員(Customer/Player)を内部結合しているため、ゲスト(非会員)受注が納品書の対象から外れる",
+      "feature": "納品書印刷(日本語)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "納品書印刷（日本語）"
+        },
+        {
+          "id": "sheet-21",
+          "title": "出荷指示ー納品書印刷（日本語）"
+        },
+        {
+          "id": "sheet-14",
+          "title": "納品書印刷（英語）"
+        }
+      ],
+      "期待される挙動": "- 納品書印刷(日本語)の「送り主-会員番号」（識別ID 16）はゲストの場合に「非会員」と表示すること。\n- 本店のほか支店もスマレジも納品書の出力対象とすること（スマレジには非会員による取引データが存在する）。",
+      "現在の挙動": "- テンプレート delivery_slips.ja.twig には smaregi_id が無い場合に「非会員」と表示するフォールバックが実装されている。\n- 一方 DtbShippingStandbyRepository::generateDeliverySlips() の注文単位サマリ取得クエリは ->join('o.Customer', 'cus') および ->join('cus.Player', 'player') と内部結合しており、Order.Customer が null のゲスト受注（Order エンティティ上 Customer は nullable）はサマリ結果 $summary から欠落する。\n- 明細取得用の $qb2 は Customer 結合を追加する前の $qb を clone しているためゲスト受注も含まれる。その結果 foreach で $result[$key] = array_merge($summary[$key], $items[$key]) を行う際、ゲスト受注の $summary[$key] が未定義となり納品書を生成できない。\n- そのため「非会員」表示のフォールバックはゲスト受注に対して到達せず、スマレジの非会員取引の納品書が出力できない。",
+      "引用": [
+        "src/Eccube/Repository/DtbShippingStandbyRepository.php:303-304",
+        "src/Eccube/Repository/DtbShippingStandbyRepository.php:263-263",
+        "src/Eccube/Repository/DtbShippingStandbyRepository.php:343-343",
+        "src/Eccube/Entity/Order.php:600-600",
+        "src/Eccube/Resource/template/admin/ShippingStandby/delivery_slips.ja.twig:86-92",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:932-932",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:899-899"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2061",
+      "summary": "【未実装】受注管理_受注情報編集 / 受注情報履歴_受注情報編集（受注商品情報）にて、小計値引き/割引区分・クーポン値引き・免税額が表示されない",
+      "feature": "受注情報編集 / 受注情報履歴",
+      "sheetCandidates": [
+        {
+          "id": "sheet-15",
+          "title": "受注情報編集"
+        }
+      ],
+      "期待される挙動": "- 受注情報編集の受注商品情報の金額欄に、識別ID 6-20「小計値引き/割引区分」、6-21「クーポン値引き」、6-22「免税額」（いずれもスマレジ連携項目）をラベルとして表示すること。",
+      "現在の挙動": "- 受注情報編集テンプレートの金額欄には、3項目とも「TODO: … - スマレジ連携後」というコメントが置かれているだけで、表示するマークアップが存在しない。\n- Order エンティティには tax_free（免税額）、coupon_discount（クーポン値引き）、subtotal_discount_division（小計値引き/割引区分）のカラムが定義済みで、データを保持する受け皿は存在する。\n- テンプレート1226行目の Order.tax_free_discount_items のループは、Order::getTaxFreeDiscountItems()（EC-CUBE標準の「非課税・不課税の値引き明細」）を表示しているものであり、設計6-22のスマレジ「免税額」とは別物である。",
+      "引用": [
+        "src/Eccube/Entity/Order.php:753-760",
+        "src/Eccube/Entity/Order.php:331-337",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:1295-1295",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:1296-1296",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M05_order_management_basedesign.md:1297-1297"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/template/admin/Order/edit.twig:1238 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2077",
+      "summary": "【一部実装】受注管理_受注一覧CSV出力_受注一覧CSV出力にて、非会員（会員未紐付け）の受注の「お名前(姓)」を「非会員」と出力する変換処理が実装されておらず、受注一覧画面の表示と食い違う",
+      "feature": "受注一覧CSV出力",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "受注一覧CSV出力"
+        }
+      ],
+      "期待される挙動": "- 受注一覧CSV出力の識別ID:6「お名前(姓)」は、非会員の受注である場合に「非会員」と出力すること。\n- 非会員の判定は受注一覧画面と同一の基準（受注に会員が紐づいていない＝Order.Customer が null）とし、画面表示とCSV出力で結果が一致すること。",
+      "現在の挙動": "- 受注一覧CSV出力は CsvExportService の汎用処理で dtb_csv の定義に従い Order.name01 の値をそのまま出力しており、非会員かどうかを判定して「非会員」へ変換する処理が存在しない。\n- スマレジ（実店頭）の非会員取引については、取込時に SmaregiOrderFactory が Order.name01 に定数 '非会員' を設定しているため、結果としてCSVにも「非会員」と出力される（設計の注記「※スマレジでの非会員による取引データを考慮」は満たされている）。\n- 一方、受注一覧画面は Order.Customer が null かどうかで判定して「非会員」と表示しており、CSV側にはこの判定が無い。管理画面から会員を紐付けずに登録した受注（Admin/OrderType の Customer は HiddenType で必須制約なし）や、会員が紐づかない既存データでは、画面には「非会員」と表示される一方、CSVには入力された姓がそのまま出力され、画面とCSVで内容が食い違う。",
+      "引用": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:247-247",
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:316-317",
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:323-323",
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:221-221",
+        "src/Eccube/Service/CsvExportService.php:213-230",
+        "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php:49-49",
+        "src/Eccube/Form/Type/Admin/OrderType.php:319-324",
+        "src/Eccube/Controller/Front/NonMemberShoppingController.php:51-51"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/template/admin/Order/index.twig:1218 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2078",
+      "summary": "【一部実装】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_手動メール通知(確認画面)のメール一括送信にて、送信失敗時のメッセージ表示が実装されていない",
+      "feature": "メール一括送信 / 【新規】手動メール通知(確認画面)",
+      "sheetCandidates": [
+        {
+          "id": "sheet-10",
+          "title": "【新規】手動メール通知(確認画面)"
+        },
+        {
+          "id": "sheet-9",
+          "title": "メール一括送信"
+        }
+      ],
+      "期待される挙動": "- 手動メール通知(確認画面)で送信ボタンを押下すると確認ダイアログを表示し、OKなら送信を実行すること。\n- 送信の成功／失敗に応じて、当該画面に対応するメッセージを表示すること（失敗時は失敗した旨のメッセージを表示すること）。",
+      "現在の挙動": "- 確認ダイアログは manual_mail.js の #send_mail クリックハンドラで confirm() により実装済み。\n- 送信成功時は MailController::manualMailAll() の complete モードで addSuccess('admin.order.mail_send_complete') により成功メッセージが表示される。\n- 一方、失敗時のメッセージ表示処理が存在しない。complete モードでフォームが不正、またはメールテンプレートが取得できない場合は switch を break して manual_mail_all.twig（入力画面）を再描画するだけで、addError 等の失敗メッセージを一切出さない（利用者には何が起きたか分からない）。\n- MailService::sendManualMailForBulk() の $this->mailer->send() は try/catch されておらず、送信例外は捕捉されない。SMTP障害等では共通の ExceptionListener による「システムエラーが発生しました」の500エラー画面となり、当該画面上の失敗メッセージにはならない。また複数件をループ送信しているため、途中で例外が発生すると何件目まで送信済みかが利用者に伝わらない。\n- 同じ MailController 内では addError による失敗メッセージが他の箇所（テンプレート未取得時・配送ID不正時）で使われており、一括送信の失敗系だけが欠落している。",
+      "引用": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:769-769",
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:770-770",
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md:778-780",
+        "html/template/admin/assets/js/manual_mail.js:3-7",
+        "src/Eccube/Resource/template/admin/Order/manual_mail_all_confirm.twig:161-168",
+        "src/Eccube/Controller/Admin/Order/MailController.php:200-200",
+        "src/Eccube/EventListener/ExceptionListener.php:36-40"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Controller/Admin/Order/MailController.php:389 [line_out_of_range]",
+        "src/Eccube/Service/MailService.php:2092 [line_out_of_range]"
+      ]
+    }
+  ]
+}

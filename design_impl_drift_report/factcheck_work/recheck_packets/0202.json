@@ -1,0 +1,655 @@
+{
+  "book": "0202",
+  "count": 36,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-1990",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-3:共通処理"
+      ],
+      "課題タイトル": "【一部実装】在庫管理_共通処理（画面共通部品/スマレジ在庫修正/入荷通知）_在庫管理の各画面共通部品にて、店舗セレクトボックスの選択肢が閉店済み店舗を除外していない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "query_builder が無く閉店店舗も選択肢に出る。同じ未対応が他6フォームにもあり影響範囲は起票より広い",
+      "前回書いた次にすること": "実装対応: isOpenShop の絞り込みを追加。他6フォームも同時是正を推奨(1994と同一箇所)",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-3「共通処理」\n4.画面共通部品\n> 1-3 店舗　複数選択(セレクトボックス)　初期値: ログインしているメンバーのデフォルト検索表示店舗\n> ・リスト内容は店舗マスタから**閉店していない店舗のみ**取得\n\n■実装の現状\nSearchStockListType.php:123-132 に `query_builder` がなく、`// TODO: 閉店フラグが BaseInfo に追加された後、query_builder で絞り込む` が残存しています。\nしかし BaseInfo.php:1563 に `is_open_shop` は既に実在し、InventoryPlanListType.php:59-60 は `andWhere('bi.isOpenShop = :isOpenShop')` で絞り込み済み、共通API `BaseInfoRepository::getOpenShops()` も存在します。TODOの前提はすでに解消しています。\n在庫区分のOR条件は ProductStockRepository.php:96-99 で設計どおり実装済みです。\n\n**影響範囲は起票の記載より広いです。** `SearchStockMoveInstructionType` / `StockMoveNewType` / `StockChangeType` / `BarcodeReplacementListType` / `StockTransferCsvImportType` / `StockMoveCsvImportType` にも同じ未対応があります。\n\n■次の対応\n実装対応: `query_builder` で `isOpenShop` による絞り込みを追加する。上記6フォームも同時に是正することを推奨します（1994と同一箇所）。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-3「共通処理」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php",
+        "src/Eccube/Form/Type/Admin/SearchStockListType.php",
+        "src/Eccube/Form/Type/Admin/Stock/InventoryPlanListType.php",
+        "src/Eccube/Form/Type/Admin/StockHistoryType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1993",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-4:在庫検索一覧(検索入力)",
+        "sheet-5:在庫検索一覧(検索結果)"
+      ],
+      "課題タイトル": "【一部実装】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の検索条件「ID」「コード」に最大255文字の入力値チェックが実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "product_id/product_code に constraints キー自体が無い。maxlength も4項目とも不在",
+      "前回書いた次にすること": "実装対応: 2項目に Length(max:255) を追加",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-4「在庫検索一覧(検索入力)」\n画面部品仕様\n> 1-1 商品名 / 1-2 カード名 / 1-3 **ID** / 1-4 **コード**　いずれも文字列・最大255文字\n\n■実装の現状\nSearchStockListType.php:99-110 の `product_name` / `card_name` には `Assert\\Length(['max' => 255])` がありますが、:113-122 の `product_id` / `product_code` は **`constraints` キー自体が存在しません**。\nStockListSearchInput.php:122-123 は文字列化のみで検証しません。`configureOptions` に `data_class` 指定がないため ValidatorTypeGuesser による maxlength 自動付与も働かず、Twig（stock_list_index.twig:103,108）にも maxlength がありません。\nなお maxlength 属性の不在は4項目共通で、サーバ側でも抑止できないのが product_id / product_code のみ、という切り分けになります。\n\n■次の対応\n実装対応: `product_id` / `product_code` に `Length(max: 255)` を追加する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-4「在庫検索一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/SearchStockListType.php",
+        "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1994",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-4:在庫検索一覧(検索入力)",
+        "sheet-5:在庫検索一覧(検索結果)"
+      ],
+      "課題タイトル": "【未実装】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の検索条件「店舗」の選択肢に閉店済み店舗が表示される",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "1990と同一箇所。初期値は実装済みで閉店除外のみ未実装",
+      "前回書いた次にすること": "実装対応: 1990で対応し本件は重複クローズを推奨",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-4「在庫検索一覧(検索入力)」\n画面部品仕様\n> 1-5 店舗　複数選択(セレクトボックス)　初期値: 表示店舗　選択肢:店舗管理に登録されており、**閉店となっていない店舗**\n\n■実装の現状\n1990 と同一箇所（SearchStockListType.php:123-132）です。初期値（デフォルト検索表示店舗）は :502-515 の `getCurrentBaseInfo()` で**実装済み**で、閉店除外のみが未実装です。\n\n■次の対応\n実装対応: 1990 と実質同一箇所の指摘です。片方で対応し他方は重複としてクローズすることを推奨します。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-4「在庫検索一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/SearchStockListType.php",
+        "src/Eccube/Form/Type/Admin/Stock/InventoryPlanListType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1995",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-4:在庫検索一覧(検索入力)",
+        "sheet-5:在庫検索一覧(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の検索結果の表示順が、一覧に表示している商品IDではなく商品規格IDの降順になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "orderBy が商品規格ID降順。一覧の表示は商品ID。docblockはASCと書かれ実コードと不一致",
+      "前回書いた次にすること": "実装対応: ソートキーを商品ID降順に変更。docblockも修正",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-5「在庫検索一覧(検索結果)」\n表示順について\n> ・一覧の表示順は**ID降順**で表示する\n\n画面部品仕様\n> 2-3 ID　数字　**商品ID**\n\n■実装の現状\nProductStockRepository.php:314-315 は `orderBy('pc.id', 'DESC')` で、`pc` は :60 の `innerJoin('ps.ProductClass', 'pc')`＝**商品規格**です。一覧のID列は stock_list_index.twig:580 の `{{ Item.ProductClass.Product.id }}`＝**商品ID**で、ソートキーと表示項目が一致していません。\nStockListSearchAction は QueryBuilder を素通しし、StockListController も sort パラメータを指定しないため、この orderBy が唯一の決定箇所です。\n\n**起票未指摘の追加事実**: 同 Repository :51-54 の docblock は「ProductClass.id **ASC**」と書かれており実コード（DESC）と方向が食い違います（既存テストは DESC を正としています）。\n\n■次の対応\n実装対応: ソートキーを商品ID降順に変更する。あわせて docblock の記述も実装に合わせて修正してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-5「在庫検索一覧(検索結果)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1996",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-4:在庫検索一覧(検索入力)",
+        "sheet-5:在庫検索一覧(検索結果)"
+      ],
+      "課題タイトル": "【一部実装】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の在庫移動・振替登録にて、複数の在庫区分が選択された場合のエラー判定が実装されていない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "在庫区分の判定が無く data-zone も未使用。ただし sheet-4 の同項目には当該条件が無い",
+      "前回書いた次にすること": "要確認: sheet-5 と sheet-4 で条件数が異なる。要求の確定後に対応",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-5「在庫検索一覧(検索結果)」\n> ・在庫検索一覧画面で在庫を選択した際に以下の場合、エラー文言を表示し在庫移動・振替登録画面に遷移させない\n> ・複数の店舗の在庫が選択されている場合／・**複数の在庫区分の在庫が選択されている場合**／・編集権限を持っていない店舗の在庫が選択されている場合／・在庫0の在庫が選択されている場合\n\n■実装の現状\nstock_list_index.twig:816-837 のハンドラは `hasUnauthorizedShop()` / `isSameShop()` / `hasZeroStock()` の**3条件のみ**で、在庫区分の判定がありません（判定関数の定義も :761-778 の3つのみ）。\n:575 に `data-zone=\"{{ Item.stockLocationId }}\"` は出力されますが、リポジトリ全体で `data-zone` のヒットはこの1件のみで未使用です。\nStockListController.php:45 に `TODO: 在庫移動登録・在庫振替登録のサーバ側バリデーションを追加する` が実在し、遷移先の StockMoveController / StockTransferController も無検証です。\n「複数の在庫区分」に相当する翻訳キー・文言もリポジトリ内0件でした。\n\n■次の対応\n要確認+実装対応: 実装の欠落は事実です。ただし**設計内に粒度差があります** — sheet-4「各種画面遷移ボタンについて」の同項目は**3条件しか挙げず、在庫区分の条件がありません**。「複数在庫区分」を要求しているのは sheet-5 とそれを引用する sheet-14/15 のみです。要求の確定後に対応してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-5「在庫検索一覧(検索結果)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockListController.php",
+        "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1997",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-4:在庫検索一覧(検索入力)",
+        "sheet-5:在庫検索一覧(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の検索条件保存にて、検索パターン名が未入力でも「検索条件保存」ボタンが非活性にならない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "保存ボタンに disabled が無く活性切替もない。同Twigの他ボタンには disabled がある",
+      "前回書いた次にすること": "実装対応: 検索パターン名の入力有無で活性を切り替え",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-4「在庫検索一覧(検索入力)」\n> ・検索パターン名を入力することで検索条件保存ボタンが**活性化する**\n\n画面部品仕様（3-2 検索条件保存）\n> 検索パターン名を入力していない場合は**非活性**とする\n\n■実装の現状\nstock_list_index.twig:369-372 の `#savePatternBtn` に `disabled` 属性がなく、:692-697 のハンドラも action を差し替えて submit するだけで空チェックも活性切替もありません。:783 の `updateActionButtons()` は遷移ボタン5つのみを対象とし `#savePatternBtn` を含みません。\nサーバ側 StockListController.php:322-326 が `admin.common.save_pattern.error.name_empty`（「検索パターン名を入力して下さい。」）でエラー代替しています。\n同一 Twig の :478-497 では他ボタンに `disabled` を使っており、保存ボタンだけ付いていません。\n\n■次の対応\n実装対応: 検索パターン名の入力有無で保存ボタンの活性を切り替える。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-4「在庫検索一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockListController.php",
+        "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1998",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-4:在庫検索一覧(検索入力)",
+        "sheet-5:在庫検索一覧(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の検索条件保存にて、保存対象外であるはずの「店舗」も検索パターンに保存されている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "除外が _token のみで base_info が保存され、読込時に初期値を上書きする",
+      "前回書いた次にすること": "実装対応: 保存時に base_info も unset する",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-4「在庫検索一覧(検索入力)」\n> ・ボタン押下時に設定されている検索条件を保存する\n> ・**店舗は検索条件の保存に含めない**\n\n■実装の現状\nStockListController.php:337-344 の除外は `_token` のみで、`base_info`（店舗）が保存対象に残ります。\n```\n$dataToStore = $viewData;\nunset($dataToStore['_token']); // トークンは保存しない\n$searchPattern->setPattern(serialize($dataToStore))\n```\n読込側 :399-403 は `unserialize` 結果をそのまま `submitAndGetData` するため、フォーム定義の初期値（ログインメンバーのBaseInfo）を上書きします。\n`savePattern()`（308-352行）・`pattern()`（390-428行）を通読しましたが、`base_info` を除外・上書きする処理も、それを行う Service / Subscriber も存在しません。\n\n■次の対応\n実装対応: 保存時に `base_info` も `unset` する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-4「在庫検索一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockListController.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1999",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-4:在庫検索一覧(検索入力)",
+        "sheet-5:在庫検索一覧(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の検索条件保存にて、「検索条件削除」ボタンが非活性表示ではなく非表示になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "非活性ではなく条件付きレンダリングで非表示。再検索でパターンIDが消える副作用もあり",
+      "前回書いた次にすること": "実装対応: disabled 属性による非活性に変更",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-4「在庫検索一覧(検索入力)」\n> ・検索パターンを選択している場合検索条件削除ボタンが活性化する\n\n画面部品仕様（3-3 検索条件削除）\n> 検索パターンを選択していない場合は**非活性**とする\n\n■実装の現状\nstock_list_index.twig:348 の `{% set patternActive = ... %}` と :374-381 の `{% if patternActive %}` により、削除ボタンは**非活性ではなく非表示**（条件付きレンダリング）になっています。\n同 Twig の `disabled` 使用箇所（478/483/488/493/497/783）に `deletePatternBtn` は含まれません。\n\n**起票未指摘の追加事実**: StockListController.php:143-150 が新規検索POST時に `patternId = null` としてセッションを削除するため、パターン読込後に検索し直すと削除ボタンが再び消えます（設計に対応記述なし）。\nなお「グレーアウト表示」という表現は設計原文にはなく、設計は「非活性」とのみ記載しています。\n\n■次の対応\n実装対応: 条件付きレンダリングを `disabled` 属性による非活性に変更する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-4「在庫検索一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockListController.php",
+        "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2000",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-8:在庫情報CSV出力"
+      ],
+      "課題タイトル": "【実装乖離】在庫管理_在庫情報CSV出力_在庫情報CSV出力（M04-04）の列順が設計と異なり、在庫が原価単価・総原価より前に出力される",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "列順は買取価格→在庫→原価単価→総原価。設計側に4通りの順序が併存し正順序が確定できない",
+      "前回書いた次にすること": "要確認: sheet-8の行順・識別ID順、sheet-5、sheet-4で計4通り。実装はsheet-8識別ID順と一致。正順序の確定が先",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-8「在庫情報CSV出力」\nCSV出力項目表の行順\n> … 12 買取価格 / **14 原価単価 / 15 総原価 / 13 在庫** / 16 当日販売数 …\n\n■実装の現状\nStockListCsvExportService.php:43-46 のヘッダ定義が `buy_price → stock → unit_cost → total_cost` の順で、:83-92 でこの順がそのまま列順になります。\n出力後に並べ替える経路はなく、参照元も StockListController.php:30,62 のみです。\n\n■次の対応\n要確認: **設計側で順序が一枚岩ではありません。** 同一ブック内に4通りの順序が併存しています。\n1. sheet-8 の**行順**: 買取価格→原価単価→総原価→在庫\n2. sheet-8 の**識別ID採番**: 12=買取価格, **13=在庫, 14=原価単価, 15=総原価**（他項目のIDは単調増加なのにここだけ逆転）\n3. sheet-5 一覧項目: 2-11買取価格 / 2-12在庫 / 2-13原価単価 / 2-14総原価（＝実装と同順）\n4. sheet-4 の一覧ラベル定義: 5-11買取価格 / 5-12原価単価 / 5-13在庫 / 5-14総原価\n\n実装は sheet-8 の識別ID順・sheet-5 の画面一覧順と一致しています。**正順序の確定が先に必要です。**\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-8「在庫情報CSV出力」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Service/Csv/Exporter/StockListCsvExportService.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2001",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-21:在庫リコメンドCSV出力"
+      ],
+      "課題タイトル": "【実装乖離】在庫管理_在庫リコメンドCSV出力_在庫リコメンドCSV出力（M04-16）の商品ID条件が完全一致で、在庫一覧の部分一致検索と出力対象が食い違う",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "リコメンド側の商品IDが完全一致。在庫一覧は部分一致で同条件でも件数が食い違う",
+      "前回書いた次にすること": "実装対応: 部分一致に変更し trim も揃える",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-21「在庫リコメンドCSV出力」（部分一致の要求元は sheet-4）\nsheet-4\n> ・商品名、カード名、**ID**、コードは**部分一致検索**とする\n\nsheet-4 各種CSV出力ボタン\n> ・押下時、検索結果一覧の表示条件で（機能ID: M04-16）在庫リコメンドCSV出力を出力する\n\n■実装の現状\nStockRecommendCsvExportService.php:220-222 は `'p.id = :productId'` で**完全一致**です（同ファイルの商品名:209・カード名:216・商品コード:227 は LIKE）。\n在庫一覧側は ProductStockRepository.php:79-82 の `CONCAT(p.id, '') LIKE` で部分一致です。両者は同一の `StockListSearchInput` を受け、StockListController.php:249-270 が同一セッションキーから条件を復元するため、**同じ条件で件数が食い違います**。\n\n**起票未指摘の追加事実**: リコメンド側は `productId` を `trim()` していません（在庫一覧側は trim します）。前後空白入りの入力で挙動が異なります。\n\n■次の対応\n実装対応: 商品IDを部分一致（LIKE）に変更し、trim も揃える。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-21「在庫リコメンドCSV出力」（部分一致の要求元は sheet-4）\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Service/Csv/Exporter/StockRecommendCsvExportService.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2003",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-7:在庫一括編集"
+      ],
+      "課題タイトル": "【実装乖離】在庫管理_在庫一括編集_在庫一括編集にて、必須項目である承認通知先（所属選択）が任意入力になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "approval_department は required=false で Controller も値を読まない。ただし参照先シートは任意",
+      "前回書いた次にすること": "要確認: sheet-7は必須○だが参照先の sheet-6/sheet-3 は任意。必須バッジ表示との不整合もあり",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-7「在庫一括編集」\n画面部品仕様\n> 1-2 承認通知先（所属選択）　単一選択(セレクトボックス)　**○**（必須）　「在庫編集」シート識別ID:3-6を参照\n\n■実装の現状\nStockBulkApprovalType.php:92-97 の `approval_department` は `'required' => false` で `constraints` 指定がありません（`approval_notification_target_members` は required=true + Count(min:1) で設計どおり）。\nさらに StockBulkApprovalController.php:126-160 は当該値を**一切読んでおらず**、`StockBulkApprovalStoreInput` にも渡していません。画面上のメンバー絞り込み専用の項目です。\n\n**起票未指摘の追加事実**: bulkapproval.twig:246-251 は所属選択ラベルに**必須バッジを表示**しています（表示は必須／検証は無しという不整合）。\n\n■次の対応\n要確認: **設計内で矛盾しています。** sheet-7 の 1-2 が参照を指示する sheet-6「在庫編集」3-6 は**必須「-」（任意）**で、参照先の sheet-3 共通処理 1-1 も必須「-」です（役割は「メンバー選択の選択肢を絞り込む」と記述）。\n必須とすべきかを設計担当者にご確認ください。必須としない場合は、必須バッジの表示のみが是正対象になります。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-7「在庫一括編集」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Form/Type/Admin/StockBulkApprovalItemType.php",
+        "src/Eccube/Form/Type/Admin/StockBulkApprovalType.php",
+        "src/Eccube/Resource/template/admin/Stock/bulkapproval.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2008",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-44:在庫編集承認一覧(検索入力)",
+        "sheet-45:在庫編集承認一覧(検索結果)"
+      ],
+      "課題タイトル": "【一部実装】在庫管理_在庫編集承認一覧_在庫編集承認一覧にて、承認状態が「スマレジ連携失敗」の行が一括承認・一括却下の対象にならない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "スマレジ連携失敗ステータス自体が Entity/マスタ/検索/翻訳の4面で存在しない",
+      "前回書いた次にすること": "実装対応: ステータスの追加から必要。適用範囲は設計内で非対称のため要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-45「在庫編集承認一覧(検索結果)」\n一覧表示項目 2-1\n> 2-1 チェックボックス … チェックボックスが表示される条件は下記とする\n> ・承認状態が「未承認」、**「スマレジ連携失敗」**\n> （2-2 承認状態）未承認,承認済,**スマレジ連携中,スマレジ連携失敗**,却下済\n\n■実装の現状\nApprovalListRowBuilder.php:90-93 の `$isBulkActionable` は `APPROVAL_STATUS_UNAPPROVED` のみを条件とし、`// TODO 承認状態が「スマレジ連携失敗」の場合も一括操作を可能にする` が残っています。\n\n**そもそもステータス自体が存在しません。** DtbStockApprovalList.php:28-35 の定数は未承認1/承認済2/却下3の**3値のみ**、`MtbApprovalStatus` クラスは src/ app/ に存在せず、検索フォーム（SearchStockApprovalListType.php:41-47,95-97）も3件、翻訳も3件のみで「スマレジ連携失敗」「連携中」の文言は0件、追加するマイグレーションもありません（4面で不在を確認）。\n\n■次の対応\n実装対応: ステータスの追加（Entity定数・マスタ・検索フォーム・翻訳・マイグレーション）から必要です。\n\n要確認: 適用範囲は設計内で非対称です。2-1 は承認・却下を区別せず「スマレジ連携失敗」を含めますが、同シートの別箇所では「一括**却下**押下時／承認状態が『未承認』の場合」と却下側だけ連携失敗を含めていません。是正時の範囲をご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-45「在庫編集承認一覧(検索結果)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2010",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-13:在庫移動・振替検索一覧(検索・結果)",
+        "sheet-14:在庫移動・振替登録 編集 (移動)"
+      ],
+      "課題タイトル": "【一部実装】在庫管理_在庫移動・振替一覧_在庫移動・振替一覧にて、戻しリストCSV出力・戻しリストPDF出力に「移動タイプが在庫移動であること」の判定が無く、在庫振替を選択しても出力できてしまう",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "validateReturnListExportIds に moveTransferType の参照が1箇所も無い。バーコードCSVには実装済み",
+      "前回書いた次にすること": "実装対応: 移動タイプ判定を追加。2030と実質同一箇所で1箇所の修正で両方解消",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-13「在庫移動・振替検索一覧(検索・結果)」\nsheet-13\n> ・戻しリストCSV出力 … ・**在庫移動である場合にのみ出力を可能とする**\n> ・戻しリストPDF出力 … ・在庫移動である場合にのみ出力を可能とする\n\n■実装の現状\nStockMoveTransferReturnListCsvExportService.php:115-171 の `validateReturnListExportIds()` は入庫先店舗null・編集可能店舗・ステータス・存在有無・複数店舗混在のみを検査し、**`moveTransferType` への参照がファイル内に1箇所もありません**。取得側 `getMoveToBaseInfoAndStatusByIds()`（:326-344）も移動タイプを select していません。\nCSV出力・PDF出力の両方とも同 Service を呼びます。\n\n**対照実装があります。** バーコードCSV（StockMoveTransferBarcodeCsvExportService.php:115-129）は `moveTransferType !== MOVE_TRANSFER_TYPE_MOVE` を判定済みで、SQL側（DtbStockMoveTransferRepository.php:441-442）にも `AND smt.move_transfer_type = :move_transfer_type` があります。\n戻しリスト用の「移動でない」翻訳キーは ja/en とも存在せず、フロントJSも `ids.length === 0` しか判定しません。\n\n■次の対応\n実装対応: `validateReturnListExportIds()` に移動タイプ判定を追加する。\n\n付記: ECCUBE_HARERUYA-2030 と**実質同一の欠陥箇所**です（起点シートと対象がCSV/PDFか否かの違いのみ）。1箇所の修正で両方解消するため、片方で対応し他方は重複としてクローズすることを推奨します。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-13「在庫移動・振替検索一覧(検索・結果)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php",
+        "src/Eccube/Service/Admin/Stock/StockTransferApprovalApproveAction.php",
+        "src/Eccube/Service/Csv/Exporter/StockMoveTransferBarcodeCsvExportService.php",
+        "src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2011",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [],
+      "課題タイトル": "【一部実装】在庫管理_在庫分割 登録編集_在庫分割 登録編集の分割先商品CSV登録にて、エラー一覧の先頭に固定文言「エラーを最大20件まで表示しています。」が表示されない（結合側では表示される）",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "分割側に固定文言の付与が無い。結合側には実装済み。上限判定に off-by-one の疑いalso",
+      "前回書いた次にすること": "実装対応: 結合側と同じく固定文言を付与。文言が分割と結合で異なる点も要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-18「在庫分割結合登録編集（分割）」\n§3.分割先商品CSV登録\n> 3-5-2.エラーメッセージには固定で、「**エラーは20件まで表示されます**」、とエラーメッセージの上に表示する\n\n■実装の現状\nStockSplitEditReplaceDestinationsImportHandler.php:44,46 に `MAX_ROWS = 2000` / `MAX_ERROR_COUNT = 20` はありますが、:307-309 は errors をそのまま返すのみで**固定文言の付与がありません**。\n対照として結合側 StockJoinEditReplaceSourcesImportHandler.php:257-262 は `array_unshift($errors, trans('admin.stock.csv.error_limit_notice'))` を実装済みです。\n`error_limit_notice` の全リポジトリ検索は3ヒットのみで、分割側の呼び出し元（StockSplitController.php:600-637）は `$result['errors']` をそのまま JSON 返却しています。\n\n**起票未指摘の追加事実**: 上限判定が `$rowIndex > MAX_ROWS`（`$lineNum = $rowIndex + 1`）で off-by-one の疑いがあります（2,001行目が通る可能性）。\n\n■次の対応\n実装対応: 結合側と同じく固定文言を先頭に付与する。off-by-one の疑いも併せてご確認ください。\n\n要確認: 固定文言が**分割側と結合側で異なります**（分割「エラーは20件まで表示されます」／結合「エラーを最大20件まで表示しています」）。実装の翻訳値は結合側の文言です。文言の統一もご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-18「在庫分割結合登録編集（分割）」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockSplitController.php",
+        "src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php",
+        "src/Eccube/Service/Csv/Importer/Event/StockSplitEditReplaceDestinationsImportHandler.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2012",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [],
+      "課題タイトル": "【実装乖離】在庫管理_在庫分割 登録編集_在庫分割 登録編集にて、分割先商品の仕入総価格（買取金額比率での按分）が承認申請時ではなく承認時に計算され、分割先商品情報に保存されない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "按分が承認時で仕入総価格カラムも無く端数割当が小計最大。起票の総原価スナップショットの説明は誤り",
+      "前回書いた次にすること": "要確認+実装対応: 計算タイミングとカラム欠落は実装対応。端数割当基準は別添資料内で非対称のため要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-18「在庫分割結合登録編集（分割）」\n§6.承認申請\n> 6-5.**承認申請時**、基本情報の更新と、分割先商品の**仕入総価格の計算**、ステータス変更履歴の更新、承認通知先へのメール送信を行う\n> 仕入総価格　この時点では分割先が確定ではないので計算は行わない、**承認申請時に**分割先が確定（編集不可）となるので、承認申請時に仕入総価格の計算を行う\n\n■実装の現状\nStockSplitApplyApprovalAction.php:87-106（承認申請）は明細生成のみで**按分計算を行いません**。按分は StockSplitApprovalApproveAction.php:107-184（**承認時**）で実行されます。\nまた DtbStockSplitJoinDetail.php:54-80 の列に**仕入総価格のカラムがありません**（設計 7-2 は保存項目として挙げています）。\n端数割当先も :170 で**小計最大**の分割先ですが、設計は「最も買取金額（**単価**）が高い分割先商品」です。\n\n**起票の説明を1点補正します。** 「承認時点の買取価格・分割元総原価で計算される」とありますが、`movedCost` が使う `getTotalCost()` / `getStock()` は StockSplitRegisterAction.php:232-237 で**分割登録時に固定されたスナップショット**です。承認時に変動しうるのは `getBuyPrice()` のみです。\n\n**起票未指摘の追加乖離**: 買取価格が全て0の場合、実装は個数比率での按分にフォールバックします（:148-155）が、設計に該当記述がありません。\n\n■次の対応\n要確認+実装対応: 計算タイミング（申請時／承認時）と仕入総価格カラムの欠落は実装対応が必要です。\n端数割当の基準については、別添資料 sheet-51 が按分の分子を「買取金額**合計**」（小計基準）としながら端数割当先を「買取金額（**単価**）が高い」としており、同一資料内で基準が非対称です。設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-18「在庫分割結合登録編集（分割）」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockSplitController.php",
+        "src/Eccube/Entity/DtbStockSplitJoinDetail.php",
+        "src/Eccube/Service/Admin/Stock/StockSplitApplyApprovalAction.php",
+        "src/Eccube/Service/Admin/Stock/StockSplitApprovalApproveAction.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2013",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [],
+      "課題タイトル": "【一部実装】在庫管理_在庫結合 登録編集_在庫結合 登録編集にて、結合数の最大値（99999999）・在庫数超過のエラーチェックが無く、ステータスも設計の7段階（二段階承認）ではなく5段階（単一承認）になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "在庫超過チェックが未接続でデッドキー2件が残存。ステータスも6件のみで結合計画系が不在",
+      "前回書いた次にすること": "実装対応: 上限・超過チェックとステータス追加。分割側4段階との不一致は要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-19「在庫分割結合登録編集（結合)」\n画面部品仕様\n> 2-11 結合数　数値　○　**1～99999999**　・**在庫数を超える数値が入力された場合はエラーとする**\n> 1-5 ステータス … 新規登録、結合元登録、**結合計画承認待ち**、却下、**結合計画承認済み**、**結合完了承認待ち**、入庫完了\n\n■実装の現状\nStockJoinRegisterAction.php:43-45 は `destinationStock <= 0` の下限のみで、上限も在庫数比較もありません。stock_join_new.twig:128 も `min=\"1\" required` のみ、StockJoinController.php:1015-1021 も `min_range => 0` のみです。`destination_stock` はフォーム管理外のため Constraint の適用経路もありません。\n\n**決定的な裏付け**: 翻訳キー `admin.stock.join.quantity_exceeds_stock`（:5099）と `admin.stock.join.source_exceeds_stock`（:5100）は**定義だけ存在し参照0ヒットのデッドキー**で、在庫超過チェックが未接続であることを示しています。\nステータスも MtbStockSplitJoinStatus.php:27-38 の定数6件（新規登録/結合元登録/分割承認待ち/結合承認待ち/入庫済み/却下）のみで、「結合計画承認済み」「結合完了承認待ち」は存在しません（`結合計画` / `JOIN_PLAN` 等の全文検索も実質0ヒット）。\n`99999999` も在庫分割結合の PHP/Twig/JS には不在です。\n\n■次の対応\n実装対応: 結合数の上限・在庫数超過チェックの実装と、ステータス段階の追加が必要です。デッドキー2件はそのまま流用できます。\n\n要確認: ステータス段階数が**結合側 sheet-19（7段階）と分割側 sheet-18（4段階）で不一致**です。同一マスタを共有する前提と衝突するため、設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-19「在庫分割結合登録編集（結合)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Entity/Master/MtbStockSplitJoinStatus.php",
+        "src/Eccube/Resource/template/admin/Stock/stock_join_new.twig",
+        "src/Eccube/Service/Admin/Stock/StockJoinApplyApprovalAction.php",
+        "src/Eccube/Service/Admin/Stock/StockJoinApprovalApproveAction.php",
+        "src/Eccube/Service/Admin/Stock/StockJoinRegisterAction.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2014",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [],
+      "課題タイトル": "【一部実装】在庫管理_在庫結合 登録編集_在庫結合 登録編集にて、結合元商品CSVの10,000件上限と結合元商品一覧の20件ページングが未実装で、結合元在庫数に0を入力しても商品行が即時削除されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "CSV行数上限の定数・判定が無くページングも未実装。CSV取込では設計に反して0がエラー",
+      "前回書いた次にすること": "実装対応: 上限10000件とページング20件を追加。0の扱いも是正。上限3系統併存は要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-19「在庫分割結合登録編集（結合)」\n> ・結合元商品が多い場合は**ページングを行う（1ページ20件とする）**\n> ・CSVは**10,000件**を登録上限とする\n> ・結合元在庫数は**0を許容**し、0の場合は結合元商品から削除すること\n\n■実装の現状\n1) CSV上限: StockJoinEditReplaceSourcesImportHandler.php:44-46 の定数は COLUMN_PRODUCT_CODE / COLUMN_SOURCE_QTY / MAX_ERROR_COUNT の3つのみで、**行数上限の定数・判定が存在しません**。\n2) ページング: `#product_pagination`（stock_join_edit.twig:1038）は商品検索モーダル用で、StockJoinController に paginate / per_page はありません。\n3) 固定文言（:257-262）とセッション全置換（:265-266）は実装済みです。\n\n**起票未指摘の追加乖離**: 結合元CSV :223 の `if ($qtyRaw === '' || !ctype_digit($qtyRaw) || (int) $qtyRaw < 1)` により、**CSV取込では0がエラー**になります。設計の「0を許容」と不一致です。\nまた `details_were_removed` の全文検索は stock_join_edit.twig:733 の1ヒットのみで、これを返すPHPが存在しないため `location.reload()` は発火しません。\n\n■次の対応\n実装対応: CSV行数上限（10,000件）と結合元商品一覧のページング（20件）を追加する。あわせてCSV取込で0が弾かれる点も是正してください。\n\n要確認: CSV上限が**分割2,000件／結合10,000件／一覧一括CSV登録2,000件**の3系統で併存しています。設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-19「在庫分割結合登録編集（結合)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockJoinController.php",
+        "src/Eccube/Resource/template/admin/Stock/stock_join_edit.twig",
+        "src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php",
+        "src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php",
+        "src/Eccube/Service/Csv/Importer/Event/StockSplitEditReplaceDestinationsImportHandler.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2015",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [],
+      "課題タイトル": "【実装乖離】在庫管理_在庫結合 登録編集_在庫結合の承認処理にて、承認後のステータスが「結合計画承認済み」ではなく「入庫済み」になり、却下時の在庫戻し原価が「移動総原価の按分」ではなく「原価単価×数量」で計算されている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "承認で入庫済みへ直行し二段階承認が不在。却下時の原価計算が出庫側と非対称",
+      "前回書いた次にすること": "実装対応: ステータス追加と却下時の計算式是正。却下理由の上限未実装も併せて対応",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-19「在庫分割結合登録編集（結合)」§結合計画承認画面\n> ・承認後、ステータスは**結合計画承認済み**となる\n> ・承認処理後、在庫分割結合（結合5（結合完了承認申請））の画面へ遷移する\n> 却下時 … ・仕入総価格：結合元商品のそれぞれの**移動総原価**／・欠品がある場合 結合元総原価 ×（（移動数 - 欠品数）/ 移動数）とする\n\n■実装の現状\n1) ステータス: StockJoinApprovalApproveAction.php:58 が `RECEIPT_COMPLETED`（入庫済み）へ直接更新します。「結合計画承認済み」「結合完了承認待ち」はマスタに存在せず（Entity定数6件・マイグレーション投入6件で確認）、二段階承認のルート・Action・Twigも不在です。\n2) 却下時の原価: StockJoinApprovalRejectAction.php:101-106 は `bcmul($costPrice, $effQtyStr, 2)`＝**原価単価 × 戻し数量**です。一方**出庫側**は StockJoinMoveToShortageEntryAction.php:211-213 が `getMovementTotalCost()`（総原価×(数量÷在庫数)）を使っており、**出庫と戻しで計算式が非対称**です。`getMovementTotalCost` の全文検索でも却下Actionからの呼び出しは0件でした。\n\n欠品控除（`max(0, splitJoinQuantity - shortageQuantity)`）と却下理由必須（StockJoinApprovalSubmitAction.php:60-67）は設計どおりです。\n\n**起票未指摘の追加事実**: 設計 8-1 の「却下理由 65535byte」の上限バリデーションが全経路で未実装です（`65535` の全文検索0ヒット、DBはTEXT型で実質無制限）。\n\n■次の対応\n実装対応: 二段階承認のステータス追加と、却下時の原価計算式の是正（出庫側と同じ `getMovementTotalCost()` 基準へ）が必要です。\n\n付記: 別添資料 sheet-51 の【出庫時】に「総原価×(数量÷在庫数)」「※原価単価 × 出庫数としないのは、原価単価を出すタイミングで端数処理を行うと誤差が大きくなるため」と明記されており、戻し側も同基準であるべきことを補強しています。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-19「在庫分割結合登録編集（結合)」§結合計画承認画面\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Entity/Master/MtbStockSplitJoinStatus.php",
+        "src/Eccube/Service/Admin/Stock/StockJoinApprovalApproveAction.php",
+        "src/Eccube/Service/Admin/Stock/StockJoinApprovalRejectAction.php",
+        "src/Eccube/Service/Admin/Stock/StockJoinApprovalSubmitAction.php",
+        "src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2016",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-22:在庫履歴検索一覧(検索入力)",
+        "sheet-23:在庫履歴検索一覧(検索結果)"
+      ],
+      "課題タイトル": "【一部実装】在庫管理_在庫履歴検索一覧_在庫履歴検索一覧にて、欠品検索チェック時のフォーム連動（在庫変動理由区分の固定・非活性化、対象外項目の非活性化、欠品理由の活性制御）が実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "フォーム連動が全く無く、サーバ側も欠品(7)でなく廃棄(6)で絞り込んでいる",
+      "前回書いた次にすること": "実装対応: フォーム連動の実装と絞り込み対象の修正。後者は検索結果自体が誤りのため優先度高め",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-22「在庫履歴検索一覧(検索入力)」\n画面部品仕様 2-4 欠品検索\n> 選択された場合\n> ・識別ID:2-3在庫変更理由区分を「**欠品/欠品減算（受注）**」・「**欠品/欠品減算(移動)**」に変更し選択できないよう非活性にする\n> ・検索対象項目の欠品履歴の内”－”としている項目は中身を空にし非活性にする\n> ・識別ID2-37欠品理由は活性化し入力できるようにする\n\n■実装の現状\n1) フォーム連動が**全く実装されていません**。StockHistoryType.php:108-115 の `disposal_search` は ChoiceType の定義のみで連動制御の attr/JS フックがなく、history.twig の `{% block javascript %}`（8-176行）にも `disposal_search` の change ハンドラがありません（JS/CSSアセットを含む全文検索で0件）。\n2) **サーバ側の絞り込み対象も誤っています。** DtbStockHistoryRepository.php:143-155 は `MtbStockChangeType::DISPOSAL`（=6「**廃棄**」）配下の子区分で IN/NOT IN しています。設計が指定する「欠品/欠品減算(受注)」「欠品/欠品減算(移動)」は `OUT_OF_STOCK`（=7「**欠品**」）配下の id=19 / id=21 で、絞り込み対象に入っていません。\n\n一覧の表示切替（`has_search_disposal`）は実装済みです。\n\n■次の対応\n実装対応: フォーム連動の実装と、絞り込み対象を「欠品(7)」配下へ修正する。後者は検索結果そのものが誤っているため優先度は高めです。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-22「在庫履歴検索一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "app/DoctrineMigrations/Version20251125165619.php",
+        "src/Eccube/Controller/Admin/Stock/StockHistoryController.php",
+        "src/Eccube/Form/Type/Admin/StockHistoryType.php",
+        "src/Eccube/Repository/DtbStockHistoryRepository.php",
+        "src/Eccube/Resource/template/admin/Stock/history.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2017",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-22:在庫履歴検索一覧(検索入力)",
+        "sheet-23:在庫履歴検索一覧(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】在庫管理_在庫履歴検索一覧_在庫履歴検索一覧の並び順にて、第3ソートキーが「基準日時（登録日時と承認日時のうち後の日時）」ではなくレコードの作成日時（create_date）になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "第三ソートが createDate。基準日時方式は同Repositoryの別メソッドに実装済み。CSV出力も同問題",
+      "前回書いた次にすること": "実装対応: 一覧用とCSV用の両方を基準日時に変更。既存実装を流用可能",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-23「在庫履歴検索一覧(検索結果)」\n1-2.在庫履歴情報の一覧は、下記ソート順とする\n> 1-2-1.第一ソートを商品コードの降順とする\n> 1-2-2.第二ソートを店舗のIDを降順とする\n> 1-2-3.第三ソートを各レコードの「登録日時」と「承認日時」のうち**後の日時（基準日時）**をソートキーとし、基準日時の降順で表示する\n> 1-3.承認日時が未設定の場合は、登録日時を基準日時とする\n\n■実装の現状\nDtbStockHistoryRepository.php:333-335 の第三ソートは `sh.createDate` で、基準日時方式ではありません。\n```\n$qb->addOrderBy('pc.code', 'DESC');\n$qb->addOrderBy('ps.baseInfo', 'DESC');\n$qb->addOrderBy('sh.createDate', 'DESC');\n```\n**基準日時方式は同 Repository 内に実装済みです** — `findLatestByProductStockId()`（:358-360）が `COALESCE(sh.approvalAt, sh.registeredAt, sh.createDate) AS HIDDEN sortDate` を使っています。一覧用だけが未適用です。\n\n**起票未指摘の追加事実**: CSV出力用の `getStockHistories()`（:411-413）も同じ `sh.createDate` ソートで、同じ問題を持ちます。\n\n■次の対応\n実装対応: 一覧用とCSV出力用の両方を `COALESCE(sh.approvalAt, sh.registeredAt, sh.createDate)` 基準に変更する。既存の `findLatestByProductStockId()` の実装をそのまま流用できます。\n\n付記: 同じ画面の欠品履歴一覧（sheet-25 1-2-3）は第三ソートを「**登録日時**の降順」と規定しており、2つの一覧で定義が異なります。実装時にご注意ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-23「在庫履歴検索一覧(検索結果)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockHistoryController.php",
+        "src/Eccube/Entity/DtbStockHistory.php",
+        "src/Eccube/Repository/DtbStockHistoryRepository.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2018",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-32:在庫移動指示検索",
+        "sheet-13:在庫移動・振替検索一覧(検索・結果)"
+      ],
+      "課題タイトル": "【未実装】在庫管理_在庫移動指示検索_在庫移動指示検索にて、出庫元店舗・入庫先店舗が必須になっておらず、出庫元店舗の初期値（ユーザーのデフォルト検索店舗）も設定されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "設計2-1/2-2は必須○かつ出庫元店舗に初期値指定。実装は required=false で初期値設定なし",
+      "前回書いた次にすること": "実装対応: 出庫元店舗・入庫先店舗を必須化し、出庫元店舗の初期値にログインメンバーの DefaultSearchBaseInfo を設定する。",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）\n\n■結論\n指摘は事実です。設計が必須と定める検索条件が任意入力になっており、初期値の設定もありません。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能)「在庫移動指示検索」シート 画面部品仕様:\n> 2-1  出庫元店舗  プルダウン  必須○  初期値: ユーザーのデフォルト検索店舗  移動指示リストの出庫元店舗名\n> 2-2  入庫先店舗  プルダウン  必須○  初期値: 未選択  移動指示リストの入庫先店舗名\n\n■実装の現状\nsrc/Eccube/Form/Type/Admin/SearchStockMoveInstructionType.php:46-58\n`move_from_base_info` / `move_to_base_info` はいずれも `'required' => false`、`'placeholder' => 'admin.common.unspecified'`（指定なし）で定義されており、未選択のまま検索できます。\nまた src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:73 でフォームを初期データ無しに生成しており、ログインメンバーの DefaultSearchBaseInfo を出庫元店舗の初期値に設定する処理がありません。\n\n■確認範囲\n- 設計（正本）: excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / 在庫移動指示検索（識別ID 2-1, 2-2）\n- 実装: SearchStockMoveInstructionType.php:46-58 ／ StockMoveInstructionController.php:73 ／ stock_move_instruction_index.twig:84",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php",
+        "src/Eccube/Entity/Member.php",
+        "src/Eccube/Form/Type/Admin/SearchStockMoveInstructionType.php",
+        "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2019",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-32:在庫移動指示検索",
+        "sheet-13:在庫移動・振替検索一覧(検索・結果)"
+      ],
+      "課題タイトル": "【未実装】在庫管理_在庫移動指示検索_在庫移動実績CSV登録にて、2,000件の登録上限チェックが実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "設計「CSVは2,000件を登録上限とする」に対し取込経路に行数判定が存在しない",
+      "前回書いた次にすること": "実装対応: 在庫移動実績CSV取込に2,000件の上限チェックを追加する（他の在庫系CSVの MAX_ROWS=2000 と同方式）。",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）\n\n■結論\n指摘は事実です。設計が定めるCSV登録件数の上限チェックが実装されていません。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能)「在庫移動指示検索」シート 在庫移動実績CSV登録:\n> ・CSVは2,000件を登録上限とする\n\n■実装の現状\nsrc/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php および\nsrc/Eccube/Service/Admin/Stock/StockMoveInstructionCsvUploadAction.php のいずれにも、\n`MAX_ROWS` 相当の定数・行数判定・`countCsvRows()` の呼び出しが存在しません（全文検索で不在を確認）。\n2,000件を超えるCSVでも全行が処理されます。\n\nなお他の在庫系CSV取込（分割先商品CSV等）には `MAX_ROWS = 2000` が実装されており、本ハンドラにのみ同等の判定がありません。\n\n■確認範囲\n- 設計（正本）: excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / 在庫移動指示検索（在庫移動実績CSV登録）\n- 実装: StockMoveInstructionCsvImportHandler.php ／ StockMoveInstructionCsvUploadAction.php ／ StockMoveInstructionController.php:368",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php",
+        "src/Eccube/Service/Admin/Stock/StockMoveInstructionCsvUploadAction.php",
+        "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php",
+        "src/Eccube/Service/Csv/Importer/Event/StockSplitEditReplaceDestinationsImportHandler.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2020",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-32:在庫移動指示検索",
+        "sheet-13:在庫移動・振替検索一覧(検索・結果)"
+      ],
+      "課題タイトル": "【未実装】在庫管理_在庫移動指示検索_在庫移動実績CSV登録にて、移動指示IDの重複チェックが実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "設計「移動指示IDに重複がないこと」に対し重複検出処理が存在しない",
+      "前回書いた次にすること": "実装対応: 取込ハンドラに移動指示IDの重複検出を追加する。既存の必須・存在チェックと同じエラー表示経路に載せる。",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）\n\n■結論\n指摘は事実です。設計が定める移動指示IDの重複チェックが実装されていません。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能)「在庫移動指示検索」シート 在庫移動実績CSV登録のチェック項目:\n> ・移動指示ID、送り状No.どちらも入力されていること\n> ・指定された移動指示IDが存在すること\n> ・移動指示IDに重複がないこと\n\n3点のうち、前2点は実装されていますが、重複チェックのみ存在しません。\n\n■実装の現状\nsrc/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php を全文検索しても、\n出現済みの移動指示IDを記録・照合する処理（重複検出）がありません。\n各行が独立して処理され、同一の移動指示IDが複数行にあると persistTrackingNo() がそれぞれ実行されるため、\n最後の行の送り状No.で上書きされ、先行行の値が失われます。\n\n■確認範囲\n- 設計（正本）: excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / 在庫移動指示検索（在庫移動実績CSV登録）\n- 実装: StockMoveInstructionCsvImportHandler.php:114, 194, 227",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2021",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-32:在庫移動指示検索",
+        "sheet-13:在庫移動・振替検索一覧(検索・結果)"
+      ],
+      "課題タイトル": "【実装乖離】在庫管理_在庫移動指示検索_在庫移動実績CSV登録にて、設計の2列（移動指示ID・送り状No.）ではなく4列（店舗名2列を含む）のCSVを要求している",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "設計フォーマットは2列。実装は店舗名2列を含む4列を要求",
+      "前回書いた次にすること": "要判断: CSVフォーマットを設計どおり2列に戻すか、設計を4列へ改訂するか。店舗名2列は実装が独自に追加したもの。",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）\n\n■結論\n指摘は事実です。設計のCSVフォーマットは2列ですが、実装は4列を要求します。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能)「在庫移動指示検索」シート、在庫移動実績CSVのフォーマット定義:\n> 移動指示ID、送り状No.\n> 2-1  移動指示ID  主キー○  数値  必須○  1～99999999  例:1234  送り状No.を登録したい移動指示IDを指定\n> 2-2  送り状No.   文字列  必須○  65535byte  例:1234-5678,1234-1234  形式のチェックは行わない、カンマ区切りで複数登録可能\n\n定義されている列は2つのみで、店舗名の列はありません。\n\n■実装の現状\nsrc/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:37-40\n```\nprivate const COL_INSTRUCTION_ID = '移動指示ID';\nprivate const COL_MOVE_FROM_SHOP = '出庫元店舗(名称)';\nprivate const COL_MOVE_TO_SHOP   = '入庫先店舗(名称)';\nprivate const COL_TRACKING_NO    = '送り状No.';\n```\nBaseCsvImportHandler は行の列数が定義数と一致しない場合に列数不正エラーとするため、設計どおりの2列CSVは取り込めません。\n\n雛形ダウンロードも同じ4列を出力します。\nsrc/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:339\n`$columns = ['移動指示ID', '出庫元店舗(名称)', '入庫先店舗(名称)', '送り状No.'];`\n\n■確認範囲\n- 設計（正本）: excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / 在庫移動指示検索（在庫移動実績CSVフォーマット 2-1, 2-2）\n- 実装: StockMoveInstructionCsvImportHandler.php:37-40, 79, 199 ／ StockMoveInstructionController.php:339 ／ stock_move_instruction_index.twig:312",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php",
+        "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig",
+        "src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2022",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-32:在庫移動指示検索",
+        "sheet-13:在庫移動・振替検索一覧(検索・結果)"
+      ],
+      "課題タイトル": "【実装乖離】在庫管理_在庫移動指示検索_在庫移動指示検索にて、在庫移動実績入力用CSVダウンロードが選択行を出力せず、常時活性のヘッダーのみのテンプレート出力になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "設計3-2は在庫移動選択時のみ活性。実装は常時活性でヘッダのみ出力",
+      "前回書いた次にすること": "実装対応: 選択行を対象とする出力に変更し、未選択時は非活性にする。現状はヘッダのみの雛形ダウンロード。",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）\n\n■結論\n指摘は事実です。活性制御と出力内容の両方が設計と異なります。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能)「在庫移動指示検索」シート 画面部品仕様:\n> 3-2  在庫移動実績入力用CSVダウンロード  ボタン  -  -  -  在庫移動選択時のみ活性状態\n\n「在庫移動選択時のみ活性」＝選択した在庫移動を対象とする出力であることが前提です。\n\n■実装の現状\n1. 活性制御なし\nsrc/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:160\n`<a href=\"{{ url('admin_stock_move_instruction_csv_download_record') }}\" class=\"btn btn-ec-conversion\">`\nチェックボックスの選択状態に連動する disabled 制御がなく、常に活性です。\n\n2. 選択行を出力しない\nsrc/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:334-339\nルート `admin_stock_move_instruction_csv_download_record` は GET で移動指示IDを受け取らず、メソッド名も `csvTemplateDownload` です。出力はヘッダー行 `['移動指示ID', '出庫元店舗(名称)', '入庫先店舗(名称)', '送り状No.']` のみで、データ行は書き出されません。\n\n■確認範囲\n- 設計（正本）: excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / 在庫移動指示検索（識別ID 3-2）\n- 実装: stock_move_instruction_index.twig:160, 405 ／ StockMoveInstructionController.php:334-345",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php",
+        "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2023",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-32:在庫移動指示検索",
+        "sheet-13:在庫移動・振替検索一覧(検索・結果)"
+      ],
+      "課題タイトル": "【実装乖離】在庫管理_在庫移動指示検索_在庫移動指示検索の一覧にて、表示件数の初期値が設計の50件ではなく10件になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "設計3-4の初期値は50。実装は eccube_default_page_count=10",
+      "前回書いた次にすること": "実装対応: 在庫移動指示検索の表示件数初期値を50にする（画面固有の既定値をセッション未設定時に用いる）。",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）\n\n■結論\n指摘は事実です。表示件数の初期値が設計の50件ではなく10件です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能)「在庫移動指示検索」シート 画面部品仕様:\n> 3-4  表示件数  必須○  初期値: 50  １ページあたりの表示件数\n\n■実装の現状\nsrc/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:76-79\n```\n$page_count = (int) $session->get(\n    self::SESSION_KEY_PAGE_COUNT,\n    $this->eccubeConfig->get('eccube_default_page_count')\n);\n```\napp/config/eccube/packages/eccube.yaml:142\n`eccube_default_page_count: 10`\n\nセッション未設定時（初期表示時）は10件になります。選択肢自体は mtb_page_max から生成されるため50件を選ぶことは可能ですが、初期選択が設計と異なります。\n\n■確認範囲\n- 設計（正本）: excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / 在庫移動指示検索（識別ID 3-4）\n- 実装: StockMoveInstructionController.php:76-79 ／ app/config/eccube/packages/eccube.yaml:142 ／ stock_move_instruction_index.twig:170",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "app/config/eccube/packages/eccube.yaml",
+        "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php",
+        "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2024",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-33:在庫移動指示詳細",
+        "sheet-13:在庫移動・振替検索一覧(検索・結果)"
+      ],
+      "課題タイトル": "【未実装】在庫管理_在庫移動指示詳細_在庫移動指示詳細にて、備考の登録が移動ステータスに関係なく常に可能になっている",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "ステータス制御が一切無い。ただし処理概要と画面部品仕様1-14で許可範囲が食い違う",
+      "前回書いた次にすること": "要確認: 出庫承認済み/移動中のみか、入庫完了以外かの確定が必要",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-33「在庫移動指示詳細」\n機能仕様処理概要「備考情報」\n> ・備考情報の内容の登録は、まとめられている移動のステータスが**出庫承認済みまたは移動中**の時のみ可能\n\n■実装の現状\nステータス制御が一切ありません。stock_move_instruction_detail.twig:80 は `form_row(form.memo, ...)` のみで readonly/disabled の制御がなく、StockMoveInstructionDetailType.php:42-45 にもステータス判定も Length 制約もありません。StockMoveInstructionDetailUpdateAction.php:34-56 と StockMoveInstructionController.php:163-192 にもステータス判定がありません（後者のバリデーションは「送り状No.を空に戻せない」チェックのみ）。\n\n■次の対応\n要確認: **設計が同一シート内で矛盾しています。** 画面部品仕様の 1-14 は\n> 1-14 備考　全角・半角　65535byte　**メモの入力は入庫完了以外で入力可能**\n\nとしており、処理概要（出庫承認済み／移動中の**2状態のみ**可）と許可範囲が食い違います。どちらを正とするかで是正内容が変わるため、設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-33「在庫移動指示詳細」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php",
+        "src/Eccube/Form/Type/Admin/StockMoveInstructionDetailType.php",
+        "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig",
+        "src/Eccube/Service/Admin/Stock/StockMoveInstructionDetailUpdateAction.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2025",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-33:在庫移動指示詳細",
+        "sheet-13:在庫移動・振替検索一覧(検索・結果)"
+      ],
+      "課題タイトル": "【未実装】在庫管理_在庫移動指示詳細_在庫移動指示詳細にて、登録ボタンが送り状No.・備考の変更有無に関わらず常に活性になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "登録ボタンに disabled も変更検知も無い。同画面の削除ボタンには disabled がある",
+      "前回書いた次にすること": "実装対応: 変更検知で活性を切り替え",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-33「在庫移動指示詳細」\n機能仕様処理概要「登録」\n> ・**送り状No.および備考の内容が変更された場合にのみ活性化する**\n\n■実装の現状\nstock_move_instruction_detail.twig:83 の登録ボタンに `disabled` 属性がなく、変更検知の処理もありません。\n同ファイルは全184行で `{% block javascript %}` も `<script>` タグも存在せず、専用JSも不在です（全文検索で確認）。共通JS（function.js）にも `disabled` を扱う汎用処理はありません。\n\n**同一画面内に非活性パターンの前例があります** — :85 の削除ボタンは `{% if instruction.trackingNo %}` で `disabled` を付けています。登録ボタンだけ制御がありません。\n\n■次の対応\n実装対応: 送り状No.・備考の変更検知で登録ボタンの活性を切り替える。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-33「在庫移動指示詳細」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2026",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-33:在庫移動指示詳細",
+        "sheet-13:在庫移動・振替検索一覧(検索・結果)"
+      ],
+      "課題タイトル": "【実装乖離】在庫管理_在庫移動指示詳細_在庫移動指示詳細にて、●●円以上／未満の閾値が出庫元店舗の高額商品閾値の最も高い価格ではなく高額商品閾値1固定になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "閾値1のみ使用。閾値2/3はゲッター定義のみで呼び出し0件",
+      "前回書いた次にすること": "実装対応: 閾値1〜3のうち最も高い価格を取得する処理に変更",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-33「在庫移動指示詳細」\n画面部品仕様\n> 1-12 ●●円以上の商品の合計　ラベル … 出庫元店舗の高額商品閾値の**最も高い価格**を取得し閾値とする\n> 1-13 ●●円未満の商品の合計　ラベル …（同上）\n\n■実装の現状\n閾値の保存箇所は2つあり、**いずれも閾値1のみ**を使用しています。\n- StockMoveInstructionEntityManager.php:53 `$Instruction->setMoveFromPriceThreshold($MoveFromBaseInfo->getExpensiveThreshold1() ?? 0);`（docblockも「expensive_threshold1 から自動取得する」と明記）\n- StockMoveInstructionCreateAction.php:43 も `getExpensiveThreshold1()`\n\n`getExpensiveThreshold2` / `getExpensiveThreshold3` の全文検索では、**ヒットは BaseInfo.php:1241/1256 のゲッター定義のみで呼び出し箇所は0件**です。最大値を求める `max()` やソート処理も在庫移動指示関連には存在しません。\n\n■次の対応\n実装対応: 閾値1〜3のうち最も高い価格を取得する処理に変更する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-33「在庫移動指示詳細」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php",
+        "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig",
+        "src/Eccube/Service/EntityManager/StockMoveInstructionEntityManager.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2027",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-34:在庫移動指示リスト ピッキングリスト印刷"
+      ],
+      "課題タイトル": "【実装乖離】在庫管理_ピッキングリスト印刷_在庫移動指示詳細画面にピッキングリスト作成ボタンがなく、ピック表は出庫承認申請画面からしか出力できない",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "移動指示詳細からの導線が無い。ただし pick_list.twig は実在し起票の不在指摘は誤り",
+      "前回書いた次にすること": "要確認: sheet-33に該当ボタンが無く、sheet-52/32の業務フローとも時系列で矛盾。是正方針の確定が先",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-34「在庫移動指示リスト ピッキングリスト印刷」\n> ・**移動指示リスト詳細画面から、ピッキングリスト作成ボタンを押下**してダイアログを表示する\n\n■実装の現状\n移動指示詳細からの導線がありません。ピック表PDFのルートは在庫移動振替ID単位の1本のみ（StockMoveController.php:437）で、同:448-452 が `STATUS_NEW` 以外を拒否します。唯一の導線は move_outbound_approval_request.twig:375 のボタンです。\nStockMoveInstructionController のルート7本にピック表系はなく、stock_move_instruction_detail.twig（全184行）に `pick` の文字列は0件です。\n\n**起票の補助情報に2つの誤りがあります。**\n1. 「`admin/Stock/MoveTransfer/pick_list.twig` が存在しない」は誤りです。同ファイル（92行）は**実在**し、M04-39 の識別ID 1〜14 に対応する列を全て持ちます。フォーマッタ `buildPickListDataByStockMoveTransferIds()` も複数ID受付で実装済みです。**欠けているのは入口ルートとボタンのみ**で、修正規模の見積もりが変わります。\n2. `stock_move_instruction_detail.twig:1 [line_out_of_range]` も誤りです（ファイルは184行存在）。\n\n■次の対応\n要確認+実装対応: **設計内で矛盾しています。**\n1. sheet-33（入口とされる画面）の画面部品仕様に「ピッキングリスト作成」ボタンが**存在しません**（ボタンは 1-15 登録 と 1-16 削除 のみ）。\n2. sheet-52「在庫移動ステータス遷移概要」および sheet-32 では、ピック作業は「新規登録 → **ピック** → 出庫承認待ち」の位置にあり、移動指示が作成されるのは「出庫承認済み」以降です。**業務フロー上のタイミングと sheet-34 の入口指定が時系列で矛盾**します。現行実装（STATUS_NEW 限定）はフロー側に沿っています。\n\n是正方針（詳細画面に入口を足すか、フローを正とするか）の確定が先に必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-34「在庫移動指示リスト ピッキングリスト印刷」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockMoveController.php",
+        "src/Eccube/Resource/template/admin/Stock/move_outbound_approval_request.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2028",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-36:バーコード貼替リストCSV出力"
+      ],
+      "課題タイトル": "【未実装】在庫管理_バーコード貼替リストCSV出力_バーコード貼替リストCSV出力にて、価格変更発生期間の「最大1か月」の上限チェックが行われていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "期間長の上限チェックが全経路に無い",
+      "前回書いた次にすること": "実装対応: 上限チェックを追加。起算方法と超過時の挙動が設計未定義のため要確認",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-36「バーコード貼替リストCSV出力」\n> ・価格変更発生期間はFromとToどちらも必須とする\n> ・**価格変更発生期間は最大で1か月間を選択可能**\n\n■実装の現状\nBarcodeReplacementListType.php:77-94 の POST_SUBMIT は `$fromComparable > $toComparable` のみを検証し、期間長の制限がありません。:63-65,:72-74 の constraints も `NotBlank` のみです。\nBarcodeReplacementListController.php:63-94 は `isValid()` 後に時刻を補正して即 `export()` し、barcode_replacement_list.twig:26-34 にも min/max 属性がなく、ファイル全49行にJSブロック自体がありません。\n`1 month` / `+1 month` / `P1M` の全文検索でも、1か月上限に相当するロジックは**0件**でした。翻訳キーも7件のみで該当文言はありません。\n\n■次の対応\n実装対応: 期間長の上限チェックを追加する。\n\n要確認: 設計は「最大で1か月間を選択可能」とのみ記載し、**起算方法（暦月か31日か、境界を含むか）と超過時の挙動（エラーか入力欄のmax属性か）が定義されていません**。実装方式を設計担当者にご確認ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-36「バーコード貼替リストCSV出力」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/BarcodeReplacementListController.php",
+        "src/Eccube/Form/Type/Admin/BarcodeReplacementListType.php",
+        "src/Eccube/Resource/template/admin/Stock/barcode_replacement_list.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2030",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-48:在庫移動戻しリストCSV出力",
+        "sheet-13:在庫移動・振替検索一覧(検索・結果)"
+      ],
+      "課題タイトル": "【未実装】在庫管理_在庫移動戻しリストCSV出力_在庫移動・振替一覧の戻しリストCSV出力にて、対象が「在庫移動」であることのチェックが行われていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "2010と同一の validateReturnListExportIds。起票のメソッド名 getReturnListExportRows は実在しない",
+      "前回書いた次にすること": "実装対応: 2010で対応し本件は重複クローズを推奨",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-48「在庫移動戻しリストCSV出力」（判定要求の出所は sheet-13）\nsheet-13\n> ・戻しリストCSV出力 … ・**在庫移動である場合にのみ出力を可能とする**\n> ・戻しリストPDF出力 … ・在庫移動である場合にのみ出力を可能とする\n\n■実装の現状\nStockMoveTransferReturnListCsvExportService.php:115-171 の `validateReturnListExportIds()` は入庫先店舗null・編集可能店舗・ステータス・存在有無・複数店舗混在のみを検査し、**`moveTransferType` への参照がファイル内に1箇所もありません**。取得側 `getMoveToBaseInfoAndStatusByIds()`（:326-344）も移動タイプを select していません。\nCSV出力とも同 Service を呼びます。\n\n**対照実装があります。** バーコードCSV（StockMoveTransferBarcodeCsvExportService.php:115-129）は `moveTransferType !== MOVE_TRANSFER_TYPE_MOVE` を判定済みで、SQL側（DtbStockMoveTransferRepository.php:441-442）にも `AND smt.move_transfer_type = :move_transfer_type` があります。\n戻しリスト用の「移動でない」翻訳キーは ja/en とも存在せず、フロントJSも `ids.length === 0` しか判定しません。\n\n**起票の記述を1点補正します。** メソッド名 `getReturnListExportRows()` は実在せず、正しくは `getListExportRows(array $ids, string $listExportType)`（:177、LIST_EXPORT_TYPE_RETURN 分岐は :188-193）です。行番号271-272の記述は正しいです。\n\n■次の対応\n実装対応: `validateReturnListExportIds()` に移動タイプ判定を追加する。\n\n付記: ECCUBE_HARERUYA-2010 と**実質同一の欠陥箇所**です（起点シートと対象がCSV/PDFか否かの違いのみ）。1箇所の修正で両方解消するため、片方で対応し他方は重複としてクローズすることを推奨します。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-48「在庫移動戻しリストCSV出力」（判定要求の出所は sheet-13）\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Repository/DtbStockMoveTransferRepository.php",
+        "src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig",
+        "src/Eccube/Service/Csv/Exporter/StockMoveTransferBarcodeCsvExportService.php",
+        "src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2031",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [],
+      "課題タイトル": "【実装乖離】在庫管理_棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）_棚卸計画新規作成にて、在庫区分ラジオボタンの初期値「EC-CUBE」が設定されておらず初期表示が未選択になっている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "data/empty_data の指定が無く setStockLocationId の呼び出しも0件で初期未選択",
+      "前回書いた次にすること": "実装対応: フォームの data に EC-CUBE の在庫区分IDを設定",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-38「棚卸計画新規作成」\n画面部品仕様\n> 3 在庫区分　ラジオボタン　◯　初期値: **EC-CUBE**　選択肢:EC-CUBE スマレジ\n\n■実装の現状\nInventoryPlanType.php:93-105 の `stockLocationId` は `required => true` と `NotBlank()` はありますが、**`data` / `empty_data` / `preferred_choices` のいずれも未指定**です。\nDtbInventoryPlan.php:67-68 も `?int $stockLocationId = null`、InventoryPlanController.php:178-195 の `newData()` も `setBaseInfo()` のみで在庫区分を設定しません。inventory_plan.twig:45-48 にも checked 指定がありません。\n`setStockLocationId` の全文検索でも、**定義（:221）はあるが呼び出し箇所は0件**でした。結果、初期表示は未選択になります。\n\n■次の対応\n実装対応: フォームの `data` に EC-CUBE の在庫区分IDを設定する。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-38「棚卸計画新規作成」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php",
+        "src/Eccube/Entity/DtbInventoryPlan.php",
+        "src/Eccube/Form/Type/Admin/Stock/InventoryPlanType.php",
+        "src/Eccube/Resource/template/admin/Stock/inventory_plan.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2032",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [],
+      "課題タイトル": "【一部実装】在庫管理_棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）_棚卸在庫反映の実行処理にて、「在庫差異があり差異確認が行われていない商品が存在する」場合のエラーチェックが行われていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "実行エンドポイントに差異未確認チェックが無く直接POSTで在庫反映が可能。CSRF検証も不在",
+      "前回書いた次にすること": "実装対応: 実行エンドポイントにもチェックを追加。設計はボタン非活性と登録エラーの両方を要求。CSRF検証も検討",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-43「棚卸在庫反映」\n登録処理について ○エラー条件\n> ・在庫反映済み／・商品数が0／・計上済み商品数が0／・商品数と計上済み商品数が一致しない\n> ・**「在庫差異」が存在し、かつ「差異確認」が行われていない商品が存在する**\n\n■実装の現状\nInventoryPlanController.php:751-778 の `stockReflect()`（実行エンドポイント）の検査は3つのみで、**差異未確認チェックがありません**。\n当該チェックは**確認画面への遷移処理**にのみ存在します（同:731-735 の `stockReflectConfirm()`）。`checkUnconfirmedStockDifferenceDetailExists` の全文検索でも、呼び出しは :264（ボタン活性判定）と :731（確認画面遷移）の**2箇所のみ**で、`stockReflect()` からの呼び出しはありません。\n実行ルート（:745-750、POST）へは確認画面 inventory_plan_stock_reflect_confirm.twig:18-19 が直接POSTする構造のため、**確認画面を経由せず直接POSTすれば差異未確認商品が残っていても在庫反映が実行されます**。\n\n**起票未指摘の追加事実**: 当該エンドポイントには `isTokenValid()` によるCSRF検証も見当たらず、防御は `isEditableBy()` の権限チェックのみです。\n\n■次の対応\n実装対応: 実行エンドポイントにも差異未確認チェックを追加する。設計は sheet-39 で「ボタン非活性」、sheet-43 で「登録処理のエラー」の**両方**を要求しており、どちらか一方では要求を満たしません。CSRF検証の追加も併せてご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-43「棚卸在庫反映」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php",
+        "src/Eccube/Repository/DtbInventoryPlanDetailRepository.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2036",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [
+        "sheet-13:在庫移動・振替検索一覧(検索・結果)",
+        "sheet-14:在庫移動・振替登録 編集 (移動)"
+      ],
+      "課題タイトル": "【要確認】在庫管理_在庫移動・振替一覧_在庫移動・振替一覧の表示順は、設計の「在庫移動振替ID降順」と実装の「登録日時降順→ID降順」が実質同一であり、乖離ではない（誤検知）",
+      "前回の判定": "CLAIM_UNSUPPORTED",
+      "前回の判定サマリ": "設計書が当該実装を明示的に是正対象と裁定しているため誤検出ではない",
+      "前回書いた次にすること": "実装是正: DtbStockMoveTransferRepository の orderBy を s.id DESC 単独に整理する。設計は当該実装を是正対象と明記済みのため設計確認は不要。",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）\n\n■結論\n「実質同一だから乖離ではない」という起票内容の主張は、設計書自身がその論法を明示的に否定しているため採用できません。本件は実装側の是正対象です。\n\n■偽である根拠（設計書の記述）\n正本設計書 0202_基本設計仕様書(在庫管理機能) の「在庫移動・振替検索一覧(検索・結果)」シートに、本件とまったく同じ実装を名指しした裁定があります。\n\n> 一覧の並び順はExcel設計の「在庫移動振替ID降順」を正とする。現状の ec-cube-enterprise 実装は登録日（create_date）降順 → ID降順でありExcel要件とキーが異なるため、実装側の是正対象（テストはExcel期待値=ID降順で設計する）。\n\n同シートの「画面表示・一覧項目 > 表示順」にも、実IDは登録日順に採番されるため概ね一致するとしたうえで、なお Excel 要件とキーが異なる旨が記載されています。\nつまり「create_date 降順でも結果は同じになる」という論点は設計側で既に検討済みで、そのうえで是正対象と結論づけられています。\n\n■起票内容のうち事実である部分\n- 実装が `orderBy('s.createDate','DESC') -> addOrderBy('s.id','DESC')` であること（src/Eccube/Repository/DtbStockMoveTransferRepository.php:56-57）\n- prePersist で create_date が現在日時に上書きされること（src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:41-42）\n- 登録処理側で create_date を明示設定していないこと（src/Eccube/Service/EntityManager/StockMoveTransferEntityManager.php:50-70）\n\nこれらはいずれも確認できました。ただし「だから乖離ではない」という結論は、上記の設計裁定と両立しません。\n\n■起票根拠の弱い点\n根拠として挙げられた .cursor/docs/MDfile/M04_stock_management_basedesign.md:1942 の「一覧はID（実質は登録日）を降順として表示する」は、M04-12 在庫分割結合一覧（別機能）の記述です。本機能 M04-09 の記述は同ファイル:916 の「一覧は在庫移動振替IDを降順として表示する」であり、こちらに「実質は登録日」という但し書きはありません。別画面の文言を本画面の要求解釈に転用しています。\n\nまた、参照されている設計資料が Markdown 要約版（.cursor/docs/MDfile/）のみで、正本 Excel 由来の設計書HTMLを確認していません。上記の是正対象の記述は正本側にのみ存在します。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / 在庫移動・振替検索一覧(検索・結果)\n- 設計（Markdown）: ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:916, :1942\n- 実装: src/Eccube/Repository/DtbStockMoveTransferRepository.php:50-57 ／ src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:195-196 ／ src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:41-42\n\n■補足\n設計裁定に従うなら、修正はソート指定を `orderBy('s.id','DESC')` 単独に整理するだけで済みます。起票内容の末尾にある「厳密性を求めるならソート指定を id 単独に整理する余地はある」という記述が、そのまま対応内容になります。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php",
+        "src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php",
+        "src/Eccube/Repository/DtbStockMoveTransferRepository.php",
+        "src/Eccube/Service/EntityManager/StockMoveTransferEntityManager.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2037",
+      "設計書": "0202_基本設計仕様書(在庫管理機能).html",
+      "設計シート": [],
+      "課題タイトル": "【要確認】在庫管理_在庫分割結合一覧_在庫分割結合一覧の検索条件「ステータス」について、分割／結合のタイプ別に選択肢を出し分ける要件は設計書に存在せず、全6ステータス表示は設計の選択肢の和集合と一致する（誤検知）",
+      "前回の判定": "CLAIM_UNSUPPORTED",
+      "前回の判定サマリ": "正本設計書がExcelの分割/結合別選択肢を「画面でのタイプ別表示要件として扱う」と明記。出し分け要件は存在する",
+      "前回書いた次にすること": "実装対応: 検索条件のタイプ（分割/結合）選択に連動してステータス選択肢を出し分ける。あわせて設計「入庫完了」とマスタ「入庫済み」の名称統一を検討。",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）\n\n■結論\n「タイプ（分割／結合）に応じてステータス選択肢を出し分ける要件は設計書に存在しない」という起票内容の前提が、正本設計書の記述と一致しません。設計書は当該の選択肢分けを画面要件として明示しています。\n\n■偽である根拠（設計書の記述）\n正本設計書 0202_基本設計仕様書(在庫管理機能) 「在庫分割結合検索一覧(検索・結果)」シート:\n\n> ステータス選択肢（MtbStockSplitJoinStatus、ID昇順）: 新規登録(1)／結合元登録(2)／分割承認待ち(3)／結合承認待ち(4)／入庫済み(5)／却下(6)。Excel記載の選択肢（分割：新規登録・分割承認待ち・却下・入庫完了／結合：新規登録・結合元登録・結合承認待ち・却下・入庫完了）は、**画面でのタイプ別表示要件として扱う**。\n\n同シートの画面部品仕様も、分割用と結合用で選択肢を別々に列挙しています。\n\n> 2-7 ステータス チェックボックス … 在庫分割・結合登録 編集（分割）の \"識別ID1-5\"「ステータス」の検索に利用\n> 選択肢（分割）：新規登録、分割承認待ち、却下、入庫完了\n> 在庫分割・結合登録 編集（結合）の \"識別ID1-5\"「ステータス」の検索に利用\n> 選択肢（結合）：新規登録、結合元登録、結合承認待ち、却下、入庫完了\n\nしたがって「和集合を全件表示すれば設計を満たす」とは言えません。\n\n■起票内容のうち事実である部分\n- 実装がマスタを無条件・ID昇順で全件表示していること（src/Eccube/Form/Type/Admin/SearchStockSplitJoinType.php:147-159）\n- テンプレートにタイプ連動の出し分けが無いこと（src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:168,177-196）\n- マスタ投入値が6件であること（app/DoctrineMigrations/Version20260519100000.php:65-71）\n\nいずれも確認できました。これらは「タイプ別の出し分けが未実装である」ことを示す事実であり、乖離が無いことの根拠にはなりません。\n\n■起票根拠の弱い点\n参照されている設計資料が Markdown 要約版（.cursor/docs/MDfile/M04_stock_management_basedesign.md）のみで、正本 Excel 由来の設計書HTMLが確認されていません。上記「画面でのタイプ別表示要件として扱う」という記述は正本側にのみ存在します。\n\n■あわせて確認された相違\n起票内容の末尾に参考として挙げられている、設計書の「入庫完了」とマスタ投入値「入庫済み」の文言不一致も事実です。本件と同じ画面部品（2-7 ステータス）の選択肢名称の相違であり、対応時に併せてご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / 在庫分割結合検索一覧(検索・結果)\n- 設計（Markdown）: ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:1925-1968\n- 実装: SearchStockSplitJoinType.php:147-159 ／ stock_split_join_index.twig:168,177-196 ／ Version20260519100000.php:65-71",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M04_stock_management_basedesign.md",
+        "app/DoctrineMigrations/Version20260519100000.php",
+        "src/Eccube/Form/Type/Admin/SearchStockSplitJoinType.php",
+        "src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig"
+      ]
+    }
+  ]
+}

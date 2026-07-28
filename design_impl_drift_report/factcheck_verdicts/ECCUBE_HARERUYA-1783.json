@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1783",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 支店専用ブロックの登録・遷移リンク付与・deletable=true 化の3点",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "本店と同一ブロックを直接include。全タグ href 0件。deletable=false で編集不可",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-4「支店ECTOP」\n「アイテムを探す」欄 機能仕様処理概要（★）\n> ★管理画面＞コンテンツ管理＞ブロック管理に設定されている、**編集可能なブロック**を表示する\n> ※**本店と支店（支店は全て共通）で異なるブロック**を表示する\n> ★(6-5)カテゴリを押下すると、押下したカテゴリで絞り込まれた商品一覧画面へ遷移する\n> ★(6-6)通常盤以外のカードセットを押下すると、押下したカードセットで絞り込まれた商品一覧画面へ遷移する\n\n■実装の現状\nshop_top.twig:45 は `{% include 'Block/search_items.twig' %}` で**本店と同一ファイル**を直接 include しています（支店専用の `shop_search_items` 等は dtb_block にも存在しません）。\nBlock/search_items.twig は全80行が静的HTMLで、カード3枚はダミー画像（dammy-feature01〜03.webp）、タグはすべて `<a class=\"c-hareruya-tag\" aria-disabled=\"true\">` で **href 属性が0件**です（英語版も0件）。\nブロック `search_items` も deletable=false 固定で編集不可です。\n\n■共通の背景（ブロック編集可否の4件に共通）\napp/DoctrineMigrations/Version20260416190000.php:32-48 がトップ用15ブロックを定義し、:67-69 の INSERT が `deletable` を **SQLリテラル false でハードコード**しています。後続の Version20260424100000 / 110000 / 130000 も `ON CONFLICT DO UPDATE SET deletable = EXCLUDED.deletable`（=false）で上書きするため、常に false のままです。\nその結果、admin/Content/block.twig:71/85/93 が編集リンク・編集アイコン・削除ボタンをいずれも非表示にし、BlockController.php:118 が `if ($id && !$Block->isDeletable()) { throw new NotFoundHttpException(); }` でURL直打ちも拒否します。\n全マイグレーションを走査しましたが、トップ用ブロックを deletable=true にするものは存在しません（Version20260711100000 は購入確認/完了フリーエリア専用）。\n\n**設計は3区分を明確に書き分けています。** スライドバナー・最新入荷アイテム・SALE開催中・お気に入り・値下げ・補充は「編集/削除**不可**」、おすすめ特集・体験会バナー・最新記事・晴れる屋チャンネルは「編集/削除**可能**」、アイテムを探すは「**編集可能**」。実装は15ブロック一律 false でこの書き分けが反映されていません。\n\n**あわせて検討が必要な点**: 仮に deletable=true にしても、管理画面の保存先は BlockController.php:172-178 の `Block/{file_name}.{locale}.twig`（例 `recommend.ja.twig`）である一方、フロントの読込は block.twig:16 の `include_dispatch('Block/' ~ Block.file_name ~ '.twig')` で、LocaleFilesystemLoader.php:134-139 が**デフォルトロケール(ja)ではロケールサフィックスを付けません**。つまり ja では管理画面の編集内容がフロントに反映されません（en は反映されます）。\n\n■次の対応\n実装対応: 支店専用ブロックの登録、タグへの遷移リンク付与、deletable=true 化の3点が必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-4「支店ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:16:06+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:16:09+09:00",
+  "appliedStatus": "処理中"
+}

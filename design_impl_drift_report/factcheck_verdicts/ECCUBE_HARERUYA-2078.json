@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2078",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 失敗時のaddErrorと送信処理のtry/catchを追加。部分送信時の件数通知も検討",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "失敗時の addError が無い。送信例外も未捕捉で500になる",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-10「【新規】手動メール通知(確認画面)」\n機能仕様処理概要\n> ・送信ボタンを押下すると確認のダイアログを表示し、OKなら送信を実行する。\n> ・**成功/失敗に応じてメッセージを表示する**\n\n■実装の現状\n確認ダイアログ（manual_mail.js:3-7）と成功メッセージ（MailController.php:390-400 の `addSuccess('admin.order.mail_send_complete')`）は実装済みです。\n**失敗メッセージがありません。** :390 の `if` が偽のとき `break` して入力画面を再描画するだけで、`addError` を一切呼びません。\nさらに MailService.php:2092-2110 の `sendManualMailForBulk()` は `$this->mailer->send()` を try/catch しておらず、送信例外は ExceptionListener に到達して HTTP 500 の共通エラー画面になります。ループ送信のため、何件目まで送信済みかも利用者に伝わりません。\n同 Controller 内には失敗メッセージの前例（:200、:319 の `addError`）があり、一括送信の complete 分岐だけが持ちません。\n\n**起票の記述を1点補正します。** 「メールテンプレートが取得できない場合は switch を break して入力画面を再描画する」とありますが、実際は `getManualMailTemplate()`（:425-440）が `NotFoundHttpException`（404）を投げます。中核の主張（失敗メッセージ不在）は事実です。\n\n■次の対応\n実装対応: 失敗時の `addError` を追加し、送信処理を try/catch で囲む。部分送信時に何件成功したかを伝えることも併せてご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-10「【新規】手動メール通知(確認画面)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:19:43+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:19:45+09:00",
+  "appliedStatus": "処理中"
+}

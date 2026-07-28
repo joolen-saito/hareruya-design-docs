@@ -1,0 +1,220 @@
+{
+  "book": "0201",
+  "count": 8,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-2190",
+      "summary": "【未実装】システム設定_メンバー管理一覧_メンバー管理一覧にて、「デフォルト検索表示店舗」による絞り込みができない",
+      "feature": "メンバー管理一覧",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        },
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        }
+      ],
+      "期待される挙動": "- メンバー管理一覧の識別ID:2-4「デフォルト検索表示店舗」を選択した際に、選択された店舗でメンバー一覧の表示を絞り込むこと。",
+      "現在の挙動": "- メンバー管理一覧の画面上部に用意されている絞り込みセレクトボックスは「所属」(filter_department) と「権限」(filter_authority) の2つのみで、デフォルト検索表示店舗を選択する絞り込み用のセレクトボックスは存在しない。\n- 「デフォルト検索表示店舗」は一覧テーブルの表示列 (Member.DefaultSearchBaseInfo.shopName の出力) としてのみ実装されており、クリック・選択による絞り込み処理は実装されていない。\n- クライアントサイドの絞り込み関数 filterMembers() も data-department-id / data-authority-id の2軸しか参照しておらず、店舗による絞り込み条件を持たない。",
+      "引用": [
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:115-115",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:122-122",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:174-174",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:45-45",
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php:77-77",
+        "html/template/admin/assets/js/function.js:None-None",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:32-32",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:48-48"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2191",
+      "summary": "【一部実装】システム設定_メンバー管理一覧_メンバー管理一覧にて、表示順の上/下移動アイコン押下時に処理前の確認が行われない",
+      "feature": "メンバー管理一覧",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        },
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        }
+      ],
+      "期待される挙動": "- メンバー管理一覧の識別ID:2-8「編集アイコン」は、それぞれのアイコンの処理を実行する前に確認を行うこと。",
+      "現在の挙動": "- 削除アイコンのみ Bootstrap の確認モーダル（member_delete_<id>）が表示され、確認後に削除される。\n- 上移動(action-up)・下移動(action-down)アイコンは、テンプレート内のインラインJSがクリックを捕捉してそのまま $.ajax でリクエストを送信しており、確認ダイアログ・確認モーダルは一切表示されない。\n- 上下移動のアンカーには csrf_token_for_anchor() が付与されていないため、html/template/admin/assets/js/function.js の a[token-for-anchor] に対する既定の確認ダイアログ（data-confirm が false でない場合に confirm を出す仕組み）も発火しない。\n- 編集アイコンは確認なしで編集画面へ遷移するだけとなっている。",
+      "引用": [
+        "html/template/admin/assets/js/function.js:None-None",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:22-22",
+        "html/template/admin/assets/js/function.js:161-161",
+        "html/template/admin/assets/js/function.js:147-147",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:52-52",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:53-53"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:232 [line_out_of_range]",
+        "src/Eccube/Resource/template/admin/Setting/System/member.twig:268 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2192",
+      "summary": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、ログインIDの最大文字数が設計の255文字ではなく50文字になっている",
+      "feature": "メンバー管理",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        },
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        }
+      ],
+      "期待される挙動": "- メンバー管理の識別ID:1-3「ログインID」は半角・全角の入力が可能で、必須、最大255文字であること。",
+      "現在の挙動": "- ログインIDの Length 制約は max に eccube_id_max_len を用いており、app/config/eccube/packages/eccube.yaml の設定値は 50 のため、51文字以上は入力エラーとなる（設計の255文字と不一致）。\n- 最小文字数として eccube_id_min_len（4）も課されている。\n- 必須（NotBlank）は新規登録時のみ付与され、編集時は required=false / mapped=false / disabled 属性が付与され入力不可となっている。\n- DBカラム login_id は length 255 で定義されており、フォームの制限値のみが50に絞られている。",
+      "引用": [
+        "app/config/eccube/packages/eccube.yaml:None-None",
+        "app/config/eccube/packages/eccube.yaml:109-109",
+        "src/Eccube/Entity/Member.php:124-124",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:117-117",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:103-103"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Form/Type/Admin/MemberType.php:201 [line_out_of_range]",
+        "src/Eccube/Form/Type/Admin/MemberType.php:215 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2193",
+      "summary": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、パスワードの最大文字数が設計の255文字ではなく50文字になっている",
+      "feature": "メンバー管理",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        },
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        }
+      ],
+      "期待される挙動": "- メンバー管理の識別ID:1-5「パスワード」は必須で、最大255文字まで入力できること。",
+      "現在の挙動": "- パスワードは RepeatedPasswordType で構築され、Length 制約の max に eccube_password_max_len を使用している。設定値は 50 のため、51文字以上は入力エラーとなる（設計の255文字と不一致）。\n- 最小文字数 eccube_password_min_len（12）および eccube_password_pattern による書式チェックも課されている。\n- 必須指定（NotBlank）は付与されており、必須要件そのものは満たしている。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/MemberType.php:84-84",
+        "src/Eccube/Form/Type/Admin/MemberType.php:89-89",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:119-119",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:103-103"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/eccube.yaml:196 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2194",
+      "summary": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、パスワード(確認)の最大文字数が設計の255文字ではなく50文字になっている",
+      "feature": "メンバー管理",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        },
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        }
+      ],
+      "期待される挙動": "- メンバー管理の識別ID:1-6「パスワード(確認)」は必須で、最大255文字まで入力できること。",
+      "現在の挙動": "- パスワード(確認)は RepeatedPasswordType の second フィールドであり、MemberType が options で渡す Length 制約（max: eccube_password_max_len = 50）が first/second の両方に適用される。\n- したがってパスワード(確認)も最大50文字となり、設計の255文字と一致しない。\n- NotBlank も options 経由で両フィールドに適用されるため、必須要件は満たしている。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/MemberType.php:84-84",
+        "src/Eccube/Form/Type/RepeatedPasswordType.php:44-44",
+        "src/Eccube/Resource/template/admin/Setting/System/member_edit.twig:171-171",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:120-120",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:103-103"
+      ],
+      "引用_不在または範囲外": [
+        "app/config/eccube/packages/eccube.yaml:196 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2195",
+      "summary": "【実装乖離】システム設定_メンバー管理_メンバー管理にて、権限グループの選択肢が「登録されている全権限」になっていない",
+      "feature": "メンバー管理",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        },
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        }
+      ],
+      "期待される挙動": "- メンバー管理の識別ID:1-7「権限グループ」は単一選択のセレクトボックスで必須であり、選択肢として登録されている全権限を表示すること。",
+      "現在の挙動": "- Authority の query_builder が「a.id >= :current_member_level」で絞り込んでおり、ログイン中メンバー自身の権限レベル以上（=IDが同値以上の下位権限）の権限しか選択肢に表示されない。\n- さらに「a.isViewable = true」で絞り込むため、mtb_authority で is_viewable=0 の「顧客」「ゲスト」は選択肢から除外される。\n- current_member_level はコントローラでログインメンバーの権限IDが渡されるため、例えば店舗オペレーター(ID=5)でログインした場合、システム管理者(ID=1)やモールオーナー(ID=2)等の権限は選択できない。\n- 必須（NotBlank）および単一選択（expanded=false / multiple=false）の要件は満たしている。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/MemberType.php:115-115",
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php:99-99",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:121-121"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/doctrine/import_csv/ja/mtb_authority.csv:7 [line_out_of_range]",
+        "src/Eccube/Entity/Master/Authority.php:51 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2197",
+      "summary": "【実装乖離】システム設定_メンバー管理_メンバー管理の新規登録時に、稼働ラジオボタンの初期値「非稼働」が選択されていない",
+      "feature": "メンバー管理",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "メンバー管理"
+        },
+        {
+          "id": "sheet-3",
+          "title": "メンバー管理一覧"
+        }
+      ],
+      "期待される挙動": "- メンバー管理の識別ID:1-10「稼働」は単一選択(ラジオボタン)で、初期値として「非稼働」が選択された状態で表示されること。",
+      "現在の挙動": "- MemberType の 'Work' は EntityType（expanded=true のラジオボタン）で定義されているが、'data' や既定値の指定がなく、初期選択値が設定されていない。\n- MemberController::create() は new Member() を生成した後に setBaseInfo() のみを実行しており、setWork() を呼び出していない（リポジトリ全体を grep しても Member エンティティ以外に setWork( の呼び出しは存在しない）。\n- Member エンティティの $Work プロパティ初期値は null であり、コンストラクタでも設定されないため、新規登録画面ではラジオボタンがどちらも未選択の状態で表示される。\n- その結果、稼働/非稼働を選択せずに登録しようとすると NotBlank でエラーとなり、設計の「初期値: 非稼働」を満たしていない。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/MemberType.php:130-130",
+        "src/Eccube/Controller/Admin/Setting/System/MemberController.php:95-95",
+        "src/Eccube/Entity/Member.php:169-169",
+        "src/Eccube/Resource/doctrine/import_csv/ja/mtb_work.csv:2-2",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M11_system_setting_basedesign.md:124-124"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2198",
+      "summary": "【実装乖離】システム設定_権限管理_権限管理画面にて、複製操作が設計書指定の「リンク」ではなく通常ボタン（button要素）で実装されている",
+      "feature": "権限管理",
+      "sheetCandidates": [
+        {
+          "id": "sheet-5",
+          "title": "権限管理"
+        }
+      ],
+      "期待される挙動": "- 権限管理画面（M11-03）の識別ID:1-9「複製リンク」は、画面部品としてリンクであること。\n- クリック時に該当行と同権限の複製行（1-10）を追加し、複製行には権限名入力（1-11、必須・重複不可）を設けること。",
+      "現在の挙動": "- 複製操作は <button type=\"button\" class=\"btn btn-ec-regular btn-copy\"> として描画されており、アンカー（a要素）のリンクではなく通常ボタン表示である。管理画面Twig・バンドルCSS/JS のいずれにも、このボタンをリンク表示へ変換する実装は存在しない。\n- 機能面では、handleCopyClick() が対象行を cloneNode して権限チェック状態を引き継いだ複製行を tbody 末尾に追加し（1-9/1-10 充足）、複製行の先頭セルに required 付きの権限名テキスト入力を動的生成する。\n- 権限名の重複は AuthorityIndexAction で、同一リクエスト内の重複および既存 mtb_authority の同名レコードを検出して例外送出により拒否している（1-11 の重複不可は充足）。\n- ただし権限名の必須チェックはクライアント側の required 属性のみで、サーバ側に NotBlank 相当のチェックがなく、空文字を直接POSTした場合は空名の権限が作成され得る。",
+      "引用": [
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md:220-220",
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md:221-222",
+        ".cursor/docs/MDfile/M11_system_setting_basedesign.md:185-189",
+        "src/Eccube/Service/Admin/Setting/System/AuthorityIndexAction.php:73-75"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/template/admin/Setting/System/authority.twig:329 [line_out_of_range]",
+        "src/Eccube/Resource/template/admin/Setting/System/authority.twig:165 [line_out_of_range]",
+        "src/Eccube/Resource/template/admin/Setting/System/authority.twig:182 [line_out_of_range]",
+        "src/Eccube/Resource/template/admin/Setting/System/authority.twig:329 [line_out_of_range]"
+      ]
+    }
+  ]
+}

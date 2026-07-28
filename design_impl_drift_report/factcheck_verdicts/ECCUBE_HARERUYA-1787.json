@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1787",
+  "verdict": "SUSPECT",
+  "reasonCode": "DESIGN_AMBIGUOUS",
+  "reasonLabel": "設計内に解釈の分岐・矛盾があり設計判断待ち",
+  "nextAction": "要確認: 追記の設計反映状況を確認し参照先を確定。実環境のHTTPレスポンス確認も未実施",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "外部APIを直接参照しバッチ出力jsonと不一致。ただし起票が引く2026/7/24追記は正本設計書に存在しない",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。起票の根拠に誤りがあり、扱いの判断が必要です。\n\n■設計上の根拠\n正本設計書 0301_基本設計仕様書(フロント_トップ) sheet-3「ECTOP」\n「最新記事」欄 機能仕様処理概要\n> ・(13-2)~(13-5)の記事情報について\n> ・**最新記事jsonファイル作成バッチによって作成されたjsonファイルから動的に取得する**\n> ※最新記事jsonファイル作成バッチは、別紙「0417_基本設計仕様書(バッチ_その他)」のシート「最新記事jsonファイル作成」を参照\n\n■実装の現状\nLatestArticlesBlockPayloadBuilder.php:27-28 は外部APIを直接叩いています。\n```\n// TODO: ECCUBE_HARERUYA-126 正しい最新記事APIエンドポイントに差し替え（現在のURL latest_articles.json は404）\nprivate const API_URL = 'https://api.corp.hareruyamtg.com/user_data/lp/json/latest_articles.json';\n```\n一方、バッチ `CreateLatestArticleListAction.php:25-29` が書き出すのは `eccube_html_user_data_dir . '/list/latestArticleList.json'` で、**ファイル名も配置先も一致しません**。全文検索でも `latestArticleList.json` をフロントから読む実装は0件でした。\n\n設計の書き分けとも食い違います。隣接する (14)晴れる屋チャンネル欄は「以下のURLから動的に取得する https://api.corp.hareruyamtg.com/user_data/lp/json/latest_videos.json」と**外部URLを明示**しているのに対し、(13)最新記事は「バッチ生成json」と書き分けられています。\n\n■次の対応\n要確認+実装対応: 実装乖離は事実です。ただし起票の「期待される挙動」にある**【2026/7/24 石川追記】（ローカルの /user_data/list/latestArticleList.json を参照する旨とSlackリンク）は、正本設計書 0301 に存在しません**（`--grep` で該当なし）。参照元は `.cursor/docs/MDfile/F01_top_basedesign.md` 側と思われます。\nこの追記が正式に設計へ反映されているかをご確認のうえ、参照先を確定してください。あわせて「記事が1件も表示されない」の断定は TODO コメントの記述に依存しており、実環境でのHTTPレスポンス確認が未実施です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0301_基本設計仕様書(フロント_トップ).html / sheet-3「ECTOP」\n- 実装: ec-cube-enterprise（Controller / Twig / Repository / Service / JS / CSS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:16:07+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:16:10+09:00",
+  "appliedStatus": "処理中"
+}

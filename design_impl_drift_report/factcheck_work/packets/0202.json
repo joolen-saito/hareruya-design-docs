@@ -1,0 +1,685 @@
+{
+  "book": "0202",
+  "count": 28,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-1990",
+      "summary": "【一部実装】在庫管理_共通処理（画面共通部品/スマレジ在庫修正/入荷通知）_在庫管理の各画面共通部品にて、店舗セレクトボックスの選択肢が閉店済み店舗を除外していない",
+      "feature": "共通処理（画面共通部品/スマレジ在庫修正/入荷通知）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-3",
+          "title": "共通処理"
+        }
+      ],
+      "期待される挙動": "- 画面共通部品「1-3 店舗」のリスト内容は、店舗マスタから閉店していない店舗のみを取得して選択肢とすること。\n- 画面共通部品「1-4 在庫区分」は複数チェックが入力されている場合にOR条件で絞り込むこと。",
+      "現在の挙動": "- 在庫一覧（M04-01）の店舗セレクトボックスは BaseInfo 全件を選択肢としており、閉店店舗を除外する query_builder が指定されていない。ソース上にも「TODO: 閉店フラグが BaseInfo に追加された後、query_builder で絞り込む」というコメントが残っている。\n- BaseInfo エンティティには開店状態を表す is_open_shop カラムが既に存在し、棚卸計画（InventoryPlanListType / InventoryPlanType）では isOpenShop = SHOP_OPEN で選択肢を絞り込んでいるため、在庫一覧側の TODO コメントの前提（フラグ未追加）は現HEADでは成立していない。\n- 在庫編集承認一覧（SearchStockApprovalListType）・在庫移動振替一覧（SearchStockMoveTransferType）・在庫分割結合一覧（SearchStockSplitJoinType）・在庫履歴（StockHistoryType）の店舗セレクトボックスも閉店店舗を除外していないため、在庫管理機能内で仕様の適用にばらつきがある。\n- 在庫区分については stockLocationId IN (:stockLocationIds) でOR条件として実装されており、この点は設計どおりである。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/SearchStockListType.php:123-123",
+        "src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:71-71",
+        "src/Eccube/Form/Type/Admin/StockHistoryType.php:78-78",
+        "src/Eccube/Form/Type/Admin/Stock/InventoryPlanListType.php:59-59",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:74-74",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:76-76"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Entity/BaseInfo.php:1563 [line_out_of_range]",
+        "src/Eccube/Repository/ProductStockRepository.php:97 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1993",
+      "summary": "【一部実装】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の検索条件「ID」「コード」に最大255文字の入力値チェックが実装されていない",
+      "feature": "在庫検索一覧（検索・結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "在庫検索一覧(検索入力)"
+        },
+        {
+          "id": "sheet-5",
+          "title": "在庫検索一覧(検索結果)"
+        }
+      ],
+      "期待される挙動": "- 在庫一覧（M04-01）の検索条件「1-3 ID」「1-4 コード」は文字列項目で、最大値を255文字とすること。\n- 商品名・カード名・ID・コードは部分一致検索とすること。",
+      "現在の挙動": "- SearchStockListType では product_name / card_name に Assert\\Length(max: 255) が設定されているのに対し、product_id / product_code には長さ制約が一切設定されていない。\n- テンプレート側でも product_id / product_code の form_widget に maxlength 属性が付与されていないため、フロント・サーバのどちらでも255文字超の入力を抑止できない。\n- 部分一致検索については、商品IDは CONCAT(p.id, '') LIKE、商品コードは pc.code LIKE で実装されており設計どおりである。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/SearchStockListType.php:113-113",
+        "src/Eccube/Form/Type/Admin/SearchStockListType.php:118-118",
+        "src/Eccube/Form/Type/Admin/SearchStockListType.php:100-100",
+        "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:103-103",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:171-171",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:100-100"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Repository/ProductStockRepository.php:81 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1994",
+      "summary": "【未実装】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の検索条件「店舗」の選択肢に閉店済み店舗が表示される",
+      "feature": "在庫検索一覧（検索・結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "在庫検索一覧(検索入力)"
+        },
+        {
+          "id": "sheet-5",
+          "title": "在庫検索一覧(検索結果)"
+        }
+      ],
+      "期待される挙動": "- 在庫一覧（M04-01）の検索条件「1-5 店舗」の選択肢は、店舗管理に登録されており、かつ閉店となっていない店舗のみとすること。",
+      "現在の挙動": "- SearchStockListType の base_info は BaseInfo エンティティ全件を選択肢としており、閉店店舗を除外する query_builder が指定されていない。\n- ソース上には「TODO: 閉店フラグが BaseInfo に追加された後、query_builder で絞り込む」というコメントが残っているが、BaseInfo には既に is_open_shop カラムが存在しており、実際に棚卸計画の店舗選択（InventoryPlanListType）では isOpenShop で絞り込まれている。\n- 結果として、在庫一覧の店舗プルダウンには閉店済みの店舗も選択肢として表示される。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/SearchStockListType.php:123-123",
+        "src/Eccube/Form/Type/Admin/SearchStockListType.php:131-131",
+        "src/Eccube/Form/Type/Admin/Stock/InventoryPlanListType.php:59-59",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:173-173"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Entity/BaseInfo.php:1563 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1995",
+      "summary": "【実装乖離】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の検索結果の表示順が、一覧に表示している商品IDではなく商品規格IDの降順になっている",
+      "feature": "在庫検索一覧（検索・結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "在庫検索一覧(検索入力)"
+        },
+        {
+          "id": "sheet-5",
+          "title": "在庫検索一覧(検索結果)"
+        }
+      ],
+      "期待される挙動": "- 在庫一覧（M04-01）の検索結果一覧の表示順は、ID（一覧の「ID」列＝商品ID）の降順とすること。",
+      "現在の挙動": "- 検索クエリの並び順は orderBy('pc.id', 'DESC')（pc = ProductClass、すなわち商品規格ID）の降順であり、続いて在庫区分（ps.stockLocationId）の昇順で並ぶ。\n- 一覧の「ID」列に表示しているのは Item.ProductClass.Product.id（商品ID）であるため、商品規格IDの降順で並べた結果は、画面上の「ID」列が必ずしも降順に並ばない。",
+      "引用": [
+        "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:580-580",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:281-281",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:318-318"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Repository/ProductStockRepository.php:314 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1996",
+      "summary": "【一部実装】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の在庫移動・振替登録にて、複数の在庫区分が選択された場合のエラー判定が実装されていない",
+      "feature": "在庫検索一覧（検索・結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "在庫検索一覧(検索入力)"
+        },
+        {
+          "id": "sheet-5",
+          "title": "在庫検索一覧(検索結果)"
+        }
+      ],
+      "期待される挙動": "- 在庫一覧で在庫を選択して在庫移動・振替登録へ遷移する際、複数の店舗の在庫が選択されている場合・複数の在庫区分の在庫が選択されている場合・編集権限を持っていない店舗の在庫が選択されている場合・在庫0の在庫が選択されている場合は、エラー文言（アラート）を表示し遷移させないこと。",
+      "現在の挙動": "- 在庫一覧テンプレートのJSでは、編集権限のない店舗（hasUnauthorizedShop）・複数店舗（isSameShop）・在庫0（hasZeroStock）の3条件のみをチェックしてアラートを表示している。\n- 複数の在庫区分が選択されている場合のチェックが存在しない。行のチェックボックスに data-zone 属性（在庫区分）は出力されているが、JS 側でこの属性を参照する処理は1箇所もない。\n- サーバ側の検証も未実装で、StockListController のクラスコメントに「TODO: 在庫移動登録・在庫振替登録のサーバ側バリデーションを追加する」と明記されている。そのため、POST を直接送ればJSのアラートを回避して遷移できる。",
+      "引用": [
+        "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:816-816",
+        "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:575-575",
+        "src/Eccube/Controller/Admin/Stock/StockListController.php:45-45",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:288-288",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:290-290"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1997",
+      "summary": "【実装乖離】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の検索条件保存にて、検索パターン名が未入力でも「検索条件保存」ボタンが非活性にならない",
+      "feature": "在庫検索一覧（検索・結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "在庫検索一覧(検索入力)"
+        },
+        {
+          "id": "sheet-5",
+          "title": "在庫検索一覧(検索結果)"
+        }
+      ],
+      "期待される挙動": "- 在庫一覧（M04-01）の「検索条件保存」ボタンは、検索パターン名を入力することで活性化すること。\n- 検索パターン名を入力していない場合はボタンを非活性とすること。",
+      "現在の挙動": "- 「検索条件保存」ボタン（#savePatternBtn）は disabled 属性を持たず、パターン名の入力有無に応じて活性/非活性を切り替えるJSも存在しないため、常に押下可能である。\n- パターン名が空のまま押下した場合はサーバ側で admin.common.save_pattern.error.name_empty のエラーメッセージを出して在庫一覧へリダイレクトする実装になっており、設計の「非活性」ではなくエラー表示で代替されている。",
+      "引用": [
+        "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:369-369",
+        "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:692-692",
+        "src/Eccube/Controller/Admin/Stock/StockListController.php:322-322",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:105-105",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:204-204"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1998",
+      "summary": "【実装乖離】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の検索条件保存にて、保存対象外であるはずの「店舗」も検索パターンに保存されている",
+      "feature": "在庫検索一覧（検索・結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "在庫検索一覧(検索入力)"
+        },
+        {
+          "id": "sheet-5",
+          "title": "在庫検索一覧(検索結果)"
+        }
+      ],
+      "期待される挙動": "- 在庫一覧（M04-01）の検索条件保存では、店舗を検索条件の保存に含めないこと。",
+      "現在の挙動": "- 検索パターン保存処理は、検索フォームのビューデータから CSRF トークン（_token）だけを除外して残り全項目をシリアライズして保存しており、店舗（base_info）も保存対象に含まれている。\n- 保存したパターンを読み込む処理でも保存済みの base_info をそのままフォームへ復元するため、パターン読込時にログインメンバーのデフォルト検索表示店舗ではなく保存時の店舗が適用される。",
+      "引用": [
+        "src/Eccube/Controller/Admin/Stock/StockListController.php:337-337",
+        "src/Eccube/Controller/Admin/Stock/StockListController.php:341-341",
+        "src/Eccube/Controller/Admin/Stock/StockListController.php:399-399",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:107-107"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-1999",
+      "summary": "【実装乖離】在庫管理_在庫検索一覧（検索・結果）_在庫一覧の検索条件保存にて、「検索条件削除」ボタンが非活性表示ではなく非表示になっている",
+      "feature": "在庫検索一覧（検索・結果）",
+      "sheetCandidates": [
+        {
+          "id": "sheet-4",
+          "title": "在庫検索一覧(検索入力)"
+        },
+        {
+          "id": "sheet-5",
+          "title": "在庫検索一覧(検索結果)"
+        }
+      ],
+      "期待される挙動": "- 在庫一覧（M04-01）の「検索条件削除」ボタンは、検索パターンを選択している場合に活性化すること。\n- 検索パターンを選択していない場合はボタンを非活性とすること。",
+      "現在の挙動": "- 「検索条件削除」ボタン（#deletePatternBtn）は Twig の {% if patternActive %} で囲まれており、検索パターンを読み込んでいる状態のときだけ DOM に出力される。パターン未選択時はボタン自体がレンダリングされず、設計が求める「非活性（グレーアウト）表示」にはなっていない。\n- パターンを選択（保存済みパターンのリンクを押下して読み込み）した場合はボタンが表示され、押下で削除できるため、削除操作を許す条件そのものは設計どおりである。",
+      "引用": [
+        "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:374-374",
+        "src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:348-348",
+        "src/Eccube/Controller/Admin/Stock/StockListController.php:357-357",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:109-109",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:207-207"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2000",
+      "summary": "【実装乖離】在庫管理_在庫情報CSV出力_在庫情報CSV出力（M04-04）の列順が設計と異なり、在庫が原価単価・総原価より前に出力される",
+      "feature": "在庫情報CSV出力",
+      "sheetCandidates": [
+        {
+          "id": "sheet-8",
+          "title": "在庫情報CSV出力"
+        }
+      ],
+      "期待される挙動": "- 在庫情報CSV出力（M04-04）の出力項目は、商品ID・商品名・商品コード・店舗名・在庫区分名・言語・状態・基準価格・販売価格・買取価格・原価単価・総原価・在庫・当日販売数…の順に出力すること。",
+      "現在の挙動": "- StockListCsvExportService::CSV_HEADER の定義順が「買取価格 → 在庫 → 原価単価 → 総原価」となっており、設計の「買取価格 → 原価単価 → 総原価 → 在庫」と在庫列の位置が異なる。\n- CSV出力はこのヘッダ定義の順序でそのまま列を並べているため、出力ファイルの列順が設計と一致しない。",
+      "引用": [
+        "src/Eccube/Service/Csv/Exporter/StockListCsvExportService.php:43-43",
+        "src/Eccube/Service/Csv/Exporter/StockListCsvExportService.php:44-44",
+        "src/Eccube/Service/Csv/Exporter/StockListCsvExportService.php:83-83",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:643-643"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2001",
+      "summary": "【実装乖離】在庫管理_在庫リコメンドCSV出力_在庫リコメンドCSV出力（M04-16）の商品ID条件が完全一致で、在庫一覧の部分一致検索と出力対象が食い違う",
+      "feature": "在庫リコメンドCSV出力",
+      "sheetCandidates": [
+        {
+          "id": "sheet-21",
+          "title": "在庫リコメンドCSV出力"
+        }
+      ],
+      "期待される挙動": "- 在庫リコメンドCSV出力（M04-16）は、在庫一覧の検索条件に応じたCSVを出力すること。\n- 在庫一覧の検索条件のうち、商品名・カード名・ID・コードは部分一致検索とすること。",
+      "現在の挙動": "- 在庫リコメンドCSVの抽出SQLでは商品IDの条件が p.id = :productId と完全一致になっている。\n- 同じ検索条件を使う在庫一覧側は CONCAT(p.id, '') LIKE '%値%' の部分一致であるため、たとえば ID に「12」と入力して検索した一覧の結果（12, 120, 312 など）と、そのままリコメンドCSVを出力した結果（商品ID 12 のみ）が一致しない。\n- 同じサービス内でも商品名・カード名・商品コードは LIKE の部分一致で実装されており、商品IDだけが完全一致になっている。",
+      "引用": [
+        "src/Eccube/Service/Csv/Exporter/StockRecommendCsvExportService.php:221-221",
+        "src/Eccube/Service/Csv/Exporter/StockRecommendCsvExportService.php:227-227",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:2776-2776",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:100-100"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Repository/ProductStockRepository.php:81 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2003",
+      "summary": "【実装乖離】在庫管理_在庫一括編集_在庫一括編集にて、必須項目である承認通知先（所属選択）が任意入力になっている",
+      "feature": "在庫一括編集",
+      "sheetCandidates": [
+        {
+          "id": "sheet-7",
+          "title": "在庫一括編集"
+        }
+      ],
+      "期待される挙動": "- 在庫一括編集（M04-03）の表ヘッダー部「1-2 承認通知先（所属選択）」は必須項目とすること。\n- 「1-3 承認通知先（メンバー選択）」も必須項目とすること。\n- 明細の「2-11 在庫変動理由」「2-12 在庫増減数」「2-13 仕入単価」は必須・最大値の条件に従いチェックすること。",
+      "現在の挙動": "- 承認通知先（所属選択）に対応する approval_department は 'required' => false で定義され、NotBlank 等の制約も付与されていないため、未選択のまま登録できる。\n- 承認通知先（メンバー選択）は required = true かつ Count(min: 1) 制約で必須化されており設計どおりである。\n- 明細の在庫変動理由（NotBlank + Length）・在庫増減数（NotBlank + Range）は必須チェックが実装され、仕入単価は Range 制約に加えて親フォームの POST_SUBMIT で入庫時のみ必須チェックが行われる（廃棄時は画面側で入力不可・クリア）ため、明細項目については設計どおりである。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/StockBulkApprovalType.php:92-92",
+        "src/Eccube/Form/Type/Admin/StockBulkApprovalType.php:98-98",
+        "src/Eccube/Form/Type/Admin/StockBulkApprovalItemType.php:52-52",
+        "src/Eccube/Resource/template/admin/Stock/bulkapproval.twig:98-98",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:601-601",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:602-602",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:616-616"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2008",
+      "summary": "【一部実装】在庫管理_在庫編集承認一覧_在庫編集承認一覧にて、承認状態が「スマレジ連携失敗」の行が一括承認・一括却下の対象にならない",
+      "feature": "在庫編集承認一覧",
+      "sheetCandidates": [
+        {
+          "id": "sheet-44",
+          "title": "在庫編集承認一覧(検索入力)"
+        },
+        {
+          "id": "sheet-45",
+          "title": "在庫編集承認一覧(検索結果)"
+        },
+        {
+          "id": "sheet-6",
+          "title": "在庫編集"
+        }
+      ],
+      "期待される挙動": "- 一覧のチェックボックス（一括承認・一括却下の対象）は、承認状態が「未承認」または「スマレジ連携失敗」で、承認対象が「在庫編集」「在庫一括編集」「在庫変更CSV登録」であり、かつ登録者がログインしているユーザー以外の場合に表示すること。",
+      "現在の挙動": "- 一括操作の可否判定（is_bulk_actionable）は、承認対象が在庫編集・在庫一括編集・在庫変更CSV登録であること、承認状態が「未承認」であること、登録者がログイン中のメンバーと異なることの3条件で構成されている。\n- 承認状態が「スマレジ連携失敗」の場合の考慮がなく、ソース上にも「TODO 承認状態が「スマレジ連携失敗」の場合も一括操作を可能にする」というコメントが残っている。そもそも承認ステータスに「スマレジ連携失敗」が存在しないため、当該条件は成立し得ない。",
+      "引用": [
+        "src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-90",
+        "src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:93-93",
+        "src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:41-41",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:4515-4515",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:4516-4516"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2010",
+      "summary": "【一部実装】在庫管理_在庫移動・振替一覧_在庫移動・振替一覧にて、戻しリストCSV出力・戻しリストPDF出力に「移動タイプが在庫移動であること」の判定が無く、在庫振替を選択しても出力できてしまう",
+      "feature": "在庫移動・振替一覧",
+      "sheetCandidates": [
+        {
+          "id": "sheet-13",
+          "title": "在庫移動・振替検索一覧(検索・結果)"
+        },
+        {
+          "id": "sheet-14",
+          "title": "在庫移動・振替登録 編集 (移動)"
+        },
+        {
+          "id": "sheet-15",
+          "title": "在庫移動・振替登録 編集(振替)"
+        }
+      ],
+      "期待される挙動": "- 在庫移動・振替一覧（M04-09）の戻しリストCSV出力は、移動タイプが「在庫移動」の場合にのみ出力を可能とすること。\n- 在庫移動・振替一覧（M04-09）の戻しリストPDF出力は、移動タイプが「在庫移動」の場合にのみ出力を可能とすること。\n- バーコード印刷用CSV出力は、移動かつ入庫先がスマレジ在庫である場合のみ出力を可能とすること。",
+      "現在の挙動": "- バーコード印刷用CSV出力（4-4）は移動タイプ＝在庫移動と入庫先在庫区分＝スマレジの両方をチェックしており、設計どおり実装されている。\n- 戻しリストCSV出力（4-6）・戻しリストPDF出力（4-7）は共通のバリデーション（validateReturnListExportRequest → validateReturnListExportIds）を通るが、そこでは「入庫先店舗の権限」と「ステータスが移動中／入庫承認待ち／入庫済みのいずれか」しか検査しておらず、移動タイプが在庫振替かどうかを判定していない。\n- 在庫振替は承認時にステータス「入庫済み」（MtbStockMoveTransferStatus::STATUS_INBOUND_APPROVED＝ID:7）へ遷移し、このIDは戻しリスト出力の許可ステータス（ALLOWED_STATUS_IDS）に含まれるため、入庫済みの在庫振替を選択すると戻しリストCSV／PDFが出力できてしまう。\n- 在庫移動振替CSV出力（4-5）は検索条件に基づく出力で、設計（M04-10「在庫移動振替検索一覧の結果をCSV出力する」）どおりである。",
+      "引用": [
+        "src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:115-173",
+        "src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:43-48",
+        "src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:468-503",
+        "src/Eccube/Service/Admin/Stock/StockTransferApprovalApproveAction.php:108-108",
+        "src/Eccube/Service/Csv/Exporter/StockMoveTransferBarcodeCsvExportService.php:115-130",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:935-938",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:939-942",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:932-932"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2011",
+      "summary": "【一部実装】在庫管理_在庫分割 登録編集_在庫分割 登録編集の分割先商品CSV登録にて、エラー一覧の先頭に固定文言「エラーを最大20件まで表示しています。」が表示されない（結合側では表示される）",
+      "feature": "在庫分割 登録編集",
+      "sheetCandidates": [],
+      "期待される挙動": "- 分割先商品CSV登録では、CSVの登録上限を2,000件とし、入力チェックはエラーが20件に到達するまで行い、行番号・商品コード・商品名をセットにしたエラーメッセージを最大20件まで画面上に表示すること。\n- エラーメッセージには固定で「エラーは20件まで表示されます」という文言をエラーメッセージの上に表示すること。\n- すでに分割先商品が1件でも登録されている場合、登録前に分割先商品を全て削除してから登録を行うこと。",
+      "現在の挙動": "- 分割先CSVの登録上限2,000件（MAX_ROWS=2000）とエラー20件打ち切り（MAX_ERROR_COUNT=20）は実装されている。\n- CSV読み込み時に分割先を配列で作り直してセッションへ上書き保存しているため、既存の分割先は全件置き換えられる（全削除後に登録と同等）。\n- 承認申請時に分割先が0件の場合は admin.stock.split.destination_required でエラーとなり、分割元と同一の在庫（同一商品コード）はCSV・画面追加のどちらでもエラーとなる。\n- エラー一覧の先頭に固定文言を付与する処理が無く、翻訳キー admin.stock.csv.error_limit_notice（「エラーを最大20件まで表示しています。」）は結合元CSV（StockJoinEditReplaceSourcesImportHandler）と結合CSV登録（StockJoinCsvImportHandler）でしか使われていない。",
+      "引用": [
+        "src/Eccube/Service/Csv/Importer/Event/StockSplitEditReplaceDestinationsImportHandler.php:44-46",
+        "src/Eccube/Service/Csv/Importer/Event/StockSplitEditReplaceDestinationsImportHandler.php:307-314",
+        "src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php:257-262",
+        "src/Eccube/Controller/Admin/Stock/StockSplitController.php:600-637",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:2152-2152",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:2155-2156",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:2157-2157"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:2399 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2012",
+      "summary": "【実装乖離】在庫管理_在庫分割 登録編集_在庫分割 登録編集にて、分割先商品の仕入総価格（買取金額比率での按分）が承認申請時ではなく承認時に計算され、分割先商品情報に保存されない",
+      "feature": "在庫分割 登録編集",
+      "sheetCandidates": [],
+      "期待される挙動": "- 承認申請時に、基本情報の更新・分割先商品の仕入総価格の計算・ステータス変更履歴の更新・承認通知先へのメール送信を行い、計算した仕入総価格を分割先商品情報に登録すること（分割先が確定＝編集不可となる承認申請時に計算する）。\n- 分割先商品の仕入総価格は分割先商品の買取金額比率で按分し、合計が分割元商品の移動総原価と一致しない場合は端数分を「最も買取金額（単価）が高い分割先商品」に割り当てること。",
+      "現在の挙動": "- 承認申請（StockSplitApplyApprovalAction）は、分割先明細の作成・ステータスの分割承認待ちへの変更・承認申請一覧への登録のみを行い、仕入総価格の按分計算は一切行っていない。\n- 分割先明細（DtbStockSplitJoinDetail）には仕入総価格を保持するカラム自体が無く（standardPrice / costPrice / totalCost / stock / splitJoinQuantity / missingQuantity のみ）、承認申請時点の仕入総価格は保存されない。\n- 買取金額比率での按分と端数調整は承認処理（StockSplitApprovalApproveAction）で都度計算されており、承認時点の買取価格・分割元総原価で計算されるため、申請時から値が変動した場合に設計と異なる金額になる。\n- 端数の割当先は「買取価格×数量（買取金額小計）が最大の分割先」であり、設計の「最も買取金額（単価）が高い分割先商品」とは、単価は低いが数量が多い商品が存在するケースで一致しない。\n- 承認通知先（メンバー）の必須チェックと承認通知メール送信、ステータスの分割承認待ちへの遷移は実装されている。",
+      "引用": [
+        "src/Eccube/Service/Admin/Stock/StockSplitApplyApprovalAction.php:87-118",
+        "src/Eccube/Entity/DtbStockSplitJoinDetail.php:55-75",
+        "src/Eccube/Service/Admin/Stock/StockSplitApprovalApproveAction.php:118-185",
+        "src/Eccube/Service/Admin/Stock/StockSplitApprovalApproveAction.php:170-173",
+        "src/Eccube/Controller/Admin/Stock/StockSplitController.php:295-300",
+        "src/Eccube/Controller/Admin/Stock/StockSplitController.php:327-331",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:2176-2176",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:2183-2183"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2013",
+      "summary": "【一部実装】在庫管理_在庫結合 登録編集_在庫結合 登録編集にて、結合数の最大値（99999999）・在庫数超過のエラーチェックが無く、ステータスも設計の7段階（二段階承認）ではなく5段階（単一承認）になっている",
+      "feature": "在庫結合 登録編集",
+      "sheetCandidates": [],
+      "期待される挙動": "- 結合先商品の「結合数」は必須で、1～99999999の範囲とし、在庫数を超える数値が入力された場合はエラーとすること。\n- 在庫結合のステータスは、新規登録、結合元登録、結合計画承認待ち、却下、結合計画承認済み、結合完了承認待ち、入庫完了の7つを持ち、結合計画承認の後に結合完了承認申請・結合完了承認を経て入庫完了となること。",
+      "現在の挙動": "- 結合数（destination_stock）は必須かつ1以上のチェックのみが行われ（サーバ側は 0以下でエラー、画面は min=\"1\" required）、上限99999999のチェックと在庫数超過のチェックはサーバ・画面のいずれにも存在しない。\n- 在庫分割結合ステータスマスタは 新規登録／結合元登録／分割承認待ち／結合承認待ち／入庫済み／却下 の6件のみで、結合計画承認済み・結合完了承認待ちに相当するステータスが存在しない。\n- 結合の遷移は 新規登録 → 結合元登録 → 結合承認待ち → 承認で入庫済み（却下で却下）の単一承認フローで実装されており、結合計画承認と結合完了承認の二段階承認は実装されていない。",
+      "引用": [
+        "src/Eccube/Service/Admin/Stock/StockJoinRegisterAction.php:43-45",
+        "src/Eccube/Service/Admin/Stock/StockJoinRegisterAction.php:64-64",
+        "src/Eccube/Resource/template/admin/Stock/stock_join_new.twig:128-128",
+        "src/Eccube/Entity/Master/MtbStockSplitJoinStatus.php:27-38",
+        "src/Eccube/Service/Admin/Stock/StockJoinApplyApprovalAction.php:69-69",
+        "src/Eccube/Service/Admin/Stock/StockJoinApprovalApproveAction.php:58-58",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:2431-2432",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:2399-2402"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2014",
+      "summary": "【一部実装】在庫管理_在庫結合 登録編集_在庫結合 登録編集にて、結合元商品CSVの10,000件上限と結合元商品一覧の20件ページングが未実装で、結合元在庫数に0を入力しても商品行が即時削除されない",
+      "feature": "在庫結合 登録編集",
+      "sheetCandidates": [],
+      "期待される挙動": "- 結合元商品CSV登録は10,000件を登録上限とし、入力チェックはエラーが20件に到達するまで行い、最大20件のエラーを固定文言付きで表示すること。\n- 結合元商品が多い場合はページングを行い、1ページ20件とすること。\n- 結合元在庫数は0を許容し、0が入力された場合は結合元商品の行を削除すること。また在庫区分を変更した場合は原価単価・総原価・在庫数を区分に応じた値に変更し総原価合計を再計算すること。",
+      "現在の挙動": "- 結合元CSV取込（StockJoinEditReplaceSourcesImportHandler）には行数上限の定数・判定が存在せず、10,000件を超えるCSVでもエラーにならない（分割先CSV側には MAX_ROWS = 2000 がある）。\n- エラー20件打ち切りと固定文言（admin.stock.csv.error_limit_notice）の先頭付与、既存結合元の全置換は実装されている。\n- 結合元商品一覧はセッション／明細を全件そのまま描画しており、ページング処理は存在しない（stock_join_edit.twig 内のページャは商品検索モーダル用の #product_pagination のみ）。\n- 結合元在庫数に0を入力してもサーバ側（updateSourceStock / updateSourceQuantity）は数量0をセッションに保持するだけで行を削除せず、画面JSが期待するレスポンス details_were_removed を返すPHPコードはリポジトリ内に存在しないため、行の即時削除・再読み込みは動作しない（0の行は「結合元商品登録」実行時にDB登録対象から除外されるのみ）。\n- 在庫区分変更時の原価単価・総原価・在庫数の再計算は StockJoinUpdateSourceStockLocationAction と編集画面JSで実装されている。",
+      "引用": [
+        "src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php:44-46",
+        "src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php:206-255",
+        "src/Eccube/Service/Csv/Importer/Event/StockSplitEditReplaceDestinationsImportHandler.php:44-44",
+        "src/Eccube/Controller/Admin/Stock/StockJoinController.php:304-340",
+        "src/Eccube/Controller/Admin/Stock/StockJoinController.php:1069-1082",
+        "src/Eccube/Resource/template/admin/Stock/stock_join_edit.twig:733-733",
+        "src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php:187-189",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:2461-2461"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2015",
+      "summary": "【実装乖離】在庫管理_在庫結合 登録編集_在庫結合の承認処理にて、承認後のステータスが「結合計画承認済み」ではなく「入庫済み」になり、却下時の在庫戻し原価が「移動総原価の按分」ではなく「原価単価×数量」で計算されている",
+      "feature": "在庫結合 登録編集",
+      "sheetCandidates": [],
+      "期待される挙動": "- 結合計画承認画面で承認した場合、ステータスは「結合計画承認済み」となり、結合完了承認申請画面へ遷移すること（却下時は「却下」）。\n- 却下時は結合元商品の在庫を移動点数だけ戻し、欠品登録を行った商品については欠品点数分を除くこと。戻す仕入総価格は結合元商品それぞれの移動総原価とし、欠品がある場合は「結合元総原価 ×（（移動数 - 欠品数）/ 移動数）」とすること。\n- 却下処理確認モーダルで却下するボタンを押下した際、却下理由（最大65535byte）の入力がない場合はエラーとすること。",
+      "現在の挙動": "- 却下理由の必須チェックは実装されている（rejectedMemo が空文字ならエラー admin.stock.join.approval_reject_reason_required）。却下メモは TEXT カラムに保存される。\n- 承認処理（StockJoinApprovalApproveAction）はステータスを RECEIPT_COMPLETED（入庫済み）に更新しており、「結合計画承認済み」ステータスは存在しない（マスタは6件のみで二段階承認が無い）。\n- 却下処理（StockJoinApprovalRejectAction）は結合元の戻し数量を「結合元在庫数 - 欠品点数」で算出しており、欠品分を除く点は設計どおりである。\n- 却下時に戻す総原価は「明細に保存された原価単価（costPrice）× 戻し数量」で計算されており、出庫時に減算した移動総原価（ProductStock::getMovementTotalCost() ＝ 総原価 ×（数量 ÷ 在庫数））の按分ではないため、端数分の誤差が生じ、設計の計算式と一致しない。",
+      "引用": [
+        "src/Eccube/Service/Admin/Stock/StockJoinApprovalSubmitAction.php:60-67",
+        "src/Eccube/Service/Admin/Stock/StockJoinApprovalApproveAction.php:58-58",
+        "src/Eccube/Service/Admin/Stock/StockJoinApprovalRejectAction.php:178-181",
+        "src/Eccube/Service/Admin/Stock/StockJoinApprovalRejectAction.php:101-106",
+        "src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php:211-213",
+        "src/Eccube/Entity/Master/MtbStockSplitJoinStatus.php:27-38",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:2654-2657",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:2672-2677"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2016",
+      "summary": "【一部実装】在庫管理_在庫履歴検索一覧_在庫履歴検索一覧にて、欠品検索チェック時のフォーム連動（在庫変動理由区分の固定・非活性化、対象外項目の非活性化、欠品理由の活性制御）が実装されていない",
+      "feature": "在庫履歴検索一覧",
+      "sheetCandidates": [
+        {
+          "id": "sheet-22",
+          "title": "在庫履歴検索一覧(検索入力)"
+        },
+        {
+          "id": "sheet-23",
+          "title": "在庫履歴検索一覧(検索結果)"
+        }
+      ],
+      "期待される挙動": "- 「欠品検索」がチェックされた場合、在庫変動理由区分を「欠品/欠品減算（受注）」「欠品/欠品減算(移動)」に変更し、選択できないよう非活性にすること。\n- 「欠品検索」がチェックされた場合、検索対象項目のうち欠品履歴で対象外（\"－\"）の項目は中身を空にして非活性にし、欠品理由（識別ID2-37）は活性化して入力できるようにすること。チェックされていない場合は欠品理由のみ中身を空にして非活性にし、チェックが解除された場合は在庫変動理由区分の内容を空にすること。\n- 「欠品検索」がチェックされた場合、検索結果として欠品履歴検索一覧を表示すること。",
+      "現在の挙動": "- 欠品検索のチェックボックス（disposal_search）と、チェック状態（has_search_disposal）による検索結果一覧（在庫履歴一覧／欠品履歴一覧）の表示切り替えは実装されている。\n- 検索フォームの JavaScript には欠品検索チェックボックスの change ハンドラが存在せず、在庫変動理由区分（stock_change_type_detail）の値の固定・非活性化、欠品履歴で対象外となる項目のクリア・非活性化、欠品理由入力欄の活性/非活性制御、チェック解除時の在庫変動理由区分クリアのいずれも行われない（history.twig の script ブロック、および admin 側の JS/CSS 資産のどこにも disposal_search を参照する処理が無い）。\n- サーバ側では、欠品検索がチェックされた場合に在庫変動区分「廃棄」（MtbStockChangeType::DISPOSAL＝ID:6）配下の子区分のみに絞り込み、チェックされていない場合は同区分を除外する処理のみが行われている。設計が指定する「欠品」親区分（OUT_OF_STOCK＝ID:7、子区分は欠品減算(受注)等）は絞り込み対象に含まれていない。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/StockHistoryType.php:108-115",
+        "src/Eccube/Resource/template/admin/Stock/history.twig:259-262",
+        "src/Eccube/Resource/template/admin/Stock/history.twig:179-183",
+        "src/Eccube/Controller/Admin/Stock/StockHistoryController.php:120-120",
+        "src/Eccube/Repository/DtbStockHistoryRepository.php:143-155",
+        "app/DoctrineMigrations/Version20251125165619.php:84-90",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:2866-2877",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:2834-2836"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2017",
+      "summary": "【実装乖離】在庫管理_在庫履歴検索一覧_在庫履歴検索一覧の並び順にて、第3ソートキーが「基準日時（登録日時と承認日時のうち後の日時）」ではなくレコードの作成日時（create_date）になっている",
+      "feature": "在庫履歴検索一覧",
+      "sheetCandidates": [
+        {
+          "id": "sheet-22",
+          "title": "在庫履歴検索一覧(検索入力)"
+        },
+        {
+          "id": "sheet-23",
+          "title": "在庫履歴検索一覧(検索結果)"
+        }
+      ],
+      "期待される挙動": "- 在庫履歴一覧は、第一ソートを商品コードの降順、第二ソートを店舗IDの降順とすること。\n- 第三ソートは各レコードの「登録日時」と「承認日時」のうち後の日時（基準日時）をソートキーとし、基準日時の降順（最新順）で表示すること。承認日時が未設定の場合は登録日時を基準日時とすること。",
+      "現在の挙動": "- 一覧の検索クエリ（getQueryBuilderBySearchDataForAdmin）は、商品コード降順・店舗（ps.baseInfo）降順までは設計どおりだが、第三ソートに sh.createDate（レコード作成日時）を用いている。\n- 在庫変動履歴エンティティは registeredAt（登録日時）と approvalAt（承認日時）を別カラムで保持しており、同リポジトリの findLatestByProductStockId() では COALESCE(approvalAt, registeredAt, createDate) を用いた基準日時ソートが実装されているが、一覧検索クエリではその方式が使われていない。\n- その結果、承認日時が登録日時より後になるレコード（承認を伴う在庫変動）が、設計で意図した基準日時順ではなく作成日時順で並ぶ。",
+      "引用": [
+        "src/Eccube/Repository/DtbStockHistoryRepository.php:332-335",
+        "src/Eccube/Controller/Admin/Stock/StockHistoryController.php:207-209",
+        "src/Eccube/Repository/DtbStockHistoryRepository.php:358-360",
+        "src/Eccube/Entity/DtbStockHistory.php:331-331",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:3003-3007"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2024",
+      "summary": "【未実装】在庫管理_在庫移動指示詳細_在庫移動指示詳細にて、備考の登録が移動ステータスに関係なく常に可能になっている",
+      "feature": "在庫移動指示詳細",
+      "sheetCandidates": [
+        {
+          "id": "sheet-33",
+          "title": "在庫移動指示詳細"
+        },
+        {
+          "id": "sheet-13",
+          "title": "在庫移動・振替検索一覧(検索・結果)"
+        },
+        {
+          "id": "sheet-14",
+          "title": "在庫移動・振替登録 編集 (移動)"
+        }
+      ],
+      "期待される挙動": "- 在庫移動指示詳細の備考情報の登録は、指示にまとめられている在庫移動のステータスが「出庫承認済み」または「移動中」の時のみ可能であること。",
+      "現在の挙動": "- 備考（memo）のテキストエリアはステータスに関係なく常に編集可能な状態で描画されており、readonly / disabled の制御がない。\n- フォーム定義（StockMoveInstructionDetailType）にも登録処理（StockMoveInstructionDetailUpdateAction）にも、紐づく在庫移動のステータスを判定して備考更新を拒否する処理が存在しない。\n- コントローラの detail アクションにもステータス判定はなく、どのステータスの指示でも備考が保存される。",
+      "引用": [
+        "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:80-80",
+        "src/Eccube/Form/Type/Admin/StockMoveInstructionDetailType.php:41-44",
+        "src/Eccube/Service/Admin/Stock/StockMoveInstructionDetailUpdateAction.php:34-56",
+        "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:163-192",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:3846-3846"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2025",
+      "summary": "【未実装】在庫管理_在庫移動指示詳細_在庫移動指示詳細にて、登録ボタンが送り状No.・備考の変更有無に関わらず常に活性になっている",
+      "feature": "在庫移動指示詳細",
+      "sheetCandidates": [
+        {
+          "id": "sheet-33",
+          "title": "在庫移動指示詳細"
+        },
+        {
+          "id": "sheet-13",
+          "title": "在庫移動・振替検索一覧(検索・結果)"
+        },
+        {
+          "id": "sheet-14",
+          "title": "在庫移動・振替登録 編集 (移動)"
+        }
+      ],
+      "期待される挙動": "- 在庫移動指示詳細の登録ボタンは、送り状No.または備考の内容が変更された場合にのみ活性化すること。",
+      "現在の挙動": "- 登録ボタンは disabled 属性を持たない submit ボタンとして常に活性状態で描画されている。\n- 当該テンプレートには入力値の変更を検知して登録ボタンの活性・非活性を切り替えるJavaScriptが存在せず（テンプレート内に script ブロック自体がない）、CSSによる押下抑止もない。",
+      "引用": [
+        "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:83-83",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:3849-3849"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:1 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2026",
+      "summary": "【実装乖離】在庫管理_在庫移動指示詳細_在庫移動指示詳細にて、●●円以上／未満の閾値が出庫元店舗の高額商品閾値の最も高い価格ではなく高額商品閾値1固定になっている",
+      "feature": "在庫移動指示詳細",
+      "sheetCandidates": [
+        {
+          "id": "sheet-33",
+          "title": "在庫移動指示詳細"
+        },
+        {
+          "id": "sheet-13",
+          "title": "在庫移動・振替検索一覧(検索・結果)"
+        },
+        {
+          "id": "sheet-14",
+          "title": "在庫移動・振替登録 編集 (移動)"
+        }
+      ],
+      "期待される挙動": "- 在庫移動指示詳細の「●●円以上の商品の合計」「●●円未満の商品の合計」は、出庫元店舗の高額商品閾値のうち最も高い価格を取得して閾値とすること。\n- 項目名も当該閾値の値を用いて「●●円以上の商品」「●●円未満の商品」と表記すること。",
+      "現在の挙動": "- 在庫移動指示の作成時に、出庫元店舗の高額商品閾値1（BaseInfo::expensive_threshold1）のみを moveFromPriceThreshold として保存しており、高額商品閾値2・3を含めた最大値の判定を行っていない。\n- 詳細画面のラベル表記および高額／通常の合計金額の集計は、この moveFromPriceThreshold（＝高額商品閾値1）をそのまま閾値として使用している。",
+      "引用": [
+        "src/Eccube/Service/EntityManager/StockMoveInstructionEntityManager.php:53-53",
+        "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:69-69",
+        "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:73-73",
+        "src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:200-203",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:3876-3878",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:3879-3881"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Entity/BaseInfo.php:1223 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2027",
+      "summary": "【実装乖離】在庫管理_ピッキングリスト印刷_在庫移動指示詳細画面にピッキングリスト作成ボタンがなく、ピック表は出庫承認申請画面からしか出力できない",
+      "feature": "ピッキングリスト印刷",
+      "sheetCandidates": [
+        {
+          "id": "sheet-34",
+          "title": "在庫移動指示リスト ピッキングリスト印刷"
+        }
+      ],
+      "期待される挙動": "- 移動指示リスト詳細画面（M04-25）からピッキングリスト作成ボタンを押下して、ピッキングリスト（M04-39）のダイアログを表示できること。\n- 移動指示リスト詳細画面で選択した在庫移動に対して、実際に出庫される商品の情報がピッキングリストに表示されること。",
+      "現在の挙動": "- 在庫移動指示詳細画面のテンプレートにはピッキングリスト作成に相当するボタン・フォーム・JavaScriptが一切存在しない。\n- ピック表PDF出力は在庫移動の出庫承認申請画面（move_outbound_approval_request.twig）のボタンからのみ実行でき、ルートも在庫移動振替ID単位の admin_stock_move_outbound_approval_request_pick_list_pdf_export のみである。\n- 当該ルートは在庫移動のステータスが新規（STATUS_NEW）でない場合はエラーとするため、在庫移動指示作成後（出庫承認済み以降）に指示単位でピッキングリストを出力する導線が存在しない。",
+      "引用": [
+        "src/Eccube/Resource/template/admin/Stock/move_outbound_approval_request.twig:375-375",
+        "src/Eccube/Controller/Admin/Stock/StockMoveController.php:437-481",
+        "src/Eccube/Controller/Admin/Stock/StockMoveController.php:447-451",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:3916-3916",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:3917-3917"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:1 [line_out_of_range]",
+        "admin/Stock/MoveTransfer/pick_list.twig:None [file_not_found]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2028",
+      "summary": "【未実装】在庫管理_バーコード貼替リストCSV出力_バーコード貼替リストCSV出力にて、価格変更発生期間の「最大1か月」の上限チェックが行われていない",
+      "feature": "バーコード貼替リストCSV出力",
+      "sheetCandidates": [
+        {
+          "id": "sheet-36",
+          "title": "バーコード貼替リストCSV出力"
+        }
+      ],
+      "期待される挙動": "- バーコード貼替リストCSV出力画面の価格変更発生期間は、最大で1か月間までしか選択できないこと。\n- 1か月を超える期間が指定された場合はエラーとし、CSV出力を行わないこと。",
+      "現在の挙動": "- フォーム（BarcodeReplacementListType）のPOST_SUBMITイベントでは「To が From 以降であること」のみを検証しており、期間の長さ（最大1か月）の検証は行っていない。\n- コントローラ（BarcodeReplacementListController::csvExport）もフォームのバリデーション結果のみを見ており、期間長のチェックを行っていない。\n- 画面テンプレート（barcode_replacement_list.twig）にも日付入力欄のmin/max属性やJavaScriptによる期間制限は存在せず、例えば1年分の期間を指定してもそのままCSV出力が実行される。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/BarcodeReplacementListType.php:77-94",
+        "src/Eccube/Controller/Admin/Stock/BarcodeReplacementListController.php:70-93",
+        "src/Eccube/Resource/template/admin/Stock/barcode_replacement_list.twig:26-34",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:4021-4021",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:4019-4019"
+      ],
+      "引用_不在または範囲外": [
+        "src/Eccube/Resource/locale/messages.ja.yaml:4836 [line_out_of_range]"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2030",
+      "summary": "【未実装】在庫管理_在庫移動戻しリストCSV出力_在庫移動・振替一覧の戻しリストCSV出力にて、対象が「在庫移動」であることのチェックが行われていない",
+      "feature": "在庫移動戻しリストCSV出力",
+      "sheetCandidates": [
+        {
+          "id": "sheet-48",
+          "title": "在庫移動戻しリストCSV出力"
+        },
+        {
+          "id": "sheet-13",
+          "title": "在庫移動・振替検索一覧(検索・結果)"
+        },
+        {
+          "id": "sheet-14",
+          "title": "在庫移動・振替登録 編集 (移動)"
+        }
+      ],
+      "期待される挙動": "- 戻しリストCSV出力（M04-33のCSVを利用）は、選択された明細が在庫移動である場合にのみ出力を可能とすること。\n- 在庫振替が選択された場合はCSV出力を行わずエラーとすること。",
+      "現在の挙動": "- StockMoveTransferReturnListCsvExportService::validateReturnListExportIds() は入庫先店舗の権限・ステータス・存在有無のみを検証しており、移動タイプ（在庫移動／在庫振替）の判定を一切行っていない。\n- 許可ステータス（ALLOWED_STATUS_IDS）に含まれる STATUS_INBOUND_APPROVED（ID:7 入庫済み）は在庫振替の承認完了時にも設定されるため（StockTransferApprovalApproveAction.php:108）、在庫振替を選択しても戻しリストCSVが出力できてしまう。\n- データ取得SQL（DtbStockMoveTransferRepository::getListExportRows()）のWHERE句も `smt.id IN (:ids)` のみで、move_transfer_type による絞り込みがない。\n- 一覧画面のJavaScript（index.twig）でも選択チェック時に移動タイプを判定しておらず、未選択チェックのみを行っている。",
+      "引用": [
+        "src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:115-173",
+        "src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:44-48",
+        "src/Eccube/Repository/DtbStockMoveTransferRepository.php:271-272",
+        "src/Eccube/Service/Csv/Exporter/StockMoveTransferBarcodeCsvExportService.php:115-121",
+        "src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:191-214",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:935-937",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:938-938"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2031",
+      "summary": "【実装乖離】在庫管理_棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）_棚卸計画新規作成にて、在庫区分ラジオボタンの初期値「EC-CUBE」が設定されておらず初期表示が未選択になっている",
+      "feature": "棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）",
+      "sheetCandidates": [],
+      "期待される挙動": "- 棚卸計画新規作成画面の「在庫区分」はラジオボタン（選択肢: EC-CUBE / スマレジ）で必須項目であり、初期値として「EC-CUBE」が選択された状態で表示されること。",
+      "現在の挙動": "- InventoryPlanType では stockLocationId を ChoiceType（expanded: true = ラジオボタン）かつ required / NotBlank で定義しているが、初期値（data・empty_data・preferred値）を指定していない。\n- エンティティ DtbInventoryPlan の $stockLocationId の初期値は null であり、新規登録画面のコントローラ（InventoryPlanController::newData）も店舗（BaseInfo）のデフォルト値のみを設定し、在庫区分は設定していない。\n- テンプレート inventory_plan.twig も form_row でそのまま描画しているだけで checked 指定はなく、画面初期表示ではEC-CUBE・スマレジのいずれも未選択となる。",
+      "引用": [
+        "src/Eccube/Form/Type/Admin/Stock/InventoryPlanType.php:93-105",
+        "src/Eccube/Entity/DtbInventoryPlan.php:68-68",
+        "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:180-190",
+        "src/Eccube/Resource/template/admin/Stock/inventory_plan.twig:45-48",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:4129-4129",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:4121-4121"
+      ],
+      "引用_不在または範囲外": []
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2032",
+      "summary": "【一部実装】在庫管理_棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）_棚卸在庫反映の実行処理にて、「在庫差異があり差異確認が行われていない商品が存在する」場合のエラーチェックが行われていない",
+      "feature": "棚卸（計画一覧/新規/編集/在庫確認/在庫反映/詳細CSV）",
+      "sheetCandidates": [],
+      "期待される挙動": "- 棚卸在庫反映の登録処理では、「在庫差異」が存在しかつ「差異確認」が行われていない商品が存在する場合はエラーとし、在庫反映を実行しないこと。\n- 商品数が0、計上済み商品数が0、商品数と計上済み商品数が不一致、在庫反映済みの各条件も同様にエラーとすること。",
+      "現在の挙動": "- 在庫反映の実行エンドポイント InventoryPlanController::stockReflect() では、在庫反映済みチェックと商品数／計上済み商品数チェックのみを行っており、差異未確認商品の存在チェック（checkUnconfirmedStockDifferenceDetailExists）を呼び出していない。\n- 差異未確認チェックは在庫反映「確認画面」への遷移処理 stockReflectConfirm()（731行目）と、棚卸計画編集画面のボタン活性判定用の値（264行目）でのみ行われている。\n- そのため確認画面を経由せずに admin_stock_inventory_plan_stock_reflect へ直接POSTした場合、差異未確認商品が残っていても在庫反映が実行される。",
+      "引用": [
+        "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:751-778",
+        "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:730-735",
+        "src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:264-264",
+        "src/Eccube/Repository/DtbInventoryPlanDetailRepository.php:299-315",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:4360-4366",
+        "ec-cube-enterprise/.cursor/docs/MDfile/M04_stock_management_basedesign.md:4174-4178"
+      ],
+      "引用_不在または範囲外": []
+    }
+  ]
+}

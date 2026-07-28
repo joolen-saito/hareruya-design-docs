@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-2027",
+  "verdict": "SUSPECT",
+  "reasonCode": "DESIGN_AMBIGUOUS",
+  "reasonLabel": "設計内に解釈の分岐・矛盾があり設計判断待ち",
+  "nextAction": "要確認: sheet-33に該当ボタンが無く、sheet-52/32の業務フローとも時系列で矛盾。是正方針の確定が先",
+  "codexReview": "設計原文抽出・実装確認・反証検索を実施",
+  "summary": "移動指示詳細からの導線が無い。ただし pick_list.twig は実在し起票の不在指摘は誤り",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0202_基本設計仕様書(在庫管理機能) sheet-34「在庫移動指示リスト ピッキングリスト印刷」\n> ・**移動指示リスト詳細画面から、ピッキングリスト作成ボタンを押下**してダイアログを表示する\n\n■実装の現状\n移動指示詳細からの導線がありません。ピック表PDFのルートは在庫移動振替ID単位の1本のみ（StockMoveController.php:437）で、同:448-452 が `STATUS_NEW` 以外を拒否します。唯一の導線は move_outbound_approval_request.twig:375 のボタンです。\nStockMoveInstructionController のルート7本にピック表系はなく、stock_move_instruction_detail.twig（全184行）に `pick` の文字列は0件です。\n\n**起票の補助情報に2つの誤りがあります。**\n1. 「`admin/Stock/MoveTransfer/pick_list.twig` が存在しない」は誤りです。同ファイル（92行）は**実在**し、M04-39 の識別ID 1〜14 に対応する列を全て持ちます。フォーマッタ `buildPickListDataByStockMoveTransferIds()` も複数ID受付で実装済みです。**欠けているのは入口ルートとボタンのみ**で、修正規模の見積もりが変わります。\n2. `stock_move_instruction_detail.twig:1 [line_out_of_range]` も誤りです（ファイルは184行存在）。\n\n■次の対応\n要確認+実装対応: **設計内で矛盾しています。**\n1. sheet-33（入口とされる画面）の画面部品仕様に「ピッキングリスト作成」ボタンが**存在しません**（ボタンは 1-15 登録 と 1-16 削除 のみ）。\n2. sheet-52「在庫移動ステータス遷移概要」および sheet-32 では、ピック作業は「新規登録 → **ピック** → 出庫承認待ち」の位置にあり、移動指示が作成されるのは「出庫承認済み」以降です。**業務フロー上のタイミングと sheet-34 の入口指定が時系列で矛盾**します。現行実装（STATUS_NEW 限定）はフロー側に沿っています。\n\n是正方針（詳細画面に入口を足すか、フローを正とするか）の確定が先に必要です。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0202_基本設計仕様書(在庫管理機能).html / sheet-34「在庫移動指示リスト ピッキングリスト印刷」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / Entity / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+  "recordedAt": "2026-07-28T10:24:00+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T10:24:06+09:00",
+  "appliedStatus": "処理中"
+}

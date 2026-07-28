@@ -1,0 +1,119 @@
+{
+  "book": "0203",
+  "count": 6,
+  "tickets": [
+    {
+      "issueKey": "ECCUBE_HARERUYA-2039",
+      "設計書": "0203_基本設計仕様書(受注管理機能).html",
+      "設計シート": [
+        "sheet-3:受注情報検索 一覧(検索入力)",
+        "sheet-4:受注情報検索 一覧(検索結果)"
+      ],
+      "課題タイトル": "【実装乖離】受注管理_受注検索一覧(検索入力/検索結果)_受注検索一覧の「対応状況」チェックボックスに、設計書のチェック項目に無い「対応中」「返品」が選択肢として表示される",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "除外が PASSED のみで13項目表示。id=4 対応中と id=15 返品が残存",
+      "前回書いた次にすること": "実装対応: 除外リストに id=4 と id=15 を追加するかマスタから削除",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-3「受注情報検索 一覧(検索入力)」\n画面部品仕様\n> 2-3 対応状況　複数選択(チェックボックス)　※カスタマイズ対応：選択肢追加\n> チェック項目：決済処理中、注文受領、入金待ち、入金済み、キャンセル、出荷指示、出荷完了、購入処理中、ピック中、ピック完了、店頭予約（**11項目**）\n\n■実装の現状\nSearchOrderType.php:141-156 の除外は `OrderStatus::PASSED`（=14 引渡し済み）**のみ**です。\nマスタの確定経路を追跡しました。EC-CUBE標準CSVが id 1,3,**4=対応中**,5,6,7,8,9 を投入し、Version20251125150428 が id 1,2,3,5,6,7,8,9,10,12,13 を追加、Version20260220000001 が id 14「引渡し済み」/ 15「返品」を追加したうえで id 1/3/5/9 の名称を UPDATE で確定します。**id=4「対応中」は改名も削除もされず残存**します。\n結果 `mtb_order_status` は14件となり、PASSED を除いた**13項目**が描画されます（設計の11項目＋対応中＋返品）。\n\n■次の対応\n実装対応: 除外リストに id=4（対応中）と id=15（返品）を追加するか、マスタから削除する。設計の11項目はすべて含まれているため、追加分の除外のみで解消します。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-3「受注情報検索 一覧(検索入力)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "app/DoctrineMigrations/Version20260220000001.php",
+        "src/Eccube/Form/Type/Admin/SearchOrderType.php",
+        "src/Eccube/Resource/doctrine/import_csv/ja/mtb_order_status.csv",
+        "src/Eccube/Resource/template/admin/Order/index.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2045",
+      "設計書": "0203_基本設計仕様書(受注管理機能).html",
+      "設計シート": [
+        "sheet-10:【新規】手動メール通知(確認画面)",
+        "sheet-9:メール一括送信"
+      ],
+      "課題タイトル": "【実装乖離】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_メール一括送信のテンプレ選択が、メール管理で作成されたテンプレート一覧ではなく特定ベースファイル（sell_order / sell_order.en / no_base）のテンプレートのみに限定されている",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "選択肢が3ファイル名に限定され、メール管理で作成したテンプレートと構造的に一致しない",
+      "前回書いた次にすること": "実装対応: 抽出条件をメール管理側(baseInfo かつ isAutoSend=false)と揃える",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-9「メール一括送信」\n画面部品仕様\n> 1 テンプレ選択　単一選択(セレクトボックス)　・選択肢は**ショップ設定＞メール管理で作成されているテンプレート一覧**が表示される\n\n■実装の現状\nOrderManualMailAllType.php:38-55 の `query_builder` は `mt.file_name IN (:fileNames)` で、MailController.php:345-354 が渡す3ファイル名（`Mail/sell_order.twig` / `Mail/sell_order.en.twig` / `Mail/no_base.twig`）に限定されます。\nメール管理で新規作成した場合のファイル名は MailType.php:112,118 で `'Mail/Mall/'.$data->getFileName().'.twig'` と生成されるため、**上記3ファイル名と絶対に一致しません**。\nさらにメール管理側の一覧は `mt.baseInfo = :baseInfo` かつ `mt.isAutoSend = false` で絞っており、一括送信側はどちらでも絞っていないため、両者の一覧は構造的に一致しません。\n`getManualMailTemplate()`（:425-433）も同じ3ファイル名でしか検索せず、二重に限定されています。\n\n■次の対応\n実装対応: 選択肢の抽出条件をメール管理側（baseInfo かつ isAutoSend=false）と揃える。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-9「メール一括送信」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "src/Eccube/Entity/MailTemplate.php",
+        "src/Eccube/Form/Type/Admin/MailType.php",
+        "src/Eccube/Form/Type/Admin/OrderManualMailAllType.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2047",
+      "設計書": "0203_基本設計仕様書(受注管理機能).html",
+      "設計シート": [
+        "sheet-13:納品書印刷（日本語）",
+        "sheet-21:出荷指示ー納品書印刷（日本語）"
+      ],
+      "課題タイトル": "【一部実装】受注管理_納品書印刷(日本語)_納品書印刷(日本語)のデータ取得クエリが会員(Customer/Player)を内部結合しているため、ゲスト(非会員)受注が納品書の対象から外れる",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "サマリ側が INNER JOIN のためゲスト受注が欠落しマージが破綻。非会員フォールバックに到達しない",
+      "前回書いた次にすること": "実装対応: サマリ側の join を leftJoin に変更。ゲスト受注で納品書が正しく出力されないため優先度高め",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-13「納品書印刷（日本語）」\n画面部品仕様\n> 16 送り主-会員番号　ラベル　**ゲストの場合は「非会員」と表示する**\n\n機能仕様処理概要（★）\n> ★本店のほかに、支店もスマレジも出力対象とする\n\n■実装の現状\nDtbShippingStandbyRepository.php:263 で `$qb2 = clone $qb;`（Customer 結合を追加する**前**にクローン）した後、:300-307 でサマリ側にのみ `join('o.Customer', 'cus')->join('cus.Player', 'player')` を追加しています。`join()` は INNER JOIN のため、`Order.Customer` が null のゲスト受注はサマリ結果から欠落します。\n:337-344 のマージ処理は `$items`（Customer 結合なし＝ゲスト受注を含む）のキーでループするため、ゲスト受注では `$summary[$key]` が未定義になります。\n\n「非会員」フォールバック自体は delivery_slips.ja.twig:85-90 に存在しますが、**ゲスト受注ではそこに到達しません**（会員受注で smaregiId が null の場合には到達します）。\n\n■次の対応\n実装対応: サマリ側の `join` を `leftJoin` に変更する。ゲスト受注で納品書が正しく出力されない不具合のため、優先度は高めです。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-13「納品書印刷（日本語）」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "src/Eccube/Entity/Order.php",
+        "src/Eccube/Repository/DtbShippingStandbyRepository.php",
+        "src/Eccube/Resource/template/admin/ShippingStandby/delivery_slips.ja.twig"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2061",
+      "設計書": "0203_基本設計仕様書(受注管理機能).html",
+      "設計シート": [
+        "sheet-15:受注情報編集"
+      ],
+      "課題タイトル": "【未実装】受注管理_受注情報編集 / 受注情報履歴_受注情報編集（受注商品情報）にて、小計値引き/割引区分・クーポン値引き・免税額が表示されない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "3項目ともTwigがコメントのみ。カラムは存在し値も投入済み",
+      "前回書いた次にすること": "実装対応: 表示を追加。Twigの配線のみで解消",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-15「受注情報編集」\n画面部品仕様\n> 6-20 小計値引き/割引区分　ラベル　スマレジ連携\n> 6-21 クーポン値引き　ラベル　スマレジ連携\n> 6-22 免税額　ラベル　スマレジ連携\n\n■実装の現状\nadmin/Order/edit.twig:1237-1240 は**コメントのみ**です。\n```\n{# TODO: 小計値引/割引区分 - スマレジ連携後#}\n{# TODO: クーポン値引き - スマレジ連携後 #}\n{# TODO: 免税額 - スマレジ連携後 #}\n```\n受け皿のカラムは存在します（Order.php:753-760 の `tax_free` / `coupon_discount` / `subtotal_discount_division`）。\n同:1226-1231 の `Order.tax_free_discount_items` ループは EC-CUBE標準の非課税・不課税値引き明細で、設計6-22 の単一値「免税額」とは別物です。\n全twigを検索した結果、管理画面側での表示は**0件**でした（唯一のヒットはフロントのマイページ）。\n\n■次の対応\n実装対応: 3項目の表示を追加する。カラムは既に存在し値も投入されているため、Twig の配線のみで解消します。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-15「受注情報編集」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "src/Eccube/Entity/Order.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2077",
+      "設計書": "0203_基本設計仕様書(受注管理機能).html",
+      "設計シート": [
+        "sheet-5:受注一覧CSV出力"
+      ],
+      "課題タイトル": "【一部実装】受注管理_受注一覧CSV出力_受注一覧CSV出力にて、非会員（会員未紐付け）の受注の「お名前(姓)」を「非会員」と出力する変換処理が実装されておらず、受注一覧画面の表示と食い違う",
+      "前回の判定": "DESIGN_AMBIGUOUS",
+      "前回の判定サマリ": "name01 をそのまま出力。ただし非会員の判定基準が設計に定義されていない",
+      "前回書いた次にすること": "要確認: 判定基準を設計担当者に確定いただく。同シート内で識別IDのズレもあり",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。設計内に矛盾または記述不足があり、判断が必要です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-5「受注一覧CSV出力」\n項目一覧\n> 6 お名前(姓)　**非会員である場合は非会員と表示する**\n\nカスタマイズ説明・機能仕様処理概要（★）\n> ・非会員である場合、非会員と表現する ※スマレジでの非会員による取引データを考慮\n\n■実装の現状\nOrderController.php:386-455 の `exportOrder()` は `dtb_csv` 定義に従う汎用処理で、CsvExportService.php:213-235 の `getData()` がエンティティのフィールドをそのまま返すだけです。`dtb_csv.csv:61` は `Order.name01` をそのまま出力する定義で、姓に対する特別扱いはありません。\nスマレジ取込時は SmaregiOrderFactory.php:49 の `GUEST_NAME01 = '非会員'` により `name01` 自体に「非会員」が入るため、結果的にCSVにも出力されます（設計の※注記は充足）。\n一覧画面は index.twig:1217-1223 で `{% if Order.Customer is null %}非会員{% else %}...{% endif %}` と判定しています。\n\n■次の対応\n要確認: **「非会員」の判定基準が設計に定義されていません。** 起票の「非会員の判定は受注一覧画面と同一の基準とし…」は起票側の解釈です。\nまた同シート内で識別IDにズレがあります（項目一覧では「お名前(姓)」= 6、機能仕様処理概要では 4）。\n判定基準（Order.Customer が null かどうか等）を設計担当者に確定いただいたうえで対応してください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-5「受注一覧CSV出力」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "src/Eccube/Controller/Front/NonMemberShoppingController.php",
+        "src/Eccube/Form/Type/Admin/OrderType.php",
+        "src/Eccube/Service/CsvExportService.php",
+        "src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php"
+      ]
+    },
+    {
+      "issueKey": "ECCUBE_HARERUYA-2078",
+      "設計書": "0203_基本設計仕様書(受注管理機能).html",
+      "設計シート": [
+        "sheet-10:【新規】手動メール通知(確認画面)",
+        "sheet-9:メール一括送信"
+      ],
+      "課題タイトル": "【一部実装】受注管理_メール一括送信 / 【新規】手動メール通知(確認画面)_手動メール通知(確認画面)のメール一括送信にて、送信失敗時のメッセージ表示が実装されていない",
+      "前回の判定": "GAP_CONFIRMED",
+      "前回の判定サマリ": "失敗時の addError が無い。送信例外も未捕捉で500になる",
+      "前回書いた次にすること": "実装対応: 失敗時のaddErrorと送信処理のtry/catchを追加。部分送信時の件数通知も検討",
+      "前回の根拠コメント": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）。指摘は事実です。\n\n■設計上の根拠\n正本設計書 0203_基本設計仕様書(受注管理機能) sheet-10「【新規】手動メール通知(確認画面)」\n機能仕様処理概要\n> ・送信ボタンを押下すると確認のダイアログを表示し、OKなら送信を実行する。\n> ・**成功/失敗に応じてメッセージを表示する**\n\n■実装の現状\n確認ダイアログ（manual_mail.js:3-7）と成功メッセージ（MailController.php:390-400 の `addSuccess('admin.order.mail_send_complete')`）は実装済みです。\n**失敗メッセージがありません。** :390 の `if` が偽のとき `break` して入力画面を再描画するだけで、`addError` を一切呼びません。\nさらに MailService.php:2092-2110 の `sendManualMailForBulk()` は `$this->mailer->send()` を try/catch しておらず、送信例外は ExceptionListener に到達して HTTP 500 の共通エラー画面になります。ループ送信のため、何件目まで送信済みかも利用者に伝わりません。\n同 Controller 内には失敗メッセージの前例（:200、:319 の `addError`）があり、一括送信の complete 分岐だけが持ちません。\n\n**起票の記述を1点補正します。** 「メールテンプレートが取得できない場合は switch を break して入力画面を再描画する」とありますが、実際は `getManualMailTemplate()`（:425-440）が `NotFoundHttpException`（404）を投げます。中核の主張（失敗メッセージ不在）は事実です。\n\n■次の対応\n実装対応: 失敗時の `addError` を追加し、送信処理を try/catch で囲む。部分送信時に何件成功したかを伝えることも併せてご検討ください。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0203_基本設計仕様書(受注管理機能).html / sheet-10「【新規】手動メール通知(確認画面)」\n- 実装: ec-cube-enterprise（Controller / FormType / Twig / Repository / Service / 翻訳ファイル / JS / マイグレーション）\n- 設計原文の抽出、実装の確認、別経路の反証検索を実施しています。",
+      "引用ファイル": [
+        ".cursor/docs/MDfile/M05_order_management_basedesign.md",
+        "html/template/admin/assets/js/manual_mail.js",
+        "src/Eccube/Controller/Admin/Order/MailController.php",
+        "src/Eccube/EventListener/ExceptionListener.php",
+        "src/Eccube/Resource/template/admin/Order/manual_mail_all_confirm.twig"
+      ]
+    }
+  ]
+}
