@@ -1,0 +1,165 @@
+{
+  "packetId": "ab_04",
+  "results": [
+    {
+      "rowId": 81,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:1966 のExcel正本には「マスターにあるステータス以外はエラー」とだけあり、期待文言「正しい店頭買取ステータスIDを入力してください」はExcel正本範囲（sheet-7:1906-1994）に存在しない。該当文言はリバース詳細設計開始後の同HTML:2051にのみある。",
+      "legacyEvidence": "pf-api/src/Controller/Admin/OtcBuyOrderStatusController.php:35-43 で `findOneBy(['id' => $request->get('status')])` の結果が空なら `'errors' => ['正しい店頭買取ステータスIDを入力してください']` をHTTP 400で返しており、期待文言の真の根拠は旧実装にある。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:198-206 は未指定・空・非数値に `MissingRequiredParameterException('ステータスが不正です')`、マスタ不在に `InvalidParameterException('ステータスが見つかりません')` を投げ、旧実装の文言を返さない。",
+      "note": "Excel正本はマスタ不在をエラーにすることまでは裏付けるが、指摘対象である固定文言は旧実装由来。"
+    },
+    {
+      "rowId": 82,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:1955 のExcel正本には「査定者本人を除き、査定中または査定再開のものは査定開始できない」とあるが、鉤括弧・句点を含む期待文言はExcel正本範囲（sheet-7:1906-1994）に存在しない。",
+      "legacyEvidence": "pf-api/src/Controller/Admin/OtcBuyOrderStatusController.php:61-69 は旧実装の担当者判定後に `'errors' => [\"この受注は「{$otcBuyOrder->getMember()->getName()}」が査定中です。\"]` を返しており、鉤括弧と末尾句点を含む文言を直接裏付ける。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateStatusAction.php:95-101 は同条件で `InvalidStatusTransitionException(\"この受注は{$input->OtcBuyOrder->getMember()->getName()}が査定中です\")` を投げ、鉤括弧と句点がない。",
+      "note": "担当者排他という業務ルールはExcel正本にもあるが、指摘された文字列差分の根拠は旧実装。"
+    },
+    {
+      "rowId": 83,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:1975-1976 のExcel正本は「レスポンスデータ」「なし」と成功応答だけを記載し、401/404の本文有無はExcel正本範囲（sheet-7:1906-1994）に存在しない。「本文を持たない」はリバース詳細設計の同HTML:2051にのみある。",
+      "legacyEvidence": "pf-api/src/Controller/BaseController.php:23-41 は認証失敗時に `throw new UnauthorizedHttpException('')`、pf-api/src/Controller/Admin/OtcBuyOrderStatusController.php:25-30 は受注不在時に `throw new NotFoundHttpException()` とする。pf-api/src/Tests/Controller/Admin/OtcBuyOrderStatusControllerPutActionTest.php:51-69 は401/404のステータスだけを検証し、レスポンス本文が空であることは検証していない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:73-76 はApp APIで「JSON形式で必ず(code, errors)を返す」とし、同:140-143 で `new JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode)` を設定するため、新実装が本文を返すことは確認できる。",
+      "note": "旧実装が401/404を返すことは確認できるが、実行時の例外レンダリング後に本文が本当に空になるかを示す本文アサーションまたは実レスポンス記録が不足している。"
+    },
+    {
+      "rowId": 84,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:1930 のExcel正本が記載する入口は `/api/admin/otcBuyOrder/{id}/status.json` のみで、拡張子なし別名はExcel正本範囲（sheet-7:1906-1994）に存在しない。拡張子なし別名はリバース詳細設計の同HTML:2024にのみある。",
+      "legacyEvidence": "pf-api/config/routes.yaml:57-64 は `/admin/otcBuyOrder/{id}/status.json` と `/admin/otcBuyOrder/{id}/status` の両方を同じ `OtcBuyOrderStatusController::putAction` に割り当てている。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:190-191 の定義は `#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/status.json', ... methods: ['PUT'])]` の1本だけ。`rg 'otcBuyOrder/\\{id\\}/status'` で src/Eccube と app/config を探索しても拡張子なしRouteは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 85,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:2118-2120 のExcel正本は「エンドポイントURL `/api/buying/{detailId}.json`」「メソッド GET」と明記し、同:2149 にも `https://stg-api.hareruyamtg.com/api/buying/173634.json` の例がある。",
+      "legacyEvidence": "pf-api/config/routes.yaml:109-112 は旧実装入口を `path: /buying/{detailId}`、`methods: GET` としている。アプリのAPIベースパス配下で提供される旧経路であり、少なくとも `/api/v1` 版数プレフィックスは持たない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:46-47 は `/%eccube_api_v1_route%/buying/{cardDetailId}.json` を定義し、ec-cube-enterprise/app/config/eccube/packages/eccube.yaml:6 の既定値は `env(ECCUBE_API_V1_ROUTE): 'api/v1'`。既定URLは `/api/v1/buying/{cardDetailId}.json` となる。",
+      "note": ""
+    },
+    {
+      "rowId": 86,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:2182-2185 のExcel正本は `conditionClasses` 配下の項目として `productClassId` に続き `productCode`（説明「商品コード」）を明記する。",
+      "legacyEvidence": "pf-api/src/Repository/DtbProductRepository.php:31-39 の階層定義は `conditionClasses:conditionCode` 配下に `'productClassId', 'productCode', 'buyPrice', 'price', 'stock', 'sectionId'` を置き、同:146-160 も `productClass.productCode` を選択する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:112-120 はJSONキーを `'productClassCode' => $dto->productClassCode` としており、`productCode` を返さない。",
+      "note": ""
+    },
+    {
+      "rowId": 87,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:2382-2397 のExcel正本は成功200と「レスポンスについてはカード詳細ID…と全く同様」の参照だけで、0件時の空配列やカード商品以外IDの扱いを記載していない。これらはリバース詳細設計開始後の同HTML:2414-2450にのみある。",
+      "legacyEvidence": "pf-api/src/Controller/ProductController.php:181-192 はID検索結果について「カード商品以外のIDだけが来た場合、0件となり得るためエラーとはしない」とコメントし、そのまま `$products` を返す。pf-api/src/Repository/DtbProductRepository.php:235-237 は検索結果を階層化して返し、旧処理の0件正常応答を裏付ける。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:79-81 は入力IDが空なら `new JsonResponse(['cards' => []])`、同:91-93 は検索結果をFormatterへ渡す。ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:123 は0件時 `['cards' => new \\stdClass()]` を返すため、応答全体の空配列にはならない。",
+      "note": ""
+    },
+    {
+      "rowId": 88,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:2396-2397 のExcel正本はA06-07の応答をA06-06と同じ定義とし、参照先の同HTML:2172,2184-2189 は `foilFlg`、`productClassId`、`productCode`、`buyPrice`、`price`（文字列）、`stock`（文字列）、`sectionId` を定義する。同:2205 の正本サンプルでは `foilFlg: false`、`price: \"600\"`、`stock: \"2\"` と記載される。",
+      "legacyEvidence": "pf-api/src/Repository/DtbProductRepository.php:15-43 の旧階層定義は `foilFlg` と `conditionClasses` 配下の `productClassId/productCode/buyPrice/price/stock/sectionId` を返す。旧Repositoryは同:217-223で `productClass.productCode`、`price`、`stock`、`foilFlg` を取得する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:85-96 は `foilFlg` をDTO値のまま返し、同:113-119 は `productClassCode`、`standardPrice`、`stock` を返す。ec-cube-enterprise/src/Eccube/Dto/Repository/Master/GetBuyingCardsQueryResponseDto.php:31,42-45 では `foilFlg` と `stock` がint、`standardPrice` がint|nullである。",
+      "note": "Excel項目表のfoilFlg型は文字列表記だが、同じExcel正本内のJSONサンプルはboolean。productCode名とprice/stockの文字列型については正本根拠が一貫しており、現在実装との乖離は確定できる。"
+    },
+    {
+      "rowId": 89,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:2773-2775 のExcel正本は `/api/search.json`、メソッド `POST`、リクエスト書式「クエリ」と記載する。したがって指摘の「GET /search」はExcel正本には裏付けられず、むしろメソッドが正本と矛盾する。",
+      "legacyEvidence": "pf-api/config/routes.yaml:133-140 は `/search.json` と `/search` の両方を `methods: GET` で `ProductController::findBuyingProductsByParamsAction` に割り当てる。pf-api/src/Controller/ProductController.php:195-204 は `@QueryParam(name=\"name\")` を `ParamFetcher` から取得する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:99-102 は `#[Route('/%eccube_api_v1_route%/search', ... methods: ['POST'])]` とし、`$request->request->get('name', '')` でフォームボディを読む。",
+      "note": "旧実装由来の移植漏れとしては成立するが、HTTPメソッドについてExcel正本は現在実装と同じPOSTを要求しており、設計書記述と旧挙動の不一致も併存する。"
+    },
+    {
+      "rowId": 90,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:2803-2806 のExcel正本はステータスコード404を「指定された名称に紐づく商品が見つからなかった場合」と明記する。本文を「標準の例外応答JSON」とする記述はリバース詳細設計の同HTML:2884にあるが、404要求自体は正本で裏付けられる。",
+      "legacyEvidence": "pf-api/src/Controller/ProductController.php:200-208 は検索結果が空なら `throw new NotFoundHttpException()` とし、旧実装も404経路を持つ。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:102-105 はnameが空ならHTTP 200の `['cards' => []]` を返し、同:115-117 は空検索結果も例外にせずFormatterへ渡す。ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:123 は0件を `['cards' => new \\stdClass()]` にして返す。",
+      "note": "正本が直接裏付けるのは該当なし時の404。例外本文の具体形はリバース詳細設計由来。"
+    },
+    {
+      "rowId": 91,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:2782-2784 のExcel正本は「商品情報の商品名の前方一致で検索を行う」と記載するが、`%` と `_` のエスケープ方法はExcel正本範囲（sheet-10:2740-2839）に存在しない。明示的なエスケープ記述はリバース詳細設計の同HTML:2876にのみある。",
+      "legacyEvidence": "pf-api/src/Repository/DtbProductRepository.php:244-265 は `$cardName = addcslashes($params['name'], '%_')` とした上で `product.name LIKE :cardName`、`setParameter('cardName', \"{$cardName}%\")` を実行し、旧実装が `%` と `_` をエスケープすることを直接示す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/Master/MtbCardRepository.php:130-139 は `product.name LIKE :cardName` に対して `setParameter('cardName', $cardName.'%')` とするだけで、入力内の `%` と `_` をエスケープしない。",
+      "note": "前方一致そのものはExcel正本にもあるが、指摘の具体的なワイルドカード処理は旧実装由来。"
+    },
+    {
+      "rowId": 92,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:2807-2821 のExcel正本はA06-08の応答をA06-06と同じ定義とするだけで、検索結果を1始まりに再採番する記述はExcel正本範囲（sheet-10:2740-2839）に存在しない。1始まり連番はリバース詳細設計の同HTML:2869,2880-2881にのみある。",
+      "legacyEvidence": "pf-api/src/Controller/ProductController.php:210-216 は `$returnProducts = ['cards' => []]; $index = 1;` とし、`$returnProducts['cards'][$index++] = $value` で検索結果を1始まりの連番へ再採番する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:68-75 は `$cardId = $dto->cardId` を取り、`$cards[$cardId]` に格納するため、実カードIDをキーにしており1始まりの再採番を行わない。",
+      "note": ""
+    },
+    {
+      "rowId": 93,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:2820-2821 のExcel正本はA06-08のレスポンスをA06-06と同一定義とし、参照先の同HTML:2184-2189 は `productCode`、`price`（文字列）、`stock`（文字列）等を明記する。同:2205 の正本サンプルも `productCode` と文字列の `price`/`stock` を示す。",
+      "legacyEvidence": "pf-api/src/Repository/DtbProductRepository.php:31-39 は旧応答の `conditionClasses` 配下を `productClassId/productCode/buyPrice/price/stock/sectionId` と定義し、同:274-279 は `productClass.productCode`、`price`、`stock` を取得する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:113-119 は `productClassCode`、`standardPrice`、`stock` を返す。ec-cube-enterprise/src/Eccube/Dto/Repository/Master/GetBuyingCardsQueryResponseDto.php:42-45 はそれぞれstring、int|null、intであり、設計名・型と一致しない。",
+      "note": ""
+    },
+    {
+      "rowId": 94,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:3226-3231 のExcel正本はトップレベルに `code`（必ず200）、`message`（必ず`get sections success`）、`sections` 配列を定義し、各要素を `section_id/name/code` とする。同:3247 に同形のJSONサンプルがある。",
+      "legacyEvidence": "pf-api/src/Controller/ProductController.php:482-490 は旧実装で `['code' => Response::HTTP_OK, 'message' => 'get sections success', 'sections' => $sections]` をHTTP 200で返す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/SectionController.php:38-49 は各部門を `section_id/name/code` に整形するが、最後は `return new JsonResponse($payload)` と裸の配列を返し、`code/message/sections` ラッパーがない。",
+      "note": ""
+    },
+    {
+      "rowId": 95,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:3381-3393 のExcel正本は成功コード200とレスポンス項目 `code`（必ず200）、`section_id`（文字列、固定価格商品部門ID）を定義し、同:3409 に `\"code\":200, \"section_id\":30` のサンプルがある。",
+      "legacyEvidence": "pf-api/src/Controller/ProductController.php:497-507 は設定値を取得し、`['code' => Response::HTTP_OK, 'section_id' => $section]` をHTTP 200で返す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:50-59 は設定値を `$value` に取り、`return new JsonResponse($value)` と値単体を返す。ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OptionControllerTest.php:183-185 も本文を `json_encode($expectedValue)` と期待する。",
+      "note": ""
+    },
+    {
+      "rowId": 96,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:3373-3399 のExcel正本は「現行踏襲」、成功200、成功レスポンスだけを記載し、設定不在時のHTTP 500やnull参照はExcel正本範囲（sheet-12:3336-3414）に存在しない。これらはリバース詳細設計の同HTML:3438,3459にのみある。",
+      "legacyEvidence": "pf-api/src/Controller/ProductController.php:497-502 は `findOneBy(...)->getOptionValue()` とnullチェックなしでメソッドを連鎖するため、設定行が無いとnullへのメソッド呼び出しで例外になる。旧経路はpf-api/config/routes.yaml:243-246 の `GET /fixedPriceSection.json`。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:53-59 は `$Option?->getOptionValue() ?? ''` と空文字へフォールバックしHTTP 200で返す。ec-cube-enterprise/tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OptionControllerTest.php:188-218 も「オプションが存在しない場合は空文字」をHTTP 200で期待する。",
+      "note": ""
+    },
+    {
+      "rowId": 97,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:3528-3530 のExcel正本は指定証明書IDがマスタに存在しない場合をエラーとし、同:3548-3552 はその場合のステータスコードを `400` と明記する。具体文言は旧実装由来だが、指摘の400対404の差は正本で直接裏付けられる。",
+      "legacyEvidence": "pf-api/src/Controller/Admin/OtcBuyOrderIdentificationController.php:32-43 は証明書IDでマスタを検索し、空ならHTTP 400で `'errors' => ['正しい証明書IDを入力してください']` を返す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:281-290 は未指定なら400系の `MissingRequiredParameterException` だが、マスタ不在時は `NotFoundException('正しい証明書IDを入力してください')` を投げる。ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php:27-32 はそのstatusCodeをHTTP 404に固定する。",
+      "note": ""
+    },
+    {
+      "rowId": 98,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:3521-3523 のExcel正本が定義する入口は `/api/admin/otcBuyOrder/{id}/identification.json`（PUT）のみで、拡張子なし別名はExcel正本範囲（sheet-13:3492-3572）に存在しない。別名記述はリバース詳細設計の同HTML:3602-3603にのみある。",
+      "legacyEvidence": "pf-api/config/routes.yaml:49-56 は `/admin/otcBuyOrder/{id}/identification.json` と `/admin/otcBuyOrder/{id}/identification` を同じ `OtcBuyOrderIdentificationController::putAction` に割り当てる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:273-274 は `/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/identification.json` のRouteだけを定義する。`rg 'otcBuyOrder/\\{id\\}/identification'` で src/Eccube と app/config を探索しても拡張子なしRouteは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 99,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:3913-3914 のExcel正本はエンドポイントを `/api/otcBuyOrder/{id}/doublecheck.json` とし、同:3937 は必須リクエスト項目を `member_id`（メンバーID）、同:3964 はサンプルを `{\"member_id\": \"1000\"}` と明記する。",
+      "legacyEvidence": "A06-16は新規機能で、旧実装4リポジトリを `doublecheck|doubleCheckMember|double_check_member_id|member_id` で横断検索したが対応APIは存在しない（確認範囲: pf-api, pf-eccube3, pf-article, deck-api）。近接ヒットの pf-api/src/Resources/config/doctrine/DtbOtcBuyOrder.orm.yml:146-152 は `doubleCheckDate` / `column: double_check_date` という日時列だけで、メンバー更新APIではない。根拠は旧実装ではなくExcel正本。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:231-240 はRouteを `/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/doubleCheckMember.json` とし、入力を `$request->request->get('double_check_member_id')` から読む。",
+      "note": ""
+    },
+    {
+      "rowId": 100,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:3928 のExcel正本は「ダブルチェック者は新規のカラムに追加する」と明記する。",
+      "legacyEvidence": "A06-16は新規機能で、旧実装4リポジトリを `doublecheck|double_check|otc_buy_order_approver|ダブルチェック者` で横断検索したが対応する担当者保存実装は存在しない（確認範囲: pf-api, pf-eccube3, pf-article, deck-api）。近接ヒットの pf-eccube3/app/Plugin/HareruyaEc/Entity/DtbOtcBuyOrder.php:813-832 は `setDoubleCheckDate($doubleCheckDate)` / `getDoubleCheckDate()` という日時の保存だけで、ダブルチェック担当者の保存ではない。保存方式の根拠はExcel正本。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateDoubleCheckMemberAction.php:42-48 は受注に更新者・更新日時を設定した後 `saveDoubleCheckApproval(...)` を呼ぶ。ec-cube-enterprise/src/Eccube/Service/EntityManager/OtcBuyOrderApproverEntityManager.php:29-45 は `DtbOtcBuyOrderApprover` を作成し `setRole(ROLE_DOUBLE_CHECK)`、`setApprover`、`setAssignedBy` して永続化し、ec-cube-enterprise/src/Eccube/Entity/DtbOtcBuyOrderApprover.php:37,44-57 はrole値を `double_check`、保存列を `otc_buy_order_id/approver_id/assigned_by_id/role` と定義する。",
+      "note": "Excel正本は新規カラムの具体的なテーブル名・カラム名までは示さないが、現在実装は受注の専用カラムではなく承認者の別テーブル行として保存しており、「カラムに追加」とは構造的に一致しない。"
+    }
+  ]
+}

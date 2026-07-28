@@ -1,0 +1,165 @@
+{
+  "packetId": "ab_02",
+  "results": [
+    {
+      "rowId": 41,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1336-1339 のExcel正本は「/order/prints/status/printed」「POST」「A05-02とエンドポイントを分ける」と記載し、ConnectionType不一致時の応答はExcel正本範囲（sheet-4の1313-1428行）に存在しない。",
+      "legacyEvidence": "pf-api/src/Controller/Admin/OrderController.php:33-64 は `$connectionType = $request->get('ConnectionType');` の後、`GetRequest` と `SetResponse` の分岐だけを持ち、いずれにも一致しない場合はレスポンスを生成せずメソッド末尾へ到達する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:79-84 は不一致時に `new StreamedResponse()`、`setStatusCode(Response::HTTP_BAD_REQUEST)`、`Content-Type: text/plain` を設定して明示的に400空応答を返す。",
+      "note": "指摘の期待値はExcel正本ではなく旧pf-apiのフォールスルー挙動に由来する。"
+    },
+    {
+      "rowId": 42,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1328 は「プリンタから送信されてきた受注IDに対してステータスをピック中にする」、同:1345-1346 は「送信されてきたXML情報から取引IDを全て抽出し、その受注IDのステータスをピック中にする」と明記し、「検索のみ」とは逆である。",
+      "legacyEvidence": "pf-api/src/Controller/Admin/OrderController.php:107-123 は受注を検索後、`$order->setStatus(MtbOrderStatus::ORDER_PICKING);`、`$orderSub->setConfirmDate(new \\DateTime());`、`$em->flush();` と更新する。旧実装の当該処理全体（31-125行）にも「DB更新なし・検索のみ」を裏付けるコードは存在しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:87-100 は `setBrowserPrintFlg(false)` または `setOrderStatus($pickingStatus)` と日時設定を行い、`persist($Order); flush();` で更新する。",
+      "note": "リバース詳細設計の「参照系でDB更新なし」という記述はExcel正本・旧実装の双方と矛盾するため誤検出と判定した。"
+    },
+    {
+      "rowId": 43,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1336-1339 のExcel正本に「/order/prints/status/printed」「メソッド POST」「リクエスト書式 XML」「レスポンス書式 なし(ステータスコードのみ)」「A05-02とエンドポイントを分ける」とある。",
+      "legacyEvidence": "pf-api/src/Controller/Admin/OrderController.php:31-64 は単一の `postPrintDirectAction` 内で `ConnectionType` の `GetRequest`／`SetResponse` を分岐する旧構造であり、分離前の実態を確認できる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:43-46 は `#[Route(path: '/api/order/prints/direct/{base_info_id}', ... methods: ['POST'])]` で、同:48-76 も同じメソッド内で `GetRequest`／`SetResponse` を分岐する。`/order/prints/status/printed` はec-cube-enterprise/srcとapp/configの横断検索で存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 44,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1343 は「プリンタ側でエラーがあった場合、XMLの中にエラーコードが返ってくるので、ログに追記する」、同:1348-1350 は「レスポンスデータの中にエラーコード」「印刷結果の詳細を参照してエラーの有無を確認」と明記する。",
+      "legacyEvidence": "pf-api/src/Controller/Admin/OrderController.php:94-104 はXML解析失敗または `$xml->ServerDirectPrint === 'false' || count($xml->ePOSPrint) < 1` の場合にResponseFile全体をログへ出すだけで、各印刷結果のsuccess/code属性を参照しない。Excel正本が指摘する既存不足と一致する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:48-58 はXML全体の解析とServerDirectPrint/ePOSPrint件数だけを判定し、同:78-100 は `printjobid` から受注を更新する。`PrintResponse`、`success`属性、`code`属性、`EX_BADPORT`、`EX_TIMEOUT` はec-cube-enterprise/src/Eccubeの横断検索で存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 45,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1570-1573 のExcel正本は `/waiting_api/get_waiting/{店舗ID}` と「本店の店舗IDを渡すように修正」、同:1580-1588 は必須リクエスト項目「店舗ID」を記載するため、指摘の「パラメータなし」とは一致しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/HareruyaEcServiceProvider.php:94 はFrontControllerProviderを `/{_locale}` にmountし、pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php:283-285 は `GET /waiting_api/get_waiting` を登録する。pf-eccube3/app/Plugin/HareruyaEc/Controller/WaitingNumberController.php:22-30 は引数を受けず、全件を取得する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/WaitingNumberController.php:63-79 は `GET /waiting_api/get_waiting_number/{base_info_id}` を定義し、BaseInfoで取得を限定する。ec-cube-enterprise/src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig:93-97 も `BaseInfo.id` を渡す。",
+      "note": "「パラメータなし」の核心は旧pf-eccube3由来。Excel正本は店舗ID必須へ変更済みであり、現実装は店舗絞り込み自体を満たすが、正本のパス名 `/get_waiting/` とはなお異なる。"
+    },
+    {
+      "rowId": 46,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1727-1728 のExcel正本はエンドポイントURLを `/smaregi/transaction`、HTTPメソッドを `POST` と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/HareruyaEcServiceProvider.php:94 はFrontControllerProviderを `/{_locale}` にmountし、pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php:287-289 は `POST /smaregi/transaction` を登録するため、旧公開URLは `/{_locale}/smaregi/transaction` である。",
+      "currentImpl": "ec-cube-enterprise/app/config/eccube/routes.yaml:9-12 はController群を秘密値 `/%eccube_smaregi_webhook_route%` 配下へmountし、ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:41 はその直下の空パス `#[Route('', ... methods: ['POST'])]` のみを定義する。`/smaregi/transaction` は現実装に存在しない。",
+      "note": "locale有無は旧実装由来だが、指摘の核心である固定パス `/smaregi/transaction` はExcel正本にも明記されている。"
+    },
+    {
+      "rowId": 47,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1728 のExcel正本は「認証の有無 有」「認証方式 IP制限」と明記し、「認証なし・400/401なし」は裏付けない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:26-28 は受信直後に `$request->request->get('params')` をJSON decodeし、同:111-116 で200応答を返すまで認証・必須ヘッダ検証を行わない。pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php:287-289 にもPOSTルート以外の認証指定はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:52-64 は `authenticationService->verify()` 失敗時にHTTP 401、同:67-77 は `smaregi-event-id` 欠落時にHTTP 400を返す。",
+      "note": "指摘の期待値は旧実装由来で、Excel正本のIP認証要件とは反対である。現実装の秘密ヘッダ認証もExcel正本のIP制限とは別方式。"
+    },
+    {
+      "rowId": 48,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1728 はレスポンス書式を「なし(ステータスコードのみ)」、同:1861-1863 は「200 レスポンスデータは空を返す」と明記し、`result[].TransactionHead` はExcel正本範囲（1703-1973行）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:51-68 は会員ポイント・出荷反映の件数を `$updateCount` に加算し、同:95-107 は支店結果の `TransactionHead` も合算して `['result' => [['TransactionHead' => $updateCount]]]` を組み立てる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:85-109 は重複時 `{status: ok, message: Event is duplicate}`、通常時 `{status: ok}` を返し、更新件数や `TransactionHead` を応答しない。",
+      "note": "更新件数JSONは旧API契約であり、新しいExcel正本の空応答要件とは矛盾する。"
+    },
+    {
+      "rowId": 49,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1861-1863 のExcel正本はWebhook応答を「200」「レスポンスデータは空を返す」とし、「取引ヘッダ更新件数を合算して返す」記述はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:51-74 は通常・取消・打消と明細処理の結果を `$updateCount` に加算し、同:103-116 はその値を `TransactionHead` としてHTTP 200 JSONで返す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:91-109 は処理を非同期キューへ投入した後、件数集計を待たず `new JsonResponse(['status' => 'ok'], HTTP_OK)` を返す。",
+      "note": "指摘は旧同期APIの応答契約を根拠とする。Excel正本は空応答へ変更している。"
+    },
+    {
+      "rowId": 50,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1728 はリクエスト書式をJSONとし、同:1851-1854 はWebhook項目を「契約ID」「イベント名」「アクション」「取引IDリスト」と定義する。フォーム値 `params` と `data[].TransactionHead/TransactionDetail` はExcel正本範囲（1703-1973行）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:26-40 は `$request->request->get('params')` をdecodeし、`$params['data']` の `table_name` が `TransactionHead`／`TransactionDetail` の要素を抽出する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/EventService.php:29-45 はraw JSON本文をdecodeし、`contractId`、`event`、`action`、本文全体を保存する。フォーム値 `params`、`table_name`、直接埋込みの `TransactionHead/TransactionDetail` を受け取る処理はない。",
+      "note": "旧Webhook形式を根拠とする指摘であり、Excel正本はプラットフォームAPI形式へ変更済み。"
+    },
+    {
+      "rowId": 51,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1786-1787 のExcel正本は「購入・キャンセル・返品で処理を分岐し、それぞれポイントの増減処理を実行」、同:1838-1840 は取消/打消時の検索キーを取引IDと記すが、`point_change/note/issue_date/point_type_id/transaction_id` の列列挙と履歴削除までは記載しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbPointHistory.dcm.yml:30-69 は `point_change`、`note`、`issue_date`、`point_type_id`、`transaction_id` を定義する。pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:140-163 は通常時にそれらを設定し、同:241-257 は `findByTransactionId` 後に `$app['orm.em']->remove($pointHistory)` する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/DtbPointHistory.php:42-59 は同等列を保持し、ec-cube-enterprise/src/Eccube/Service/EntityManager/PointHistoryEntityManager.php:58-77 は履歴を登録する。一方、ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentReverter.php:96-110 は取消時に元履歴を削除せず、逆符号の相殺履歴を追加する。",
+      "note": "列と『取消・打消で削除』という具体契約は旧実装由来。現実装は監査履歴保持のため逆仕訳方式へ変更しており、旧挙動とは一致しない。"
+    },
+    {
+      "rowId": 52,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1732-1733 のExcel正本は「本店側で…支店側にデータをAPIで送っている処理を廃止し、webhookからの受信のみで本店・支店のデータ連携を実行する」とし、指摘の支店API転送とは反対である。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:66-99 は自店舗外の明細を `$branchTransactionRows` に集め、受信した `X_contract_id`／`X_access_token` を引き継いで `cURLForwardBranchSmaregi` を呼び、結果の `TransactionHead` を加算する。同:270-289 は支店APIへPOSTする実装である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:91-109 はイベント保存・メッセージdispatchだけを行う。ec-cube-enterprise/srcとappを `branch_api_url`、`endpoint_smaregi_transaction`、`X_contract_id`、`支店転送` で横断検索しても支店スマレジAPI転送処理は存在しない。",
+      "note": "旧実装には根拠があるが、Excel正本はこの転送を明示的に廃止しているため、移植要否は正本変更の意図に注意が必要。"
+    },
+    {
+      "rowId": 53,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1792-1795 のExcel正本はスマレジ商品IDで既存受注を検索し、取引データを出荷完了で登録する業務を記すが、`dtb_order_sub` や「スマレジコード・出荷日・担当者・付与ポイント・連携エラー」の列集合はExcel正本範囲（1703-1973行）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:178-207 は注文サブを `smaregiCode` で検索し、Shippingの出荷確定日、受注のcommit/status、注文サブの `shippingDate` と `operator` を更新する。同:209-226 は付与ポイントとスマレジ連携エラーを注文サブへ反映する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Order.php:655-719 は `gained_points`、`shipping_date`、`smaregi_code`、`smaregi_error_flg`、`point_error_message` をOrderへ移している。ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/Pattern/EccubeSmoothOtcPatternHandler.php:62-66 は該当受注にstatusとsmaregiTransactionIdだけを設定し、旧実装の出荷日・担当者・連携エラー一式の更新は行わない。",
+      "note": "具体的な注文サブ列集合と更新内容は旧実装由来。現実装には移行先列の一部と出荷完了処理があるが、旧更新一式は満たさない。"
+    },
+    {
+      "rowId": 54,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1861-1863 のExcel正本は正常時200空応答を記すが、例外時に「明示的try-catchを持たず標準例外ハンドラへ委ねる」という記述はExcel正本範囲（1703-1973行）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:26-116 の `updateSmaregiTransaction` はparams解釈からDB更新・支店転送・200応答まで明示的な `try-catch` を持たない。例外はコントローラ外の共通処理へ伝播する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:91-120 はイベント保存・dispatchを `try { ... } catch (\\Throwable $e)` で囲み、catch内で `{status:error,message:Error processing webhook}` のHTTP 500 JSONを明示的に返す。",
+      "note": ""
+    },
+    {
+      "rowId": 55,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1838-1840 のExcel正本は取消時を取引ID、打消時を打消元取引IDで検索すると記載する。旧実装由来のさらに具体的な重複整合説明は同HTML:2067のリバース埋込みにのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:241-257 は取消・打消の対象ポイント履歴を `findByTransactionId($transactionId)` で特定して残高を戻し、履歴を削除する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbPointHistoryRepository.php:41-55 は `existsByTransactionId` でWebhook再送時の二重付与を防ぎ、同:66-77 は取引IDでポイント履歴を取得する。ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:224-247 は取消に取引ID、打消に `disposeServerTransactionHeadId` を渡してrevertするため、取引ID基準の重複・巻戻し前提は既に満たす。",
+      "note": "現実装はイベントID重複判定に加え、取引ID単位の冪等性確認と巻戻しも実装済み。"
+    },
+    {
+      "rowId": 56,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1728 はレスポンス書式を「なし(ステータスコードのみ)」、同:1863 は200空応答とするが、`application/json;charset=UTF-8`、キャッシュ抑止、CORSヘッダの指定はExcel正本範囲（1703-1973行）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:111-116 は200 JSON応答に `'Content-Type' => 'application/json;charset=UTF-8'`、`'Cache-Control' => 'no-store'`、`'Pragma' => 'no-cache'`、`'Access-Control-Allow-Origin' => '*'` を明示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:107-120 は `new JsonResponse(...)` を返すだけで、旧実装の `Cache-Control: no-store`、`Pragma: no-cache`、`Access-Control-Allow-Origin: *` を設定しない。これらのヘッダ名は現Controller全体（41-122行）にも存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 57,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1851-1854 のExcel正本は契約ID等を入力項目として記すが、連携用ヘッダ/Cookieのログ禁止規則はExcel正本範囲（1703-1973行）に存在しない。禁止規則は同HTML:2061-2064のリバース埋込みだけにある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:26-28 は本文paramsだけを読み、同:78-84 は連携ヘッダを転送用配列に移すがログ出力しない。ログは同:95-100の支店転送失敗結果だけで、受信ヘッダやCookie完全値の出力はController全体（26-116行）に存在しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:44-50 は受信直後に `'headers' => $request->headers->all()` と本文をログ出力し、認証失敗時も同:52-59 でヘッダ完全値を再度ログ出力する。",
+      "note": "禁止規則は旧実装の非出力挙動を文章化したリバース詳細設計由来。"
+    },
+    {
+      "rowId": 58,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1851-1854 のExcel正本はWebhookの4入力項目を必須とするが、「取引ヘッダ不足をエラー応答にする」という処理はExcel正本範囲（1703-1973行）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:30-44 はTransactionHeadが無くても `$transactionHead = []` のまま進み、同:51-74 は未定義キーを参照するだけで明示的な不足判定・例外送出・エラー応答を持たない。pf-eccube3/html/index.php:38-41 のErrorHandler設定はnotice/warningをthrow対象から除外しており、旧実装が不足を確実にエラー化する根拠もない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/TransactionEventDispatcher.php:89-109 は `transactionHeadIds` が配列でなければ空配列を返し、ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/CreatedHandler.php:45-52 は空配列をwarningログ後にreturnする。呼出元はec-cube-enterprise/src/Eccube/MessageHandler/SmaregiWebhookEventMessageHandler.php:94-108でそのまま完了扱いにする。",
+      "note": "リバース詳細設計の『不足時は標準例外で500』は旧コードの明示挙動でも実行環境のErrorHandler設定でも裏付けられない。"
+    },
+    {
+      "rowId": 59,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html のExcel正本sheet-6範囲（1703-1973行）に悲観ロック・楽観ロック・排他制御の指定は存在しない。「明示的な悲観ロック・楽観ロックの取得は行わない」は同HTML:2066-2067のリバース埋込みにのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:129-168 は会員・履歴を更新して `flush()` するが、Controller全体（26-289行）に `beginTransaction`、`LockMode`、`lock()` は存在しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderPointApplier.php:96-121 は `beginTransaction()` 後に `lock($player, LockMode::PESSIMISTIC_WRITE)` を実行する。ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentApplier.php:129-161 も同じ悲観ロックを取得する。",
+      "note": ""
+    },
+    {
+      "rowId": 60,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1727-1728 のExcel正本は `/smaregi/transaction`、POST、認証有、認証方式IP制限、リクエストJSON、レスポンスなし（ステータスコードのみ）を明記し、同:1861-1863 は200空応答とする。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ControllerProvider/FrontControllerProvider.php:287-289 は `/smaregi/transaction` のPOSTを登録する一方、pf-eccube3/app/Plugin/HareruyaEc/Controller/SmaregiController.php:26-28 は認証せず旧params形式を読み、同:103-116 は更新件数JSONを返すため、認証方式・入出力の正本期待は旧実装そのものではない。",
+      "currentImpl": "ec-cube-enterprise/app/config/eccube/routes.yaml:9-12 とec-cube-enterprise/src/Eccube/Controller/Smaregi/WebhookController.php:41 は秘密prefix直下のPOSTルートを定義する。ec-cube-enterprise/src/Eccube/Service/Smaregi/Webhook/AuthenticationService.php:33-45 はIPでなく秘密ヘッダを照合し、Controller:107-109 は空本文でなく `{status: ok}` JSONを返す。汎用front IP許可リスト処理はec-cube-enterprise/src/Eccube/EventListener/IpAddrListener.php:41-54にあるが、本API固有のIP認証契約・固定URL・空応答を満たさない。",
+      "note": ""
+    }
+  ]
+}

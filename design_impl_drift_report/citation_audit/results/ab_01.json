@@ -1,0 +1,165 @@
+{
+  "packetId": "ab_01",
+  "results": [
+    {
+      "rowId": 21,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1052-1055 のExcel正本は `/order/print/direct?ConnectionType=GetRequest`（GET）と `...SetResponse`（POST）を「現状」と記載する一方、同:1040-1047 は新仕様を `/order/prints/{店舗ID}`、A05-02とのエンドポイント分離とする。したがって指摘の旧パスを移行後の期待値とする正本根拠はない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/config/routes.yaml:73-80 は `path: /order/print/direct` をGET・POSTの2ルートで同じ `postPrintDirectAction` に割り当て、/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:33-58 は `ConnectionType` の `GetRequest` / `SetResponse` で分岐する。旧経路期待の真の根拠は旧実装である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:43-48 は `#[Route(path: '/api/order/prints/direct/{base_info_id}', ... methods: ['POST'])]` のみを定義し、GetRequestもPOSTルート内で処理する。",
+      "note": "旧実装との相違は確認できるが、Excel正本は旧経路を「現状」と明示して新経路への分離を要求している。LEGACY_BACKEDは根拠の所在を示す判定であり、旧URLへの復元を正本が要求するという意味ではない。"
+    },
+    {
+      "rowId": 22,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1106 のExcel正本に、合計金額は「注文の合計金額。ただしスムーズ店頭受取の場合、『スムーズ店頭受取』と表示」と明記されている。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:137-144 は通常 `$paymentTotal = '\\\\' . number_format(...)` としつつ、配送IDが `DtbDelivery::SMOOTH_OTC` の場合に `$paymentTotal = 'スムーズ店頭受取';` と置換する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:73-75 は `$paymentTotal = $Order['payment_total'];` とするだけで配送を判定せず、同:124-129 はその値を合計金額欄へそのまま出力する。",
+      "note": ""
+    },
+    {
+      "rowId": 23,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1100 はExcel正本に「店頭注文番号」欄を定義するが、`dtb_order_number.value` / `waiting_number` という取得元は記載しない。同:1132 のサンプルは同欄を `{$order['order_number']}`、同:1152 の通常注文番号欄を `{$order['order_no']}` と別変数で示すにとどまる。指摘の具体的なDBマッピングは正本では裏付けられない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:138-143 は受注IDで `DtbWaitingNumber` を引き `$waitingNumber` を得て、同:162-165 の「店頭注文番号」欄へ `{$waitingNumber}` を印字する。旧実装が待ち番号を使う根拠である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:77-78 は受注の `order_number` だけを取得し、同:94-97 の店頭注文番号欄と同:114-117 の注文番号欄の双方へ同じ `$orderNumber` を出力する。",
+      "note": "店頭注文番号欄そのものは正本にあるが、指摘の核心である `dtb_order_number.value`（旧 `waiting_number`）という取得元はリバース詳細設計・旧実装由来。"
+    },
+    {
+      "rowId": 24,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1063-1068 のExcel正本は印刷XML生成の処理概要に続けて「印刷データXMLをログに出力する」と明記する。保存先・一意名・ディレクトリ作成の詳細は正本にないが、ログ書き出し自体は正本要件である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:39-47 は空でないXMLについて `/var/www/html/api/var/log/print_logs/` を必要なら `mkdir` し、`print_`＋日時＋`uniqid()` のファイルへ `file_put_contents` する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:48-63 のGetRequest分岐はXMLを生成してStreamedResponseへ設定するだけで、ファイル書き出しを行わない。確認範囲 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube` の `print_logs`、`印刷不具合`、`print_*.xml` 検索でも代替実装は存在しない。",
+      "note": "保存ディレクトリや命名規則の詳細は旧実装由来だが、未実装指摘の核心であるXMLログ出力はExcel正本に明記されている。"
+    },
+    {
+      "rowId": 25,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1046-1047 のExcel正本はConnectionTypeで分岐する共通メソッドを「現状」とし、A05-02とエンドポイントを分けるとする。想定外ConnectionType時の「応答なし」はsheet-3のExcel由来範囲:1017-1186に記載がなく、埋込リバース詳細設計だけの記述である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:33-64 は `GetRequest` と `SetResponse` の2分岐だけを持ち、それ以外ではResponseを生成せずメソッド末尾へ到達する。旧実装が「応答を組み立てない」の根拠である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:79-84 は想定外値に対してStreamedResponseを作り、`Response::HTTP_BAD_REQUEST` と `text/plain; charset=utf-8` を設定して返す。",
+      "note": "正本はConnectionType分岐自体を廃してエンドポイントを分離する設計であり、このエラー契約は旧共通エンドポイント由来。"
+    },
+    {
+      "rowId": 26,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1065-1066 のExcel正本は「店舗IDからその店舗の未印刷の注文データを抽出」とだけ記載し、店頭受取・スムーズ店頭受取の列挙条件、支払方法、各日時NULL、browser_print_flg、最大10件という具体条件はsheet-3のExcel由来範囲:1017-1186に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Repository/DtbOrderRepository.php:38-60 はOTC+NEW、SMOOTH_OTC+支払方法+confirm/commit/shipping/cancel/receipt/otcRsv未設定+smaregiCodeあり、browserPrintFlgのOR条件を組み、`setMaxResults(10)` とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:42-48 は本店と支店で取得メソッドを分ける。本店側は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1618-1644 にSMOOTH_OTC条件を持つが、支店側の同:1657-1700 はOTC+NEWとbrowser_print_flgの2系統だけでSMOOTH_OTC分岐を持たない。",
+      "note": "未印刷データ抽出という上位要件は正本にあるが、指摘の核心である完全な抽出条件は旧実装由来。"
+    },
+    {
+      "rowId": 27,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1328,1345-1347 のExcel正本は受注ステータスを「ピック中」にすることを要求するが、`confirm_date`、`picking_date`、`pick_finish_date` の設定要件はsheet-4のExcel由来範囲:1313-1420に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:116-123 はbrowserPrintFlgが偽なら `$order->setStatus(MtbOrderStatus::ORDER_PICKING);` と `$orderSub->setConfirmDate(new \\DateTime());` を常に実行する。旧実装は少なくともピック中＋確定日時の組を裏付ける。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:87-100 はステータスをPICKINGへ更新する一方、本店だけ `setConfirmDate`、支店だけ `setPickingDate` と分岐し、`setPickFinishDate` は呼ばない。",
+      "note": "`pick_finish_date` まで同時設定する期待はリバース詳細設計が移行先スキーマから補ったもので、旧pf-apiは直接裏付けない。ただし全店舗でconfirm_dateを設定する旧挙動の支店移植漏れは確認できるためLEGACY_BACKED。"
+    },
+    {
+      "rowId": 28,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/functions/pf-api/a05-01_api_order_print_direct.md:252 のリバース詳細設計は「本機能は参照系…DBへの登録・更新・削除は行わない」とするが、同:202-205 は同じ機能のSetResponseで「受注ステータスの更新…データベースへの更新」と明記しており自己矛盾する。Excel正本も /home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1345-1347 でA05-02が受注ステータスをピック中に更新すると要求するため、共通機能全体を参照専用とする正本根拠はない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:56-63 はSetResponseで `updatePrintedOrderStatus()` を呼び、同:116-123 はステータス・confirmDateを更新して `flush()` する。旧実装も「DB更新なし」を否定する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:87-100 はbrowser_print_flgまたはステータス・日時を変更し、`persist($Order)` と `flush()` を実行する。",
+      "note": "指摘根拠はリバース詳細設計のDB操作節の誤記とみられる。A05-01のGET部分だけなら受注DBを更新しないが、指摘はSetResponseを含む共通機能に対してDB更新そのものを乖離としており、設計にも旧実装にも支持されない。"
+    },
+    {
+      "rowId": 29,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1040-1047 のExcel正本はA05-01を `/order/prints/{店舗ID}`、GETとし、A05-02とエンドポイントを分ける。同:1061-1062 はURL引数を店舗ID(shop_id)、同:1083 は例 `/order/prints/123` と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/config/routes.yaml:73-80 の旧実装は店舗IDなしの `/order/print/direct` をGET/POSTで共有しており、この新設計要件は満たさない。根拠は旧実装ではなくExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:43-48 は `POST /api/order/prints/direct/{base_info_id}` の単一ルートでGetRequestも処理し、`GET /order/prints/{店舗ID}` とA05-02分離ルートを持たない。",
+      "note": ""
+    },
+    {
+      "rowId": 30,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1077 は店舗IDを必須の整数とし、同:1087 は「店舗ID(shop_id)が無い、整数以外の型、存在しない店舗ID(shop_id)」の場合を404と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/config/routes.yaml:73-80 の旧 `/order/print/direct` は店舗IDパス引数自体を持たず、旧4リポジトリを `shop_id`、`base_info_id`、`order/prints`、`404` で検索してもA05-01の存在しない店舗404処理は確認できない。これは移行後Excel正本の新要件である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:42-51 はBaseInfoが見つからなくてもelseで `getDirectPrintOrderList($base_info_id)` を実行し、対象なしなら空文字を返す。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:48-63 はその空文字をステータス200のStreamedResponseとして返し得る。",
+      "note": ""
+    },
+    {
+      "rowId": 31,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1065-1068 のExcel正本は未印刷注文をXMLにして返す処理に続けて「印刷データXMLをログに出力する」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:39-47 はXMLが空でない場合に `print_logs` を作成し、日時・一意ID付きXMLへ `file_put_contents` する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:48-63 はXMLを応答へ載せるだけでログ保存処理を持たない。確認範囲 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube` の `print_logs`、`file_put_contents`、`印刷不具合` 検索でも注文印刷XMLの代替書き出しは存在しない。",
+      "note": "rowId 24と同じ欠落を要求網羅監査で再掲した重複指摘だが、根拠判定は同じ。"
+    },
+    {
+      "rowId": 32,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1063-1064 のExcel正本はXML化前にスマレジ商品コードの存在を確認し、存在しなければ「何もしない」と明記する。同:1170 はバーコード値に `{$order['smaregi_code']}` を用いる。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Repository/DtbOrderRepository.php:38-51 ではsmaregiCode必須条件がSMOOTH_OTC分岐にしかなく、OTC+NEWとbrowserPrintFlg分岐には適用されないため、旧実装も正本の全件事前確認を完全には満たさない。根拠はExcel正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1618-1636 の本店クエリはOTC+NEWとbrowser_print_flg分岐にsmaregi_code必須条件がなく、同:1683-1698 の支店browser_print_flg分岐にもない。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:77-78,134-135 は取得した値を検証せずバーコードへ出力する。",
+      "note": ""
+    },
+    {
+      "rowId": 33,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1106 のExcel正本はスムーズ店頭受取時に合計金額欄を「スムーズ店頭受取」と表示すると明記する。同:1065 は店舗IDごとの未印刷注文抽出を要求する。詳細な抽出条件は正本にないが、少なくとも文言置換は直接裏付けられる。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Repository/DtbOrderRepository.php:38-60 はSMOOTH_OTCを含む3系統の抽出と最大10件を実装し、/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:140-144 はSMOOTH_OTC時に合計金額を「スムーズ店頭受取」へ置換する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1657-1700 の支店クエリにはSMOOTH_OTC分岐がなく、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:73-75,124-129 は配送判定なしでpayment_totalを出力する。",
+      "note": "指摘内の詳細抽出条件は旧実装由来だが、同時に指摘された合計金額の文言置換欠落はExcel正本に明記され、新実装が満たさないためSPEC_BACKED。"
+    },
+    {
+      "rowId": 34,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1046-1047 はConnectionType共通分岐を「現状」としてエンドポイント分離を要求しており、想定外ConnectionType時の挙動はsheet-3のExcel由来範囲:1017-1186に記載しない。`応答を組み立てない` は埋込リバース詳細設計だけの期待である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:33-64 はGetRequest/SetResponse以外のelseやreturn Responseを持たず、応答を生成しないまま終了する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:79-84 は想定外値に対し明示的にHTTP 400・`text/plain; charset=utf-8` のStreamedResponseを返す。",
+      "note": "rowId 25と同じ旧エラー契約の重複指摘。"
+    },
+    {
+      "rowId": 35,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1335-1339 のA05-02 Excel正本は新仕様を `POST /order/prints/status/printed` とし、現状のConnectionType共通メソッドからエンドポイントを分ける。したがって指摘の `GET/POST /order/print/direct` は移行後の正本期待ではない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/config/routes.yaml:73-80 は `/order/print/direct` をGET/POSTの双方で同じControllerへ割り当て、/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:33-58 はConnectionTypeでGetRequest/SetResponseを分岐する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:43-48 は `POST /api/order/prints/direct/{base_info_id}` のみを定義し、旧GETルートも正本の `/order/prints/status/printed` も持たない。",
+      "note": "旧実装由来の経路差はあるが、Excel正本は旧経路を廃してA05-02専用経路へ分離する設計である。"
+    },
+    {
+      "rowId": 36,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1068 のA05-01 Excel正本に「印刷データXMLをログに出力する」と明記される。参照先sheet-4（A05-02）のExcel由来範囲:1313-1420にはGetRequestログ要件はないため機能への紐付けは誤っているが、同じ正本ブックのA05-01要件として根拠は実在する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:34-47 のGetRequest分岐は空でないXMLを `print_logs` 配下へ書き出し、必要ならディレクトリを作成する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/OrderController.php:48-63 のGetRequest分岐にはXMLログ保存がなく、確認範囲 `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube` の `print_logs`、`印刷不具合` 検索でも代替実装は存在しない。",
+      "note": "A05-02のfindingとしてはA05-01要件の重複混入だが、欠落挙動自体はExcel正本に裏付けられる。"
+    },
+    {
+      "rowId": 37,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1328,1345-1347 のExcel正本は受注をピック中にすることだけを明記し、`picking_date`、`pick_finish_date`、`confirm_date` の具体的な更新はsheet-4のExcel由来範囲:1313-1420に存在しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:116-123 はbrowserPrintFlgが偽なら、店舗種別による分岐なしでPICKINGステータスと `confirmDate(new \\DateTime())` を設定してflushする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:87-100 はPICKING更新後、本店は `setConfirmDate`、支店は `setPickingDate` の片方だけを呼び、`setPickFinishDate` は呼ばない。",
+      "note": "全店舗confirm_date更新は旧実装に裏付けられるが、picking_dateとpick_finish_dateを双方設定するという移行先列の期待はリバース詳細設計による補完で、旧コードには直接の根拠がない。"
+    },
+    {
+      "rowId": 38,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1313-1420 のA05-02 Excel正本はSetResponseによるステータス更新を扱い、GetRequestの印刷対象抽出条件を記載しない。A05-01側も同:1065 の「店舗IDから…未印刷の注文データ」までで、列挙された詳細条件は正本にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Repository/DtbOrderRepository.php:38-60 はOTC+NEW、SMOOTH_OTC+支払方法・各日時・スマレジ条件、browserPrintFlgのORと最大10件を実装する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:42-48 は本店/支店で検索を分け、支店側 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1657-1700 はOTC+NEWとbrowser_print_flgだけでSMOOTH_OTC条件を持たない。",
+      "note": "A05-02のfindingへA05-01のGetRequest要件が重複混入している。詳細条件の根拠は旧pf-api。"
+    },
+    {
+      "rowId": 39,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1106 のA05-01 Excel正本に「スムーズ店頭受取の場合、『スムーズ店頭受取』と表示」と明記される。参照先sheet-4はこの印刷レイアウトを扱わないが、同一正本ブック内に期待値は実在する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:137-144 は配送を取得し、SMOOTH_OTCなら `$paymentTotal = 'スムーズ店頭受取';` とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:73-75 はpayment_totalをそのまま代入し、同:124-129 で無条件に出力するため文言置換がない。",
+      "note": "A05-02のfindingとしてはA05-01印刷レイアウト要件の重複混入だが、欠落自体は正本根拠を持つ。"
+    },
+    {
+      "rowId": 40,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0505_基本設計仕様書(API_受注管理).html:1100 のA05-01 Excel正本は「店頭注文番号」欄を定義するが、A05-02 sheet-4には印刷欄も `dtb_order_number.value` / `waiting_number` のDBマッピングもない。具体的な取得元は埋込リバース詳細設計だけにある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OrderController.php:138-143 は受注IDでDtbWaitingNumberを検索して `$waitingNumber` を得て、同:162-165 の店頭注文番号欄へ印字する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:77-78 は `order_number` のみを変数化し、同:94-97 と同:114-117 で店頭注文番号欄・注文番号欄の両方へ同じ値を出力する。現在リポジトリには /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbWaitingNumber.php:39-39 の `waiting_number` が存在するが、この印刷処理は参照しない。",
+      "note": "店頭注文番号という表示項目は正本にあるが、指摘の核心である待ち番号テーブルからの取得契約は旧実装由来。A05-02への紐付けもA05-01印刷処理の重複である。"
+    }
+  ]
+}
