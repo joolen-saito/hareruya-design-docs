@@ -1,0 +1,77 @@
+{
+  "packetId": "0202_10",
+  "results": [
+    {
+      "rowId": 693,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:169` `if ($srcQtyRaw === '' || !ctype_digit($srcQtyRaw) || (int) $srcQtyRaw < 1) {` のみで、結合元 ProductStock の現在庫との比較検証は無い。`processGroup()` (同:372-393) も `findOneByProductCodeAndBaseInfoAndStockLocation()` で結合元を解決し `$sourceByPsId[$psId]['quantity'] += $gr['src_qty'];` と合算するだけで在庫数チェックをしない。Action 側も `src/Eccube/Service/Admin/Stock/StockJoinMoveToShortageEntryAction.php:187` `$quantity = \\min(\\max(0, $data['quantity']), (int) ($SrcPs->getStock() ?? 0));` のまま現在庫へ丸めて処理する。`admin.stock.join.source_register_quantity_over_stock`(messages.ja.yaml:5084) / `admin.stock.join.source_exceeds_stock`(同:5116) は yaml に定義されるのみで、CSV取込経路の PHP からは一切参照されていない（grep で src/ 内の .php 参照ゼロ）。監査時点と実質同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 694,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:379` `if (!$file instanceof UploadedFile || !$file->isValid()) {` が listJoinCsvImport の唯一のファイル検証で、`$searchForm->handleRequest()`/`isValid()` は同ファイル127-128行の検索フォームにしか存在せず、CSVアップロードフォームの検証は行われない（grep: handleRequest/isValid のヒットは127,128,287,379行のみ）。`src/Eccube/Form/Type/Admin/StockJoinCsvUploadType.php` の `new File(['mimeTypes' => ['text/csv', 'text/plain', 'application/csv'], ...])` 制約は POST 経路で実行されない。`src/Eccube/Service/Csv/Importer/CsvImporter.php:172-173` `$fileExtension = $file->getClientOriginalExtension(); $delimiter = ($fileExtension === 'tsv') ? \"\\t\" : ...` も残存し、TSV が取込処理へ進む。監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 695,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:385-386` `$storeId = isset($csvBag['store']) ? (int) $csvBag['store'] : 0;` / `$BaseInfo = $storeId > 0 ? $this->baseInfoRepository->find($storeId) : $this->baseInfoRepository->get();` と、POST された store ID をそのまま find するのみ。同ファイル内で `isEditableShop` が現れるのは `approvalMembers()` の `:490` `if ($LoginMember instanceof Member && !$LoginMember->isEditableShop($BaseInfo)) { return $this->json([...], 403); }` の1箇所だけで、listJoinCsvImport (367-443行) には編集可能店舗検証が無い。監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 696,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:4995` `admin.stock.join_csv_modal.format_join_quantity: 結合元在庫数` のままで、設計のカラム名「結合数」になっていない。`src/Eccube/Resource/template/admin/Stock/stock_join_csv_modal_body.twig:52` `<td class=\"table-light\">{{ 'admin.stock.join_csv_modal.format_join_quantity'|trans }}...` がこのキーを表示し、5-1行目 `format_source_stock_quantity: 結合元在庫数`(同yaml:5001) と表示が重複する。監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 697,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:153` `if (!ctype_digit($joinQtyRaw) || (int) $joinQtyRaw <= 0) {`（結合数）、同`:169` `if ($srcQtyRaw === '' || !ctype_digit($srcQtyRaw) || (int) $srcQtyRaw < 1) {`（結合元在庫数）のいずれも下限のみで、999999999 の上限判定は無い（ファイル全体に `999999999` の文字列なし）。監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 698,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:5288` `admin.stock.move_instruction.tracking_no: 送り状No` と末尾ピリオドが無いまま。`src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:194` `<th class=\"pt-2 pb-2\">{{ 'admin.stock.move_instruction.tracking_no'|trans }}</th>` および同`:262` `<label class=\"form-label fw\">{{ 'admin.stock.move_instruction.tracking_no'|trans }}</label>`、`src/Eccube/Form/Type/Admin/StockMoveInstructionDetailType.php:35` `'label' => 'admin.stock.move_instruction.tracking_no',` が引き続きこのキーを表示する。監査時点と同じ。",
+      "note": "同 yaml の csv_format_tracking_no(:5319) は「送り状No.」でピリオド有り。画面ラベル側のキーだけが未是正。"
+    },
+    {
+      "rowId": 699,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php` 全248行に `MAX_ROWS` も件数上限判定も存在しない（`onValidateRow()`:73-109 は列数・列存在・列バリデータのみ）。兄弟の `src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:46` `public const MAX_ROWS = 2000;` と同:107 `if ($this->dataRowCount > self::MAX_ROWS) {` は存在するが本機能には未移植。画面文言も `src/Eccube/Resource/locale/messages.ja.yaml:5311` `admin.stock.move_instruction.csv_registration_file_limit: （1ファイルの登録上限は10,000件です）` のままで、`stock_move_instruction_index.twig:294` が表示する。監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 700,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:81,90,95,104` はいずれも `$event->skipRow();` でエラー行を飛ばして継続（docコメント70-72行「エラー時はその行をスキップして処理を継続する。全行の個別エラーを収集するため、breakAll() ではなく skipRow() を使用する」）。`onReadRow()`:127,136,149,156,166 も `return false;` のみで中断しない。`src/Eccube/Service/Csv/Importer/CsvImporter.php:270-275` `$isSuccessful = $messageStore->count() === 0 || !$hasBreak;` / `if ($isSuccessful) { $this->em->getConnection()->commit(); } else { ...rollback(); }` も未変更で、skip のみ（$hasBreak=false）ならエラー有りでも正常行がコミットされる。監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 701,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/StockMoveInstructionCsvImportHandler.php:194-197` `protected function getRowValidators(): array { return []; }` は空のまま。移動指示ID列の定義は同`:201-204` `(new BaseCsvColumn(self::COL_INSTRUCTION_ID, ...))->setRequired(true)->setConverter(new IntConverter())->addValidator(new NumericValidator());` のみで重複検出なし。`onReadRow()`:120-137 も `$this->stockMoveInstructionRepository->find($instructionId)` の存在検証だけ。`StockMoveInstructionCsvImportService.php`/`StockMoveInstructionCsvImporter.php`/`StockMoveInstructionCsvUploadAction.php`（計226行）に対する `重複|duplicate|array_unique|seen` の grep はヒット0件。監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 702,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:88-91` `$page_count = (int) $session->get(self::SESSION_KEY_PAGE_COUNT, $this->eccubeConfig->get('eccube_default_page_count'));` のままで、その既定値は `app/config/eccube/packages/eccube.yaml:142` `eccube_default_page_count: 10`（監査時の140行から行番号のみ移動、値は10で不変）。設計の初期値50と不一致。",
+      "note": ""
+    },
+    {
+      "rowId": 703,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchStockMoveInstructionType.php:142` `->add('shipment_status_not_done', CheckboxType::class, [` および同`:146` `->add('shipment_status_done', CheckboxType::class, [` と、CheckboxType×2 のまま（複数選択 ChoiceType/セレクトボックスではない）。Twig も `src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:131,134` で `form_widget(searchForm.shipment_status_not_done, {'attr': {'class': 'form-check-input'}})` / `form_widget(searchForm.shipment_status_done, ...)` と個別チェックボックス描画。監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 704,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php`（542行）、`src/Eccube/Repository/DtbStockMoveInstructionRepository.php`、`src/Eccube/Form/Type/Admin/SearchStockMoveInstructionType.php` に対する `isEditableShop|editableBaseInfos|getEditableShop` の grep はヒット0件。index() は `src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:74` `$builder = $this->formFactory->createBuilder(SearchStockMoveInstructionType::class);` 以降、ログインメンバーの編集可能店舗による絞り込み・拒否を一切行わない。監査時点と同じ。",
+      "note": ""
+    }
+  ]
+}

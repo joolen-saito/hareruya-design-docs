@@ -1,0 +1,77 @@
+{
+  "packetId": "0202_06",
+  "results": [
+    {
+      "rowId": 645,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockHistoryController.php:317-321` `$params = $request->request->all(); $ids = $params['ids'] ?? []; $stockHistoryIds = \\is_array($ids) ? array_values(array_filter(array_map('intval', $ids), fn (int $id): bool => $id > 0)) : [];` … `:352` `return $stockHistoryCsv->exportCsv($stockHistoryIds);` と、依然として request の ids[] を読むID指定型のまま。CSV endpoint 内に検索条件セッション読み出しやフォーム復元は無い。一覧側のセッションキーも `:99` `$sessionKeySearch = 'eccube.admin.stock.stock_history.search';` のままで、設計の `admin.history.search` は `grep -rn 'admin\\.history\\.search' src/ app/` で 0 件。Twig 側も `src/Eccube/Resource/template/admin/Stock/history.twig:604-606` `{% for StockHistory in PaginationAll %}<input type=\"hidden\" name=\"ids[]\" value=\"{{ StockHistory.id }}\">` で hidden ids[] 埋め込みのまま。",
+      "note": ""
+    },
+    {
+      "rowId": 646,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/StockHistoryCsv.php:75` `$filename = $this->createFileName('stock_history_');` のままで prefix は `stock_history_`。`grep -rn 'product_stock_history_' src/ app/` は 0 件で、設計の prefix `product_stock_history_` を使う実装は現 develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 647,
+      "status": "未対応",
+      "evidence": "ヘッダー定義 `src/Eccube/Controller/Admin/Stock/StockHistoryController.php:434-436` `'店舗' => '', '在庫場所' => '', '登録元' => '',` および行変換 `src/Eccube/Service/Csv/StockHistoryCsv.php:105-106` `'店舗' => $ProductStock->getBaseInfo(), '在庫場所' => $ProductStock->getLocationName(),` のままで、CSV列名は『在庫場所』。在庫履歴CSV側に『在庫区分』ヘッダーを出す実装は無い（`grep -rn '在庫区分' src/Eccube/Service/Csv/ src/Eccube/Controller/Admin/Stock/` のヒットは StockApprovalListCsvExportService 等の別機能CSVのみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 648,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/StockHistoryCsv.php:103` `'状態' => $ProductClass->getCardCondition()->getCode(),` のままで、カード状態コードを固定的に出力している。規格拡張メモの参照や、メモが無い場合に状態名へフォールバックする分岐は convertExportCsvRows（同ファイル:90-132）内に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 649,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockHistoryController.php:323-325` `if ($stockHistoryIds === []) { return $this->responseNoStockHistoryIdError($request); }`（`:505-511` でエラー追加のうえ admin_stock_history_page へリダイレクト）、および `src/Eccube/Service/Csv/StockHistoryCsv.php:55-62` `if (empty($stockHistoryIds) || !$StockHistories = ...) { throw new \\RuntimeException(...'not_registered_stock_history_id'); }` / `if ($csvRows === []) { throw new \\RuntimeException(...'no_stock_history_data'); }` のままで、0件時はエラー扱い。ヘッダ行のみのCSVを返す経路は無い（`:66-73` の setCallback は $csvRows 生成後にしか到達しない）。",
+      "note": ""
+    },
+    {
+      "rowId": 650,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/StockHistoryCsv.php:121` `'登録日' => !empty($StockHistory->getRegisteredAt()) ? $StockHistory->getRegisteredAt()->format('Y-m-d H:i') : '',` のままで、参照は registeredAt、書式は `Y-m-d H:i`（ハイフン区切り）。設計の create_date 参照・`Y/m/d H:i` 書式には変更されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 651,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbStockHistoryRepository.php:144-150` `$DisposalTypeIds = $this->stockChangeTypeDetailRepository->getQueryBuilderByStockChangeTypeIds([MtbStockChangeType::DISPOSAL])->getQuery()->getResult(); if (isset($searchData['disposal_search']) ...) { $qb->andWhere($qb->expr()->in('sh.StockChangeTypeDetail', ':stock_change_type_detail'))->setParameter('stock_change_type_detail', $DisposalTypeIds); }` のままで、抽出対象は DISPOSAL(=6) 配下の子区分のみ。`app/DoctrineMigrations/Version20260108130821.php:172-190` の通り `id=19 欠品減算(受注)` / `id=21 欠品減算(移動)` は `'stock_change_type_id' => MtbStockChangeType::OUT_OF_STOCK`(=7) 配下であり、この IN 条件には含まれない。id=19,21 を明示指定する実装は現 develop に無い。",
+      "note": ""
+    },
+    {
+      "rowId": 652,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbStockHistoryRepository.php:333-335` `$qb->addOrderBy('pc.code', 'DESC'); $qb->addOrderBy('ps.baseInfo', 'DESC'); $qb->addOrderBy('sh.createDate', 'DESC');` のままで、第三ソートは createDate。一覧の登録日表示は `src/Eccube/Resource/template/admin/Stock/history.twig:726` `{{ Stock.registeredAt|date('Y/m/d H:i') }}` と registeredAt であり、表示項目とソートキーの不一致は解消されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 653,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/history.twig:661` `<td class=\"align-top fixed-cell-col2\">{{ productSub.name }}</td>` のままで、商品名列はプレーンテキスト。在庫編集画面への a タグや `target=\"_blank\"` は無い（同ファイルで target=\"_blank\" を持つのは `:670` の登録元IDリンクのみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 654,
+      "status": "未対応",
+      "evidence": "欠品検索モード（`has_search_disposal == true`）の分岐 `src/Eccube/Resource/template/admin/Stock/history.twig:711-713` `{% else %} <td class=\"align-top\">{{ Stock.stock }}</td> <td class=\"align-top\">{{ productClassSub.buy_price|price }}</td>` のままで、見出し `:642` `admin.stock.history.disposal_sale_price`（=『欠品時販売価格』）の列に仕入単価 buy_price を表示している。在庫履歴に保存された sell_price（同ファイル:704 で通常モードのみ `{{ Stock.sell_price|price }}`）は欠品モード列では使われていない。",
+      "note": ""
+    },
+    {
+      "rowId": 655,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockHistoryController.php:240-252` の検索成功後の戻り値が `:247` `'has_errors' => true,` 固定のまま。`src/Eccube/Resource/template/admin/Stock/history.twig:565` `{% if pagination and pagination.totalItemCount %}` … `:746-749` `{% elseif has_errors %}` → `{{ 'admin.common.search_invalid_condition'|trans }}` の分岐により、0件時は `src/Eccube/Resource/locale/messages.ja.yaml:1736` `admin.common.search_invalid_condition: 検索条件に誤りがあります` が表示される。設計文言に対応する `:1737` `admin.common.search_no_result: 検索条件に合致するデータが見つかりませんでした` は has_errors=false の `{% else %}`(:753-756) 側にあり到達しない。",
+      "note": "設計文言「検索条件に該当するデータがありませんでした。」自体も現行 messages.ja.yaml の search_no_result 文言と完全一致はしていない。"
+    },
+    {
+      "rowId": 656,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/history.twig:624` `<th class=\"border-top-0 pt-2 pb-2\">{{ 'admin.stock.history.stock_location'|trans }}</th>` のままで、翻訳は `src/Eccube/Resource/locale/messages.ja.yaml:4867` `admin.stock.history.stock_location: 在庫場所`。列値も `:666` `<td class=\"align-top\">{{ Stock.ProductStock.locationName }}</td>`。M04-19 一覧の当該列見出しを『在庫区分』にする実装は現 develop に無い。",
+      "note": ""
+    }
+  ]
+}

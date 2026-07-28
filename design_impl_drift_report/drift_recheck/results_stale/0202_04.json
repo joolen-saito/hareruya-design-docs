@@ -1,0 +1,77 @@
+{
+  "packetId": "0202_04",
+  "results": [
+    {
+      "rowId": 621,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchStockSplitJoinType.php:96-106` は `->add('search_target', ChoiceType::class, ['label' => 'admin.stock.split_join.search_target_label', 'required' => false, 'choices' => [...'source', ...'destination'], 'expanded' => true, 'multiple' => true])` のままで `data`(初期値) 指定なし。`:302-307` の `setDefaults([...])` にも初期データ指定なし。呼び出し側 `src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:113` `$builder = $this->formFactory->createBuilder(SearchStockSplitJoinType::class);` も初期データ未指定（第2引数なし）で、初期表示は `:135-160` の else 節で `$searchForm->createView()` をそのまま渡すのみ。twig `stock_split_join_index.twig:120` `<input type=\"checkbox\" ... {{ child.vars.checked ? 'checked' : '' }}>` は Form 側の checked に従うだけなので、初期表示は source/destination とも未チェック。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 622,
+      "status": "未対応",
+      "evidence": "分割側 `src/Eccube/Service/Csv/Importer/Event/StockSplitEditReplaceDestinationsImportHandler.php:307-309` は `if ($errors !== []) { return ['ok' => false, 'errors' => $errors]; }` のままで、20件到達時の固定文言付加なし。対して結合側 `src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php:258-259` は `if (count($errors) >= self::MAX_ERROR_COUNT) { array_unshift($errors, trans('admin.stock.csv.error_limit_notice')); }`、`StockJoinCsvImportHandler.php:198-199` も同様に付加。翻訳キーは `src/Eccube/Resource/locale/messages.ja.yaml:2410` `admin.stock.csv.error_limit_notice: \"エラーを最大20件まで表示しています。\"` に存在するが分割経路では依然未使用。Join側との非対称は解消されていない。",
+      "note": "監査時の行番号 257-260 → 現 develop では 258-259（Join側）。分割側の該当箇所も 307-309 で変化なし。"
+    },
+    {
+      "rowId": 623,
+      "status": "未対応",
+      "evidence": "承認申請 `src/Eccube/Service/Admin/Stock/StockSplitApplyApprovalAction.php:96-103` は `$this->detailEntityManager->save(Detail: null, ..., splitJoinQuantity: $quantity, stockSnapshot: (int) ($DestPs->getStock() ?? 0), totalCost: $DestPs->getTotalCost(),)` と分割先の現在総原価スナップショットを保存するのみで、按分計算は行わない。按分は依然として承認処理 `src/Eccube/Service/Admin/Stock/StockSplitApprovalApproveAction.php:147-156`（`// 買取価格が全て0の場合は個数比率で按分する（フォールバック）` / `bcround(bcmul($movedCost, bcdiv($numerator, $denominator, 8), 8), 0)`）で都度実行され、`:209 totalCost: $newTotalCost` として ProductStock 側へ反映される。格納先も `src/Eccube/Entity/DtbStockSplitJoinDetail.php:54-75` に `standard_price` / `cost_price` / `total_cost` / `stock` / `split_join_quantity` / `missing_quantity` のみで仕入総価格専用カラムは追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 624,
+      "status": "未対応",
+      "evidence": "3経路とも在庫数上限チェックなし。(1) Ajax更新 `src/Eccube/Controller/Admin/Stock/StockSplitController.php:566-567` `$quantity = max(0, (int) $request->request->get('quantity', 0)); $destinations[$destinationId]['quantity'] = $quantity;` で下限のみ。(2) 承認申請のコミット規則 `src/Eccube/Service/Admin/Stock/StockSplitApplyApprovalAction.php:171-188` は `getSplitJoinQuantity() < 1` / `$Destinations === []` / `$destinationQuantitySum < 1` の3件のみ検証。(3) CSV `StockSplitEditReplaceDestinationsImportHandler.php:272-273` `if ((int) $qtyRaw < 1) { $errors[] = \"...分割先在庫数は1以上を指定してください。\"; }` と下限のみ。",
+      "note": "`stock_split_edit.twig:216` の input に `max=\"{{ destination.sourceStock }}\"` があるが、これは 2026-03-25 の新規twig追加時点(5a3368f34e)から存在し監査後の是正ではない。かつ当該 input はフォーム送信ではなく change 時 Ajax 保存のため HTML max は実効的な拒否にならず、サーバ側は無制限に受理する。"
+    },
+    {
+      "rowId": 625,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/stock_split_edit.twig:508-534` の change ハンドラは `fetch(url, {...}).then(...)` の成功時に `input.value = res.data.quantity; prevQty = input.value; return;` を行うのみで、合計の再集計・再描画コードが存在しない。合計表示は `:177` `{{ 'admin.stock.split.destination_split_quantity_total'|trans }}: <strong>{{ destTotalSum|default(0)|number_format }}</strong>` のサーバ描画静的値のまま。Ajax側 `StockSplitController.php:580` の戻り値も `return $this->json(['ok' => true, 'quantity' => $quantity]);` で合計値を返さない。",
+      "note": ""
+    },
+    {
+      "rowId": 626,
+      "status": "未対応",
+      "evidence": "編集画面フッター `src/Eccube/Resource/template/admin/Stock/stock_split_edit.twig:418` は `<a href=\"{{ url('admin_stock_split_join_list') }}\" class=\"c-baseLink\">` のままで resume パラメータ未付与。一覧側 `src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:132-134` は `} elseif ($request->query->getBoolean('resume')) { $viewData = $session->get(StockSplitJoinIndexAction::SESSION_KEY_SEARCH, []); FormUtil::submitAndGetData($searchForm, $viewData); }`、`:135-160` の else 節は `'StockSplitJoins' => [], 'stockSplitJoinSearchPerformed' => false` の初期表示を返すため、このリンク経由では検索状態が初期化される。",
+      "note": "監査時に対比対象とされた stock_split_new.twig の resume=1 付与リンクは現 develop では `stock_split_new.twig:421` 相当が `url('admin_stock_list', {'resume': '1'})`（在庫一覧向け）になっており分割結合一覧へのリンクは無いが、編集画面側の resume 未付与という指摘内容自体は不変。"
+    },
+    {
+      "rowId": 627,
+      "status": "未対応",
+      "evidence": "取込側 `src/Eccube/Service/Csv/Importer/Event/StockSplitEditReplaceDestinationsImportHandler.php:246-247` `if (!isset($rowData['商品コード'], $rowData['分割先在庫数'])) { return ['ok' => false, 'errors' => ['1行目の列名を確認してください（商品コード, 分割先在庫数）。']]; }`、雛形出力 `src/Eccube/Controller/Admin/Stock/StockSplitController.php:769` `$headers = ['商品コード', '分割先在庫数'];` と、いずれも「分割先在庫数」のまま。エラーメッセージ `src/Eccube/Resource/locale/messages.ja.yaml:5046` も `'CSVの列名が不正です。1行目に「商品コード」「分割先在庫数」が必要です。'` で、設計の「分割先分割在庫数」との列名不一致は未解消。",
+      "note": ""
+    },
+    {
+      "rowId": 628,
+      "status": "未対応",
+      "evidence": "入力 `src/Eccube/Resource/template/admin/Stock/stock_join_new.twig:128` `<input type=\"number\" name=\"destination_stock\" class=\"form-control form-control-sm d-inline-block\" style=\"width:6rem;\" min=\"1\" value=\"\" placeholder=\"0\" required>` は min のみで max 属性なし。受け口 `src/Eccube/Controller/Admin/Stock/StockJoinController.php:1200-1204` も `filter_var($destRaw, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]])` と下限のみ（max_range 指定なし）。登録処理 `src/Eccube/Service/Admin/Stock/StockJoinRegisterAction.php:43-45` は `if ($input->destinationStock <= 0) { throw new \\LogicException('admin.stock.join.destination_stock_min'); }` のみで、`:64 $StockSplitJoin->setSplitJoinQuantity($input->destinationStock);` とそのまま保存。上限99999999・在庫数超過チェックともに不在（リポジトリ全体を `git grep 99999999` しても在庫分割結合系のヒットなし）。",
+      "note": ""
+    },
+    {
+      "rowId": 629,
+      "status": "未対応",
+      "evidence": "`app/DoctrineMigrations/Version20260519100000.php:65-72` の getRecords() は `['id' => 1, 'name' => '新規登録'], ['id' => 2, 'name' => '結合元登録'], ['id' => 3, 'name' => '分割承認待ち'], ['id' => 4, 'name' => '結合承認待ち'], ['id' => 5, 'name' => '入庫済み'], ['id' => 6, 'name' => '却下']` の6件のまま。`src/Eccube/Entity/Master/MtbStockSplitJoinStatus.php:27-37` の定数も `NEW = 1 / JOIN_SOURCE_REGISTERED = 2 / SPLIT_APPROVAL_WAITING = 3 / JOIN_APPROVAL_WAITING = 4 / RECEIPT_COMPLETED = 5 / REJECTED = 6` の6区分。`git grep '結合計画承認|結合完了承認|入庫完了'` でも当該マスタ追加は無く、設計の7区分に不足（mtb_stock_split_join_status を追加変更する後続マイグレーションも存在しない）。",
+      "note": ""
+    },
+    {
+      "rowId": 630,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockJoinController.php:666-668` は `$form = $this->formFactory->createBuilder(StockSplitJoinType::class, [...], ['ProductStock' => ..., 'approval_required' => true,])` と店舗間移動判定なしに無条件 true。`:902-905` も `$notificationMemberIds = array_filter(...); if ($notificationMemberIds === []) { $this->addError('admin.stock.split_join.form.approval_notification_required', 'admin'); ... }` と常時必須。Form 側 `src/Eccube/Form/Type/Admin/StockSplitJoinType.php:53-58` の所属 `approval_notification_department` は `'required' => false,` 固定、`:61-77` のメンバーは `'required' => $options['approval_required']` かつ `'constraints' => $options['approval_required'] ? [new Assert\\Count(['min' => 1, ...])] : []`。店舗間移動か否かの判定コード自体が依然存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 631,
+      "status": "未対応",
+      "evidence": "結合元CSV取込ハンドラに行数上限が無い。`src/Eccube/Service/Csv/Importer/Event/StockJoinCsvImportHandler.php:38` は `private const MAX_ERROR_COUNT = 20;` のみで MAX_ROWS 定数なし、`:141-195` のループ内にも行数判定がなく全行処理。`src/Eccube/Service/Csv/Importer/Event/StockJoinEditReplaceSourcesImportHandler.php:44-46` も `COLUMN_PRODUCT_CODE / COLUMN_SOURCE_QTY / MAX_ERROR_COUNT = 20` のみで MAX_ROWS 不在。一方 UI 文言は `src/Eccube/Resource/locale/messages.ja.yaml:5101` `admin.stock.join.new_source_csv_modal.csv_file: CSVファイル選択（1ファイルの登録上限は 10,000 件です）` および `:5124` と表示するのみ。分割側は `StockSplitEditReplaceDestinationsImportHandler.php:250-252` に `if ($rowIndex > self::MAX_ROWS) { $errors[] = '登録上限（'.self::MAX_ROWS.'件）を超えています。'; break; }` があるが結合側には同等処理なし。",
+      "note": ""
+    },
+    {
+      "rowId": 632,
+      "status": "未対応",
+      "evidence": "結合元在庫数Ajax更新は 0 でも行を保持する。`src/Eccube/Controller/Admin/Stock/StockJoinController.php:1258-1264` `foreach ($sourceStocks as $psIdKey => $value) { $psId = (int) $psIdKey; if ($psId > 0 && isset($sources[$psId])) { $sources[$psId]['quantity'] = \\max(0, (int) $value); } } $session->set($sessionKey, $sources);` と Session 保存のみで削除せず、戻り値も `:1276 return $this->json(['ok' => true]);`（details_were_removed を返さない）。単一行更新 `:1306-1307` も `$quantity = \\max(0, (int) $request->request->get('quantity', 0)); $sources[$sourceId]['quantity'] = $quantity;` で同様、`:1322 return $this->json(['ok' => true, 'quantity' => $quantity]);`。0削除ユーティリティ `src/Eccube/Service/Admin/Stock/Util/StockJoinApplyPostedSourceStocks.php:34-51`（`if ($posted <= 0) { $entityManager->remove($Detail); continue; }`）は `git grep StockJoinApplyPostedSourceStocks` でも定義ファイル以外に呼び出し元が無く未使用。twig 側 `stock_join_edit.twig:733` の `if (data && data.details_were_removed && !skipReloadOnRemoval) { location.reload(); }` はサーバが当該フラグを一切返さないため発火しない。",
+      "note": ""
+    }
+  ]
+}

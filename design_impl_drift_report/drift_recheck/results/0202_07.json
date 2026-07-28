@@ -1,0 +1,77 @@
+{
+  "packetId": "0202_07",
+  "results": [
+    {
+      "rowId": 657,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockHistoryController.php:484-503` `private function getStockHistoryDisposalCsvHeader(): array { return ['商品コード'=>'', '商品名'=>'', '言語'=>'', '状態'=>'', 'Foil'=>'', '店舗'=>'', '在庫場所'=>'', '登録元'=>'', '欠品点数'=>'', ...]; }` は現 develop でも15列のままで、7列目は `'在庫場所' => ''`(:492)、`'登録元ID'` は存在しない。`src/Eccube/Service/Csv/StockHistoryDisposalCsv.php:108` `'登録元ID' => $StockHistory->getHistorySourceId(),` は行データ側にあるが、`:65` `$headerKeys = array_keys($this->csvHeader);` / `:70` `array_map(fn (string $key) => $row[$key] ?? '', $headerKeys)` によりヘッダに無い列は出力されない構造も監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 658,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/history.twig:604-605` `{% for StockHistory in PaginationAll %}` / `<input type=\"hidden\" name=\"ids[]\" value=\"{{ StockHistory.id }}\">` のまま。行選択用 checkbox は当該一覧に存在しない（grep で `type=\"checkbox\"` の行選択要素なし、検索条件フォームの checkbox-inline のみ）。`src/Eccube/Controller/Admin/Stock/StockHistoryController.php:238` `$PaginationAll = $qb->getQuery()->getResult();` で全件をテンプレートへ渡す実装も不変。",
+      "note": ""
+    },
+    {
+      "rowId": 659,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockHistoryController.php:410-417` `} catch (\\RuntimeException $e) { ... if ($referer !== null && $referer !== '') { return $this->redirect($referer); } return $this->redirectToRoute('admin_stock_history'); }` とリファラ無し時の遷移先は依然 `admin_stock_history`。`admin_stock_history_new` ルートは `grep -rn \"admin_stock_history_new\" src/` で0件。ID未指定時は `:508` `$pageNo = $request->getSession()->get('eccube.admin.stock_history.search.page_no', 1);` を読む一方、一覧側の保存キーは `:96` `$sessionKeyPageNo = 'eccube.admin.stock.stock_history.pageNo';` でキー不一致も未修正。",
+      "note": ""
+    },
+    {
+      "rowId": 660,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:252` `$this->editQuantityColumn = ColumnDefinitions::editQuantity()->setRequired(true);`、`src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:617-619` `public static function editQuantity(string $name = '在庫増減数'): BaseCsvColumn { return self::createUnsignedNumericColumn($name, '在庫増減数'); }`、`:716-720` `createUnsignedNumericColumn(...) { $column->setConverter(new IntConverter())->addValidator(new NumericValidator()); }`、`src/Eccube/Service/Csv/Importer/Validator/NumericValidator.php:43` `return SqlUtil::isNumericParam($value);`、`src/Eccube/Util/SqlUtil.php:73-76` `public static function isNumericParam(string $sqlVal): bool { return (bool) preg_match('/^\\d+$/', $sqlVal); }` と、符号なし数字のみ許可のまま。-99999999〜99999999 の範囲検証も未実装（`isSignedNumericParam` は存在するが在庫増減数列では未使用）。",
+      "note": ""
+    },
+    {
+      "rowId": 661,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:253` `$this->purchaseUnitPriceColumn = ColumnDefinitions::purchaseUnitPrice()->setRequired(true);` は在庫変動区分に関係なく常時必須。`src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:398-402` `trans('admin.product.stock_change_csv.stock_purchase_price_col') => ['id' => 'stock_purchase_price', 'description' => ..., 'required' => true,]` も常時 true。`src/Eccube/Resource/template/admin/Stock/change.twig:433-435` `{% if key.required %}<span class=\"badge bg-primary ms-1\">{{ 'admin.common.required'|trans }}</span>{% endif %}` で必須バッジ表示も不変。親区分（入庫/廃棄）による分岐は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 662,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:611` `$columns = array_keys($this->getStockChangeCsvHeader());` で雛形を組み立て、`:387-403` の `getStockChangeCsvHeader()` は `stock_product_code` / `stock_change_quantity` / `stock_purchase_price` の3要素のみ。在庫変動理由に相当するキー（`stock_change_reason` 等）は同メソッドに存在せず、`:625` `fputcsv($fp, $row, ...)` の出力も3列のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 663,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/StockChangeType.php:154-159` `->add('import_file', FileType::class, ['label' => 'admin.common.csv_select', 'mapped' => false, 'required' => true, 'constraints' => [ ],]);` と constraints は空配列のままで File/MIME/maxSize 制約なし。`src/Eccube/Resource/template/admin/Stock/change.twig:406` `{{ form_widget(form.import_file, {'attr': {'accept': 'text/csv,text/tsv', 'class': 'd-none'}}) }}` も tsv 許可のまま。`src/Eccube/Service/Csv/Importer/CsvImporter.php:172-173` `$fileExtension = $file->getClientOriginalExtension(); $delimiter = ($fileExtension === 'tsv') ? \"\\t\" : $this->eccubeConfig['eccube_csv_import_delimiter'];` で TSV 受入経路も残存。",
+      "note": ""
+    },
+    {
+      "rowId": 664,
+      "status": "未対応",
+      "evidence": "`grep -rn \"getRecentCsvImportHistory\" src/` のヒットは定義側の `src/Eccube/Repository/DtbCsvImportHistoryRepository.php:79` `public function getRecentCsvImportHistory(int $csvImportType, string $fileName): array` のみで、呼び出し箇所は0件。`src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:88-103` のコンストラクタに `DtbCsvImportHistoryRepository` の注入はなく、`:260` `if ($this->countCsvRows($file) >= static::ADMIN_CSV_IMPORT_MAX_ROWS) {` の行数チェック後、`:323` `$result = $importer->import($file);` へ直行する。「直近でアップロードされたファイル名です。」相当のメッセージも `src/Eccube/Resource/locale/messages.ja.yaml` に存在しない（grep 0件）。",
+      "note": ""
+    },
+    {
+      "rowId": 665,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/BaseCsvImportHandler.php:72-77` `if (count($row) !== count($columns)) { ...addInvalidColumnCountError(...); $event->breakAll(); return; }`、`:93-96` `if (!$column->validate($messageStore, $row)) { $event->breakAll(); return; }` が残存。`src/Eccube/Service/Csv/Importer/CsvImporter.php:239-243` `$this->handler->onValidateRow($event); if ($event->isBreakAll()) { $hasBreak = true; break; }` で最初のエラー行でループ中断。`src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:296` `$event->breakAll();`（商品コード未存在時）も不変で、最終行まで検査する実装にはなっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 666,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductStockRepository.php:536-551` `public function getProductStockIdByProductCode(string $productCode, BaseInfo $BaseInfo, int $stockLocationId): ?int { $qb->select('ps.id')->innerJoin('ps.ProductClass', 'pc')->where('pc.code = :productCode')...->setMaxResults(1); $result = $qb->getQuery()->getOneOrNullResult(); return $result ? $result['id'] : null; }` と `setMaxResults(1)`(:547) のままで2件以上一致の判定なし、`setLockMode`/`FOR UPDATE` 相当も無し。`src/Eccube/Service/Csv/Importer/CsvImporter.php:225-226` `$defaultLockTimeout = SqlUtil::getLockTimeout($this->em); SqlUtil::setLockTimeout($this->em, $this->getLockTimeout());` はタイムアウト設定のみで、`StockChangeCsvImportHandler.php:291-299` も未存在エラー（`商品コード「%s」が見つかりません`）1種類のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 667,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:303-323` `$stock = ['productStockId' => $productStockId, 'editQuantity' => $this->editQuantityColumn->getValue($row), ...]; $stockChangeId = $repository->insertStockChangeDetail($stock); $this->totalInventoryChange += (int) $this->editQuantityColumn->getValue($row); ... ++$this->rowCount;` の通り、editQuantity が0かどうかの判定・スキップ（`$event->skipRow()` 等）は無く、0行も承認明細登録・集計・rowCount 加算の対象のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 668,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:273-325` `persistStockChange()` は `$repository->insertStockChangeDetail($stock);`(:319) で dtb_stock_edit_approval_detail を登録するのみで、ProductStock の在庫減算・DtbStockHistory 作成・スマレジ連携呼び出しは一切存在しない（同ファイル全体に `StockHistory` 生成や smaregi 系サービスの注入なし。:66-77 のコンストラクタ依存も承認・明細・拠点・在庫Repository等のみ）。承認側 `src/Eccube/Service/Admin/Stock/Util/StockEditApprovalLineItemApprover.php:56-58` `* - 申請時に作成済みの在庫履歴を更新` / `* - 在庫情報は申請時に反映済みのため更新不要` の前提も監査時点と同一で、CSV申請経路での反映欠落は解消されていない。",
+      "note": ""
+    }
+  ]
+}

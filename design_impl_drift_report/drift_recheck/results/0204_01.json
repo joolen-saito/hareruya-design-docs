@@ -1,0 +1,77 @@
+{
+  "packetId": "0204_01",
+  "results": [
+    {
+      "rowId": 469,
+      "status": "未対応",
+      "evidence": "現 develop でも `src/Eccube/Resource/locale/messages.ja.yaml:2210` `admin.product.promotion: プロモ種別` のままで、設計期待値の「プロモ」になっていない。ラベル参照側も未変更で `src/Eccube/Form/Type/Admin/SearchProductType.php:187` `'label' => 'admin.product.promotion',`（EntityType 側も同 :198 で同一キー）、`src/Eccube/Resource/template/admin/Product/index.twig:307` `{{ form_label(searchForm.promotion) }}` が表示している。なお `messages.ja.yaml:2211` の `admin.product.promotion_promo: プロモ` は選択肢の値であり検索条件ラベルではない。",
+      "note": "検証は develop(da9c2ba276) の内容に対して git show/git grep で実施。作業ツリーは別 feature ブランチ(0ccb093c50)のため直接 Read せず develop 版を参照した。"
+    },
+    {
+      "rowId": 470,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductRepository.php:1091` `$qb->andWhere('p.name LIKE :adminSearchProductName')` のままで、`p.name_en` は依然として含まれない。英語名を含む OR 条件は隠し一括キーワード側の `src/Eccube/Repository/ProductRepository.php:1132` `'p.id = :id OR p.name LIKE :likeid OR p.name_en LIKE :likeid OR pc.code LIKE :likeid OR ca.name_jp LIKE :likeid OR ca.name_en LIKE :likeid'` にしか存在しない。`git grep adminSearchProductName da9c2ba276 -- src/` の結果は ProductRepository.php:1091,1092 のみで、別クラス・別サービスへの移管もない。",
+      "note": ""
+    },
+    {
+      "rowId": 471,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductRepository.php:1104` `->andWhere('ca_card.name_jp LIKE :adminSearchCardName');`（EXISTS サブクエリ内、:1098-1107）のままで `ca_card.name_en` は参照されていない。`git grep adminSearchCardName da9c2ba276 -- src/` の結果も ProductRepository.php:1104,1107 のみで、他所への実装移管はない。",
+      "note": ""
+    },
+    {
+      "rowId": 472,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/ProductController.php:222-230` に `// 初期表示の場合は検索前のため商品一覧を表示しない.` / `$page_no = 1;` / `$this->session->set('eccube.admin.product.search', $viewData);` / `return [ 'searchForm' => ..., 'pagination' => null,` が現 develop でも残っており、`ProductRepository::getQueryBuilderBySearchDataForAdmin`（同 :245）へ進まず1ページ目の一覧を表示しない。",
+      "note": ""
+    },
+    {
+      "rowId": 473,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductRepository.php:1386-1397` の Order By は `if (isset($searchData['sortkey']) ...) { $qb->orderBy(self::COLUMNS[$searchData['sortkey']], $sortOrder); $qb->addOrderBy('p.id', 'DESC'); } else { $qb->orderBy('p.id', 'DESC'); }` に続き `$qb->addOrderBy('IDENTITY(pc.Language)', 'ASC');` `$qb->addOrderBy('IDENTITY(pc.CardCondition)', 'ASC');` のままで、棚番号昇順も既定の `p.update_date DESC` も存在しない。`git grep -i shelf da9c2ba276 -- src/Eccube/Repository/ProductRepository.php` のヒットは :1378-1382 の検索絞り込み `->andWhere($qb->expr()->in('pc.ShelfNumber', ':shelf_number'))` のみで、並び順用途の実装はない。`self::COLUMNS`（同 :61-68）にも shelf_number キーはない。",
+      "note": ""
+    },
+    {
+      "rowId": 474,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Repository/ProductRepository.php:1080-1084` に規格レベルの廃止除外が追加済み: `->leftJoin('pc.Status', 'pcs')` / `->andWhere('pc.visible = :visible')` / `->andWhere('pcs.id != :abolishedStatus')` / `->setParameter('visible', true)` / `->setParameter('abolishedStatus', ProductStatus::DISPLAY_ABOLISHED);`。`ProductStatus::DISPLAY_ABOLISHED = 3`（`src/Eccube/Entity/Master/ProductStatus.php:61`）。設計期待値の要素である ProductClass.visible と ProductClass.Status(廃止) の両方が既定除外条件として実装され、監査時点で指摘された「pc.visible や pc.Status による廃止規格除外条件を付けていない」状態は解消。修正コミットは `2428d2d92c fix(ECCUBE_HARERUYA-1596): exclude abolished product classes from admin product list search` および `59e4629938 fix(ECCUBE_HARERUYA-1596): exclude disused product classes from admin product list search`。表示側も `src/Eccube/Controller/Admin/Product/ProductController.php:259-264` で `$paginator->paginate($qb, ..., ['wrap-queries' => true])` と ProductClasses を fetch join（`ProductRepository.php:1074` `->addSelect('pc', 'tr', 'ps', 'cd', 'pi')`）しているため、Twig が走査する `Product.ProductClasses` は上記 WHERE で絞られたコレクションになり、廃止規格は行として出力されない。",
+      "note": "Twig 側 index.twig:576 の `{% if subClass.Language and subClass.CardCondition %}` は言語・状態の欠損除外であり廃止判定とは別軸。廃止除外はクエリ側で担保されている。"
+    },
+    {
+      "rowId": 475,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:2258` `admin.product.list_display_data__title: 表示データ切り替え` のままで、設計の「表示データ切替え」と表記が一致しない。表示箇所も未変更で `src/Eccube/Resource/template/admin/Product/index.twig:529` `<label class=\"col-form-label me-4\">{{ 'admin.product.list_display_data__title'|trans }}</label>`。",
+      "note": ""
+    },
+    {
+      "rowId": 476,
+      "status": "未対応",
+      "evidence": "ラベルは `src/Eccube/Resource/locale/messages.ja.yaml:2258` `admin.product.list_display_data__title: 表示データ切り替え`（設計は「表示データ切替え」）、選択項目は同 `:2259 admin.product.list_display_data__main: 販売数（通販+TC東京）`（設計は全角「＋」の「販売数（通販＋TC東京）」）、`:2260 admin.product.list_display_data__branch: 販売数（支店）`、`:2261 admin.product.list_display_data__stock: 入庫数`。Twig も未変更で `src/Eccube/Resource/template/admin/Product/index.twig:529`（ラベル）、`:532` `{{ 'admin.product.list_display_data__main'|trans }}`、`:533` `..._branch`、`:534` `..._stock` を表示する。監査時点と同じ差分（「切替え」→「切り替え」、全角＋→半角+）が残存。",
+      "note": "「販売数（支店）」「入庫数」の2件は元から一致しているが、ラベルと1件目の選択肢文言が未修正のため設計期待値を完全には満たさない。"
+    },
+    {
+      "rowId": 477,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Product/index.twig:824` `<div class=\"text-center text-muted mb-4 h5\">{{ 'admin.common.search_no_result'|trans }}</div>` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1739` `admin.common.search_no_result: 検索条件に合致するデータが見つかりませんでした`。設計の「検索結果がありません」に変更されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 478,
+      "status": "対応済み",
+      "evidence": "商品一覧クエリに規格側の廃止除外が実装済み。`src/Eccube/Repository/ProductRepository.php:1080-1084` `->leftJoin('pc.Status', 'pcs')` / `->andWhere('pc.visible = :visible')` / `->andWhere('pcs.id != :abolishedStatus')` / `->setParameter('abolishedStatus', ProductStatus::DISPLAY_ABOLISHED);`。監査時点の「ProductClassesを結合するだけでProductClass.visibleやProductClass.Statusの廃止除外を行わず」という状態は解消されている。Twig は `src/Eccube/Resource/template/admin/Product/index.twig:573-579` `{% for Product in pagination %}` → `{% for subClass in Product.ProductClasses %}` `{% if subClass.Language and subClass.CardCondition %}` で走査するが、`src/Eccube/Controller/Admin/Product/ProductController.php:259-264` の `$paginator->paginate($qb, (int) $page_no, (int) $page_count, ['wrap-queries' => true])` と `ProductRepository.php:1074` `->addSelect('pc', 'tr', 'ps', 'cd', 'pi')` の fetch join により、走査対象コレクションは上記 WHERE 適用後の規格のみとなるため、廃止規格は一覧行に出力されない。",
+      "note": "商品本体ステータス側の除外（SearchProductType の status 選択肢）とは独立に、規格レベルの除外根拠がクエリに追加されている点が監査時点との差分。"
+    },
+    {
+      "rowId": 479,
+      "status": "未対応",
+      "evidence": "現 develop でも規格単位の個別行・個別集計のまま。`src/Eccube/Resource/template/admin/Product/index.twig:575-579` `{% for subClass in Product.ProductClasses %}` … `{% set ProductClasses = ProductClasses|merge([subClass]) %}` で ProductClass を1件ずつ行化し、`:710` `{% for key, productClass in ProductClasses %}`、`:728` `{% set stockSummary = stockSummaries[productClass.id]|default(defaultStockSummary) %}`、`:736` `{% set mainQuantity = mainSalesQuantities[productClass.id]|default(defaultOrderQuantities) %}` と product_class_id をキーに参照している。集計側も product_class_id 単位のままで `src/Eccube/Controller/Admin/Product/ProductController.php:267` `$productClassIds = $this->collectVisibleProductClassIds($pagination->getItems());`、`src/Eccube/Repository/ProductStockRepository.php:629` `public function getStockSummaryByProductClassIds(array $productClassIds): array`、`src/Eccube/Repository/DtbSalesQuantityRepository.php:479` `getMainSalesQuantitiesByProductClassIds` / `:491` `getBranchSalesQuantitiesByProductClassIds`、`src/Eccube/Repository/DtbStockUpQuantityRepository.php:258` `getStockUpQuantitiesByProductClassIds`。言語単位・通常状態(NM/SP/MP/HP)グループ単位の合算処理も、通常以外(高額商品等)を分離表示する処理も存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 480,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductRepository.php:1386-1393` `if (isset($searchData['sortkey']) && !empty($searchData['sortkey']) && isset(self::COLUMNS[$searchData['sortkey']])) { ... $qb->orderBy(self::COLUMNS[$searchData['sortkey']], $sortOrder); $qb->addOrderBy('p.id', 'DESC'); } else { $qb->orderBy('p.id', 'DESC'); }`、続く `:1395-1397` `// 規格行の表示順: 言語（日本語→英語）→ 状態（NM→SP→…）` `$qb->addOrderBy('IDENTITY(pc.Language)', 'ASC');` `$qb->addOrderBy('IDENTITY(pc.CardCondition)', 'ASC');` のままで、棚番号昇順の ORDER BY は存在しない。`self::COLUMNS`（`src/Eccube/Repository/ProductRepository.php:61-68`: product_id/name/product_code/status/create_date/update_date）にも棚番号は含まれない。ShelfNumber の登場箇所は `:1378-1382` の検索絞り込み `->andWhere($qb->expr()->in('pc.ShelfNumber', ':shelf_number'))` のみ。",
+      "note": ""
+    }
+  ]
+}
