@@ -6060,3 +6060,398 @@ pf-eccube3/app/Plugin/HareruyaEc/Service/PointService.php:48:        $pointHisto
 pf-eccube3/app/Plugin/HareruyaEc/Service/PointService.php:85:        $pointHistoryForUse = new DtbPointHistory();
 pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/LostPoints.php:51:            $history = new DtbPointHistory();
 
+exec
+/bin/bash -lc "nl -ba ec-cube-enterprise/src/Eccube/Controller/App/DeckBuilder/CardController.php | sed -n '135,165p'
+nl -ba ec-cube-enterprise/src/Eccube/Controller/App/CardController.php | sed -n '35,65p'
+nl -ba ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php | sed -n '980,1040p'
+nl -ba ec-cube-enterprise/src/Eccube/Entity/AbstractEntity.php | sed -n '160,190p;230,260p'
+nl -ba ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php | sed -n '40,125p'
+nl -ba ec-cube-enterprise/src/Eccube/Service/App/Content/TopBannerResponseBuilder.php | sed -n '25,80p'
+nl -ba ec-cube-enterprise/src/Eccube/Service/App/Content/TopBannersResponseBuilder.php | sed -n '25,90p' 2>/dev/null || true
+nl -ba ec-cube-enterprise/src/Eccube/Repository/Master/MtbTopBannerRepository.php | sed -n '25,70p'
+nl -ba ec-cube-enterprise/src/Eccube/Entity/Master/MtbTopBanner.php | sed -n '35,75p'" in /home/y-saito/Developments
+ succeeded in 0ms:
+   135	        if (!is_string($params[$field])) {
+   136	            return false;
+   137	        }
+   138	
+   139	        return preg_match('/^\d+$/', $params[$field]) === 1;
+   140	    }
+   141	
+   142	    #[Route('/api/cards/{id}', name: 'api_deck_builder_card', methods: ['GET', 'OPTIONS'], requirements: ['id' => '\d+'])]
+   143	    public function getCard(Request $request, int $id): JsonResponse
+   144	    {
+   145	        if ($request->isMethod('OPTIONS')) {
+   146	            return $this->createCorsResponse(new JsonResponse(null, Response::HTTP_NO_CONTENT));
+   147	        }
+   148	
+   149	        $Card = $this->cardRepository->find($id);
+   150	        if ($Card === null) {
+   151	            return $this->createErrorResponse(
+   152	                Response::HTTP_NOT_FOUND,
+   153	                trans('api.deck_builder.common.not_found')
+   154	            );
+   155	        }
+   156	
+   157	        return $this->createCorsResponse(new JsonResponse($Card->toNormalizedArray(), Response::HTTP_OK));
+   158	    }
+   159	
+   160	    #[Route('/api/card', name: 'api_deck_builder_card_search', methods: ['GET', 'OPTIONS'])]
+   161	    public function getCardByParams(Request $request): JsonResponse
+   162	    {
+   163	        if ($request->isMethod('OPTIONS')) {
+   164	            return $this->createCorsResponse(new JsonResponse(null, Response::HTTP_NO_CONTENT));
+   165	        }
+    35	     * 検索クエリに一致するカード情報を1件取得する
+    36	     *
+    37	     * @param Request $request
+    38	     *
+    39	     * @return JsonResponse
+    40	     */
+    41	    #[Route(path: '/card', name: 'card_by_params', methods: ['GET'])]
+    42	    #[Route(path: '/card.json', name: 'card_by_params_json', methods: ['GET'])]
+    43	    public function getSingleCardByParams(Request $request): JsonResponse
+    44	    {
+    45	        $name = (string) $request->query->get('name', '');
+    46	        $lang = (string) $request->query->get('lang', 'en');
+    47	
+    48	        try {
+    49	            if ($name === '') {
+    50	                throw new NotFoundException('Not Found');
+    51	            }
+    52	
+    53	            $card = $this->cardRepository->findOneByParams($name, $lang);
+    54	            if ($card === null) {
+    55	                throw new NotFoundException('Not Found');
+    56	            }
+    57	
+    58	            return $this->json($card, Response::HTTP_OK);
+    59	        } catch (BaseApiException $e) {
+    60	            return $this->json([
+    61	                'code' => $e->getStatusCode(),
+    62	                'message' => $e->getMessage(),
+    63	            ], $e->getStatusCode());
+    64	        } catch (\Throwable $e) {
+    65	            log_error('カード検索処理中にエラーが発生しました', [
+   980	        $qb = $this->cardDetailRepository->getQueryBuilderBySearchDataForAdmin($searchData);
+   981	
+   982	        $event = new EventArgs(
+   983	            [
+   984	                'qb' => $qb,
+   985	                'searchData' => $searchData,
+   986	            ],
+   987	            $request
+   988	        );
+   989	        $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_PRODUCT_CARD_DETAIL_HTML_SEARCH);
+   990	
+   991	        $pagination = $paginator->paginate(
+   992	            $qb,
+   993	            (int) $pageNo,
+   994	            (int) $pageCount,
+   995	            ['wrap-queries' => true]
+   996	        );
+   997	
+   998	        return [
+   999	            'cardDetails' => $pagination->getItems(),
+  1000	            'pagination' => $pagination,
+  1001	            'modal' => ($request->get('modal') === 'true'),
+  1002	        ];
+  1003	    }
+  1004	
+  1005	    /**
+  1006	     * カード詳細IDをもとに結果表示に必要な情報を得る
+  1007	     *
+  1008	     * @return RedirectResponse|JsonResponse
+  1009	     *
+  1010	     * @throws \Exception
+  1011	     */
+  1012	    #[Route(path: '/%eccube_admin_route%/product/detail/search/id', name: 'admin_product_search_card_detail_by_id', methods: ['GET', 'POST'])]
+  1013	    public function searchCardDetailById(Request $request)
+  1014	    {
+  1015	        $data = [];
+  1016	        $cardDetailId = $request->get('id');
+  1017	
+  1018	        if (!$request->isXmlHttpRequest() || !isset($cardDetailId)) {
+  1019	            return $this->json($data);
+  1020	        }
+  1021	
+  1022	        $CardDetail = $this->cardDetailRepository->find($cardDetailId);
+  1023	        if ($CardDetail === null) {
+  1024	            return $this->json([], 404);
+  1025	        }
+  1026	
+  1027	        $Card = $CardDetail->getCard();
+  1028	        if ($Card === null) {
+  1029	            return $this->json([], 404);
+  1030	        }
+  1031	
+  1032	        $CardColors = $Card->getColors();
+  1033	        if ($CardColors->isEmpty()) {
+  1034	            return $this->json([], 404);
+  1035	        }
+  1036	
+  1037	        if ($CardDetail->getRarity() === null) {
+  1038	            return $this->json([], 404);
+  1039	        }
+  1040	
+   160	     * - AbstractEntity :: associative array such as [id => value]
+   161	     * - PersistentCollection :: associative array of [[id => value], [id => value], ...]
+   162	     *
+   163	     * @param string[] $excludeAttribute Array of field names to exclusion.
+   164	     *
+   165	     * @return array<string, mixed>
+   166	     */
+   167	    public function toNormalizedArray(array $excludeAttribute = ['__initializer__', '__cloner__', '__isInitialized__']): array
+   168	    {
+   169	        $arrResult = $this->toArray($excludeAttribute);
+   170	        foreach ($arrResult as &$value) {
+   171	            if ($value instanceof \DateTime) {
+   172	                // see also https://stackoverflow.com/a/17390817/4956633
+   173	                $value->setTimezone(new \DateTimeZone('UTC'));
+   174	                $value = $value->format('Y-m-d\TH:i:s\Z');
+   175	            } elseif ($value instanceof AbstractEntity) {
+   176	                // Entity の場合は [id => value] の配列を返す
+   177	                $value = $this->getEntityIdentifierAsArray($value);
+   178	            } elseif ($value instanceof Collection) {
+   179	                // Collection の場合は ID を持つオブジェクトの配列を返す
+   180	                $Collections = $value;
+   181	                $value = [];
+   182	                foreach ($Collections as $Child) {
+   183	                    $value[] = $this->getEntityIdentifierAsArray($Child);
+   184	                }
+   185	            }
+   186	        }
+   187	
+   188	        return $arrResult;
+   189	    }
+   190	
+   230	        return $this;
+   231	    }
+   232	
+   233	    /**
+   234	     * Convert to Entity of Identity value to associative array.
+   235	     *
+   236	     * @return array<mixed> associative array of [[id => value], [id => value], ...]
+   237	     */
+   238	    public function getEntityIdentifierAsArray(AbstractEntity $Entity): array
+   239	    {
+   240	        $Result = [];
+   241	        $PropReflect = new \ReflectionClass($Entity);
+   242	        if ($Entity instanceof Proxy) {
+   243	            // Doctrine Proxy の場合は親クラスを取得
+   244	            $PropReflect = $PropReflect->getParentClass();
+   245	        }
+   246	        $Properties = $PropReflect->getProperties();
+   247	
+   248	        foreach ($Properties as $Property) {
+   249	            $attribute = $Property->getAttributes(Id::class);
+   250	            if ($attribute) {
+   251	                $Result[$Property->getName()] = $Property->getValue($Entity);
+   252	            }
+   253	        }
+   254	
+   255	        return $Result;
+   256	    }
+   257	}
+    40	    /**
+    41	     * トップバナーIDを検索条件として、トップバナー情報を1件取得して返却するAPIエンドポイント
+    42	     *
+    43	     * @param Request $request
+    44	     * @param string $topBannerId
+    45	     *
+    46	     * @return JsonResponse
+    47	     */
+    48	    #[Route(path: '/topBanner/{topBannerId}', name: 'top_banner_by_top_banner_id', methods: ['GET'])]
+    49	    public function getTopBannerByTopBannerId(Request $request, string $topBannerId): JsonResponse
+    50	    {
+    51	        try {
+    52	            if (!preg_match('/^\d+$/', $topBannerId) || (int) $topBannerId < 1) {
+    53	                log_warning('topBannerIdは正の整数である必要があります', [
+    54	                    'request_url' => $request->getUri(),
+    55	                ]);
+    56	                throw new NotFoundException('Not Found');
+    57	            }
+    58	
+    59	            $TopBanner = $this->topBannerRepository->find((int) $topBannerId);
+    60	            if (empty($TopBanner)) {
+    61	                log_warning('トップバナーが見つかりません', [
+    62	                    'request_url' => $request->getUri(),
+    63	                ]);
+    64	                throw new NotFoundException('Not Found');
+    65	            }
+    66	
+    67	            $response = $this->topBannerResponseBuilder->build($TopBanner);
+    68	
+    69	            return $this->json($response, Response::HTTP_OK);
+    70	        } catch (BaseApiException $e) {
+    71	            return $this->json([
+    72	                'code' => $e->getStatusCode(),
+    73	                'errors' => $e->getErrors(),
+    74	            ], $e->getStatusCode());
+    75	        }
+    76	    }
+    77	
+    78	    /**
+    79	     * 言語コードを検索条件として、トップバナー情報の一覧を取得して返却するAPIエンドポイント
+    80	     *
+    81	     * @param Request $request
+    82	     * @param string $languageCode
+    83	     *
+    84	     * @return JsonResponse
+    85	     */
+    86	    #[Route(path: '/topBanners/{languageCode}.json', name: 'top_banners_by_language_code_json', methods: ['GET'])]
+    87	    #[Route(path: '/topBanners/{languageCode}', name: 'top_banners_by_language_code', methods: ['GET'])]
+    88	    public function getTopBannersByLanguageCode(Request $request, string $languageCode): JsonResponse
+    89	    {
+    90	        try {
+    91	            $Language = $this->languageRepository->findOneBy([
+    92	                'code' => $languageCode,
+    93	            ]);
+    94	
+    95	            if (empty($Language)) {
+    96	                log_warning('言語情報が見つかりません', [
+    97	                    'request_url' => $request->getUri(),
+    98	                ]);
+    99	                throw new NotFoundException('Not Found');
+   100	            }
+   101	
+   102	            $TopBanners = $Language->getTopBanners();
+   103	            if ($TopBanners->isEmpty()) {
+   104	                log_warning('指定した言語のトップバナーが見つかりません', [
+   105	                    'request_url' => $request->getUri(),
+   106	                ]);
+   107	                throw new NotFoundException('Not Found');
+   108	            }
+   109	
+   110	            $response = $this->topBannersResponseBuilder->build($TopBanners);
+   111	
+   112	            return $this->json($response, Response::HTTP_OK);
+   113	        } catch (BaseApiException $e) {
+   114	            return $this->json([
+   115	                'code' => $e->getStatusCode(),
+   116	                'errors' => $e->getErrors(),
+   117	            ], $e->getStatusCode());
+   118	        }
+   119	    }
+   120	}
+    25	     * @param MtbTopBanner $TopBanner
+    26	     *
+    27	     * @return array<string, mixed>
+    28	     */
+    29	    public function build(MtbTopBanner $TopBanner): array
+    30	    {
+    31	        $languages = [];
+    32	        foreach ($TopBanner->getLanguages() as $Language) {
+    33	            $languages[] = [
+    34	                'id' => $Language->getId(),
+    35	                'name_jp' => $Language->getNameJp(),
+    36	                'name_en' => $Language->getNameEn(),
+    37	                'code' => $Language->getCode(),
+    38	            ];
+    39	        }
+    40	
+    41	        $response = [
+    42	            'id' => $TopBanner->getId(),
+    43	            'image_url' => $TopBanner->getImageUrl(),
+    44	            'link' => $TopBanner->getLink(),
+    45	            'disp_type' => $TopBanner->getDispType(),
+    46	            'languages' => $languages,
+    47	        ];
+    48	
+    49	        return $response;
+    50	    }
+    51	}
+    25	    }
+    26	
+    27	    /**
+    28	     * トップバナー情報からAPIレスポンス用の配列を構築する
+    29	     *
+    30	     * @param iterable<MtbTopBanner> $TopBanners
+    31	     *
+    32	     * @return array<int, array<string, mixed>>
+    33	     */
+    34	    public function build(iterable $TopBanners): array
+    35	    {
+    36	        $response = [];
+    37	        foreach ($TopBanners as $TopBanner) {
+    38	            $response[] = $this->topBannerResponseBuilder->build($TopBanner);
+    39	        }
+    40	
+    41	        return $response;
+    42	    }
+    43	}
+    25	 */
+    26	class MtbTopBannerRepository extends AbstractRepository
+    27	{
+    28	    public function __construct(ManagerRegistry $registry)
+    29	    {
+    30	        parent::__construct($registry, MtbTopBanner::class);
+    31	    }
+    32	
+    33	    /**
+    34	     * 条件に一致する画像URLが空文字でないレコードをすべて返す
+    35	     *
+    36	     * @param array<int, mixed> $dispTypes
+    37	     */
+    38	    public function findWhereUrlIsNotEmpty(string $locale, int $limit, array $dispTypes = []): mixed
+    39	    {
+    40	        // localeとlocaleIdの対応づけ処理
+    41	        $localeId = $locale === 'en' ? MtbLanguage::EN_ID : MtbLanguage::JP_ID;
+    42	
+    43	        $qb = $this->createQueryBuilder('tb');
+    44	        $query = $qb->join('tb.Languages', 'l')
+    45	            ->where($qb->expr()->eq('l.id', ':localeId'))
+    46	            ->andWhere($qb->expr()->in('tb.dispType', ':dispTypes'))
+    47	            ->andWhere("tb.imageUrl <> ''")
+    48	            ->setParameter('localeId', $localeId)
+    49	            ->setParameter('dispTypes', $dispTypes)
+    50	            ->orderBy('tb.sortNo', 'ASC')
+    51	            ->addOrderBy('tb.id', 'ASC')
+    52	            ->setMaxResults($limit)
+    53	            ->getQuery();
+    54	
+    55	        return $query->execute();
+    56	    }
+    57	}
+    35	        self::SHOW_BOTH => '表示',
+    36	    ];
+    37	
+    38	    #[ORM\Column(name: 'id', type: Types::INTEGER, options: ['unsigned' => true, 'comment' => 'バナーID'])]
+    39	    #[ORM\Id]
+    40	    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+    41	    private int $id;
+    42	
+    43	    #[ORM\Column(name: 'image_url', type: Types::STRING, length: 255, options: ['comment' => '画像URL'])]
+    44	    private string $imageUrl;
+    45	
+    46	    #[ORM\Column(name: 'link', type: Types::STRING, length: 255, options: ['comment' => 'リンク'])]
+    47	    private string $link;
+    48	
+    49	    #[ORM\Column(name: 'disp_type', type: Types::INTEGER, options: ['default' => 0, 'comment' => '表示タイプ'])]
+    50	    private int $dispType;
+    51	
+    52	    /**
+    53	     * @var Collection<int, MtbLanguage>
+    54	     */
+    55	    #[ORM\JoinTable(name: 'dtb_top_banner_language')]
+    56	    #[ORM\JoinColumn(name: 'top_banner_id', referencedColumnName: 'id')]
+    57	    #[ORM\InverseJoinColumn(name: 'language_id', referencedColumnName: 'id')]
+    58	    #[ORM\ManyToMany(targetEntity: MtbLanguage::class, inversedBy: 'TopBanners')]
+    59	    private Collection $Languages;
+    60	
+    61	    #[ORM\Column(name: 'image_alt', type: Types::TEXT, length: 255, options: ['comment' => 'alt属性'])]
+    62	    private string $imageAlt;
+    63	
+    64	    #[ORM\Column(name: 'sort_no', type: Types::INTEGER, options: ['default' => 0, 'comment' => '表示順'])]
+    65	    private int $sortNo = 0;
+    66	
+    67	    public function __construct()
+    68	    {
+    69	        $this->Languages = new ArrayCollection();
+    70	    }
+    71	
+    72	    public function getId(): int
+    73	    {
+    74	        return $this->id;
+    75	    }
+
