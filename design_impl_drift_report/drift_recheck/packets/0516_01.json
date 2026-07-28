@@ -1,0 +1,83 @@
+{
+ "packetId": "0516_01",
+ "book": "0516",
+ "eeHead": "da9c2ba276ac317041cf5596c3ec6d6d4ab5c581",
+ "count": 5,
+ "findings": [
+  {
+   "rowId": 127,
+   "機能No": "A16-01",
+   "機能名": "A16-01 トップバナー情報取得",
+   "ドメイン": "a16",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "レスポンス（成功）はHTTP 200で、トップバナー情報をJSONで返す。詳細設計の応答フィールドは id, imageUrl, link, dispType, languages[].id, languages[].nameJp, languages[].nameEn, languages[].code とする。",
+   "実装実態": "TopBannerResponseBuilder は id, image_url, link, disp_type, languages[].id, languages[].name_jp, languages[].name_en, languages[].code を返す。ContentController はこの配列をそのまま JSON 200 で返す。",
+   "差分内容": "詳細設計埋め込み部ではプロパティは camelCase と明記され、サンプルも imageUrl/dispType/nameJp/nameEn である。一方、実装の単一整形層は snake_case の image_url/disp_type/name_jp/name_en を構築しており、Controller 側にも camelCase 変換処理はない。反証検索では src/Eccube/Controller/App、src/Eccube/Service/App、src/Eccube/Exception/App、src/Eccube/EventListener 配下で TopBannerResponseBuilder/topBanner/imageUrl/dispType/nameJp/nameEn を確認したが、当該API用の別整形層は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/Content/TopBannerResponseBuilder.php:41",
+   "設計書参照": "excel_to_html/output/0516_基本設計仕様書(API_データ管理).html#sheet-3:955"
+  },
+  {
+   "rowId": 128,
+   "機能No": "A16-01",
+   "機能名": "A16-01 トップバナー情報取得",
+   "ドメイン": "a16",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "レスポンス（失敗）は、該当IDのトップバナーが存在しない場合にHTTP 404で本文 {code, message}（\"Not Found\"）を返す。",
+   "実装実態": "該当なし時は NotFoundException('Not Found') を投げ、catch(BaseApiException) で {'code': 404, 'errors': ['Not Found']} を返す。",
+   "差分内容": "設計は失敗本文の形を {code, message} としているが、実装は message キーを返さず errors 配列を返す。NotFoundException は errors にメッセージを保持し、ContentController は getErrors() を errors キーで JSON 化している。反証検索では ContentController、BaseApiException、NotFoundException、ExceptionListener を確認したが、この経路で {code,message} に変換する処理はない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:70",
+   "設計書参照": "excel_to_html/output/0516_基本設計仕様書(API_データ管理).html#sheet-3:958"
+  },
+  {
+   "rowId": 129,
+   "機能No": "A16-02",
+   "機能名": "A16-02 言語コードに紐づいたトップバナーの情報一覧を取得",
+   "ドメイン": "a16",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "指定言語の設定済みトップバナー一覧を取得する。トップバナーマスタは設定状態・言語で絞り込み、取得対象は指定言語の設定済みトップバナーとする。",
+   "実装実態": "A16-02 Controller は言語コードで MtbLanguage を取得した後、$Language->getTopBanners() をそのまま返す。disp_type=1（表示）、画像URL空でないこと、sort_no順などを条件にする MtbTopBannerRepository::findWhereUrlIsNotEmpty() は存在するが、この API からは呼ばれていない。",
+   "差分内容": "設計は「設定済みトップバナー」を対象とし、トップバナーマスタを設定状態・言語で絞り込む要求だが、実装は言語関連のみで絞り込み、非表示（disp_type=0）や画像URL空のトップバナーも Collection に含まれていればレスポンス対象になる。反証として topBanners ルート、TopBannersResponseBuilder、MtbTopBannerRepository::findWhereUrlIsNotEmpty、SHOW_BOTH、dispType を再検索したが、A16-02 の getTopBannersByLanguageCode から表示状態絞り込みを行う呼び出しは見つからなかった。",
+   "実装参照": "src/Eccube/Controller/App/ContentController.php:91,102; src/Eccube/Repository/Master/MtbTopBannerRepository.php:38",
+   "設計書参照": "excel_to_html/output/0516_基本設計仕様書(API_データ管理).html#sheet-4:1023,1177,1185,1188,1222"
+  },
+  {
+   "rowId": 130,
+   "機能No": "A16-02",
+   "機能名": "A16-02 言語コードに紐づいたトップバナーの情報一覧を取得",
+   "ドメイン": "a16",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "表示順は既存実装のデフォルトと上限に従い、取得後に業務値を再計算しない。移行先トップバナーマスタは sort_no を持ち、表示順に用いる。",
+   "実装実態": "A16-02 は $Language->getTopBanners() の Collection を TopBannersResponseBuilder に渡しており、MtbTopBanner の ManyToMany 定義には sort_no の OrderBy がない。一方、未使用の MtbTopBannerRepository::findWhereUrlIsNotEmpty() には orderBy('tb.sortNo', 'ASC') がある。",
+   "差分内容": "設計は表示順を既存実装のデフォルトに従う要求を置いているが、A16-02 実装経路では sort_no ASC の明示的な並び替えも上限制御も行われない。反証として sortNo、orderBy、findWhereUrlIsNotEmpty、getTopBanners を検索したが、A16-02 Controller から sort_no 順取得へ接続する実装は確認できなかった。",
+   "実装参照": "src/Eccube/Controller/App/ContentController.php:102,110; src/Eccube/Entity/Master/MtbTopBanner.php:55; src/Eccube/Repository/Master/MtbTopBannerRepository.php:50",
+   "設計書参照": "excel_to_html/output/0516_基本設計仕様書(API_データ管理).html#sheet-4:1177,1216,1222"
+  },
+  {
+   "rowId": 131,
+   "機能No": "A16-02",
+   "機能名": "A16-02 言語コードに紐づいたトップバナーの情報一覧を取得",
+   "ドメイン": "a16",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "一覧が空、または当該言語コードが言語マスタに存在しない場合はコード404のJSONを返す。失敗レスポンス本文は {code, message}（\"Language code is not found\"）。",
+   "実装実態": "言語未存在または TopBanners が空の場合、NotFoundException('Not Found') を投げ、catch で {'code': 404, 'errors': ['Not Found']} を返す。",
+   "差分内容": "HTTP 404 自体は実装されているが、設計が指定する本文キー message とメッセージ 'Language code is not found' ではなく、実装は errors 配列に 'Not Found' を返す。反証として 'Language code is not found'、NotFoundException、errors/message、topBanners ルートを検索したが、A16-02 の 404 で設計文言・本文形を返す実装は見つからなかった。",
+   "実装参照": "src/Eccube/Controller/App/ContentController.php:95,99,103,107,113; src/Eccube/Exception/App/NotFoundException.php:27; src/Eccube/Exception/App/BaseApiException.php:48",
+   "設計書参照": "excel_to_html/output/0516_基本設計仕様書(API_データ管理).html#sheet-4:1045,1185,1197,1231"
+  }
+ ]
+}

@@ -1,0 +1,68 @@
+{
+ "packetId": "0507_02",
+ "book": "0507",
+ "eeHead": "da9c2ba276ac317041cf5596c3ec6d6d4ab5c581",
+ "count": 4,
+ "findings": [
+  {
+   "rowId": 117,
+   "機能No": "A07-05",
+   "機能名": "A07-05 複数ネット買取IDからネット買取受注の商品一覧を取得",
+   "ドメイン": "a07",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "`ids` は任意。カンマ区切り文字列として受け取り分解する。形式・件数の検証は行わない。未指定・空文字のときは0件となる。",
+   "実装実態": "実装は `explode(',', $ids)` 後、`preg_match('/^\\d+$/', trim($id)) === 1` で数字のみを残し、非数値トークンを除外する。さらに有効IDが空なら空配列を返す。",
+   "差分内容": "設計は形式・件数の検証を行わないとしているが、実装は数値形式でフィルタリングしており、`ids` の形式を実質的に検証している。HTTP 400 は返さない点は設計と一致するが、非数値要素を検索配列から落とす挙動は「形式検証なし」と一致しない。反証として同Controller、リポジトリ、関連MTGBuyer APIを検索したが、このAPIで別の未検証パーサへ委譲する経路は確認できなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:47",
+   "設計書参照": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-8:2128"
+  },
+  {
+   "rowId": 118,
+   "機能No": "A07-06",
+   "機能名": "A07-06 複数ネット買取IDから個別入力商品の一覧を取得",
+   "ドメイン": "a07",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "エンドポイントURLは /api/admin/buyOrderIndivisualInputProduct.json とする。",
+   "実装実態": "実装ルートは /%eccube_api_v1_route%/admin/buyOrderIndivisualInputProduct.json で、設定値 eccube_api_v1_route は api/v1 のため、実際の入口は /api/v1/admin/buyOrderIndivisualInputProduct.json。",
+   "差分内容": "設計は /api/admin/... を指定しているが、実装は api/v1 プレフィックス付きの /api/v1/admin/... で公開している。app/config/eccube/packages/eccube.yaml:6,55 で ECCUBE_API_V1_ROUTE の既定値が api/v1 であることも確認した。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:37",
+   "設計書参照": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-9:1980"
+  },
+  {
+   "rowId": 119,
+   "機能No": "A07-06",
+   "機能名": "A07-06 複数ネット買取IDから個別入力商品の一覧を取得",
+   "ドメイン": "a07",
+   "区分(画面種別)": "api",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "リクエストパラメータ ids は文字列・必須（〇）で、ネット買取IDをカンマ区切りで指定する。",
+   "実装実態": "ids を取得後、null または空文字なら HTTP 200 の空配列を返す。さらにカンマ分解後は数字のみをフィルタリングし、有効IDが空なら HTTP 200 の空配列を返す。",
+   "差分内容": "設計では ids が必須指定だが、実装は ids 未指定・空文字を許容し、必須エラーにしない。実装コメントでも 400 ではなく空配列を返す旧システム互換挙動としている。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:40",
+   "設計書参照": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-9:2003"
+  },
+  {
+   "rowId": 120,
+   "機能No": "A07-06",
+   "機能名": "A07-06 複数ネット買取IDから個別入力商品の一覧を取得",
+   "ドメイン": "a07",
+   "区分(画面種別)": "api",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "認証方式は IP制限・トークン とする。",
+   "実装実態": "jwt-token ヘッダによるトークン認証は実装済みだが、当該 API 入口に対する IP 制限の実装は確認できない。",
+   "差分内容": "トークン認証は JwtTokenHeaderExtractor と security access_token で確認できる一方、IP アドレス allowlist / denylist / access_control / Request::getClientIp 相当の判定が当該 API ルートに存在しない。",
+   "実装参照": "不在（探索範囲: /home/y-saito/Developments/ec-cube-enterprise/src/Eccube, /home/y-saito/Developments/ec-cube-enterprise/html, /home/y-saito/Developments/ec-cube-enterprise/app/config/eccube; 検索語: IP制限, ip制限, client_ip, REMOTE_ADDR, access_control, allowlist, trusted_proxies）",
+   "設計書参照": "excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html#sheet-9:1981"
+  }
+ ]
+}

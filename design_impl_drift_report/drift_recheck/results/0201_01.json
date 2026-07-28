@@ -1,0 +1,71 @@
+{
+  "packetId": "0201_01",
+  "results": [
+    {
+      "rowId": 1043,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/System/MemberController.php:302` `public function delete(Request $request, Member $Member): RedirectResponse` のまま型付きエンティティ引数解決に依存しており、監査時点から変わっていない。本体先頭は `$this->isTokenValid();` / `log_info('メンバー削除開始', [$Member->getId()]);`（同 :304,306）で、対象不在時の警告フラッシュ＋`redirectToRoute` 分岐は無い。`src/Eccube/EventListener/` 配下にも `admin_setting_system_member` を扱う 404→リダイレクト変換リスナは存在しない（grep 結果 0 件）ため、存在しないIDでは依然 404 応答となる。",
+      "note": "up/down（同 :244, :273）も同じ型付き引数だが、設計はこちらは404を許容しているため差分は delete のみ。"
+    },
+    {
+      "rowId": 1044,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/MemberType.php:171-174` `->add('smaregiMemberFlg', CheckboxType::class, ['label' => false, 'required' => false,])` のまま制約なし。同ファイルの POST_SUBMIT リスナ（:176 テナントbaseInfo、:224 非稼働Work＋`isLoginIdExists` による login_id 重複、:254 権限による店舗ID書き換え）にスマレジ一意性検証は無い。`grep -rn \"exist_smaregi_member\" src/Eccube` は 0 件でエラーメッセージキーも未追加。さらに `src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php:392` に `smaregi_member_flg は一意保証が無いため、id 昇順で決定的に1件目を採用し、複数該当は` とコメントされ、同 :397 `$operators = $this->memberRepository->findBy(['smaregi_member_flg' => true], ['id' => 'ASC']);`、:405 `'Multiple Smaregi operator members (smaregi_member_flg) found; using the smallest id'` と、複数保持を前提とした実装が現 develop に明示的に存在する。",
+      "note": "監査時点より「複数存在し得る」前提の実装（SmaregiOrderFactory）が増えており、一意制約の方向へは進んでいない。"
+    },
+    {
+      "rowId": 1045,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:72-79` で初期表示時に `$event = new EventArgs(['builder' => $builder, 'AuthorityRoles' => $AuthorityRoles,], $request);` `$this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_SETTING_SYSTEM_AUTHORITY_INDEX_INITIALIZE);` が追加され、`$form = $builder->getForm();`（:81）より前に発火する。保存完了時も `同:99-106` `$this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_SETTING_SYSTEM_AUTHORITY_INDEX_COMPLETE);` が `$this->authorityIndexAction->handle($input);`（:97）成功後・`addSuccess`（:108）前に発火する。定数は `src/Eccube/Event/EccubeEvents.php:1284-1285` `ADMIN_SETTING_SYSTEM_AUTHORITY_INDEX_INITIALIZE = 'admin.setting.system.authority.index.initialize'` / `..._COMPLETE = 'admin.setting.system.authority.index.complete'`。監査時点の「dispatch 呼び出しが無い」状態は解消済み。",
+      "note": ""
+    },
+    {
+      "rowId": 1046,
+      "status": "未対応",
+      "evidence": "`src/Eccube/EventListener/TwigInitializeListener.php:186-191` は `if ($Member instanceof Member) { $AuthorityRoles = $this->authorityRoleRepository->findBy(['Authority' => $Member->getAuthority()]); ... $eccubeNav = $this->getDisplayEccubeNav($eccubeNav, $AuthorityRoles, $baseUrl); }` の後 `$this->twig->addGlobal('eccubeNav', $eccubeNav);`(:191) のみで、`AuthorityRoles` を Twig グローバルに登録していない。`grep -rn \"AuthorityRoles\" src/Eccube/EventListener src/Eccube/Twig src/Eccube/Resource/template/admin/nav.twig` のヒットは同ファイルのローカル変数（:187,:189,:200,:204,:211,:238）と `src/Eccube/Twig/Extension/IsAccessibleRouteExtension.php:65,68` のローカル変数のみで、`addGlobal('AuthorityRoles', ...)` は 0 件。二重初期化回避フラグも同メソッド内に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1047,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:108` `$this->addSuccess('admin.common.save_complete', 'admin');` のままで、対応する翻訳は `src/Eccube/Resource/locale/messages.ja.yaml:1593` `admin.common.save_complete: 保存しました`。`grep -n \"権限設定を保存\" src/Eccube/Resource/locale/messages.ja.yaml` は 0 件で、設計の専用文言「権限設定を保存しました。」は現 develop にも存在しない。設計側は `excel_to_html/output/0201_基本設計仕様書(システム設定).html:1971` の登録成功フローで「管理者向け成功メッセージ「権限設定を保存しました。」を積む。」と明記。",
+      "note": "監査時点の行番号 1405 は現 develop では 1593 にずれているが内容は同一。"
+    },
+    {
+      "rowId": 1048,
+      "status": "部分対応",
+      "evidence": "受注編集画面の更新系については新規にガードが追加された。`src/Eccube/Controller/Admin/Order/EditController.php:508-514` `$mode = $request->get('mode'); if (\\in_array($mode, ['status_change', 'clear_date', 'register'], true) && !$this->canMutateOrder($OriginOrder)) { $this->addError('admin.common.error_invalid_request', 'admin'); return $this->redirectToRoute('admin_order_edit', ['id' => $TargetOrder->getId()]); }`、`同:588-596` `private function canMutateOrder(Order $Order): bool { if (!$this->isOrderEditableByLoginMember($Order)) { return false; } ... }`、`同:578-581` `private function isOrderEditableByLoginMember(Order $Order): bool { return $this->getMember()->isEditableShop($Order->getBaseInfo()); }`（コメント :576「画面側（Twig）の isEditableShop ガードと同等の検証をサーバ側でも行う.」）。これにより 2-4 の『画面表示するが更新処理時に権限エラー』は受注編集画面で成立する。一方、受注管理メニュー配下のその他更新系には依然チェックが無い。`grep -rn \"isEditableShop|editableBaseInfos|MemberBaseInfo|AccessDeniedHttpException|approval_no_authority\" src/Eccube/Controller/Admin/Order src/Eccube/Service/Admin/Order` のヒットは EditController.php:576,580 の 2 件のみ。実例として `src/Eccube/Controller/Admin/Order/OrderController.php:307-325` の `admin_order_delete` は `$Order = $this->orderRepository->find($id);` の後、店舗判定なしに `$this->entityManager->remove($Order); $this->entityManager->flush();` を実行し、`同:502-503` `admin_shipping_update_order_status` の `public function updateOrderStatus(Request $request, Shipping $Shipping): JsonResponse` も CSRF/XHR 判定のみで編集可能店舗を見ていない（`admin_order_bulk_delete`:368、`admin_shipping_update_tracking_number`:605 も同様）。",
+      "note": "編集画面（register/status_change/clear_date）は充足、削除・一括削除・出荷ステータス/伝票番号更新は未充足のため部分対応。"
+    },
+    {
+      "rowId": 1049,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:68-70` `$builder = $this->formFactory->createBuilder(AuthorityMatrixType::class, ['AuthorityRoles' => $AuthorityRoles,]);` のままマトリックス型フォームを使用し、`同:86-88` `$requestData = $request->request->all(); $authorityRequestData = $requestData['authority'] ?? []; $newAuthorityNames = $requestData['new_authority_name'] ?? [];` と POST 形も監査時点と同一。行追加は `src/Eccube/Resource/template/admin/Setting/System/authority.twig:182` の JS `nameCell.innerHTML = '<input type=\"text\" class=\"form-control authority-name-input\" name=\"new_authority_name[' + uniqueId + ']\" ...'` で権限名を足す方式であり、設計（`0201_基本設計仕様書(システム設定).html:1965` 「権限は mtb_authority を参照する単一選択のセレクト…拒否URLは一行テキスト」「「行追加」はテーブルに保持したプロトタイプ文字列で __name__ をインデックスに置換し」）の行フォーム／data-prototype 方式ではない。`src/Eccube/Form/Type/Admin/AuthorityRoleType.php:29` は残存するが AuthorityController から参照されない（同 Controller の use 文は `use Eccube\\Form\\Type\\Admin\\AuthorityMatrixType;` のみ、:19）。",
+      "note": ""
+    },
+    {
+      "rowId": 1050,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Setting/System/AuthorityIndexAction.php:122-136` は依然として差分更新。`$existingDeniedUrls = $existingDeniedByAuthority[$authorityId] ?? [];` / `// 既存の拒否URLを削除` `foreach ($existingDeniedUrls as $denyUrl => $ExistingAuthorityRole) { if (!isset($desiredDeniedUrls[$denyUrl])) { $this->authorityRoleEntityManager->delete($ExistingAuthorityRole); } }` / `// 新しい拒否URLを保存` `foreach (array_keys($desiredDeniedUrls) as $denyUrl) { if (!isset($existingDeniedUrls[$denyUrl])) { $this->authorityRoleEntityManager->save($Authority, $denyUrl); } }` のとおり、変更のない AuthorityRole は削除も再登録もされず残る。設計 `0201_基本設計仕様書(システム設定).html:1971` の「画面表示時点で取得済みの既存権限ロール行をすべて EntityManager から削除する。続けて…persist する」による全件置換は未実装。また同 :58-60 `if (empty($authorityRequestData)) { return; }` により、全解除送信時に既存行が0件化しないパスも残る。",
+      "note": ""
+    },
+    {
+      "rowId": 1051,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:72-79` で `new EventArgs(['builder' => $builder, 'AuthorityRoles' => $AuthorityRoles,], $request)` を `$form = $builder->getForm();`(:81) の前に `ADMIN_SETTING_SYSTEM_AUTHORITY_INDEX_INITIALIZE` として dispatch しており、設計 `0201_基本設計仕様書(システム設定).html:1969`「表示初期化イベントを発火する。プラグイン等がビルダや一覧を変更し得る。」のとおりビルダ・一覧の両方が拡張点として渡る。保存後は `同:99-106` で `['form' => $form, 'AuthorityRoles' => $AuthorityRoles]` を `ADMIN_SETTING_SYSTEM_AUTHORITY_INDEX_COMPLETE` として dispatch（`$this->authorityIndexAction->handle($input);`:97 の直後）。監査時点の「定数のみで dispatch されない」状態（EccubeEvents.php:1284-1285 の定数は現存）は解消済み。",
+      "note": ""
+    },
+    {
+      "rowId": 1052,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:108` `$this->addSuccess('admin.common.save_complete', 'admin');`、`同:114` `return $this->redirectToRoute('admin_setting_system_authority');` のままで、翻訳は `src/Eccube/Resource/locale/messages.ja.yaml:1593` `admin.common.save_complete: 保存しました`。リダイレクトは設計どおりだが、設計 `0201_基本設計仕様書(システム設定).html:1971` の専用文言「権限設定を保存しました。」は現 develop の messages.ja.yaml に存在しない（`grep -n \"権限設定を保存\"` 0 件）。",
+      "note": "rowId 1047 と同一事象。監査時点の行番号 1559 は現 develop では 1593。"
+    },
+    {
+      "rowId": 1053,
+      "status": "未対応",
+      "evidence": "`src/Eccube/EventListener/TwigInitializeListener.php:176-191` `public function setAdminGlobals(RequestEvent $event): void` は `$AuthorityRoles = $this->authorityRoleRepository->findBy(['Authority' => $Member->getAuthority()]);`(:187) / `$baseUrl = $event->getRequest()->getBaseUrl().'/'.$this->eccubeConfig['eccube_admin_route'];`(:188) / `$eccubeNav = $this->getDisplayEccubeNav($eccubeNav, $AuthorityRoles, $baseUrl);`(:189) と eccubeNav を事前フィルタし、`$this->twig->addGlobal('eccubeNav', $eccubeNav);`(:191) しか登録しない。フィルタ本体 `getDisplayEccubeNav()`(:204-) の :238-244 `foreach ($AuthorityRoles as $AuthorityRole) { $denyUrl = str_replace('/', '\\/', $baseUrl.$AuthorityRole->getDenyUrl()); if (preg_match(\"/^({$denyUrl})/i\", $url)) { unset($parentNav[$key]); break; } }` で PHP 側から除去しており、設計 `0201_基本設計仕様書(システム設定).html:1977`「拒否URL を連結した文字列を配列に入れ、Twig グローバル AuthorityRoles として渡す」「ナビテンプレートは…この配列に…含まれるとき該当ブロックを出さない」の外部契約（Twig グローバル `AuthorityRoles` と nav.twig 側の条件分岐）は未実装。`addGlobal('AuthorityRoles', ...)` は src/Eccube 全体で 0 件。",
+      "note": ""
+    }
+  ]
+}

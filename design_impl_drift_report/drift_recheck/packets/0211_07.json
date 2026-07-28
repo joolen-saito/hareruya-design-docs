@@ -1,0 +1,68 @@
+{
+ "packetId": "0211_07",
+ "book": "0211",
+ "eeHead": "da9c2ba276ac317041cf5596c3ec6d6d4ab5c581",
+ "count": 4,
+ "findings": [
+  {
+   "rowId": 1126,
+   "機能No": "M12-09",
+   "機能名": "M12-09 特集タグ編集CSVダウンロード(検索項目)",
+   "ドメイン": "m12",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "初期表示（GET）では保持していた出力条件を消去し、未指定の検索フォームを表示する。入力は出力条件、CSVの出力形式（mode）、なりすまし対策トークンを扱う。",
+   "実装実態": "GET は SearchUsedCardType を新規作成するだけで、保持条件の削除処理はない。フォームは csrf_protection=false、start_date は必須かつ初期値が 2 weeks ago、formats は必須で Count(min:1)。Twig の form は POST admin_analysis_used_card_export で、mode 入力を持たない。",
+   "差分内容": "設計は初期表示でセッション条件を消し、未指定フォームとCSRFトークン、CSV形式 mode を扱う要求だが、実装はセッション削除も mode もCSRFもなく、一部入力に必須・初期値を設定している。反証として UsedCardController/SearchUsedCardType/used_card.twig/locale/nav と export/{mode}, mode, csrf, session キーワードを再検索したが、UsedCard 用の該当実装は見つからなかった。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/UsedCardController.php:39,43; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SearchUsedCardType.php:34,35,43,47,55,57,64; /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Analysis/used_card.twig:15,28",
+   "設計書参照": "excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-19:4058,4076,4085,4100"
+  },
+  {
+   "rowId": 1127,
+   "機能No": "M12-10",
+   "機能名": "M12-10 特集タグ編集CSVダウンロード CSV出力",
+   "ドメイン": "m12",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "CSVダウンロード（形式指定）は GET /{admin_route}/analysis/used_card/export/{mode} で、保持した出力条件に従い、指定形式（特集タグ編集用など）でCSVを出力する。{mode} は出力形式を表し、指定形式のヘッダと各行をCSVとしてストリーミング出力する（ファイル名は形式と日時を含む）。",
+   "実装実態": "実装は POST /%eccube_admin_route%/analysis/used-card を name=admin_analysis_used_card_export とし、同一POSTでフォームデータからCSVを直接返す。GET /analysis/used_card/export/{mode} 相当のルート、{mode} パラメータ、形式別ファイル名はない。CSVサービスのファイル名も used_card_product_YYYYMMDDHHMMSS.csv 固定。",
+   "差分内容": "設計の外部契約は underscore パスの GET export/{mode} と形式指定だが、実装は hyphen パスの POST 同一URLで mode なし。反証として admin_used_card_export/admin_analysis_used_card_export/analysis/used_card/export/analysis/used-card/export/mode を src/Eccube, app, html で検索したが、該当GET export/{mode} ルートは不在。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/UsedCardController.php:52",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-20:4206"
+  },
+  {
+   "rowId": 1128,
+   "機能No": "M12-10",
+   "機能名": "M12-10 特集タグ編集CSVダウンロード CSV出力",
+   "ドメイン": "m12",
+   "区分(画面種別)": "admin",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "「検索」ボタン POST /{admin_route}/analysis/used_card は、指定した出力条件で集計結果を表示し、条件をセッションに保持する。初期表示 GET では保持していた出力条件を消去し、未指定の検索フォームを表示する。CSV出力では同じ出力条件を用いる。",
+   "実装実態": "GET は SearchUsedCardType の空フォームを返すのみ。POST は searchForm->getData() を UsedCardCsvExportService に渡してCSVレスポンスを返すのみで、集計結果画面の表示、セッション保存、GET時のセッション消去がない。Twigにも集計結果表示領域はなく、検索フォームとCSVダウンロードボタンのみ。",
+   "差分内容": "設計は検索表示フローとCSV出力フローを分離し、条件をセッションで引き継ぐことを要求している。実装はPOST即CSV出力で、SessionInterface/request session/set/remove/get、admin_used_card_result 相当のルート、集計結果表示テンプレートが確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Analysis/UsedCardController.php:39",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-20:4206"
+  },
+  {
+   "rowId": 1129,
+   "機能No": "M12-10",
+   "機能名": "M12-10 特集タグ編集CSVダウンロード CSV出力",
+   "ドメイン": "m12",
+   "区分(画面種別)": "admin",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "入出力の入力には、出力条件、CSVの出力形式（mode）、なりすまし対策トークンを含む。",
+   "実装実態": "SearchUsedCardType は csrf_protection=false を設定しており、フォームは start_date/end_date/formats/include_basic のみで mode フィールドもCSRFトークンも持たない。TwigのformもPOST送信するが form_rest や _token 出力はない。",
+   "差分内容": "設計はなりすまし対策トークンと mode を入力契約として明記しているが、実装はCSRF保護を明示的に無効化し、mode 入力も存在しない。反証として SearchUsedCardType、used_card.twig、UsedCardController、および used_card/mode/_token/csrf を検索したが、本機能のCSRFトークン・mode入力は確認できない。",
+   "実装参照": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SearchUsedCardType.php:34",
+   "設計書参照": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html#sheet-20:4232"
+  }
+ ]
+}

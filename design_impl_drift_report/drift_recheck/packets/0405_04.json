@@ -1,0 +1,68 @@
+{
+ "packetId": "0405_04",
+ "book": "0405",
+ "eeHead": "da9c2ba276ac317041cf5596c3ec6d6d4ab5c581",
+ "count": 4,
+ "findings": [
+  {
+   "rowId": 235,
+   "機能No": "B05-09",
+   "機能名": "B05-09 スマレジ取引連携エラー再連携",
+   "ドメイン": "b05",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "APIでバッチ駆動時間から5時間前まで、または手動実行時に指定された期間内のスマレジ取引データを取得すること。",
+   "実装実態": "`src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:99` に取引一覧API `listTransactions()` はあるが、コメントでページング未実装・期間指定クエリ正式名未確定とされている。同メソッドの使用箇所は検索上なく、現在時刻から5時間前または手動指定期間を組み立てるCommand/Serviceも見つからない。",
+   "差分内容": "設計は時間窓検索をバッチの入力データ検索条件として定義しているが、実装には期間パラメータの組み立て、手動期間指定の受け口、一覧取得結果の処理ループがない。単一transactionHeadIdを取得する `getTransaction()` は `SmaregiTransactionProcessMessageHandler.php:158` で使われるが、時間窓で未連携取引を発見する処理ではない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service/Smaregi, src/Eccube/MessageHandler, src/Eccube/Repository, html。検索語: listTransactions / transaction_list / pos/transactions / updateDateTime / fromDate / toDate / 5時間 / hours / within / 期間指定）",
+   "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2024,2025,2031,2041,2083,2089"
+  },
+  {
+   "rowId": 236,
+   "機能No": "B05-09",
+   "機能名": "B05-09 スマレジ取引連携エラー再連携",
+   "ドメイン": "b05",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "Webhookが失敗した可能性のある取引について、ポイント処理不整合、ECCUBE側にスマレジ取引ID未登録、登録済み取引の返品・キャンセル等による更新日時差異を検知し、スマレジ受信処理(A05-04)と同等の処理が完了した状態にすること。",
+   "実装実態": "Webhook起点の子ジョブ処理は `src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:57` 以降にあり、単一 `transactionHeadId` の取得、`updateDateTime` による重複スキップ、`created/canceled/disposed` の処理分岐は存在する。しかし時間窓で取得した取引一覧から、ECCUBE未登録・更新日時差異・ポイント不整合を検出して子ジョブ化または同等処理へ投入する親バッチが存在しない。",
+   "差分内容": "設計の再連携バッチはWebhook失敗時の救済処理であり、Webhookが届いていない/失敗した取引をAPI一覧から発見して処理する必要がある。実装はWebhookイベントまたは既存メッセージを前提にした処理で、失敗Webhookを発見する入口・条件判定が欠落している。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service/Smaregi/Webhook, src/Eccube/MessageHandler, src/Eccube/Repository, src/Eccube/Entity, html。検索語: 未連携.*取引 / スマレジ取引ID.*登録されていない / updateDateTime / transaction_update_date_time / canceled / disposed / point inconsistency / transactionHeadId）",
+   "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2026,2027,2032-2037,2043,2057,2072,2083,2102"
+  },
+  {
+   "rowId": 237,
+   "機能No": "B05-09",
+   "機能名": "B05-09 スマレジ取引連携エラー再連携",
+   "ドメイン": "b05",
+   "区分(画面種別)": "batch",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "スマレジ接続設定（接続先URL・契約ID・アクセストークン等）はオプションマスタ `mtb_option` の `option_key`・`option_value` に保持し、API呼び出しに使用すること。",
+   "実装実態": "取引処理ハンドラは `smaregiApiIdUrl`、`smaregiApiUrl`、`smaregiApiClientId`、`smaregiApiClientSecret`、`smaregiApiContractId` をコンストラクタ注入で受け、`SmaregiAccessTokenService::getAccessToken()` と `SmaregiTransactionApiClient::getTransaction()` に渡している。設定値は `app/config/eccube/services.yaml:27` 以降の `%env(SMAREGI_API_...)%` パラメータであり、`mtb_option` から取得していない。",
+   "差分内容": "設計は接続設定の保持・利用元を `mtb_option` と明記している。実装は環境変数由来のDIパラメータを使用しており、設計のオプションマスタ契約と異なる。なお `mtb_option` に旧スマレジ設定を追加するmigrationや管理画面項目は存在するが、B05-09取引API呼び出し経路では参照されていない。",
+   "実装参照": "src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:93,151; app/config/eccube/services.yaml:27",
+   "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2072,2083,2092,2096"
+  },
+  {
+   "rowId": 238,
+   "機能No": "B05-09",
+   "機能名": "B05-09 スマレジ取引連携エラー再連携",
+   "ドメイン": "b05",
+   "区分(画面種別)": "batch",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "取引情報取得に失敗した場合は、失敗内容をログとコンソールに出力して異常終了（戻り値1）すること。取得結果が空の場合は正常終了すること。",
+   "実装実態": "単一取引取得失敗時は `src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:165` でDTOがない場合に例外を投げ、`src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:133` でジョブ失敗ログと状態保存を行う。これはMessenger子ジョブの失敗処理であり、設計コマンドのコンソール出力・戻り値1・一覧取得結果空時の正常終了を実装するCommand処理は存在しない。",
+   "差分内容": "設計の外部契約はコンソールバッチの終了仕様である。実装には該当Command自体がなく、ログは子ジョブ内に閉じており、コンソール出力や戻り値1を保証する処理が確認できない。",
+   "実装参照": "不在（探索範囲: src/Eccube/Command, src/Eccube/Service/Smaregi, src/Eccube/MessageHandler, html。検索語: checkSmaregiTransaction / Command::FAILURE / return 1 / 異常終了 / コンソール出力 / listTransactions / 取得結果が空）",
+   "設計書参照": "excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html#sheet-11:2083,2089,2092,2106"
+  }
+ ]
+}

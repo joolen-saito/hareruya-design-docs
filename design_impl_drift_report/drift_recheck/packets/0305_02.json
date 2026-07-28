@@ -1,0 +1,83 @@
+{
+ "packetId": "0305_02",
+ "book": "0305",
+ "eeHead": "da9c2ba276ac317041cf5596c3ec6d6d4ab5c581",
+ "count": 5,
+ "findings": [
+  {
+   "rowId": 371,
+   "機能No": "F05-06",
+   "機能名": "F05-06 ネット買取買取手続き～完了",
+   "ドメイン": "f05",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "★カスタマイズ要件：現行は買取依頼内容の確認画面で『買取利用規約』を表示しているが、リニューアル後はサイト全体で共通の利用規約にまとめるため共通の利用規約を表示し、かつ『冒頭からではなく買取に該当する箇所を表示する』（画面部品#23 ネット買取利用規約テキストエリア：共通の利用規約を表示／買取に該当する箇所を表示）",
+   "実装実態": "fill.twig が Block/terms_modal.twig を include し modal_body_template='Purchase/include/net_purchase_terms_text.twig'・modal_title を渡すが、terms_modal.twig は両パラメータを一切参照せず、共通利用規約 front.agreement.s1〜s11 とプライバシー front.privacy.* をタブでハードコード全文レンダリングする。共通利用規約は第1条「1. 適用範囲」＝冒頭から全11条を表示し、買取箇所へのアンカー/絞り込み/スクロールJSは無い。front.agreement.* は汎用条項のみで買取に該当する条項を含まず（買取ヒット0件）、旧・買取専用規約テンプレ net_purchase_terms_text.twig は渡されるが描画されない（デッドコード）。",
+   "差分内容": "fill.twig→Block/terms_modal.twig→net_purchase_terms_text.twig および messages.ja.yaml(front.agreement.s1〜s11/front.purchase.fill.terms_heading) を確認。共通利用規約の表示自体は実装されているが、★カスタマイズで明記された『冒頭からではなく買取に該当する箇所を表示する』が満たされず、モーダルは共通規約を冒頭(第1条 適用範囲)から全文表示する。加えて共通規約側に買取該当条項が統合されておらず、旧・買取専用規約テンプレは渡されても描画されない。利用者が目にする規約表示が設計の要求位置・要求内容と差異があるため実装違い。",
+   "実装参照": "src/Eccube/Resource/template/default/Purchase/fill.twig:362-367 / src/Eccube/Resource/template/default/Block/terms_modal.twig:1-166 / src/Eccube/Resource/template/default/Purchase/include/net_purchase_terms_text.twig:1-52 / src/Eccube/Resource/locale/messages.ja.yaml:526-585",
+   "設計書参照": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-8"
+  },
+  {
+   "rowId": 372,
+   "機能No": "F05-06",
+   "機能名": "F05-06 買取依頼完了",
+   "ドメイン": "f05",
+   "区分(画面種別)": "front",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "買取依頼完了画面の画面部品ID3「オンライン本人確認について」は画像で、押下時に別ウィンドウでオンライン本人確認について画面へ遷移する（sheet-9 画面部品表／カスタマイズ説明「・別ウィンドウでオンライン本人確認について画面に遷移する」）。",
+   "実装実態": "complete.twig:64 は `<a href=\"{{ path('mypage_identification') }}\">{{ 'front.mypage.nav__identification'|trans }}</a>`（文言はテキスト「オンライン本人確認」= messages.ja.yaml:646）のテキストリンクのみ。アンカーに target=\"_blank\" が無く同一ウィンドウ遷移。設計が求める画像（QRコード）は complete.twig:63 の TODO コメント『デザインタスク QRコード画像を表示する』のとおり未表示。遷移先 mypage_identification（/mypage/identification）自体は設計の遷移先と一致。",
+   "差分内容": "設計は『別ウィンドウでオンライン本人確認について画面に遷移する』と明記するが、実装のアンカーには target=\"_blank\" が無く同一ウィンドウ遷移で別ウィンドウ要件を満たさない。加えて設計の部品種別は『画像』だが実装はテキストリンクで、意図する画像（QRコード）は complete.twig:63 の TODO で未実装。Purchase/complete.twig のみに当該アンカーが存在し JS 等での別ウィンドウ化も無いことを確認した上での判定。",
+   "実装参照": "src/Eccube/Resource/template/default/Purchase/complete.twig:62-64",
+   "設計書参照": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-9"
+  },
+  {
+   "rowId": 405,
+   "機能No": "F06-11",
+   "機能名": "F06-11 買取履歴一覧",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "処理状態を状態別の『画像』で表示する。マッピング後6状態（受付完了/査定中/査定完了/振込待ち/買取完了/キャンセル）に対応する状態画像を一覧の各行に表示する。",
+   "実装実態": "一覧Twigは処理状態を <img> ではなく <span class=\"c-hareruya-label--status c-hareruya-label--status-{completed|cancelled|pending}\">{{ row.statusIconAlt }}</span> の色付きテキストラベルで表示し、状態画像を描画しない。CSSモディファイアは3種のみ。StatusMapper::resolveStatusIcon()(StatusMapper.php:95-127)が6状態の iconPath(assets/img/mypage/*.svg)を返し RowBuilder(RowBuilder.php:104,144)が DTO statusIconPath に詰めるが一覧Twigは statusIconPath を参照しない（死にコード）。詳細画面(purchase_history_detail_net.twig:46-49, _otc.twig:24-27)は d.statusIconPath を <img> 描画する。",
+   "差分内容": "設計は処理状態を状態別『画像』表示と一貫して明記（識別ID10=画像、リバース節も状態画像）。実装は一覧では画像を一切描画せず色付きテキストラベル(3配色)に置換。状態画像アセット・パス算出・詳細画面のimg描画は存在するのに一覧側のみ画像描画が欠落。purchase_history.twig / StatusMapper.php / RowBuilder.php を確認し一覧側に画像描画が存在しないことを確認済み。",
+   "実装参照": "src/Eccube/Resource/template/default/Mypage/purchase_history.twig:133-147（特に144）",
+   "設計書参照": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-10"
+  },
+  {
+   "rowId": 406,
+   "機能No": "F06-11",
+   "機能名": "F06-11 買取履歴一覧",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "low",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "一覧列ラベル文言は識別ID5『買取依頼日』、識別ID6『買取店舗』、識別ID8『買取依頼内容』。",
+   "実装実態": "col.order_date=『依頼日』, col.shop=『店舗』, col.summary=『依頼内容』と定義され描画される。設計の『買取』接頭辞が3列で欠落。識別ID7『買取番号』(col.order_id)、ID9『買取金額合計』(col.application_total)、ID10『処理状態』(col.status)は設計文言と一致。",
+   "差分内容": "設計の画面部品ラベル（利用者が直接目にする列見出し）と実装ロケール文言が3列で不一致（買取依頼日→依頼日、買取店舗→店舗、買取依頼内容→依頼内容）。低重要度の文言差。messages.ja.yaml と purchase_history.twig と設計HTMLを確認。",
+   "実装参照": "src/Eccube/Resource/locale/messages.ja.yaml:829,830,832（col.order_date/col.shop/col.summary）, purchase_history.twig:96,102,112",
+   "設計書参照": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-10"
+  },
+  {
+   "rowId": 407,
+   "機能No": "F06-12",
+   "機能名": "F06-12 買取履歴詳細",
+   "ドメイン": "f06",
+   "区分(画面種別)": "front",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "買取履歴詳細は GET /{_locale}/mypage/purchase_history/detail/{id}、「承諾確定」ボタン押下は POST /{_locale}/mypage/purchase_history/update/{id} のパスパターンで提供する（設計注記によりサイトルートからのパスパターンを利用者視点の入口として明記）。",
+   "実装実態": "詳細表示を買取種別ごとに分離。ネット買取 GET /mypage/purchase_history/net/{buyOrderId}（mypage_purchase_history_detail_net）、店頭買取 GET /mypage/purchase_history/otc/{otcBuyOrderId}（mypage_purchase_history_detail_otc）。承諾確定は POST /mypage/purchase_history/net/{buyOrderId}/confirm（mypage_purchase_history_net_confirm）。テンプレートのフォームactionも同confirmルートを指す。",
+   "差分内容": "PurchaseHistoryController.php の全Route定義を確認したが、設計が『利用者視点の入口』『画面遷移』『処理フロー』で明記する統合詳細パス /purchase_history/detail/{id}・承諾パス /purchase_history/update/{id} は src/Eccube・html を全検索しても存在しない（grep 'purchase_history/detail' 0件、'purchase_history/update' 0件）。実装は net/otc/confirm という別のURL構造で提供しており、設計のパスパターンと相違する。機能自体は動作するがURL構造が設計と相違（PLAUSIBLE）。",
+   "実装参照": "src/Eccube/Controller/Front/Mypage/PurchaseHistoryController.php:99-106,127-133,189-196; src/Eccube/Resource/template/default/Mypage/purchase_history_detail_net.twig:10",
+   "設計書参照": "excel_to_html/output/0305_基本設計仕様書(フロント_ネット買取).html#sheet-11"
+  }
+ ]
+}

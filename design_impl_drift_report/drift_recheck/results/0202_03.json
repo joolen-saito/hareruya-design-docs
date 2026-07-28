@@ -1,0 +1,77 @@
+{
+  "packetId": "0202_03",
+  "results": [
+    {
+      "rowId": 609,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Stock/StockTransferStoreAction.php:86-103` は現 develop でも `$FromProductStock = $this->productStockRepository->find($moveFromProductStockId);` → `$ProductClass = $this->productClassRepository->findOneBy(['code' => $destProductCode]);` → `$ToProductStock = $this->productStockRepository->findOneBy([...])` の順で、振替元コードと `$destProductCode` の同一判定・`MoveFrom == MoveTo` 禁止ガードは無い。フォーム側 `src/Eccube/Form/Type/Admin/StockTransferNewDetailType.php:47-57` の constraints も `new Assert\\NotBlank(['message' => trans('admin.stock.transfer.dest_product_code_required')])` のみで Callback 検証なし。`src/Eccube/Controller/Admin/Stock/StockTransferController.php:241-258` の明細ループも `admin.stock.transfer.not_editable_store` の店舗チェックのみ。翻訳キー `admin.stock.transfer.same_source_dest_error`（develop の `src/Eccube/Resource/locale/messages.ja.yaml:4818`）は依然 `src/Eccube/Service/Admin/Stock/StockJoinUpdateSourceStockLocationAction.php:102` `throw new \\LogicException('admin.stock.transfer.same_source_dest_error');` の結合フローのみで使用され、振替登録フローでは未使用。",
+      "note": "実装リポジトリのワークツリーは feature/ECCUBE_HARERUYA-1525 (0ccb093c50) だが、develop(da9c2ba276) との差分は Stock 配下では StockApprovalList 系のみで本件該当ファイルは同一。"
+    },
+    {
+      "rowId": 610,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/transfer_new.twig:342` は現 develop でも `{{ form_widget(detail.dest_product_code, {'attr': {'readonly': 'readonly'}}) }}` のまま。値のセットは同 twig:40 `window.currentTransferDestInput = $(this).closest('tr').find('input[name*=\"[dest_product_code]\"]');`（検索ボタン押下時）と、モーダル決定処理内の `window.currentTransferDestInput.val(destData.product_code || '');` のみで、直接入力は不可。フォーム定義 `src/Eccube/Form/Type/Admin/StockTransferNewDetailType.php:47-57` は TextType/required のままで readonly 指定は無く、twig 側の上書きが設計との相違を生んでいる状態が継続。",
+      "note": ""
+    },
+    {
+      "rowId": 611,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/transfer_new.twig` 全体を `grep -n \"blur\\|change\\|keyup\\|focusout\"` しても 0 件（ヒットなし）。振替先情報の反映は依然モーダル決定契機のみで、`$(document).on('click', '.add-order-item', ...)` 内の `$.ajax({ url: '{{ url('admin_stock_transfer_dest_product_class_info') }}' ... }).done(function(destData) { window.currentTransferDestInput.val(destData.product_code || ''); applyDestToTransferRow($transferRow, destData); })` からのみ実行される。加えて入力欄は同 twig:342 で `{'attr': {'readonly': 'readonly'}}` のため blur 契機自体が発生しない。",
+      "note": ""
+    },
+    {
+      "rowId": 612,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Exporter/StockMoveTransferListCsvExportService.php:171-172` は現 develop でも `'move_from_stock_at' => $this->formatDateTime($stockMoveTransfer->getMoveFromStockAt()), 'move_to_stock_at' => $this->formatDateTime($stockMoveTransfer->getMoveToStockAt()),` のまま（列見出しは同ファイル:47-48 `'move_from_stock_at' => '出庫日'` / `'move_to_stock_at' => '入庫日'`）。`grep -rn -- \"->setMoveFromStockAt(\\|->setMoveToStockAt(\"` をリポジトリ全体（vendor 除く）に実行した結果、ヒットは `tests/Eccube/Tests/Service/Csv/StockMoveTransferListCsvExportServiceTest.php:228-229` と `tests/Eccube/Tests/Repository/DtbStockMoveTransferRepositoryGetQueryBuilderBySearchDataTest.php:95-96` のテスト生成のみで、`src/` 配下の業務フロー（ステータス『移動中』『出庫承認済み』『入庫完了』到達時）に代入箇所は存在しない。セッター定義は `src/Eccube/Entity/DtbStockMoveTransfer.php:236` `public function setMoveFromStockAt(?\\DateTime $moveFromStockAt): DtbStockMoveTransfer` / 同:282 のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 613,
+      "status": "未対応",
+      "evidence": "develop 版 `src/Eccube/Resource/locale/messages.ja.yaml:4940` は `admin.stock.split_join.list.source_destination_product: 分割元・結合先商品` のままで、設計の「分割元 / 結合先商品名」と区切り記号・末尾の「名」が不一致。表示側 `src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:312` も `<th class=\"pt-2 pb-2\">{{ 'admin.stock.split_join.list.source_destination_product'|trans }}</th>` のまま。",
+      "note": "messages.ja.yaml はワークツリーとdevelopで差分があるため `git show develop:` で取得した内容・行番号を採用。"
+    },
+    {
+      "rowId": 614,
+      "status": "未対応",
+      "evidence": "`grep -rn \"page_count\\|pageMax\\|disp_number\\|表示件数\\|PageMax\"` を `src/Eccube/Form/Type/Admin/SearchStockSplitJoinType.php` / `src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig` / `src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php` / `src/Eccube/Service/Admin/Stock/StockSplitJoinIndexAction.php` に対して実行した結果 0 件。Controller は現 develop でも `src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:152` `'pager' => null,`（初期表示）および同:182 `'pager' => null,`（検索後）を返し、`$StockSplitJoins = $this->indexAction->handle(new StockSplitJoinIndexInput($searchData, $rawFormPayload));`（:165）で全件を返却する。表示件数の単一選択UIは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 615,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:409-413` は現 develop でも `{% if pager is defined and pager is not null and pager.pageCount > 0 %}` … `{% include '@admin/pager.twig' with { 'pages': pager.pages, 'routes': pager.routes } %}` の条件付き include のままで、`src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:152,182` がともに `'pager' => null,` を渡すため描画されない。ページネーション処理も追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 616,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig` の結果テーブル部（:306-407）に行選択チェックボックスは無く、`<thead>` の `<th>` は `admin.stock.split_join.id` / `.type` / `.store` / `.inventory_category` / `.list.source_destination_product` / `.status` / `.registrant` / `.registration_date` などのみ。`input type=\"checkbox\"` のヒットは検索条件側の :120, :154, :170, :190 のみ（:190 はステータス検索条件 `<input type=\"checkbox\" name=\"{{ child.vars.full_name }}\" ... class=\"form-check-input\">`）。CSV出力ボタンは同 twig:292 `<a href=\"{{ url('admin_stock_split_join_csv_export') }}\" class=\"btn btn-ec-conversion\">` で、`stockSplitJoinSearchPerformed` の有無だけで表示制御され行選択連動の活性化JSは不在。",
+      "note": ""
+    },
+    {
+      "rowId": 617,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:251-272` の `csvExport()` は現 develop でも `$viewData = $request->getSession()->get(StockSplitJoinIndexAction::SESSION_KEY_SEARCH, []);` … `$response = $this->stockSplitJoinCsvExportService->exportBySearchData($searchData);`（:260）で、選択行IDを受け取るパラメータは一切無い（ルートも `methods: ['GET']` でクエリの id 受け取り無し）。",
+      "note": ""
+    },
+    {
+      "rowId": 618,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php` の CSV取込は現 develop でもエラー時・完了時とも `return $this->redirectToRoute('admin_stock_split_join_list');`（分割: :282, :290, :298, :306, :313, :342, :363／結合: :374, :382, :390, :397, :404 ほか）で `?resume=1` を付けない。一方、検索条件の画面復元は同:132-134 `} elseif ($request->query->getBoolean('resume')) { $viewData = $session->get(StockSplitJoinIndexAction::SESSION_KEY_SEARCH, []); FormUtil::submitAndGetData($searchForm, $viewData); }` のみで行われ、リダイレクト後は else 分岐(:135-160)の `'StockSplitJoins' => [], 'stockSplitJoinSearchPerformed' => false,` で空の初期表示に戻る。",
+      "note": ""
+    },
+    {
+      "rowId": 619,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchStockSplitJoinType.php:147-159` は現 develop でも `->add('stock_split_join_status', EntityType::class, [ 'class' => MtbStockSplitJoinStatus::class, 'choice_label' => 'name', ... 'query_builder' => function (EntityRepository $er) { return $er->createQueryBuilder('s')->orderBy('s.id', 'ASC'); } ])` で、分割/結合タイプ別の絞り込み条件が無く全件フラット表示。マスタ定数も `src/Eccube/Entity/Master/MtbStockSplitJoinStatus.php:28-38` で `NEW=1 / JOIN_SOURCE_REGISTERED=2 / SPLIT_APPROVAL_WAITING=3 / JOIN_APPROVAL_WAITING=4 / RECEIPT_COMPLETED=5（コメント `/** 入庫済み */`）/ REJECTED=6` の6件のまま。twig `src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:180-193` も `{% for child in searchForm.stock_split_join_status %}` で全選択肢を無条件に描画。",
+      "note": ""
+    },
+    {
+      "rowId": 620,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:270-273` は現 develop でも `{# (3-7) 検索条件をクリア #}` … `<a href=\"{{ url('admin_stock_split_join_list') }}?clear=1\" class=\"text-decoration-none\">{{ 'admin.stock.split_join.clear_search'|trans }}</a>` とリンク実装のまま。受け側 `src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:107-111` も `if ($request->query->getBoolean('clear')) { $session->remove(StockSplitJoinIndexAction::SESSION_KEY_SEARCH); return $this->redirectToRoute('admin_stock_split_join_list'); }` で検索セッション全体を破棄しており、3-1〜3-4 限定クリアにはなっていない。",
+      "note": ""
+    }
+  ]
+}

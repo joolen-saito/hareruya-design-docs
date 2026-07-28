@@ -1,0 +1,77 @@
+{
+  "packetId": "0202_01",
+  "results": [
+    {
+      "rowId": 585,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockListController.php:357` `$viewData = FormUtil::getViewData($searchForm);` / 同374-375行 `$dataToStore = $viewData;` `unset($dataToStore['_token']); // トークンは保存しない` / 同378行 `->setPattern(serialize($dataToStore))`。監査時点と同じく `_token` のみ除外で `base_info` は保存対象に残る。`unset($dataToStore['base_info'])` 相当は現 develop に存在しない（StockListController 全体を grep 済み）。",
+      "note": "パターン復元側 `pattern()`(同443-491行) も `unserialize` した viewData をそのまま submit しており、base_info を捨てる処理はない。"
+    },
+    {
+      "rowId": 586,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockListController.php:192-206` GET 初回（page_no/resume/product_name/card_condition いずれも無し）は `$session->remove(self::SESSION_KEY_SEARCH);` 以下でセッションを破棄し、199行 `'pagination' => [],` の空一覧を返す。デフォルト検索表示店舗で絞り込んだ検索実行は行われない。",
+      "note": ""
+    },
+    {
+      "rowId": 587,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchStockListType.php:123-132` `->add('base_info', EntityType::class, [ 'class' => BaseInfo::class, 'choice_label' => 'shop_name', ... ])` のままで、131行に `// TODO: 閉店フラグが BaseInfo に追加された後、query_builder で絞り込む` が残る。`query_builder` 指定は無く、`BaseInfoRepository::getOpenShops()`（`src/Eccube/Repository/BaseInfoRepository.php:188-192` `->andWhere('bi.isOpenShop = :isOpenShop')`）は本フォームから呼ばれていない（getOpenShops/isOpenShop の全 grep で SearchStockListType はヒットせず）。",
+      "note": "同種の絞り込みは InventoryPlanListType.php:59 で実装済みだが在庫検索一覧には未適用。"
+    },
+    {
+      "rowId": 588,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:369-372` `<button type=\"button\" id=\"savePatternBtn\" class=\"btn btn-sm btn-ec-regular\" data-url=\"...\">` と disabled 属性なしで描画。JS も同692-697行 `$('#savePatternBtn').on('click', function() { const url = $(this).data('url'); ... });` のみで pattern_name の入力イベント連動は無い。未入力時は `StockListController.php:359-362` の `$this->addError('admin.common.save_pattern.error.name_empty', 'admin');` でリダイレクトする実装のまま。プロジェクト全体 grep でも savePatternBtn の出現は twig の上記2箇所のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 589,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockListController.php:374-378` `$dataToStore = $viewData;` `unset($dataToStore['_token']);` `->setPattern(serialize($dataToStore))`。base_info を除外する処理は追加されておらず、保存前正規化も DtbSearchPattern 側の除外も存在しない。",
+      "note": "rowId 585/596 と同一の実装箇所。"
+    },
+    {
+      "rowId": 590,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:816-837` `$('#stockMoveBtn, #stockTransferBtn').on('click', ...)` の判定は `hasUnauthorizedShop()`(768-772行)、`isSameShop()`(761-766行、data-shop-id のみ参照)、`hasZeroStock()`(774-778行) の3つのみ。行チェックボックスには575行 `data-zone=\"{{ Item.stockLocationId }}\"` が出力されるが、JS 側で data-zone を読む箇所は存在しない（同ファイル内 data-zone の出現は575行のみ）。src/・app/ 全体を `isSameZone` `複数の在庫区分` `同一の在庫区分` で grep してもヒット無し。",
+      "note": ""
+    },
+    {
+      "rowId": 591,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchStockListType.php:130` `'data' => array_filter([$this->getCurrentBaseInfo()]),`（同502-511行で `$user->getDefaultSearchBaseInfo()` を返す）とフォーム初期値は設定されるが、`src/Eccube/Controller/Admin/Stock/StockListController.php:192-206` の初回 GET は検索セッションを破棄して 199行 `'pagination' => [],` を返すため一覧本体は空のまま。監査時点から変化なし。",
+      "note": "rowId 586 と同一の実装箇所。"
+    },
+    {
+      "rowId": 592,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductStockRepository.php:314-315` `$qb->orderBy('pc.id', 'DESC')->addOrderBy('ps.stockLocationId', 'ASC');`（pc = ProductClass）で商品規格ID降順のまま。一方 ID 列表示は `src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:580` `<td class=\"col-id\">{{ Item.ProductClass.Product.id }}</td>` と商品ID。表示IDとソートキーの不一致は解消されていない。",
+      "note": "Controller は StockListSearchAction 経由になったが、`src/Eccube/Service/Admin/Stock/StockListSearchAction.php:34-37` は `getQueryBuilderForAdminStockList()` へ委譲するだけで並び順は変更していない。"
+    },
+    {
+      "rowId": 593,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:816-837` の `$('#stockMoveBtn, #stockTransferBtn').on('click', ...)` は権限・複数店舗・在庫0のみを alert 判定し、選択行の在庫区分（575行 `data-zone=\"{{ Item.stockLocationId }}\"`）の一意性検査は無い。遷移は835行 `submitIdsToUrl(url, ids);` で無条件に実行される。",
+      "note": "rowId 590 と同一事象（検索結果側の観点）。"
+    },
+    {
+      "rowId": 594,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:449-457` `<select id=\"stock_csv_pulldown\" class=\"form-select form-select-sm\">` 配下に453行 `<option value=\"{{ url('admin_stock_list_custom_csv', { csvExtensionId: CsvEx.id }) }}\">{{ CsvEx.name }}</option>`、455行 `<option value=\"{{ url('admin_setting_shop_csv_custom', ...) }}\">{{ 'admin.stock.list.custom_csv_settings'|trans }}</option>` とプルダウンのまま。787-792行 `$('#page_count_pulldown, #stock_csv_pulldown').on('change', ... window.location.href = targetUrl; ...)` で選択遷移する実装で、リンク表示UIにはなっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 595,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/stock_list_index.twig:369` `<button type=\"button\" id=\"savePatternBtn\" class=\"btn btn-sm btn-ec-regular\"` に disabled 属性なし。JS は692行 `$('#savePatternBtn').on('click', function() {` の click ハンドラのみで pattern_name の input/keyup 連動制御は無い。空入力時は `StockListController.php:359-362` の `admin.common.save_pattern.error.name_empty` でサーバ側拒否のまま。",
+      "note": "rowId 588 と同一の実装箇所。"
+    },
+    {
+      "rowId": 596,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockListController.php:374-378` `$dataToStore = $viewData;` `unset($dataToStore['_token']);` `->setPattern(serialize($dataToStore))`。`src/Eccube/Form/Type/Admin/SearchStockListType.php:123` の `->add('base_info', EntityType::class, [...])` は保存対象に含まれたままで、base_info を除外する処理は Controller/FormType/Repository/Service いずれにも無い。",
+      "note": "rowId 585/589 と同一の実装箇所。"
+    }
+  ]
+}

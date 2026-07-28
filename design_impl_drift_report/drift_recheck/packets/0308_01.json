@@ -1,0 +1,83 @@
+{
+ "packetId": "0308_01",
+ "book": "0308",
+ "eeHead": "da9c2ba276ac317041cf5596c3ec6d6d4ab5c581",
+ "count": 5,
+ "findings": [
+  {
+   "rowId": 464,
+   "機能No": "F08-02",
+   "機能名": "F08-02 店頭買取査定申込情報入力",
+   "ドメイン": "f08",
+   "区分(画面種別)": "front",
+   "指摘区分": "実装違い",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "共通の利用規約の表示: 現行は個人情報保護方針と利用規約を表示しているが、リニューアル後はサイト全体で共通の利用規約にまとめるため共通の利用規約のみ表示する。★利用規約について: 共通の利用規約のみ表示し、『個人情報の取り扱いについて』（画面部品29）を削除する。",
+   "実装実態": "利用規約詳細ボタン(index.twig:328)が開くotc-terms-modal(terms_modal.twig)は『利用規約』タブ(tab-otc-terms=front.agreement)と『プライバシーポリシー(個人情報保護方針)』タブ(tab-otc-privacy=front.privacy)の2タブ構成で、個人情報保護方針の本文(terms_modal.twig:108-152)が残存。個別の『個人情報の取り扱いについて』ボタン(ID29)は削除済みだが、モーダル内の個人情報保護方針コンテンツが未削除。同意ラベルも『個人情報の取り扱い/利用規約に同意する』(index.twig:339)で個人情報の取り扱い文言が残る。",
+   "差分内容": "設計は明示的に『共通の利用規約のみ表示する』『個人情報の取り扱いについてを削除する』とカスタマイズを指示。terms_modal.twig:107-152にプライバシーポリシー(front.privacy)タブが依然存在し個人情報保護方針を表示している点、および同意ラベルが画面部品31『利用規約同意する』でなく『個人情報の取り扱い/利用規約に同意する』である点が設計と相違。実装確認済み(privacyタブ残存を根拠として特定)。",
+   "実装参照": "src/Eccube/Resource/template/default/OtcBuy/index.twig:326-341,378-382 → src/Eccube/Resource/template/default/Block/terms_modal.twig:10-11,107-152",
+   "設計書参照": "excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html#sheet-4"
+  },
+  {
+   "rowId": 465,
+   "機能No": "F08-02",
+   "機能名": "F08-02 店頭買取査定申込情報入力",
+   "ドメイン": "f08",
+   "区分(画面種別)": "front",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "画面部品10『郵便番号から自動入力ボタン』（ボタン）を表示し、押下時に郵便番号1・郵便番号2から都道府県・住所1・住所2に値を設定する。フロント挙動として自動入力ボタンと郵便番号検索リンクを表示する。",
+   "実装実態": "郵便番号入力ブロックに自動入力ボタン・郵便番号検索リンクが描画されていない。postal_code_2のblurイベントでAjaxZip3.zip2addr('otc_buy_order[postal_code_1]','otc_buy_order[postal_code_2]','otc_buy_order[pref]','otc_buy_order[addr01]')を自動実行するのみで、設定先はpref・addr01まで（addr02=住所2は未設定）。",
+   "差分内容": "index.twig(ja/en)・otc_buy_order_js.twig を『自動入力|zip2addr|AjaxZip3|button|検索』で確認したが、ボタン・検索リンクは不在でblur自動起動に置換され、自動入力対象も住所2(addr02)が欠落。ユーザーが目にする操作要素・挙動が設計と相違。",
+   "実装参照": "src/Eccube/Resource/template/default/OtcBuy/index.twig:126-157, src/Eccube/Resource/template/default/Block/js/OtcBuy/otc_buy_order_js.twig:91-93",
+   "設計書参照": "excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html#sheet-4"
+  },
+  {
+   "rowId": 466,
+   "機能No": "F08-03",
+   "機能名": "F08-03 店頭買取査定申込登録確認～完了",
+   "ドメイン": "f08",
+   "区分(画面種別)": "front",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "完了画面に身分証明書の用意案内「身分証明書をご用意ください」（英: Please prepare your ID when selling your item.）を完了画面表示時に常時表示する。",
+   "実装実態": "complete.twig・complete.en.twig のいずれにも『身分証明書をご用意ください』/『Please prepare your ID』の文言・要素が存在しない。完了画面に表示される画像は assets/hareruya/img/otc/staff-card.webp（alt=スタッフにお声がけください/Please speak to staff）のみで身分証明書案内を含まない。OtcBuyController::complete()(L455-496)が描画するテンプレートは default_frame.twig 継承のみで他テンプレートのインクルードなし。",
+   "差分内容": "被監査対象 OtcBuyController::complete()(OtcBuyController.php:455-496) が描画する complete.twig / complete.en.twig を全文精査し、設計が完了画面表示時に常時求める身分証明書用意案内が全く出力されないことを確認。grep でも OtcBuy テンプレートに該当文言なし。ゆえに未実装。",
+   "実装参照": "src/Eccube/Resource/template/default/OtcBuy/complete.twig 全体 / complete.en.twig 全体（不在）",
+   "設計書参照": "excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html#sheet-5"
+  },
+  {
+   "rowId": 467,
+   "機能No": "F08-03",
+   "機能名": "F08-03 店頭買取査定申込登録確認～完了",
+   "ドメイン": "f08",
+   "区分(画面種別)": "front",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・未実装",
+   "設計期待値": "申込者が成年でないとき（adult_flg=false）、完了画面に未成年案内「未成年の方は保護者同意書をご用意ください」（英: If you are under 18, you will need an authorization from an adult by preparing a written consent.）を条件付きで表示する。",
+   "実装実態": "complete()(OtcBuyController.php:490-495)は adultFlg を持つ otcBuyOrder をテンプレートへ渡すが、complete.twig / complete.en.twig は adultFlg/adult_flg を一切参照せず、未成年向け保護者同意書案内の文言・条件分岐が存在しない。grep で保護者/未成年/consent/under 18/authorization は OtcBuy 完了テンプレートに皆無。",
+   "差分内容": "設計は adult_flg=false 条件での保護者同意書案内表示を要求。実装テンプレートは adultFlg 条件分岐自体を持たず該当文言も出力しないため、条件表示・常時表示いずれも成立せず未実装。Controller が adultFlg を設定してもテンプレート未使用のため利用者に表示されない。",
+   "実装参照": "src/Eccube/Resource/template/default/OtcBuy/complete.twig 全体（adultFlg 参照なし）/ complete.en.twig 全体（不在）",
+   "設計書参照": "excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html#sheet-5"
+  },
+  {
+   "rowId": 468,
+   "機能No": "F08-05",
+   "機能名": "F08-05 店頭買取査定申込確認",
+   "ドメイン": "f08",
+   "区分(画面種別)": "front",
+   "指摘区分": "未実装",
+   "重要度": "med",
+   "観点": "⑦要求網羅・実装違い",
+   "設計期待値": "査定申込確認画面で、未ログインかつ会員登録フォームで入力した場合、会員登録フォーム入力情報として『メールアドレス』『メールアドレス(確認用)』『パスワード』『パスワード(確認用)』の4つの表示ラベル行を表示する。",
+   "実装実態": "is_granted('ROLE_USER')==false かつ withEntry==true の会員登録フォーム表示ブロックは、可視ラベル行として『メールアドレス』(値=form.email.first.vars.data)と『パスワード』(値=********)の2行のみを描画。form.email.second・form.password.first/second は form_widget(..., {type:'hidden'}) の隠しフィールドとして出力されるのみで、『メールアドレス(確認用)』『パスワード(確認用)』の可視ラベル行は存在しない。",
+   "差分内容": "設計項目表(item17/item19)が確認画面の表示要素(ラベル)として『メールアドレス(確認用)』『パスワード(確認用)』を明示列挙し、それぞれ独立のワイヤピン・図形参照(M45/M49)を持つのに対し、実装confirm.twig(232-266行)はこれら2行を可視行として描画しない。値自体は入力と同値のため機能上は冗長だが、設計オラクル上は列挙された表示要素であり、可視ラベル2行の欠落は表示レベルの実装違い。confirm.twig以外に該当ブロックは存在せず(OtcBuy配下の確認テンプレートはconfirm.twigのみ)、他画面のregister_customer.twigは別画面の再入力フォームであり本確認画面本体ではない。",
+   "実装参照": "src/Eccube/Resource/template/default/OtcBuy/confirm.twig:232-266",
+   "設計書参照": "excel_to_html/output/0308_基本設計仕様書(フロント_店頭買取).html#sheet-7"
+  }
+ ]
+}

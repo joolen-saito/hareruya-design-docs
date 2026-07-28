@@ -1,0 +1,77 @@
+{
+  "packetId": "0202_05",
+  "results": [
+    {
+      "rowId": 633,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Exporter/StockRecommendCsvExportService.php:39-53` `public const CSV_HEADER = ['店舗名','商品コード','商品名(日)','商品ID','言語ID','現在庫','一週前在庫',...]` と依然14列で、言語IDと現在庫の間に『販売価格』が無い。行生成側も `同:71-84` `(string) ($row['language_id'] ?? ''), (string) ($row['current_stock'] ?? 0),` と販売価格を書き出していない。同ファイル内の `price02`/`standard_price` は `同:354-367` `$conditions[] = 'pc.price02 >= :sellPriceFrom';` のように検索条件WHERE句でのみ使われ、出力列には未追加。",
+      "note": "監査時点と同一。"
+    },
+    {
+      "rowId": 634,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/` 配下に product:batch / ExportPopularProductRecommendCsv 相当のコマンドは存在しない（`grep -rn \"ExportPopularProductRecommendCsv|product:batch|PopularProductRecommend\" src app` のヒットは `src/Eccube/Command/InventoryReflectionCommand.php:32` のコメント `【3系】 bin/console product:batch inventoryReflection ...` と `src/Eccube/Repository/DtbSalesQuantityRepository.php:163 public function getPopularProductRecommend(...)`（ブロック表示用）のみ）。出力は今も管理画面GETルート `src/Eccube/Controller/Admin/Stock/StockListController.php:268` `#[Route(path: '/%eccube_admin_route%/product/stock/recommend-csv', name: 'admin_stock_list_recommend_csv', methods: ['GET'])]` から `StockRecommendCsvExportService::export()` を呼び、`src/Eccube/Service/Csv/Exporter/StockRecommendCsvExportService.php:64-97` `$response = new StreamedResponse(); ... $response->headers->set('Content-Disposition', 'attachment; filename='.$filename); log_info('在庫リコメンドCSV出力完了. ファイル名: '.$filename);` とブラウザダウンロード。設定出力先へのファイル作成・上書きもコンソール出力も無い。",
+      "note": "監査時点と同一。"
+    },
+    {
+      "rowId": 635,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/StockHistoryType.php:240-255` `->add('stock_change_from', IntegerType::class, [ 'label' => 'admin.product.stock_change_from', 'required' => false, 'attr' => ['min' => 0, 'maxlength' => $this->eccubeConfig['eccube_int_len']], ])` および同様に `->add('stock_change_to', IntegerType::class, [... 'min' => 0 ...])`。min=0 のままで負値（-99999999〜）を入力・検索できず、負値許容の Range 制約も追加されていない。",
+      "note": "監査時点と同一。"
+    },
+    {
+      "rowId": 636,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/StockHistoryType.php:78-85` `->add('base_info', EntityType::class, ['label' => 'admin.stock.history.base_info_name', 'class' => BaseInfo::class, 'choice_label' => 'shop_name', 'required' => false, 'multiple' => true, 'placeholder' => 'common.select__unspecified'])` と初期データ未設定のまま。`grep -n \"getDefaultSearchBaseInfo|setData|PRE_SET_DATA\" StockHistoryType.php StockHistoryController.php` はヒット0件。初期表示分岐 `src/Eccube/Controller/Admin/Stock/StockHistoryController.php:189-195` `$pageNo = 1; // submit default value $viewData = FormUtil::getViewData($searchForm); $searchData = FormUtil::submitAndGetData($searchForm, $viewData);` と空フォームをそのまま表示している。",
+      "note": "監査時点と同一。ログインメンバーのデフォルト検索表示店舗を設定する処理は未追加。"
+    },
+    {
+      "rowId": 637,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/StockHistoryType.php:339-356` `->add('create_date_from', DateType::class, ['label' => 'admin.common.create_date__start', 'required' => false, 'input' => 'datetime', 'widget' => 'single_text', 'placeholder' => ['year' => '----', 'month' => '--', 'day' => '--'], ...])` に data/初期値の指定なし。`grep -n \"first day of|modify(|setData\" StockHistoryType.php StockHistoryController.php` はヒット0件で、当月1日を算出・設定する処理は不在。初期表示は `StockHistoryController.php:191-193` の `FormUtil::getViewData($searchForm)` による空フォーム表示のまま。",
+      "note": "監査時点と同一。"
+    },
+    {
+      "rowId": 638,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/StockHistoryType.php:126-131` `->add('status', ProductStatusType::class, ['label' => 'admin.product.display_status', 'multiple' => true, 'required' => false, 'expanded' => true])` のみで `data`/`empty_data` による『公開』の既定選択が無い。Controller 側にも setData / PRE_SET_DATA は不在（grep 0件）で、`StockHistoryController.php:191-193` は空フォームの view data を表示するだけ。",
+      "note": "監査時点と同一。"
+    },
+    {
+      "rowId": 639,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/StockHistoryType.php:161-173` `->add('card_condition', ChoiceType::class, ['label' => 'admin.product.card_condition', 'required' => false, 'multiple' => true, 'expanded' => true, 'choices' => ['admin.stock.history.card_condition.nm' => 1, ... 'admin.stock.history.card_condition.other' => 5]])` に初期選択(NM=1)の `data` 指定なし。Controller にも setData 不在（grep 0件）。",
+      "note": "監査時点と同一。"
+    },
+    {
+      "rowId": 640,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/StockHistoryType.php:108-115` `->add('disposal_search', ChoiceType::class, [... 'choices' => ['admin.stock.history.disposal_search_select' => true], 'placeholder' => 'common.select__unspecified'])` のまま。テンプレート側 `src/Eccube/Resource/template/admin/Stock/history.twig:259-262` は `<label class=\"fw mb-3\">{{ 'admin.stock.history.disposal_search'|trans }}</label> ... {{ form_widget(form.disposal_search) }}` を描画するのみで、`grep -rn disposal_search history.twig src/Eccube/Resource/assets` のヒットはこの3行だけ。JSブロック内で disposal_search の change を監視して stock_change_type_detail を自動設定・非活性化したり stock_change_reason を活性化/クリアする処理は存在しない（history.twig の `#admin_stock_history_stock_change_type_detail` 参照は :162 の別用途セレクタのみ）。",
+      "note": "監査時点と同一。クライアント側動的挙動は未実装。"
+    },
+    {
+      "rowId": 641,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbStockHistoryRepository.php:332-335` `// Order By` `$qb->addOrderBy('pc.code', 'DESC'); $qb->addOrderBy('ps.baseInfo', 'DESC'); $qb->addOrderBy('sh.createDate', 'DESC');`（`同:84 public function getQueryBuilderBySearchDataForAdmin(array $searchData): QueryBuilder` 内、次の関数は `同:347 findLatestByProductStockId`）。第三ソートは今も createDate で、COALESCE(承認日時,登録日時) 基準ではない。基準日時ソートは `同:359-360` `->orderBy('sortDate', 'DESC') ->addOrderBy('sh.registeredAt', 'DESC')` の findLatestByProductStockId 側にのみ存在し一覧クエリでは未使用。CSV出力側 `同:411-413` も同じく createDate DESC。",
+      "note": "監査時点と同一。"
+    },
+    {
+      "rowId": 642,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/history.twig:730` `<td class=\"align-top\">{{ Stock.approvalMember ? Stock.approvalMember : '-' }}</td>` のままで、承認者名/「-」の2値のみ。`grep -n \"承認待ち|approval_waiting\" history.twig` はヒット0件で「承認待ち」分岐は追加されていない。",
+      "note": "監査時点と同一。"
+    },
+    {
+      "rowId": 643,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/history.twig:705` `<td class=\"align-top\">{{ productClassSub.buy_price|price }}</td>`（同ファイル :713 にも同一記述）。null 時に「-」を出す三項分岐や default フィルタは無く、price フィルタが 0 円整形するため「¥0」表示のまま。データソースも履歴時点の値ではなく現在の ProductClass.buy_price 参照のまま。",
+      "note": "監査時点と同一。"
+    },
+    {
+      "rowId": 644,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockHistoryController.php:314` `#[Route(path: '/%eccube_admin_route%/product/stock/history/csv_export', name: 'admin_stock_history_csv_export', methods: ['POST'])]` `public function csvStockHistoryExport(Request $request): StreamedResponse|RedirectResponse` と POST のまま（監査時点の :267 から行番号のみ移動）。テンプレートも `src/Eccube/Resource/template/admin/Stock/history.twig:598` `<button class=\"btn btn-ec-regular\" type=\"submit\" formaction=\"{{ url('admin_stock_history_csv_export') }}\">` とフォーム送信起動。`grep -rn \"product/history/stock/export|admin_product_stock_history_export\" src app` はヒット0件で、設計の GET /%eccube_admin_route%/product/history/stock/export ルートは存在しない。",
+      "note": "監査時点と同一。HTTPメソッド・URL・起動形態いずれも設計と不一致のまま。"
+    }
+  ]
+}
