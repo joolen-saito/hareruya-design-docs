@@ -1,0 +1,127 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "M03-09 商品規格登録/編集（更新系CRUD・母集合90件）候補。区分=カスタマイズ（excel-primary+pf-fallback）。Gate自己監査体制(CONCRETIZATION_GATES.md 2026-07-27)に基づき初版からGate B(B1-B15)自己監査済み。正式解決器はこの_drafts/を読んではならない。期待値の正はL1オラクルID（三段参照）。fixture_versionは@TBD-D5。bindは母集合の期待テキスト実内容で判定（観点ラベル不使用）。ee実ソースはオラクル値の根拠に不使用（standard-src付与ゼロ）＝pf md/Excelの陳腐化検知の照合補助のみに使用。【重大所見】M03-09のpf md（現行pf-eccube3挙動記述）はee実装と広範に食い違う（陳腐化）: (1)更新/新規登録の成功遷移先はpf md『編集画面へ戻す』だがee実装は規格一覧(admin_product_product_class)へリダイレクト。(2)pf md『論理削除』だがee物理削除(remove)。(3)pf md『最後の1件は削除不可(HTTP400)』のチェックはee delete()/DeleteActionに存在しない。(4)pf md『在庫数編集・在庫変動区分・在庫履歴・在庫予約数加算・入荷通知メール』はExcel(sheet-22)で『在庫数変更不可・在庫変動理由除去』とされee実装(UpdateAction『NOTE:在庫情報は更新しない』・在庫/履歴/メール処理無し・フォームにstock/在庫変動区分フィールド無し)で裏付く＝これら在庫系挙動はboundにできず要実機TBD。(5)フラッシュ文言はee=admin.common.save_complete『保存しました』/save_error『保存に失敗しました』/delete_complete『削除しました』でありpf md『登録が完了しました/登録できませんでした』は陳腐化。上記(1)〜(5)に該当する母集合行はGate B15『pf md↔ee乖離＝要実機TBD(eeはオラクルにしない)』でTBDへ分類。逆にee実ソースがpf md/Excelを裏付ける挙動（編集時の言語・状態はProductClass.idありでdisabled+hidden＝読み取り表示: ee edit.twig:301,318／代表画像は全削除→再登録: ee UpdateAction／公開ステータス廃止時の在庫1以上エラー: ee UpdateAction HasStockCannotAbolishException＝Excel:5869／新規登録で規格レコード追加: ee store()／商品・規格ID不在で404: ee requirements+MapEntity／基準価格・セールフラグでの販売価格上書き: ee Store/UpdateAction＝Excel:5863,5893）はboundとした。会計: bound 16／TBD 11／excluded 63＝90（codex Gate C Major4件是正後: (1)母集合行から条件を一意に導けない汎用/矛盾スタブ28行[-012〜017,-033〜036,-041〜046,-050,-053〜058,-068,-082,-084,-059,-066]をbound→excluded(B15②/③)、(2)C-001/L1-001から一次資料に無いee値[スマレジ初期OFF]・新規画面に無い項目[在庫0]を除去、(3)-070は画面で見える最終状態のみbound・物理置換の内部主張はTBD分離、(4)在庫変更不可でee非該当の-067/-069/-074・母集合条件と乖離の-065をTBD→excluded)。bound16はユニーク候補ケース11本(C-001〜005,011〜014,018,019)へマップ。廃止×在庫相関/ID存在404/削除→一覧/基準価格/閾値ポップアップ/状態その他の実挙動は母集合に一意bind可能な親行が無く§4.2補完行(母集合会計外)で保持。",
+    "source": "integration_test/e2e/exec/_drafts/m03-09_admin_product_product_class_edit_executable_draft.md §1（本jsonはmd §1から導出・手編集禁止）",
+    "baseline": {
+      "excel_html": "excel_to_html/output/0204_基本設計仕様書(商品管理).html sheet-22=商品規格登録編集(L5758-6159) (commit 0e65e6a60e13ff4f5175af1a450c1b61a0b5b14b)",
+      "pf_md": "functions/pf-eccube3/m03-09_admin_product_product_class_edit.md (382行・feat/front-e2e-coverage)",
+      "ee_corroboration_commit": "da9c2ba276ac317041cf5596c3ec6d6d4ab5c581 (ProductClassController.php / ProductClassType.php / ProductClass{Store,Update,Delete}Action.php / ProductClass/edit.twig / messages.ja.yaml=陳腐化検知の照合補助のみ・オラクル値の根拠に不使用)",
+      "ee_shared_infra_commit": "9dbc4dd12080ac6a3d58a97f67e23e4a4a6e4f51",
+      "fid_kubun": "M03-09=カスタマイズ excel-primary+pf-fallback（暫定付与・確定はD6）",
+      "all_it_cases_population": "IT-M03-09-ADMIN-PRODUCT-PRODUCT-CLASS-EDIT-001〜090（90行・欠番0）"
+    }
+  },
+  "L1-M0309-001": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "規格の新規登録画面は既定値を載せた空の規格フォームを表示し、言語・状態を選択欄として表示する（編集画面の読み取り表示と対比）。",
+    "source": "m03-09md:75,103"
+  },
+  "L1-M0309-002": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "規格の編集画面は指定規格の現行値をフォームに載せて表示する（DBから読み取った現行値を初期表示）。ee edit()が確認。",
+    "source": "m03-09md:76,194 (ee ProductClassController::edit)"
+  },
+  "L1-M0309-003": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "編集時は当該規格の言語・状態（カード状態）を変更せず読み取り表示し隠しフィールドで保持する。新規登録時のみ選択欄として表示する。ee edit.twig:301-323が確認（ProductClass.idありのときform.Language/form.CardConditionをdisabled付与＋hiddenで値保持、新規時はform_widget編集可）。",
+    "source": "m03-09md:93,146 (ee ProductClass/edit.twig:301,318)"
+  },
+  "L1-M0309-004": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "販売価格は必須（NotBlank）・最大10桁・数値（Regex）。未入力・非数値は検証失敗。ee ProductClassType price02(NotBlank+Length max+Regex)が確認。",
+    "source": "m03-09md:164,268 (ee ProductClassType::price02)"
+  },
+  "L1-M0309-005": {
+    "claim_type": "excel_delta",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "部門は登録を必須とする（カスタマイズ）。未選択は検証失敗。ee ProductClassType Section(NotBlank)が確認。",
+    "source": "0204.html:5876 (ee ProductClassType::Section)"
+  },
+  "L1-M0309-006": {
+    "claim_type": "excel_delta",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "公開ステータスを「廃止」で更新するタイミングでEC-CUBE・スマレジ両方の在庫数を確認し、いずれかの在庫数が1以上の場合は在庫が存在する旨のエラーを返す（保存されず再表示）。在庫0または非廃止なら継続。ee ProductClassUpdateAction(isAbolished()&&hasStocks()→HasStockCannotAbolishException)が確認。",
+    "source": "0204.html:5869 (ee ProductClassUpdateAction::handle)"
+  },
+  "L1-M0309-007": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "商品IDまたは規格IDが存在しなければ見つからない（HTTP404）とする。存在する既存IDでは編集画面表示が継続する。ee route requirements(id/productClassId='\\d+')＋MapEntityが確認。",
+    "source": "m03-09md:102,103,303,304 (ee ProductClassController route requirements/MapEntity)"
+  },
+  "L1-M0309-008": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "規格の新規登録送信は入力値を検証し、合格時に新しい規格レコードを保存する（規格が1件追加される）。検証失敗時は追加しない。ee ProductClassController::store()＋ProductClassStoreAction(新規ProductClass persist・visible=true)が確認。※pf md『編集画面へ戻す』の遷移先はee実装で規格一覧へリダイレクト＝陳腐化のため本claimは『規格レコードの保存（追加）』のみをbind根拠とし遷移先はbindしない。",
+    "source": "m03-09md:77,81,112 (ee ProductClassController::store / ProductClassStoreAction)"
+  },
+  "L1-M0309-009": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "検証に失敗した場合はエラーを設定し保存せず同じ画面を再表示する（HTTP200再描画・入力値保持・フィールドエラー表示）。ee store()/update()(!isValid→addError+edit.twig再描画)が確認。※pf md記載のフラッシュ文言『登録できませんでした。』はee=admin.common.save_error『保存に失敗しました』で陳腐化のため文言はbindせず『保存されず同一画面再表示』の挙動のみをbind根拠とする。",
+    "source": "m03-09md:111,220,305 (ee ProductClassController::store/update)"
+  },
+  "L1-M0309-010": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "更新で保存した値は、編集画面を再表示（GET）した際に現行値としてフォームへ初期表示される（保存後の再表示に保存値が出る）。ee edit()が現行ProductClassからフォームを描画。※セールフラグ無効時の販売価格は基準価格で上書きされるため再表示検証にはmemo/商品コード等の非上書き項目を用いる（L1-M0309-014）。",
+    "source": "m03-09md:194,76 (ee ProductClassController::edit)"
+  },
+  "L1-M0309-011": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "規格の更新時に規格の更新日時（update_date）を現在時刻へ更新し永続化を確定する。ee更新フロー（Doctrine更新＋update_date列）が確認。画面の更新日欄はY/m/d粒度のため同日更新は目視差分が出ない＝内部DB照会で確認する構造的事実。",
+    "source": "m03-09md:118,236 (ee ProductClass.update_date)"
+  },
+  "L1-M0309-012": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "代表画像は既存の画像関連（商品規格画像）を一度すべて削除してから、送信された代表画像で作り直す（送信に含まれない画像は関連から外れる）。ee ProductClassUpdateAction(getProductClassImages全remove→productClassImagesEntityManager->save再登録)が確認。",
+    "source": "m03-09md:113,197 (ee ProductClassUpdateAction::handle)"
+  },
+  "L1-M0309-013": {
+    "claim_type": "behavior",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "削除可能な規格を削除し、規格一覧へ戻す（削除完了メッセージ表示・一覧から当該規格が消える）。削除方式は現行pf-eccube3=del_flgによる論理削除／移行先ee=del_flg列なし物理削除（entityManager->remove）。ee ProductClassController::delete()＋ProductClassDeleteAction(remove＋規格一覧へredirect)が確認。※pf md『最後の1件は削除不可(HTTP400)』のチェックはee実装(delete/DeleteAction)に存在しない＝当該観点は§9.1 TBD。論理／物理の別は画面非観測の構造的事実であり§リニューアル移行(md:48)で確定。画面ではdelete→一覧遷移・一覧から消えることのみをbindする。",
+    "source": "m03-09md:79,48,122-126 (ee ProductClassController::delete / ProductClassDeleteAction)"
+  },
+  "L1-M0309-014": {
+    "claim_type": "excel_delta",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "基準価格を追加する。セールフラグのチェックをオフにした状態で商品規格を登録/更新すると、販売価格を基準価格に登録済みの値で上書きして保存する（セールフラグON時は販売価格・基準価格とも現状のまま）。ee ProductClassStoreAction/ProductClassUpdateAction(!isSaleFlg()→setPrice02(standardPrice))が確認。",
+    "source": "0204.html:5863,5893 (ee ProductClassStoreAction/ProductClassUpdateAction)"
+  },
+  "L1-M0309-015": {
+    "claim_type": "excel_delta",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "販売価格が300円（閾値）を跨ぐ形で変更された場合、スマレジ連携フラグを見てポップアップメッセージ『スマレジ連携の閾値（300円）を跨ぐ価格変更があったため、スマレジ連携フラグの設定をご確認ください』を表示する。ee edit.twig(PRICE_THRESHOLD=300・smaregiNeedAlert・alert)が確認。",
+    "source": "0204.html:5881 (ee ProductClass/edit.twig:163,201-220)"
+  },
+  "L1-M0309-016": {
+    "claim_type": "excel_delta",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "状態（カード状態）の選択肢に「その他」を追加する。「その他」が選択された場合のみ状態名（card_condition_name）を表示・入力可能とする。編集時にすでに状態名が登録されている場合はテキストを出力し編集不可とする。ee edit.twig(cardConditionNameありでテキスト出力＋hidden・JSでCODE_OTHER時のみdisabled解除)が確認。",
+    "source": "0204.html:5888,5911 (ee ProductClass/edit.twig:140-154,330-347)"
+  }
+}
