@@ -9,9 +9,10 @@ import csv, os, re, json, sys
 from collections import Counter
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.join(BASE, '..')
-SRC = os.path.join(ROOT, 'design_impl_drift_report', 'drift_findings_list_open.tsv')
-OUTDIR = os.path.join(ROOT, 'design_impl_drift_report', 'citation_audit')
+REPORT = os.path.join(BASE, '..')          # design_impl_drift_report
+ROOT = os.path.join(REPORT, '..')          # hareruya-design-docs
+SRC = os.path.join(REPORT, 'drift_findings_list_open.tsv')
+OUTDIR = BASE
 
 def sheet_ranges(path):
     """HTML 内の各 sheet-N の開始/終了行を返す（1始まり）。"""
