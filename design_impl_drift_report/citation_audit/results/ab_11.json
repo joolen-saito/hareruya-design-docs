@@ -1,0 +1,165 @@
+{
+  "packetId": "ab_11",
+  "results": [
+    {
+      "rowId": 221,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2065 は正本で「スマレジ連携エラーが起きているEC受注のスマレジ連携をリトライする」とだけ記載し、正本範囲（同:2050-2092）にインターバル、1秒、リクエスト上限の記載はない。該当記述はリバース詳細設計開始後の同:2102「リクエスト数の上限に配慮し、受注ごとに短いインターバルを挟む」にのみ存在する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiErrorOrder.php:31-46 で `$orders = ...->getSmaregiErrorOrder();` を `foreach ($orders as $order)` で処理し、「1秒当たり10回のリクエストを超えないようにインターバルを調整」に続けて `usleep(100000);` を実行している。pf-api、pf-article、deck-api も `checkSmaregiErrorOrder`、`usleep`、`sleep` で横断検索したが、当機能の根拠はこの pf-eccube3 実装だった。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiGuzzleClientFactory.php:88-94 には共通HTTP層の `$limiter->consume(1)` と `$rateLimit->wait();` がある。一方、`src/Eccube/Command`、`src/Eccube/Service/Smaregi`、`src/Eccube/MessageHandler` を `checkSmaregiErrorOrder`、`smaregi_error_flg`、`point_error_message`、`sleep`、`usleep` で確認しても、エラー受注を列挙するB05-08本体は存在しない。",
+      "note": "インターバル要件の真の根拠は正本ではなく旧実装。共通RateLimiter自体は実装済みだが、B05-08の受注ループがないため移植完了とはいえない。"
+    },
+    {
+      "rowId": 222,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2178 は正本で概要を「スマレジ連携でwebhookで連携エラーになったものを再連携する」とするが、正本範囲（同:2163-2213）に `smaregi:batch` や `checkSmaregiTransaction` はない。コマンド名はリバース詳細設計の同:2244「`smaregi:batch checkSmaregiTransaction`」にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Command/SmaregiBatch.php:16-24 は `checkSmaregiTransaction` を `Plugin\\HareruyaEc\\Service\\Smaregi\\CheckSmaregiTransaction` に割り当て、コマンド名を `$this->setName('smaregi:batch')` と登録している。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:71-104 は `#[AsMessageHandler]` の子ジョブハンドラであり、コンソールコマンドではない。`src/Eccube/Command` 全体の `#[AsCommand]`、`setName(`、`checkSmaregiTransaction`、`smaregi:batch` 検索で設計名または別名の登録は存在しない。",
+      "note": "特定コマンド名は旧実装由来。"
+    },
+    {
+      "rowId": 223,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2190-2191 の正本セルは「APIでバッチ駆動時間から5時間前までの間の取引データを取得する」「手動でのバッチ実行時に期間指定されている場合はその期間内の取引データを取得する」と明記し、同:2207 も更新時間を `X-Y hours` の範囲とする。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/config.yml:283 は `transaction_period_hours: 5`、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiTransaction.php:136-153 は `$now->modify(\"-...transaction_period_hours... hours\")` から `updDateTime >=` と `updDateTime <` を組み立てる。旧実装も正本要求を裏付ける。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:91-117 に一覧API `listTransactions(..., array $query = [])` はあるが、呼出箇所は同メソッド定義とテストだけである。`src/Eccube/Command`、`src/Eccube/Service/Smaregi`、`src/Eccube/MessageHandler` を `5時間`、`hours`、`fromDate`、`toDate`、`listTransactions(` で確認しても、5時間窓または手動期間を組み立てる本番処理は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 224,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2198-2203 の正本セルは対象を「Webhookが何らかの理由で失敗したスマレジ取引情報」とし、再連携条件を「ポイント処理に不整合」「スマレジ取引IDがECCUBE側に登録されていない」「登録済みで返品等による取引の更新日時差異」と列挙する。同:2209 は「スマレジ受信処理(A05-04)と同等の処理が完了した状態」を要求する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiTransaction.php:157-183 は取引一覧を走査し、`findByTransactionId($transactionId)` の有無と `cancelDivision` / `disposeDivision` により、未登録取引の登録または取消処理を分岐する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:53-69 は責務をWebhook親ジョブ配下の単一 `transactionHeadId` 処理と説明し、同:125-130 で `SmaregiWebhookEvent` の存在を前提に処理する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiTransactionApiClient.php:101-117 の `listTransactions()` は本番呼出しがなく、失敗Webhookを期間一覧から発見する親バッチは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 225,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2195 の正本は入力元を「スマレジプラットフォームAPI」とするだけで、正本範囲（同:2163-2213）に `mtb_option`、`option_key`、`option_value`、接続設定の保持先はない。該当DB指定はリバース詳細設計の同:2262「`mtb_option`（オプションマスタ）...接続設定...を保持し、API呼び出しに使用する」にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiTransaction.php:35-44 は `$optionValues = $this->getOptionValues($app)` をAPI URL・ヘッダに使い、同:68-78 は option repository から `SMAREGI_CONTRACT_ID`、`SMAREGI_ACCESS_TOKEN`、`SMAREGI_REQUEST_URL` 等を取得して `optionValue` / `optionKey` 配列にする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/services.yaml:28-32 は `smaregi_api_id_url`、`smaregi_api_url`、client ID/secret、contract IDを `%env(SMAREGI_API_...)%` から定義する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:96-100,154-165 はこれらの注入値をトークン取得・取引APIへ渡しており、`mtb_option` を参照しない。",
+      "note": "保持先の指定は旧実装由来。"
+    },
+    {
+      "rowId": 226,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2211 の正本は「再連携時にエラーがあった場合、スマレジから返ってきているエラー内容をログに出力する」とだけ記載する。コンソール出力、戻り値1、空結果の正常終了は正本範囲に無く、リバース詳細設計の同:2255「結果が空なら何もせず完了する。取得失敗時は異常終了（戻り値1）」にある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiTransaction.php:46-59 は失敗時に `log_info(...)` と `echo ...` を行って `return 1;`、`empty($result['result'])` なら `return 0;` とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:136-146 は子ジョブ失敗をloggerへ記録して例外を再throwし、同:168-170 は単一取引DTOが無い場合に例外を投げる。`src/Eccube/Command` にB05-09コマンドがないため、一覧結果空の正常終了、コンソール出力、`Command::FAILURE` を定義する入口もない。",
+      "note": "正本はログ要求のみを裏付ける。外部終了契約の全体は旧実装由来。"
+    },
+    {
+      "rowId": 227,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html:1037-1038 の正本セルは「店頭買取情報.ステータス 12: 入庫待ち」「ネット買取情報.ステータス 16: 入庫待ち」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md:89 は「本機能は新規実装であり、現行（pf-eccube3）に対応するバッチは存在しない」と明記する。旧4リポジトリを `B06-01`、`auto-stock`、`買取自動入庫` で検索しても対応バッチはなく、本件は旧実装を根拠としない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:40-42,58-60 は `11. 入庫済み`、`12. 未登録在庫あり`、`13. 入庫待ち` と定義する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/BatchAutoStockAction.php:43-45 は対象を `STATUS_STOCKING_PENDING`（13）で抽出する。一方、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Master/MtbBuyOrderStatus.php:54-59 のネット買取は入庫待ち16で正本どおり。",
+      "note": ""
+    },
+    {
+      "rowId": 228,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html:1005-1010 は店頭買取を「買取を行った店舗のECCUBE在庫」に、同:1020-1022 はネット買取を「本店のECCUBE在庫」に登録し総在庫等を更新すると明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md:89-93 は旧pf-eccube3に対応する自動入庫バッチがないことを明記する。旧4リポジトリの機能名・テーブル名検索でも対応バッチはなかったため、根拠は正本である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderStockInbound.php:54-61 は `getProductStocks()` を店舗IDだけで絞り、同:75-82 は既存行の `stockLocationId` をそのまま保存する。ネット側も /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Purchase/BuyOrderStockInbound.php:54-61,75-82 で同じ。対して /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/ProductClass.php:604-610 にはEC-CUBE在庫限定の `resolveEccubeProductStockForShop()` があるが、この自動入庫経路では使われない。",
+      "note": ""
+    },
+    {
+      "rowId": 229,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html:1011,1022 の正本は店頭・ネット双方で「総在庫、総原価、原価単価の更新を行う」、同:1042-1043 は「在庫情報を更新する」「在庫履歴を登録する」と要求する。しかし `dtb_product_class.stock` と `dtb_product_stock.stock` の双方を更新するとの特定は正本範囲に無く、リバース詳細設計の同:1082 にのみ現れる。",
+      "legacyEvidence": "/home/y-saito/Developments/hareruya-design-docs/functions/ec-cube-enterprise/b06-01_batch_purchase_purchase_auto_stock.md:89 は旧実装に対応バッチがないとする。ただし隣接する旧在庫更新では /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/ShoppingService.php:565-569 が `$productStock->setStock($stock)` と `$orderDetail->getProductClass()->setStock($stock)` の双方を更新し、旧在庫モデルの慣行は確認できる。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/ProductStockEntityManager.php:42-49 は `ProductStock->setStock($stock)` と persist のみを行う。現在の /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/ProductClass.php:600-610 は在庫を `ProductStock` から解決する構造で、当Entity自体に `stock` プロパティはない。",
+      "note": "正本の「総在庫」が現行データモデル上の `dtb_product_stock.stock` だけを意味するのか、旧モデル互換で `dtb_product_class.stock` も要求するのかを確定できない。B06-01対応の旧バッチも存在しないため、DB物理設計または移行方針の明示が必要。"
+    },
+    {
+      "rowId": 230,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html:1179 の正本は引数の有無による集計日を定義するが、正本範囲（同:1154-1197）に `otcBuyOrder:batch` や `updateSummary` はない。コマンド名はリバース詳細設計にのみ記載される。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Command/OtcBuyOrderBatch.php:12-22 は `updateSummary` を `SummaryService` に割り当て、`$this->setName('otcBuyOrder:batch')` とする。同:54-60 は後続引数をoptionsへ詰め、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/OtcBuyOrder/SummaryService.php:40-43 は先頭引数をY-m-dの集計日として使う。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:34-45 は使用例と登録名を `eccube:otc-buy-order:aggregate-summary` とし、同:54-74 は `date` 引数を受ける。`src/Eccube` と `html` の `otcBuyOrder:batch`、`updateSummary`、`aliases` 検索で旧名の別名登録は存在しない。",
+      "note": "特定の起動名は旧実装由来。"
+    },
+    {
+      "rowId": 231,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html:1195 の正本セルは「部門が登録されていない商品が存在する場合は、エラーメールを送信する」と明記する。本文の商品名・商品コード一覧という具体化は旧実装にも一致する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/OtcBuyOrder/SummaryService.php:54-59 は `getNoSectionProducts($summaryDate)` が空でなければ `sendNoSectionAlertMail` を呼ぶ。/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1168-1176 は各商品の `product_name` と `product_code` を「商品名, 商品コード」本文へ並べる。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Repository/DtbOtcBuyOrderRepository.php:942-971 のSQLは両SELECTで `WHERE` 直後に `AND obo.complete_date ...` を置いており構文不正である。選択列自体は同:943-945 の `p.name AS product_name`、`pc.product_code AS product_code` だが、同:980-986 の実行時に一覧取得が失敗するため通知まで到達できない。",
+      "note": ""
+    },
+    {
+      "rowId": 232,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html:1178-1195 の正本範囲は集計・引数・DB更新・部門未設定メールを記載するが、`set_time_limit`、`max_execution_time`、実行時間制限解除はない。要件はリバース詳細設計の同:1293「長時間処理に備えて実行時間制限を解除する」にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/OtcBuyOrder/SummaryService.php:28-32 は処理冒頭で `set_time_limit(0);` を実行し、続いてSQL logger無効化とトランザクション開始を行う。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:60-90 は日付解決後に `BatchAggregateSummaryAction->handle()` を呼ぶが時間制限を変更しない。対象Command、`src/Eccube/Service/Admin/OtcBuyOrder`、関連Repositoryを `set_time_limit`、`max_execution_time` で検索して0件だった。",
+      "note": "実行時間制限解除は旧実装由来。"
+    },
+    {
+      "rowId": 233,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0406_基本設計仕様書(バッチ_店頭買取管理) .html:1195 の正本は部門未設定時のメール送信だけを要求し、正本範囲に送信開始・完了・件数・宛先未設定ログの指定はない。これらはリバース詳細設計のログ節にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1164-1166 は送信開始、同:1179-1186 は宛先未設定時の送信せず終了、同:1199-1201 は `$count = $this->app->mail($message);` と `log_info(..., ['count' => $count]);` を記録する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1279-1287 は開始と宛先未設定終了を記録し、同:1306-1310 は送信後に `log_info('部門未設定商品通知メール送信完了');` とするだけで、`count($products)` または送信件数をログコンテキストへ渡さない。",
+      "note": "件数を含むログ契約は旧実装由来。"
+    },
+    {
+      "rowId": 234,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1254-1265 の正本はポイント失効処理と毎日0:00のスケジュール起動を定義するが、正本範囲（同:1234-1304）に `customer:batch` や `lostPoint` はない。コマンド名はリバース詳細設計にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php:12-16 は `lostPoint` を `Plugin\\HareruyaEc\\Service\\Customer\\LostPoints` に割り当て、同:24-28 は `$this->setName('customer:batch')` とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/LostPointsCommand.php:25 は `#[AsCommand(name: 'eccube:customer:lost-points', ...)]` と登録する。`src/Eccube` と `html` の `customer:batch`、`lostPoint`、`aliases` 検索で旧名の別名登録は存在しない。",
+      "note": "特定の起動名は旧実装由来。"
+    },
+    {
+      "rowId": 235,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1288-1290 の正本セルは失効ポイントを算出して「スマレジのポイント増減APIに送信し、失効ポイント分を差し引く」と要求する。同:1300-1302 はAPI失敗時に当該ユーザーのスマレジ・ユーザーポイント増減を今回は行わず次ユーザーへ進み、翌日以降へ持ち越すと明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/LostPoints.php:40-48 は会員ごとに `$losePoint` を算出し、`postSmaregiPoint($player->getSmaregiId(), $losePoint, false)` を呼び、結果が無ければ `continue;` する。同:49-61 のEC側ポイント・履歴更新は成功後だけである。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Customer/LostPointsAction.php:68-86 はEC側ポイント更新・履歴・連携ジョブを先にcommitし、同:112-115 でcommit後に非同期メッセージをdispatchする。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiCustomerPointAddMessageHandler.php:90-113 は後から実APIを呼び失敗ジョブを処理するため、API失敗時でも既に確定したEC側失効をスキップ・持越しにはできない。実API自体は /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiCustomerService.php:397-410 の `customerApiClient->addPoint(..., $delta)` として現在は実装済み。",
+      "note": "パケット記載の「固定成功レスポンス」は現スナップショットでは解消済み。ただし、設計が要求するAPI成功後のみEC側失効を確定する順序は満たしていないため、判定は真の乖離のまま。"
+    },
+    {
+      "rowId": 236,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1234-1304 のポイント失効正本範囲に開始・完了コンソール出力や日時付きという記載はない。要件はリバース詳細設計の同:1365「開始・完了のコンソール出力（日時付き）」にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php:49-52 は `echo sprintf(\"Command start:%s \\n\", date('Y/m/d H:i:s'));`、バッチ実行後に `echo sprintf(\"Command complete:%s \\n\", date('Y/m/d H:i:s'));` を出力する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/LostPointsCommand.php:35-38 は開始時に固定文言 `$io->text('ポイント失効バッチ開始')`、同:51 は完了時に固定文言 `$io->success('ポイント失効処理が完了しました。')` を出力し、`DateTime` や `format` を使わない。",
+      "note": "日時付きコンソール契約は旧実装由来。"
+    },
+    {
+      "rowId": 237,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1286-1302 の正本は会員ごとの処理とAPI失敗時の次会員継続を定義するが、インターバル、流量制御、リクエスト上限はない。要件はリバース詳細設計の同:1370「流量制御のため会員ごとにインターバルを挟む」にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Customer/LostPoints.php:38-45 は失効対象を `foreach` し、各会員の冒頭で `usleep(100000);` を行ってからスマレジ連携する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Admin/Customer/LostPointsAction.php:52-60 は会員ループを行うが待機処理はなく、同:112-115 で会員ごとに非同期dispatchする。対象Action、Command、PointHistoryRepositoryを `sleep`、`usleep`、`interval`、`インターバル` で検索して0件だった。",
+      "note": "会員ごとの明示インターバルは旧実装由来。現在は非同期化されており、共通APIクライアントのRateLimiterは別層にあるが、当該バッチの会員ごとの待機契約そのものは移植されていない。"
+    },
+    {
+      "rowId": 238,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1388-1464 のB08-03正本範囲に `customer:batch` や `pointExpireNotification` はない。コマンド名と不一致時終了はリバース詳細設計の同:1497-1498 にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php:12-16 は `pointExpireNotification` を対象サービスへ割り当て、同:24-28 はコマンド名を `customer:batch` とする。同:43-46 は未登録のbatch_nameならメッセージを出して `return 1;` とする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/PointExpireNotificationCommand.php:25 は `#[AsCommand(name: 'eccube:customer:point-expire-notification', ...)]` と登録する。`src/Eccube/Command` の `pointExpireNotification`、`customer:batch`、`aliases`、`setName(` 検索で旧名の登録は存在しない。",
+      "note": "特定コマンド名とbatch_name不一致時の契約は旧実装由来。"
+    },
+    {
+      "rowId": 239,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1463-1464 の正本エラーハンドリングは「該当処理なし」と記載し、送信エラーのコンソール出力を要求していない。該当要件はリバース詳細設計の同:1528「送信時のエラー／エラーメッセージをコンソールに出力する」にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1150-1154 は `$this->app->mail($message)` をcatchせず実行し、/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php:49-52 もサービス実行をcatchしないため、送信例外はConsole Applicationへ伝播してエラーとして出力される。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/MailService.php:1119-1125 は `TransportExceptionInterface` をcatchし、`log_critical($e->getMessage()); return;` として例外を握りつぶす。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/PointExpireNotificationCommand.php:40-48 に `$io->error(...)` はあるが、MailServiceから例外が再throwされないため送信エラーでは到達しない。",
+      "note": "正本はむしろエラー処理なしとするため、コンソール出力要件の根拠は旧実装の例外伝播。"
+    },
+    {
+      "rowId": 240,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1388-1464 のB08-03正本範囲に開始・完了コンソール出力や日時付きという記載はない。要件はリバース詳細設計の同:1531「開始・完了のコンソール出力（日時付き）」にのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php:49-52 は開始時に `date('Y/m/d H:i:s')` を含む `Command start`、完了時に同形式の `Command complete` をechoする。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Command/PointExpireNotificationCommand.php:35-38 は開始を固定文言 `$io->text('ポイント有効期限通知バッチ開始')`、同:51 は完了を固定文言 `$io->success('ポイント有効期限通知処理が完了しました。')` とし、日時を付与しない。",
+      "note": "日時付きコンソール契約は旧実装由来。"
+    }
+  ]
+}

@@ -6455,3 +6455,944 @@ nl -ba ec-cube-enterprise/src/Eccube/Entity/Master/MtbTopBanner.php | sed -n '35
     74	        return $this->id;
     75	    }
 
+exec
+/bin/bash -lc 'ls hareruya-design-docs/design_impl_drift_report/citation_audit/results | tail -n 10
+for f in hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_0{4,5}.json; do if test -f "$f"; then jq -r '"'.results[] | \"\\(.rowId) \\(.verdict)\"' \""'$f"; fi; done' in /home/y-saito/Developments
+ succeeded in 0ms:
+ab_03.log
+ab_04.json
+ab_04.log
+ab_05.log
+ab_06.log
+ab_07.log
+spot_01.log
+spot_02.log
+trial_01.json
+trial_01.log
+81 LEGACY_BACKED
+82 LEGACY_BACKED
+83 UNCERTAIN
+84 LEGACY_BACKED
+85 SPEC_BACKED
+86 SPEC_BACKED
+87 LEGACY_BACKED
+88 SPEC_BACKED
+89 LEGACY_BACKED
+90 SPEC_BACKED
+91 LEGACY_BACKED
+92 LEGACY_BACKED
+93 SPEC_BACKED
+94 SPEC_BACKED
+95 SPEC_BACKED
+96 LEGACY_BACKED
+97 SPEC_BACKED
+98 LEGACY_BACKED
+99 SPEC_BACKED
+100 SPEC_BACKED
+
+exec
+/bin/bash -lc "jq '.results[0:3]' hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_04.json" in /home/y-saito/Developments
+ succeeded in 0ms:
+[
+  {
+    "rowId": 81,
+    "verdict": "LEGACY_BACKED",
+    "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:1966 のExcel正本には「マスターにあるステータス以外はエラー」とだけあり、期待文言「正しい店頭買取ステータスIDを入力してください」はExcel正本範囲（sheet-7:1906-1994）に存在しない。該当文言はリバース詳細設計開始後の同HTML:2051にのみある。",
+    "legacyEvidence": "pf-api/src/Controller/Admin/OtcBuyOrderStatusController.php:35-43 で `findOneBy(['id' => $request->get('status')])` の結果が空なら `'errors' => ['正しい店頭買取ステータスIDを入力してください']` をHTTP 400で返しており、期待文言の真の根拠は旧実装にある。",
+    "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:198-206 は未指定・空・非数値に `MissingRequiredParameterException('ステータスが不正です')`、マスタ不在に `InvalidParameterException('ステータスが見つかりません')` を投げ、旧実装の文言を返さない。",
+    "note": "Excel正本はマスタ不在をエラーにすることまでは裏付けるが、指摘対象である固定文言は旧実装由来。"
+  },
+  {
+    "rowId": 82,
+    "verdict": "LEGACY_BACKED",
+    "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:1955 のExcel正本には「査定者本人を除き、査定中または査定再開のものは査定開始できない」とあるが、鉤括弧・句点を含む期待文言はExcel正本範囲（sheet-7:1906-1994）に存在しない。",
+    "legacyEvidence": "pf-api/src/Controller/Admin/OtcBuyOrderStatusController.php:61-69 は旧実装の担当者判定後に `'errors' => [\"この受注は「{$otcBuyOrder->getMember()->getName()}」が査定中です。\"]` を返しており、鉤括弧と末尾句点を含む文言を直接裏付ける。",
+    "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateStatusAction.php:95-101 は同条件で `InvalidStatusTransitionException(\"この受注は{$input->OtcBuyOrder->getMember()->getName()}が査定中です\")` を投げ、鉤括弧と句点がない。",
+    "note": "担当者排他という業務ルールはExcel正本にもあるが、指摘された文字列差分の根拠は旧実装。"
+  },
+  {
+    "rowId": 83,
+    "verdict": "UNCERTAIN",
+    "specEvidence": "hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:1975-1976 のExcel正本は「レスポンスデータ」「なし」と成功応答だけを記載し、401/404の本文有無はExcel正本範囲（sheet-7:1906-1994）に存在しない。「本文を持たない」はリバース詳細設計の同HTML:2051にのみある。",
+    "legacyEvidence": "pf-api/src/Controller/BaseController.php:23-41 は認証失敗時に `throw new UnauthorizedHttpException('')`、pf-api/src/Controller/Admin/OtcBuyOrderStatusController.php:25-30 は受注不在時に `throw new NotFoundHttpException()` とする。pf-api/src/Tests/Controller/Admin/OtcBuyOrderStatusControllerPutActionTest.php:51-69 は401/404のステータスだけを検証し、レスポンス本文が空であることは検証していない。",
+    "currentImpl": "ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:73-76 はApp APIで「JSON形式で必ず(code, errors)を返す」とし、同:140-143 で `new JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode)` を設定するため、新実装が本文を返すことは確認できる。",
+    "note": "旧実装が401/404を返すことは確認できるが、実行時の例外レンダリング後に本文が本当に空になるかを示す本文アサーションまたは実レスポンス記録が不足している。"
+  }
+]
+
+exec
+/bin/bash -lc "nl -ba ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php | sed -n '1037,1065p'
+nl -ba ec-cube-enterprise/src/Eccube/Entity/Master/MtbCardDetail.php | sed -n '270,325p'
+nl -ba ec-cube-enterprise/src/Eccube/Entity/DtbArticle.php | sed -n '20,60p'
+nl -ba ec-cube-enterprise/src/Eccube/Exception/App/BaseApiException.php | sed -n '35,60p'
+nl -ba ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php | sed -n '20,40p'" in /home/y-saito/Developments
+ succeeded in 0ms:
+  1037	        if ($CardDetail->getRarity() === null) {
+  1038	            return $this->json([], 404);
+  1039	        }
+  1040	
+  1041	        $CardImages = $CardDetail->getCardImages();
+  1042	        if ($CardImages->isEmpty()) {
+  1043	            return $this->json([], 404);
+  1044	        }
+  1045	
+  1046	        $cardDetail = [
+  1047	            'name' => $Card->getNameJp(),
+  1048	            'nameEn' => $Card->getNameEn(),
+  1049	            'productNameJp' => $CardDetail->buildProductNameJp(),
+  1050	            'productNameEn' => $CardDetail->buildProductNameEn(),
+  1051	            'cardLabelJp' => $CardDetail->buildCardLabelJp(),
+  1052	            'detailId' => $cardDetailId,
+  1053	            'images' => [],
+  1054	        ];
+  1055	
+  1056	        foreach ($CardImages as $CardImage) {
+  1057	            $cardDetail['images'][] = $CardImage->getUrl();
+  1058	        }
+  1059	
+  1060	        $event = new EventArgs(
+  1061	            [
+  1062	                'cardDetail' => $cardDetail,
+  1063	                'CardDetail' => $CardDetail,
+  1064	            ],
+  1065	            $request
+   270	
+   271	    public function setCardNo(?string $card_no): MtbCardDetail
+   272	    {
+   273	        $this->card_no = $card_no;
+   274	
+   275	        return $this;
+   276	    }
+   277	
+   278	    #[ORM\Column(name: 'foil_flg', type: Types::INTEGER, options: ['unsigned' => true, 'default' => 0, 'comment' => 'Foilフラグ'])]
+   279	    private ?int $foil_flg = 0;
+   280	
+   281	    public function getFoilFlg(): int
+   282	    {
+   283	        return $this->foil_flg;
+   284	    }
+   285	
+   286	    public function setFoilFlg(?int $foil_flg): MtbCardDetail
+   287	    {
+   288	        $this->foil_flg = $foil_flg;
+   289	
+   290	        return $this;
+   291	    }
+   292	
+   293	    #[ORM\Column(name: 'promotion_flg', type: Types::BOOLEAN, options: ['default' => false, 'comment' => 'プロモフラグ'])]
+   294	    private bool $promotion_flg = false;
+   295	
+   296	    public function isPromotionFlg(): bool
+   297	    {
+   298	        return $this->promotion_flg;
+   299	    }
+   300	
+   301	    public function setPromotionFlg(bool $promotion_flg): MtbCardDetail
+   302	    {
+   303	        $this->promotion_flg = $promotion_flg;
+   304	
+   305	        return $this;
+   306	    }
+   307	
+   308	    #[ORM\Column(name: 'frame_flg', type: Types::INTEGER, options: ['unsigned' => true, 'default' => 0, 'comment' => 'フレーム'])]
+   309	    private ?int $frameFlg = 0;
+   310	
+   311	    public function getFrameFlg(): int
+   312	    {
+   313	        return $this->frameFlg;
+   314	    }
+   315	
+   316	    public function setFrameFlg(?int $frameFlg): MtbCardDetail
+   317	    {
+   318	        $this->frameFlg = $frameFlg;
+   319	
+   320	        return $this;
+   321	    }
+   322	
+   323	    #[ORM\Column(name: 'create_date', type: Types::DATETIMETZ_MUTABLE, options: ['comment' => '作成日時'])]
+   324	    private \DateTime $create_date;
+   325	
+    20	use Doctrine\DBAL\Types\Types;
+    21	use Doctrine\ORM\Mapping as ORM;
+    22	use Eccube\Entity\Master\MtbCard;
+    23	use Eccube\Repository\DtbArticleRepository;
+    24	
+    25	#[ORM\Table(name: 'dtb_article')]
+    26	#[ORM\HasLifecycleCallbacks]
+    27	#[ORM\Entity(repositoryClass: DtbArticleRepository::class)]
+    28	class DtbArticle extends AbstractEntity
+    29	{
+    30	    #[ORM\Column(name: 'id', type: Types::INTEGER, options: ['unsigned' => true, 'comment' => '記事ID'])]
+    31	    #[ORM\Id]
+    32	    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+    33	    private int $id;
+    34	
+    35	    #[ORM\Column(name: 'wp_post_id', type: Types::INTEGER, options: ['unsigned' => true, 'comment' => 'WPの投稿ID'])]
+    36	    private int $wpPostId;
+    37	
+    38	    #[ORM\Column(name: 'wp_type_id', type: Types::INTEGER, options: ['unsigned' => true, 'comment' => 'WP種別ID'])]
+    39	    private int $wpTypeId;
+    40	
+    41	    #[ORM\Column(name: 'url', type: Types::STRING, length: 64, nullable: true, options: ['comment' => 'URL'])]
+    42	    private ?string $url = null;
+    43	
+    44	    #[ORM\Column(name: 'update_date', type: Types::DATETIMETZ_MUTABLE)]
+    45	    private \DateTime $updateDate;
+    46	
+    47	    #[ORM\Column(name: 'create_date', type: Types::DATETIMETZ_MUTABLE)]
+    48	    private \DateTime $createDate;
+    49	
+    50	    #[ORM\Column(name: 'deleted_at', type: Types::DATETIMETZ_MUTABLE, nullable: true)]
+    51	    private ?\DateTime $deletedAt = null;
+    52	
+    53	    /**
+    54	     * @var Collection<int, DtbArchetype>
+    55	     */
+    56	    #[ORM\ManyToMany(targetEntity: DtbArchetype::class, mappedBy: 'Articles')]
+    57	    private Collection $Archetypes;
+    58	
+    59	    /**
+    60	     * @var Collection<int, MtbCard>
+    35	    public function getStatusCode(): int
+    36	    {
+    37	        return $this->statusCode;
+    38	    }
+    39	
+    40	    public function getLogLevel(): string
+    41	    {
+    42	        return $this->logLevel;
+    43	    }
+    44	
+    45	    /**
+    46	     * @return array<int, string>
+    47	     */
+    48	    public function getErrors(): array
+    49	    {
+    50	        return $this->errors;
+    51	    }
+    52	}
+    20	class NotFoundException extends BaseApiException
+    21	{
+    22	    /**
+    23	     * @param string $message エラーメッセージ
+    24	     * @param ?\Throwable $previous
+    25	     * @param string $logLevel ログレベル
+    26	     */
+    27	    public function __construct(string $message = 'リソースが見つかりません', ?\Throwable $previous = null, string $logLevel = 'info')
+    28	    {
+    29	        parent::__construct(
+    30	            errors: [$message],
+    31	            statusCode: Response::HTTP_NOT_FOUND,
+    32	            logLevel: $logLevel,
+    33	            previous: $previous
+    34	        );
+    35	    }
+    36	}
+
+codex
+根拠の切り分けが完了しました。特に、camelCase・`sort_no`・関連記事の「共有数合計順」・`dtb_customer.point`・PointGranter時の`transaction_id`保存は Excel 正本にも旧実装にも一致せず、リバース設計由来の誤った具体化として分離しています。これを結果JSONへ反映し、形式と全20件の網羅性を検証します。
+apply patch
+patch: completed
+/home/y-saito/Developments/hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..f393ef15b82407401b7eac4d1d4ceba0673502c8
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json
+@@ -0,0 +1,165 @@
++{
++  "packetId": "ab_06",
++  "results": [
++    {
++      "rowId": 121,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1039-1050 のExcel正本に `/cards/{id}`、`メソッド GET`、`指定されたカードIDでカード情報を返す` とあり、同:1084-1085 に `200.0 正常終了`、`404.0 ... idに対応するカード情報が存在しない場合` とある。",
++      "legacyEvidence": "pf-api/config/routes.yaml:167-170 は `path: /cards/{id}`、`CardController::getCardAction`、`methods: GET` を定義し、pf-api/src/Controller/CardController.php:22-35 は `->find($id)`、不在時 `\"code\" => 404, \"message\" => 'Not Found'`、成功時 `return $card;` とする。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/CardController.php:41-43 は `/card`・`/card.json` の検索API、ec-cube-enterprise/src/Eccube/Controller/App/DeckBuilder/CardController.php:142-157 は `/api/cards/{id}` を定義するが、`/cards/{id}` ではない。確認範囲 `ec-cube-enterprise/src/Eccube/Controller`, `app`, `config`、検索語 `/cards/{id}`, `/cards`, `cards/{id}` では同一ルートは存在しない。",
++      "note": "404本文の `Not Found` は旧実装でも確認できるが、指摘の中心であるGETルートとカードID取得はExcel正本が直接裏付ける。"
++    },
++    {
++      "rowId": 122,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1043-1047 のExcel正本に `rank列をsort_noに名称変更`、`color_identitiesを追加`、`foil_flgをfoilに変更`、`frameを追加`、`promotion_flgを除去` とある。同:1114、1169、1183、1195 は `cardtypes.product_search_flg`、`card_details.cardset.branch_display_flg`、`card_details.card_images.create_date`、`color_sequence.sort_no` を応答項目として列挙する。",
++      "legacyEvidence": "pf-api/src/Controller/CardController.php:20-35 はカードEntityをそのまま返し、旧応答の基礎となる。pf-api/src/Entity/MtbCardDetail.php:91-109 は旧項目 `$foilFlg`、`$promotionFlg`、`$updateDate`、`$createDate` を保持しており、Excel正本のカスタマイズ記述が旧応答からの変更要求であることと整合する。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/DeckBuilder/CardController.php:149-157 は近似APIで `$Card->toNormalizedArray()` をそのまま返す。ec-cube-enterprise/src/Eccube/Entity/AbstractEntity.php:175-184 は関連Entityを識別子配列、Collectionを識別子だけの配列にするため、設計のネスト項目を展開しない。",
++      "note": ""
++    },
++    {
++      "rowId": 123,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1469 にExcel正本のエンドポイント `/cardDetails/{id}`、同:1505-1506 に `200.0 正常終了` と `404.0 ... idに対応するカード詳細情報が存在しない場合` がある。",
++      "legacyEvidence": "pf-api/config/routes.yaml:171-174 は `path: /cardDetails/{id}`、`CardController::getCardDetailAction`、`methods: GET` を定義し、pf-api/src/Controller/CardController.php:44-59 は `findOneById($id)` で取得し、不在時に `\"code\" => 404, \"message\" => 'Not Found'`、成功時に `return $cardDetail;` とする。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:1012-1024 に近似の管理画面AJAX `/%eccube_admin_route%/product/detail/search/id` はあるが、公開GET `/cardDetails/{id}` ではない。確認範囲 `src/Eccube/Controller`, `Service`, `Repository`, `Entity`, `html`、検索語 `cardDetails`, `/cardDetails`, `MtbCardDetail` では設計ルートは存在しない。",
++      "note": ""
++    },
++    {
++      "rowId": 124,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1513-1570 のExcel正本は `id`、`card_id`、`back_card_detail_id`、`cardset_id`、`rarity_id`、`illustrator_id`、`flavor_jp`、`text_jp`、`foil`、`card_layout`、`rarity`、`cardset`、`illustrator`、`promotion`、`card_images` 等の応答項目を列挙し、同:1505 は成功を `200.0` とする。なお正本の項目名はsnake_caseであり、finding記載のcamelCase表記は正本どおりではない。",
++      "legacyEvidence": "pf-api/src/Entity/MtbCardDetail.php:19-109 は `$cardId`、`$backCardDetailId`、`$cardsetId`、`$rarityId`、`$illustratorId`、`$flavorJp`、`$textJp`、`$foilFlg`、`$promotionFlg`、日時を持ち、同:75-84 と112-115 は `cardLayoutId`・`promotionId`・親`card`を `@JSON\\Exclude()` とする。pf-api/src/Controller/CardController.php:44-59 はこのEntityを返す。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:1046-1057 の近似AJAX応答は `'name'`, `'nameEn'`, `'productNameJp'`, `'productNameEn'`, `'cardLabelJp'`, `'detailId'`, `'images'` だけであり、設計の公開API応答を構築しない。設計ルート自体も確認範囲 `Controller/App`, `Controller/Front`, `Controller/Admin`, `Service/App`, `Repository/Master` に存在しない。",
++      "note": "findingのcamelCase列挙は不正確だが、Excel正本には同じ意味のsnake_case応答契約があり、その公開APIが不在という乖離は成立する。"
++    },
++    {
++      "rowId": 125,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1473-1475 のExcel正本に `foil_flgをfoilに変更`、`frameを追加`、`promotion_flgを除去` とあり、同:1479-1484 と1528-1531 は `0:なし / 1:あり / 2:特殊` を含む変更後の項目を示す。",
++      "legacyEvidence": "pf-api/src/Entity/MtbCardDetail.php:91-99 は旧実装が `$foilFlg = false` と `$promotionFlg = false` を保持することを示し、Excel正本が旧項目からの変更を要求していることと一致する。旧実装のA14-02入口は pf-api/src/Controller/CardController.php:44-59。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Master/MtbCardDetail.php:278-309 は `foil_flg`、`promotion_flg`、`frame_flg` を保持するが、公開A14-02応答で `foil`・`frame`へ整形して`promotion_flg`を除く入口はない。近似の記事用整形も ec-cube-enterprise/src/Eccube/Service/App/Article/ArticleResponseBuilder.php:270-280 で `'foil_flg'`、`'promotion_flg'` を出力し`frame`を出力しない。",
++      "note": ""
++    },
++    {
++      "rowId": 126,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1513-1570 のExcel正本は応答項目を `card_id`、`update_date`、`create_date`、`card_images` 等のsnake_caseで記載し、日時を `日時（YYYY/MM/DD HH:MM）` とする。`camelCase`・`ISO8601`・`本APIはデータを更新しない` はExcel正本範囲（sheet-4:1446-1650）に存在せず、リバース詳細設計開始後の同HTML:1717-1732 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/CardController.php:44-59 は取得した `$cardDetail` をそのまま返し、pf-api/src/Entity/MtbCardDetail.php:21-109 のプロパティは `$cardId` 等だが、Excel正本の実レスポンス例はsnake_caseである。旧実装全体（`pf-api`, `pf-eccube3`, `pf-article`, `deck-api`）を `cardDetails`, `camelCase`, `ISO8601`, `formatDateTime` で検索したが、A14-02にcamelCase契約を課すコード・テストは見つからない。",
++      "currentImpl": "ec-cube-enterpriseには公開A14-02入口がない一方、近似の一般正規化は ec-cube-enterprise/src/Eccube/Entity/AbstractEntity.php:171-184 で日時を `Y-m-d\\TH:i:s\\Z` にし関連をID配列化する。finding固有のcamelCase契約は新実装にもない。",
++      "note": "A14-02ルート不在自体はrowId 123でSPEC_BACKEDだが、本finding固有のcamelCase/ISO8601/read-onlyという一組の期待値はExcel正本にも旧実装にも裏付けられず、正本のsnake_case・日時表記とも矛盾する。"
++    },
++    {
++      "rowId": 127,
++      "verdict": "ALREADY_MET",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1041-1049 のExcel正本は成功応答を `id`, `image_url`, `link`, `disp_type`, `languages.id`, `languages.name_jp`, `languages.name_en`, `languages.code` と明記し、同:1055-1064 のサンプルもsnake_caseである。findingのcamelCaseはリバース詳細設計開始後の同HTML:1120-1133 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/MtbTopBanner.php:17-43 は公開対象の `$id`, `$imageUrl`, `$link`, `$dispType`, `$languages` を持ち、pf-api/src/Controller/BannerController.php:20-35 は取得Entityを返す。Excel正本のサンプルは旧APIの外部応答をsnake_caseで示している。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/Content/TopBannerResponseBuilder.php:31-47 は正本どおり `'id'`, `'image_url'`, `'link'`, `'disp_type'`, `languages`配下の`'id'`, `'name_jp'`, `'name_en'`, `'code'` を構築し、ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:67-69 がHTTP 200で返す。",
++      "note": "監査findingはリバース詳細設計の誤ったcamelCase表記を正本扱いしたもの。新実装はExcel正本のsnake_case契約を既に満たす。"
++    },
++    {
++      "rowId": 128,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1032-1033 のExcel正本は `200 正常`、`404 該当データがない場合(トップバナーIDが存在しない)` までを記載するが、本文 `{code, message}` と固定文言 `Not Found` はExcel正本範囲（sheet-3:985-1070）に存在せず、リバース詳細設計の同HTML:1136 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/BannerController.php:22-35 はトップバナー不在時に `View::create([\"code\" => 404, \"message\" => 'Not Found'], 404)` を返すため、本文形と固定文言の真の根拠は旧実装にある。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:59-74 は不在時 `NotFoundException('Not Found')` を投げるが、catchで `['code' => $e->getStatusCode(), 'errors' => $e->getErrors()]` を返すため、本文は `{code, errors}` になる。",
++      "note": "HTTP 404自体はExcel正本にもあるが、指摘対象の本文キー差分は旧実装由来。"
++    },
++    {
++      "rowId": 129,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1153-1166 のExcel正本は `言語コードに紐づいたトップバナーの情報一覧` と `指定された言語コードに紐づいた...一覧をJSON形式で出力`、同:1177-1180 は `指定言語の設定済みトップバナー一覧を取得` と明記する。",
++      "legacyEvidence": "pf-api/src/Controller/BannerController.php:44-61 は `findAllWhereUrlIsNotEmpty($languageCode)` を呼び、pf-api/src/Repository/MtbTopBannerRepository.php:19-28 は `tb.imageUrl <> ''`、`tb.dispType <> 0`、`l.code = :languageCode` で絞る。旧実装は正本の「設定済み」を表示対象かつ画像設定済みとして具体化している。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:91-110 は言語を取得後 `$Language->getTopBanners()` をそのままbuilderへ渡す。表示状態・画像URL・言語・並び順を絞る実装は ec-cube-enterprise/src/Eccube/Repository/Master/MtbTopBannerRepository.php:43-52 にあるが、このAPIから呼ばれていない。",
++      "note": ""
++    },
++    {
++      "rowId": 130,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1151-1308 のExcel正本には `sort_no`、表示順、上限、取得後の再計算禁止の記載が存在しない。正本は同:1177-1180 の `指定言語の設定済みトップバナー一覧` までであり、`sort_no` はリバース詳細設計開始後の同HTML:1332-1341 にのみある。",
++      "legacyEvidence": "pf-api/src/Repository/MtbTopBannerRepository.php:17-30 は旧一覧を画像URL・表示状態・言語で絞った後 `orderBy('tb.id', 'ASC')` としており、`sort_no`順ではない。旧4リポジトリを `topBanner`, `sort_no`, `findAllWhereUrlIsNotEmpty` で検索しても、A16-02を`sort_no`順にする根拠はない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:102-110 は `$Language->getTopBanners()` をそのまま渡す。一方、未使用の ec-cube-enterprise/src/Eccube/Repository/Master/MtbTopBannerRepository.php:50-52 には `orderBy('tb.sortNo', 'ASC')` と上限があるが、API経路から呼ばれない。",
++      "note": "移行先Entityが`sort_no`列を持つことだけでは、このAPIの表示順要件にはならない。旧実装はid昇順であり、findingの`sort_no`順要求を裏付けない。"
++    },
++    {
++      "rowId": 131,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1198-1199 のExcel正本は `404 該当データがない場合(言語コード未設定・言語コードに紐づいたトップバナーIDがない場合)` とするが、本文 `{code, message}` と `Language code is not found` はExcel正本範囲（sheet-4:1151-1308）に存在せず、リバース詳細設計の同HTML:1351 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/BannerController.php:46-58 は一覧が空かつ `findByCode($languageCode)` も空のとき `View::create([\"code\" => 404, \"message\" => 'Language code is not found'], 404)` を返し、固定文言と本文形を直接裏付ける。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:95-107 は言語不在または一覧空で `NotFoundException('Not Found')` を投げ、同:113-117 は `['code' => ..., 'errors' => ...]` を返すため、旧実装の `{code, message}` と固定文言を満たさない。",
++      "note": "404条件はExcel正本にもあるが、指摘の具体的な本文契約は旧実装由来。旧実装は「一覧空かつ言語不在」のAND条件であり、findingの「または」という表現は正確ではない。"
++    },
++    {
++      "rowId": 132,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1077-1086 のExcel正本は `deleted_at` を応答項目表の `削除日時` として載せるだけで、削除済みを応答対象外にする検索条件はExcel正本範囲（sheet-3:1021-1587）に存在しない。除外要件はリバース詳細設計の同HTML:1610,1659 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/DtbArticle.php:13-15 は `@Gedmo\\SoftDeleteable(fieldName=\"deletedAt\", timeAware=false)`、pf-api/config/packages/doctrine.yaml:28-31 は `SoftDeleteableFilter` を `enabled: true` とする。pf-api/src/Repository/DtbArticleRepository.php:21-26 の通常QueryBuilder検索にはこのフィルタが適用され、削除済み記事を除外する旧挙動が根拠となる。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php:58 は `findOneBy(['wpPostId' => ...])` のみで、ec-cube-enterprise/src/Eccube/Entity/DtbArticle.php:50-51 は`deletedAt`列を持つがSoftDeleteable指定がない。確認範囲 `ArticleController`, `DtbArticleRepository`, `ArticleResponseBuilder`, `DtbArticle` に削除除外条件はない。",
++      "note": "旧Repositoryに明示的な`deletedAt IS NULL`がなくても、旧環境では有効化されたGedmo SoftDeleteableFilterが自動適用される。"
++    },
++    {
++      "rowId": 133,
++      "verdict": "ALREADY_MET",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1077-1086 のExcel正本は `article_id`, `wp_post_id`, `wp_type_id`, `update_date`, `create_date`, `event_details` とsnake_caseで明記し、同:1093-1099 のサンプルもsnake_caseである。`camelCase` はリバース詳細設計開始後の同HTML:1640-1653 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/DtbArticle.php:20-82 は公開プロパティを定義し、pf-api/src/Controller/ArticleController.php:92-107 は取得Entityをそのまま返す。Excel正本の旧APIレスポンス例は外部キーをsnake_caseで示しており、camelCase契約を裏付ける旧テスト・SerializedName指定は確認できない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/Article/ArticleResponseBuilder.php:34-47 は正本どおり `'article_id'`, `'wp_post_id'`, `'wp_type_id'`, `'update_date'`, `'create_date'`, `'event_details'` を構築し、同:55-57 は日時を `Y-m-d\\TH:i:sP`（ISO8601）で返す。",
++      "note": "新実装はExcel正本のsnake_case契約とISO8601日時を既に満たす。findingはリバース詳細設計の誤ったcamelCase表記を正本扱いした誤検出。"
++    },
++    {
++      "rowId": 134,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1067-1068 のExcel正本は `404.0 該当データがない場合` までで、本文 `{code, message}` と `Not Found` はExcel正本範囲（sheet-3:1021-1587）に存在せず、リバース詳細設計の同HTML:1647 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/ArticleController.php:92-104 は該当記事なしで `View::create([\"code\" => 404, \"message\" => 'Not Found'], 404)` を返すため、固定文言と本文形の真の根拠は旧実装にある。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php:58-69 は該当なしで `NotFoundException('記事が見つかりません')` を投げ、catchで `['code' => ..., 'errors' => ...]` を返すため、キーも文言も旧実装と異なる。",
++      "note": "HTTP 404自体はExcel正本にもあるが、指摘対象の本文契約は旧実装由来。"
++    },
++    {
++      "rowId": 135,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1730-1737 のExcel正本は関連記事応答の `wp_post_id` 等を示すが、`deleted_at`による基準記事・関連記事の除外要件はExcel正本範囲（sheet-4:1676-1766）に存在しない。除外要件はリバース詳細設計の同HTML:1789,1840 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/DtbArticle.php:13-15 の `@Gedmo\\SoftDeleteable(fieldName=\"deletedAt\")` と pf-api/config/packages/doctrine.yaml:28-31 の有効な`SoftDeleteableFilter`により、pf-api/src/Repository/DtbArticleRepository.php:39-68 のDQL関連記事検索では削除済みDtbArticleが自動除外される。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:44-115 のraw SQLは `FROM dtb_article a1 INNER JOIN dtb_article a2` に対し、WHEREが`a1.wp_post_id`、wp_post_id差異、`a2.wp_post_id <> 0`、共有EXISTSだけで、`a1.deleted_at IS NULL` / `a2.deleted_at IS NULL` がない。raw SQLにはDoctrineフィルタも適用されない。",
++      "note": ""
++    },
++    {
++      "rowId": 136,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1676-1766 のExcel正本には関連記事の具体的な並び順が存在しない。`共有度の高い順` はリバース詳細設計の同HTML:1807 にのみあり、その元文書自身も `関連の判定ロジックの詳細（実装を確認値とする）` としている。共有フラグ数の合計降順という記述は正本・リバース設計のいずれにもない。",
++      "legacyEvidence": "pf-api/src/Repository/DtbArticleRepository.php:50-65 は共有フラグを作り、`orderBy('hasSameDeck','DESC')`、続けてarchetype、card、eventDetailの固定優先順位で並べる。これは新実装と同じ辞書順であり、「共有フラグ数合計の降順」を裏付けない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:110-115 も `has_same_deck DESC, has_same_archetype DESC, has_same_card DESC, has_same_event_detail DESC, a2.wp_post_id ASC` と旧実装を踏襲する。",
++      "note": "findingが例示する「共有3件よりdeck共有1件が後になるべき」という合計スコア解釈は、Excel正本にも旧実装にも根拠がない。"
++    },
++    {
++      "rowId": 137,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1884-1893 のExcel正本に `PointGranterから送られてきた端末販売APIの内容をスマレジに連携する`、`スマレジへデータを転送する` とあり、同:1926-1927 はスマレジ`postTransactions` APIを参照する。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:30-36 は契約ID・アクセストークンをヘッダ化し `postSmaregiRegisterTransaction(...)` を呼ぶ。pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CustomerService.php:365-380 はcURLでURL、HTTPヘッダ、POST、`proc_name`・`params`を設定して実際に中継する。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/PointGranterController.php:86-91 はサービスを呼ぶが、ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiApiService.php:33-45 は `TODO: スマレジAPIを実行する実装を追加`、`未実装のため仮の固定レスポンス` として固定successを返し、HTTP中継しない。",
++      "note": ""
++    },
++    {
++      "rowId": 138,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1887-1891 のExcel正本は `下記の項目がなければエラー404` として `X_contract_id`, `X_access_token`, `proc_name`, `params` を列挙し、同:1924 は `404.0 必須項目にデータがない場合` と明記する。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:23-28 は同4項目を検査するが、欠落時は `Response::HTTP_BAD_REQUEST`（400）を返す。旧実装は正本の404とは矛盾するため、期待値の根拠は旧実装ではなくExcel正本である。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/PointGranterController.php:65-83 は4項目のいずれかが空なら `jsonResponse([], Response::HTTP_BAD_REQUEST)` を返し、HTTP 400となる。",
++      "note": "同HTMLのリバース詳細設計はHTTP 400と記載するが、Excel正本の404要求を優先してSPEC_BACKEDと判定した。"
++    },
++    {
++      "rowId": 139,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1872 のExcel正本は `PointGranter連携で会員にポイントを付与`、同:1896-1900 は `customerIdからプレイヤー情報を取得`、`プレイヤー...保有ポイントに付与ポイントを加算` と記載し、`dtb_customer.point`更新とは書いていない。`dtb_customer.point`はリバース詳細設計の同HTML:1953,2000 にのみある。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:43-60 は`customerId`から`$player`を取得し、`$player->setPoint($player->getPoint() + $row['newPoint'])`をpersistする。旧実装も`dtb_player.point`更新であり、`dtb_customer.point`更新を裏付けない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/PointGranter/PointGranterAction.php:46-67 は`customerId`を`smaregiId`としてPlayerを検索し、`$Player->setPoint($Player->getPoint() + $newPoint)`をpersistするため、Excel正本と旧実装のプレイヤーポイント加算を踏襲している。",
++      "note": "リバース詳細設計が移行先DBを誤って`dtb_customer.point`と具体化したことによる誤検出。"
++    },
++    {
++      "rowId": 140,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1900 のExcel正本は `ポイント履歴を登録する` とだけ記載し、`transaction_id`をPointGranter付与時に保存する要件はExcel正本範囲（sheet-5:1857-1929）に存在しない。列一覧はリバース詳細設計の同HTML:1953,2000 にのみある。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:51-60 はPointGranter履歴にcustomer、pointChange、note、issueDate、createDate、pointTypeを設定するが、`setTransactionId`を呼ばない。旧実装全体を`PointGranter`, `setTransactionId`, `transaction_id`で検索すると別処理のCheckSmaregiTransactionには設定がある一方、本APIにはなく、期待値を裏付けない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/PointGranter/PointGranterAction.php:68-77 はPointGranter履歴保存で `transactionId: null` を明示する。これは旧PointGranter実装と同じで、履歴自体はcustomer、pointChange、note、issueDate、pointType付きで登録する。",
++      "note": "`dtb_point_history.transaction_id`列の存在だけではPointGranter経路の必須保存要件にならない。正本と旧実装はいずれも本経路での取引ID保存を要求・実行していない。"
++    }
++  ]
++}
+
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..f393ef15b82407401b7eac4d1d4ceba0673502c8
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json
+@@ -0,0 +1,165 @@
++{
++  "packetId": "ab_06",
++  "results": [
++    {
++      "rowId": 121,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1039-1050 のExcel正本に `/cards/{id}`、`メソッド GET`、`指定されたカードIDでカード情報を返す` とあり、同:1084-1085 に `200.0 正常終了`、`404.0 ... idに対応するカード情報が存在しない場合` とある。",
++      "legacyEvidence": "pf-api/config/routes.yaml:167-170 は `path: /cards/{id}`、`CardController::getCardAction`、`methods: GET` を定義し、pf-api/src/Controller/CardController.php:22-35 は `->find($id)`、不在時 `\"code\" => 404, \"message\" => 'Not Found'`、成功時 `return $card;` とする。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/CardController.php:41-43 は `/card`・`/card.json` の検索API、ec-cube-enterprise/src/Eccube/Controller/App/DeckBuilder/CardController.php:142-157 は `/api/cards/{id}` を定義するが、`/cards/{id}` ではない。確認範囲 `ec-cube-enterprise/src/Eccube/Controller`, `app`, `config`、検索語 `/cards/{id}`, `/cards`, `cards/{id}` では同一ルートは存在しない。",
++      "note": "404本文の `Not Found` は旧実装でも確認できるが、指摘の中心であるGETルートとカードID取得はExcel正本が直接裏付ける。"
++    },
++    {
++      "rowId": 122,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1043-1047 のExcel正本に `rank列をsort_noに名称変更`、`color_identitiesを追加`、`foil_flgをfoilに変更`、`frameを追加`、`promotion_flgを除去` とある。同:1114、1169、1183、1195 は `cardtypes.product_search_flg`、`card_details.cardset.branch_display_flg`、`card_details.card_images.create_date`、`color_sequence.sort_no` を応答項目として列挙する。",
++      "legacyEvidence": "pf-api/src/Controller/CardController.php:20-35 はカードEntityをそのまま返し、旧応答の基礎となる。pf-api/src/Entity/MtbCardDetail.php:91-109 は旧項目 `$foilFlg`、`$promotionFlg`、`$updateDate`、`$createDate` を保持しており、Excel正本のカスタマイズ記述が旧応答からの変更要求であることと整合する。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/DeckBuilder/CardController.php:149-157 は近似APIで `$Card->toNormalizedArray()` をそのまま返す。ec-cube-enterprise/src/Eccube/Entity/AbstractEntity.php:175-184 は関連Entityを識別子配列、Collectionを識別子だけの配列にするため、設計のネスト項目を展開しない。",
++      "note": ""
++    },
++    {
++      "rowId": 123,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1469 にExcel正本のエンドポイント `/cardDetails/{id}`、同:1505-1506 に `200.0 正常終了` と `404.0 ... idに対応するカード詳細情報が存在しない場合` がある。",
++      "legacyEvidence": "pf-api/config/routes.yaml:171-174 は `path: /cardDetails/{id}`、`CardController::getCardDetailAction`、`methods: GET` を定義し、pf-api/src/Controller/CardController.php:44-59 は `findOneById($id)` で取得し、不在時に `\"code\" => 404, \"message\" => 'Not Found'`、成功時に `return $cardDetail;` とする。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:1012-1024 に近似の管理画面AJAX `/%eccube_admin_route%/product/detail/search/id` はあるが、公開GET `/cardDetails/{id}` ではない。確認範囲 `src/Eccube/Controller`, `Service`, `Repository`, `Entity`, `html`、検索語 `cardDetails`, `/cardDetails`, `MtbCardDetail` では設計ルートは存在しない。",
++      "note": ""
++    },
++    {
++      "rowId": 124,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1513-1570 のExcel正本は `id`、`card_id`、`back_card_detail_id`、`cardset_id`、`rarity_id`、`illustrator_id`、`flavor_jp`、`text_jp`、`foil`、`card_layout`、`rarity`、`cardset`、`illustrator`、`promotion`、`card_images` 等の応答項目を列挙し、同:1505 は成功を `200.0` とする。なお正本の項目名はsnake_caseであり、finding記載のcamelCase表記は正本どおりではない。",
++      "legacyEvidence": "pf-api/src/Entity/MtbCardDetail.php:19-109 は `$cardId`、`$backCardDetailId`、`$cardsetId`、`$rarityId`、`$illustratorId`、`$flavorJp`、`$textJp`、`$foilFlg`、`$promotionFlg`、日時を持ち、同:75-84 と112-115 は `cardLayoutId`・`promotionId`・親`card`を `@JSON\\Exclude()` とする。pf-api/src/Controller/CardController.php:44-59 はこのEntityを返す。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:1046-1057 の近似AJAX応答は `'name'`, `'nameEn'`, `'productNameJp'`, `'productNameEn'`, `'cardLabelJp'`, `'detailId'`, `'images'` だけであり、設計の公開API応答を構築しない。設計ルート自体も確認範囲 `Controller/App`, `Controller/Front`, `Controller/Admin`, `Service/App`, `Repository/Master` に存在しない。",
++      "note": "findingのcamelCase列挙は不正確だが、Excel正本には同じ意味のsnake_case応答契約があり、その公開APIが不在という乖離は成立する。"
++    },
++    {
++      "rowId": 125,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1473-1475 のExcel正本に `foil_flgをfoilに変更`、`frameを追加`、`promotion_flgを除去` とあり、同:1479-1484 と1528-1531 は `0:なし / 1:あり / 2:特殊` を含む変更後の項目を示す。",
++      "legacyEvidence": "pf-api/src/Entity/MtbCardDetail.php:91-99 は旧実装が `$foilFlg = false` と `$promotionFlg = false` を保持することを示し、Excel正本が旧項目からの変更を要求していることと一致する。旧実装のA14-02入口は pf-api/src/Controller/CardController.php:44-59。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Master/MtbCardDetail.php:278-309 は `foil_flg`、`promotion_flg`、`frame_flg` を保持するが、公開A14-02応答で `foil`・`frame`へ整形して`promotion_flg`を除く入口はない。近似の記事用整形も ec-cube-enterprise/src/Eccube/Service/App/Article/ArticleResponseBuilder.php:270-280 で `'foil_flg'`、`'promotion_flg'` を出力し`frame`を出力しない。",
++      "note": ""
++    },
++    {
++      "rowId": 126,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1513-1570 のExcel正本は応答項目を `card_id`、`update_date`、`create_date`、`card_images` 等のsnake_caseで記載し、日時を `日時（YYYY/MM/DD HH:MM）` とする。`camelCase`・`ISO8601`・`本APIはデータを更新しない` はExcel正本範囲（sheet-4:1446-1650）に存在せず、リバース詳細設計開始後の同HTML:1717-1732 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/CardController.php:44-59 は取得した `$cardDetail` をそのまま返し、pf-api/src/Entity/MtbCardDetail.php:21-109 のプロパティは `$cardId` 等だが、Excel正本の実レスポンス例はsnake_caseである。旧実装全体（`pf-api`, `pf-eccube3`, `pf-article`, `deck-api`）を `cardDetails`, `camelCase`, `ISO8601`, `formatDateTime` で検索したが、A14-02にcamelCase契約を課すコード・テストは見つからない。",
++      "currentImpl": "ec-cube-enterpriseには公開A14-02入口がない一方、近似の一般正規化は ec-cube-enterprise/src/Eccube/Entity/AbstractEntity.php:171-184 で日時を `Y-m-d\\TH:i:s\\Z` にし関連をID配列化する。finding固有のcamelCase契約は新実装にもない。",
++      "note": "A14-02ルート不在自体はrowId 123でSPEC_BACKEDだが、本finding固有のcamelCase/ISO8601/read-onlyという一組の期待値はExcel正本にも旧実装にも裏付けられず、正本のsnake_case・日時表記とも矛盾する。"
++    },
++    {
++      "rowId": 127,
++      "verdict": "ALREADY_MET",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1041-1049 のExcel正本は成功応答を `id`, `image_url`, `link`, `disp_type`, `languages.id`, `languages.name_jp`, `languages.name_en`, `languages.code` と明記し、同:1055-1064 のサンプルもsnake_caseである。findingのcamelCaseはリバース詳細設計開始後の同HTML:1120-1133 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/MtbTopBanner.php:17-43 は公開対象の `$id`, `$imageUrl`, `$link`, `$dispType`, `$languages` を持ち、pf-api/src/Controller/BannerController.php:20-35 は取得Entityを返す。Excel正本のサンプルは旧APIの外部応答をsnake_caseで示している。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/Content/TopBannerResponseBuilder.php:31-47 は正本どおり `'id'`, `'image_url'`, `'link'`, `'disp_type'`, `languages`配下の`'id'`, `'name_jp'`, `'name_en'`, `'code'` を構築し、ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:67-69 がHTTP 200で返す。",
++      "note": "監査findingはリバース詳細設計の誤ったcamelCase表記を正本扱いしたもの。新実装はExcel正本のsnake_case契約を既に満たす。"
++    },
++    {
++      "rowId": 128,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1032-1033 のExcel正本は `200 正常`、`404 該当データがない場合(トップバナーIDが存在しない)` までを記載するが、本文 `{code, message}` と固定文言 `Not Found` はExcel正本範囲（sheet-3:985-1070）に存在せず、リバース詳細設計の同HTML:1136 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/BannerController.php:22-35 はトップバナー不在時に `View::create([\"code\" => 404, \"message\" => 'Not Found'], 404)` を返すため、本文形と固定文言の真の根拠は旧実装にある。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:59-74 は不在時 `NotFoundException('Not Found')` を投げるが、catchで `['code' => $e->getStatusCode(), 'errors' => $e->getErrors()]` を返すため、本文は `{code, errors}` になる。",
++      "note": "HTTP 404自体はExcel正本にもあるが、指摘対象の本文キー差分は旧実装由来。"
++    },
++    {
++      "rowId": 129,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1153-1166 のExcel正本は `言語コードに紐づいたトップバナーの情報一覧` と `指定された言語コードに紐づいた...一覧をJSON形式で出力`、同:1177-1180 は `指定言語の設定済みトップバナー一覧を取得` と明記する。",
++      "legacyEvidence": "pf-api/src/Controller/BannerController.php:44-61 は `findAllWhereUrlIsNotEmpty($languageCode)` を呼び、pf-api/src/Repository/MtbTopBannerRepository.php:19-28 は `tb.imageUrl <> ''`、`tb.dispType <> 0`、`l.code = :languageCode` で絞る。旧実装は正本の「設定済み」を表示対象かつ画像設定済みとして具体化している。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:91-110 は言語を取得後 `$Language->getTopBanners()` をそのままbuilderへ渡す。表示状態・画像URL・言語・並び順を絞る実装は ec-cube-enterprise/src/Eccube/Repository/Master/MtbTopBannerRepository.php:43-52 にあるが、このAPIから呼ばれていない。",
++      "note": ""
++    },
++    {
++      "rowId": 130,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1151-1308 のExcel正本には `sort_no`、表示順、上限、取得後の再計算禁止の記載が存在しない。正本は同:1177-1180 の `指定言語の設定済みトップバナー一覧` までであり、`sort_no` はリバース詳細設計開始後の同HTML:1332-1341 にのみある。",
++      "legacyEvidence": "pf-api/src/Repository/MtbTopBannerRepository.php:17-30 は旧一覧を画像URL・表示状態・言語で絞った後 `orderBy('tb.id', 'ASC')` としており、`sort_no`順ではない。旧4リポジトリを `topBanner`, `sort_no`, `findAllWhereUrlIsNotEmpty` で検索しても、A16-02を`sort_no`順にする根拠はない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:102-110 は `$Language->getTopBanners()` をそのまま渡す。一方、未使用の ec-cube-enterprise/src/Eccube/Repository/Master/MtbTopBannerRepository.php:50-52 には `orderBy('tb.sortNo', 'ASC')` と上限があるが、API経路から呼ばれない。",
++      "note": "移行先Entityが`sort_no`列を持つことだけでは、このAPIの表示順要件にはならない。旧実装はid昇順であり、findingの`sort_no`順要求を裏付けない。"
++    },
++    {
++      "rowId": 131,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1198-1199 のExcel正本は `404 該当データがない場合(言語コード未設定・言語コードに紐づいたトップバナーIDがない場合)` とするが、本文 `{code, message}` と `Language code is not found` はExcel正本範囲（sheet-4:1151-1308）に存在せず、リバース詳細設計の同HTML:1351 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/BannerController.php:46-58 は一覧が空かつ `findByCode($languageCode)` も空のとき `View::create([\"code\" => 404, \"message\" => 'Language code is not found'], 404)` を返し、固定文言と本文形を直接裏付ける。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:95-107 は言語不在または一覧空で `NotFoundException('Not Found')` を投げ、同:113-117 は `['code' => ..., 'errors' => ...]` を返すため、旧実装の `{code, message}` と固定文言を満たさない。",
++      "note": "404条件はExcel正本にもあるが、指摘の具体的な本文契約は旧実装由来。旧実装は「一覧空かつ言語不在」のAND条件であり、findingの「または」という表現は正確ではない。"
++    },
++    {
++      "rowId": 132,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1077-1086 のExcel正本は `deleted_at` を応答項目表の `削除日時` として載せるだけで、削除済みを応答対象外にする検索条件はExcel正本範囲（sheet-3:1021-1587）に存在しない。除外要件はリバース詳細設計の同HTML:1610,1659 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/DtbArticle.php:13-15 は `@Gedmo\\SoftDeleteable(fieldName=\"deletedAt\", timeAware=false)`、pf-api/config/packages/doctrine.yaml:28-31 は `SoftDeleteableFilter` を `enabled: true` とする。pf-api/src/Repository/DtbArticleRepository.php:21-26 の通常QueryBuilder検索にはこのフィルタが適用され、削除済み記事を除外する旧挙動が根拠となる。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php:58 は `findOneBy(['wpPostId' => ...])` のみで、ec-cube-enterprise/src/Eccube/Entity/DtbArticle.php:50-51 は`deletedAt`列を持つがSoftDeleteable指定がない。確認範囲 `ArticleController`, `DtbArticleRepository`, `ArticleResponseBuilder`, `DtbArticle` に削除除外条件はない。",
++      "note": "旧Repositoryに明示的な`deletedAt IS NULL`がなくても、旧環境では有効化されたGedmo SoftDeleteableFilterが自動適用される。"
++    },
++    {
++      "rowId": 133,
++      "verdict": "ALREADY_MET",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1077-1086 のExcel正本は `article_id`, `wp_post_id`, `wp_type_id`, `update_date`, `create_date`, `event_details` とsnake_caseで明記し、同:1093-1099 のサンプルもsnake_caseである。`camelCase` はリバース詳細設計開始後の同HTML:1640-1653 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/DtbArticle.php:20-82 は公開プロパティを定義し、pf-api/src/Controller/ArticleController.php:92-107 は取得Entityをそのまま返す。Excel正本の旧APIレスポンス例は外部キーをsnake_caseで示しており、camelCase契約を裏付ける旧テスト・SerializedName指定は確認できない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/Article/ArticleResponseBuilder.php:34-47 は正本どおり `'article_id'`, `'wp_post_id'`, `'wp_type_id'`, `'update_date'`, `'create_date'`, `'event_details'` を構築し、同:55-57 は日時を `Y-m-d\\TH:i:sP`（ISO8601）で返す。",
++      "note": "新実装はExcel正本のsnake_case契約とISO8601日時を既に満たす。findingはリバース詳細設計の誤ったcamelCase表記を正本扱いした誤検出。"
++    },
++    {
++      "rowId": 134,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1067-1068 のExcel正本は `404.0 該当データがない場合` までで、本文 `{code, message}` と `Not Found` はExcel正本範囲（sheet-3:1021-1587）に存在せず、リバース詳細設計の同HTML:1647 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/ArticleController.php:92-104 は該当記事なしで `View::create([\"code\" => 404, \"message\" => 'Not Found'], 404)` を返すため、固定文言と本文形の真の根拠は旧実装にある。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php:58-69 は該当なしで `NotFoundException('記事が見つかりません')` を投げ、catchで `['code' => ..., 'errors' => ...]` を返すため、キーも文言も旧実装と異なる。",
++      "note": "HTTP 404自体はExcel正本にもあるが、指摘対象の本文契約は旧実装由来。"
++    },
++    {
++      "rowId": 135,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1730-1737 のExcel正本は関連記事応答の `wp_post_id` 等を示すが、`deleted_at`による基準記事・関連記事の除外要件はExcel正本範囲（sheet-4:1676-1766）に存在しない。除外要件はリバース詳細設計の同HTML:1789,1840 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/DtbArticle.php:13-15 の `@Gedmo\\SoftDeleteable(fieldName=\"deletedAt\")` と pf-api/config/packages/doctrine.yaml:28-31 の有効な`SoftDeleteableFilter`により、pf-api/src/Repository/DtbArticleRepository.php:39-68 のDQL関連記事検索では削除済みDtbArticleが自動除外される。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:44-115 のraw SQLは `FROM dtb_article a1 INNER JOIN dtb_article a2` に対し、WHEREが`a1.wp_post_id`、wp_post_id差異、`a2.wp_post_id <> 0`、共有EXISTSだけで、`a1.deleted_at IS NULL` / `a2.deleted_at IS NULL` がない。raw SQLにはDoctrineフィルタも適用されない。",
++      "note": ""
++    },
++    {
++      "rowId": 136,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1676-1766 のExcel正本には関連記事の具体的な並び順が存在しない。`共有度の高い順` はリバース詳細設計の同HTML:1807 にのみあり、その元文書自身も `関連の判定ロジックの詳細（実装を確認値とする）` としている。共有フラグ数の合計降順という記述は正本・リバース設計のいずれにもない。",
++      "legacyEvidence": "pf-api/src/Repository/DtbArticleRepository.php:50-65 は共有フラグを作り、`orderBy('hasSameDeck','DESC')`、続けてarchetype、card、eventDetailの固定優先順位で並べる。これは新実装と同じ辞書順であり、「共有フラグ数合計の降順」を裏付けない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:110-115 も `has_same_deck DESC, has_same_archetype DESC, has_same_card DESC, has_same_event_detail DESC, a2.wp_post_id ASC` と旧実装を踏襲する。",
++      "note": "findingが例示する「共有3件よりdeck共有1件が後になるべき」という合計スコア解釈は、Excel正本にも旧実装にも根拠がない。"
++    },
++    {
++      "rowId": 137,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1884-1893 のExcel正本に `PointGranterから送られてきた端末販売APIの内容をスマレジに連携する`、`スマレジへデータを転送する` とあり、同:1926-1927 はスマレジ`postTransactions` APIを参照する。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:30-36 は契約ID・アクセストークンをヘッダ化し `postSmaregiRegisterTransaction(...)` を呼ぶ。pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CustomerService.php:365-380 はcURLでURL、HTTPヘッダ、POST、`proc_name`・`params`を設定して実際に中継する。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/PointGranterController.php:86-91 はサービスを呼ぶが、ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiApiService.php:33-45 は `TODO: スマレジAPIを実行する実装を追加`、`未実装のため仮の固定レスポンス` として固定successを返し、HTTP中継しない。",
++      "note": ""
++    },
++    {
++      "rowId": 138,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1887-1891 のExcel正本は `下記の項目がなければエラー404` として `X_contract_id`, `X_access_token`, `proc_name`, `params` を列挙し、同:1924 は `404.0 必須項目にデータがない場合` と明記する。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:23-28 は同4項目を検査するが、欠落時は `Response::HTTP_BAD_REQUEST`（400）を返す。旧実装は正本の404とは矛盾するため、期待値の根拠は旧実装ではなくExcel正本である。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/PointGranterController.php:65-83 は4項目のいずれかが空なら `jsonResponse([], Response::HTTP_BAD_REQUEST)` を返し、HTTP 400となる。",
++      "note": "同HTMLのリバース詳細設計はHTTP 400と記載するが、Excel正本の404要求を優先してSPEC_BACKEDと判定した。"
++    },
++    {
++      "rowId": 139,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1872 のExcel正本は `PointGranter連携で会員にポイントを付与`、同:1896-1900 は `customerIdからプレイヤー情報を取得`、`プレイヤー...保有ポイントに付与ポイントを加算` と記載し、`dtb_customer.point`更新とは書いていない。`dtb_customer.point`はリバース詳細設計の同HTML:1953,2000 にのみある。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:43-60 は`customerId`から`$player`を取得し、`$player->setPoint($player->getPoint() + $row['newPoint'])`をpersistする。旧実装も`dtb_player.point`更新であり、`dtb_customer.point`更新を裏付けない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/PointGranter/PointGranterAction.php:46-67 は`customerId`を`smaregiId`としてPlayerを検索し、`$Player->setPoint($Player->getPoint() + $newPoint)`をpersistするため、Excel正本と旧実装のプレイヤーポイント加算を踏襲している。",
++      "note": "リバース詳細設計が移行先DBを誤って`dtb_customer.point`と具体化したことによる誤検出。"
++    },
++    {
++      "rowId": 140,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1900 のExcel正本は `ポイント履歴を登録する` とだけ記載し、`transaction_id`をPointGranter付与時に保存する要件はExcel正本範囲（sheet-5:1857-1929）に存在しない。列一覧はリバース詳細設計の同HTML:1953,2000 にのみある。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:51-60 はPointGranter履歴にcustomer、pointChange、note、issueDate、createDate、pointTypeを設定するが、`setTransactionId`を呼ばない。旧実装全体を`PointGranter`, `setTransactionId`, `transaction_id`で検索すると別処理のCheckSmaregiTransactionには設定がある一方、本APIにはなく、期待値を裏付けない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/PointGranter/PointGranterAction.php:68-77 はPointGranter履歴保存で `transactionId: null` を明示する。これは旧PointGranter実装と同じで、履歴自体はcustomer、pointChange、note、issueDate、pointType付きで登録する。",
++      "note": "`dtb_point_history.transaction_id`列の存在だけではPointGranter経路の必須保存要件にならない。正本と旧実装はいずれも本経路での取引ID保存を要求・実行していない。"
++    }
++  ]
++}
+
+exec
+/bin/bash -lc "python3 -m json.tool hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json >/dev/null
+jq -e '.packetId == \"ab_06\" and (.results|length) == 20 and ([.results[].rowId] == [range(121;141)]) and ([.results[] | has(\"verdict\") and has(\"specEvidence\") and has(\"legacyEvidence\") and has(\"currentImpl\") and has(\"note\")] | all)' hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json
+jq -r '.results | group_by(.verdict) | map(\"\\(.[0].verdict)=\\(length)\") | join(\" \")' hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json
+git -C hareruya-design-docs diff --check -- design_impl_drift_report/citation_audit/results/ab_06.json" in /home/y-saito/Developments
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..f393ef15b82407401b7eac4d1d4ceba0673502c8
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json
+@@ -0,0 +1,165 @@
++{
++  "packetId": "ab_06",
++  "results": [
++    {
++      "rowId": 121,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1039-1050 のExcel正本に `/cards/{id}`、`メソッド GET`、`指定されたカードIDでカード情報を返す` とあり、同:1084-1085 に `200.0 正常終了`、`404.0 ... idに対応するカード情報が存在しない場合` とある。",
++      "legacyEvidence": "pf-api/config/routes.yaml:167-170 は `path: /cards/{id}`、`CardController::getCardAction`、`methods: GET` を定義し、pf-api/src/Controller/CardController.php:22-35 は `->find($id)`、不在時 `\"code\" => 404, \"message\" => 'Not Found'`、成功時 `return $card;` とする。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/CardController.php:41-43 は `/card`・`/card.json` の検索API、ec-cube-enterprise/src/Eccube/Controller/App/DeckBuilder/CardController.php:142-157 は `/api/cards/{id}` を定義するが、`/cards/{id}` ではない。確認範囲 `ec-cube-enterprise/src/Eccube/Controller`, `app`, `config`、検索語 `/cards/{id}`, `/cards`, `cards/{id}` では同一ルートは存在しない。",
++      "note": "404本文の `Not Found` は旧実装でも確認できるが、指摘の中心であるGETルートとカードID取得はExcel正本が直接裏付ける。"
++    },
++    {
++      "rowId": 122,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1043-1047 のExcel正本に `rank列をsort_noに名称変更`、`color_identitiesを追加`、`foil_flgをfoilに変更`、`frameを追加`、`promotion_flgを除去` とある。同:1114、1169、1183、1195 は `cardtypes.product_search_flg`、`card_details.cardset.branch_display_flg`、`card_details.card_images.create_date`、`color_sequence.sort_no` を応答項目として列挙する。",
++      "legacyEvidence": "pf-api/src/Controller/CardController.php:20-35 はカードEntityをそのまま返し、旧応答の基礎となる。pf-api/src/Entity/MtbCardDetail.php:91-109 は旧項目 `$foilFlg`、`$promotionFlg`、`$updateDate`、`$createDate` を保持しており、Excel正本のカスタマイズ記述が旧応答からの変更要求であることと整合する。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/DeckBuilder/CardController.php:149-157 は近似APIで `$Card->toNormalizedArray()` をそのまま返す。ec-cube-enterprise/src/Eccube/Entity/AbstractEntity.php:175-184 は関連Entityを識別子配列、Collectionを識別子だけの配列にするため、設計のネスト項目を展開しない。",
++      "note": ""
++    },
++    {
++      "rowId": 123,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1469 にExcel正本のエンドポイント `/cardDetails/{id}`、同:1505-1506 に `200.0 正常終了` と `404.0 ... idに対応するカード詳細情報が存在しない場合` がある。",
++      "legacyEvidence": "pf-api/config/routes.yaml:171-174 は `path: /cardDetails/{id}`、`CardController::getCardDetailAction`、`methods: GET` を定義し、pf-api/src/Controller/CardController.php:44-59 は `findOneById($id)` で取得し、不在時に `\"code\" => 404, \"message\" => 'Not Found'`、成功時に `return $cardDetail;` とする。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:1012-1024 に近似の管理画面AJAX `/%eccube_admin_route%/product/detail/search/id` はあるが、公開GET `/cardDetails/{id}` ではない。確認範囲 `src/Eccube/Controller`, `Service`, `Repository`, `Entity`, `html`、検索語 `cardDetails`, `/cardDetails`, `MtbCardDetail` では設計ルートは存在しない。",
++      "note": ""
++    },
++    {
++      "rowId": 124,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1513-1570 のExcel正本は `id`、`card_id`、`back_card_detail_id`、`cardset_id`、`rarity_id`、`illustrator_id`、`flavor_jp`、`text_jp`、`foil`、`card_layout`、`rarity`、`cardset`、`illustrator`、`promotion`、`card_images` 等の応答項目を列挙し、同:1505 は成功を `200.0` とする。なお正本の項目名はsnake_caseであり、finding記載のcamelCase表記は正本どおりではない。",
++      "legacyEvidence": "pf-api/src/Entity/MtbCardDetail.php:19-109 は `$cardId`、`$backCardDetailId`、`$cardsetId`、`$rarityId`、`$illustratorId`、`$flavorJp`、`$textJp`、`$foilFlg`、`$promotionFlg`、日時を持ち、同:75-84 と112-115 は `cardLayoutId`・`promotionId`・親`card`を `@JSON\\Exclude()` とする。pf-api/src/Controller/CardController.php:44-59 はこのEntityを返す。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:1046-1057 の近似AJAX応答は `'name'`, `'nameEn'`, `'productNameJp'`, `'productNameEn'`, `'cardLabelJp'`, `'detailId'`, `'images'` だけであり、設計の公開API応答を構築しない。設計ルート自体も確認範囲 `Controller/App`, `Controller/Front`, `Controller/Admin`, `Service/App`, `Repository/Master` に存在しない。",
++      "note": "findingのcamelCase列挙は不正確だが、Excel正本には同じ意味のsnake_case応答契約があり、その公開APIが不在という乖離は成立する。"
++    },
++    {
++      "rowId": 125,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1473-1475 のExcel正本に `foil_flgをfoilに変更`、`frameを追加`、`promotion_flgを除去` とあり、同:1479-1484 と1528-1531 は `0:なし / 1:あり / 2:特殊` を含む変更後の項目を示す。",
++      "legacyEvidence": "pf-api/src/Entity/MtbCardDetail.php:91-99 は旧実装が `$foilFlg = false` と `$promotionFlg = false` を保持することを示し、Excel正本が旧項目からの変更を要求していることと一致する。旧実装のA14-02入口は pf-api/src/Controller/CardController.php:44-59。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Master/MtbCardDetail.php:278-309 は `foil_flg`、`promotion_flg`、`frame_flg` を保持するが、公開A14-02応答で `foil`・`frame`へ整形して`promotion_flg`を除く入口はない。近似の記事用整形も ec-cube-enterprise/src/Eccube/Service/App/Article/ArticleResponseBuilder.php:270-280 で `'foil_flg'`、`'promotion_flg'` を出力し`frame`を出力しない。",
++      "note": ""
++    },
++    {
++      "rowId": 126,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1513-1570 のExcel正本は応答項目を `card_id`、`update_date`、`create_date`、`card_images` 等のsnake_caseで記載し、日時を `日時（YYYY/MM/DD HH:MM）` とする。`camelCase`・`ISO8601`・`本APIはデータを更新しない` はExcel正本範囲（sheet-4:1446-1650）に存在せず、リバース詳細設計開始後の同HTML:1717-1732 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/CardController.php:44-59 は取得した `$cardDetail` をそのまま返し、pf-api/src/Entity/MtbCardDetail.php:21-109 のプロパティは `$cardId` 等だが、Excel正本の実レスポンス例はsnake_caseである。旧実装全体（`pf-api`, `pf-eccube3`, `pf-article`, `deck-api`）を `cardDetails`, `camelCase`, `ISO8601`, `formatDateTime` で検索したが、A14-02にcamelCase契約を課すコード・テストは見つからない。",
++      "currentImpl": "ec-cube-enterpriseには公開A14-02入口がない一方、近似の一般正規化は ec-cube-enterprise/src/Eccube/Entity/AbstractEntity.php:171-184 で日時を `Y-m-d\\TH:i:s\\Z` にし関連をID配列化する。finding固有のcamelCase契約は新実装にもない。",
++      "note": "A14-02ルート不在自体はrowId 123でSPEC_BACKEDだが、本finding固有のcamelCase/ISO8601/read-onlyという一組の期待値はExcel正本にも旧実装にも裏付けられず、正本のsnake_case・日時表記とも矛盾する。"
++    },
++    {
++      "rowId": 127,
++      "verdict": "ALREADY_MET",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1041-1049 のExcel正本は成功応答を `id`, `image_url`, `link`, `disp_type`, `languages.id`, `languages.name_jp`, `languages.name_en`, `languages.code` と明記し、同:1055-1064 のサンプルもsnake_caseである。findingのcamelCaseはリバース詳細設計開始後の同HTML:1120-1133 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/MtbTopBanner.php:17-43 は公開対象の `$id`, `$imageUrl`, `$link`, `$dispType`, `$languages` を持ち、pf-api/src/Controller/BannerController.php:20-35 は取得Entityを返す。Excel正本のサンプルは旧APIの外部応答をsnake_caseで示している。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/Content/TopBannerResponseBuilder.php:31-47 は正本どおり `'id'`, `'image_url'`, `'link'`, `'disp_type'`, `languages`配下の`'id'`, `'name_jp'`, `'name_en'`, `'code'` を構築し、ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:67-69 がHTTP 200で返す。",
++      "note": "監査findingはリバース詳細設計の誤ったcamelCase表記を正本扱いしたもの。新実装はExcel正本のsnake_case契約を既に満たす。"
++    },
++    {
++      "rowId": 128,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1032-1033 のExcel正本は `200 正常`、`404 該当データがない場合(トップバナーIDが存在しない)` までを記載するが、本文 `{code, message}` と固定文言 `Not Found` はExcel正本範囲（sheet-3:985-1070）に存在せず、リバース詳細設計の同HTML:1136 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/BannerController.php:22-35 はトップバナー不在時に `View::create([\"code\" => 404, \"message\" => 'Not Found'], 404)` を返すため、本文形と固定文言の真の根拠は旧実装にある。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:59-74 は不在時 `NotFoundException('Not Found')` を投げるが、catchで `['code' => $e->getStatusCode(), 'errors' => $e->getErrors()]` を返すため、本文は `{code, errors}` になる。",
++      "note": "HTTP 404自体はExcel正本にもあるが、指摘対象の本文キー差分は旧実装由来。"
++    },
++    {
++      "rowId": 129,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1153-1166 のExcel正本は `言語コードに紐づいたトップバナーの情報一覧` と `指定された言語コードに紐づいた...一覧をJSON形式で出力`、同:1177-1180 は `指定言語の設定済みトップバナー一覧を取得` と明記する。",
++      "legacyEvidence": "pf-api/src/Controller/BannerController.php:44-61 は `findAllWhereUrlIsNotEmpty($languageCode)` を呼び、pf-api/src/Repository/MtbTopBannerRepository.php:19-28 は `tb.imageUrl <> ''`、`tb.dispType <> 0`、`l.code = :languageCode` で絞る。旧実装は正本の「設定済み」を表示対象かつ画像設定済みとして具体化している。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:91-110 は言語を取得後 `$Language->getTopBanners()` をそのままbuilderへ渡す。表示状態・画像URL・言語・並び順を絞る実装は ec-cube-enterprise/src/Eccube/Repository/Master/MtbTopBannerRepository.php:43-52 にあるが、このAPIから呼ばれていない。",
++      "note": ""
++    },
++    {
++      "rowId": 130,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1151-1308 のExcel正本には `sort_no`、表示順、上限、取得後の再計算禁止の記載が存在しない。正本は同:1177-1180 の `指定言語の設定済みトップバナー一覧` までであり、`sort_no` はリバース詳細設計開始後の同HTML:1332-1341 にのみある。",
++      "legacyEvidence": "pf-api/src/Repository/MtbTopBannerRepository.php:17-30 は旧一覧を画像URL・表示状態・言語で絞った後 `orderBy('tb.id', 'ASC')` としており、`sort_no`順ではない。旧4リポジトリを `topBanner`, `sort_no`, `findAllWhereUrlIsNotEmpty` で検索しても、A16-02を`sort_no`順にする根拠はない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:102-110 は `$Language->getTopBanners()` をそのまま渡す。一方、未使用の ec-cube-enterprise/src/Eccube/Repository/Master/MtbTopBannerRepository.php:50-52 には `orderBy('tb.sortNo', 'ASC')` と上限があるが、API経路から呼ばれない。",
++      "note": "移行先Entityが`sort_no`列を持つことだけでは、このAPIの表示順要件にはならない。旧実装はid昇順であり、findingの`sort_no`順要求を裏付けない。"
++    },
++    {
++      "rowId": 131,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1198-1199 のExcel正本は `404 該当データがない場合(言語コード未設定・言語コードに紐づいたトップバナーIDがない場合)` とするが、本文 `{code, message}` と `Language code is not found` はExcel正本範囲（sheet-4:1151-1308）に存在せず、リバース詳細設計の同HTML:1351 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/BannerController.php:46-58 は一覧が空かつ `findByCode($languageCode)` も空のとき `View::create([\"code\" => 404, \"message\" => 'Language code is not found'], 404)` を返し、固定文言と本文形を直接裏付ける。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:95-107 は言語不在または一覧空で `NotFoundException('Not Found')` を投げ、同:113-117 は `['code' => ..., 'errors' => ...]` を返すため、旧実装の `{code, message}` と固定文言を満たさない。",
++      "note": "404条件はExcel正本にもあるが、指摘の具体的な本文契約は旧実装由来。旧実装は「一覧空かつ言語不在」のAND条件であり、findingの「または」という表現は正確ではない。"
++    },
++    {
++      "rowId": 132,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1077-1086 のExcel正本は `deleted_at` を応答項目表の `削除日時` として載せるだけで、削除済みを応答対象外にする検索条件はExcel正本範囲（sheet-3:1021-1587）に存在しない。除外要件はリバース詳細設計の同HTML:1610,1659 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/DtbArticle.php:13-15 は `@Gedmo\\SoftDeleteable(fieldName=\"deletedAt\", timeAware=false)`、pf-api/config/packages/doctrine.yaml:28-31 は `SoftDeleteableFilter` を `enabled: true` とする。pf-api/src/Repository/DtbArticleRepository.php:21-26 の通常QueryBuilder検索にはこのフィルタが適用され、削除済み記事を除外する旧挙動が根拠となる。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php:58 は `findOneBy(['wpPostId' => ...])` のみで、ec-cube-enterprise/src/Eccube/Entity/DtbArticle.php:50-51 は`deletedAt`列を持つがSoftDeleteable指定がない。確認範囲 `ArticleController`, `DtbArticleRepository`, `ArticleResponseBuilder`, `DtbArticle` に削除除外条件はない。",
++      "note": "旧Repositoryに明示的な`deletedAt IS NULL`がなくても、旧環境では有効化されたGedmo SoftDeleteableFilterが自動適用される。"
++    },
++    {
++      "rowId": 133,
++      "verdict": "ALREADY_MET",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1077-1086 のExcel正本は `article_id`, `wp_post_id`, `wp_type_id`, `update_date`, `create_date`, `event_details` とsnake_caseで明記し、同:1093-1099 のサンプルもsnake_caseである。`camelCase` はリバース詳細設計開始後の同HTML:1640-1653 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/DtbArticle.php:20-82 は公開プロパティを定義し、pf-api/src/Controller/ArticleController.php:92-107 は取得Entityをそのまま返す。Excel正本の旧APIレスポンス例は外部キーをsnake_caseで示しており、camelCase契約を裏付ける旧テスト・SerializedName指定は確認できない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/Article/ArticleResponseBuilder.php:34-47 は正本どおり `'article_id'`, `'wp_post_id'`, `'wp_type_id'`, `'update_date'`, `'create_date'`, `'event_details'` を構築し、同:55-57 は日時を `Y-m-d\\TH:i:sP`（ISO8601）で返す。",
++      "note": "新実装はExcel正本のsnake_case契約とISO8601日時を既に満たす。findingはリバース詳細設計の誤ったcamelCase表記を正本扱いした誤検出。"
++    },
++    {
++      "rowId": 134,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1067-1068 のExcel正本は `404.0 該当データがない場合` までで、本文 `{code, message}` と `Not Found` はExcel正本範囲（sheet-3:1021-1587）に存在せず、リバース詳細設計の同HTML:1647 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/ArticleController.php:92-104 は該当記事なしで `View::create([\"code\" => 404, \"message\" => 'Not Found'], 404)` を返すため、固定文言と本文形の真の根拠は旧実装にある。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php:58-69 は該当なしで `NotFoundException('記事が見つかりません')` を投げ、catchで `['code' => ..., 'errors' => ...]` を返すため、キーも文言も旧実装と異なる。",
++      "note": "HTTP 404自体はExcel正本にもあるが、指摘対象の本文契約は旧実装由来。"
++    },
++    {
++      "rowId": 135,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1730-1737 のExcel正本は関連記事応答の `wp_post_id` 等を示すが、`deleted_at`による基準記事・関連記事の除外要件はExcel正本範囲（sheet-4:1676-1766）に存在しない。除外要件はリバース詳細設計の同HTML:1789,1840 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/DtbArticle.php:13-15 の `@Gedmo\\SoftDeleteable(fieldName=\"deletedAt\")` と pf-api/config/packages/doctrine.yaml:28-31 の有効な`SoftDeleteableFilter`により、pf-api/src/Repository/DtbArticleRepository.php:39-68 のDQL関連記事検索では削除済みDtbArticleが自動除外される。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:44-115 のraw SQLは `FROM dtb_article a1 INNER JOIN dtb_article a2` に対し、WHEREが`a1.wp_post_id`、wp_post_id差異、`a2.wp_post_id <> 0`、共有EXISTSだけで、`a1.deleted_at IS NULL` / `a2.deleted_at IS NULL` がない。raw SQLにはDoctrineフィルタも適用されない。",
++      "note": ""
++    },
++    {
++      "rowId": 136,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1676-1766 のExcel正本には関連記事の具体的な並び順が存在しない。`共有度の高い順` はリバース詳細設計の同HTML:1807 にのみあり、その元文書自身も `関連の判定ロジックの詳細（実装を確認値とする）` としている。共有フラグ数の合計降順という記述は正本・リバース設計のいずれにもない。",
++      "legacyEvidence": "pf-api/src/Repository/DtbArticleRepository.php:50-65 は共有フラグを作り、`orderBy('hasSameDeck','DESC')`、続けてarchetype、card、eventDetailの固定優先順位で並べる。これは新実装と同じ辞書順であり、「共有フラグ数合計の降順」を裏付けない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:110-115 も `has_same_deck DESC, has_same_archetype DESC, has_same_card DESC, has_same_event_detail DESC, a2.wp_post_id ASC` と旧実装を踏襲する。",
++      "note": "findingが例示する「共有3件よりdeck共有1件が後になるべき」という合計スコア解釈は、Excel正本にも旧実装にも根拠がない。"
++    },
++    {
++      "rowId": 137,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1884-1893 のExcel正本に `PointGranterから送られてきた端末販売APIの内容をスマレジに連携する`、`スマレジへデータを転送する` とあり、同:1926-1927 はスマレジ`postTransactions` APIを参照する。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:30-36 は契約ID・アクセストークンをヘッダ化し `postSmaregiRegisterTransaction(...)` を呼ぶ。pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CustomerService.php:365-380 はcURLでURL、HTTPヘッダ、POST、`proc_name`・`params`を設定して実際に中継する。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/PointGranterController.php:86-91 はサービスを呼ぶが、ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiApiService.php:33-45 は `TODO: スマレジAPIを実行する実装を追加`、`未実装のため仮の固定レスポンス` として固定successを返し、HTTP中継しない。",
++      "note": ""
++    },
++    {
++      "rowId": 138,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1887-1891 のExcel正本は `下記の項目がなければエラー404` として `X_contract_id`, `X_access_token`, `proc_name`, `params` を列挙し、同:1924 は `404.0 必須項目にデータがない場合` と明記する。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:23-28 は同4項目を検査するが、欠落時は `Response::HTTP_BAD_REQUEST`（400）を返す。旧実装は正本の404とは矛盾するため、期待値の根拠は旧実装ではなくExcel正本である。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/PointGranterController.php:65-83 は4項目のいずれかが空なら `jsonResponse([], Response::HTTP_BAD_REQUEST)` を返し、HTTP 400となる。",
++      "note": "同HTMLのリバース詳細設計はHTTP 400と記載するが、Excel正本の404要求を優先してSPEC_BACKEDと判定した。"
++    },
++    {
++      "rowId": 139,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1872 のExcel正本は `PointGranter連携で会員にポイントを付与`、同:1896-1900 は `customerIdからプレイヤー情報を取得`、`プレイヤー...保有ポイントに付与ポイントを加算` と記載し、`dtb_customer.point`更新とは書いていない。`dtb_customer.point`はリバース詳細設計の同HTML:1953,2000 にのみある。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:43-60 は`customerId`から`$player`を取得し、`$player->setPoint($player->getPoint() + $row['newPoint'])`をpersistする。旧実装も`dtb_player.point`更新であり、`dtb_customer.point`更新を裏付けない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/PointGranter/PointGranterAction.php:46-67 は`customerId`を`smaregiId`としてPlayerを検索し、`$Player->setPoint($Player->getPoint() + $newPoint)`をpersistするため、Excel正本と旧実装のプレイヤーポイント加算を踏襲している。",
++      "note": "リバース詳細設計が移行先DBを誤って`dtb_customer.point`と具体化したことによる誤検出。"
++    },
++    {
++      "rowId": 140,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1900 のExcel正本は `ポイント履歴を登録する` とだけ記載し、`transaction_id`をPointGranter付与時に保存する要件はExcel正本範囲（sheet-5:1857-1929）に存在しない。列一覧はリバース詳細設計の同HTML:1953,2000 にのみある。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:51-60 はPointGranter履歴にcustomer、pointChange、note、issueDate、createDate、pointTypeを設定するが、`setTransactionId`を呼ばない。旧実装全体を`PointGranter`, `setTransactionId`, `transaction_id`で検索すると別処理のCheckSmaregiTransactionには設定がある一方、本APIにはなく、期待値を裏付けない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/PointGranter/PointGranterAction.php:68-77 はPointGranter履歴保存で `transactionId: null` を明示する。これは旧PointGranter実装と同じで、履歴自体はcustomer、pointChange、note、issueDate、pointType付きで登録する。",
++      "note": "`dtb_point_history.transaction_id`列の存在だけではPointGranter経路の必須保存要件にならない。正本と旧実装はいずれも本経路での取引ID保存を要求・実行していない。"
++    }
++  ]
++}
+
+ succeeded in 173ms:
+true
+ALREADY_MET=2 LEGACY_BACKED=5 SPEC_BACKED=8 UNSUPPORTED=5
+
+codex
+20件処理: SPEC_BACKED=8 LEGACY_BACKED=5 UNSUPPORTED=5 ALREADY_MET=2 UNCERTAIN=0
+diff --git a/hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json b/hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..f393ef15b82407401b7eac4d1d4ceba0673502c8
+--- /dev/null
++++ b/hareruya-design-docs/design_impl_drift_report/citation_audit/results/ab_06.json
+@@ -0,0 +1,165 @@
++{
++  "packetId": "ab_06",
++  "results": [
++    {
++      "rowId": 121,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1039-1050 のExcel正本に `/cards/{id}`、`メソッド GET`、`指定されたカードIDでカード情報を返す` とあり、同:1084-1085 に `200.0 正常終了`、`404.0 ... idに対応するカード情報が存在しない場合` とある。",
++      "legacyEvidence": "pf-api/config/routes.yaml:167-170 は `path: /cards/{id}`、`CardController::getCardAction`、`methods: GET` を定義し、pf-api/src/Controller/CardController.php:22-35 は `->find($id)`、不在時 `\"code\" => 404, \"message\" => 'Not Found'`、成功時 `return $card;` とする。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/CardController.php:41-43 は `/card`・`/card.json` の検索API、ec-cube-enterprise/src/Eccube/Controller/App/DeckBuilder/CardController.php:142-157 は `/api/cards/{id}` を定義するが、`/cards/{id}` ではない。確認範囲 `ec-cube-enterprise/src/Eccube/Controller`, `app`, `config`、検索語 `/cards/{id}`, `/cards`, `cards/{id}` では同一ルートは存在しない。",
++      "note": "404本文の `Not Found` は旧実装でも確認できるが、指摘の中心であるGETルートとカードID取得はExcel正本が直接裏付ける。"
++    },
++    {
++      "rowId": 122,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1043-1047 のExcel正本に `rank列をsort_noに名称変更`、`color_identitiesを追加`、`foil_flgをfoilに変更`、`frameを追加`、`promotion_flgを除去` とある。同:1114、1169、1183、1195 は `cardtypes.product_search_flg`、`card_details.cardset.branch_display_flg`、`card_details.card_images.create_date`、`color_sequence.sort_no` を応答項目として列挙する。",
++      "legacyEvidence": "pf-api/src/Controller/CardController.php:20-35 はカードEntityをそのまま返し、旧応答の基礎となる。pf-api/src/Entity/MtbCardDetail.php:91-109 は旧項目 `$foilFlg`、`$promotionFlg`、`$updateDate`、`$createDate` を保持しており、Excel正本のカスタマイズ記述が旧応答からの変更要求であることと整合する。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/DeckBuilder/CardController.php:149-157 は近似APIで `$Card->toNormalizedArray()` をそのまま返す。ec-cube-enterprise/src/Eccube/Entity/AbstractEntity.php:175-184 は関連Entityを識別子配列、Collectionを識別子だけの配列にするため、設計のネスト項目を展開しない。",
++      "note": ""
++    },
++    {
++      "rowId": 123,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1469 にExcel正本のエンドポイント `/cardDetails/{id}`、同:1505-1506 に `200.0 正常終了` と `404.0 ... idに対応するカード詳細情報が存在しない場合` がある。",
++      "legacyEvidence": "pf-api/config/routes.yaml:171-174 は `path: /cardDetails/{id}`、`CardController::getCardDetailAction`、`methods: GET` を定義し、pf-api/src/Controller/CardController.php:44-59 は `findOneById($id)` で取得し、不在時に `\"code\" => 404, \"message\" => 'Not Found'`、成功時に `return $cardDetail;` とする。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:1012-1024 に近似の管理画面AJAX `/%eccube_admin_route%/product/detail/search/id` はあるが、公開GET `/cardDetails/{id}` ではない。確認範囲 `src/Eccube/Controller`, `Service`, `Repository`, `Entity`, `html`、検索語 `cardDetails`, `/cardDetails`, `MtbCardDetail` では設計ルートは存在しない。",
++      "note": ""
++    },
++    {
++      "rowId": 124,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1513-1570 のExcel正本は `id`、`card_id`、`back_card_detail_id`、`cardset_id`、`rarity_id`、`illustrator_id`、`flavor_jp`、`text_jp`、`foil`、`card_layout`、`rarity`、`cardset`、`illustrator`、`promotion`、`card_images` 等の応答項目を列挙し、同:1505 は成功を `200.0` とする。なお正本の項目名はsnake_caseであり、finding記載のcamelCase表記は正本どおりではない。",
++      "legacyEvidence": "pf-api/src/Entity/MtbCardDetail.php:19-109 は `$cardId`、`$backCardDetailId`、`$cardsetId`、`$rarityId`、`$illustratorId`、`$flavorJp`、`$textJp`、`$foilFlg`、`$promotionFlg`、日時を持ち、同:75-84 と112-115 は `cardLayoutId`・`promotionId`・親`card`を `@JSON\\Exclude()` とする。pf-api/src/Controller/CardController.php:44-59 はこのEntityを返す。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/ProductController.php:1046-1057 の近似AJAX応答は `'name'`, `'nameEn'`, `'productNameJp'`, `'productNameEn'`, `'cardLabelJp'`, `'detailId'`, `'images'` だけであり、設計の公開API応答を構築しない。設計ルート自体も確認範囲 `Controller/App`, `Controller/Front`, `Controller/Admin`, `Service/App`, `Repository/Master` に存在しない。",
++      "note": "findingのcamelCase列挙は不正確だが、Excel正本には同じ意味のsnake_case応答契約があり、その公開APIが不在という乖離は成立する。"
++    },
++    {
++      "rowId": 125,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1473-1475 のExcel正本に `foil_flgをfoilに変更`、`frameを追加`、`promotion_flgを除去` とあり、同:1479-1484 と1528-1531 は `0:なし / 1:あり / 2:特殊` を含む変更後の項目を示す。",
++      "legacyEvidence": "pf-api/src/Entity/MtbCardDetail.php:91-99 は旧実装が `$foilFlg = false` と `$promotionFlg = false` を保持することを示し、Excel正本が旧項目からの変更を要求していることと一致する。旧実装のA14-02入口は pf-api/src/Controller/CardController.php:44-59。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/Master/MtbCardDetail.php:278-309 は `foil_flg`、`promotion_flg`、`frame_flg` を保持するが、公開A14-02応答で `foil`・`frame`へ整形して`promotion_flg`を除く入口はない。近似の記事用整形も ec-cube-enterprise/src/Eccube/Service/App/Article/ArticleResponseBuilder.php:270-280 で `'foil_flg'`、`'promotion_flg'` を出力し`frame`を出力しない。",
++      "note": ""
++    },
++    {
++      "rowId": 126,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0514_基本設計仕様書(API_カード管理).html:1513-1570 のExcel正本は応答項目を `card_id`、`update_date`、`create_date`、`card_images` 等のsnake_caseで記載し、日時を `日時（YYYY/MM/DD HH:MM）` とする。`camelCase`・`ISO8601`・`本APIはデータを更新しない` はExcel正本範囲（sheet-4:1446-1650）に存在せず、リバース詳細設計開始後の同HTML:1717-1732 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/CardController.php:44-59 は取得した `$cardDetail` をそのまま返し、pf-api/src/Entity/MtbCardDetail.php:21-109 のプロパティは `$cardId` 等だが、Excel正本の実レスポンス例はsnake_caseである。旧実装全体（`pf-api`, `pf-eccube3`, `pf-article`, `deck-api`）を `cardDetails`, `camelCase`, `ISO8601`, `formatDateTime` で検索したが、A14-02にcamelCase契約を課すコード・テストは見つからない。",
++      "currentImpl": "ec-cube-enterpriseには公開A14-02入口がない一方、近似の一般正規化は ec-cube-enterprise/src/Eccube/Entity/AbstractEntity.php:171-184 で日時を `Y-m-d\\TH:i:s\\Z` にし関連をID配列化する。finding固有のcamelCase契約は新実装にもない。",
++      "note": "A14-02ルート不在自体はrowId 123でSPEC_BACKEDだが、本finding固有のcamelCase/ISO8601/read-onlyという一組の期待値はExcel正本にも旧実装にも裏付けられず、正本のsnake_case・日時表記とも矛盾する。"
++    },
++    {
++      "rowId": 127,
++      "verdict": "ALREADY_MET",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1041-1049 のExcel正本は成功応答を `id`, `image_url`, `link`, `disp_type`, `languages.id`, `languages.name_jp`, `languages.name_en`, `languages.code` と明記し、同:1055-1064 のサンプルもsnake_caseである。findingのcamelCaseはリバース詳細設計開始後の同HTML:1120-1133 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/MtbTopBanner.php:17-43 は公開対象の `$id`, `$imageUrl`, `$link`, `$dispType`, `$languages` を持ち、pf-api/src/Controller/BannerController.php:20-35 は取得Entityを返す。Excel正本のサンプルは旧APIの外部応答をsnake_caseで示している。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/Content/TopBannerResponseBuilder.php:31-47 は正本どおり `'id'`, `'image_url'`, `'link'`, `'disp_type'`, `languages`配下の`'id'`, `'name_jp'`, `'name_en'`, `'code'` を構築し、ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:67-69 がHTTP 200で返す。",
++      "note": "監査findingはリバース詳細設計の誤ったcamelCase表記を正本扱いしたもの。新実装はExcel正本のsnake_case契約を既に満たす。"
++    },
++    {
++      "rowId": 128,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1032-1033 のExcel正本は `200 正常`、`404 該当データがない場合(トップバナーIDが存在しない)` までを記載するが、本文 `{code, message}` と固定文言 `Not Found` はExcel正本範囲（sheet-3:985-1070）に存在せず、リバース詳細設計の同HTML:1136 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/BannerController.php:22-35 はトップバナー不在時に `View::create([\"code\" => 404, \"message\" => 'Not Found'], 404)` を返すため、本文形と固定文言の真の根拠は旧実装にある。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:59-74 は不在時 `NotFoundException('Not Found')` を投げるが、catchで `['code' => $e->getStatusCode(), 'errors' => $e->getErrors()]` を返すため、本文は `{code, errors}` になる。",
++      "note": "HTTP 404自体はExcel正本にもあるが、指摘対象の本文キー差分は旧実装由来。"
++    },
++    {
++      "rowId": 129,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1153-1166 のExcel正本は `言語コードに紐づいたトップバナーの情報一覧` と `指定された言語コードに紐づいた...一覧をJSON形式で出力`、同:1177-1180 は `指定言語の設定済みトップバナー一覧を取得` と明記する。",
++      "legacyEvidence": "pf-api/src/Controller/BannerController.php:44-61 は `findAllWhereUrlIsNotEmpty($languageCode)` を呼び、pf-api/src/Repository/MtbTopBannerRepository.php:19-28 は `tb.imageUrl <> ''`、`tb.dispType <> 0`、`l.code = :languageCode` で絞る。旧実装は正本の「設定済み」を表示対象かつ画像設定済みとして具体化している。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:91-110 は言語を取得後 `$Language->getTopBanners()` をそのままbuilderへ渡す。表示状態・画像URL・言語・並び順を絞る実装は ec-cube-enterprise/src/Eccube/Repository/Master/MtbTopBannerRepository.php:43-52 にあるが、このAPIから呼ばれていない。",
++      "note": ""
++    },
++    {
++      "rowId": 130,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1151-1308 のExcel正本には `sort_no`、表示順、上限、取得後の再計算禁止の記載が存在しない。正本は同:1177-1180 の `指定言語の設定済みトップバナー一覧` までであり、`sort_no` はリバース詳細設計開始後の同HTML:1332-1341 にのみある。",
++      "legacyEvidence": "pf-api/src/Repository/MtbTopBannerRepository.php:17-30 は旧一覧を画像URL・表示状態・言語で絞った後 `orderBy('tb.id', 'ASC')` としており、`sort_no`順ではない。旧4リポジトリを `topBanner`, `sort_no`, `findAllWhereUrlIsNotEmpty` で検索しても、A16-02を`sort_no`順にする根拠はない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:102-110 は `$Language->getTopBanners()` をそのまま渡す。一方、未使用の ec-cube-enterprise/src/Eccube/Repository/Master/MtbTopBannerRepository.php:50-52 には `orderBy('tb.sortNo', 'ASC')` と上限があるが、API経路から呼ばれない。",
++      "note": "移行先Entityが`sort_no`列を持つことだけでは、このAPIの表示順要件にはならない。旧実装はid昇順であり、findingの`sort_no`順要求を裏付けない。"
++    },
++    {
++      "rowId": 131,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0516_基本設計仕様書(API_データ管理).html:1198-1199 のExcel正本は `404 該当データがない場合(言語コード未設定・言語コードに紐づいたトップバナーIDがない場合)` とするが、本文 `{code, message}` と `Language code is not found` はExcel正本範囲（sheet-4:1151-1308）に存在せず、リバース詳細設計の同HTML:1351 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/BannerController.php:46-58 は一覧が空かつ `findByCode($languageCode)` も空のとき `View::create([\"code\" => 404, \"message\" => 'Language code is not found'], 404)` を返し、固定文言と本文形を直接裏付ける。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ContentController.php:95-107 は言語不在または一覧空で `NotFoundException('Not Found')` を投げ、同:113-117 は `['code' => ..., 'errors' => ...]` を返すため、旧実装の `{code, message}` と固定文言を満たさない。",
++      "note": "404条件はExcel正本にもあるが、指摘の具体的な本文契約は旧実装由来。旧実装は「一覧空かつ言語不在」のAND条件であり、findingの「または」という表現は正確ではない。"
++    },
++    {
++      "rowId": 132,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1077-1086 のExcel正本は `deleted_at` を応答項目表の `削除日時` として載せるだけで、削除済みを応答対象外にする検索条件はExcel正本範囲（sheet-3:1021-1587）に存在しない。除外要件はリバース詳細設計の同HTML:1610,1659 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/DtbArticle.php:13-15 は `@Gedmo\\SoftDeleteable(fieldName=\"deletedAt\", timeAware=false)`、pf-api/config/packages/doctrine.yaml:28-31 は `SoftDeleteableFilter` を `enabled: true` とする。pf-api/src/Repository/DtbArticleRepository.php:21-26 の通常QueryBuilder検索にはこのフィルタが適用され、削除済み記事を除外する旧挙動が根拠となる。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php:58 は `findOneBy(['wpPostId' => ...])` のみで、ec-cube-enterprise/src/Eccube/Entity/DtbArticle.php:50-51 は`deletedAt`列を持つがSoftDeleteable指定がない。確認範囲 `ArticleController`, `DtbArticleRepository`, `ArticleResponseBuilder`, `DtbArticle` に削除除外条件はない。",
++      "note": "旧Repositoryに明示的な`deletedAt IS NULL`がなくても、旧環境では有効化されたGedmo SoftDeleteableFilterが自動適用される。"
++    },
++    {
++      "rowId": 133,
++      "verdict": "ALREADY_MET",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1077-1086 のExcel正本は `article_id`, `wp_post_id`, `wp_type_id`, `update_date`, `create_date`, `event_details` とsnake_caseで明記し、同:1093-1099 のサンプルもsnake_caseである。`camelCase` はリバース詳細設計開始後の同HTML:1640-1653 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/DtbArticle.php:20-82 は公開プロパティを定義し、pf-api/src/Controller/ArticleController.php:92-107 は取得Entityをそのまま返す。Excel正本の旧APIレスポンス例は外部キーをsnake_caseで示しており、camelCase契約を裏付ける旧テスト・SerializedName指定は確認できない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/Article/ArticleResponseBuilder.php:34-47 は正本どおり `'article_id'`, `'wp_post_id'`, `'wp_type_id'`, `'update_date'`, `'create_date'`, `'event_details'` を構築し、同:55-57 は日時を `Y-m-d\\TH:i:sP`（ISO8601）で返す。",
++      "note": "新実装はExcel正本のsnake_case契約とISO8601日時を既に満たす。findingはリバース詳細設計の誤ったcamelCase表記を正本扱いした誤検出。"
++    },
++    {
++      "rowId": 134,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1067-1068 のExcel正本は `404.0 該当データがない場合` までで、本文 `{code, message}` と `Not Found` はExcel正本範囲（sheet-3:1021-1587）に存在せず、リバース詳細設計の同HTML:1647 にのみある。",
++      "legacyEvidence": "pf-api/src/Controller/ArticleController.php:92-104 は該当記事なしで `View::create([\"code\" => 404, \"message\" => 'Not Found'], 404)` を返すため、固定文言と本文形の真の根拠は旧実装にある。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ArticleController.php:58-69 は該当なしで `NotFoundException('記事が見つかりません')` を投げ、catchで `['code' => ..., 'errors' => ...]` を返すため、キーも文言も旧実装と異なる。",
++      "note": "HTTP 404自体はExcel正本にもあるが、指摘対象の本文契約は旧実装由来。"
++    },
++    {
++      "rowId": 135,
++      "verdict": "LEGACY_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1730-1737 のExcel正本は関連記事応答の `wp_post_id` 等を示すが、`deleted_at`による基準記事・関連記事の除外要件はExcel正本範囲（sheet-4:1676-1766）に存在しない。除外要件はリバース詳細設計の同HTML:1789,1840 にのみある。",
++      "legacyEvidence": "pf-api/src/Entity/DtbArticle.php:13-15 の `@Gedmo\\SoftDeleteable(fieldName=\"deletedAt\")` と pf-api/config/packages/doctrine.yaml:28-31 の有効な`SoftDeleteableFilter`により、pf-api/src/Repository/DtbArticleRepository.php:39-68 のDQL関連記事検索では削除済みDtbArticleが自動除外される。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:44-115 のraw SQLは `FROM dtb_article a1 INNER JOIN dtb_article a2` に対し、WHEREが`a1.wp_post_id`、wp_post_id差異、`a2.wp_post_id <> 0`、共有EXISTSだけで、`a1.deleted_at IS NULL` / `a2.deleted_at IS NULL` がない。raw SQLにはDoctrineフィルタも適用されない。",
++      "note": ""
++    },
++    {
++      "rowId": 136,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1676-1766 のExcel正本には関連記事の具体的な並び順が存在しない。`共有度の高い順` はリバース詳細設計の同HTML:1807 にのみあり、その元文書自身も `関連の判定ロジックの詳細（実装を確認値とする）` としている。共有フラグ数の合計降順という記述は正本・リバース設計のいずれにもない。",
++      "legacyEvidence": "pf-api/src/Repository/DtbArticleRepository.php:50-65 は共有フラグを作り、`orderBy('hasSameDeck','DESC')`、続けてarchetype、card、eventDetailの固定優先順位で並べる。これは新実装と同じ辞書順であり、「共有フラグ数合計の降順」を裏付けない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbArticleRepository.php:110-115 も `has_same_deck DESC, has_same_archetype DESC, has_same_card DESC, has_same_event_detail DESC, a2.wp_post_id ASC` と旧実装を踏襲する。",
++      "note": "findingが例示する「共有3件よりdeck共有1件が後になるべき」という合計スコア解釈は、Excel正本にも旧実装にも根拠がない。"
++    },
++    {
++      "rowId": 137,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1884-1893 のExcel正本に `PointGranterから送られてきた端末販売APIの内容をスマレジに連携する`、`スマレジへデータを転送する` とあり、同:1926-1927 はスマレジ`postTransactions` APIを参照する。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:30-36 は契約ID・アクセストークンをヘッダ化し `postSmaregiRegisterTransaction(...)` を呼ぶ。pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CustomerService.php:365-380 はcURLでURL、HTTPヘッダ、POST、`proc_name`・`params`を設定して実際に中継する。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/PointGranterController.php:86-91 はサービスを呼ぶが、ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiApiService.php:33-45 は `TODO: スマレジAPIを実行する実装を追加`、`未実装のため仮の固定レスポンス` として固定successを返し、HTTP中継しない。",
++      "note": ""
++    },
++    {
++      "rowId": 138,
++      "verdict": "SPEC_BACKED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1887-1891 のExcel正本は `下記の項目がなければエラー404` として `X_contract_id`, `X_access_token`, `proc_name`, `params` を列挙し、同:1924 は `404.0 必須項目にデータがない場合` と明記する。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:23-28 は同4項目を検査するが、欠落時は `Response::HTTP_BAD_REQUEST`（400）を返す。旧実装は正本の404とは矛盾するため、期待値の根拠は旧実装ではなくExcel正本である。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/PointGranterController.php:65-83 は4項目のいずれかが空なら `jsonResponse([], Response::HTTP_BAD_REQUEST)` を返し、HTTP 400となる。",
++      "note": "同HTMLのリバース詳細設計はHTTP 400と記載するが、Excel正本の404要求を優先してSPEC_BACKEDと判定した。"
++    },
++    {
++      "rowId": 139,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1872 のExcel正本は `PointGranter連携で会員にポイントを付与`、同:1896-1900 は `customerIdからプレイヤー情報を取得`、`プレイヤー...保有ポイントに付与ポイントを加算` と記載し、`dtb_customer.point`更新とは書いていない。`dtb_customer.point`はリバース詳細設計の同HTML:1953,2000 にのみある。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:43-60 は`customerId`から`$player`を取得し、`$player->setPoint($player->getPoint() + $row['newPoint'])`をpersistする。旧実装も`dtb_player.point`更新であり、`dtb_customer.point`更新を裏付けない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/PointGranter/PointGranterAction.php:46-67 は`customerId`を`smaregiId`としてPlayerを検索し、`$Player->setPoint($Player->getPoint() + $newPoint)`をpersistするため、Excel正本と旧実装のプレイヤーポイント加算を踏襲している。",
++      "note": "リバース詳細設計が移行先DBを誤って`dtb_customer.point`と具体化したことによる誤検出。"
++    },
++    {
++      "rowId": 140,
++      "verdict": "UNSUPPORTED",
++      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:1900 のExcel正本は `ポイント履歴を登録する` とだけ記載し、`transaction_id`をPointGranter付与時に保存する要件はExcel正本範囲（sheet-5:1857-1929）に存在しない。列一覧はリバース詳細設計の同HTML:1953,2000 にのみある。",
++      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Api/PointGranterController.php:51-60 はPointGranter履歴にcustomer、pointChange、note、issueDate、createDate、pointTypeを設定するが、`setTransactionId`を呼ばない。旧実装全体を`PointGranter`, `setTransactionId`, `transaction_id`で検索すると別処理のCheckSmaregiTransactionには設定がある一方、本APIにはなく、期待値を裏付けない。",
++      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/App/PointGranter/PointGranterAction.php:68-77 はPointGranter履歴保存で `transactionId: null` を明示する。これは旧PointGranter実装と同じで、履歴自体はcustomer、pointChange、note、issueDate、pointType付きで登録する。",
++      "note": "`dtb_point_history.transaction_id`列の存在だけではPointGranter経路の必須保存要件にならない。正本と旧実装はいずれも本経路での取引ID保存を要求・実行していない。"
++    }
++  ]
++}
+
+tokens used
+190,377
+20件処理: SPEC_BACKED=8 LEGACY_BACKED=5 UNSUPPORTED=5 ALREADY_MET=2 UNCERTAIN=0

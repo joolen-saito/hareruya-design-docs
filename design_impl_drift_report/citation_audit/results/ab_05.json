@@ -1,0 +1,165 @@
+{
+  "packetId": "ab_05",
+  "results": [
+    {
+      "rowId": 101,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:3914-3915 のExcel正本（src-cell）は「/api/otcBuyOrder/{id}/doublecheck.json」「メソッド PUT」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/config/routes.yaml:49-63 には近接する店頭買取APIとして `path: /admin/otcBuyOrder/{id}/identification.json` と `path: /admin/otcBuyOrder/{id}/status.json` があるが、`doublecheck` / `doubleCheckMember` のルートはない。pf-api、pf-eccube3、pf-article、deck-apiを同語と機能名で横断検索してもA06-16相当は見つからず、新規機能である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:231-232 は `#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/doubleCheckMember.json', ... methods: ['PUT'])]` を公開しており、正本URLと一致しない。",
+      "note": ""
+    },
+    {
+      "rowId": 102,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:3937 のExcel正本（src-cell）は `member_id`、`数値(整数)`、`〇`、`1000`、`メンバーID` と記載し、同:3964 の正本図形抽出も `{ \"member_id\": \"1000\" }` とする。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/config/routes.yaml:49-63 の旧店頭買取API群には `doublecheck` / `doubleCheckMember` 自体がなく、pf-api、pf-eccube3、pf-article、deck-apiを `member_id`、`double_check_member_id`、機能名で横断検索してもA06-16相当は見つからない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:239-242 は `$request->request->get('double_check_member_id')` を読み、nullなら `MissingRequiredParameterException` を投げる。`member_id` は受け付けていない。",
+      "note": ""
+    },
+    {
+      "rowId": 103,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:3928 のExcel正本（src-cell）は「ダブルチェック者は新規のカラムに追加する」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/config/routes.yaml:49-63 の旧店頭買取API群にはダブルチェック者更新ルートがなく、pf-api、pf-eccube3、pf-article、deck-apiを `double_check`、`ダブルチェック者`、関連カラム名で横断検索してもA06-16の旧保存モデルは見つからない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/EntityManager/OtcBuyOrderApproverEntityManager.php:29-45 は `DtbOtcBuyOrderApprover` を role=`ROLE_DOUBLE_CHECK` で検索・新規作成し、Approver/AssignedBy/approvedAtを保存する。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbOtcBuyOrderApprover.php:24-60 は保存先を `dtb_otc_buy_order_approver`、列を `approver_id`、`assigned_by_id`、`role`、`approved_at` と定義する。",
+      "note": ""
+    },
+    {
+      "rowId": 104,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0506_基本設計仕様書(API_店頭買取管理).html:3945-3948 のExcel正本（src-cell）はステータスコード `200`、レスポンスデータ `なし` と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/config/routes.yaml:49-63 の旧ルート群にA06-16はなく、pf-api、pf-eccube3、pf-article、deck-apiを `doublecheck`、`doubleCheckMember` で横断検索しても旧レスポンス契約は見つからない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:267 は `return new JsonResponse(['code' => Response::HTTP_OK], Response::HTTP_OK);` とし、HTTP 200にJSON本文 `{\"code\":200}` を付ける。",
+      "note": ""
+    },
+    {
+      "rowId": 105,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:1025 のExcel正本は「追加システム設定のまとめて買取商品IDを取得する」、同:1041 は `200 成功` とだけ記載し、設定欠落時にHTTP 500とする記述はsheet-3のExcel正本範囲にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/OptionController.php:23-29 は `findOneBy(['optionKey' => MtbOption::BULK_PURCHASE_ID_KEY])->getOptionValue()` とnull確認なしで値を参照するため、設定が無ければメソッド呼出しで例外となる。/home/y-saito/Developments/pf-api/config/routes.yaml:9-12 はこれを `GET /admin/optionBulkPurchaseId.json` に接続する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:38-44 は `$value = $Option?->getOptionValue() ?? ''; return new JsonResponse($value);` とし、未設定を空文字のHTTP 200に変えている。",
+      "note": "期待値はExcel正本ではなく旧pf-apiのnull未考慮挙動に由来する。"
+    },
+    {
+      "rowId": 106,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:1228-1232 のExcel正本は `netBuyOrderId` と `netOrderStatusId` をいずれも「文字列」とし、同:1254 の正本サンプルも `\"netBuyOrderId\": \"9218\"`、`\"applyDate\": \"2024/03/06 17:21:23\"`、`\"netOrderStatusId\":\"1\"` である。integer・ISO8601・null保持はExcel正本ではなくリバース詳細設計の記述である。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Repository/DtbBuyOrderRepository.php:45-65 は整数列 `buyOrder.buyOrderId AS netBuyOrderId`、datetime列 `buyOrder.orderDate AS applyDate`、nullableな `memo AS freeComment` と左結合の `memberMain.name AS memberName`、整数列 `buyOrder.buyOrderStatusId AS netOrderStatusId` を加工せず返す。/home/y-saito/Developments/pf-api/src/Resources/config/doctrine/DtbBuyOrder.orm.yml:139-157 はmemoをnullable、orderDateをdatetimeとし、/home/y-saito/Developments/pf-api/config/packages/fos_rest.yaml:12-17 はJSON serializerで `serialize_null: true` を指定するため、旧API契約がinteger・日時シリアライズ・null保持の根拠である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:71-76 はIDを `(string)` にキャストし、日時を `format('Y/m/d H:i:s')`、memo/memberNameを `?? ''` として返す。",
+      "note": "旧実装由来の期待値はExcel正本の型・サンプルと矛盾する。"
+    },
+    {
+      "rowId": 107,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:1218 のExcel正本は成功時 `200` のみを記載し、sheet-4のExcel正本に401や「本文なし」の失敗応答定義はない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/BaseController.php:25-42 はjwt-token欠落・署名不正・会員不在の各場合に空のchallenge文字列で `throw new UnauthorizedHttpException('');` とし、旧認証経路の401根拠になる。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:73-105 はApp APIの401を `errors = ['認証エラー']` にし、同:140-143 は `new JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode)` を返すため本文ありとなる。",
+      "note": "401本文なしという具体契約はExcel正本ではなく旧pf-apiの空メッセージ例外経路に由来する。"
+    },
+    {
+      "rowId": 108,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:1421-1425 のExcel正本は `200 成功`、`500 サーバエラー`、レスポンスデータ `なし` とだけ記載する。rollback、`{code, errors}`、errorsに元例外メッセージを返す要件はExcel正本にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/BuyOrderFreeCommentController.php:40-57 はトランザクションを開始し、例外時に `$em->rollback()` 後、`'code' => HTTP_INTERNAL_SERVER_ERROR, 'errors' => [$e->getMessage()]` のViewを500で返す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateFreeCommentAction.php:41-45 はrollback後に `throw new \\RuntimeException('システムエラーが発生しました')` と元メッセージを捨て、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:115-118 も固定文言の `InternalException` に包む。",
+      "note": "HTTP 500自体は正本にもあるが、指摘の核心である元例外メッセージ返却は旧実装由来。"
+    },
+    {
+      "rowId": 109,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:1607-1610 のA07-04 Excel正本は成功時 `200`、レスポンスデータ `なし` のみで、401/404と本文なしの失敗応答は記載しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/BaseController.php:25-42 は認証失敗に `UnauthorizedHttpException('')` を投げ、/home/y-saito/Developments/pf-api/src/Controller/Admin/BuyOrderStatusController.php:25-31 は受注なしに引数なしの `NotFoundHttpException()` を投げる。これが旧APIの空メッセージ401/404経路である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:73-105 は401/404にもerrors配列を設定し、同:140-143 は常に `{code, errors}` のJSON本文を返す。",
+      "note": "失敗時本文なしの期待値は旧pf-api由来で、Excel正本には失敗応答定義がない。"
+    },
+    {
+      "rowId": 110,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:1607-1610 のA07-04 Excel正本は `200` とレスポンスデータ `なし` のみで、保存例外時のrollback、500本文、元例外メッセージ返却を定義しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/BuyOrderStatusController.php:75-101 は更新トランザクションを開始し、例外時に `$em->rollback()` して `errors => [$e->getMessage()]` をHTTP 500で返す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:99-115 はrollbackする一方、`throw new InternalException('システムエラーが発生しました', $e)` と固定文言に包む。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Exception/App/InternalException.php:27-33 はerrorsをその固定 `$message` の配列にする。",
+      "note": "期待値のうち元例外メッセージを外部へ返す契約は旧実装由来。"
+    },
+    {
+      "rowId": 111,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:1810 のExcel正本（src-cell）は査定終了APIの `400 バリデーションエラー` を明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/BuyOrderController.php:74-99 はステータス・明細をvalidatorで検証し、1件でもメッセージがあれば `code => HTTP_BAD_REQUEST, errors => $messages` をHTTP 400で返すため、旧実装も正本を支持する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:170-171 は引数にオプションなしの `#[MapRequestPayload]` を使い、/home/y-saito/Developments/ec-cube-enterprise/vendor/symfony/http-kernel/Attribute/MapRequestPayload.php:37-43 の既定値は `validationFailedStatusCode = Response::HTTP_UNPROCESSABLE_ENTITY`（422）である。",
+      "note": ""
+    },
+    {
+      "rowId": 112,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:1792 のExcel正本は `order_status` を必須（〇）かつ「マスターにあるステータス以外はエラー」とするが、「MtbBuyOrderStatusに（値）が見つかりません。」という厳密な文言はExcel正本にない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Entity/Api/BuyOrderEdit.php:13-20 はorderStatusIdに `@AppAssert\\MasterValue(table = \"MtbBuyOrderStatus\")` とNotBlankを指定する。/home/y-saito/Developments/pf-api/src/Validator/Constraints/MasterValue.php:11-14 の既定文言は `{{ table }}に{{ id }}が見つかりません。`、同MasterValueValidator.php:32-36 はtableとidを実値で置換して違反を追加する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:183-186 はマスタ不在時に `InvalidParameterException('正しい買取ステータスIDを入力してください')` を投げ、旧文言と異なる。",
+      "note": "必須・マスタ存在検証は正本にもあるが、指摘対象の完全一致メッセージは旧pf-api由来。"
+    },
+    {
+      "rowId": 113,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:1811 はExcel正本として `500 例外発生` を記載するが、rollbackや `{code, errors}`、errorsに元例外メッセージを返す具体契約は記載しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/BuyOrderController.php:101-110 は更新例外をcatchし、`errors => [$e->getMessage()]` をHTTP 500で返す。同:316-320 は内部更新例外時にログ出力、`$em->rollback()`、元例外の再throwを行う。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateBuyOrderAction.php:130-138 はrollback・ログ後に `InternalException('システムエラーが発生しました', $e)` へ包み直し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:84-88,140-143 はその固定errorsをJSONで返す。",
+      "note": "HTTP 500は正本にもあるが、元例外メッセージを返すという差分の根拠は旧実装。"
+    },
+    {
+      "rowId": 114,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:1809-1814 のExcel正本は200/400/500と成功レスポンスデータ `なし` を記載するが、受注なし時の404および本文なしは記載しない。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/BuyOrderController.php:61-67 は受注をfindし、空なら引数なしの `throw new NotFoundHttpException();` とするため、旧経路はメッセージを明示しない404である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:173-176 は `NotFoundException('買取情報が見つかりません')` を投げる。/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Exception/App/NotFoundException.php:27-33 はerrors配列と404を持たせ、ExceptionListener.php:140-143 が `{code, errors}` の本文を返す。",
+      "note": "404本文なしの期待値は旧pf-api由来。"
+    },
+    {
+      "rowId": 115,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:1795 のExcel正本（src-cell）は明細 `name` を文字列、必須（〇）、最大 `65535`、備考 `商品名` と定義する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Entity/Api/BuyOrderDetail.php:21-28 はnameに `@Assert\\Length(max = 65535)` とNotBlankを指定し、/home/y-saito/Developments/pf-api/src/Resources/config/doctrine/DtbBuyOrderIndivisualInputProduct.orm.yml:24-29 は永続列nameを `type: text`, `length: 65535` とするため、旧実装も正本を満たす。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateBuyOrderDetailDto.php:30-33 は入力を最大65535まで許可する一方、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbBuyOrderIndivisualInputProduct.php:35-36 は保存列を `Types::STRING, length: 255` と定義し、256文字以上を設計どおり永続化できない。",
+      "note": ""
+    },
+    {
+      "rowId": 116,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:2002 のExcel正本は `foilFlg` を「数値(整数)」「『なし』『通常』『特殊』の3種のID」「trueまたはfalseを返していたところをIDにする」と明記し、指摘のboolean期待値とは反対である。boolean記述は同HTML:2270のリバース埋込みにのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Resources/config/doctrine/DtbBuyMainCard.orm.yml:55-61 は旧 `foilFlg` を `type: boolean`, nullableと定義し、/home/y-saito/Developments/pf-api/src/Repository/DtbBuyMainCardRepository.php:20-35 は `buyMainCard.foilFlg` を変換せずレスポンス配列へ取得するため、boolean/nullは旧APIの挙動に由来する。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:69-80 は `'foilFlg' => $BuyMainCard->getFoilFlg()` を返し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/DtbBuyMainCard.php:36-38,63-64,139-142 は0/1/2定数、SMALLINT、`?int` getterを定義する。現実装は旧boolean契約とは異なるがExcel正本の3値ID変更には合致する。",
+      "note": "指摘期待値は旧実装由来で、Excel正本では明示的に3値IDへ変更されている。移植要否は正本変更を優先して再評価すべきである。"
+    },
+    {
+      "rowId": 117,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:1980 のExcel正本は `ids` を文字列、必須（〇）、カンマ区切り指定とし、指摘の「任意・未指定可」と矛盾する。「任意」「形式・件数の検証は行わない」は同HTML:2301のリバース埋込みにのみある。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/BuyMainCardController.php:21-28 は `$ids = $request->get('ids'); $buyOrderIds = explode(',', $ids);` とするだけで、必須確認・数値形式検証・件数検証を行わずリポジトリへ渡す。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:40-56 は未指定・空文字を空配列で返す一方、`preg_match('/^\\d+$/', trim($id)) === 1` で数字だけにフィルタリングするため、旧実装の未検証挙動とは異なる。",
+      "note": "期待値は旧実装由来で、必須性についてはExcel正本が旧挙動を変更している。"
+    },
+    {
+      "rowId": 118,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:2153 のExcel正本（src-cell）はエンドポイントを `/api/admin/buyOrderIndivisualInputProduct.json` と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/config/routes.yaml:69-72 は旧入口を `path: /admin/buyOrderIndivisualInputProduct.json`、POSTとして定義する。Excel正本はこれに `/api` を加えた契約であり、`/api/v1` ではない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:37-38 は `/%eccube_api_v1_route%/admin/buyOrderIndivisualInputProduct.json` を公開し、/home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/packages/eccube.yaml:6 は `ECCUBE_API_V1_ROUTE` の既定値を `api/v1` とするため、実URLは `/api/v1/admin/...` となる。",
+      "note": ""
+    },
+    {
+      "rowId": 119,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:2176 のExcel正本（src-cell）は `ids` を「文字列」「〇」「ネット買取IDをカンマ区切りで指定する」と定義する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/Admin/BuyOrderIndivisualInputProductController.php:20-29 は `$ids = $request->get('ids'); $buyOrderIds = explode(',', $ids);` とし、旧実装では明示的な必須エラーを返していない。したがって本件は旧挙動踏襲ではなく、Excel正本で追加された必須要件の未反映である。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:40-56 はidsがnull/空文字、または数字フィルタ後に空の場合、いずれも `return new JsonResponse([]);` とHTTP 200の空配列を返し、必須エラーにしない。",
+      "note": ""
+    },
+    {
+      "rowId": 120,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "/home/y-saito/Developments/hareruya-design-docs/excel_to_html/output/0507_基本設計仕様書(API_ネット買取管理).html:2154 のExcel正本（src-cell）は認証方式を「IP制限」「トークン」と明記する。",
+      "legacyEvidence": "/home/y-saito/Developments/pf-api/src/Controller/BaseController.php:23-44 は旧APIのjwt-token検証を実装するが、同メソッド内にIP判定はない。pf-api、pf-eccube3、pf-article、deck-apiを `getClientIp`、`REMOTE_ADDR`、allowlist、IP制限で横断検索しても当該API固有のIP制限コードは特定できず、旧環境の外部Webサーバ設定は確認できない。",
+      "currentImpl": "/home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/packages/security.yaml:32-39 は `/api/v1/` にJwtTokenHandler/JwtTokenHeaderExtractorを適用し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Security/AccessToken/JwtTokenHeaderExtractor.php:27-40 は `jwt-token` を抽出する。IP制限についても /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/EventListener/IpAddrListener.php:32-54 が非管理画面リクエストへ `eccube_front_allow_hosts` / deny_hosts を適用し、/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Request/Context.php:41-52,80-85 により `/api/v1/admin/...` は通常の管理画面パスではなくApp APIとしてこのフロント側判定に入る。ただし /home/y-saito/Developments/ec-cube-enterprise/app/config/eccube/packages/eccube.yaml:8-11 の既定allow/deny値は全て `[]` で、実配備環境の `ECCUBE_FRONT_ALLOW_HOSTS` 値はリポジトリから確認できない。",
+      "note": "IP制限機構自体は新実装に存在するため「実装不在」とは断定できない。一方、当該APIで実際に制限が有効かは配備環境のECCUBE_FRONT_ALLOW_HOSTS/ECCUBE_FRONT_DENY_HOSTSまたは外部WAF・Webサーバ設定が必要で、現スナップショットだけでは判定できない。"
+    }
+  ]
+}

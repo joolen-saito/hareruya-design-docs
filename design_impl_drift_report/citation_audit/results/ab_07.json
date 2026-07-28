@@ -1,0 +1,165 @@
+{
+  "packetId": "ab_07",
+  "results": [
+    {
+      "rowId": 141,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:2049 は「商品IDをもとに商品情報を検索しJSON出力する」、同:2058 はリクエスト項目「言語」・入力例「JP」、同:2064 は `api/product/detail/62566?lang=JP`、同:2083 は応答の `language_code` を記載する。したがって商品IDと指定言語に対応する結果を返す要求は正本セルにある。ただし「未指定時JP」は正本ではなくリバース詳細設計側の記述である。",
+      "legacyEvidence": "pf-api/src/Controller/ProductController.php:400-408 は `$languageCode = $request->get('lang');`、空なら `$languageCode = 'JP';` として `getProductDetailById($productId, $languageCode)` を呼び、pf-api/src/Repository/DtbProductRepository.php:358-360 は `->where('product.productId = :productId')->andWhere('language.code = :languageCode')` と両条件で絞る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:52-59 は `lang`（既定JP）を `findProductById($productId, $languageCode)` へ渡す。一方 ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:297-302 は `LEFT JOIN ... lang ON pc.language_id = lang.id AND lang.code = :languageCode`、同:320-323 のWHEREは `p.id = :productId AND pc.id IS NOT NULL` のみで言語を除外条件にせず、同:267 の `COALESCE(lang.code, :languageCode)` により非指定言語規格も指定言語として応答し得る。",
+      "note": "正本で明示される指定言語対応部分だけで真の乖離を確定できる。未指定時JPの補足根拠は旧実装。"
+    },
+    {
+      "rowId": 142,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:2069-2070 は `200 正常` と `404 or 500 異常` を記すが、同:2075-2079 の正本レスポンス表にある失敗形式の根拠は `code` だけで、`message` や `Not Found` の正本セルは存在しない（確認範囲: sheet-6 の正本部 2021-2194）。",
+      "legacyEvidence": "pf-api/src/Controller/ProductController.php:405-414 は取得結果が空なら `return $this->json(['code' => Response::HTTP_NOT_FOUND, 'message' => 'Not Found'], Response::HTTP_NOT_FOUND);` と返す。`{code,message}` の真の根拠は旧実装である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/App/ProductController.php:59-64 は空結果で `throw new NotFoundException('Not Found')`、ec-cube-enterprise/src/Eccube/EventListener/ExceptionListener.php:140-143 は例外を `['code' => $statusCode, 'errors' => $errors]` に変換するため本文キーが `message` ではなく `errors` になる。",
+      "note": "HTTP 404自体は正本にあるが、指摘対象の本文契約 `{code,message}` は旧実装由来。"
+    },
+    {
+      "rowId": 143,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0517_基本設計仕様書(API_その他).html:2109 の正本表は `card_detail.formats` の型を「文字列」とし、同:2190 の正本サンプルも `\"formats\": \"Commander,Legacy,Modern,Pioneer,Vintage\"` である。配列期待は正本と逆である。",
+      "legacyEvidence": "pf-api/src/Repository/DtbProductRepository.php:335 は `GROUP_CONCAT(DISTINCT format.nameEn) AS formats` と文字列集約し、pf-api/src/Controller/ProductController.php:435-449 は `'formats' => $productDetail['formats']` をそのまま返す。旧実装にもarray化は存在しない（確認範囲: pf-api の `formats`、`getProductDetailAction`、`getProductDetailById`）。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductRepository.php:292 は `STRING_AGG(DISTINCT fmt.name_en, ',') AS formats`、ec-cube-enterprise/src/Eccube/Service/App/ProductDetail/ProductDetailResponseBuilder.php:126-140 は `'formats' => $detail['formats'] ?? ''` と文字列を返し、正本および旧実装と一致する。",
+      "note": "リバース詳細設計のarray表記が誤っており、新実装は正本の文字列契約を既に満たす。"
+    },
+    {
+      "rowId": 144,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1031 の正本セルは実行トリガーを「スケジュール起動(Step Functions)」「毎日0:00」とするだけで、`product:batch updateProductSummary` というコマンド名は正本部（996-1046）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:12-20 は `BATCH_NAMES` に `'updateProductSummary' => ...UpdateProductSummary` を登録し、同:30-32 はコマンドを `product:batch` と定義する。同:43-50 は未登録名なら `Nothing args or command.` で終了する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:31-35 は利用方法を `bin/console eccube:aggregate-sales`、登録名を `#[AsCommand(name: 'eccube:aggregate-sales'...)]` とする。`product:batch` / `updateProductSummary` は新実装の src/Eccube、html、config、app を横断検索して登録なし。",
+      "note": ""
+    },
+    {
+      "rowId": 145,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1023 は「本店のほか、支店やスマレジの販売情報も集計対象」、同:1030 は「スマレジの取引データも集計対象とし、それぞれ店舗ごとにECCUBEとスマレジで分けて販売数を集計する」と正本セルで明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:332-350 の旧集計SQLは `dtb_order_detail` と `dtb_order` のみを商品規格IDで集計し、スマレジ・店舗軸は持たない。これは正本が明記するリニューアル時カスタマイズである。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:28-30 は「現在は EC 受注のみ対象。スマレジ実店舗販売は未実装」と明記し、ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:438-440 にも別テーブルなら `UNION 等で本クエリを拡張` するTODOが残る。",
+      "note": ""
+    },
+    {
+      "rowId": 146,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1029 は「本店の支店IDは0として処理する」、同:1042-1043 は「商品規格ID,支店ID,...365日間の販売数」「以上の情報を販売数集計データへ更新」と正本セルで明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:332-350 の旧SQLは `od.product_class_id` 単位だけで店舗IDを持たず、この本店ID=0はリニューアル正本の追加要求である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:442-461 は `s.base_info_id` をそのままSELECT/GROUP BYし、ec-cube-enterprise/src/Eccube/Entity/BaseInfo.php:45 は `TC_TOKYO_ID = 1`。また ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:38-39 はID 0を `POPULAR_PRODUCT_RECOMMEND_SHOP_ID` として別用途に予約している。",
+      "note": ""
+    },
+    {
+      "rowId": 147,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1038-1039 の正本検索条件は「366日間の期間内」「キャンセルを除外」であり、「処理中」除外は正本部（996-1046）に存在しない。新実装はこの正本のキャンセル除外は満たす。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderDetailRepository.php:316-320 は除外配列に `OrderStatus::ORDER_CANCEL` と `OrderStatus::ORDER_PROCESSING` を入れ、同:334-340 は各期間で `o.status NOT IN ({$excludeStatusesStr})` を適用する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:435-457 は `$cancelStatus = OrderStatus::CANCEL` とし、SQL条件は `o.order_status_id != :cancel_status` のみ。旧実装のPROCESSING/PENDING相当を除外する条件は当該集計経路にない。",
+      "note": "乖離は「処理中も除外」の旧挙動に対してのみ成立する。"
+    },
+    {
+      "rowId": 148,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1033-1044 の正本は入力条件と更新項目を記載するが、「対象が無い場合は更新しない」は正本部（996-1046）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummary.php:34-42 は先に取得した `$orderDetails` をforeachし、結果が空なら更新メソッドも `flush()` 前の変更もなく終了する。旧実装が対象なし無更新の根拠である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php:45-49 は対象取得前に `clearSalesQuantityForAggregate()` を呼び、ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:93-98 は `DELETE FROM dtb_sales_quantity WHERE base_info_id != :popular_shop_id` を実行するため、取得結果が空でも既存行を削除する。",
+      "note": ""
+    },
+    {
+      "rowId": 149,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1017-1044 の正本部には100件単位flush/clear、部分反映、次回回収、トランザクション方針の記述が存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummary.php:35-42 は各行を更新し、`if ($index % 100 === 0) { ... flush(); EntityManagerUtil::clearCache(...); }`、最後に `flush()` する。明示的な全体トランザクションはなく、途中までflush済みの変更が残る構造である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php:42-54 は `beginTransaction()`、全件処理後 `commit()`、例外時 `rollBack()` とするため、100件単位の部分反映ではなく全体ロールバックになる。",
+      "note": ""
+    },
+    {
+      "rowId": 150,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1017-1044 の正本部に実行時間制限解除やSQLロガー無効化の記述は存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummary.php:30-34 は `set_time_limit(0);` と `$this->app['orm.em']->getConnection()->getConfiguration()->setSQLLogger(null);` を実行してから集計する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:44-56 はaction実行と完了出力のみ、ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateSalesAction.php:37-54 はトランザクション処理のみで、`set_time_limit` / `setSQLLogger` は存在しない（確認範囲: 当該Command、Action、DtbSalesQuantityRepository）。",
+      "note": ""
+    },
+    {
+      "rowId": 151,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1031 は実行時刻「毎日0:00」を記すが、開始・完了メッセージや日時付きコンソール出力は正本部（996-1046）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:43-56 は `$resultMessage = '[' . date('Y/m/d H:i') . '] ';` を作り、`\"{$name}: Command start.\"` と `\"{$name}: Command complete.\"` をechoする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/AggregateSalesCommand.php:44-56 は処理前の開始出力を持たず、成功時も `$io->success('期間別販売数集計が完了しました。');` のみで日時を含めない。",
+      "note": ""
+    },
+    {
+      "rowId": 152,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1042-1043 の正本は期間別値を「販売数集計データへ更新」とだけ記し、`dtb_product_class.order_quantity_01`〜`08` や「補助表を設けない」は正本部に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:632-645 は旧実装で `UPDATE dtb_product_sub_class SET order_quantity_01 = 0, ... order_quantity_08 = :sales_365day` とする。pf-api/src/Resources/config/doctrine/DtbProductSubClass.orm.yml:82-138 と deck-api/src/Resources/config/doctrine/DtbProductSubClass.orm.yml:82-138 も同列を `DtbProductSubClass` に対応づける。pf-api、pf-eccube3、pf-article、deck-apiを `order_quantity_01`〜`08`、`dtb_product_class`、`dtb_sales_quantity` で横断したが、移行先を `dtb_product_class` とし「補助表を設けない」と決定する旧実装根拠は見つからない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Entity/ProductClass.php:320-342 には `order_quantity_01`〜`order_quantity_08` が実在する一方、ec-cube-enterprise/src/Eccube/Repository/DtbSalesQuantityRepository.php:113-155 の実行経路は `dtb_sales_quantity.sales_quantity_01`〜`08` をINSERT/UPDATEする。",
+      "note": "移行時の保存先を `dtb_product_class` と決定した正本設計・移行マッピング資料が不足している。旧実装は同名列を別表 `dtb_product_sub_class` に持つため、LEGACY_BACKEDともUNSUPPORTEDとも断定できない。"
+    },
+    {
+      "rowId": 153,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1152 の正本は実行トリガー「スケジュール起動(Step Functions)」「毎日3:00」のみで、`product:batch deleteProductRequest` は正本部（1119-1166）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:16 は `'deleteProductRequest' => ...DeleteProductRequest`、同:30-32 は `product:batch` を登録し、同:47-50 は不一致名なら処理せず終了する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/CancelProductRequestCommand.php:30-35 は `bin/console eccube:cancel-product-request`、`#[AsCommand(name: 'eccube:cancel-product-request'...)]` とする。旧名は新実装の src/Eccube、html、config、app を横断検索して登録なし。",
+      "note": ""
+    },
+    {
+      "rowId": 154,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1148-1151、同:1155-1163 の正本は商品・商品規格の公開ステータスが非公開/廃止なら論理削除すると記す。この公開ステータス部分は新実装も満たすが、`visible` と商品不存在を条件にするという指摘部分は正本にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductRequestRepository.php:250-268 は未削除行を対象に `pc.del_flg = 1 OR p.product_id IS NULL OR p.del_flg = 1` なら `deleted_at` を設定する。商品規格削除と商品不存在を含む根拠は旧実装である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbProductRequestRepository.php:568-589 は `JOIN dtb_product p` のうえ `pc.product_status_id IN (...) OR p.product_status_id IN (...)` とし、`pc.visible = false` と商品不存在を条件に含めない。ec-cube-enterprise/src/Eccube/Service/Product/BatchCancelProductRequestAction.php:32-35 はこのメソッドだけを呼ぶ。",
+      "note": "正本の非公開/廃止条件は既に実装済み。残る乖離は旧実装の削除相当・商品不存在条件の移植漏れ。"
+    },
+    {
+      "rowId": 155,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1138-1164 の正本部には開始・完了ログや日時付きコンソール出力の記述が存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:43-56 は日時プレフィックス `[' . date('Y/m/d H:i') . ']` を作り、全商品バッチについて `Command start` と `Command complete` を出力する。`deleteProductRequest` も同入口を使う（同:16）。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/CancelProductRequestCommand.php:43-55 は開始出力を持たず、成功時は `$io->success(sprintf('入荷通知キャンセルが完了しました。（%d件）', $count));` のみで日時を含めない。",
+      "note": ""
+    },
+    {
+      "rowId": 156,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1328 の正本は実行トリガー「スケジュール起動(Step Functions)」「手動実行」のみで、`product:batch updateProductSummaryForStockUp` は正本部（1292-1342）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:20 は `'updateProductSummaryForStockUp' => ...UpdateProductSummaryForStockUp`、同:30-32 は入口を `product:batch` とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php:30-35 は `bin/console eccube:aggregate-stock-up`、`#[AsCommand(name: 'eccube:aggregate-stock-up'...)]` とする。旧名は新実装の src/Eccube と html を横断検索して登録なし。",
+      "note": ""
+    },
+    {
+      "rowId": 157,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1316-1317、同:1320 は商品コード・店舗・在庫区分ごとの集計を明記し、同:1325-1327 は「商品コード、店舗、在庫場所」が一致すれば更新、なければ新規登録すると正本セルで定める。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/StockHistoryRepository.php は存在せず、旧集計の実体はリポジトリ横断検索で商品規格単位だった。pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:653-670 も保存キーは `product_class_id` のみで、在庫場所軸はリニューアル正本の追加要求である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php:151-180 は `ps.product_class_id, sh.base_info_id` だけをSELECT/GROUP BYし、同:195-220 の保存先も `product_class_id, base_info_id` のみで `stock_location_id` / 在庫区分を保持しない。",
+      "note": ""
+    },
+    {
+      "rowId": 158,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1322 は親区分が「入庫」「買取」のもののみ、同:1323 は「移動や分割などで入庫した在庫は集計に含まない」と正本セルで明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php:30-34 は旧リポジトリの `getStockUpForUpdateSummary()` 結果を処理しており、旧挙動の詳細はリバース文書上「入庫・マスタ更新」だが、本件は旧挙動に依存せず正本要求で確定する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php:147-148 は対象定数を `BE_STOCKED` と `INVENTORY_ADJUSTMENT` にし、同:175-178 は `stock_change_type_id IN (:be_stocked, :inventory_adjustment)` とするため、「買取」ではなく「棚卸/在庫調整」を含めている。",
+      "note": ""
+    },
+    {
+      "rowId": 159,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1314-1340 の正本部は集計・保存・エラー時メールを記すが、「対象が無い場合は更新しない」は存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php:32-40 は先に `$stockHistories` を取得し、そのforeach内だけで更新するため、空結果なら更新を行わず終了する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php:36-44 は対象取得前に `clearStockUpQuantityForAggregate()` を呼び、ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php:99-103 は無条件に `DELETE FROM dtb_stock_up_quantity` を実行する。空結果でも削除をcommitする。",
+      "note": ""
+    },
+    {
+      "rowId": 160,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1314-1340 の正本部に100件単位flush/clear、部分反映、トランザクション方針は存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php:33-40 は各行を更新し、`if ($index % 100 === 0) { flush(); EntityManagerUtil::clearCache(...); }`、最後に `flush()` する。全体を囲う明示トランザクションはない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php:36-47 は `beginTransaction()`、全件後 `commit()`、例外時 `rollBack()` とし、100件単位の部分反映を行わない。",
+      "note": ""
+    }
+  ]
+}

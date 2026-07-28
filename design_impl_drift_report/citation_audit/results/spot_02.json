@@ -1,0 +1,165 @@
+{
+  "packetId": "spot_02",
+  "results": [
+    {
+      "rowId": 839,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:3032-3036 のExcel正本は「(4)バナー画像選択」「選択して登録すると、支店TOPにバナー画像を表示する」「バナー画像のアップロード先を、S3の支店別トップバナー用フォルダに変更する」とだけ記載し、指定文言はない。同:3202（リバース詳細設計）も「旧版にあった『バナーイメージファイルを指定してください。』は実ソースに存在しない捏造のため除去済み」と明記している。",
+      "legacyEvidence": "pf-api、pf-eccube3、pf-article、deck-api 全域を完全一致文字列「バナーイメージファイルを指定してください。」で横断検索したが0件。確認範囲の結論は hareruya-design-docs/excel_to_html/output/0210_基本設計仕様書(コンテンツ管理).html:3202 の「実ソースに存在しない捏造のため除去済み」とも一致する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Content/BranchTopPageController.php:288-297 は既存画像も投稿画像も空なら `$this->addError('admin.content.branch_toppage.banner_image_required', 'admin'); return false;` としてDB保存を止める。ec-cube-enterprise/src/Eccube/Resource/locale/messages.ja.yaml:4178 の実文言は `admin.content.branch_toppage.banner_image_required: バナー画像の登録に失敗しました。`。",
+      "note": "DB保存を止める挙動は現行にあるが、指摘が要求する旧文言は正本設計にも4旧実装リポジトリにも存在しないため、文言差分の指摘は根拠なし。"
+    },
+    {
+      "rowId": 857,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2875-2877 のExcel正本に「個別税率設定」、識別ID 1-1「商品別税率機能」・「選択肢:有効　無効」、識別ID 1-2「登録」・「選択された商品別税率機能を登録」と明記されている。同:2866 も「個別税率設定、共通税率設定を登録する」とする。",
+      "legacyEvidence": "pf-eccube3/src/Eccube/ControllerProvider/AdminControllerProvider.php:176-180 は `/setting/shop/tax/edit_param` を `TaxRuleController::editParameter` に束縛する。pf-eccube3/src/Eccube/Controller/Admin/Setting/Shop/TaxRuleController.php:182-200 は `$form->get('option_product_tax_rule')`、`$BaseInfo->setOptionProductTaxRule($optionForm->getData());`、`flush()`、完了イベントdispatch、成功メッセージを実装している。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/TaxRuleController.php:51-54 の税率画面ルートは `/setting/shop/tax` と `/setting/shop/tax/new` のみで、edit_paramがない。ec-cube-enterprise/src/Eccube/Form/Type/Admin/ShopMasterType.php:279-280 には `->add('option_product_tax_rule', ToggleSwitchType::class)` があるが、ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/ShopController.php:45-70 の別画面 `/setting/shop` で保存される。",
+      "note": "URL・保存カラム・イベントdispatchの詳細は旧実装で補強されるが、「税率設定画面に個別税率設定ブロックと登録操作を置く」という期待の中核はExcel正本に明記されている。"
+    },
+    {
+      "rowId": 863,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0209_基本設計仕様書(基本情報設定).html:2864 のExcel正本は「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするだけで、対象ID不存在時のフラッシュ処理は記載していない。具体手順は同:2972 のリバース詳細設計にのみ現れる。",
+      "legacyEvidence": "pf-eccube3/src/Eccube/Controller/Admin/Setting/Shop/TaxRuleController.php:134-138 は `$TargetTaxRule = ...->find($id); if (!$TargetTaxRule) { $app->deleteMessage(); return ...; }`。pf-eccube3/src/Eccube/Application/ApplicationTrait.php:51-60 は `deleteMessage()` が `clearMessage();` 後に `$this->addWarning('admin.delete.warning', 'admin');` を行うため、フラッシュを消して警告だけを残す期待と一致する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Setting/Shop/TaxRuleController.php:147-166 は `delete(Request $request, TaxRule $TaxRule)` とエンティティを必須引数にし、メソッド内は非基本税率の削除・成功メッセージ・一覧リダイレクトのみで、対象不存在分岐もフラッシュクリアもない。",
+      "note": "具体的な期待値はExcel正本ではなく旧EC-CUBE3本体の実装に由来する。"
+    },
+    {
+      "rowId": 911,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:1606-1608 のExcel正本は「集計方式の変更」として「販売関連の集計は注文データの注文ステータスが『出荷完了』のみ計上し、それ以外の注文ステータスは計上しない」と明記する。",
+      "legacyEvidence": "旧実装のステータス定義は pf-eccube3/app/Plugin/HareruyaEc/Entity/OrderStatus.php:43-46 に `self::ORDER_DELIV` の `name => '出荷完了'` とある。pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:68-73 も `shipped => [OrderStatus::ORDER_DELIV, OrderStatus::ORDER_PASSED]` と出荷系を明示的に区別するが、本判定はExcel正本の明示要件を根拠とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbDailySummaryRepository.php:52-66 の集計SQLは `FROM dtb_order o` に対し `o.base_info_id IS NOT NULL` と `o.order_date` 範囲しかWHEREに持たず、出荷完了の `order_status_id` 条件がない。",
+      "note": ""
+    },
+    {
+      "rowId": 934,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html:2276-2282 のExcel正本は「現行機能をベースに下記のカスタマイズを行う」「下記の項目を削除」に続けて「生年月日」「性別」「都道府県」「利用端末」を列挙しており、指摘の設計期待値を明確に否定する。",
+      "legacyEvidence": "旧実装には対象項目が実在する。pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Analysis/SalesType.php:21-30 は `order_pref`、`order_sex`、`device_type`、`order_birth` を集計単位に持ち、同:71-73 は商品・顧客検索フォーム、同:100-126 は `device_type`、`birth_from`、`birth_to` を追加する。ただしExcel正本がこれらを刷新後の削除対象に指定しているため、旧実装の存在は移植期待の根拠にならない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/Analysis/SalesType.php:50-53 の `SUMMARY_TYPE` は商品とカテゴリだけで、同:94-110 から始まる現行フォームにも当該旧項目はない。これは「削除」としたExcel正本に沿う。",
+      "note": "旧実装から起こしたリバース詳細設計には対象項目が残っているが、Excel正本の明示的な削除カスタマイズが優先される。現行は真の設計期待を満たしており、指摘された追加要求は誤検出。"
+    },
+    {
+      "rowId": 1006,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:2681 のExcel正本は繰返日程追加について「カスタマイズ要件に記載の内容以外は現行踏襲とする」とするが、「支払い方法が設定されていない場合申込み受付不可」という具体条件・メッセージはExcel正本部分に存在しない（確認範囲: sheet-8のExcel正本全体、同:2590-2715）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/RepeatScheduleController.php:72-81 は `if ($form->get('entryFlg')->getData() === DtbEventDetail::JOINABLE && $event->getPayments()->isEmpty())` の場合に `admin.schedule.save.failed` と `admin.schedule.error.payment.not.exists` を追加し、入力テンプレートを再表示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/RepeatScheduleType.php:187-194 には現在、`$entryFlg && (int) $Event->getEntryFee() > 0 && $Event->getPayments()->isEmpty()` の場合だけフォームエラーを付ける検証がある。旧実装と異なり参加費0円では支払方法未設定を許すため、申込受付有効時に無条件で拒否する旧挙動は満たさない。",
+      "note": "パケット作成後に現行へ有料イベント向けの部分実装が入っているが、旧実装の無条件チェックとは一致しない。"
+    },
+    {
+      "rowId": 1008,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:2704-2713 のExcel正本は、受付開始/終了時刻を各「00:00」、デッキ登録締切日前日数を「0」・時刻を「23:59」、オンライン受付開始/終了日前日数を各「0」・時刻を各「00:00」と初期値欄に明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Schedule/RepeatScheduleType.php:107-121 は日前日数5項目を列挙し、各整数フィールドに `'data' => 0` を設定する。一方、同:59-92 の時刻項目定義自体にはdata指定がなく、初期値一式の最終根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/RepeatScheduleType.php:132-156 は受付開始/終了時刻にdataがなく、日前日数は `data => 0`、締切時刻は `Carbon::now()->setTime(23, 59, 59)`。同:163-185 はオンライン日前日数を0にしたが、開始/終了時刻にdataがない。",
+      "note": "現行は日前日数0と締切時刻23:59を既に満たすためパケットの実装実態は一部古いが、3つの00:00時刻初期値は依然不足する。"
+    },
+    {
+      "rowId": 1015,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:3375 のExcel正本は識別ID 2-2「検索条件をクリア」の画面部品説明を「フォームを全て空に変更」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/entrylist.js:25-30 の旧実装は `.search-clear` で申込状況・支払方法・店舗をnullにし、DCI番号を空文字にする。少なくとも専用の値クリア処理を持つが、全項目を空にする最終根拠はExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Entry/index.twig:114-119 のクリック処理はsearchModeを `event_entry` にしてchangeを発火するだけ。同:39-53 のchange先はdeckモード時に3項目を消し、event_entryモード時はdisabled解除だけで、フォーム全体を空にしない。",
+      "note": ""
+    },
+    {
+      "rowId": 1019,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:3367-3368 のExcel正本の最大文字数欄は「支払番号」64、「プレイヤー名」255と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/config.yml:105-108 は `entry.length.name: 255` と `payment_no: 64` を定義し、pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Entry/EntryListType.php:70-85 は支払番号とプレイヤー名の `attr` にそれぞれ `'maxlength' => $paymentNoLen`、`'maxlength' => $nameLen` を付ける。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/SearchEntryType.php:98-105 は `payment_no` と `player_name` にlabelとrequiredしか指定しない。ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/Entry/index.twig:272-280 も両方を単純な `form_widget` で描画し、maxlengthを補っていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1041,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5509 は「権限を保持している店舗のイベントのみ登録が可能とする」、同:5518 は「識別ID:3-1『イベント申込を登録』は権限を保持している店舗のイベントの申込のみ表示する」とExcel正本に明記する。",
+      "legacyEvidence": "本件はExcel正本が直接根拠。旧実装の補助確認として pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Entry/EntryListType.php:30-69 は申込一覧検索フォームを構成しているが、権限店舗限定という移行カスタマイズの根拠は旧コードではなくExcel正本:5509,5518である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/EntryRegisterSearchType.php:41-51 は店舗候補を全BaseInfoから作る。ec-cube-enterprise/src/Eccube/Repository/DtbEventRepository.php:189-197 は店舗選択が空なら絞り込まず、ec-cube-enterprise/src/Eccube/Resource/template/admin/Event/EntryRegistration/index.twig:109-110 は全結果行に登録ボタンを出す。直接URLだけは EntryRegistrationController.php:159-165 の `isEditableShop` で拒否する。",
+      "note": "新規登録先での直接アクセス防御はあるが、一覧表示を権限店舗に限定する明示要件は未達。"
+    },
+    {
+      "rowId": 1051,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5835-5838 のExcel正本はCSV一括登録と支払方法条件を説明し、同:5846-5848 はCSV選択・アップロード・フォーマットを列挙するが、5000行上限は記載しない（確認範囲: sheet-19 Excel正本全体、同:5810-5850）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:32 は `const CSV_IMPORT_MAX = 5000;`。同:669-673 は `if ((int)exec('wc -l '.$file) >= self::CSV_IMPORT_MAX)` で5000行以上を拒否し、`admin.csv.error.upload.maxrecord` を表示する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/AbstractController.php:364 は `ADMIN_CSV_IMPORT_MAX_ROWS = 5010`。ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:90-105 は `countCsvRows(...) > ...5010` の場合だけ `%maxRecord%` 5010のエラーを返す。",
+      "note": "5000行以上を不可とする閾値はExcel正本ではなく旧実装に由来する。"
+    },
+    {
+      "rowId": 1057,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0214_基本設計仕様書(イベント管理).html:5835 のExcel正本は「イベントと、それに紐づく日程情報をCSVで一括登録できる」とだけ記載し、実行時間制限の無効化は記載しない（確認範囲: sheet-19 Excel正本全体、同:5810-5850）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/EntryController.php:647-650 はイベント一括登録CSVアップロードの冒頭でコメント「タイムアウトを無効にする」に続けて `set_time_limit(0);` を実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:68-105 はPOST分岐、フォーム処理、行数検査へ進むが `set_time_limit(0)` 等がない。確認範囲: 同Controller全体、Service/Csv/Importer、EventBulkCsvImportHandlerを `set_time_limit|max_execution_time|time_limit` で検索して0件。",
+      "note": ""
+    },
+    {
+      "rowId": 1110,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3212 の `function-design-embed:start m14-07...` より後のリバース詳細設計にのみ具体的な `admin.download.card.not_found` が現れ（同:3244,3292）、それ以前の当該sheetのExcel正本にはこのカード詳細単位エラーの記載がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:329-360 はカード詳細ごとに画像を試し、成功時は `continue 2`、すべて失敗したときは `$app->addError(sprintf($app->trans('admin.download.card.not_found'), $cardImage->getCardDetailId()), 'admin');` として外側処理を続ける。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:115-163 は詳細単位で画像を試すが失敗時フラッシュがなく、同:168-174 は全体の `$addedCount === 0` の場合だけ `admin.card.cardset.error.download_no_images` 例外を投げる。ec-cube-enterprise/src/Eccube/Service/S3AccessService.php:152-161 もS3例外時はログ後 `return null;` のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 1122,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:3877 の `function-design-embed:start m14-08...` より後のリバース詳細設計（同:3908）にだけ、cardDetails件数・`admin.cardset.delete.failed`・Referer・セッションページ復帰の具体手順がある。Excel正本部分にはこの削除分岐の記述がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/CardSetController.php:259-272 は `getCardDetails()->count() > 0` なら日本語名を渡した `admin.cardset.delete.failed` を積んでRefererへ戻し、成功時は `admin.delete.complete` を積み、セッション `eccube.admin.cardset.page_no`（既定1）の `admin_cardset_page` へ戻す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/CardsetController.php:246-280 は先にシンボル画像を削除し、`cardsetRepository->delete()` 後の外部キー例外で `admin.card.cardset.error.delete_has_cards` を出す。成功・失敗とも `admin_cardset_list` へ戻り、事前件数判定・Referer・セッションページ復帰はない。",
+      "note": ""
+    },
+    {
+      "rowId": 1129,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0208_基本設計仕様書(カード管理).html:4055 のリバース埋込開始より後の同:4469 にだけ、削除拒否時の `admin.format.error.delete.event` とRefererリダイレクトが記載される。Excel正本部分にこのメッセージキー・遷移先の指定はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/FormatController.php:160-165 は大会・デッキ・アーキタイプのいずれかで使用中なら `$app->addError('admin.format.error.delete.event', 'admin');` とし、`$request->headers->get('referer')` へリダイレクトする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Card/FormatController.php:182-197 は関連種別ごとに `admin.product.format.error.delete.registered_event/deck/archetype` を出し分け、各分岐で `redirectToRoute('admin_format_list')` を返す。",
+      "note": ""
+    },
+    {
+      "rowId": 1156,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:1283 の `function-design-embed:start m15-01...` より前のExcel正本にはフォーマット・色変更時のアーキタイプoption無効化ロジックの記載がなく、具体挙動はリバース詳細設計側にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/deck-search.js:49-76 は全アーキタイプoptionをdisabledにして、選択フォーマットの `.format_id_*` と色の `.color_id_*` でfilterしたoptionだけを有効化する。同:84-90 はフォーマットまたは色のchangeで `archetypeFilter()` を呼ぶ。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/index.twig:51-80 の現行JSはselect2初期化、ページ件数・ソート変更処理だけで、format/colorのchangeやarchetype optionのfilter処理を持たない。確認範囲: 現行Deckテンプレート・assets全域で旧 `deck-search.js` 相当を検索。",
+      "note": ""
+    },
+    {
+      "rowId": 1161,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0212_基本設計仕様書(デッキ管理).html:2142-2144 のExcel正本は「(5) アーキタイプを選択変更すると、JSで(8)代表カードが更新される」と明記し、既存代表カードがある場合の除外条件を置いていない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/assets/js/deck-detail.js:24-40 はアーキタイプchange時、アーキタイプ側画像があればAjaxを実行し、代表カードID・画像src・名称をセットする。既存代表カードIDによる早期returnはない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Deck/edit.twig:100-117 はアーキタイプchangeを処理するが、同:106-109 の `if (currentCardImageId && currentCardImageId !== '0') { return; }` により既存代表カードがある編集では更新しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1217,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1086 のExcel正本は項目「リンク先URL」と説明「バナーをクリックした際のリンク先URL」だけで、最大255文字・Regex文字種検証は記載しない。具体制約はリバース詳細設計の同:1178,1199にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/Banner/BannerType.php:69-75 はリンク先URLに `Assert\\Length(... max => 255 ...)` と `new Assert\\Regex(\"/[a-zA-Z0-9!?\\\"\\'\\/\\.#$%&()=~|@`:*;+-]/\")` を設定する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Form/Type/Admin/TopBannerType.php:92-99 はリンクフィールドに `new Length(['max' => $this->eccubeConfig['eccube_stext_len']])` だけを付け、Regex制約を持たない。",
+      "note": "255文字上限も旧実装由来だが現行は満たす。未移植なのは旧実装のRegex文字種検証。"
+    },
+    {
+      "rowId": 1223,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1591 の `function-design-embed:start m16-03...` より後のリバース詳細設計（同:1688）にだけ4ルートとHTTPメソッドが列挙され、Excel正本部分にはURL・ルート名・メソッドの指定がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/HolidayServiceProvider.php:18-30 は `/holiday`→`admin_holiday_list`、`/holiday/{id}/delete`、`/holiday/add`、`/holiday/load` をそれぞれ旧Controllerに束縛する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Data/HolidayController.php:47-49 は一覧・追加・一括登録の入口をGET/POST `/data/holiday` に統合し、同:164-165 は削除をDELETE `/data/holiday/{id}/delete` とする。旧 `/holiday`、`/holiday/add`、`/holiday/load` ルートはない。",
+      "note": ""
+    },
+    {
+      "rowId": 1224,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0213_基本設計仕様書(データ管理).html:1591 のリバース埋込開始より後にだけテンプレートブロック・旧メニューキーの具体情報があり、Excel正本部分には `menus = ['data_menu', 'holiday_list']` やtitle/sub_titleブロックの指定がない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Holiday/holiday.twig:1-7 は `{% set menus = ['data_menu', 'holiday_list'] %}`、`{% block title %}データ管理`、`{% block sub_title %}祝日管理` と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Resource/template/admin/Data/holiday.twig:11-16 は `menus = ['data_management', 'holiday_management']`、title=`admin.data.holiday_management`、sub_title=`admin.data.data_management`。ec-cube-enterprise/app/config/eccube/packages/eccube_nav.yaml:349-361 も `data_management` 配下の `holiday_management` を使う。",
+      "note": ""
+    }
+  ]
+}

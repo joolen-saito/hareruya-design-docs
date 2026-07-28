@@ -1282,16 +1282,16 @@
         </header>
         <div class="function-design-body">
           <h2 id="function-design-m07-01-m07-01_admin_online_purchase_purchase_online_search_list-概要">概要</h2>
-          <p>ブラウザ向けの管理画面「ネット買取管理」において、<code>dtb_buy_order</code> を検索フォームで絞り込み、<code>dtb_buy_main_card</code> と顧客周辺データを一覧表示する機能である。翻訳上のタイトルは「ネット買取管理」、一覧は「買取一覧」。テンプレート注釈にあるとおり、表示はプラグイン HareruyaEc 由来であり、現在はコア側の Twig・コントローラへ移載されている実装が確認値である。</p>
-          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。ec-cube-enterprise の管理画面ソースを確認値とする。</p>
-          <p>本機能のカスタマイズ区分はカスタマイズである。現行挙動は現行リポ（pf-eccube3 の HareruyaEc プラグイン）を出自とし、リニューアル後は ec-cube-enterprise のコア実装へ移載される。挙動の確認値は ec-cube-enterprise のコア実装とし、DB関連の記述（テーブル名・列名・保存先・整合）は ec-cube-enterprise を正とする。</p>
+          <p>ブラウザ向けの管理画面「ネット買取管理」において、<code>dtb_buy_order</code> を検索フォームで絞り込み、<code>dtb_buy_main_card</code> と顧客周辺データを一覧表示する機能である。翻訳上のタイトルは「ネット買取管理」、一覧は「買取一覧」。テンプレート注釈にあるとおり、表示はプラグイン HareruyaEc 由来であり、移行先 ec-cube-enterprise ではコア側の Twig・コントローラへ移載されている実装が確認値である。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。「利用者視点の入口」以降を含む本文の挙動は、移行先 ec-cube-enterprise の管理画面ソースをリバースしたものであり、現行 pf-eccube3 の挙動を記述したものではない。</p>
+          <p>本機能のカスタマイズ区分はカスタマイズである。機能の移植元は現行 pf-eccube3 の HareruyaEc プラグインだが、本書本文の挙動とDB関連の記述（テーブル名・列名・保存先・整合）は移行先 ec-cube-enterprise のコア実装を正とする。</p>
           <p>対象はブラウザ経由の管理画面に限定する。コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
           <hr>
           <h2 id="function-design-m07-01-m07-01_admin_online_purchase_purchase_online_search_list-利用者視点の入口">利用者視点の入口</h2>
           <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビから「ネット買取管理」→「買取一覧」</td><td><code>GET /{admin_route}/purchase/list</code></td><td>検索条件は空または既定の日付のみ。結果テーブルは出さず、「検索」押下まで一覧は表示しない設計となる。</td></tr><tr><td>「検索」ボタン</td><td><code>POST /{admin_route}/purchase/search</code>（同一フォームのアクション、<code>page_no=1</code>）</td><td>POST 済み検索データで一覧を構成し、総件数とページングリンクを生成する。</td></tr><tr><td>一覧のページ送り</td><td><code>GET /{admin_route}/purchase/page/{page_no}</code>（クエリに <code>sort</code>・<code>order</code>・<code>page_count</code> を付与しうる）</td><td>直前の検索条件をセッションから復元し、指定ページを表示する。</td></tr><tr><td>表示件数プルダウン</td><td><code>GET /{admin_route}/purchase/page/1?page_count=…</code></td><td>マスタ <code>mtb_page_max</code> に存在する件数ならセッションへ保存し、1 ページ目から再表示する。</td></tr><tr><td>並び順ドロップダウン</td><td>`GET /{admin_route}/purchase/page/1?sort=…&amp;order=ASC</td><td>DESC`</td></tr><tr><td>注文者名リンク（氏名）</td><td><code>POST /{admin_route}/purchase/search</code>（クライアントが買取状況を空にし、氏名を埋めて自動送信）</td><td>氏名の部分一致検索で再検索する。</td></tr></tbody></table></div>
           <hr>
           <h2 id="function-design-m07-01-m07-01_admin_online_purchase_purchase_online_search_list-フロント挙動">フロント挙動</h2>
-          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>検索結果ブロックとダウンロード用フォーム・ページ情報は <code>pagination.totalItemCount &gt; 0</code> のときのみ描画する。総件数 0 のときカードに「検索条件に該当するデータがありませんでした。」を示す。列は買取番号リンク、買取依頼日時、<code>dtb_buy_main_card</code> に基づく商品名と枚数一覧、申込時買取金額合計、<code>packageCount</code> と閾値に応じた強調、<code>dtb_buy_main_card.sale_flg</code> および個別入力行の売却フラグに基づくキャンセル含有の警告、ステータス名、<code>dtb_player</code> と本人確認マスタ経由のアイコン／ラベル、利用回数、行メニュー（編集・削除リンク等）。</td></tr><tr><td>JS 挙動</td><td><code>purchase.js</code>。ヘッダ全選択チェックは同一フォーム内の <code>buyOrderId</code> を持つチェックのみ同期する。ダウンロード系送信はチェック無し時 <code>alert</code> で中断する対象がある。PDF 送信は AJAX で JSON を受け取り新規ウィンドウへ HTML を書き込む。ポップアップ無効時は <code>alert</code>。氏名リンクは買取状況選択を解除し、<code>name_multi</code> に表示テキストを代入して検索フォームを <code>submit</code>。</td></tr><tr><td>「検索条件をクリア」</td><td>ラベルは全条件クリアの意味だが、現行実装では <code>sale_flg</code> 相当のチェックリストではなく、<code>#admin_purchase_list_buy_order_status</code> のみ select2 で空にする。他フィールドや日付はクライアント側では消さない。</td></tr><tr><td>CSS・レイアウト</td><td><code>#result_list__custom_csv_menu</code> と <code>#result_list_main__sort_menu</code> の Bootstrap ドロップダウンが <code>display:none</code> と干渉するため、<code>.show</code> 時に強制ブロックへ上書きするインライン <code>style</code>。</td></tr><tr><td>クライアント共通</td><td><code>select2</code>、<code>sort-method-display.js</code> で二段ドロップダウン。「ソートキー」をクリックしてから昇順／降順のサブメニューを出す操作が必要となる。ページ件数変更は別プルダウンでそのまま別 URL に遷移させる。</td></tr><tr><td>一覧の CSRF</td><td>検索フォームは項目型で CSRF を無効化している。一覧下部のCSV系フォーム単体でのトークンの有無や別機能のチェック要件は別範囲とする（利用者視点では送信は同一画面内別 <code>formaction</code> へ向くだけと捉える）。</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>検索結果ブロックとダウンロード用フォーム・ページ情報は <code>pagination.totalItemCount &gt; 0</code> のときのみ描画する。総件数 0 のときカードに「検索条件に該当するデータがありませんでした。」を示す。列は買取番号リンク、買取依頼日時、<code>dtb_buy_main_card</code> に基づく商品名と枚数一覧、申込時買取金額合計、<code>packageCount</code> と閾値に応じた強調、<code>dtb_buy_main_card.sale_flg</code> および個別入力行の売却フラグに基づくキャンセル含有の警告、ステータス名、<code>dtb_player</code> と本人確認マスタ経由のアイコン／ラベル、利用回数、行メニュー（編集・削除リンク等）。</td></tr><tr><td>JS 挙動</td><td><code>purchase.js</code>。ヘッダ全選択チェックは同一フォーム内の <code>buyOrderId</code> を持つチェックのみ同期する。ダウンロード系送信はチェック無し時 <code>alert</code> で中断する対象がある。PDF 送信は AJAX で JSON を受け取り新規ウィンドウへ HTML を書き込む。ポップアップ無効時は <code>alert</code>。氏名リンクは買取状況選択を解除し、<code>name_multi</code> に表示テキストを代入して検索フォームを <code>submit</code>。</td></tr><tr><td>「検索条件をクリア」</td><td>ラベルは全条件クリアの意味だが、移行先 ec-cube-enterprise 実装では <code>sale_flg</code> 相当のチェックリストではなく、<code>#admin_purchase_list_buy_order_status</code> のみ select2 で空にする。他フィールドや日付はクライアント側では消さない。</td></tr><tr><td>CSS・レイアウト</td><td><code>#result_list__custom_csv_menu</code> と <code>#result_list_main__sort_menu</code> の Bootstrap ドロップダウンが <code>display:none</code> と干渉するため、<code>.show</code> 時に強制ブロックへ上書きするインライン <code>style</code>。</td></tr><tr><td>クライアント共通</td><td><code>select2</code>、<code>sort-method-display.js</code> で二段ドロップダウン。「ソートキー」をクリックしてから昇順／降順のサブメニューを出す操作が必要となる。ページ件数変更は別プルダウンでそのまま別 URL に遷移させる。</td></tr><tr><td>一覧の CSRF</td><td>検索フォームは項目型で CSRF を無効化している。一覧下部のCSV系フォーム単体でのトークンの有無や別機能のチェック要件は別範囲とする（利用者視点では送信は同一画面内別 <code>formaction</code> へ向くだけと捉える）。</td></tr></tbody></table></div>
           <hr>
           <h2 id="function-design-m07-01-m07-01_admin_online_purchase_purchase_online_search_list-処理フロー">処理フロー</h2>
           <h3 id="function-design-m07-01-m07-01_admin_online_purchase_purchase_online_search_list-一覧の初期-GET-ルート-admin-purchase-list">一覧の初期 GET（ルート <code>admin_purchase_list</code>）</h3>
@@ -1655,16 +1655,16 @@
         </header>
         <div class="function-design-body">
           <h2 id="function-design-m07-01-m07-01_admin_online_purchase_purchase_online_search_list-概要">概要</h2>
-          <p>ブラウザ向けの管理画面「ネット買取管理」において、<code>dtb_buy_order</code> を検索フォームで絞り込み、<code>dtb_buy_main_card</code> と顧客周辺データを一覧表示する機能である。翻訳上のタイトルは「ネット買取管理」、一覧は「買取一覧」。テンプレート注釈にあるとおり、表示はプラグイン HareruyaEc 由来であり、現在はコア側の Twig・コントローラへ移載されている実装が確認値である。</p>
-          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。ec-cube-enterprise の管理画面ソースを確認値とする。</p>
-          <p>本機能のカスタマイズ区分はカスタマイズである。現行挙動は現行リポ（pf-eccube3 の HareruyaEc プラグイン）を出自とし、リニューアル後は ec-cube-enterprise のコア実装へ移載される。挙動の確認値は ec-cube-enterprise のコア実装とし、DB関連の記述（テーブル名・列名・保存先・整合）は ec-cube-enterprise を正とする。</p>
+          <p>ブラウザ向けの管理画面「ネット買取管理」において、<code>dtb_buy_order</code> を検索フォームで絞り込み、<code>dtb_buy_main_card</code> と顧客周辺データを一覧表示する機能である。翻訳上のタイトルは「ネット買取管理」、一覧は「買取一覧」。テンプレート注釈にあるとおり、表示はプラグイン HareruyaEc 由来であり、移行先 ec-cube-enterprise ではコア側の Twig・コントローラへ移載されている実装が確認値である。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。「利用者視点の入口」以降を含む本文の挙動は、移行先 ec-cube-enterprise の管理画面ソースをリバースしたものであり、現行 pf-eccube3 の挙動を記述したものではない。</p>
+          <p>本機能のカスタマイズ区分はカスタマイズである。機能の移植元は現行 pf-eccube3 の HareruyaEc プラグインだが、本書本文の挙動とDB関連の記述（テーブル名・列名・保存先・整合）は移行先 ec-cube-enterprise のコア実装を正とする。</p>
           <p>対象はブラウザ経由の管理画面に限定する。コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
           <hr>
           <h2 id="function-design-m07-01-m07-01_admin_online_purchase_purchase_online_search_list-利用者視点の入口">利用者視点の入口</h2>
           <div class="table-wrap"><table><thead><tr><th>入口</th><th>URLエンドポイント</th><th>期待されるふるまい</th></tr></thead><tbody><tr><td>ナビから「ネット買取管理」→「買取一覧」</td><td><code>GET /{admin_route}/purchase/list</code></td><td>検索条件は空または既定の日付のみ。結果テーブルは出さず、「検索」押下まで一覧は表示しない設計となる。</td></tr><tr><td>「検索」ボタン</td><td><code>POST /{admin_route}/purchase/search</code>（同一フォームのアクション、<code>page_no=1</code>）</td><td>POST 済み検索データで一覧を構成し、総件数とページングリンクを生成する。</td></tr><tr><td>一覧のページ送り</td><td><code>GET /{admin_route}/purchase/page/{page_no}</code>（クエリに <code>sort</code>・<code>order</code>・<code>page_count</code> を付与しうる）</td><td>直前の検索条件をセッションから復元し、指定ページを表示する。</td></tr><tr><td>表示件数プルダウン</td><td><code>GET /{admin_route}/purchase/page/1?page_count=…</code></td><td>マスタ <code>mtb_page_max</code> に存在する件数ならセッションへ保存し、1 ページ目から再表示する。</td></tr><tr><td>並び順ドロップダウン</td><td>`GET /{admin_route}/purchase/page/1?sort=…&amp;order=ASC</td><td>DESC`</td></tr><tr><td>注文者名リンク（氏名）</td><td><code>POST /{admin_route}/purchase/search</code>（クライアントが買取状況を空にし、氏名を埋めて自動送信）</td><td>氏名の部分一致検索で再検索する。</td></tr></tbody></table></div>
           <hr>
           <h2 id="function-design-m07-01-m07-01_admin_online_purchase_purchase_online_search_list-フロント挙動">フロント挙動</h2>
-          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>検索結果ブロックとダウンロード用フォーム・ページ情報は <code>pagination.totalItemCount &gt; 0</code> のときのみ描画する。総件数 0 のときカードに「検索条件に該当するデータがありませんでした。」を示す。列は買取番号リンク、買取依頼日時、<code>dtb_buy_main_card</code> に基づく商品名と枚数一覧、申込時買取金額合計、<code>packageCount</code> と閾値に応じた強調、<code>dtb_buy_main_card.sale_flg</code> および個別入力行の売却フラグに基づくキャンセル含有の警告、ステータス名、<code>dtb_player</code> と本人確認マスタ経由のアイコン／ラベル、利用回数、行メニュー（編集・削除リンク等）。</td></tr><tr><td>JS 挙動</td><td><code>purchase.js</code>。ヘッダ全選択チェックは同一フォーム内の <code>buyOrderId</code> を持つチェックのみ同期する。ダウンロード系送信はチェック無し時 <code>alert</code> で中断する対象がある。PDF 送信は AJAX で JSON を受け取り新規ウィンドウへ HTML を書き込む。ポップアップ無効時は <code>alert</code>。氏名リンクは買取状況選択を解除し、<code>name_multi</code> に表示テキストを代入して検索フォームを <code>submit</code>。</td></tr><tr><td>「検索条件をクリア」</td><td>ラベルは全条件クリアの意味だが、現行実装では <code>sale_flg</code> 相当のチェックリストではなく、<code>#admin_purchase_list_buy_order_status</code> のみ select2 で空にする。他フィールドや日付はクライアント側では消さない。</td></tr><tr><td>CSS・レイアウト</td><td><code>#result_list__custom_csv_menu</code> と <code>#result_list_main__sort_menu</code> の Bootstrap ドロップダウンが <code>display:none</code> と干渉するため、<code>.show</code> 時に強制ブロックへ上書きするインライン <code>style</code>。</td></tr><tr><td>クライアント共通</td><td><code>select2</code>、<code>sort-method-display.js</code> で二段ドロップダウン。「ソートキー」をクリックしてから昇順／降順のサブメニューを出す操作が必要となる。ページ件数変更は別プルダウンでそのまま別 URL に遷移させる。</td></tr><tr><td>一覧の CSRF</td><td>検索フォームは項目型で CSRF を無効化している。一覧下部のCSV系フォーム単体でのトークンの有無や別機能のチェック要件は別範囲とする（利用者視点では送信は同一画面内別 <code>formaction</code> へ向くだけと捉える）。</td></tr></tbody></table></div>
+          <div class="table-wrap"><table><thead><tr><th>観点</th><th>内容</th></tr></thead><tbody><tr><td>表示要素</td><td>検索結果ブロックとダウンロード用フォーム・ページ情報は <code>pagination.totalItemCount &gt; 0</code> のときのみ描画する。総件数 0 のときカードに「検索条件に該当するデータがありませんでした。」を示す。列は買取番号リンク、買取依頼日時、<code>dtb_buy_main_card</code> に基づく商品名と枚数一覧、申込時買取金額合計、<code>packageCount</code> と閾値に応じた強調、<code>dtb_buy_main_card.sale_flg</code> および個別入力行の売却フラグに基づくキャンセル含有の警告、ステータス名、<code>dtb_player</code> と本人確認マスタ経由のアイコン／ラベル、利用回数、行メニュー（編集・削除リンク等）。</td></tr><tr><td>JS 挙動</td><td><code>purchase.js</code>。ヘッダ全選択チェックは同一フォーム内の <code>buyOrderId</code> を持つチェックのみ同期する。ダウンロード系送信はチェック無し時 <code>alert</code> で中断する対象がある。PDF 送信は AJAX で JSON を受け取り新規ウィンドウへ HTML を書き込む。ポップアップ無効時は <code>alert</code>。氏名リンクは買取状況選択を解除し、<code>name_multi</code> に表示テキストを代入して検索フォームを <code>submit</code>。</td></tr><tr><td>「検索条件をクリア」</td><td>ラベルは全条件クリアの意味だが、移行先 ec-cube-enterprise 実装では <code>sale_flg</code> 相当のチェックリストではなく、<code>#admin_purchase_list_buy_order_status</code> のみ select2 で空にする。他フィールドや日付はクライアント側では消さない。</td></tr><tr><td>CSS・レイアウト</td><td><code>#result_list__custom_csv_menu</code> と <code>#result_list_main__sort_menu</code> の Bootstrap ドロップダウンが <code>display:none</code> と干渉するため、<code>.show</code> 時に強制ブロックへ上書きするインライン <code>style</code>。</td></tr><tr><td>クライアント共通</td><td><code>select2</code>、<code>sort-method-display.js</code> で二段ドロップダウン。「ソートキー」をクリックしてから昇順／降順のサブメニューを出す操作が必要となる。ページ件数変更は別プルダウンでそのまま別 URL に遷移させる。</td></tr><tr><td>一覧の CSRF</td><td>検索フォームは項目型で CSRF を無効化している。一覧下部のCSV系フォーム単体でのトークンの有無や別機能のチェック要件は別範囲とする（利用者視点では送信は同一画面内別 <code>formaction</code> へ向くだけと捉える）。</td></tr></tbody></table></div>
           <hr>
           <h2 id="function-design-m07-01-m07-01_admin_online_purchase_purchase_online_search_list-処理フロー">処理フロー</h2>
           <h3 id="function-design-m07-01-m07-01_admin_online_purchase_purchase_online_search_list-一覧の初期-GET-ルート-admin-purchase-list">一覧の初期 GET（ルート <code>admin_purchase_list</code>）</h3>
@@ -1805,8 +1805,8 @@
         <div class="function-design-body">
           <h2 id="function-design-m07-02-m07-02_admin_online_purchase_purchase_online_old_goods_ledger_csv_export-概要">概要</h2>
           <p>管理画面の「ネット買取管理」買取一覧または買取詳細（編集）から、選択した買取注文IDを対象に、古物台帳入力用として固定レイアウトのCSVファイルをダウンロード応答として返す機能である。一覧のドロップダウン項目の翻訳キーは<code>admin.purchase.online.btn.csvexport</code>であり、文言は「古物台帳入力用CSV」と表示される。店頭買取向けの同名ラベル（別ルート・別クエリ）とはデータ源が異なる。</p>
-          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。テンプレート注釈で示された移植元はpf-eccube3プラグインであるが、本書の確認値はec-cube-enterpriseのコア実装とする。</p>
-          <p>本機能のカスタマイズ区分はカスタマイズである。現行挙動は現行リポ（pf-eccube3のHareruyaEcプラグイン）を出自とし、リニューアル後はec-cube-enterpriseのコア実装へ移載される。挙動の確認値はec-cube-enterpriseのコア実装とし、DB関連の記述（テーブル名・列名・整合）はec-cube-enterpriseを正とする。本機能はCSV出力のみでDB更新を行わない。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。テンプレート注釈の pf-eccube3 プラグインパスは移植元を示す。「利用者視点の入口」以降を含む本文の挙動は、移行先 ec-cube-enterprise のコア実装をリバースしたものであり、現行 pf-eccube3 の挙動を記述したものではない。</p>
+          <p>本機能のカスタマイズ区分はカスタマイズである。機能の移植元は現行 pf-eccube3 の HareruyaEc プラグインだが、本書本文の挙動とDB関連の記述（テーブル名・列名・整合）は移行先 ec-cube-enterprise のコア実装を正とする。本機能はCSV出力のみでDB更新を行わない。</p>
           <p>対象はブラウザ経由の管理画面に限定する。</p>
           <p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
           <hr>
@@ -1929,8 +1929,8 @@
         <div class="function-design-body">
           <h2 id="function-design-m07-05-m07-05_admin_online_purchase_purchase_csv_export_deposit-概要">概要</h2>
           <p>管理画面の「ネット買取管理」検索一覧でチェックした買取注文IDを対象に、銀行振込先と振込金額などを並べた入金用CSVファイルをダウンロード応答として返す機能である。一覧のドロップダウンで翻訳キー <code>admin.purchase.online.btn.csvexport_deposit</code> により「入金CSV」と表示される。業務上は銀行入金CSV出力として実装コメントされている。</p>
-          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。テンプレート上の移植元は pf-eccube3 の HareruyaEc プラグインであり、現行のふるまいは ec-cube-enterprise のコア実装を確認値とする。</p>
-          <p>本機能のカスタマイズ区分は現行踏襲である。現行挙動は現行リポ（pf-eccube3のHareruyaEcプラグイン）を出自とし、リニューアル後はec-cube-enterpriseのコア実装へ移載される。挙動の確認値はec-cube-enterpriseのコア実装とし、DB関連の記述（テーブル名・列名・整合）はec-cube-enterpriseを正とする。本機能はCSV出力のみでDB更新を行わない。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。テンプレート上の pf-eccube3 HareruyaEc プラグインパスは移植元を示す。「利用者視点の入口」以降を含む本文の挙動は、移行先 ec-cube-enterprise のコア実装をリバースしたものであり、現行 pf-eccube3 の挙動を記述したものではない。</p>
+          <p>本機能のカスタマイズ区分は現行踏襲である。機能の移植元は現行 pf-eccube3 の HareruyaEc プラグインだが、本書本文の挙動とDB関連の記述（テーブル名・列名・整合）は移行先 ec-cube-enterprise のコア実装を正とする。本機能はCSV出力のみでDB更新を行わない。</p>
           <p>対象はブラウザ経由の管理画面に限定する。</p>
           <p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
           <hr>
@@ -2036,8 +2036,8 @@
         <div class="function-design-body">
           <h2 id="function-design-m07-06-m07-06_admin_online_purchase_purchase_online_product_list_csv_export-概要">概要</h2>
           <p>管理画面の「ネット買取管理」買取一覧から「ダウンロード」メニュー内の「買取商品一覧CSV」を選ぶか、買取詳細（編集）から「買取商品一覧CSV出力」を押したときに、選択または対象となった買取注文に紐づく商品明細を、在庫増減向けの固定レイアウトでCSVとしてストリーム返却する機能である。一覧ラベルの翻訳キーは<code>admin.purchase.online.btn.csvexport_product_list</code>、詳細ボタンは<code>admin.purchase.online.detail.btn.csvexport_product_list</code>である。同一HTTPルートにクエリ<code>type=notSale</code>を付けた「買取商品（キャンセル）CSV」があり、ヘッダの数量に相当する列見出しとファイル名接頭辞のみ差し替わるが、抽出SQLとサービス実装は共用する。</p>
-          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。テンプレート注釈で示された移植元はpf-eccube3プラグインであるが、本書の確認値はec-cube-enterpriseのコア実装とする。</p>
-          <p>本機能のカスタマイズ区分は現行踏襲であり、挙動の参照は現行リポ（pf-eccube3のネット買取プラグイン）、DB関連はec-cube-enterpriseを正とする。ネット買取の永続化テーブル（<code>dtb_buy_order</code>・<code>dtb_buy_main_card</code>・<code>dtb_buy_order_indivisual_input_product</code>等）はec-cube-enterpriseに同名で実在し、現行と移行先で同一スキーマである。店頭買取の<code>dtb_otc_buy_*</code>は別系統であり本機能では扱わない。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。テンプレート注釈の pf-eccube3 プラグインパスは移植元を示す。「利用者視点の入口」以降を含む本文の挙動は、移行先 ec-cube-enterprise のコア実装をリバースしたものであり、現行 pf-eccube3 の挙動を記述したものではない。</p>
+          <p>本機能のカスタマイズ区分は現行踏襲である。機能の移植元は現行 pf-eccube3 のネット買取プラグインだが、本書本文の挙動とDB関連は移行先 ec-cube-enterprise を正とする。ネット買取の永続化テーブル（<code>dtb_buy_order</code>・<code>dtb_buy_main_card</code>・<code>dtb_buy_order_indivisual_input_product</code>等）はec-cube-enterpriseに同名で実在し、現行と移行先で同一スキーマである。店頭買取の<code>dtb_otc_buy_*</code>は別系統であり本機能では扱わない。</p>
           <p>対象はブラウザ経由の管理画面に限定する。</p>
           <p>コントローラのメソッド名は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
           <hr>
@@ -3378,8 +3378,8 @@
         <div class="function-design-body">
           <h2 id="function-design-m07-03-m07-03_admin_online_purchase_purchase_online_buy_order_edit-概要">概要</h2>
           <p>管理画面「ネット買取管理」から到達する、1件のネット買取注文（<code>dtb_buy_order</code>）について、買取番号・買取状況・査定・明細（選んで買取／まとめて買取／個別入力）・実在庫・買取依頼者・口座・適格請求書まわりを閲覧・編集し、保存する機能である。画面メッセージでは「買取情報編集」とも呼ばれる。サブタイトルはTwig上「買取詳細」、<code>messages.ja.yaml</code>の確認値では「買取情報編集」がある。</p>
-          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。確認値はリポジトリ内のネット買取管理コントローラ、買取詳細フォーム定義、買取詳細保存サービス、買取詳細Twigテンプレート、同画面のフロント脚本、設定 <code>eccube.yaml</code> を正とする。</p>
-          <p>本機能のカスタマイズ区分はカスタマイズである。現行挙動は現行リポ（pf-eccube3のHareruyaEcプラグイン）を出自とし、リニューアル後はec-cube-enterpriseのコア実装へ移載される。挙動の確認値はec-cube-enterpriseのコア実装とし、DB関連の記述（テーブル名・列名・保存先・整合・副作用のDB更新）はec-cube-enterpriseを正とする。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。「利用者視点の入口」以降を含む本文の挙動は、移行先 ec-cube-enterprise のネット買取管理コントローラ、買取詳細フォーム定義、買取詳細保存サービス、買取詳細Twigテンプレート、同画面のフロント脚本、設定 <code>eccube.yaml</code> をリバースしたものであり、現行 pf-eccube3 の挙動を記述したものではない。</p>
+          <p>本機能のカスタマイズ区分はカスタマイズである。機能の移植元は現行 pf-eccube3 の HareruyaEc プラグインだが、本書本文の挙動とDB関連の記述（テーブル名・列名・保存先・整合・副作用のDB更新）は移行先 ec-cube-enterprise のコア実装を正とする。</p>
           <p>対象はブラウザ経由の管理画面に限定する。</p>
           <p>コントローラのメソッド単位の解剖は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
           <hr>
@@ -3580,8 +3580,8 @@
         <div class="function-design-body">
           <h2 id="function-design-m07-04-m07-04_admin_online_purchase_purchase_manual_mail-概要">概要</h2>
           <p>管理画面の「ネット買取管理」において、1件のネット買取受注（買取番号に相当する識別子をもつ受注）を対象に、管理者がメールテンプレートと件名・本文を確定して顧客へメールを送り、送信結果をメール履歴として残す機能である。一覧ドロップダウンの「メール通知」と詳細フッターの「手動メール通知」の文言から開ける。</p>
-          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。ec-cube-enterprise のコア実装を確認値とする。</p>
-          <p>本機能のカスタマイズ区分はカスタマイズである。現行挙動は現行リポ（pf-eccube3のHareruyaEcプラグイン）を出自とし、リニューアル後はec-cube-enterpriseのコア実装へ移載される。挙動の確認値はec-cube-enterpriseのコア実装とし、DB関連の記述（テーブル名・列名・保存先・副作用のメール履歴INSERT）はec-cube-enterpriseを正とする。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。「利用者視点の入口」以降を含む本文の単一URL・<code>mode</code> 分岐を含む挙動は、移行先 ec-cube-enterprise のコア実装をリバースしたものであり、現行 pf-eccube3 の挙動を記述したものではない。</p>
+          <p>本機能のカスタマイズ区分はカスタマイズである。機能の移植元は現行 pf-eccube3 の HareruyaEc プラグインだが、本書本文の挙動とDB関連の記述（テーブル名・列名・保存先・副作用のメール履歴INSERT）は移行先 ec-cube-enterprise のコア実装を正とする。</p>
           <p>対象はブラウザ経由の管理画面に限定する。</p>
           <p>コントローラのメソッド単位の解剖は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
           <hr>
@@ -3792,8 +3792,8 @@
         <div class="function-design-body">
           <h2 id="function-design-m07-04-m07-04_admin_online_purchase_purchase_manual_mail-概要">概要</h2>
           <p>管理画面の「ネット買取管理」において、1件のネット買取受注（買取番号に相当する識別子をもつ受注）を対象に、管理者がメールテンプレートと件名・本文を確定して顧客へメールを送り、送信結果をメール履歴として残す機能である。一覧ドロップダウンの「メール通知」と詳細フッターの「手動メール通知」の文言から開ける。</p>
-          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。ec-cube-enterprise のコア実装を確認値とする。</p>
-          <p>本機能のカスタマイズ区分はカスタマイズである。現行挙動は現行リポ（pf-eccube3のHareruyaEcプラグイン）を出自とし、リニューアル後はec-cube-enterpriseのコア実装へ移載される。挙動の確認値はec-cube-enterpriseのコア実装とし、DB関連の記述（テーブル名・列名・保存先・副作用のメール履歴INSERT）はec-cube-enterpriseを正とする。</p>
+          <p>本書は実装手順ではなく、誰が・いつ・どの条件で・結果どうなるかを読むためのリバース詳細設計とする。「利用者視点の入口」以降を含む本文の単一URL・<code>mode</code> 分岐を含む挙動は、移行先 ec-cube-enterprise のコア実装をリバースしたものであり、現行 pf-eccube3 の挙動を記述したものではない。</p>
+          <p>本機能のカスタマイズ区分はカスタマイズである。機能の移植元は現行 pf-eccube3 の HareruyaEc プラグインだが、本書本文の挙動とDB関連の記述（テーブル名・列名・保存先・副作用のメール履歴INSERT）は移行先 ec-cube-enterprise のコア実装を正とする。</p>
           <p>対象はブラウザ経由の管理画面に限定する。</p>
           <p>コントローラのメソッド単位の解剖は本文の主題としない。本文ではルートbind名やSymfonyのルートnameの網羅は主説明としない。「利用者視点の入口」にHTTPメソッドとサイトルートからのパスパターンを書く。コード探索でbind名が必要なときだけ「調査補助」へ書く。</p>
           <hr>

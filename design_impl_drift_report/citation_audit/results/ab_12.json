@@ -1,0 +1,149 @@
+{
+  "packetId": "ab_12",
+  "results": [
+    {
+      "rowId": 241,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1659-1666 のExcel正本は「ポイント履歴データから…」「実行トリガー スケジュール起動(Step Functions)」「毎日3:30」と記載するだけで、`customer:batch adjustPointVariance` というコマンド契約は記載していない。正本範囲（同:1629-1694）に `customer:batch` / `adjustPointVariance` は存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php:12-19 は `'adjustPointVariance' => 'Plugin\\HareruyaEc\\Service\\Customer\\AdjustPointVariance'`、同:24-28 は `$this->setName('customer:batch')` と実装しており、旧実行契約は `customer:batch adjustPointVariance` である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/AdjustPointVarianceCommand.php:25 は `#[AsCommand(name: 'eccube:customer:adjust-point-variance', description: 'ポイント差分発生通知バッチ')]` と登録する。`ec-cube-enterprise` 全体を `customer:batch` / `adjustPointVariance` で検索したが、旧名のエイリアス登録は存在しない（確認範囲: PHP/YAML/XML/JSON/SH/Twig、vendor/var除外）。",
+      "note": "コマンド名の期待値はExcel正本ではなく旧実装由来。"
+    },
+    {
+      "rowId": 242,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1691-1692 のExcel正本は「エラーハンドリング」「該当処理なし」と記載して終わり、開始・完了の日時付きコンソール出力は記載していない。該当記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b08-05_batch_customer_customer_adjust_point_variance.md:156-160 の「開始・完了」「開始・完了のコンソール出力（日時付き）」にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php:49-52 は `echo sprintf(\"Command start:%s \\n\", date('Y/m/d H:i:s'));`、処理後に `echo sprintf(\"Command complete:%s \\n\", date('Y/m/d H:i:s'));` と日時付きで出力する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/AdjustPointVarianceCommand.php:37-38 は `$io->text('ポイント差分発生通知バッチ開始');`、同:51 は `$io->success('ポイント差分発生通知処理が完了しました。');` と出力するが、いずれにも日時値を付与していない。",
+      "note": "日時付きログの期待値は旧実装を起こしたリバース詳細設計由来。"
+    },
+    {
+      "rowId": 243,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1691-1692 のExcel正本は「エラーハンドリング」「該当処理なし」であり、取得・送信エラーのコンソール出力を要求していない。該当文言はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b08-05_batch_customer_customer_adjust_point_variance.md:146-152 の「取得・送信時のエラー」「エラーメッセージをコンソールに出力する」にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/CustomerBatch.php:49-52 はサービスの `execute()` をtry/catchなしで直接呼び、pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1604-1607 も `$count = $this->app->mail($message);` を例外捕捉せず実行する。このため旧実装では取得・送信例外がコンソールランナーへ伝播する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/AdjustPointVarianceCommand.php:40-48 は伝播した `Throwable` を `$io->error([$e->getMessage()])` へ出す一方、ec-cube-enterprise/src/Eccube/Service/MailService.php:1447-1452 は送信時の `TransportExceptionInterface` をcatchして `log_critical($e->getMessage())` のみ行い、再throwしない。したがって送信エラーはCommandのコンソール出力へ到達しない。",
+      "note": "旧実装の根拠は明示的なcatchではなく、メール例外を捕捉せずコンソールランナーへ伝播させる経路である。"
+    },
+    {
+      "rowId": 244,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1797-1804 のExcel正本は「商品購入完了時」「注文IDの値をバッチに引き渡し」「スマレジ連携ポイント増減API」を記載するが、`smaregi:batch updatePoint` というコマンド文字列は記載していない。正本範囲（同:1768-1830）に `smaregi:batch` / `updatePoint` は存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/SmaregiBatch.php:12-16 は `'updatePoint' => 'Plugin\\HareruyaEc\\Service\\Smaregi\\UpdatePoint'`、同:22-26 は `$this->setName('smaregi:batch')` と登録する。pf-eccube3/app/Plugin/HareruyaEc/Controller/ShoppingController.php:540-543 も `app/console smaregi:batch updatePoint {$order->getId()}` を別プロセスで実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:26 は `#[AsCommand(name: 'eccube:smaregi:update-point', ...)]`。ec-cube-enterprise/src/Eccube/Controller/Front/ShoppingController.php の呼出しを含む全体検索でも `smaregi:batch updatePoint` の旧名登録・エイリアスは存在しない（確認範囲: PHP/YAML/XML/JSON/SH/Twig、vendor/var除外）。",
+      "note": "コマンド名の期待値は旧実装由来。"
+    },
+    {
+      "rowId": 245,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1824-1826 のExcel正本は「注文IDが未入力もしくは該当データなし」「処理を終了する(正常終了扱い[return終了])」だけを定義し、非数値IDの扱いは記載していない。非数値も処理しないという記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b08-06_batch_customer_smaregi_update_point.md:60-62 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/UpdatePoint.php:27-34 は `if (empty($options) || !is_numeric($options[0])) { return; }` とし、未指定・非数値の双方を何もせず終了する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:46-56 は未入力なら `Command::SUCCESS` だが、`!is_numeric($orderId)` の場合は `$io->error('orderId は数値で指定してください'); return Command::FAILURE;` とする。なお存在しない数値IDは ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:34-37 の `if ($order === null) { return; }` で正本どおり処理しない。",
+      "note": "正本が定める未入力・該当データなしは既に満たす。乖離対象の非数値入力ルールだけが旧実装由来。"
+    },
+    {
+      "rowId": 246,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1827-1828 のExcel正本は通信失敗時に `point_error_message` と `smaregi_error_flg=True` を保存することまでは記載するが、後続の「スマレジEC受注連携エラー再連携バッチ」は記載していない。再試行の記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b08-06_batch_customer_smaregi_update_point.md:127-132 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/SmaregiBatch.php:15-16 は `updatePoint` に加え `'checkSmaregiErrorOrder' => '...CheckSmaregiErrorOrder'` を登録し、pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiErrorOrder.php:31-49 は `getSmaregiErrorOrder()` で失敗受注を取得して再度 `postSmaregiPoint(...)` を実行し、成功時に `setSmaregiErrorFlg(false)` としてflushする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:53-60,75-78 は失敗情報を保存する。ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:977-989 に `getSmaregiErrorOrder()` もあるが、このメソッドの呼出しは定義箇所以外に0件で、`src/Eccube/Command` に再連携入口は存在しない（検索語: `getSmaregiErrorOrder(`, `checkSmaregiErrorOrder`, `SmaregiUpdatePointAction`）。",
+      "note": "失敗記録は正本どおり実装済み。再連携入口の期待値だけが旧実装由来で、移植されていない。"
+    },
+    {
+      "rowId": 247,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html:1005-1008 のExcel正本に「SP.LINKSに取引照会を行い、照会結果に応じた処理を行う」、同:1013-1016 に入力元「SP.LINKS取引照会API」、同:1032-1048 にResponseCdに応じた更新・保留・論理削除が明記されている。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/SlnSearchHelper.php:59-67 は `$this->credit->SearchLinkPayment($this->app, $entry, $this->config)` で取引参照を実行し、例外がなければ `ES::ENTERED` を返す。同:68-90 はレスポンスエラーを削除対象または保留へ分類する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:103-105 は `$this->getApiResponse($paymentNo)` を呼ぶが、同:191-195 の本体は `throw new \\LogicException('SP.LINKS取引照会API未実装のため、決済処理中チェックはまだ実行できません。');` であり、API照会を実行しない。",
+      "note": ""
+    },
+    {
+      "rowId": 248,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html:1005-1051 のExcel正本には取引照会と結果別処理はあるが、「直前と同じ決済番号」「前回結果の流用」は存在しない。該当記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b13-01_batch_event_event_check_processing_payment.md:75-85,89-95 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbEventEntryRepository.php:64-76 は対象を `orderBy('ee.paymentNo')` で並べ、pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php:23-43 は `$prePaymentNo` と前回の `$message/$newStatus` を保持し、同一番号なら照会せず前回結果で更新・削除する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbEventEntryRepository.php:261-272 は `orderBy('ee.paymentNo')` まで行うが、ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:87-105 は各 `$EventEntry` について毎回 `$this->getApiResponse($paymentNo)` を呼ぶ。前回番号・照会結果を保持する変数や同一番号分岐は同Action全体に存在しない。",
+      "note": "同一決済番号の照会結果流用は旧実装由来。"
+    },
+    {
+      "rowId": 249,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html:1049-1051 のExcel正本は取引照会処理自体のエラー時に「イベント決済確認エラー通知メール」を送ることだけを要求し、重複排除・一括送信は記載していない。集約要件はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b13-01_batch_event_event_check_processing_payment.md:98-104,158-165 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php:45-56 は取引不在等を除外し、`!in_array($message, $errorMessages)` の場合だけ `$errorMessages[] = $message` と重複排除する。同:62-69 はループ後に `sendCheckPaymentErrorMail($errorMessages)` を1回呼ぶ。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:164-172 は各申込みのcatch内で直ちに `$this->mailService->sendEventPaymentErrorAlertMail($EventEntry, $e->getMessage());` を呼び、`$cntError++` とする。エラー配列・重複排除・ループ後の一括通知はない。",
+      "note": "正本は通知単位を定めておらず、集約方式は旧実装由来。"
+    },
+    {
+      "rowId": 250,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html:1047-1048 のExcel正本は取引不在・失敗時の「イベント申込を削除（論理削除）」を定めるが、個別メッセージの収集・返却は記載していない。メッセージ収集要件はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b13-01_batch_event_event_check_processing_payment.md:117-124,158-165 にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php:45-52 は取引不在・未完了等を `$messages[] = \"OrderId<{$prePaymentNo}>{$message}\"` に収集し、同:71-74 と pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractPaymentService.php:56-60 は最後に `createResult($messages)` で改行結合したメッセージを返す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:149-163 は保留件数を加算するか `deletedAt` を設定して削除件数を加算するだけで、同:175-178 の戻り値 `detail` も「対象・更新・保留・削除・エラー」の件数集計のみ。個別理由を蓄積する配列はない。",
+      "note": "論理削除自体は正本を満たす。個別メッセージ収集の期待値が旧実装由来。"
+    },
+    {
+      "rowId": 251,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0413_基本設計仕様書(バッチ_イベント).html:1031-1051 のExcel正本は更新・履歴追加・論理削除・通知を記載するが、flush/commitの単位や「最後に確定」は記載していない。該当記述はリバース詳細設計 hareruya-design-docs/functions/pf-eccube3/b13-01_batch_event_event_check_processing_payment.md:183-185 の「照会・更新を積み、最後に確定する」にのみ存在する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Payment/AbstractCheckPaymentEntry.php:27-60 はループ内で更新・削除を積み、同:71-72 で全申込履歴を作成した後に `$this->app['orm.em']->flush();` を1回実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:113-130 は成功申込みごとに `beginTransaction()`、`flush()`、`commit()` を行い、同:154-160 は取引不在時にも申込みごとに `flush()` する。バッチ全体の最後に一括確定する構造ではない。",
+      "note": "確定単位の期待値は旧実装由来。"
+    },
+    {
+      "rowId": 252,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0408_基本設計仕様書(バッチ_会員).html:1580-1595 のExcel正本は電話番号(1列目)〜(3列目)を取得し、例を `tel01:[電話番号(1列目)]:tel02:[電話番号(2列目)]:tel03:[電話番号(3列目)]` と明記する。同:1622-1623 のメール本文例も `tel01:000:tel02:0000:tel03:0000` である。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/CustomerRepository.php:133-138 は旧実装でも `':tel02:', COALESCE(c.tel01, 'null'), ':tel02:', COALESCE(c.tel02, 'null')` となっており、正本と同じ不整合を持つ。したがって期待値の根拠は旧実装ではなくExcel正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/CustomerRepository.php:649-655 は `':name02:' ... ':tel02:', COALESCE(c.tel01, 'null'), ':tel02:', COALESCE(c.tel02, 'null'), ':tel03:'...` と連結し、`c.tel01` にも `tel02` ラベルを付ける。該当メール本文用の代替 `:tel01:` 出力は `src/Eccube/Repository/CustomerRepository.php`、`src/Eccube/Service/MailService.php`、`src/Eccube/Command`、テンプレート群に存在しない。",
+      "note": "旧実装にも同じ不具合があるが、Excel正本が明示的にtel01を要求するためSPEC_BACKED。"
+    },
+    {
+      "rowId": 253,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html:1178-1181 のExcel正本は月初・全店舗・バッチEC2を定め、同:1192-1209 はDB抽出、`stock_YYYYMMDD.txt.zip`、`s3://inventorycheck/` を、同:1211 は「スケジュール起動(Step Functions)」「毎月1日 午前1時」を明記する。全て `src-cell` を持つExcel正本記述である。",
+      "legacyEvidence": "指定された4旧実装リポジトリ（pf-api, pf-eccube3, pf-article, deck-api）を `inventorycheck` / `stock_YYYYMMDD` / `monthly-inventory` / `restore-for-inventory` で横断検索したが該当実装は存在しない。ec-cube-enterprise/script/ops/monthly-inventory-snapshot/inventory.sh:1-5 には `移植元: 旧バッチサーバー inventory_tc.sh / inventory_branch.sh` とあり、移植元は指定4リポジトリ外の旧バッチサーバーであることだけ確認できる。",
+      "currentImpl": "当初探索外だった ec-cube-enterprise/script/ops/monthly-inventory-snapshot/inventory.sh:115-126 に `OUT=\"stock_$(date +%Y%m%d).txt\"`、`zip -j -q \"${ZIP}\" \"${OUT}\"`、`aws s3 cp \"${ZIP}\" \"s3://${S3_BUCKET}/\"` が実装済み。同:58-113 は最新RDSスナップショットから一時クラスタ/インスタンスを作成し、ec-cube-enterprise/script/ops/monthly-inventory-snapshot/query.sql:4-18 は店舗・商品規格・在庫場所別の抽出と並び順を実装する。ただしリポジトリ内にStep Functionsの「毎月1日 午前1時」起動設定は見つからない。",
+      "note": "処理本体は既に存在するため「専用処理が不在」という指摘は古い。一方、設計期待値に含まれるStep Functionsの本番スケジュールは外部AWS設定であり、提供範囲から確認できないためALREADY_METとは断定しない。必要資料: 対象Step Functions/EventBridgeのデプロイ設定または本番ジョブ定義。"
+    },
+    {
+      "rowId": 254,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html:1394-1410 のExcel正本はトップページからリンクを反復巡回し、`Sitemap-Generator-Crawler` でURLリストからサイトマップを作成することを、同:1385-1386,1396-1398 はS3アップロードを明記する。全て `src-cell` を持つExcel正本記述である。",
+      "legacyEvidence": "指定4旧実装リポジトリで `Sitemap-Generator-Crawler` / `SitemapGenerator` / `crawl` / サイトマップS3アップロードを横断検索したが実装は存在しない。最も近いヒットは pf-article/wp-content/themes/hareruyaEc/footer.php:5-6 の `<input id=\"footer-nav-toggle-sitemap\" ...>` と表示ラベル「サイトマップ」であり、生成バッチではない。SPEC_BACKED判定には旧実装根拠を要しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/SitemapController.php:56-115 はGET `/sitemap.xml` でPage/Product/Category/Purchase/DeckをDBから取得し `sitemap_index.xml.twig` を返す。トップページ起点の再帰巡回・ファイル生成・S3アップロードではない。composer.json:75 の依存は汎用 `symfony/dom-crawler` のみで、Sitemap-Generator-Crawler系依存とサイトマップからのS3呼出しは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 255,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html:1418 はExcel正本セルで「前回(昨日)のサイトマップと今回作成したサイトマップを比較し、差異がある場合はS3にアップロードする」と明記する。",
+      "legacyEvidence": "指定4旧実装リポジトリで `sitemap` と `yesterday/前回/昨日/diff/compare/S3` の組合せを横断検索したが該当処理は存在しない。pf-article/wp-content/themes/hareruyaEc/footer.php:5-6 の「サイトマップ」はフッターナビ表示だけで、比較・アップロード処理ではない。SPEC_BACKED判定には旧実装根拠を要しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/SitemapController.php:56-115 はリクエスト時にDB情報からXMLレスポンスを返すだけで、前回ファイルの取得・今回結果との比較・差分時のみS3アップロードする状態管理はない。`ec-cube-enterprise` のPHP/SH/YAML/JSON/Twigを `sitemap` と `yesterday/前回/昨日/diff/compare/差異/S3` で横断検索しても接続処理は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 256,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html:1399-1400 のExcel正本は実行環境「バッチ処理用EC2インスタンス」、同:1422 は実行トリガー「Eventbridge+Lamdba」、実行タイミング「毎日4:00」と明記する。",
+      "legacyEvidence": "指定4旧実装リポジトリでサイトマップと `EventBridge/Eventbridge/Lambda/Lamdba/4:00/cron` を横断検索したが該当設定・実行入口は存在しない。pf-article/wp-content/themes/hareruyaEc/footer.php:5-6 の「サイトマップ」は画面表示のみで、起動設定ではない。SPEC_BACKED判定には旧実装根拠を要しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/SitemapController.php:56-57 は `#[Route(path: '/sitemap.xml', ... methods: ['GET'])]` というHTTP入口である。`src/Eccube/Command`、`script`、`app/config`、`.github` を `EventBridge/Eventbridge/Lambda/Lamdba/04:00/4:00/sitemap` で検索したが、サイトマップ生成用のCommandや毎日4:00のAWS起動設定は存在しない。",
+      "note": "外部AWS環境に未収録設定が存在する可能性はあるが、同じ正本が要求するクローラーバッチ入口自体も新実装にないため、現リポジトリ範囲だけでも乖離は確定する。"
+    },
+    {
+      "rowId": 257,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html:1411-1417 のExcel正本は「全部のリンクを取得（階層設定なし）」としつつ、管理、商品検索（日英）、カードリスト購入（日英）、デッキ検索（日英）、イベント情報（日英）以降を取得しないと明記する。",
+      "legacyEvidence": "指定4旧実装リポジトリで上記除外対象とサイトマップ・crawler設定を横断検索したが該当実装は存在しない。pf-article/wp-content/themes/hareruyaEc/footer.php:5-6 の「サイトマップ」はナビ表示であり、巡回除外設定ではない。SPEC_BACKED判定には旧実装根拠を要しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Front/SitemapController.php:164-181 の `page()` はnoindex/none、管理画面作成ページ、URL変数を持つルートを除外するだけで、設計のURL群を対象にした巡回除外ではない。同:196-227 は購入・デッキ用XMLを固定ルートとして生成しており、階層無制限クローラの除外規則を実装していない。",
+      "note": ""
+    },
+    {
+      "rowId": 258,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0416_基本設計仕様書(バッチ_インフラ).html:1527-1549 のExcel正本はS3画像一覧取得、種別別容量判定、管理者メール、Step Functionsで15分毎を明記する。同:1551-1574 は5種のS3パスと250/400/500/400/5kBの閾値、同:1575-1585 はFrom/To/CC/BCC/件名/本文を定義する。全て `src-cell` を持つExcel正本記述である。",
+      "legacyEvidence": "指定4旧実装リポジトリで `hareruya_filesize_alert` / `bigfilefinder` / `file_size_list` / `画像ファイルサイズ超過` / 対象S3パスを横断検索したが該当実装は存在しない。ec-cube-enterprise/script/ops/imgcheck/bigfilefinder.sh:1-3 は `移植元: 旧STGサーバー STG_WebFront01:/home/ec2-user/imgcheck/new_bigfilefinder.sh` と記載し、移植元が指定4リポジトリ外だったことだけ確認できる。",
+      "currentImpl": "当初探索外だった ec-cube-enterprise/script/ops/imgcheck/bigfilefinder.sh:13-31 は設計の各S3パスからファイル名・サイズ一覧を取得し、同:42-80 は250/400/500/400/5KiB相当の閾値を判定、同:86-108 は超過時にFrom/To/CC/BCC、件名「画像ファイルサイズ超過アラート」、本文をsendmailで送信する。ec-cube-enterprise/script/ops/imgcheck/config.sh:31-35 に宛先設定もある。ただしリポジトリ内にStep Functionsの「15分毎」起動設定は見つからない。",
+      "note": "処理本体は既に存在するため「Console Command/Service/Mail処理が不在」という指摘は探索漏れ。一方、15分毎の本番起動は外部AWS設定であり、提供範囲から確認できないためALREADY_METとは断定しない。必要資料: 対象Step Functions/EventBridgeのデプロイ設定または本番ジョブ定義。"
+    }
+  ]
+}

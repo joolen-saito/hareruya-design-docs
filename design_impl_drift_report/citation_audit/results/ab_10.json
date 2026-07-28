@@ -1,0 +1,165 @@
+{
+  "packetId": "ab_10",
+  "results": [
+    {
+      "rowId": 201,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1463-1464 の正本セルは「エラーハンドリング」「エラーが発生した場合、メールで管理者に通知」と記載し、「例外を捕捉しない／通知しない／コンソールへ伝播する」という指摘期待値を裏付けず、むしろ通知しない点とは矛盾する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:51-54 は `$batch = new $batchNames[$name](...); $batch->execute(); return 0;` と try/catch なしで実行し、pf-eccube3/app/Plugin/HareruyaEc/Service/Order/TruncateWaitingNumber.php:29-32 も `execute()` から `truncateWaitingNumber()` を直接呼ぶだけである。旧経路では例外捕捉・メール通知がなく、例外はコンソールコマンドへ伝播する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php:40-49 は `try { ...handle(); } catch (\\Throwable $e) { $io->error([...]); return Command::FAILURE; }` と例外を捕捉して終了コードへ変換している。",
+      "note": "指摘期待値は正本ではなく旧実装由来。正本は管理者メール通知を要求しており、旧実装踏襲要求との間に設計矛盾も残る。"
+    },
+    {
+      "rowId": 202,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1443 は「実行トリガー スケジュール起動(Step Functions)」「毎日0時」、同:1460-1464 はDB更新結果とエラーハンドリングを記すだけで、起動時の日時付き出力や完了ログ禁止は正本部（sheet-5:1414-1466）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:43-48 の日時文字列 `$resultMessage = '[' . date('Y/m/d H:i') . '] ';` は未登録コマンド時の `Nothing args or command.` にだけ使用される。有効なコマンドは同:51-54 で `$batch->execute(); return 0;` と出力なしで終了し、pf-eccube3/app/Plugin/HareruyaEc/Service/Order/TruncateWaitingNumber.php:29-32 にも出力はない。したがって「完了ログなし」は旧実装に根拠があるが、「正常起動時の日時付き出力」は旧実装にもない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php:37-38 は `$io->text('店舗注文番号初期化バッチ開始');` と日時なしで開始を出力し、同:51 は `$io->success('店舗注文番号初期化処理が完了しました。');` と旧実装にはなかった完了ログを出力する。",
+      "note": "複合指摘のうち、完了ログを追加した差分だけが旧実装で裏付けられる。日時付き開始ログという期待値部分は正本・旧実装の双方で未裏付け。"
+    },
+    {
+      "rowId": 203,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1565-1597 の正本セルには旧来の抽出条件・未連携区分ごとの再連携が残る一方、同:1608 の正本図形注記は明示的に「注文番号登録バッチの仕様変更により、こちらのバッチは不要となる」と記載する。したがって B05-04 専用再連携バッチを現行必須要件として扱えない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:16,28-30 は `resendSmaregiProduct` を `order:batch` のサブコマンドとして登録する。pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbOrderSubRepository.php:141-151 は `smaregiCode is not null`、削除フラグ無効、商品または在庫フラグ無効のOR条件で抽出し、pf-eccube3/app/Plugin/HareruyaEc/Service/Order/ResendSmaregiProduct.php:34-42 は未連携区分だけを `$processes` に加えて送る。旧実装には指摘された機能が実在した。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:25 は現行の通常連携入口を `eccube:order:otc-smaregi-post` とし、ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:42 は `findTargetOrdersForSmaregiPost()` を呼ぶ。B05-04 専用 `order:batch resendSmaregiProduct` はないが、これは正本:1608 の「バッチ不要」と整合する。",
+      "note": "旧実装由来の詳細を、同じ正本シート内の廃止注記を無視して現行要件化した指摘。B05-04 専用バッチの不在は乖離ではない。"
+    },
+    {
+      "rowId": 204,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1572,1575,1597 は旧来の再連携失敗時メールを記すが、同:1608 の正本図形注記は機能全体について「注文番号登録バッチの仕様変更により、こちらのバッチは不要となる」と明記する。不要化された B05-04 バッチの失敗経路・通知を現行実装へ要求できない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Order/ResendSmaregiProduct.php:34-42 は旧再連携処理から `postSmaregiProcess()` を呼び、pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php:62-80 は商品・在庫API失敗時に `sendSmaregiErrorMail(...)` を呼ぶ。pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1379-1386,1414-1418 は送信先を取得し、件名「スマレジ通信エラー」でメールを生成する。",
+      "currentImpl": "B05-04 専用バッチは正本の不要化注記どおり存在しない。近接する現行通常連携では ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:253-258 が失敗を `$this->logger->error(...)` と `$Order->setSmaregiErrorFlg(true)` で扱い、ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:133-138 は失敗結果をFAILEDジョブへ反映する。",
+      "note": "旧バッチにはメール送信があったが、正本が当該バッチ自体を不要化しているため、その専用失敗通知の欠落は現行乖離にならない。"
+    },
+    {
+      "rowId": 205,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1699 は「手続きが完了した店頭注文をスマレジ商品から削除する」、同:1715 はスケジュール起動を記すが、正本部（sheet-7:1684-1733）に `order:batch deleteSmaregiProduct` というコマンド名や不一致時終了の記述はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:17 は `'deleteSmaregiProduct' => ...DeleteSmaregiProduct`、同:28-30 は親コマンド名を `order:batch` とし、同:45-48 は未登録名なら `Nothing args or command.` で終了する。pf-eccube3/app/Plugin/HareruyaEc/Service/Order/DeleteSmaregiProduct.php:34-36 は対象を走査して削除区分 `['delete']` を連携する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/SmaregiOtcDeleteCommand.php:39 は同等機能の登録名を `#[AsCommand(name: 'eccube:smaregi:otc:delete', ...)]` とする。`order:batch` / `deleteSmaregiProduct` は新実装の src/Eccube・html・config を横断検索して別名登録なし。",
+      "note": "削除機能自体は正本にあり現実装にもある。指摘対象の外部コマンド名契約だけが旧実装由来。"
+    },
+    {
+      "rowId": 206,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1714 の正本セルは「連携に失敗した場合はスマレジ通信エラーメール送信」、同:1730-1731 は「エラーが発生した場合、発生したスマレジ連携ごとにメールで管理者に通知」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Order/DeleteSmaregiProduct.php:34-36 は削除連携を `postSmaregiProcess(..., ['delete'])` へ渡し、pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php:49-55 は削除API失敗時に `sendSmaregiErrorMail(...)` を呼ぶ。pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1414-1418 は件名「スマレジ通信エラー」で宛先へメールを設定する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php:65-76,92-101 は検索・削除API失敗時に `$this->logger->error(...)` と `DELETE_FAILED` を返すだけで、ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php:113-118,133-139 はジョブをFAILEDへ更新する。関連 Command/MessageHandler/Service と MailService を `スマレジ通信エラー`, `sendSmaregiErrorMail`, `MailService`, `mailer` で検索したが、この失敗経路からメール送信するコードは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 207,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1715 は実行トリガーと「毎日4時」、同:1727-1731 は実行結果とエラーハンドリングを記すが、開始・完了の日時付きコンソール出力は正本部（sheet-7:1684-1733）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:43-48 の日時出力はコマンド未指定・不一致時だけで、有効な処理は同:51-54 の `$batch->execute(); return 0;`。pf-eccube3/app/Plugin/HareruyaEc/Service/Order/DeleteSmaregiProduct.php:27-37 も対象走査と連携だけで開始・完了出力を行わない。旧実装にも「開始・完了を日時付き出力」の根拠はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/SmaregiOtcDeleteCommand.php:80-83 は対象なし、同:92 は受注ごとのenqueue、同:103-111 は完了サマリを出力するが、開始出力と日時付与はない。",
+      "note": "リバース詳細設計のログ記述が旧コードの実挙動と一致せず、正本・旧実装の双方で期待値を裏付けられない。"
+    },
+    {
+      "rowId": 208,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1707-1731 の正本部は抽出・削除連携・エラー通知を記すが、楽観ロック・悲観ロックを「持たない」という記述は存在しない（確認範囲: sheet-7:1684-1733）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:51-54 はサービスを直接実行し、pf-eccube3/app/Plugin/HareruyaEc/Service/Order/DeleteSmaregiProduct.php:27-36 は取得結果を `foreach` して `postSmaregiProcess(..., ['delete'])` を呼ぶだけで、ロック取得処理を挟まない。対象 Command/Service と DtbOrderSubRepository::getDeleteSmaregiProduct を `lock`, `isFree`, `tryBegin`, `pessimistic`, `optimistic` で確認して削除経路にロックなし。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php:35-36 は同一ジョブ重複実行を `SmaregiMessengerJobProcessingLock` で抑止すると説明し、同:42-46 でロックを注入、同:71-75 で `tryBeginProcessingJob($Job)` を実行してから本処理へ進む。",
+      "note": "「ロックを持たない」は正本要件ではないが、旧削除経路と現経路の実装差として裏付けられる。"
+    },
+    {
+      "rowId": 209,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1819 はポイント二重登録検知と管理者通知、同:1830 はスケジュール起動を記すが、正本部（sheet-8:1804-1847）に `order:batch checkDuplicatePoint` というコマンド名はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:18 は `'checkDuplicatePoint' => ...CheckDuplicatePoint`、同:28-30 は親コマンドを `order:batch` と定義する。これにより旧実装の起動契約は `order:batch checkDuplicatePoint` である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/CheckDuplicatePointCommand.php:30-34 は利用例 `bin/console eccube:check-duplicate-point` と `#[AsCommand(name: 'eccube:check-duplicate-point', ...)]` を定義する。新実装の src/Eccube・html を `order:batch`, `checkDuplicatePoint` で検索して旧名aliasなし。",
+      "note": ""
+    },
+    {
+      "rowId": 210,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1828 は「注文データIDとポイント増減量」で重複検索、同:1833-1836 は直近1日・ポイント増減量が負・「注文データIDとポイント増減量の組み合わせ」、同:1841 も「注文ID, ポイント増減量」の組合せと明記する。会員や `point_type_id` を検知キーに含める要求は正本にない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbPointHistoryRepository.php:173-187 は `ph.pointChange < 0`、直近1日、`groupBy('o.id')`、`addGroupBy('ph.pointChange')`、`COUNT(DISTINCT ph.pointHistoryId) > 1` で抽出し、会員・point_typeをグループキーに含めない。旧実装も正本と一致する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbPointHistoryRepository.php:220-245 は `ph.pointChange < 0`、直近1日、`groupBy('o.id')`、`addGroupBy('ph.pointChange')`、`COUNT(DISTINCT ph.id) > 1` を実装しており、正本および旧実装の検知条件を満たす。",
+      "note": "リバース詳細設計の一般的な業務説明とDBカラム列挙から、実際には要求されていない会員・ポイント履歴区分を検知キーとして膨らませた誤検出。"
+    },
+    {
+      "rowId": 211,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1829 は「注文IDから注文番号を取得」、同:1843 は「ポイント履歴にある注文IDから注文番号を取得」と記すだけで、DB列 `dtb_order.order_no` は指定していない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Util/OrderUtil.php:19-24 は受注サブから `$orderSub->getOrderNumber()` を取得し、pf-eccube3/app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbOrderSub.dcm.yml:100-105 はこのプロパティをコメント「注文番号」、列 `order_number` にマップする。旧実装も `order_no` ではない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Util/OrderUtil.php:33-40 は受注IDで検索して `$order->getOrderNumber()` を返す。ec-cube-enterprise/src/Eccube/Entity/Order.php:648-649 は `order_number` 列をコメント「注文番号」と定義し、同:1769-1772 の `getOrderNumber()` は `$this->order_number` を返すため、正本と旧実装に一致する。",
+      "note": "`dtb_order.order_no` 期待は正本にも旧実装にも根拠がなく、新実装は注文番号である `order_number` を正しく通知に使用する。"
+    },
+    {
+      "rowId": 212,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1844-1845 の正本セルはエラーハンドリングを「外部システムとの連携もなく、外部から引数等も受け取っていないため、特になし」とし、「取得・送信時のエラーをコンソール出力」とは記載していない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:51-54 はバッチ実行をtry/catchせず、pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1434-1464 も `$this->app->mail($message);` をtry/catchしない。そのため取得・メール送信例外は旧コンソールへ伝播する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/CheckDuplicatePointCommand.php:48-56 はActionからの例外を `$io->error(...)` へ出す一方、ec-cube-enterprise/src/Eccube/Service/MailService.php:2496-2501 は送信時 `TransportExceptionInterface` をcatchして `log_critical($e->getMessage())` のみ行い再throwしないため、送信例外はCommandのコンソールエラーに到達しない。",
+      "note": "コンソールへ伝播する挙動は正本ではなく旧実装に由来する。"
+    },
+    {
+      "rowId": 213,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1830 は実行トリガーと「毎日4時」、同:1842-1845 は実行結果とエラーハンドリングを記すが、開始・完了の日時付きコンソール出力は正本部（sheet-8:1804-1847）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:43-48 の日時文字列は不正コマンド時だけに出力され、有効な `checkDuplicatePoint` は同:51-54 で出力なしに実行される。pf-eccube3/app/Plugin/HareruyaEc/Service/Order/CheckDuplicatePoint.php:30-54 にも開始・完了コンソール出力はなく、旧実装に期待値の根拠はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/CheckDuplicatePointCommand.php:45-46 は開始文言、同:59-63 は検出有無の完了文言を出力するが日時は付けない。",
+      "note": "リバース詳細設計のログ記述が旧コードと一致しないため、日時不足を乖離とする根拠がない。"
+    },
+    {
+      "rowId": 214,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1936 は機能概要、同:1947 はスケジュール起動を記すが、正本部（sheet-9:1921-1976）に `order:batch checkNotReflectedPointUsage` というコマンド名はない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:19 は `'checkNotReflectedPointUsage' => ...CheckNotReflectedPointUsage`、同:28-30 は親コマンドを `order:batch` と定義するため、旧実装の起動契約は `order:batch checkNotReflectedPointUsage` である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/CheckNotReflectedPointUsageCommand.php:30-36 は利用例 `bin/console eccube:check-not-reflected-point-usage` と登録名 `eccube:check-not-reflected-point-usage` を定義する。新実装の src/Eccube・html を旧名で検索してaliasなし。",
+      "note": ""
+    },
+    {
+      "rowId": 215,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1947 は実行トリガー「スケジュール起動(Step Functions)」「毎時10分」、同:1971-1974 は実行結果とエラーハンドリングを記すが、開始・完了の日時付き出力は正本部（sheet-9:1921-1976）に存在しない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:43-48 の日時出力は不正コマンド時のみで、有効な処理は同:51-54 で出力なしに実行される。pf-eccube3/app/Plugin/HareruyaEc/Service/Order/CheckNotReflectedPointUsage.php:24-36 も検索・メール送信だけで開始・完了出力を行わない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/CheckNotReflectedPointUsageCommand.php:51-52 は開始文言、同:65-68 は検出有無の完了文言を出すが日時付与はない。",
+      "note": "正本・旧実装とも日時付き開始完了ログを要求・実行しておらず、期待値自体が未裏付け。"
+    },
+    {
+      "rowId": 216,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2065 は「スマレジ連携エラーが起きているEC受注のスマレジ連携をリトライする」、同:2074-2076 はエラー受注を取得してリトライし5分ごとに起動、同:2084-2087 はスマレジID・ポイント残高で更新し成功時にエラーフラグをオフと明記する。正本は機能本体を明確に要求する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/SmaregiBatch.php:16,24-26 は `checkSmaregiErrorOrder` を `smaregi:batch` のサブコマンドとして登録する。pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiErrorOrder.php:31-49 はエラー受注を走査し、ポイントを連携して成否を保存する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/SmaregiUpdatePointCommand.php:26,38 は近接入口を `eccube:smaregi:update-point` とし、任意の `orderId` 1件を引数に取る。新実装の Command/Service/Repository/Message/MessageHandler を `checkSmaregiErrorOrder`, `smaregi:batch`, `getSmaregiErrorOrder`, `エラー再連携` で検索したが、全エラー受注を定期抽出して再連携する実行入口はない。",
+      "note": "正本はコマンド文字列までは指定しないため、`smaregi:batch checkSmaregiErrorOrder` という正確な旧名は旧実装根拠。ただし定期再連携機能自体の欠落は正本だけで確定できる。"
+    },
+    {
+      "rowId": 217,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2074-2075 は「スマレジ連携エラーフラグが立っている注文データと…ユーザー情報を取得」「取得した注文データのスマレジ連携をリトライ」、同:2079-2084 は同条件の抽出とユーザーのスマレジID・ポイント残高取得を明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbOrderSubRepository.php:182-211 は `smaregiErrorFlg = 1` の受注サブと会員・Playerを抽出して配列化し、pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiErrorOrder.php:31-36 は結果を全件走査して各PlayerのスマレジIDとポイントで連携する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:980-1013 に `getSmaregiErrorOrder()` はあるが、`rg 'getSmaregiErrorOrder\\(' ec-cube-enterprise/src ec-cube-enterprise/html` の呼び出しは定義のみ。実行される近接処理 ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:32-39 は `handle(int $orderId)` で単一受注を `find($orderId)` する。",
+      "note": ""
+    },
+    {
+      "rowId": 218,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2087 の正本セルは「リトライに成功したら、当該の注文データのスマレジ連携エラーフラグをオフにする」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiErrorOrder.php:36-42 は `postSmaregiPoint(...)` のレスポンスに `result` があれば `$orderSub->setSmaregiErrorFlg(false);`、失敗ならエラーメッセージを設定し、同:49 でflushする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:53-60,75-78 は失敗時だけ `setSmaregiErrorFlg(true)` を保存し、同:71-72 は成功レスポンスでそのまま `return` するためフラグを解除しない。新実装全体にある `setSmaregiErrorFlg(false)` は通常のUse/Gain Point MessageHandlerやOTC更新経路であり、このB05-08近接Actionの成功経路には接続されない。",
+      "note": ""
+    },
+    {
+      "rowId": 219,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2084-2086 の正本セルは「ユーザーのスマレジIDとポイント残高を取得」「ユーザーのポイント数は絶対値で更新を行う」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CheckSmaregiErrorOrder.php:31-36 はエラー受注に紐づくPlayerを取得し、`postSmaregiPoint($player->getSmaregiId(), $player->getPoint(), true)` とポイント残高および同期モードを渡す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:39 は受注の使用ポイント `$order->getSpendedPoints()` を取得し、同:53-54 は `postSmaregiPoint($player->getSmaregiId(), -$suspendPoint, false)` と負の差分値を送る。Playerのポイント残高を絶対値として送っていない。",
+      "note": ""
+    },
+    {
+      "rowId": 220,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:2071-2072 の正本セルは「呼び出しを廃止予定のスマレジAPIからプラットフォームAPIに変更」、同:2084-2086 は取得したスマレジID・ポイントで更新することを要求する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Smaregi/CustomerService.php:185-197 は旧 `postSmaregiPoint()` で `SMAREGI_REQUEST_URL` に処理名 `'point_upd'` を渡して旧APIを呼ぶ。これは正本が置換対象としている旧実装である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiCustomerService.php:386-410 はアクセストークンを取得し、顧客IDを解決して `$this->customerApiClient->addPoint(...)` を呼ぶ。ec-cube-enterprise/src/Eccube/Service/Smaregi/Api/SmaregiCustomerApiClient.php:208-230 はプラットフォームAPI URL `.../pos/customers/{id}/point/add` へPOSTし、同:342-351 は実際に `$this->httpClient->request($method, $url, $options)` を実行する。",
+      "note": "パケット作成時に引用されたTODO固定成功実装は現在のスナップショットには存在せず、プラットフォームAPI呼び出しへ実装済み。絶対値ではなく差分送信する別の乖離は rowId 219 で扱う。"
+    }
+  ]
+}

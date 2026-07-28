@@ -5,7 +5,8 @@ Excel基本設計が「Ph2で対応するため、Ph1では実装しない」と
 フェーズ1では実装しない。ところが現行実装からリバースした機能設計書はその機能を
 現行仕様として書くため、読み手は「実装すべき仕様」と誤読する。
 
-記述は消さずに残し、**フェーズ1では実装不要であることをバナーで明示する**。
+記述は消さずに残し、スコープに応じて **機能全体がフェーズ2** なのか
+**機能はフェーズ1で項目だけがフェーズ2** なのかをバナーで明示する。
 構造は [[superseded-spec]]（Excel基本設計による廃止）とまったく同じで、違うのは
 「廃止された」のか「フェーズ2へ延期された」のかという理由だけである。両者は別物として
 扱う。廃止は刷新後も実装しない。Ph2はフェーズ2で実装する。
@@ -164,15 +165,31 @@ def _entry_line(entry: dict, href_prefix: str) -> str:
 
 
 def render_notice(doc: str | Path, href_prefix: str = "") -> str:
-    """機能設計書の冒頭に出す「フェーズ1では実装不要」バナー。該当が無ければ空文字。"""
+    """機能設計書の冒頭に出すフェーズ2スコープのバナー。該当が無ければ空文字。"""
     entries = entries_for_doc(doc)
     if not entries:
         return ""
     key = doc.as_posix() if isinstance(doc, Path) else str(doc)
     repo = Path(key).parent.name
     lines = "\n        ".join(_entry_line(e, href_prefix) for e in entries)
+    function_scope = any(e.get("scope") == "FUNCTION_SCOPE" for e in entries)
+    if function_scope:
+        badge = "フェーズ1では実装不要"
+        description = (
+            f"本節は実装（{html.escape(repo, quote=False)}）からのリバースです。"
+            "次の機能はExcel基本設計によりフェーズ2対応とされており、"
+            "フェーズ1では実装・テストの対象外です。"
+        )
+    else:
+        badge = "本機能はフェーズ1対象"
+        description = (
+            f"本節は実装（{html.escape(repo, quote=False)}）からのリバースです。"
+            "本機能全体はフェーズ1の実装・テスト対象です。"
+            "次の項目だけがExcel基本設計によりフェーズ2対応とされており、"
+            "フェーズ1では実装・テストの対象外です。"
+        )
     return f"""<div class="phase2-notice">
-      <p class="phase2-notice-head"><span class="phase2-badge">フェーズ1では実装不要</span>本節は現行実装（{html.escape(repo, quote=False)}）からのリバースです。次はExcel基本設計によりフェーズ2対応とされており、フェーズ1では実装・テストの対象外です。</p>
+      <p class="phase2-notice-head"><span class="phase2-badge">{badge}</span>{description}</p>
       <ul class="phase2-notice-list">
         {lines}
       </ul>

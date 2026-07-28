@@ -1,0 +1,165 @@
+{
+  "packetId": "ab_08",
+  "results": [
+    {
+      "rowId": 161,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1339-1340 のExcel正本セルに「エラーハンドリング」「エラーが発生した場合集計できなかった旨をメールで送信する」と明記されている。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:53-56 は `$product->execute();` の後に `echo $product->getErrorMassage() ?? ... \"Command complete.\"` とコンソール出力するだけで、旧B02-03経路にもエラーメール送信はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php:47-55 は例外時に `$io->error('集計処理でエラーが発生しました: '.$e->getMessage());`、成功時に `$io->success(...)` を出力するのみ。`BatchAggregateStockUpAction`、`MailService`、Command/Service/Repositoryを `AggregateStockUp`, `集計できなかった`, `send*Mail` で確認したが、本バッチのメール送信は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 162,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1314-1340 のsheet-5 Excel正本部には開始・完了ログや日時の指定がなく、同:1343 の `function-design-embed:start b02-03...` より後のリバース詳細設計にだけ現れる。実体 hareruya-design-docs/functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:167-171 は「開始・完了のコンソール出力（日時付き）」と記す。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:45 は `$resultMessage = '[' . date('Y/m/d H:i') . '] ';`、同:54-56 は日時付きで `Command start.` と `Command complete.` をechoする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php:43-55 は処理開始の出力をせず、完了時も `$io->success('期間別入庫数集計が完了しました。');` のみで、日時を組み立てるコードがない。",
+      "note": ""
+    },
+    {
+      "rowId": 163,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1243-1285 のsheet-5 Excel正本部にはコマンド名の記載がなく、同:1287 以降が旧実装由来の埋め込みである。hareruya-design-docs/functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:59-65 にだけ `product:batch updateProductSummaryForStockUp` と「コマンド名が一致しない場合は処理を行わずに終了」がある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:20 は `updateProductSummaryForStockUp` をサービスへ対応付け、同:30-32 はコマンドを `product:batch` と定義し、同:43-50 は未登録のbatch_nameなら `Nothing args or command.` を出して終了する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php:30-34 は使用例を `bin/console eccube:aggregate-stock-up`、登録名を `#[AsCommand(name: 'eccube:aggregate-stock-up', ...)]` としており、旧コマンド契約では起動できない。",
+      "note": ""
+    },
+    {
+      "rowId": 164,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1274 はExcel正本セルで「商品の入庫ステータスが入庫もしくマスタ更新」、同:1279 は検索条件を「入庫もしくはマスター更新」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php:290-325 は `$changeTypeIds = [MtbStockChangeType::BE_STOCKED, MtbStockChangeType::MASTER_UPDATE]` を `stock_change_type_id IN (:changeTypeIds)` に使う。pf-eccube3/app/Plugin/HareruyaEc/Entity/MtbStockChangeType.php:12-16 は `BE_STOCKED = 1`、`MASTER_UPDATE = 5` と定義する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php:147-177 は `BE_STOCKED` と `INVENTORY_ADJUSTMENT` を抽出条件にする。ec-cube-enterprise/src/Eccube/Entity/Master/MtbStockChangeType.php:27-31 は後者をID 5、ec-cube-enterprise/app/DoctrineMigrations/Version20251125165619.php:80-82 はID 5の名称を「棚卸」と定義しており、「マスタ更新」ではない。",
+      "note": ""
+    },
+    {
+      "rowId": 165,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1243-1285 のExcel正本部は対象なし時の挙動を記さず、同:1287 以降のリバース詳細設計だけが根拠である。hareruya-design-docs/functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:73-78 は「対象が無い場合は更新を行わずに終了する」と記す。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php:32-40 は取得結果をそのまま `foreach` し、空なら更新処理を一度も呼ばず、最後の `flush()` だけで終了する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php:38-44 は集計対象取得より先に `clearStockUpQuantityForAggregate()` を実行する。ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php:99-103 でこれは `DELETE FROM dtb_stock_up_quantity` のため、対象が空でも既存集計行を削除してcommitする。",
+      "note": ""
+    },
+    {
+      "rowId": 166,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1243-1285 のExcel正本部には途中失敗・部分反映・再実行の記述がなく、同:1287 以降のリバース詳細設計にのみ存在する。hareruya-design-docs/functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:104-112、127-133 は「途中失敗時は反映済みの行のみ更新が残る」「部分反映は次回実行で回収」と記す。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php:33-40 は行ごとに更新し、`$index % 100 === 0` ごとに `flush()`、最後にも `flush()` するため、失敗前にflush済みの更新が残る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php:36-47 は全処理を `beginTransaction()` から `commit()` まで包み、例外時は `rollBack()` するため、途中までの更新を残さない。",
+      "note": ""
+    },
+    {
+      "rowId": 167,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1243-1285 のExcel正本部には100件境界・flush・キャッシュクリアの記載がない。同:1287 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:73-78、181-183 に「100件ごとに変更を反映しキャッシュをクリア」とある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/UpdateProductSummaryForStockUp.php:33-40 は `if ($index % 100 === 0) { ... flush(); EntityManagerUtil::clearCache(...); }` を実装する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchAggregateStockUpAction.php:39-44 は全結果を単純な `foreach` で更新して最後に1回commitする。関連する AggregateStockUpCommand、BatchAggregateStockUpAction、DtbStockUpQuantityRepository を `flush`, `clear`, `% 100`, `batch` で確認したが、本処理の100件境界やキャッシュクリアは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 168,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1243-1285 のsheet-5 Excel正本部には開始・完了ログや日時の指定がない。同:1287 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-03_batch_product_product_storage_period_summary.md:167-171 にだけ「開始・完了のコンソール出力（日時付き）」がある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:45、54-56 は `date('Y/m/d H:i')` を付けて `Command start.` と `Command complete.` をechoする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/AggregateStockUpCommand.php:43-55 は開始出力を持たず、完了時は日時なしの `$io->success('期間別入庫数集計が完了しました。');` のみ。",
+      "note": "rowId 162と同一要求を別設計書参照で挙げた重複指摘だが、各findingとして判定した。"
+    },
+    {
+      "rowId": 169,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1267-1270 のExcel正本セルは本店を含む店舗別集計に続けて「本店の支店IDは0として処理する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php:308-327 の旧集計は `SELECT sh.product_class_id`、`GROUP BY sh.product_class_id` で、店舗IDを扱わない。本店ID 0変換はリニューアル正本で追加された要求である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbStockUpQuantityRepository.php:151-179 は `sh.base_info_id` をそのままSELECT・GROUP BYし、同:199-205/246 でもその値を登録・更新に使う。本店を0へ変換するCASE式や分岐はない。",
+      "note": ""
+    },
+    {
+      "rowId": 170,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1510-1512、1514-1531 のExcel正本はセール中お気に入り商品の会員別メール送信と「現行踏襲」を要求するが、コマンド名は記載しない。同:1535 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:59-65 にだけ `product:batch saleNotification` がある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:22 は `saleNotification` を `SaleNotificationService` へ対応付け、同:30-32 は親コマンド名を `product:batch` と定義する。pf-eccube3/app/Plugin/HareruyaEc/Service/Product/SaleNotificationService.php:29-30、64-67 はセール中お気に入りを取得し会員ごとに通知メールを送る。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/FavoriteSaleNotificationCommand.php:30-34 は使用例・登録名とも `eccube:favorite-sale-notification` で、`product:batch saleNotification` の入口はない。",
+      "note": "メール送信という機能本体は正本にもあるが、指摘対象であるコマンド名の根拠は旧実装である。"
+    },
+    {
+      "rowId": 171,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1514-1531 のExcel正本はお気に入り商品抽出・会員別集約・メール送信を記すが、`dtb_favorite_product`、`player_id`、`language_id`、`dtb_player` の列名は記載しない。これらは同:1535 以降のリバース詳細設計（functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:131-138）にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbFavoriteProductRepository.php:24-49 は旧お気に入り表から `fp.playerId`, `fp.productId`, 言語を取り、`fp.player` をjoinする。ただし宛先氏名・メールは同:32-44 の `c.name01`, `c.name02`, `c.email`（Playerに紐づくCustomer）であり、指摘文の `dtb_player.first_name_jp/last_name_jp/email` 使用までは旧コードに裏付けられない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:24-38 は `CustomerFavoriteProductRepository` に依存する。ec-cube-enterprise/src/Eccube/Repository/CustomerFavoriteProductRepository.php:230-250 は `cfp.Customer` と `cfp.Product` をjoinし、`c.id/name01/name02/email` を取得しており、旧 `DtbFavoriteProduct` のplayer・language単位の抽出ではない。",
+      "note": "旧お気に入り表・player単位を移植していない点は旧実装で裏付けられる。一方、旧実装も通知氏名・メールはPlayer列ではなくCustomer列を使うため、指摘の `dtb_player.first_name_jp/last_name_jp/email` 部分は過大記述である。"
+    },
+    {
+      "rowId": 172,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1520 のExcel正本セルに「実行トリガー スケジュール起動(Step Functions)」「実行タイミング 毎週水曜17:30」と明記されている。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:22、30-32 は `product:batch saleNotification` のコマンド登録だけを持ち、pf-api、pf-eccube3、pf-article、deck-apiを `17:30`, `水曜`, `saleNotification`, `Step Functions`, `StepFunctions` で横断確認したが、本バッチのスケジュール定義は存在しない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/FavoriteSaleNotificationCommand.php:30-34 はCLIコマンド `eccube:favorite-sale-notification` のみを定義する。ec-cube-enterpriseの `src`, `app`, `config`, `html` を `17:30`, `水曜`, `saleNotification`, `favorite-sale-notification`, `Step Functions` で確認したが、時刻・Step Functions設定は存在しない。",
+      "note": "要求は正本にあるが、Step Functionsのスケジュールはアプリケーション外のIaC・AWS設定で管理され得る。監査対象にインフラリポジトリや実環境設定が含まれておらず、実際に未設定かを断定できない。"
+    },
+    {
+      "rowId": 173,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1514-1532 のExcel正本部には一定件数ごとのメモリ解放はない。同:1535 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:69-77、91-97 にのみ記載される。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/SaleNotificationService.php:33-56 は件数 `$i` を数え、`if ($i % 1000 === 0) { $this->app['orm.em']->clear(); }` と1000件ごとにEntityManagerをclearする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:36-44 は全件を `$rows` に取得して `groupByCustomer($rows)` に渡し、同:71-90 は全行を `$grouped` 配列へ積む。chunk/limit/offset/clear/detachによる一定件数処理はない。",
+      "note": ""
+    },
+    {
+      "rowId": 174,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1532 のExcel正本は見出し「エラーハンドリング」だけで、抽出・送信時にコンソールへ出すという処理はない。同:1535 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:150-155 にその記述がある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:53-56 はサービスを実行し、サービスのエラーメッセージがあれば `echo $product->getErrorMassage()` する共通コンソール経路を持つ。旧SaleNotificationService.php:27-67 は抽出・送信例外を内部で握りつぶさない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:53-58 は送信例外をcatchし、`log_error('お気に入りセール通知メール送信失敗', ...)` のみで再throwしない。そのため ec-cube-enterprise/src/Eccube/Command/FavoriteSaleNotificationCommand.php:47-50 の `$io->error(...)` に送信例外は到達しない。",
+      "note": "抽出時の未捕捉例外はCommandのコンソールエラーになるが、送信時エラーはログのみとなるため要求の一部が欠ける。"
+    },
+    {
+      "rowId": 175,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1498-1532 のExcel正本部に開始・完了ログや日時指定はない。同:1535 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-05_batch_product_product_favorite_sale_notification.md:159-163 にだけ「開始・完了のコンソール出力（日時付き）」がある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:45、54-56 は日時接頭辞を作り、`saleNotification: Command start.` と `Command complete.` を共通的に出力する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/FavoriteSaleNotificationCommand.php:43-59 は開始メッセージを出さず、完了時も日時なしの `$io->success(...)` のみ。`date`, `DateTime`, `format` による日時付与はない。",
+      "note": ""
+    },
+    {
+      "rowId": 176,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1634-1635 のExcel正本セルに「店舗登録時、TC大阪(支店ID:1)の商品規格在庫全データを新規店舗用に…登録(複製)するバッチ」と明記されている。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:19 は旧B02-06相当として `insertStockHistory` を登録し、pf-eccube3/app/Plugin/HareruyaEc/Service/Product/InsertStockHistory.php:34-41 は開始日・終了日の受注を処理する。旧実装には店舗登録時のTC大阪在庫複製に対応するコードは確認できない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchInitialStockRegistrationAction.php:43-53 は複製元を `BaseInfo::TC_TOKYO_ID` とし、ec-cube-enterprise/src/Eccube/Entity/BaseInfo.php:45 はこれをID 1と定義する。ec-cube-enterprise/tests/Eccube/Tests/Web/Admin/Analysis/SummaryControllerTest.php:66 は「base_info_id が TC東京（1）の場合」と明記しており、実装のID 1はTC大阪ではなくTC東京として扱われる。",
+      "note": ""
+    },
+    {
+      "rowId": 177,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1636 のExcel正本セルに「複製範囲は『商品規格コード』および『拡張タイプ』のみ。それ以外は初期値(在庫数0など)」と明記されている。",
+      "legacyEvidence": "pf-eccube3のCommand/Service/Repositoryを `商品規格コード`, `拡張タイプ`, `TC大阪`, `初期在庫`, `copy stock` で確認したが、対応する店舗在庫複製実装は存在しない。近接する pf-eccube3/app/Plugin/HareruyaEc/Service/Product/InsertStockHistory.php:61-71 は受注由来の在庫履歴を作る別処理である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductStockRepository.php:431-440 は元店舗の全 `dtb_product_stock` から `product_class_id` と `stock_location_id` を引き継ぎ、`stock=0`, `total_cost=0`, `pick_up_flg=false`, 日時=nowで新規行を作る。コード上は識別項目だけを引き継ぎ他値を初期化する形だが、設計用語「商品規格コード」「拡張タイプ」と実装列の対応は明示されていない。",
+      "note": "「商品規格コード」=product_class_id経由のProductClass.code、「拡張タイプ」=stock_location_id という対応表またはDB定義が不足している。対応が正しければ新実装は既に要求を満たすため、列対応を確定できる資料が必要。"
+    },
+    {
+      "rowId": 178,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1629-1644 のsheet-8 Excel正本部は店舗登録時の在庫複製だけを記し、`insertStockHistory`、開始日・終了日、過去受注からの履歴作成はない。同:1646 以降のリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-06_batch_product_product_stock_initialize.md:60-80 にのみ当該フローがある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:19、30-35 は `product:batch insertStockHistory` と追加引数を登録する。pf-eccube3/app/Plugin/HareruyaEc/Service/Product/InsertStockHistory.php:34-71 は2引数不足メッセージ、日付範囲受注取得、受注日前の最新履歴、メモ重複判定、在庫減算履歴作成、登録済み/登録結果出力を実装する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/InitialStockRegistrationCommand.php:33-46 はB02-06の入口を `eccube:initial-stock-registration {新店舗のbase_info_id}` とし、引数は `target_base_info_id` だけである。現行Command/Service/Repositoryを `insertStockHistory`, `受注日より前`, `stock_change_reason`, `開始日`, `終了日` で確認したが、旧バッチ相当の入口・フローは存在しない。",
+      "note": "Excel正本のB02-06は店舗在庫複製、旧実装由来のリバース詳細設計は受注在庫履歴補完で、同じ機能Noに異なる処理が併存している。指摘された処理自体の根拠は旧実装にある。"
+    },
+    {
+      "rowId": 179,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1438-1444 のExcel正本は旧CSV連携から統合後DBの週間在庫履歴テーブルへ保存する変更を記し、同:1467 は出力先を「DB」と明記する。`product:batch exportWeeklyStockHistoryCsv` とCSV出力は同:1479 以降のリバース詳細設計（functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md:59-79）にのみある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:17 は `exportWeeklyStockHistoryCsv` を登録する。pf-eccube3/app/Plugin/HareruyaEc/Service/Product/ExportWeeklyStockHistoryCsv.php:43-50 は週次履歴を取得し、設定パスを `fopen(..., 'w')`、`fputcsv` で全件CSV出力する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:31-35 は `eccube:update-weekly-stock-history` を入口とする。ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:33-40、53-76 は一時テーブルを初期化し、20,000件ずつINSERT後に本テーブルを置換するDB方式で、Excel正本の統合後方式と一致する。",
+      "note": "旧コマンド・CSV挙動の存在は確実だが、Excel正本はCSV方式をDB方式へ変更する意図を明記しており、移植漏れか意図的廃止かが衝突する。旧CLI互換性を残す要求の有無を決める移行方針が不足している。"
+    },
+    {
+      "rowId": 180,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1463-1465 のExcel正本セルに、商品コード・店舗ごとに出力するため「ECCUBE、スマレジの在庫を合算して週間在庫履歴テーブルに登録する」と明記されている。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/ExportWeeklyStockHistoryCsv.php:43-50 は旧週次履歴をそのままCSVへ書き出すだけで、ECCUBE・スマレジ在庫区分の合算は行わない。この要求は統合後の正本で追加されたカスタマイズである。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:41-46 は `TODO: スマレジ在庫との合算対応`、`現時点ではスマレジ在庫の取り込みが未実装のため、ECCUBE在庫のみを対象` と明記し、必要な `stock_location_id=1` と `=2` の合算処理を未実装としている。",
+      "note": ""
+    }
+  ]
+}

@@ -860,7 +860,7 @@ def _phase2_failures(output_dir: Path) -> tuple[list[str], list[str]]:
             embedded_docs.add(doc)
             if PHASE2_MARK not in section:
                 failures.append(
-                    f"{path.name}: {doc} の埋め込み節に「フェーズ1では実装不要」バナーが無い"
+                    f"{path.name}: {doc} の埋め込み節にフェーズ2スコープバナーが無い"
                     "（integrate_function_docs_into_excel_html.py を再実行してください）"
                 )
 
@@ -869,7 +869,7 @@ def _phase2_failures(output_dir: Path) -> tuple[list[str], list[str]]:
         if not preview.exists():
             failures.append(f"プレビューHTMLが未生成: {preview.relative_to(REPO_ROOT)}")
         elif PHASE2_MARK not in preview.read_text(encoding="utf-8"):
-            failures.append(f"{preview.name}: 「フェーズ1では実装不要」バナーが無い")
+            failures.append(f"{preview.name}: フェーズ2スコープバナーが無い")
         if doc not in embedded_docs:
             notes.append(f"埋め込み先シートなし（プレビューのみで明示）: {doc}")
 

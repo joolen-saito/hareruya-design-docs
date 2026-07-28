@@ -1,0 +1,165 @@
+{
+  "packetId": "ab_09",
+  "results": [
+    {
+      "rowId": 181,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1439 の正本セルは「本店では在庫履歴取得結果をCSVに出力し、支店側でCSVを取り込んでいたが、本店も支店も同様に取得を行い、週間在庫履歴テーブルに結果を保存する」、同:1448 は「CSV読込は不要」としており、移行先にCSV出力を要求していない。CSV出力契約は正本終了後のリバース詳細設計（同:1479 の `function-design-embed:start` 以降）にだけあり、実体 hareruya-design-docs/functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md:123-125 が「`weekly_stock_history.csv` へのCSV書き出し」「CSVファイルの生成・上書き。DBは更新しない」と記す。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/ExportWeeklyStockHistoryCsv.php:9-22 はヘッダ `product_class_id`, `stock_01`〜`stock_11` を定義し、同:43-50 は `$weeklyStockHistories = ...->getWeeklyStockHistory();`、`fopen(...['csv_path'], 'w')`、`fputcsv(...)`、`fclose($f)` でCSVを書き出す。pf-eccube3/app/Plugin/HareruyaEc/config.yml:341 は `csv_path: '/html/csv/weekly_stock_history.csv'`。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:53-76 は一時テーブルを `truncate()` し、`getStockData()` の結果を `insertBatch()`、最後に `replaceFromTemp()` する。ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryRepository.php:67-75 も `TRUNCATE TABLE dtb_weekly_stock_history` と一時テーブルからのコピーを実行し、CSVは生成しない。",
+      "note": "正本はDB方式への変更を明記しているためSPEC_BACKEDではない。指摘値は旧実装のCSV契約に由来する。"
+    },
+    {
+      "rowId": 182,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "正本の hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1449 は「在庫ごと…1週間前…11週間前時点で最新の在庫変動履歴を取得」、同:1458 は結果を一時テーブルへ保存すると記すが、「全商品規格ID」および履歴が一件もない商品を0行として残す要求は明記しない。その厳密な要求はリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md:99-102 の「商品在庫に存在する全商品規格ID」「該当する在庫履歴が無い場合は0」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php:203-218 は `getAllProductClassId()` で商品在庫側のIDを得て各IDの行を作り、同:219-237 は各週の履歴を検索して `$result['stock'] ?? 0` を設定するため、履歴が皆無の商品規格も0埋め行になる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:69-79 は `FROM dtb_stock_history sh`、`sh.product_stock_id BETWEEN :start AND :end`、`GROUP BY sh.product_stock_id` であり、履歴行が一件もない商品在庫は結果行自体ができない。同:92-102 の `null ? 0` は結果行が存在する場合の週列だけを0化する。",
+      "note": "正本には対象単位の一般記述はあるが、指摘の決め手である「履歴皆無でも全IDを0行化」は旧実装由来。"
+    },
+    {
+      "rowId": 183,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "正本シート本文 hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1437-1467 の処理概要・トリガー・入出力には `memory_limit`、実行時間制限解除、SQLロガー無効化の記述がない。要求はリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md:73 の「メモリ制限と実行時間制限を解除し、SQLロガーを無効化する」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php:203-210 は `ini_set('memory_limit', '-1');`、`set_time_limit(0);`、`getConfiguration()->setSQLLogger(null);` を実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:44-56 はアクション呼出しと成否出力のみ、ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:50-79 はテーブル更新と例外メールのみである。確認範囲（この2ファイルおよび DtbWeeklyStockHistoryTempRepository.php / DtbWeeklyStockHistoryRepository.php）を `ini_set|memory_limit|set_time_limit|setSQLLogger|SQLLogger` で検索して0件。",
+      "note": "実行環境設定は正本ではなく旧実装コードおよびリバース詳細設計が根拠。"
+    },
+    {
+      "rowId": 184,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "正本シート本文 hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1437-1467 には開始・完了ログや日時形式の記述がない。要求はリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md:174-176 の表「開始・完了のコンソール出力（日時付き）」にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:45-56 は `$resultMessage = '[' . date('Y/m/d H:i') . '] ';` を作り、`\"{$name}: Command start.\\n\"` と `\"{$name}: Command complete.\\n\"` の両方へ付加する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:44-56 は開始出力を持たず、完了時も `$io->success('週間在庫履歴の更新が完了しました。');` と日時なしで出力する。",
+      "note": "正本にはなく、旧ProductBatchの共通出力が真の根拠。"
+    },
+    {
+      "rowId": 185,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1874 の正本項目23は `stock`、同:1885 の項目34は `branch_status`（「支店表示フラグ」）、同:1888 の項目37 `reservation_flg` で正本表が終わる。この正本項目表に `category_name_en` と `search_word` は存在しない（確認範囲: 同:1850-1888 のTSV全項目表）。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Unisearch/CreateFeedFile.php:11-46 の旧 `TSV_HEADER` は `stock`、`category_name`、`product_class` 等に加えて末尾に `release_date`, `search_word` を持つが、`branch_status` と `category_name_en` は持たない。旧実装も正本と完全一致しておらず、判定根拠は正本表である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/UniSearch/UniSearchExportService.php:129-172 の `getHeader()` は `category_name_en`（159行）、`is_branch_published`（167行）、`search_word`（171行）を含む39列で、`branch_status` 名を出力しない。",
+      "note": "正本の列名・列順という外部契約に対する確認済み乖離。"
+    },
+    {
+      "rowId": 186,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1874 の正本表は `stock` を「本店ECの在庫数、リニューアル後は本店ECだけでなく店舗のEC在庫を反映する」とする。一方、同:1766 は希望形式を「支店ID:在庫数…の形式で指定可能であれば指定したい」、同:1767 は「在庫有無のみ検索できればよいので、数量は不要か」と未確定の問いとしており、値形式を一意に確定できない。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbProductSubClassRepository.php:1745-1756 は旧フィードの `stock` を `SUM(stockpc.stock) AS 'stock'` として数値合計していた。ただし旧実装は単一本店構成で、複数店舗化後の正しい表現形式までは裏付けない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/ProductClassRepository.php:354-381 は、在庫ありの `base_info_id` を `string_agg(... E'\\\\x01' ...)` した集合を `stock` とする。数量そのものではないが、正本の未確定メモにある「在庫有無」および店舗識別を表せる。",
+      "note": "ユニサーチ提供のフィード仕様書または要件質問票で、複数店舗時のstock値が数量・`店舗ID:数量`・在庫あり店舗ID集合のどれに確定したかが不足している。"
+    },
+    {
+      "rowId": 187,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "参照先sheet-10の正本はユニサーチTSV項目表であり、hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1893 から別機能B02-07のリバース詳細設計が始まる。`product:batch exportWeeklyStockHistoryCsv` はその埋め込み元 hareruya-design-docs/functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md:61-65 にだけ記載され、Excel正本のB02-07は同じHTMLではなく在庫管理書側でDB方式を要求している。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/ProductBatch.php:12-18 は `exportWeeklyStockHistoryCsv` を `ExportWeeklyStockHistoryCsv` サービスへ割り当て、同:28-32 はコマンド名を `product:batch` とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:31-35 は使用例 `bin/console eccube:update-weekly-stock-history`、登録名 `eccube:update-weekly-stock-history` である。`product:batch|exportWeeklyStockHistoryCsv` を ec-cube-enterprise/src/Eccube, app, html で検索して0件。",
+      "note": "設計書参照が正本TSVシート後の埋め込みリバース設計を指しており、旧コマンド名が根拠。"
+    },
+    {
+      "rowId": 188,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1893 以降は `data-source=\"functions/pf-eccube3/b02-07...md\"` のリバース詳細設計であり、同:1939 のCSVパス・DB非更新記述は正本セルではない。正本B02-07は hareruya-design-docs/excel_to_html/output/0402_基本設計仕様書(バッチ_在庫管理).html:1439 で「週間在庫履歴テーブルに結果を保存する」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/Product/ExportWeeklyStockHistoryCsv.php:43-50 は設定 `weekly_stock_history.csv_path` を使って `fopen(..., 'w')`、`fputcsv` で全件上書きし、pf-eccube3/app/Plugin/HareruyaEc/config.yml:341 は `/html/csv/weekly_stock_history.csv` を設定する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:53-76 は一時テーブルのtruncate/insertと本テーブルの `replaceFromTemp()` を実行する。ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryRepository.php:67-75 もDBのTRUNCATEとコピーであり、CSV出力ではない。",
+      "note": "rowId 181と同一の旧契約を、別HTML内の埋め込みリバース設計から拾った重複指摘。"
+    },
+    {
+      "rowId": 189,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "参照HTMLの「全商品規格」「履歴なしは0」は正本セルではなく、hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1893 から始まるリバース詳細設計内（同:1930）の記述である。実体 hareruya-design-docs/functions/pf-eccube3/b02-07_batch_product_product_weekly_stock_history_update.md:99-102 が「商品在庫に存在する全商品規格ID」「該当する在庫履歴が無い場合は0」と記す。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbStockHistoryRepository.php:211-218 は商品在庫から `getAllProductClassId()` した全IDごとに行を作り、同:219-237 は各週の検索結果を `$result['stock'] ?? 0` とする。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:69-79 は `dtb_stock_history sh` 起点で `GROUP BY sh.product_stock_id` するため履歴皆無の商品在庫を返さず、同:99 の0変換は生成済み行の欠損週だけに作用する。",
+      "note": "rowId 182と同じ旧実装要件を参照した重複指摘。"
+    },
+    {
+      "rowId": 190,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1797-1800 の正本セルは「管理画面から実行」「管理画面の商品管理＞ユニサーチフィード作成メニューでフィードファイル作成可能」とする。同:1744 は作成結果をTSV.gzとdoneファイルの指定ディレクトリ出力とし、送信は別シートB02-09（同:1988-1992）として分離している。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/UnisearchFeedController.php:35-42 は管理画面操作から `unisearch:batch createFeedFile` を起動し、pf-eccube3/app/Plugin/HareruyaEc/Service/Unisearch/CreateFeedFile.php:225-234 はローカルにgzipとdoneファイルを作成する。旧リポジトリ内の当サービスにはSCP/SFTP送信処理がない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:41-49 はPOSTで `feedCreateAction->handle()` を呼び、ec-cube-enterprise/src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:27-30 は `exportAndUpload(false)` を渡す。ec-cube-enterprise/src/Eccube/Service/UniSearch/UniSearchExportService.php:99-111 では `false` のときリモート削除と2ファイルのSFTP uploadを行い、`true` のときだけ送信をスキップする。",
+      "note": "正本で作成と送信が別機能として明示されるため、管理画面作成操作で送信まで行う現在の引数は真の乖離。"
+    },
+    {
+      "rowId": 191,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1991-1992 の正本セルは「SCPでフィードファイルとdoneファイルを…送信」「秘密鍵ファイルを…SCPコマンド実行時に指定」、同:2002 も「TSVファイル、doneファイルをSCPで送信する」と明記する。",
+      "legacyEvidence": "旧アプリ内では pf-eccube3/app/Plugin/HareruyaEc/Service/Unisearch/CreateFeedFile.php:225-234 が `.tsv.gz` とdoneファイルをローカル生成するところまでで、`scp|SCP|feed_upload` はアプリコードに存在しない。正本自身も hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1993-1994 で現行 `feed_upload.sh` は「リポジトリ管理なし」と記す。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/UniSearch/UniSearchSftpService.php:21-28 は `phpseclib3\\Net\\SFTP` を使用し、同:59-66 は `$sftp->put(..., SFTP::SOURCE_LOCAL_FILE)` で送信する。ec-cube-enterprise/src/Eccube/Service/UniSearch/UniSearchExportService.php:90-107 は `.tsv.gz` とdoneファイルをこのSFTPサービスへ渡す。",
+      "note": "SCPとSFTPは別プロトコル/実装方式であり、正本の明示値に対する乖離。旧SCPシェル本体はリポジトリ外。"
+    },
+    {
+      "rowId": 192,
+      "verdict": "UNCERTAIN",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1993-1995 の正本セルは、現行Cron `*/5 * * * * sh -x /home/ec2-user/feed_upload.sh ...`、移行先トリガー「スケジュール起動(Step Functions)」、実行タイミング「5分おき」を明記する。",
+      "legacyEvidence": "正本の hareruya-design-docs/excel_to_html/output/0404_基本設計仕様書(バッチ_商品管理).html:1993 は旧 `feed_upload.sh` について明示的に「シェルはリポジトリ管理なし」と記す。旧4リポジトリを `feed_upload|*/5|unisearch.*cron|Step Functions` で検索して対応するスケジュール定義は0件であり、旧運用設定もリポジトリ外だった。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/SendUnisearchProductFeedCommand.php:29-32 に手動起動可能な `unisearch:batch` はある。一方、ec-cube-enterprise の src/app/html を `feed_upload|*/5|Step Functions|rate\\(|schedule|cron|unisearch:batch` で検索して5分おきの起動定義は見つからない。",
+      "note": "Step Functionsの定義はアプリリポジトリ外のAWS構成に存在し得る。対象のIaCリポジトリまたは実環境Step Functions/EventBridge設定が未提示のため、未実装とは確定できない。"
+    },
+    {
+      "rowId": 193,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1104-1107 の正本セルは、`20 + 1 + スマレジ店舗ID3桁0埋め + 注文番号(8桁0埋め後、末尾6桁) + チェックディジット` と明記し、同:1110-1111 は注文番号12345の例を `2010010123451` とする。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Util/OrderUtil.php:38-40 の旧生成処理も `$inStoreCode . $extension . $shopCode . substr($orderNumber, -6)` で、注文番号の0埋めをしない。したがってこの要求は旧コード由来ではなく正本で追加・明確化されたもの。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:55-60 はバッチ対象全件で自身の `getProductBarcode()` を呼び、同:94-114 は `$janCode = ...substr($orderNumber, -6);` と0埋めせず保存する。別クラス SmaregiOtcProductCodeGenerator.php:70-78 には正しい `str_pad(..., 8, '0', STR_PAD_LEFT)` があるが、当バッチ経路では事前にsmaregi_codeを設定するため、そのフォールバック生成器は使われない。",
+      "note": "正しい共通生成器は存在するが、B05-01の親バッチ経路が旧ロジックを直接使用しており未充足。"
+    },
+    {
+      "rowId": 194,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1115-1119 の正本セルはスマレジ商品登録APIの送信データ「部門ID」を「6: 店頭受取（固定）」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php:174-182 の旧コードも `categoryId` に `$optionValues[MtbOption::SMAREGI_CATEGORY_ID]` を設定しており、固定6ではなく設定値依存だった。固定6要求の根拠は旧コードではなく正本である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:96-100 は `resolveSmaregiCategoryId()` の値を使い、同:153-160 は追加設定 `SMAREGI_CATEGORY_ID` の保存値を返す。ec-cube-enterprise/app/DoctrineMigrations/Version20251125161057.php:169-173 の初期値は6だが、ec-cube-enterprise/src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:99 で編集可能な設定であり、常時6を保証しない。",
+      "note": "初期データは6だが、API送信値が編集可能設定に依存するため、正本の「固定」契約はコード上保証されない。"
+    },
+    {
+      "rowId": 195,
+      "verdict": "ALREADY_MET",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1120-1122 の正本セルは、店頭PCアカウントなら「店頭注文: 店頭注文番号 のご注文」、通常会員なら「注文者姓カナ 注文者名カナ 様のご注文」とする。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php:154-168 は `shopFrontFlg` で分岐し、店頭では `店頭注文: {$waitingNumber} のご注文`、通常会員では `{$order->getKana01()} {$order->getKana02()} 様のご注文` を組み立てる。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcProductBodyBuilder.php:41-53 はAPIの `productName` に `buildProductName()` を使用し、同:72-88 は `isShopFrontOrder()` で分岐して `\"/店頭注文: {$waitingNumber} のご注文\"` または `\"/ {$Order->getKana01()} {$Order->getKana02()} 様のご注文\"` を生成する。同:106-118 は会員のCustomerGroupの `shopFrontFlg` を判定する。",
+      "note": "パケット記載の「常に `店頭受取 %s`」は現スナップショットでは解消済み。注文番号プレフィックスを伴う点も旧実装と同じで、要求する分岐・本文は実装済み。"
+    },
+    {
+      "rowId": 196,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1126-1127 の正本セルは商品連携失敗時にエラーメールを送り、宛先を「追加設定のスマレジ通信エラー送信メールアドレス」とする。同:1132-1133 は在庫連携失敗にも同じ要求を置き、同:1157 もAPI失敗時のエラーメール送信を明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Service/SmaregiService.php:53,65,78 は商品削除・商品更新・在庫更新失敗時に `sendSmaregiErrorMail(...)` を呼ぶ。pf-eccube3/app/Plugin/HareruyaEc/Service/MailService.php:1379-1386 は設定 `SMAREGI_ERROR_MAIL_ADDRESS` を取得して宛先にし、同:1414-1418 は件名「スマレジ通信エラー」で送信する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:251-259 の `markError()` はlogger、`smaregi_error_flg=true`、flushのみ。ec-cube-enterprise/src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:163-168 の `failJob()` もジョブ失敗状態とerrorMessageの保存である。OTC同期経路を `SMAREGI_ERROR_MAIL_ADDRESS|sendSmaregiError|MailerInterface|send\\(` で検索してメール呼出し0件。",
+      "note": "MailServiceには別用途で同設定を読む処理があるが、OTC商品・在庫連携失敗経路から呼ばれていない。"
+    },
+    {
+      "rowId": 197,
+      "verdict": "UNSUPPORTED",
+      "specEvidence": "正本の注文番号登録シートは hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:999-1201 で、同:1134 は実行トリガー/10分おき、同:1157 はAPI失敗時メールを記すが、開始・完了の日時付きコンソール出力は記さない。該当文言は同:1202 から始まるリバース詳細設計の元ファイル hareruya-design-docs/functions/pf-eccube3/b05-01_batch_order_order_copy_order_number.md:154-156 にだけある。",
+      "legacyEvidence": "旧実装の実入口 pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:37-54 は `$resultMessage = '[' . date('Y/m/d H:i') . '] ';` を作るが、これは不正コマンド時の `Nothing args or command.`（45-48行）にだけ使い、正常時は `$batch->execute();` のみで開始・完了を出力しない。pf-eccube3/app/Plugin/HareruyaEc/Service/Order/CopyOrderNumber.php:44-56 にも開始・完了出力はない。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/OtcOrderSmaregiPostCommand.php:40-61 は開始 `店頭受取注文スマレジ連携バッチ開始` と完了 `店頭受取注文スマレジ連携処理が完了しました。` を出力するが、いずれも日時を含まない。",
+      "note": "リバース詳細設計の汎用記述はあるが、正本にも実際の旧正常系コードにも「開始・完了を日時付き」の根拠がないため誤検出疑い。"
+    },
+    {
+      "rowId": 198,
+      "verdict": "SPEC_BACKED",
+      "specEvidence": "hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1320-1328 の正本セルは、対象を「新規・入金待ち・ピック中」「注文番号に紐づく送信履歴がない」「バッチ起動時間の5分前から1分前まで」と明記する。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/OrderRepository.php:1443-1464 は送信履歴をLEFT JOINして `umh.id IS NULL`、3ステータスを指定する。ただし時刻は `toDate = now-60秒` の後に `fromDate = toDate-5分`（1445-1448行）なので、実質now-6分〜now-1分である。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Repository/OrderRepository.php:1961-1982 に現在 `getNotSendMailOrders()` が存在し、`mh.id IS NULL` と NEW/PAY_WAIT/PICKING を満たす。しかし同:1963-1966 は `toDate` をnow-60秒にした後、そこからさらに5分引いて `fromDate` とするため、実質6分前〜1分前を抽出する。ec-cube-enterprise/src/Eccube/Service/Admin/Order/ResendMailAction.php:60-62 はこのメソッドを実際に呼ぶ。",
+      "note": "パケットの「抽出実装不在」は現状では古い。ただし時間窓が正本の5分前〜1分前ではなく6分前〜1分前なので、要求はなお完全には満たさない。"
+    },
+    {
+      "rowId": 199,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "正本シート hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1440-1464 は番号全削除・IDリセット・毎日0時を記すが、コンソールコマンド名を記さない。`order:batch truncateWaitingNumber` は同:1467 から始まるリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b05-03_batch_order_order_store_call_number_initialize.md:55-67 にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Command/OrderBatch.php:12-16 は `truncateWaitingNumber` をサービスへ割り当て、同:26-30 はコマンド名を `order:batch` とする。pf-eccube3/app/Plugin/HareruyaEc/Service/Order/TruncateWaitingNumber.php:7-10 も `commandName = 'truncateWaitingNumber'`。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Command/TruncateWaitingNumberCommand.php:25-26 の登録名は `eccube:order:truncate-waiting-number`。`order:batch|truncateWaitingNumber|setAliases|aliases` を ec-cube-enterprise/src/Eccube, app, html で検索し、旧名またはalias登録は0件。",
+      "note": "外部コマンド名はExcel正本ではなく旧実装とリバース詳細設計が根拠。"
+    },
+    {
+      "rowId": 200,
+      "verdict": "LEGACY_BACKED",
+      "specEvidence": "正本の hareruya-design-docs/excel_to_html/output/0405_基本設計仕様書(バッチ_受注管理).html:1461-1462 は「全件を物理削除」「IDをリセットして1から」とだけ記し、トランザクション境界は定めない。「別の文」「1トランザクションでまとめない」はリバース詳細設計の実体 hareruya-design-docs/functions/pf-eccube3/b05-03_batch_order_order_store_call_number_initialize.md:113-120 および同:168 の旧挙動記述にだけある。",
+      "legacyEvidence": "pf-eccube3/app/Plugin/HareruyaEc/Repository/DtbWaitingNumberRepository.php:15-20 は明示トランザクションなしで `$connection->query('DELETE FROM dtb_waiting_number');`、続けて `$connection->query('ALTER TABLE dtb_waiting_number AUTO_INCREMENT = 1');` を独立文として実行する。",
+      "currentImpl": "ec-cube-enterprise/src/Eccube/Service/Admin/Order/TruncateWaitingNumberAction.php:34-55 は `beginTransaction()` 後に両テーブルのtruncate、カウンタ再登録、`flush()` を行い、最後に `commit()`、例外時 `rollback()` するため全処理を1トランザクションにまとめる。",
+      "note": "トランザクション分離要件は正本に無く、MySQL旧実装の逐次実行方式が根拠。"
+    }
+  ]
+}
