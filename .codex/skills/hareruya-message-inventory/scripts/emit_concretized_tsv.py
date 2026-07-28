@@ -200,8 +200,12 @@ def strip_parens(text: str) -> str:
             t = inner
     # データ括弧を非括弧化: (id=990001)/（商品ID=990001） → ID990001
     t = re.sub(r"[（(]\s*(?:商品)?id\s*[=＝:：]?\s*(\d+)\s*[)）]", r" ID\1", t, flags=re.I)
-    # 残りの括弧書き（説明・メタ注記・URL等）は除去
-    t = re.sub(r"[（(][^（）()]*[)）]", "", t)
+    # 残りの括弧書き（説明・メタ注記・URL等）は除去。ネスト括弧に備え不動点まで反復。
+    while True:
+        nt = re.sub(r"[（(][^（）()]*[)）]", "", t)
+        if nt == t:
+            break
+        t = nt
     t = re.sub(r"\*\*", "", t)  # 強調マーカーの残骸
     t = re.sub(r"\s{2,}", " ", t).strip("／、。 ").strip()
     return t or "—"

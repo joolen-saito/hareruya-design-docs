@@ -1,0 +1,14 @@
+{
+  "issueKey": "ECCUBE_HARERUYA-1914",
+  "verdict": "SUSPECT",
+  "reasonCode": "GAP_CONFIRMED",
+  "reasonLabel": "起票どおり実装が設計要求を欠いている（対応要）",
+  "nextAction": "実装対応: 未使用のDtbEventRepository::getEventBanners()を配線し条件付き取得に切替",
+  "codexReview": "設計原文を独立抽出レビュー済み(クラスタ単位)",
+  "summary": "スライダーはMtbBannerを使用し日付・公開状態条件なし。条件付きgetEventBannersは未使用",
+  "comment": "【事実確認結果】誤検出とは判断できず（状態を処理中とします）\n\n■結論\n指摘は事実です。設計要求が正本設計書に実在し、実装がそれを満たしていないことを確認しました。\n\n■設計上の根拠\n正本設計書 0307_基本設計仕様書(フロント_イベント)「イベント大会TOP」シート\n1. パンくずリストとバナー > 機能仕様機能説明 > バナースライダー\n> ・バナー設定に設定されているイベントバナーから店舗と表示タイプが「スライド」で検索し表示する\n> ・開催日当日または開催前で、かつ公開状態のイベントに登録されているバナーを表示する\n\n■実装の現状\nsrc/Eccube/Controller/Front/EventTopController.php:55 は `MtbBannerRepository::findWhereUrlIsNotEmpty()` を呼び出しています。同メソッド（src/Eccube/Repository/Master/MtbBannerRepository.php:52-71）の絞り込み条件は次の4つのみです。\n```\ns.id = :baseInfoId / l.id = :localeId / b.dispType IN :dispTypes / b.imageUrl <> ''\n```\nイベント（dtb_event）への JOIN も、開催日条件も、公開状態条件もありません。MtbBanner エンティティ自体がイベントとの関連を持ちません。\n\n付記: 設計どおりの条件を備えたクエリは実在します。src/Eccube/Repository/DtbEventRepository.php:225-244 の `getEventBanners()` は `e.Disp = 公開` `ed.Disp = 公開` `ed.startDate >= 本日0時` を持ちます。しかし全文検索した結果、このメソッドの呼び出し元は存在せず未使用（デッドコード）でした。\n\n■次の対応\n実装対応: バナースライダーの取得を DtbEventRepository::getEventBanners() 系の条件付きクエリに切り替える。既に条件を満たすメソッドが未使用のまま存在するため、まず配線するのが最短。\n\n■確認範囲\n- 設計（正本）: hareruya-design-docs/excel_to_html/output/0307_基本設計仕様書(フロント_イベント).html / イベント大会TOP\n- 実装: ec-cube-enterprise（Controller / Twig / 翻訳ファイル / hareruya-event.js / EventScheduleJsonBuilder）\n- 本判定は設計原文の独立抽出レビュー（codex）を経ています。",
+  "recordedAt": "2026-07-28T08:58:08+09:00",
+  "applied": true,
+  "appliedAt": "2026-07-28T09:00:43+09:00",
+  "appliedStatus": "処理中"
+}

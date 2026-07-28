@@ -56,6 +56,16 @@ VERDICT_FALSE_POSITIVE = "FALSE_POSITIVE"
 VERDICT_SUSPECT = "SUSPECT"
 VERDICTS = (VERDICT_FALSE_POSITIVE, VERDICT_SUSPECT)
 
+# SUSPECT は「保留」ではなく「次に何をすれば二値化できるか」まで示す必要がある。
+# 理由コードを必須にして、処理中の山が行動可能な状態で残るようにする。
+REASON_CODES = {
+    "GAP_CONFIRMED": "起票どおり実装が設計要求を欠いている（対応要）",
+    "CLAIM_UNSUPPORTED": "起票の『誤検知』という結論が設計と矛盾する",
+    "DESIGN_AMBIGUOUS": "設計内に解釈の分岐・矛盾があり設計判断待ち",
+    "DESIGN_UNREACHABLE": "正本設計書の該当記述に到達できない",
+    "NEEDS_LIVE_CHECK": "実機・実データでの確認が必要",
+}
+
 # 節見出しは既知のものだけを認識する。本文中の `# パスワード再発行` のような
 # 行で誤分割しないため、行頭 # 全般では切らない。
 SECTION_HEADINGS = (
@@ -727,9 +737,20 @@ def cmd_record(args: argparse.Namespace) -> int:
     comment = Path(args.comment_file).read_text(encoding="utf-8").strip()
     if not comment:
         die("コメント本文が空")
+    if args.verdict == VERDICT_SUSPECT:
+        if not args.reason_code:
+            die("SUSPECT には --reason-code が必須（" + " / ".join(REASON_CODES) + "）")
+        if not args.next_action:
+            die("SUSPECT には --next-action が必須（誰が何を確認すれば二値化できるか）")
+    if args.reason_code and args.reason_code not in REASON_CODES:
+        die(f"未知の理由コード {args.reason_code!r}。有効値: " + " / ".join(REASON_CODES))
     verdict = {
         "issueKey": args.issue,
         "verdict": args.verdict,
+        "reasonCode": args.reason_code or None,
+        "reasonLabel": REASON_CODES.get(args.reason_code or "") or None,
+        "nextAction": args.next_action or None,
+        "codexReview": args.codex_review or None,
         "summary": args.summary,
         "comment": comment,
         "recordedAt": now_iso(),
@@ -836,6 +857,20 @@ def cmd_status(args: argparse.Namespace) -> int:
             counts["反映済み"] += 1
     for key, value in counts.items():
         print(f"  {key}: {value}")
+
+    reasons: dict[str, int] = {}
+    for verdict in verdicts.values():
+        code = verdict.get("reasonCode")
+        if code:
+            reasons[code] = reasons.get(code, 0) + 1
+    if reasons:
+        print("\n[SUSPECT の理由コード]")
+        for code, count in sorted(reasons.items(), key=lambda kv: -kv[1]):
+            print(f"  {count:3d}  {code}  {REASON_CODES.get(code, '')}")
+    missing = [k for k, v in verdicts.items() if v["verdict"] == VERDICT_SUSPECT and not v.get("reasonCode")]
+    if missing:
+        print(f"\n理由コード未設定の SUSPECT: {len(missing)} 件 {missing[:10]}")
+    print()
     for path in inbox:
         verdict = verdicts.get(path.stem)
         state = "未判定" if not verdict else (
@@ -885,6 +920,13 @@ def build_parser() -> argparse.ArgumentParser:
     record.add_argument("--verdict", required=True, choices=VERDICTS)
     record.add_argument("--summary", default="")
     record.add_argument("--comment-file", required=True)
+    record.add_argument(
+        "--reason-code",
+        choices=sorted(REASON_CODES),
+        help="SUSPECT では必須。" + " / ".join(f"{k}={v}" for k, v in REASON_CODES.items()),
+    )
+    record.add_argument("--next-action", default="", help="SUSPECT では必須。二値化に必要な次の確認")
+    record.add_argument("--codex-review", default="", help="codex レビューの結論（AGREE/DISAGREE等）")
     record.set_defaults(func=cmd_record)
 
     plan = sub.add_parser("plan", help="反映予定を表示")
