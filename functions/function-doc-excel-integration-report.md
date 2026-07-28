@@ -249,6 +249,26 @@
 - M09-09 メンテナンス管理 -> `sheet-3` from `functions/ec-cube-enterprise/m09-09_admin_content_content_maintenance.md` [親シート追記]
 - M09-10 支店トップページ管理 -> `sheet-7` from `functions/pf-eccube3/m09-10_admin_content_content_branch_top_page.md`
 
+### `excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能).html`
+- M12-01 日別/月別集計 集計一覧表示 -> `sheet-3` from `functions/pf-eccube3/m12-01_admin_analytics_sales_daily_monthly_summary.md`
+- M12-01 日別/月別集計 集計一覧表示 -> `sheet-4` from `functions/pf-eccube3/m12-01_admin_analytics_sales_daily_monthly_summary.md`
+- M12-01 日別/月別集計 集計一覧表示 -> `sheet-5` from `functions/pf-eccube3/m12-01_admin_analytics_sales_daily_monthly_summary.md`
+- M12-01 日別/月別集計 集計一覧表示 -> `sheet-6` from `functions/pf-eccube3/m12-01_admin_analytics_sales_daily_monthly_summary.md`
+- M12-02 日別/月別集計 CSVダウンロード -> `sheet-7` from `functions/pf-eccube3/m12-02_admin_analytics_sales_daily_monthly_csv_export.md`
+- M12-03 受注/売上分析 集計一覧表示 -> `sheet-8` from `functions/pf-eccube3/m12-03_admin_analytics_sales_order_analysis_summary.md`
+- M12-03 受注/売上分析 集計一覧表示 -> `sheet-9` from `functions/pf-eccube3/m12-03_admin_analytics_sales_order_analysis_summary.md`
+- M12-03 受注/売上分析 集計一覧表示 -> `sheet-10` from `functions/pf-eccube3/m12-03_admin_analytics_sales_order_analysis_summary.md`
+- M12-04 受注/売上分析 CSVダウンロード -> `sheet-11` from `functions/pf-eccube3/m12-04_admin_analytics_sales_order_analysis_csv_export.md`
+- M12-04 受注/売上分析 CSVダウンロード -> `sheet-12` from `functions/pf-eccube3/m12-04_admin_analytics_sales_order_analysis_csv_export.md`
+- M12-05 入荷通知依頼 一覧表示 -> `sheet-13` from `functions/pf-eccube3/m12-05_admin_analytics_sales_arrival_notification_search_list.md`
+- M12-05 入荷通知依頼 一覧表示 -> `sheet-14` from `functions/pf-eccube3/m12-05_admin_analytics_sales_arrival_notification_search_list.md`
+- M12-06 入荷通知依頼 CSVダウンロード -> `sheet-15` from `functions/pf-eccube3/m12-06_admin_analytics_sales_arrival_notification_csv_export.md`
+- M12-07 フォーマット売上分析 集計一覧表示 -> `sheet-16` from `functions/pf-eccube3/m12-07_admin_analytics_sales_format_analysis_summary.md`
+- M12-07 フォーマット売上分析 集計一覧表示 -> `sheet-17` from `functions/pf-eccube3/m12-07_admin_analytics_sales_format_analysis_summary.md`
+- M12-08 フォーマット売上分析 CSVダウンロード -> `sheet-18` from `functions/pf-eccube3/m12-08_admin_analytics_sales_format_analysis_csv_export.md`
+- M12-09 デッキ採用枚数集計 出力条件変更 -> `sheet-19` from `functions/pf-eccube3/m12-09_admin_analysis_used_card.md`
+- M12-10 デッキ採用枚数集計 特集タグ編集用CSVダウンロード -> `sheet-20` from `functions/pf-eccube3/m12-10_admin_analysis_used_card.md`
+
 ### `excel_to_html/output/0211_基本設計仕様書(分析・集計管理機能)_詳細設計.html`
 - M12-01 日別/月別集計 集計一覧表示 -> `sheet-3` from `functions/pf-eccube3/m12-01_admin_analytics_sales_daily_monthly_summary.md`
 - M12-01 日別/月別集計 集計一覧表示 -> `sheet-4` from `functions/pf-eccube3/m12-01_admin_analytics_sales_daily_monthly_summary.md`
@@ -357,7 +377,7 @@
 - F05-05 ネット買取カート -> `sheet-7` from `functions/pf-eccube3/f05-05_front_online_purchase_buy_cart.md`
 - F05-06 ネット買取買取手続き～完了 -> `sheet-8` from `functions/pf-eccube3/f05-06_front_online_purchase_buy_shopping_complete.md`
 - F05-06 ネット買取買取手続き～完了 -> `sheet-9` from `functions/pf-eccube3/f05-06_front_online_purchase_buy_shopping_complete.md`
-- F06-11 買取履歴一覧 -> `sheet-10` from `functions/pf-eccube3/f06-11_front_member_mypage_buy_history.md`
+- F06-11 買取一覧 -> `sheet-10` from `functions/pf-eccube3/f06-11_front_member_mypage_buy_history.md`
 - F06-12 まとめて買取査定結果 -> `sheet-12` from `functions/pf-eccube3/f06-12_front_member_mypage_bulk_purchase_result.md`
 - F06-15 買取履歴詳細 -> `sheet-11` from `functions/pf-eccube3/f06-15_front_member_mypage_buy_history_detail.md`
 

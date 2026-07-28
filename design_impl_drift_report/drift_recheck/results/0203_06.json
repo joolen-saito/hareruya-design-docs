@@ -4,73 +4,73 @@
     {
       "rowId": 821,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:286` `#[Route(path: '/%eccube_admin_route%/order/shipping_result_csv/import', name: 'admin_shipping_result_csv_upload', methods: ['POST'], ),]` のままで、パスは依然 `/order/shipping_result_csv/import`。フォームも `src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:45` `action=\"{{ url('admin_shipping_result_csv_import') }}\"` で import へPOSTしており、`shipping_result_csv/upload` パス定義は develop 全体を検索しても存在しない。",
-      "note": ""
+      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:286` `#[Route(path: '/%eccube_admin_route%/order/shipping_result_csv/import', name: 'admin_shipping_result_csv_upload', methods: ['POST'], ),]` で、パスは現 develop でも `import` のまま。`src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:45` `<form id=\"upload-form\" method=\"post\" action=\"{{ url('admin_shipping_result_csv_import') }}\"` も import ルート宛。スナップショット全体を `grep -rn \"shipping_result_csv/upload\" .` で検索したがヒット0（script/, bin/, app/config/, .github/ を含む）。",
+      "note": "GET画面ルートは同 controller:250-253 で同一パス `/order/shipping_result_csv/import` name=admin_shipping_result_csv_import。"
     },
     {
       "rowId": 822,
       "status": "対応済み",
-      "evidence": "`src/Eccube/Service/Csv/OrderCsv.php:143-144` `foreach ($order->getShippings() as $shipping) { $shipping->setShippingDate($shippingDate); }` に変更されており、監査時点の `setShippingCommitDate($shippingDate)` は削除されている。`src/Eccube/Entity/Shipping.php:114` `#[ORM\\Column(name: 'shipping_date', ...)]` / `:441 public function setShippingDate(...)` により dtb_shipping.shipping_date が更新される。設計期待値「配送情報の出荷日を登録する」を満たす。",
-      "note": ""
+      "evidence": "`src/Eccube/Service/Csv/OrderCsv.php:143-145` が `foreach ($order->getShippings() as $shipping) { $shipping->setShippingDate($shippingDate); }` に是正済み。監査時点の `$shipping->setShippingCommitDate($shippingDate)` は削除されている。`src/Eccube/Entity/Shipping.php:114-115` `#[ORM\\Column(name: 'shipping_date', type: Types::DATETIMETZ_MUTABLE, nullable: true)] private $shipping_date;` / `:441-443` `public function setShippingDate(?\\DateTime $shippingDate = null): Shipping { $this->shipping_date = $shippingDate;` により dtb_shipping.shipping_date へ登録される。",
+      "note": "設計期待値「配送情報の出荷日を登録する」を満たす。"
     },
     {
       "rowId": 823,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:326-390` の成功処理は `pointService->gainPoints` / `registerGainPointJob` / `flush` / `commit` / `dispatchGainPointMessage` / `addSuccess('admin.register.complete')` のみで、MailService の注入(`:35-43` のコンストラクタに MailService なし)も `sendShippingNotifyMail` 呼び出しもない。`sendShippingNotifyMail` の呼び出し元は `src/Eccube/Controller/Admin/Order/OrderController.php:542` と `src/Eccube/Controller/Admin/Order/ShippingController.php:272` のみで、本インポート経路からは呼ばれない。`ADMIN_ORDER_CSV_SHIPPING_RESULT_IMPORT_COMPLETE` を購読するメール送信リスナーも src 配下に存在しない。",
+      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:35-43` のコンストラクタ注入は `OrderCsv, CsvExportService, OrderRepository, OrderStatusRepository, PointService, SmaregiOrderGainPointEventService` のみで MailService が無く、成功処理(`:344-390`)も `registerShippingResult` → `pointService->gainPoints` → `registerGainPointJob` → `flush/commit` → `dispatchGainPointMessage` → `$this->addSuccess('admin.register.complete', 'admin');` → `redirectToRoute` のみ。`grep -rn \"sendShippingNotifyMail\" --include=*.php src/` の結果は `src/Eccube/Service/MailService.php:768`(定義)、`src/Eccube/Controller/Admin/Order/OrderController.php:542`、`src/Eccube/Controller/Admin/Order/ShippingController.php:272` の3件のみで、本インポート経路からの呼び出しは無い。`script/`, `bin/`, `app/config/`, `.github/` を `出荷実績|shipping_result` で検索しても `app/config/eccube/packages/eccube_nav.yaml:122 url: admin_shipping_result_csv_import` のメニュー定義のみで、バッチ・運用スクリプト実装は存在しない。",
       "note": ""
     },
     {
       "rowId": 824,
       "status": "対応済み",
-      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:346-351` で `$this->pointService->gainPoints($updateOrder['order']);` に加えて `$gainPointJob = $this->smaregiOrderGainPointEventService->registerGainPointJob($updateOrder['order']);` を実行し、`:370-373` commit 後に `$this->smaregiOrderGainPointEventService->dispatchGainPointMessage($gainPointEntry['job'], $gainPointEntry['order']);` を送信する。ハンドラ `src/Eccube/MessageHandler/SmaregiOrderGainPointMessageHandler.php:93` `$response = $this->smaregiCustomerService->gainPoints($Order);` でスマレジへ付与ポイントを送信する。監査時点に存在しなかったスマレジ連携が本インポート経路に追加済み。",
-      "note": "非同期(MessengerJob + message bus)経由での送信。"
+      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:41` で `private readonly SmaregiOrderGainPointEventService $smaregiOrderGainPointEventService,` を注入し、`:346-351` で `$this->pointService->gainPoints($updateOrder['order']);` に続き `$gainPointJob = $this->smaregiOrderGainPointEventService->registerGainPointJob($updateOrder['order']);` を実行、`:370-373` の commit 後ループで `$this->smaregiOrderGainPointEventService->dispatchGainPointMessage($gainPointEntry['job'], $gainPointEntry['order']);` を送信する。`src/Eccube/Service/Smaregi/SmaregiOrderGainPointEventService.php:52-60` が `$gainedPoints = $Order->getGainedPoints();` を payload に `$job->setMessageClass(SmaregiOrderGainPointMessage::class);` でジョブ登録し、`src/Eccube/MessageHandler/SmaregiOrderGainPointMessageHandler.php:93` `$response = $this->smaregiCustomerService->gainPoints($Order);` でスマレジへ付与ポイントを送信する。監査時点の「SmaregiCustomerService 未注入・本経路からの呼び出し無し」は解消済み。",
+      "note": "非同期(Messenger)経由だが、本インポート経路からスマレジへの付与ポイント送信が成立している。"
     },
     {
       "rowId": 825,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Csv/OrderCsv.php:132-133` `$isPreDeliv = $order->getOrderStatus()?->getId() === OrderStatus::PRE_DELIV;` / `if ($isPreDeliv && $order->getShippingDate() === null) {` が現 develop でもそのまま残り、出荷指示(PRE_DELIV)以外の受注は `:134-137` の状態差し替え・出荷日・送り状番号更新から除外される。設計の「サブ側出荷実施日時の既存有無のみでゲート」にはなっていない。",
+      "evidence": "`src/Eccube/Service/Csv/OrderCsv.php:132-133` に `$isPreDeliv = $order->getOrderStatus()?->getId() === OrderStatus::PRE_DELIV;` / `if ($isPreDeliv && $order->getShippingDate() === null) {` が現 develop でもそのまま存在し、`:134-137` の `$order->setOrderStatus($newStatus);` `->setShippingDate($shippingDate)->setInvoiceNumber($invoiceNumber);` は両条件成立時のみ実行される。設計の「サブ側出荷実施日時の既存のみでゲート」に対し、受注ステータス(PRE_DELIV)条件が残存しており監査時点と同一。",
       "note": ""
     },
     {
       "rowId": 826,
       "status": "部分対応",
-      "evidence": "出荷日側は是正済み: `src/Eccube/Service/Csv/OrderCsv.php:143-144` `$shipping->setShippingDate($shippingDate);` で dtb_shipping.shipping_date(`src/Eccube/Entity/Shipping.php:114`)へ保存するようになった。一方、送り状番号は依然 `src/Eccube/Service/Csv/OrderCsv.php:135-137` `$order->setShippingDate($shippingDate)->setInvoiceNumber($invoiceNumber);` で親注文の dtb_order.invoice_number(`src/Eccube/Entity/Order.php:694` `#[ORM\\Column(name: 'invoice_number', type: Types::STRING, length: 64, ...)]`)へ保存され、`Shipping::setTrackingNumber()`(`src/Eccube/Entity/Shipping.php:665`)は本取込経路から一切呼ばれない。dtb_shipping.tracking_number への移行が未了。",
-      "note": "設計期待値のうち出荷日のみ充足、送り状番号は未充足。"
+      "evidence": "出荷日側は是正済み: `src/Eccube/Service/Csv/OrderCsv.php:143-144` `foreach ($order->getShippings() as $shipping) { $shipping->setShippingDate($shippingDate);` により `src/Eccube/Entity/Shipping.php:114` `#[ORM\\Column(name: 'shipping_date', ...)]` すなわち dtb_shipping.shipping_date へ保存されるようになった（監査時点の setShippingCommitDate は削除）。一方、送り状番号は未是正で `src/Eccube/Service/Csv/OrderCsv.php:135-137` が `$order->setShippingDate($shippingDate)->setInvoiceNumber($invoiceNumber);` と親注文側に保存し（`src/Eccube/Entity/Order.php:694` `#[ORM\\Column(name: 'invoice_number', type: Types::STRING, length: 64, nullable: true, options: ['comment' => '送り状No.'])]`）、`src/Eccube/Entity/Shipping.php:665-667` `public function setTrackingNumber(?string $trackingNumber): Shipping` は本取込経路から一度も呼ばれない（OrderCsv.php 内に setTrackingNumber の記述なし）。",
+      "note": "設計の2要素のうち dtb_shipping.shipping_date への移行のみ達成、dtb_shipping.tracking_number への移行は未達。"
     },
     {
       "rowId": 827,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:286` の POST ルートは `path: '/%eccube_admin_route%/order/shipping_result_csv/import', name: 'admin_shipping_result_csv_upload', methods: ['POST']` のままで、GET 画面(`:250-253` path 同 import, name=admin_shipping_result_csv_import)と同一パスをメソッド分岐している。設計の `/order/shipping_result_csv/upload` パスは develop 全体に存在しない。",
+      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:286` `#[Route(path: '/%eccube_admin_route%/order/shipping_result_csv/import', name: 'admin_shipping_result_csv_upload', methods: ['POST'], ),]` と `:250-254` の GET ルート（同一パス、`name: 'admin_shipping_result_csv_import'`, `methods: ['GET']`）が監査時点と同一構成で、同一パスをHTTPメソッドで分岐する形が残る。スナップショット全体の `grep -rn \"shipping_result_csv/upload\" .` はヒット0で、`upload` パス定義は `script/`・`bin/`・`app/config/**`・`.github/workflows/**` にも存在しない。",
       "note": ""
     },
     {
       "rowId": 828,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:341-354` で `beginTransaction()` 後、try 内に `$this->pointService->gainPoints($updateOrder['order']);`(:346) と `registerGainPointJob`(:348) を置き、`commit()` は :354。commit 後(:370-373)に実行されるのは `dispatchGainPointMessage` のみで、監査時点と同じ構造。出荷完了メール送信に相当する処理も依然存在しない（コンストラクタ :35-43 に MailService なし）。",
-      "note": ""
+      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:341` `$this->entityManager->beginTransaction();` の内側かつ try 内で `:345-352` `foreach ($updatedOrders as $updateOrder) { $this->pointService->gainPoints($updateOrder['order']); ... $gainPointJob = $this->smaregiOrderGainPointEventService->registerGainPointJob(...); }` を実行し、`:354` `$this->entityManager->commit();`、`:355-359` の `catch (\\Throwable $e)` で `$this->entityManager->rollback();` する構造は監査時点と同一。commit 後(`:370-376`)に実行されるのは `dispatchGainPointMessage` のみ。出荷完了メール送信は依然存在せず、controller に MailService 参照は皆無（`:35-43` の注入一覧に MailService なし）。",
+      "note": "設計の「ポイント付与・出荷完了メール・別系ポイントを try の外側で独立実行」のうち独立化されているのは Smaregi メッセージ dispatch のみで、監査時点から実質変化なし。"
     },
     {
       "rowId": 829,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:99` `'配送先_住所3' => '配送先_住所3',`(CSV_HEADER) と `:172` `'配送先_住所3' => '配送先_住所3',`(NOT_REQUIRED_CSV_HEADER) が現 develop でも残存し、列数は設計より1多い。ヘッダ照合 `checkHeaderValues` / `checkHeaderSize`(`src/Eccube/Controller/Admin/Order/OrderCsvController.php:334`, `src/Eccube/Service/Csv/OrderCsv.php:108`)も変更なし。",
+      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:99` `'配送先_住所3' => '配送先_住所3',`（CSV_HEADER 内、`:98` の `'配送先_住所2'` 直後）および `:172` `'配送先_住所3' => '配送先_住所3',`（NOT_REQUIRED_CSV_HEADER 内）が現 develop でも存在し列数は設計より1多い。ヘッダ照合も `:334` `$this->orderCsv->checkHeaderValues(array_keys($headers), $columnHeaders, array_keys($notRequiredCsvHeader));` と `src/Eccube/Service/Csv/OrderCsv.php:108` `$this->checkHeaderSize($headerSize, $row, $rowIndex);` で監査時点と同一。",
       "note": ""
     },
     {
       "rowId": 830,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Csv/AbstractCsvService.php:131-134` `$formFile = $form->get('import_file')->getData(); if ($formFile === null || $formFile->getSize() === 0) { return null; }` が現 develop でもそのままで、呼び出し元 `src/Eccube/Controller/Admin/Order/OrderCsvController.php:303-308` で null 時に render + `redirectToRoute('admin_shipping_result_csv_import')` へ復帰する。サイズ0が処理経路に残る設計(pf-eccube3挙動)とは依然異なる。",
-      "note": ""
+      "evidence": "`src/Eccube/Service/Csv/AbstractCsvService.php:129-134` `public function getFormFile(FormInterface $form): ?UploadedFile { $formFile = $form->get('import_file')->getData(); if ($formFile === null || $formFile->getSize() === 0) { return null; }` とサイズ0の明示ガードが現 develop にも残存。呼び出し元 `src/Eccube/Controller/Admin/Order/OrderCsvController.php:303-308` `$formFile = $this->orderCsv->getFormFile($form); if ($formFile === null) { $this->orderCsv->render(); return $this->redirectToRoute('admin_shipping_result_csv_import'); }` も同一。",
+      "note": "設計（pf-eccube3挙動）が示す「サイズ0でも処理経路に残る」とは依然として異なる。"
     },
     {
       "rowId": 832,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:97-110` は `'配送先_住所1'`, `'配送先_住所2'`, `'配送先_住所3'`, `'配送先_TEL1'` … の並びで、設計にない `配送先_住所3` を住所2の直後に定義したまま（設計は住所2の次が配送先_TEL1）。出力SQLも `src/Eccube/Repository/OrderRepository.php:1525` `'s.addr03 AS shipping_addr03',` を含み、テンプレート `src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:82` `{% for header in headers|keys %}` がその定義をそのまま表示する。65列契約のままで変更なし。",
+      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:97-100` は `'配送先_住所1' / '配送先_住所2' / '配送先_住所3' => '配送先_住所3', / '配送先_TEL1'` の順で、設計にない `配送先_住所3` が住所2とTEL1の間に定義されたまま（NOT_REQUIRED 側も `:170-173` で同様）。`src/Eccube/Repository/OrderRepository.php:1525` `'s.addr03 AS shipping_addr03',` も出力SQLに残存。`src/Eccube/Resource/template/admin/Order/shipping_result_csv_import.twig:82` `{% for header in headers|keys %}` が CSV_HEADER 定義をそのまま表示する構造も未変更で、実装は65列契約のまま。",
       "note": ""
     },
     {
       "rowId": 833,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Csv/OrderCsv.php:130` `$invoiceNumber = $row['送り状No.'];` と文字列のまま扱い、`:137` `->setInvoiceNumber($invoiceNumber)` で `src/Eccube/Entity/Order.php:694` の string(64) 列へ保存する。`src/Eccube/Service/Csv/AbstractCsvService.php` には `checkRequiredHeaders` による必須空チェックのみで `送り状No.` の数値(整数)検証(is_numeric/ctype_digit 等)は存在しない（同ファイル内の is_numeric 使用箇所は :117-118 の CMC 判定のみ）。",
+      "evidence": "`src/Eccube/Service/Csv/OrderCsv.php:130` `$invoiceNumber = $row['送り状No.'];` と文字列のまま代入して `:137` `->setInvoiceNumber($invoiceNumber)` へ渡す。格納先は `src/Eccube/Entity/Order.php:694` `#[ORM\\Column(name: 'invoice_number', type: Types::STRING, length: 64, nullable: true, options: ['comment' => '送り状No.'])]` で string 64。`src/Eccube/Service/Csv/AbstractCsvService.php` を `送り状|invoiceNumber|is_numeric|ctype_digit|numeric` で検索したヒットは `:117-118` の getCmc 内 `is_numeric($cmc)` のみで、送り状No. の数値(整数)検証は存在しない。`OrderCsv::registerShippingResult`(`:99-151`) の検証も `checkHeaderSize` / `checkRequiredHeaders` / 出荷日の `new \\DateTime($row['出荷日'])` 変換のみ。",
       "note": ""
     }
   ]

@@ -4,38 +4,38 @@
     {
       "rowId": 193,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:35` `#[AsCommand(name: 'eccube:update-weekly-stock-history', description: '週間在庫履歴更新バッチ')]` のままで、設計の `product:batch exportWeeklyStockHistoryCsv` は存在しない。src/app/html/config 全体を `exportWeeklyStockHistoryCsv` / `product:batch` で再検索しても、ヒットは `src/Eccube/Command/InventoryReflectionCommand.php:29,32` の「3系 product:batch からの移管」を説明するコメントのみで、設計コマンド名の実装は無い。",
-      "note": ""
+      "evidence": "`src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:35` `#[AsCommand(name: 'eccube:update-weekly-stock-history', description: '週間在庫履歴更新バッチ')]` で監査時点と同一。同ファイル33行目の使い方コメントも `bin/console eccube:update-weekly-stock-history`。スナップショット全体（src/ に加え script/ops/**, scripts/, bin/, app/config/**, .github/workflows/**, infra/ を含む）を `exportWeeklyStockHistoryCsv` / `product:batch` で横断検索したが、ヒットは `src/Eccube/Command/InventoryReflectionCommand.php:29,32` の3系移植元コメント（`bin/console product:batch inventoryReflection`）のみで、設計コマンド名 `product:batch exportWeeklyStockHistoryCsv` の実装は存在しない。",
+      "note": "script/ops 配下は db / imgcheck / monthly-inventory-snapshot / stg-db-maintenance の4ディレクトリのみで、週間在庫履歴関連のスクリプトは無い。"
     },
     {
       "rowId": 194,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:54-76` は今も `$this->weeklyStockHistoryTempRepository->truncate();` → `getStockData()`/`insertBatch()` → `$this->weeklyStockHistoryRepository->replaceFromTemp();` というDBテーブル洗い替え方式で、CSV出力処理は無い（`src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:167` `TRUNCATE TABLE dtb_weekly_stock_history_temp`、同:130-138 `INSERT INTO dtb_weekly_stock_history_temp`）。`weekly_stock_history.csv` / `HareruyaEc.const.weekly_stock_history.csv_path` を src・app・html・config 横断で再検索したがヒット0件。設計のCSV生成・DB非更新は未充足。",
-      "note": ""
+      "evidence": "`src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:54` `$this->weeklyStockHistoryTempRepository->truncate();`、同:70-71 `getStockData($dateStr, self::BATCH_SIZE, $offset)` → `insertBatch($data)`、同:76 `$this->weeklyStockHistoryRepository->replaceFromTemp();` と、監査時点と同じDBテーブル洗い替え方式のまま。`src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:167` `TRUNCATE TABLE dtb_weekly_stock_history_temp`、同:130-138 `INSERT INTO dtb_weekly_stock_history_temp` も不変。スナップショット全体（src/, app/config/**, html/, script/ops/**, bin/, .github/**）を `weekly_stock_history.csv` / `HareruyaEc.const.weekly_stock_history` / `weekly_stock_history`（設定ファイル側）で検索してヒット0件で、設計のCSV出力パス設定・CSV書き出し実装は追加されていない。",
+      "note": "設計要求の「DBは更新しない」に対し実装が dtb_weekly_stock_history / _temp を更新する点も監査時点のまま。"
     },
     {
       "rowId": 195,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:69-79` のSQLは依然として `FROM dtb_stock_history sh WHERE sh.product_stock_id BETWEEN :start AND :end GROUP BY sh.product_stock_id` で、dtb_product_stock を起点にしたLEFT JOINは無い。0埋めは同:99 `$values[] = $column === null ? 0 : (int) substr((string) $column, -$exp);` の週別NULL→0変換のみで、在庫履歴が1件も無い商品在庫は行自体が生成されない。`src/Eccube/Repository/DtbWeeklyStockHistoryRepository.php` にも ProductStock / dtb_product_stock 参照は無く（grep ヒット0件）、全商品規格IDを対象とする補完処理は追加されていない。",
+      "evidence": "`src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:69-79` のSQLは依然 `FROM dtb_stock_history sh WHERE sh.product_stock_id BETWEEN :start AND :end GROUP BY sh.product_stock_id` で、dtb_product_stock 起点の LEFT JOIN になっていない。0埋めは同:99 `$values[] = $column === null ? 0 : (int) substr((string) $column, -$exp);` の週別NULL→0変換のみで、在庫履歴が1件も無い商品在庫の行自体は生成されない。`getLastProductStockId()`（同:148-159 `COALESCE(MAX(ps.id), 0)` from ProductStock）は `BatchUpdateWeeklyStockHistoryAction.php:58,67` でバッチ範囲上限の算出に使われるだけで、全商品規格IDを0行として補完する処理は src/ にも script/ops/** にも存在しない。",
       "note": ""
     },
     {
       "rowId": 196,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:29` は今も `return $this->exportService->exportAndUpload(false);` で、`src/Eccube/Service/UniSearch/UniSearchExportService.php:99-109` は `if (!$isManualExecution) { ... deleteRemoteByPrefixes(...) ... upload($gzipPath) ... upload($donePath) ... }` のため false ではSFTP送信が実行される。管理画面側も `src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:21` 「フィードファイルを更新する」POST → `src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:49` `$result = $this->feedCreateAction->handle();` のままで、作成のみ（SFTPスキップ）にする分岐は追加されていない。",
-      "note": "コマンド側 `src/Eccube/Command/SendUnisearchProductFeedCommand.php:43,52` は `--manual` オプションで true を渡せるが、管理画面経路は false 固定のまま。"
+      "evidence": "`src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:29` `return $this->exportService->exportAndUpload(false);` が監査時点のまま。`src/Eccube/Service/UniSearch/UniSearchExportService.php:65` `public function exportAndUpload(bool $isManualExecution = false): int` と同:99-109 `if (!$isManualExecution) { ... deleteRemoteByPrefixes(['feed_hareruyamtg_', 'done_hareruyamtg_']) ... upload($gzipPath) ... upload($donePath) ... }` により false 渡しでは SFTP 送信が実行される（true のときだけ同:111 「手動実行モードのため、SFTPアップロードをスキップしました。」）。管理画面導線も不変で `src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:19,22` のPOSTフォーム「フィードファイルを更新する」→ `src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:41,49` `if ($request->isMethod('POST')) { ... $result = $this->feedCreateAction->handle(); }`。管理画面経由でSFTP送信をスキップする分岐は develop 全体に無い。",
+      "note": "`--manual` オプション（`src/Eccube/Command/SendUnisearchProductFeedCommand.php:43,52`）はCLI経路のみで、管理画面からは false 固定。"
     },
     {
       "rowId": 197,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/UniSearch/UniSearchSftpService.php:23` `use phpseclib3\\Net\\SFTP;`、同:66 `if (!$sftp->put($remotePath, $localPath, SFTP::SOURCE_LOCAL_FILE))` とSFTP実装のままで、`src/Eccube/Service/UniSearch/UniSearchExportService.php:90` `$gzipPath = $this->compressFile($tsvPath, self::COMPRESS_GZIP);`、同:103,106 `$this->sftpService->upload($gzipPath)` / `upload($donePath)` で .tsv.gz と doneファイルを送信している。`src/Eccube` と `html` 配下を `scp` で再検索してもヒット0件で、設計のSCP送信は実装されていない。",
-      "note": ""
+      "evidence": "`src/Eccube/Service/UniSearch/UniSearchExportService.php:90` `$gzipPath = $this->compressFile($tsvPath, self::COMPRESS_GZIP);`（同:510 `$destPath = $sourcePath.'.gz';`）で .tsv.gz を作成し、同:103,106 `$this->sftpService->upload($gzipPath)` / `upload($donePath)` で送信。送信実体は `src/Eccube/Service/UniSearch/UniSearchSftpService.php:23` `use phpseclib3\\Net\\SFTP;`、同:66 `if (!$sftp->put($remotePath, $localPath, SFTP::SOURCE_LOCAL_FILE))` で監査時点と同一のSFTP実装。今回はスナップショット全体（src/, html/, script/ops/**, bin/, app/config/**, .github/workflows/**, infra/）を `scp` / `feed_upload` で再検索したが、SCPコマンド実行の実装は皆無（唯一のヒットは `infra/cdk.json:49` の `aws-stepfunctions-tasks` 設定で無関係）。設計要求のSCP送信は未実装。",
+      "note": "設計はTSVファイルの送信を要求するが、実装は gz 圧縮後に送信する点も不変。"
     },
     {
       "rowId": 198,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/SendUnisearchProductFeedCommand.php:30` `name: 'unisearch:batch'` の手動実行可能なConsoleコマンドが存在するだけで、5分おき起動の定義は無い。`src/Eccube`・`html` 配下を `feed_upload` / `feed.log` / `ec2-user` / `Step Functions` / `stepfunctions` / `crontab` で再検索してもヒット0件、`schedule` のヒットはイベント日程CSV（EventBulkCsvImportHandler 等）の無関係なものだけ。リポジトリ全体で `unisearch:batch` を参照するのは上記コマンド定義1箇所のみで、スケジューラ定義から呼ばれていない。",
-      "note": ""
+      "evidence": "`src/Eccube/Command/SendUnisearchProductFeedCommand.php:29-32` `#[AsCommand(name: 'unisearch:batch', description: 'ユニサーチ商品フィード連携用Batch')]` は存在するが、5分おきに起動する定義は develop に無い（`unisearch:batch` の全ツリー検索ヒットはこの定義1件のみ）。今回追加確認した範囲: `script/ops/**` は db / imgcheck / monthly-inventory-snapshot / stg-db-maintenance の4ディレクトリのみでユニサーチ関連スクリプトは無く（`script/ops/stg-db-maintenance/restoresnapshot_stg_from_tmp.sh:17` に「Step Functions からのスケジュール起動は別管理」と記載）、`bin/` は console と template_jp.php のみ、`app/config/**` のユニサーチ関連は `app/config/eccube/packages/eccube.yaml:390-394` のSFTP接続パラメータと `eccube_nav.yaml:37-39` のメニュー定義だけ、`.github/workflows/**` で `schedule: cron` を持つのは `vaddy-1.yml:3-4` `- cron: '0 15 * * 0'` と `vaddy-2.yml:3-4` `- cron: '0 21 * * 0'`（脆弱性スキャン）のみで `deploy-batch.yml:3-4` は `on: workflow_dispatch`、`infra/lib/**` の `Schedule.cron` 使用は `infra/lib/constructs/datastore.ts:83-85` のバックアップ計画のみ。`*/5 * * * *` 相当・feed_upload.sh・feed.log・Step Functions ステートマシン定義はいずれも存在しない。",
+      "note": "Step Functions 起動は `src/Eccube/Command/SmaregiOtcDeleteCommand.php:37` 等でもコメント上「外部設定」とされ、リポジトリ内に定義を持たない方針が見て取れる。"
     }
   ]
 }

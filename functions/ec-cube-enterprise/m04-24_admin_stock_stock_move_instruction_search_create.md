@@ -88,7 +88,7 @@
 
 ### 在庫移動指示詳細
 
-`admin_stock_move_instruction_detail` は対象指示を `find($id)` で取得（無ければ404）し、`StockMoveInstructionDetailType`（block prefix `admin_stock_move_instruction_detail`、CSRFトークンID `stock_move_instruction_detail`）で送り状No.（`trackingNo`、`Length max=255`）・備考（`memo`、`Textarea`）を編集する。
+`admin_stock_move_instruction_detail` は対象指示を `find($id)` で取得（無ければ404）し、`StockMoveInstructionDetailType`（block prefix `admin_stock_move_instruction_detail`、CSRFトークンID `stock_move_instruction_detail`）で送り状No.（`trackingNo`、`Length max=255`）・備考（`memo`、`Textarea`）を編集する。Excel識別ID 1-9 / 1-14 は両項目を最大16384文字とするため、送り状No.はExcelより実装上限が小さく、備考はフォームにLength制約がないという実装差がある。
 
 表示項目（読取）: 移動指示ID／発送状況／出庫元店舗／入庫先店舗／登録日／登録者（`RegisteredMember.name`）／更新日／最終更新者（`UpdateMember.name`）／基準価格合計（`standardTotalPrice`）／移動原価合計（`outboundTotalCost`）／高額商品合計（`highTotalPrice`）／通常商品合計（`regularTotalPrice`）。下部に当該指示に紐づく在庫移動一覧（`DtbStockMoveTransfer` を `moveInstructionId` で `id ASC` 取得）を表示。
 
@@ -400,7 +400,7 @@ M04-25
 1-6登録日ラベル---移動指示リストの登録日
 1-7更新日ラベル---移動指示リストの更新日
 1-8最終更新者ラベル---移動指示リストの最終更新者
-1-9送状No.全角・半角-65535byte-送状No.がある場合に値を表示
+1-9送状No.全角・半角-16384文字-送状No.がある場合に値を表示
 数値だけでなく全角・半角を許容する
 1-10総販売価格の合計ラベル---各在庫移動の持つ全ての商品の販売価格の合計金額
 1-11総移動原価の合計ラベル---各在庫移動の持つ総移動原価の合計金額
@@ -410,7 +410,7 @@ M04-25
 1-13●●円未満の商品の合計ラベル---出庫元店舗の高額商品閾値の最も高い価格を取得し閾値とする
 項目名も閾値の値を使って、●●円未満の商品と表記する
 商品の基準価格が●●円未満の商品の合計金額
-1-14備考全角・半角-65535byte-メモの入力は入庫完了以外で入力可能
+1-14備考全角・半角-16384文字-メモの入力は入庫完了以外で入力可能
 1-15登録ボタン---備考の変更内容を登録する処理を実行
 1-16削除ボタン---表示中の指示書リストを削除する処理を実行
 出庫待ち状態の場合のみ削除可能

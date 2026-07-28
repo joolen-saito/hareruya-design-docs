@@ -4,44 +4,44 @@
     {
       "rowId": 239,
       "status": "未対応",
-      "evidence": "`src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:58-60` は監査時点と同一で `STATUS_STOCKING_COMPLETE = 11` / `STATUS_HAS_UNREGISTERED_STOCK = 12` / `STATUS_STOCKING_PENDING = 13`。自動入庫バッチ `src/Eccube/Service/Admin/OtcBuyOrder/BatchAutoStockAction.php:45` も `$this->otcBuyOrderRepository->findBy(['OtcBuyOrderStatus' => MtbOtcBuyOrderStatus::STATUS_STOCKING_PENDING]);` のままで、設計が入庫待ちとするステータス12を対象にしていない。",
-      "note": "ネット買取側 WAITING_FOR_STOCK=16 は設計通りという監査時点の評価も変化なし。"
+      "evidence": "`src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:58-60` は現 develop でも `STATUS_STOCKING_COMPLETE = 11;` / `STATUS_HAS_UNREGISTERED_STOCK = 12;` / `STATUS_STOCKING_PENDING = 13;` のままで、ステータス12は「未登録在庫あり」。`src/Eccube/Service/Admin/OtcBuyOrder/BatchAutoStockAction.php:45` `$OtcBuyOrders = $this->otcBuyOrderRepository->findBy(['OtcBuyOrderStatus' => MtbOtcBuyOrderStatus::STATUS_STOCKING_PENDING]);` と対象は依然13のみで、設計が入庫待ちとする12は対象外。`script/ops/**`(db, imgcheck, monthly-inventory-snapshot, stg-db-maintenance), `bin/`, `app/config/**`, `.github/**` を `otc|buy_order|buyOrder|入庫` で横断検索したが、自動入庫の代替実装・別経路の起動定義は存在しない（ヒットは `script/ops/stg-db-maintenance/mask.sh:156` のマスキングSQLと `app/config/eccube/packages/eccube.yaml:231-232` のメールテンプレートIDのみ）。",
+      "note": "ネット買取側 WAITING_FOR_STOCK=16 が設計通りという監査時点の評価も変化なし。"
     },
     {
       "rowId": 240,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderStockInbound.php:54-60` は現 develop でも `foreach ($ProductClass->getProductStocks() as $Stock) { if ($Stock->getBaseInfo()->getId() === $BaseInfo->getId()) { $ProductStock = $Stock; break; } }` と BaseInfo 一致だけで既存在庫行を選び、同ファイル:80 の保存も `stockLocationId: $ProductStock?->getStockLocationId() ?? ProductStock::STOCK_LOCATION_ECCUBE,` と既存 stock_location_id を引き継ぐ。ProductClass 側に `getProductStockByLocation()`（`src/Eccube/Entity/ProductClass.php:623`）等の EC-CUBE 在庫特定手段があるが自動入庫処理では未使用で、EC-CUBE 在庫行への限定は行われていない。",
-      "note": ""
+      "evidence": "`src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderStockInbound.php:56-61` は現 develop でも `foreach ($ProductClass->getProductStocks() as $Stock) { if ($Stock->getBaseInfo()->getId() === $BaseInfo->getId()) { $ProductStock = $Stock; break; } }` と BaseInfo 一致だけで既存在庫行を選び、同ファイル:81 `stockLocationId: $ProductStock?->getStockLocationId() ?? ProductStock::STOCK_LOCATION_ECCUBE,` と既存の stock_location_id を引き継ぐ。ネット買取側 `src/Eccube/Service/Admin/Purchase/BuyOrderStockInbound.php:56-57,81` も同一構造。EC-CUBE在庫専用取得 `getProductStockByEccube` は `src/Eccube/Entity/ProductClass.php:595` に存在するが、`STOCK_LOCATION_ECCUBE`/`getProductStockByEccube` の全件 grep では利用箇所は `src/Eccube/Service/ShoppingService.php:92` 等のみで、自動入庫経路からは未使用。",
+      "note": "stock_location_id = STOCK_LOCATION_ECCUBE での絞り込みは依然未実装。"
     },
     {
       "rowId": 241,
       "status": "未対応",
-      "evidence": "在庫数更新は `src/Eccube/Service/EntityManager/ProductStockEntityManager.php:43` の `$ProductStock->setStock($stock);` のみで、ProductClass 側の在庫更新はない（同ファイル内に ProductClass の stock 設定処理なし）。`src/Eccube/Service/Admin/OtcBuyOrder/` 配下および `src/Eccube/Service/Admin/Purchase/` 配下を `->setStock(` で再検索してもヒット0件。`src/Eccube/Entity/ProductClass.php` にも `#[ORM\\Column(name: 'stock' ...)]` は存在せず（`stock_unlimited` のみ:187）、`dtb_product_class.stock` を更新するSQLも src/ app/ 全体で不在。監査時点と同状態。",
-      "note": "dtb_product_stock.stock と在庫履歴の登録のみ実装されており、dtb_product_class.stock 更新という設計要求は依然未充足。"
+      "evidence": "自動入庫の在庫数更新は `src/Eccube/Service/EntityManager/ProductStockEntityManager.php:44` `$ProductStock->setStock($stock);` のみで、ProductClass 側の在庫更新はない。`src/Eccube` 全体の `setStock(` grep で ProductClass に対する setStock 呼び出しは0件（ヒットは ProductStock / DtbStockSplitJoin(Detail) / DtbStockHistory のみ。`CsvImportController.php:1653` 等は `setStockUnlimited`）。`dtb_product_class.stock` を更新するSQLも `src/Eccube/Service/Admin/OtcBuyOrder`, `src/Eccube/Service/Admin/Purchase`, `src/Eccube/Service/EntityManager`, `src/Eccube/Repository` に不在。加えて `script/ops/**`(db/imgcheck/monthly-inventory-snapshot/stg-db-maintenance), `bin/`, `app/config/**`, `.github/workflows/**` を横断検索したが、在庫数を補正するバッチ・運用スクリプトの追加もない。",
+      "note": "dtb_product_stock.stock と在庫履歴の登録のみで、dtb_product_class.stock 更新という設計要求は依然未充足。"
     },
     {
       "rowId": 242,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:45` は現 develop でも `#[AsCommand(name: 'eccube:otc-buy-order:aggregate-summary', description: '店頭買取集計バッチ')]` のままで、`aliases` 指定もなし。src/ app/ html/ config/ を `otcBuyOrder:batch` / `updateSummary` で再検索してもヒット0件。設計のコマンド名では起動できない。",
-      "note": "引数側（`$this->addArgument('date', InputArgument::OPTIONAL, '集計対象日 (Y-m-d形式)。省略時は前日');` 同ファイル:57）は設計の YYYY-MM-DD 1引数を満たすが、コマンド名が不一致。"
+      "evidence": "`src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:45` `#[AsCommand(name: 'eccube:otc-buy-order:aggregate-summary', description: '店頭買取集計バッチ')]` のままで alias 指定（`setAliases`）もない。スナップショット全体（`src/`, `script/`, `bin/`, `app/config/`, `.github/`, `html/`, `codeception/` を含む）を `otcBuyOrder:batch` / `updateSummary` / `aggregate-summary` で grep しても、ヒットは同 Command の 35・38（docblock の使用例）と 45 行のみで、設計名 `otcBuyOrder:batch updateSummary` で起動できる定義・ラッパスクリプトは存在しない。",
+      "note": "引数は `同ファイル:56` `$this->addArgument('date', InputArgument::OPTIONAL, '集計対象日 (Y-m-d形式)。省略時は前日');` で設計の1引数(YYYY-MM-DD)を満たすが、コマンド名が設計と不一致。"
     },
     {
       "rowId": 243,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/DtbOtcBuyOrderRepository.php:956-958` は現 develop でも `WHERE` 直後に `AND` が来る不正SQLのまま: `WHERE\\n    AND obo.complete_date >= :from\\n    AND obo.complete_date <= :to`。UNION 側（同ファイル:969-971）も同様に `WHERE\\n    AND obo.complete_date >= :from`。集計対象ステータス条件も追加されていない。呼び出し元 `src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php:50-52` も `$noSectionProducts = $this->otcBuyOrderRepository->getNoSectionProducts($summaryDate);` → `$this->mailService->sendNoSectionAlertMail($noSectionProducts);` のままで変化なし。",
-      "note": ""
+      "evidence": "`src/Eccube/Repository/DtbOtcBuyOrderRepository.php:956-958` は現 develop でも `WHERE` 直後に `AND` が来る構文不正のまま: `WHERE\\n    AND obo.complete_date >= :from\\n    AND obo.complete_date <= :to`。UNION 側（同ファイル:969-971）も同様に `WHERE\\n    AND obo.complete_date >= :from`。集計対象ステータス条件も追加されていない。呼び出し元 `src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php:50-53` `$noSectionProducts = $this->otcBuyOrderRepository->getNoSectionProducts($summaryDate); if (!empty($noSectionProducts)) { $this->mailService->sendNoSectionAlertMail($noSectionProducts); }` も未変更のため、SQL 実行時に例外となり通知本文生成へ到達しない。",
+      "note": "行番号は監査時点の956から変わらず。"
     },
     {
       "rowId": 244,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php` の `execute()`（:61-91）に `set_time_limit` / `ini_set('max_execution_time', ...)` は存在せず、`src/Eccube/Service/Admin/OtcBuyOrder/`、`src/Eccube/Repository/DtbOtcBuyOrder*.php` を `set_time_limit|max_execution_time` で grep してもヒット0件（ヒットするのは CSV 出力系 `src/Eccube/Service/Csv/AbstractCsvService.php:187` 等の別経路のみ）。監査時点と同状態。",
-      "note": ""
+      "evidence": "`src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:60-91` の `execute()` にも `src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php:40-59` の `handle()` にも実行時間制限解除処理はない。`src/`, `bin/`, `app/`, `script/`, `html/` を `set_time_limit|max_execution_time` で grep しても本バッチ経路（Command / BatchAggregateSummaryAction / SummaryByDateAggregator / DtbOtcBuyOrderRepository / DtbOtcBuyOrderSummaryRepository）は1件もヒットせず、ヒットするのは画面系 CSV 出力など別経路のみ（例: `src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderSummaryController.php:147` `set_time_limit(0);` は集計CSVダウンロード）。`script/ops/**` にも本バッチを起動し時間制限を制御するラッパスクリプトは存在しない。",
+      "note": "画面側の set_time_limit(0) はバッチ経路ではないため設計要件を満たさない。"
     },
     {
       "rowId": 245,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/MailService.php:1281` `log_info('部門未設定商品通知メール送信開始');`、:1285 `log_info('部門未設定商品通知メールアドレス未設定のため送信せず終了');`、:1308 `log_info('部門未設定商品通知メール送信完了');` の3点のみで、引数 `array $products`(:1279) の件数をログ出力する処理は現 develop にも存在しない（同メソッド内に `count(` なし）。",
-      "note": ""
+      "evidence": "`src/Eccube/Service/MailService.php:1279-1312` の `sendNoSectionAlertMail(array $products)` は `1281` `log_info('部門未設定商品通知メール送信開始');`、`1285` `log_info('部門未設定商品通知メールアドレス未設定のため送信せず終了');`、`1308` `log_info('部門未設定商品通知メール送信完了');` の3点のみで、`count($products)` 等の件数ログは現 develop にも存在しない（同メソッド内に `count(` なし）。",
+      "note": "監査時点の1190行から1279行へ移動したが実装内容は同一。"
     }
   ]
 }

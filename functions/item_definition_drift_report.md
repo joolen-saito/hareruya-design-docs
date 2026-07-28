@@ -1,36 +1,36 @@
 # 画面項目定義ドリフト差分レポート
 
-HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）を、機能設計書の入力項目節（現行ソースから起こした値）と突き合わせ、乖離を出力する。**HTMLは正典ではなく機能設計書を正とする**。生成物（HTML・Excel・機能設計書）は一切書き換えない。
+HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）を、機能設計書の入力項目節（現行ソースから起こした実装確認値）と突き合わせ、差分を出力する。**重複仕様の正はExcel基本設計**とし、差分は実装済み・実装違い・移行前後差へ分類する。生成物（HTML・Excel・機能設計書）は一切書き換えない。
 
-生成: `functions/audit_item_definition_drift.py` ／ 全出力: `functions/item_definition_drift.tsv`（881行）
+生成: `functions/audit_item_definition_drift.py` ／ 全出力: `functions/item_definition_drift.tsv`（908行）
 
 ## サマリ
 
 ### 要対応（確定乖離）
 - **必須/任意の不一致: 44 件** — HTML(Excel)とソースで必須判定が逆
-- **最大文字数の不一致（両方に数値・値違い）: 12 件** — 文字型のみ（数値項目の最大値は除外）
+- **最大文字数の不一致（両方に数値・値違い）: 11 件** — 文字型のみ（数値項目の最大値は除外）
 - **最大文字数がHTMLに無いがソースにある: 29 件** — HTMLが文字数制限を書き落とし
 
 ### 要確認
 - 最大文字数がHTMLにあるがソースに数値記載が無い: 44 件 — ソースがconfig委譲/範囲/非数値。TSV参照
-- 未マッチ（設計書に入力項目節はあるがラベル不一致）: 577 件 — 未リバース or ラベル揺れ or Excelにのみ在る項目。TSV参照
+- 未マッチ（設計書に入力項目節はあるがラベル不一致）: 606 件 — 未リバース or ラベル揺れ or Excelにのみ在る項目。TSV参照
 
 ### 参考（突合対象外）
-- 設計書に入力項目節が無いシート（検索/一覧/CSV等）: 175 件
+- 設計書に入力項目節が無いシート（検索/一覧/CSV等）: 174 件
 
 ## 読み方
 
-- **正典は機能設計書**（FormType＋config定数＋Doctrine からリバースした値）。HTMLがこれと食い違う箇所を乖離とする。設計書自体の実装忠実性は別途 config.yml 直読みで再検証できる。
+- **重複仕様の正典はExcel基本設計**。機能設計書はFormType＋config定数＋Doctrineからリバースした実装確認値として比較し、食い違いを実装違いまたは移行前後差として分類する。機能設計書自体の実装忠実性は別途config.yml直読みで再検証できる。
 - **必須**: HTML の ◯/○/〇＝必須、-/空＝任意。条件付き（△・自由文）は判定保留で乖離に数えない。
 - **最大文字数**: 文字型（半角/全角/文字列/テキスト/メール/パスワード）のみ比較。数値項目の「最大値」（金額の上限等）は文字数ではないので対象外。範囲は上限を採用。
-- **maxlen-missing-html は必ずしも実装バグではない**。Excel の記載漏れの可能性が高く、ソース上限が過大（実質無制限）なら記載不要の判断もあり得る。人の判断が要る。
+- **maxlen-missing-html は自動でExcelの記載漏れと断定しない**。Excel要求、実装上限、移行前後差を確認してから分類する。
 
 ## 書番別
 
 | 書番 | 必須不一致 | 最大数値不一致 | 最大HTML欠落 | 最大ソース未記載 | 未マッチ | 対象外 |
 |---|---|---|---|---|---|---|
-| 0201 | 0 | 3 | 0 | 0 | 3 | 0 |
-| 0202 | 1 | 0 | 1 | 0 | 108 | 93 |
+| 0201 | 0 | 1 | 0 | 0 | 3 | 0 |
+| 0202 | 1 | 1 | 1 | 0 | 108 | 93 |
 | 0203 | 5 | 1 | 7 | 0 | 86 | 2 |
 | 0204 | 16 | 0 | 2 | 0 | 43 | 1 |
 | 0205 | 0 | 0 | 0 | 0 | 7 | 0 |
@@ -39,14 +39,14 @@ HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）�
 | 0208 | 0 | 0 | 1 | 7 | 6 | 0 |
 | 0209 | 13 | 5 | 10 | 8 | 60 | 8 |
 | 0210 | 0 | 0 | 0 | 0 | 8 | 0 |
-| 0211 | 0 | 0 | 0 | 0 | 32 | 0 |
+| 0211 | 0 | 0 | 0 | 0 | 64 | 0 |
 | 0212 | 0 | 0 | 2 | 8 | 26 | 4 |
 | 0213 | 1 | 0 | 1 | 0 | 10 | 17 |
 | 0214 | 2 | 0 | 0 | 0 | 31 | 28 |
 | 0302 | 0 | 0 | 0 | 0 | 2 | 2 |
 | 0303 | 0 | 0 | 0 | 0 | 4 | 0 |
 | 0304 | 0 | 0 | 0 | 0 | 18 | 3 |
-| 0305 | 0 | 0 | 0 | 0 | 4 | 1 |
+| 0305 | 0 | 0 | 0 | 0 | 1 | 0 |
 | 0306 | 2 | 3 | 3 | 8 | 39 | 2 |
 | 0308 | 0 | 0 | 0 | 4 | 12 | 2 |
 
@@ -99,13 +99,12 @@ HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）�
 | 0306 | 会員情報変更 | 15-1-12 | パスワード | 必須 | 任意 | f06-18_front_member_mypage_customer_edit.md |
 | 0306 | 退会 | 17-2-3 | パスワード | 必須 | 任意 | f06-21_front_member_mypage_withdraw.md |
 
-## 最大文字数の不一致（両方に数値）（12件）
+## 最大文字数の不一致（両方に数値）（11件）
 
 | 書番 | シート | 識別ID | ラベル | HTML | 設計書 | 根拠設計書 |
 |---|---|---|---|---|---|---|
 | 0201 | メンバー管理 | 4-1-1 | 名前 | 255 | 50 | m11-02_admin_system_setting_setting_system_member_edit.md |
-| 0201 | メンバー管理 | 4-1-4 | ログインID | 255 | 50 | m11-02_admin_system_setting_setting_system_member_edit.md |
-| 0201 | メンバー管理 | 4-1-6 | パスワード | 255 | 50 | m11-02_admin_system_setting_setting_system_member_edit.md |
+| 0202 | 在庫一括編集 | 7-2-11 | 在庫変動理由 | 16384 | 65535 | m04-03_admin_stock_stock_bulk_edit.md |
 | 0203 | 受注情報編集 | 15-10-22 | 会社名 | 50 | 255 | m05-11_admin_order_order_edit.md |
 | 0209 | 自動送信メール | 9-1-4 | テンプレ名称 | 255 | 50 | m10-08_admin_base_setting_setting_shop_auto_mail.md |
 | 0209 | 店舗登録 | 13-1-1 | 会社名 | 255 | 50 | m10-15_admin_base_setting_setting_shop_register.md |
@@ -155,13 +154,13 @@ HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）�
 | 書番 | シート | 識別ID | ラベル | HTML | 設計書記載 | 根拠設計書 |
 |---|---|---|---|---|---|---|
 | 0206 | 買取一覧(検索入力) | 3-2 | 買取番号 | 50 | 255（設定 `eccube_stext_len` の値）。 | m07-01_admin_online_purchase_purchase_online_search_list.md |
-| 0207 | 会員検索一覧(検索入力) | 3-1 | 会員ID・メールアドレス・お名前 | 100 | コアの会員検索フォームに準ずる | m08-01_admin_customer_customer_search_list.md |
+| 0207 | 会員検索一覧(検索入力) | 3-1 | 会員ID・メールアドレス・お名前 | 255 | コアの会員検索フォームに準ずる | m08-01_admin_customer_customer_search_list.md |
 | 0207 | 会員検索一覧(検索入力) | 3-3 | 検索パターン名 | 30865 | コア標準テキスト | m08-01_admin_customer_customer_search_list.md |
 | 0207 | 会員検索一覧(検索入力) | 3-18 | 購入商品名・コード | 50 | コアの会員検索フォームに準ずる | m08-01_admin_customer_customer_search_list.md |
-| 0207 | 会員登録編集 | 9-6 | 会社名 | 100 | コア会員フォームに準ずる | m08-04_admin_customer_customer_edit.md |
-| 0207 | 会員登録編集 | 9-13 | 住所1 | 90 | SJIS換算の上限（プラグイン定数`customer_address.length.addr`） | m08-04_admin_customer_customer_edit.md |
-| 0207 | 会員登録編集 | 9-14 | 住所2 | 90 | SJIS換算の上限（同上） | m08-04_admin_customer_customer_edit.md |
-| 0207 | 会員登録編集 | 9-16 | メールアドレス | 85 | コア会員フォームに準ずる | m08-04_admin_customer_customer_edit.md |
+| 0207 | 会員登録編集 | 9-6 | 会社名 | 50 | コア会員フォームに準ずる | m08-04_admin_customer_customer_edit.md |
+| 0207 | 会員登録編集 | 9-13 | 住所1 | 200 | SJIS換算の上限（プラグイン定数`customer_address.length.addr`） | m08-04_admin_customer_customer_edit.md |
+| 0207 | 会員登録編集 | 9-14 | 住所2 | 200 | SJIS換算の上限（同上） | m08-04_admin_customer_customer_edit.md |
+| 0207 | 会員登録編集 | 9-16 | メールアドレス | 255 | コア会員フォームに準ずる | m08-04_admin_customer_customer_edit.md |
 | 0207 | 会員登録編集 | 9-23 | パスワード | 32 | 確認用と合わせて2入力 | m08-04_admin_customer_customer_edit.md |
 | 0208 | カード詳細(登録・編集・削除) | 6-1-2 | カード名(英) | 255 | 同上 | m14-04_admin_card_card_register_update_delete.md |
 | 0208 | カード詳細(登録・編集・削除) | 6-1-3 | アリーナカード名(日) | 255 | 同上 | m14-04_admin_card_card_register_update_delete.md |
@@ -188,11 +187,11 @@ HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）�
 | 0212 | アーキタイプ編集 | 11-4 | 解説(英) | 1024 | 同上 | m15-09_admin_deck_deck_archetype_crud.md |
 | 0306 | 新規会員登録 | 3-1-10 | メールアドレス | 255 | メール用フォーム部品の上限に従う（再入力一致を要する） | f06-01_front_member_customer_entry.md |
 | 0306 | 新規会員登録 | 3-1-11 | メールアドレス(確認) | 255 | 同上 | f06-01_front_member_customer_entry.md |
-| 0306 | 新規会員登録 | 3-1-12 | パスワード | 32 | パスワード用フォーム部品の上限に従う（再入力一致を要する） | f06-01_front_member_customer_entry.md |
-| 0306 | 新規会員登録 | 3-1-13 | パスワード(確認) | 32 | 同上 | f06-01_front_member_customer_entry.md |
-| 0306 | パスワード再発行 | 6-3-4 | 新しいパスワード(確認) | 32 | 同上 | f06-04_front_member_forgot_password_reset.md |
+| 0306 | 新規会員登録 | 3-1-12 | パスワード | 50 | パスワード用フォーム部品の上限に従う（再入力一致を要する） | f06-01_front_member_customer_entry.md |
+| 0306 | 新規会員登録 | 3-1-13 | パスワード(確認) | 50 | 同上 | f06-01_front_member_customer_entry.md |
+| 0306 | パスワード再発行 | 6-3-4 | 新しいパスワード(確認) | 50 | 同上 | f06-04_front_member_forgot_password_reset.md |
 | 0306 | 会員情報変更 | 15-1-10 | メールアドレス | 255 | フォーム上限なし（メール形式） | f06-18_front_member_mypage_customer_edit.md |
-| 0306 | 会員情報変更 | 15-1-12 | パスワード | 32 | フォーム上限なし（パスワード種別、2欄一致） | f06-18_front_member_mypage_customer_edit.md |
+| 0306 | 会員情報変更 | 15-1-12 | パスワード | 50 | フォーム上限なし（パスワード種別、2欄一致） | f06-18_front_member_mypage_customer_edit.md |
 | 0306 | 退会 | 17-2-3 | パスワード | 32 | フォーム上限なし（パスワード種別の入力欄） | f06-21_front_member_mypage_withdraw.md |
 | 0308 | 店頭買取査定申込前ログイン | 3-2 | メールアドレス | 320 | フォーム上限なし（ログイン用） | f08-01_front_store_purchase_otc_buy_entry_login.md |
 | 0308 | 店頭買取査定申込前ログイン | 3-3 | パスワード | 320 | フォーム上限なし（パスワード種別の入力欄） | f08-01_front_store_purchase_otc_buy_entry_login.md |
@@ -201,5 +200,5 @@ HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）�
 
 ## 未マッチ・突合対象外について
 
-未マッチ 577 件と突合対象外 175 件は件数が多いため本レポートには列挙しない。`functions/item_definition_drift.tsv` の `kind=unmatched-label` / `kind=no-input-section` を参照。未マッチには 「Excelにあってソースに無い項目（真の差分）」と「ラベル表記揺れ」が混在する。
+未マッチ 606 件と突合対象外 174 件は件数が多いため本レポートには列挙しない。`functions/item_definition_drift.tsv` の `kind=unmatched-label` / `kind=no-input-section` を参照。未マッチには 「Excelにあってソースに無い項目（真の差分）」と「ラベル表記揺れ」が混在する。
 

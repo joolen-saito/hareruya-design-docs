@@ -4,49 +4,49 @@
     {
       "rowId": 1066,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:201-213` `resolveStoreName()` は `if ($mailOrderEnabled && $baseInfoId === (int) $this->eccubeConfig->get('eccube_root_base_info_id')) { return '通販'; }` の後は `short_name_jp` / `shop_name` を返すのみで「その他」を生成しない。集計SQLも `src/Eccube/Repository/DtbDailySummaryRepository.php:63` `o.base_info_id IS NOT NULL`、同 `:145` `obo.base_info_id IS NOT NULL` のままで base_info_id が NULL の売上を拾わない。スナップショット全体を `その他` で検索しても M12-01 系のヒットは `src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:233` （別機能M12の売上分析）のみ。",
+      "evidence": "`src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:201-213` `resolveStoreName()` は `if ($mailOrderEnabled && $baseInfoId === (int) $this->eccubeConfig->get('eccube_root_base_info_id')) { return '通販'; }` の後は `short_name_jp` / `shop_name` を返すのみで「その他」を生成しない。集計SQLも `src/Eccube/Repository/DtbDailySummaryRepository.php:63` `o.base_info_id IS NOT NULL`、同 `:145` `obo.base_info_id IS NOT NULL` のままで base_info_id が NULL の売上を拾わない。`その他` での横断検索のヒットは `src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:233`（別機能の「その他(カード)」）のみ。`script/ops/**`（db / imgcheck / monthly-inventory-snapshot / stg-db-maintenance の4ディレクトリ）・`bin/`・`app/config/**`・`.github/workflows/**` を `summary|集計|廃棄|欠品` で再検索したが、集計処理の実体は `app/config/eccube/packages/eccube_nav.yaml:279-287` のメニュー定義のみで、M12-01集計の代替実装は存在しない。",
       "note": ""
     },
     {
       "rowId": 1067,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/DtbDailySummaryRepository.php:177` `->addSelect('(0 - COALESCE(SUM(sh.stockChangeQuantity), 0)) AS waste_quantity')`、同 `:210` `->addSelect('(0 - COALESCE(SUM(sh.stockChangeQuantity), 0)) AS shortage_quantity')` と監査時点のまま数量合計を算出。`src/Eccube/Entity/DtbDailySummary.php:66-69` も `private int $wasteCount = 0; private int $shortageCount = 0;` で金額カラムを持たず、`廃棄コスト`/`waste_cost`/`disposal_cost`/`shortage_cost` は src・tests のいずれにも存在しない。",
+      "evidence": "`src/Eccube/Repository/DtbDailySummaryRepository.php:177` `->addSelect('(0 - COALESCE(SUM(sh.stockChangeQuantity), 0)) AS waste_quantity')`、同 `:210` `->addSelect('(0 - COALESCE(SUM(sh.stockChangeQuantity), 0)) AS shortage_quantity')` と監査時点のまま数量合計を算出。`src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:85` `$summaries[$baseInfoId]['waste_count'] += (int) ($row['waste_quantity'] ?? 0);`、同 `:98` の `shortage_count += (int) ($row['shortage_quantity'] ?? 0)` でその数量をそのまま保存し、`:132-133` で `'waste_count'` / `'shortage_count'` として INSERT する。原価・コスト金額を合算する処理は無い。バッチ側の実装移管も無く、`script/ops/**`・`bin/`・`.github/workflows/**` に集計スクリプトは存在しない（`summary|集計|廃棄|欠品` grep でシェル/ワークフローのヒット 0）。",
       "note": ""
     },
     {
       "rowId": 1068,
       "status": "対応済み",
-      "evidence": "切り上げに是正済み。日次バッチ `src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:116-118` `$saleAverage = $saleCount > 0 ? (int) ceil($grossSales / $saleCount) : 0;`、月次バッチ `src/Eccube/Service/Admin/Analysis/BatchAggregateMonthlySummaryAction.php:51-52` も同じ `(int) ceil($grossSales / $saleCount)`。表示側も `src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:194-199` `private static function calcOrderAverage(int $grossSales, int $saleCount): float { return $saleCount > 0 ? ceil($grossSales / $saleCount) : 0.0; }`（docコメント `取引単価(平均) = 総売上 ÷ 取引数（切り上げ）`）で切り上げ。監査時点の `PHP_ROUND_HALF_UP` と合計行の `intdiv()` は Analysis 配下（Service/Controller/template/SummaryCsvExporterService）から完全に消えており、合計行は `AnalysisSummaryBuilder.php:164-189` `buildTotal()` の列単純合算（設計「合計行: 一覧の各列について期間分を合算する」に一致）。除数は設計 sheet-6 識別ID 8「取引単価(平均)…1回の取引に対しての購入金額平均」の通り取引数(sale_count)。",
-      "note": "設計 sheet-6 業務ルール「平均単価 金額合計を数量合計で割る。表示時は切り上げる。」の切り上げ要件を、日次・月次バッチと表示ビルダーの3経路すべてで充足。"
+      "evidence": "切り上げに是正済み。日次バッチ `src/Eccube/Service/Admin/Analysis/BatchAggregateDailySummaryAction.php:116-118` `$saleAverage = $saleCount > 0 ? (int) ceil($grossSales / $saleCount) : 0;`、月次バッチ `src/Eccube/Service/Admin/Analysis/BatchAggregateMonthlySummaryAction.php` も同じ `(int) ceil($grossSales / $saleCount)`。表示側も `src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:194-199` `private static function calcOrderAverage(int $grossSales, int $saleCount): float { return $saleCount > 0 ? ceil($grossSales / $saleCount) : 0.0; }`（docコメント `:192` 「取引単価(平均) = 総売上 ÷ 取引数（切り上げ）」）で切り上げ、行生成 `:95` / `:144` から呼ばれる。監査時点の `PHP_ROUND_HALF_UP` と合計行の `intdiv()` は Analysis 配下から消えており、合計行は `AnalysisSummaryBuilder.php:164-189` `buildTotal()` の列単純合算（設計 sheet-6「合計行 一覧の各列について期間分を合算する」に一致）。",
+      "note": "設計 sheet-6「平均単価 金額合計を数量合計で割る。表示時は切り上げる。」の切り上げ要件を、日次バッチ・月次バッチ・表示ビルダーの3経路すべてで充足。"
     },
     {
       "rowId": 1069,
       "status": "未対応",
-      "evidence": "`src/Eccube/Form/Type/Admin/Analysis/SummaryType.php:61-86` の `buildForm()` は `summary_type` / `summary_date_from` / `summary_date_to` / `mail_order_enabled` / `store_sales_all` / `store_sales_targets` の6項目のみを `->add()` しており、`multi` / `device_type` / `columns_order` / `columns_product` は無い。`src/Eccube/Resource/template/admin/Analysis/summary.twig:140-184` の検索欄も同6ウィジェットのみ（`form_widget(searchForm.summary_type)` 〜 `form_widget(searchForm.store_sales_targets)`）。`src/Eccube/Controller/Admin/Analysis/SummaryController.php:226-249` `extractSearchCriteria()` も同5値しか取り出さない。",
+      "evidence": "`src/Eccube/Form/Type/Admin/Analysis/SummaryType.php:61-86` の `buildForm()` は `summary_type` / `summary_date_from` / `summary_date_to` / `mail_order_enabled` / `store_sales_all` / `store_sales_targets` の6項目のみを `->add()` しており、`multi` / `device_type` / `columns_order` / `columns_product` は無い。`src/Eccube/Resource/template/admin/Analysis/summary.twig:140-184` の検索欄も同6ウィジェットのみ（`form_widget(searchForm.summary_type)` 〜 `form_widget(searchForm.store_sales_targets)`）。`src/Eccube/Controller/Admin/Analysis/SummaryController.php:226-249` `extractSearchCriteria()` も同5値しか取り出さない。`columns_order|columns_product|device_type|multi` の横断検索でも Analysis/Summary 系のヒットは無い（ヒットは OrderRepository/CustomerRepository 等の別機能）。",
       "note": ""
     },
     {
       "rowId": 1070,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:126-155` `fetchMonthlySummary()` は `$rowsRaw = $this->dtbMonthlySummaryRepository->fetchSummaryRowsByMonthRangeAndTargets(...)` の結果を `foreach ($rowsRaw as $raw) { $rows[] = [...]; }` と写像するだけ、`:75-104` `fetchDailySummary()` も同様で欠落日付・月を生成しない。`DatePeriod` はスナップショット src 配下で `src/Eccube/Service/ShoppingService.php` にしか存在せず、Analysis 配下には `DatePeriod` / `+1 month` / `+1 day` のいずれもヒットしない。`src/Eccube/Repository/DtbMonthlySummaryRepository.php:88-123` も存在行のみを SELECT する。",
+      "evidence": "`src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:126-155` `fetchMonthlySummary()` は `$rowsRaw = $this->dtbMonthlySummaryRepository->fetchSummaryRowsByMonthRangeAndTargets(...)` の結果を `foreach ($rowsRaw as $raw) { $rows[] = [...]; }` と写像するだけ、`:75-104` `fetchDailySummary()` も同様で欠落日付・月を生成しない。`src/Eccube/Repository/DtbMonthlySummaryRepository.php:88-123` も `WHERE s.summary_month >= :from AND s.summary_month <= :to ... ORDER BY s.summary_month ASC` の存在行のみ SELECT。`DatePeriod` / `+1 month` / `+1 day` を Analysis 配下と両 Summary リポジトリ・CSVエクスポータに対して grep してヒット 0 で、0埋め補完処理は現 develop に存在しない。",
       "note": "設計 sheet-6「期間の補完: 集計結果に存在しない日付・月は、表示項目の各列を0として一覧へ補完する」は未実装のまま。"
     },
     {
       "rowId": 1071,
       "status": "未対応",
       "evidence": "`src/Eccube/Controller/Admin/Analysis/SummaryController.php:310-317` `resolveInitialSummaryDateRange()` は月次で `$currentMonth = new \\DateTime('first day of this month'); $twoMonthsAgo = (clone $currentMonth)->modify('-2 months'); return [$twoMonthsAgo, $currentMonth];` と、To を当月初日にしたまま（同 `:305-306` のdocコメントも「月次: 2ヶ月前 ～ 当月」）。日次のみ `:319-322` で `new \\DateTime('last day of this month')` を使う。設計 sheet-6「サイドメニュー『月別集計』…集計日を当月初日の2か月前〜当月末日とした検索画面を表示する」「集計日To 初期値 当月末日」とは不一致。",
-      "note": "Twig側の集計タイプ切替は summary.twig:89-98 で daily/monthly ルートへの遷移に変わり日付上書きJSは消えたが、Controller の当月初日設定は監査時点のまま。"
+      "note": "Twig側の集計タイプ切替は summary.twig:89-98 で daily/monthly ルートへの `window.location.href` 遷移に変わり日付上書きJSは消えたが、遷移先が上記Controllerを通るため月次Toは当月初日のままで挙動は監査時点と同じ。"
     },
     {
       "rowId": 1072,
       "status": "対応済み",
-      "evidence": "`src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:44-57` に先頭列『集計日』の `EXPORT_HEADER_DAILY`、`:62-75` に先頭列『集計月』の `EXPORT_HEADER_MONTHLY` が定義され、`:102-104` `$exportHeader = $summaryType === 'monthly' ? self::EXPORT_HEADER_MONTHLY : self::EXPORT_HEADER_DAILY;` で集計タイプにより差し替え、`:108` `$this->csvExportService->fputcsv($exportHeader);` で出力する。監査時点の単一 `EXPORT_HEADER` 固定は解消済み。",
+      "evidence": "`src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:44-57` に先頭列『集計日』の `EXPORT_HEADER_DAILY`、`:62-75` に先頭列『集計月』の `EXPORT_HEADER_MONTHLY` が定義され、`:102-104` `$exportHeader = $summaryType === 'monthly' ? self::EXPORT_HEADER_MONTHLY : self::EXPORT_HEADER_DAILY;` で集計タイプにより差し替え、`:108` `$this->csvExportService->fputcsv($exportHeader);` で出力する。`$summaryType` は `src/Eccube/Controller/Admin/Analysis/SummaryController.php:189-190` の `export()` から渡る。監査時点の単一 `EXPORT_HEADER` 固定は解消済み。",
       "note": "設計 sheet-7 識別ID1『集計日 または 集計月 ※集計タイプ(日別・月別)によってヘッダー項目名が差し替わる』を充足。"
     },
     {
       "rowId": 1073,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:128` `$filename = sprintf('summary_%s_%s.csv', $summaryType, (new \\DateTime())->format('YmdHis'));` のままで、`report_summary` はスナップショットの src・tests 全体を検索しても1件もヒットしない。設計 sheet-7『ファイル名はreport_summary_に出力日時（YmdHis）を付けた.csv』とは不一致。",
+      "evidence": "`src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:128` `$filename = sprintf('summary_%s_%s.csv', $summaryType, (new \\DateTime())->format('YmdHis'));` のままで、`report_summary` はスナップショット全体（`src/` に加え `script/`・`bin/`・`app/config/`）を検索しても1件もヒットしない。設計 sheet-7『ファイル名はreport_summary_に出力日時（YmdHis）を付けた.csv』とは不一致。",
       "note": ""
     },
     {
@@ -58,19 +58,19 @@
     {
       "rowId": 1075,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:101` `$summary = $summaryData['summary'];` のみを取り出し、`:109-124` `foreach ($summary as $row) { $this->csvExportService->fputcsv([...]); }` の後 `:125` `fclose()` で終了する。`$summaryData['total']`（`AnalysisSummaryBuilder::buildTotal()` の結果）は同ファイル内で一切参照されず、`総合計` の文字列も Csv/Exporter 配下に存在しない（画面側 `src/Eccube/Resource/template/admin/Analysis/summary.twig:236` の `admin.analysis.summary.grand_total` のみ）。",
+      "evidence": "`src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:101` `$summary = $summaryData['summary'];` のみを取り出し、`:109-124` `foreach ($summary as $row) { $this->csvExportService->fputcsv([...]); }` の後 `:125` `fclose()` で終了する。`$summaryData['total']`（`AnalysisSummaryBuilder::build()` の `src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:54` `'total' => $this->buildTotal($summary, $resultColumns),`）は当サービス内で一切参照されず、総合計行をCSV末尾へ出力する処理は無い（総合計行は画面側 `src/Eccube/Resource/template/admin/Analysis/summary.twig:235-246` のみ）。",
       "note": ""
     },
     {
       "rowId": 1076,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/DtbDailySummaryRepository.php:171-193` `aggregateDisposalQuantityByBaseInfo()` は `:177` `->addSelect('(0 - COALESCE(SUM(sh.stockChangeQuantity), 0)) AS waste_quantity')` と在庫変動数量を集計し、`src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:101,150` `'discard_count' => (int) ($raw['waste_count'] ?? 0)` を経て `src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:121` `(string) ((int) ($row['discard_count'] ?? 0))` としてCSV出力する。廃棄コスト（原価金額）の算出は develop に存在しない。",
+      "evidence": "`src/Eccube/Repository/DtbDailySummaryRepository.php:171-193` `aggregateDisposalQuantityByBaseInfo()` は `:177` `->addSelect('(0 - COALESCE(SUM(sh.stockChangeQuantity), 0)) AS waste_quantity')` と在庫変動数量を集計（docコメント `:162` も「廃棄数量を店舗(base_info)ごとに集計する」）し、`src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:101,150` `'discard_count' => (int) ($raw['waste_count'] ?? 0)` を経て `src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:121` `(string) ((int) ($row['discard_count'] ?? 0))` としてCSV出力する。廃棄コスト（原価金額）の算出は `src/` にも `script/ops/**`・`bin/`・`.github/workflows/**` にも存在しない。",
       "note": ""
     },
     {
       "rowId": 1077,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/DtbDailySummaryRepository.php:204-224` `aggregateShortageQuantityByBaseInfo()` は `:210` `->addSelect('(0 - COALESCE(SUM(sh.stockChangeQuantity), 0)) AS shortage_quantity')` と数量を集計し、`src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:102,151` `'out_of_stock_count' => (int) ($raw['shortage_count'] ?? 0)` を経て `src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:122` `(string) ((int) ($row['out_of_stock_count'] ?? 0))` としてCSV出力する。欠品コスト合計の算出コードは存在しない。",
+      "evidence": "`src/Eccube/Repository/DtbDailySummaryRepository.php:204-224` `aggregateShortageQuantityByBaseInfo()` は `:210` `->addSelect('(0 - COALESCE(SUM(sh.stockChangeQuantity), 0)) AS shortage_quantity')` と数量を集計し、`src/Eccube/Service/Admin/Analysis/AnalysisSummaryBuilder.php:102,151` `'out_of_stock_count' => (int) ($raw['shortage_count'] ?? 0)` を経て `src/Eccube/Service/Csv/Exporter/SummaryCsvExporterService.php:122` `(string) ((int) ($row['out_of_stock_count'] ?? 0))` としてCSV出力する。欠品コスト合計の算出コードは `src/`・`script/`・`bin/`・`.github/workflows/` のいずれにも存在しない。",
       "note": ""
     }
   ]

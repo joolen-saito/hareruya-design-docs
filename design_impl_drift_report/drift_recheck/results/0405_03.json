@@ -4,74 +4,74 @@
     {
       "rowId": 223,
       "status": "未対応",
-      "evidence": "`src/Eccube/Util/OrderUtil.php:37` `$orderNumbers[$order->getid()] = $order->getOrderNumber();` のままで、`getOrderNo()`（`src/Eccube/Entity/Order.php:888` の `order_no` カラム getter, 定義は同ファイル465-466行）は使われていない。呼び出し元 `src/Eccube/Service/Admin/Order/CheckDuplicatePointAction.php:47` `$orderNumbers = OrderUtil::getOrderNumbers($this->orderRepository, $orderIds);` も監査時点と同じ。`order_number` は `src/Eccube/Entity/Order.php:648-649` に別カラムとして存在し続けている。",
-      "note": ""
+      "evidence": "`src/Eccube/Util/OrderUtil.php:37` は現 develop でも `$orderNumbers[$order->getid()] = $order->getOrderNumber();` のままで、`order_no` の getter（`src/Eccube/Entity/Order.php:888-891` `public function getOrderNo(): ?string { return $this->order_no; }`、カラム定義は同 `465-466` `#[ORM\\Column(name: 'order_no', ...)] private ?string $order_no = null;`）は使われていない。`getOrderNumber()` は `src/Eccube/Entity/Order.php:1769-1772` で別カラム `order_number`（同 `648-649` `#[ORM\\Column(name: 'order_number', ..., 'comment' => '注文番号')]`）を返す。設計 sheet-8 の『dtb_order（受注） order_no 通知に添える注文番号』は未充足。",
+      "note": "呼び出し元 `src/Eccube/Service/Admin/Order/CheckDuplicatePointAction.php` の `OrderUtil::getOrderNumbers()` 経由も同じ。script/ops 配下（db / imgcheck / monthly-inventory-snapshot / stg-db-maintenance）にポイント二重登録チェック相当のスクリプトは無く、実装移管もない。"
     },
     {
       "rowId": 224,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/MailService.php:2496-2501` は `try { $this->mailer->send($message); ... } catch (TransportExceptionInterface $e) { log_critical($e->getMessage()); }` のままで再throwしない。Command 側 `src/Eccube/Command/CheckDuplicatePointCommand.php:50-57` の `catch (\\Throwable $e) { $io->error([...]); return Command::FAILURE; }` には送信エラーが伝播しない構造が維持されている。",
-      "note": "監査時点の行番号(2266)からズレているが、コード内容は同一。"
+      "evidence": "`src/Eccube/Service/MailService.php:2496-2501` は現 develop でも `try { $this->mailer->send($message); log_info('ポイント重複登録通知メール送信完了'); } catch (TransportExceptionInterface $e) { log_critical($e->getMessage()); }` で再throwしない。そのため `src/Eccube/Command/CheckDuplicatePointCommand.php:50-57` の `catch (\\Throwable $e) { $io->error(['ポイント二重登録チェック処理でエラーが発生しました', $e->getMessage()]); return Command::FAILURE; }` に送信エラーが伝播せず、設計 sheet-8『取得・送信時のエラー エラーメッセージをコンソールに出力する』は未充足。",
+      "note": "監査時点の行番号(2266)からズレているがコード内容は同一。"
     },
     {
       "rowId": 225,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/CheckDuplicatePointCommand.php:46` `$io->text('ポイント二重登録チェックバッチ開始');`、同59-63行 `$io->success('ポイント二重登録は検出されませんでした。')` / `$io->success(sprintf('ポイント二重登録が検出されました。（%d件）', $count))` のままで日時付与なし。同ファイルを `date(` / `DateTimeImmutable` / `format('Y` で grep しても該当なし。",
-      "note": ""
+      "evidence": "`src/Eccube/Command/CheckDuplicatePointCommand.php:46` `$io->text('ポイント二重登録チェックバッチ開始');`、同 `60` `$io->success('ポイント二重登録は検出されませんでした。');`、同 `62` `$io->success(sprintf('ポイント二重登録が検出されました。（%d件）', $count));` のままで、同ファイル全体に `date(` / `DateTime` / `format(` による日時生成・付与はない。設計 sheet-8『開始・完了のコンソール出力（日時付き）』は未充足。",
+      "note": "起動ラッパー側での日時付与も無い（`script/ops/**`・`bin/`（console, template_jp.php のみ）・`.github/workflows/**` に当該バッチの起動定義や日時整形は不在）。"
     },
     {
       "rowId": 226,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/CheckNotReflectedPointUsageCommand.php:34-37` `#[AsCommand(name: 'eccube:check-not-reflected-point-usage', description: 'ポイント利用未反映チェックバッチ')]` のまま。`src/Eccube/Command` 全体の AsCommand 名一覧を抽出しても `order:batch` は存在せず、`grep -rn \"order:batch\\|checkNotReflectedPointUsage\" src/ app/` のヒットは同 Command クラスの型名参照(41,55行)のみで alias 定義はない。",
-      "note": ""
+      "evidence": "`src/Eccube/Command/CheckNotReflectedPointUsageCommand.php:34-37` は `#[AsCommand(name: 'eccube:check-not-reflected-point-usage', description: 'ポイント利用未反映チェックバッチ')]` のままで `aliases` 指定も無い。スナップショット全体（`src/`, `script/ops/**`, `bin/`, `app/config/**`, `.github/workflows/**`, `html/`, `docs/`）を `order:batch` / `checkNotReflectedPointUsage` で grep してもヒットは同 Command と `tests/Eccube/Tests/Command/CheckNotReflectedPointUsageCommandTest.php` のみ。設計コマンド名 `order:batch checkNotReflectedPointUsage` の入口は存在しない。",
+      "note": "script/ops 配下は db/init.sh・imgcheck/bigfilefinder.sh・monthly-inventory-snapshot/inventory.sh・stg-db-maintenance/mask.sh 等の運用スクリプトのみで、本バッチのラッパーは無い。"
     },
     {
       "rowId": 227,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/CheckNotReflectedPointUsageCommand.php:52` `$io->text('ポイント利用未反映チェックバッチ開始');`、同65-69行 `$io->success('ポイント利用未反映は検出されませんでした。')` / `$io->success(sprintf('ポイント利用未反映が検出されました。（%d件）', $count))` のままで日時なし。同ファイル内に `date(` / `DateTimeImmutable` / `format('Y` の記述は存在しない。",
+      "evidence": "`src/Eccube/Command/CheckNotReflectedPointUsageCommand.php:52` `$io->text('ポイント利用未反映チェックバッチ開始');`、同 `66` `$io->success('ポイント利用未反映は検出されませんでした。');`、同 `68` `$io->success(sprintf('ポイント利用未反映が検出されました。（%d件）', $count));` で監査時点と同一。日時生成・付与処理は同ファイルに無く、設計 sheet-9『開始・完了のコンソール出力（日時付き）』は未充足。",
       "note": ""
     },
     {
       "rowId": 228,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command` 配下の `#[AsCommand(name: ...)]` を全列挙しても smaregi 系は `eccube:smaregi:order:backfill-shipping` / `eccube:smaregi:otc:create-test-order` / `eccube:smaregi:otc:delete` / `eccube:smaregi:stock:backfill` / `eccube:smaregi:update-point` のみで、`smaregi:batch checkSmaregiErrorOrder` は不在。`grep -rn \"checkSmaregiErrorOrder\\|smaregi:batch\" src/ app/` はヒット0件。近接実装 `src/Eccube/Command/SmaregiUpdatePointCommand.php:26` は `#[AsCommand(name: 'eccube:smaregi:update-point', description: 'スマレジ使用ポイント連携バッチ')]` で、同62行 `$this->smaregiUpdatePointAction->handle((int) $orderId);` と単一 orderId 処理のままである。",
-      "note": "設計(sheet-10 利用者視点の入口)の外部契約コマンド名は現 develop に存在しない。"
+      "evidence": "`src/Eccube/Command/*.php` の `#[AsCommand(name: ...)]` を全列挙（51件）しても smaregi 系は `eccube:smaregi:update-point`（`src/Eccube/Command/SmaregiUpdatePointCommand.php:26`）、`eccube:smaregi:stock:backfill`（`SmaregiStockBackfillCommand.php:32`）、`eccube:smaregi:otc:delete`（`SmaregiOtcDeleteCommand.php:39`）、`eccube:smaregi:order:backfill-shipping`（`SmaregiOrderShippingBackfillCommand.php:41-44`）、`eccube:smaregi:otc:create-test-order` のみ。`smaregi:batch` / `checkSmaregiErrorOrder` はスナップショット全体（src, script/ops/**, bin, app/config/**, .github/workflows/**, docs, html）で0ヒット。近接実装 `src/Eccube/Command/SmaregiUpdatePointCommand.php:38` は `$this->addArgument('orderId', InputArgument::OPTIONAL, '対象受注ID', '')`、同 `62` `$this->smaregiUpdatePointAction->handle((int) $orderId);` で単一受注処理のまま。",
+      "note": "`.github/workflows/deploy-batch.yml` を含む workflow 群にも当該バッチの起動定義は無い。"
     },
     {
       "rowId": 229,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/OrderRepository.php:980` `public function getSmaregiErrorOrder(): mixed`（`->where('o.smaregi_error_flg = 1')` で受注＋選手情報を抽出）は現存するが、`grep -rn \"getSmaregiErrorOrder\" src/ app/` のヒットはこの定義1件のみで呼び出し元は依然ゼロ。実行される近接処理 `src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:32-34` は `public function handle(int $orderId): void { $order = $this->orderRepository->find($orderId); ...}` の単一受注処理のままで、エラー受注抽出結果をループしない。",
+      "evidence": "`src/Eccube/Repository/OrderRepository.php:980` の `public function getSmaregiErrorOrder(): mixed`（同 `987` `->where('o.smaregi_error_flg = 1')`）は現存するが、スナップショット全体の `grep -rn getSmaregiErrorOrder`（php/sh/yml/yaml）のヒットは定義行1件のみで呼び出し元ゼロ。実行される近接処理 `src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:32-34` は `public function handle(int $orderId): void { $order = $this->orderRepository->find($orderId); ... }` の単一受注処理で、エラー受注の抽出結果を走査するループは無い。",
       "note": ""
     },
     {
       "rowId": 230,
       "status": "部分対応",
-      "evidence": "指摘箇所 `src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:71-73` は `if (array_key_exists('result', $response)) { return; }` のままで成功時のフラグ解除がなく未修正（失敗時の `setSmaregiErrorFlg(true)` は同57-58行・75-76行に残存）。一方、監査時点に存在しなかった非同期ハンドラ側では成功時解除が実装された: `src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:128-130` `// 連携成功時は過去の連携エラー状態をクリアする。 $Order->setSmaregiErrorFlg(false)->setPointErrorMessage(null);`、同様に `src/Eccube/MessageHandler/SmaregiOrderGainPointMessageHandler.php:127`。設計(sheet-10 処理フロー『連携が成功した場合は受注サブの連携エラーフラグを解除する』)の解除挙動は Messenger リトライ経路でのみ充足し、B05-08 の再連携バッチ／指摘対象 Action では未充足。",
-      "note": ""
+      "evidence": "指摘箇所 `src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:71-73` は監査時点と同じく `if (array_key_exists('result', $response)) { return; }` で、成功時に `setSmaregiErrorFlg(false)` を行わない（失敗時の `setSmaregiErrorFlg(true)` は同 `58` 行・`76` 行に残存）。一方、監査時点に存在しなかった成功時解除が非同期ハンドラ側に新設された: `src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:127-128` `// 連携成功時は過去の連携エラー状態をクリアする。 $Order->setSmaregiErrorFlg(false)->setPointErrorMessage(null);`、同様に `src/Eccube/MessageHandler/SmaregiOrderGainPointMessageHandler.php:127`、`src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderUpdateService.php:106-107`。設計 sheet-10『連携が成功した場合は受注サブの連携エラーフラグを解除する』の解除挙動は Messenger 経路でのみ充足し、B05-08 再連携バッチ／指摘対象 Action では未充足。",
+      "note": "B05-08 のバッチ本体（rowId 228/229）が未実装のため、再連携成功時のフラグ解除には実行経路が無い。"
     },
     {
       "rowId": 231,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:39` `$suspendPoint = $order->getSpendedPoints();`、同54行 `$response = $this->smaregiCustomerService->postSmaregiPoint($player->getSmaregiId(), -$suspendPoint, false);` のままで、`dtb_player.point` の残高を絶対値送信していない。送信先も `src/Eccube/Service/Smaregi/Api/SmaregiCustomerApiClient.php:215` `$url = sprintf('%s/%s/pos/customers/%s/point/add', ...)` の相対加算API(point/add)であり、設計(sheet-10『・ユーザーのポイント数は絶対値で更新を行う』)の絶対値更新ではない。",
+      "evidence": "`src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:39` `$suspendPoint = $order->getSpendedPoints();`、同 `54` `$response = $this->smaregiCustomerService->postSmaregiPoint($player->getSmaregiId(), -$suspendPoint, false);` のままで、`dtb_player.point` の残高を絶対値で送っていない。送信先も `src/Eccube/Service/Smaregi/Api/SmaregiCustomerApiClient.php:215` `$url = sprintf('%s/%s/pos/customers/%s/point/add', rtrim($apiUrl, '/'), $contractId, rawurlencode($smaregiCustomerId));` の相対加算API(point/add)で、`src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:93` も `postSmaregiPoint($smaregiId, -$spendedPoints, false)` と差分連携。設計 sheet-10『・ユーザーのポイント数は絶対値で更新を行う』は未充足。",
       "note": ""
     },
     {
       "rowId": 232,
       "status": "部分対応",
-      "evidence": "監査時点の TODO 仮実装は解消済み。`src/Eccube/Service/Smaregi/SmaregiCustomerService.php:375-410` の `postSmaregiPoint()` は `$this->accessTokenService->getAccessToken($this->smaregiApiIdUrl, $this->smaregiApiContractId, $this->smaregiApiClientId, $this->smaregiApiClientSecret)` でトークンを取得し `$this->customerApiClient->addPoint($this->smaregiApiUrl, $this->smaregiApiContractId, $accessToken, $smaregiCustomerId, $delta)` を実行、`src/Eccube/Service/Smaregi/Api/SmaregiCustomerApiClient.php:215-230` が `POST {apiUrl}/{contractId}/pos/customers/{id}/point/add` を `SmaregiPlatformApiCallLog::OPERATION_CUSTOMER_POINT_UPDATE` として呼ぶ（`.env.dist:102` `SMAREGI_API_URL=https://api.smaregi.dev`）。すなわち『廃止予定APIではなくプラットフォームAPIを使用』は充足。ただし設計期待値後段の『取得したデータでスマレジ連携を行う』側は、B05-08 のエラー受注抽出→再連携バッチ自体が不在（rowId 228/229 参照）のため未充足。",
+      "evidence": "監査時点の『TODO: スマレジAPIを実行する実装を追加』の仮実装は解消済み。`src/Eccube/Service/Smaregi/SmaregiCustomerService.php:386-392` で `$accessToken = $this->accessTokenService->getAccessToken($this->smaregiApiIdUrl, $this->smaregiApiContractId, $this->smaregiApiClientId, $this->smaregiApiClientSecret);` を取得し、同 `398` `$smaregiCustomerId = $this->resolveSmaregiCustomerId($accessToken, $smaregiId);`、同 `404-410` `$response = $this->customerApiClient->addPoint($this->smaregiApiUrl, $this->smaregiApiContractId, $accessToken, $smaregiCustomerId, $delta);` と実APIを呼ぶ。呼び先 `src/Eccube/Service/Smaregi/Api/SmaregiCustomerApiClient.php:215` は `sprintf('%s/%s/pos/customers/%s/point/add', ...)` で、スマレジ プラットフォームAPI（`/{contractId}/pos/...`）を叩いており廃止予定APIではない（同 `412-435` で 2xx 判定・取引ID検証も実装）。よって『廃止予定APIではなくプラットフォームAPIを使用』は充足。ただし設計期待値後段の『取得したデータでスマレジ連携を行う』（sheet-10 の B05-08 = エラー受注を取得して再連携）は、抽出→再連携のバッチ本体が不在（rowId 228/229）のため未充足。",
       "note": "API移行のみ充足のため部分対応と判定。"
     },
     {
       "rowId": 233,
       "status": "未対応",
-      "evidence": "`grep -rn \"usleep\\|sleep(\" src/Eccube/Service/Smaregi/ src/Eccube/Command/ src/Eccube/MessageHandler/` はヒット0件で、受注ごとのインターバル実装は依然存在しない。監査時点と同じく共通HTTPクライアント側の `src/Eccube/Service/Smaregi/Api/SmaregiGuzzleClientFactory.php:82-96` `private function acquireRateLimitToken(string $method)` の `$rateLimit = $limiter->consume(1); if ($rateLimit->isAccepted()) { return; } $rateLimit->wait();` があるのみで、これは設計(sheet-10『リクエスト上限に配慮し、受注ごとに短いインターバルを挟む』)が求める B05-08 再連携バッチの受注ループ内待機ではない（そのバッチ本体が不在）。",
-      "note": ""
+      "evidence": "`grep -rn 'usleep(\\|sleep('` を `src/Eccube/Service/Smaregi`, `src/Eccube/Command`, `src/Eccube/MessageHandler` に対して実行してもヒット0件で、受注ごとの待機処理は現 develop にも無い。監査時点と同じく共通HTTPクライアント側の `src/Eccube/Service/Smaregi/Api/SmaregiGuzzleClientFactory.php:82-96` `private function acquireRateLimitToken(string $method)` に `while (true) { $rateLimit = $limiter->consume(1); if ($rateLimit->isAccepted()) { return; } $rateLimit->wait(); }` があるのみで、これは全スマレジAPI共通のトークンバケット待機であり、設計 sheet-10『リクエスト上限に配慮し、受注ごとに短いインターバルを挟む』が求める B05-08 再連携バッチの受注ループ内待機ではない（そのループ自体が存在しない）。",
+      "note": "`script/ops/**` のシェルスクリプトにもスマレジ再連携のループ／sleep は無い（imgcheck・monthly-inventory-snapshot・stg-db-maintenance・db のみ）。"
     },
     {
       "rowId": 234,
       "status": "未対応",
-      "evidence": "`grep -rn \"checkSmaregiTransaction\\|smaregi:batch\" src/ app/` はヒット0件。`src/Eccube/Command` 配下の smaregi 系 AsCommand は `eccube:smaregi:order:backfill-shipping` / `eccube:smaregi:otc:create-test-order` / `eccube:smaregi:otc:delete` / `eccube:smaregi:stock:backfill` / `eccube:smaregi:update-point` のみで、取引再連携のコンソール入口は不在（在庫側のみ `src/Eccube/Command/SmaregiStockBackfillCommand.php:32` `#[AsCommand(name: 'eccube:smaregi:stock:backfill', description: 'スマレジ在庫変動Webhook連携エラー再連携バッチ ...')]` が存在）。取引参照APIの利用は `src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php:83` `private SmaregiTransactionApiClient $transactionApiClient,` の Webhook 由来子ジョブのみで、設計(sheet-11『コンソールのバッチコマンド smaregi:batch checkSmaregiTransaction』)のバッチ入口要求を満たさない。",
-      "note": ""
+      "evidence": "`checkSmaregiTransaction` / `smaregi:batch` はスナップショット全体（`src/`, `script/ops/**`, `bin/`, `app/config/**`, `.github/workflows/**`, `docs/`）で0ヒット。`src/Eccube/Command` の smaregi 系 AsCommand は `eccube:smaregi:update-point` / `eccube:smaregi:stock:backfill`（`src/Eccube/Command/SmaregiStockBackfillCommand.php:32` `#[AsCommand(name: 'eccube:smaregi:stock:backfill', description: 'スマレジ在庫変動Webhook連携エラー再連携バッチ (未連携の在庫変動を子ジョブとして enqueue する)')]` = 在庫側のみ） / `eccube:smaregi:otc:delete` / `eccube:smaregi:order:backfill-shipping` / `eccube:smaregi:otc:create-test-order` のみで、取引再連携のコンソール入口は不在。取引処理は依然 Webhook 由来の `src/Eccube/MessageHandler/SmaregiTransactionProcessMessageHandler.php` の子ジョブのみで、設計 sheet-11『コンソールのバッチコマンド smaregi:batch checkSmaregiTransaction』のバッチ入口要求を満たさない。",
+      "note": "script/ops 配下（db, imgcheck, monthly-inventory-snapshot, stg-db-maintenance の4系統のみ／waf-log-count は develop スナップショットに存在しない）にも取引再連携スクリプトは無い。"
     }
   ]
 }

@@ -4,19 +4,19 @@
     {
       "rowId": 1273,
       "status": "未対応",
-      "evidence": "`app/template/admin/Cardset/edit.twig:135` `<a href=\"{{ url('admin_card_edit', {id: Card.id}) }}\">《 {{ Card.nameJpWithEn }} 》</a>` のままで `target=\"_blank\"` / `rel` 指定はない。収録カードリストは `edit.twig:122` `{% if Cardset.id %}` 配下（編集時のみ表示）で監査時点と同一。`src/Eccube/Controller/Admin/Card/CardsetController.php:217` `$cardList = $this->cardRepository->getQueryBuilderByCardset($Cardset)` も変更なし。テンプレート全体（173行）に target 属性の追加はない。",
+      "evidence": "`app/template/admin/Cardset/edit.twig:135` `<a href=\"{{ url('admin_card_edit', {id: Card.id}) }}\">《 {{ Card.nameJpWithEn }} 》</a>` のままで `target=\"_blank\"` / `rel` 指定はない。収録カードリストは `edit.twig:121` `{% if Cardset.id %}` 配下（編集時のみ表示）で監査時点と同一。`src/Eccube/Controller/Admin/Card/CardsetController.php:217` `$cardList = $this->cardRepository->getQueryBuilderByCardset($Cardset)` も変更なし。テンプレート全体（173行）に target 属性の追加はない。",
       "note": "遷移先ルート admin_card_edit は設計どおりだが、「新規タブで開く」指定が未実装のまま。"
     },
     {
       "rowId": 1274,
       "status": "未対応",
-      "evidence": "`app/template/admin/Cardset/edit.twig:151` `href=\"{{ pageNo > 1 ? url('admin_cardset_list_paged', {page_no: pageNo}) : url('admin_cardset_list') }}\"` のままで `resume=1` は付与されない。ルート定義も `src/Eccube/Controller/Admin/Card/CardsetController.php:51-52` `#[Route('/%eccube_admin_route%/cardset', name: 'admin_cardset_list')]` / `#[Route('/%eccube_admin_route%/cardset/page/{page_no}', name: 'admin_cardset_list_paged', requirements: ['page_no' => '\\d+'])]` で、設計の `/cardset/{page_no}?resume=1` 形式は存在しない。コントローラ全体（368行）に `resume` の文字列は現れない。セッション保持は `CardsetController.php:87` `$pageCountSessionKey = 'eccube.admin.cardset.search.page_count';`、`:109` `$this->session->set('eccube.admin.cardset.page_no', $page_no);` と監査時点のまま。",
+      "evidence": "`app/template/admin/Cardset/edit.twig:151` `href=\"{{ pageNo > 1 ? url('admin_cardset_list_paged', {page_no: pageNo}) : url('admin_cardset_list') }}\"` のままで `resume=1` は付与されない。ルート定義も `src/Eccube/Controller/Admin/Card/CardsetController.php:51-52` `#[Route('/%eccube_admin_route%/cardset', name: 'admin_cardset_list')]` / `#[Route('/%eccube_admin_route%/cardset/page/{page_no}', name: 'admin_cardset_list_paged', requirements: ['page_no' => '\\d+'])]` で、設計の `/cardset/{page_no}?resume=1` 形式は存在しない。コントローラ全体（368行）に `resume` の文字列は現れない（`grep -rn resume` のヒットは CardController.php:99,316,363 と CardCsvController.php:194 のカード側のみ）。セッション保持は `CardsetController.php:87` `$pageCountSessionKey = 'eccube.admin.cardset.search.page_count';`、`:109` `$this->session->set('eccube.admin.cardset.page_no', $page_no);` と監査時点のまま。",
       "note": ""
     },
     {
       "rowId": 1275,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Admin/Card/FormatController.php:50` `'Formats' => $this->formatRepository->findBy([], ['rank' => 'ASC']),` のままで、第二ソートキー `id ASC` は指定されていない。`src/Eccube/Repository/Master/MtbFormatRepository.php` 全文を確認したが、一覧用の rank+id 複合ソートメソッドは追加されていない（存在するのは `findRankingDisplayFormats()` の `['rank' => 'ASC']`、`findDeckSitemapFormats()` の `->orderBy('f.rank', 'ASC')`、`getFormatsAssignedToEvents()` の `->orderBy('f.id', 'ASC')` のみで、いずれも一覧画面用ではない）。",
+      "evidence": "`src/Eccube/Controller/Admin/Card/FormatController.php:50` `'Formats' => $this->formatRepository->findBy([], ['rank' => 'ASC']),` のままで、第二ソートキー `id ASC` は指定されていない。`src/Eccube/Repository/Master/MtbFormatRepository.php` にも一覧用の rank+id 複合ソートメソッドは追加されていない（存在するのは `findRankingDisplayFormats()`、`findDeckSitemapFormats()` の `->orderBy('f.rank', 'ASC')`(:62)、`getFormatsAssignedToEvents()` の `->orderBy('f.id', 'ASC')`(:126) のみで、いずれも一覧画面用ではない）。",
       "note": ""
     },
     {
@@ -40,13 +40,13 @@
     {
       "rowId": 1279,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Admin/Card/FormatController.php:184-198` で `if (!$Format->getEvents()->isEmpty()) { $this->addError('admin.product.format.error.delete.registered_event', 'admin'); return $this->redirectToRoute('admin_format_list'); }` 以下、deck / archetype も同様に個別キー＋一覧リダイレクトのまま。翻訳ファイルにも `src/Eccube/Resource/locale/messages.ja.yaml:4332-4334` の registered_deck / registered_event / registered_archetype しか存在せず、設計の単一キー `admin.format.error.delete.event` は locale 配下に一切定義がない。Referer 戻り（`headers->get('referer')`）もコントローラ内に存在しない。",
+      "evidence": "`src/Eccube/Controller/Admin/Card/FormatController.php:184-198` で `if (!$Format->getEvents()->isEmpty()) { $this->addError('admin.product.format.error.delete.registered_event', 'admin'); return $this->redirectToRoute('admin_format_list'); }` 以下、deck / archetype も同様に個別キー＋一覧リダイレクトのまま。翻訳ファイルにも `src/Eccube/Resource/locale/messages.ja.yaml:4332-4334` の registered_deck / registered_event / registered_archetype しか存在せず、設計の単一キー `admin.format.error.delete.event` は `grep -rn 'admin.format.error.delete' src app` でヒット 0。Referer 戻り（`headers->get('referer')`）もコントローラ内に存在しない。",
       "note": ""
     },
     {
       "rowId": 1280,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Admin/Card/FormatController.php:200-201` は `$this->entityManager->remove($Format);` `$this->entityManager->flush();` のみで、dtb_card_format 行の事前削除処理は追加されていない。`src/Eccube/Entity/Master/MtbFormat.php:405` `#[ORM\\OneToMany(targetEntity: DtbCardFormat::class, mappedBy: 'Format')]` に cascade 指定はなく（同ファイル:483 の FormatBoards には `cascade: ['remove']` あり）、DtbCardFormat を削除する EventListener やサービスも `src/Eccube/EventListener/`・`src/Eccube/Service/Admin/Format/` 配下に存在しない。",
+      "evidence": "`src/Eccube/Controller/Admin/Card/FormatController.php:200-201` は `$this->entityManager->remove($Format);` `$this->entityManager->flush();` のみで、dtb_card_format 行の事前削除処理は追加されていない。`src/Eccube/Entity/Master/MtbFormat.php:405` `#[ORM\\OneToMany(targetEntity: DtbCardFormat::class, mappedBy: 'Format')]` に cascade 指定はなく（同ファイル:483 の FormatBoards には `cascade: ['remove']` あり）、DtbCardFormat を削除する処理も `src/Eccube/Service/Admin/Format/`（FormatSaveAction のみ）や `src/Eccube/Repository/DtbCardFormatRepository.php`（get() のみ）に存在しない。",
       "note": ""
     },
     {
@@ -58,8 +58,8 @@
     {
       "rowId": 1282,
       "status": "未対応",
-      "evidence": "`app/template/admin/Format/format_list.twig` 全81行に `{% block stylesheet %}` / `css` ブロックは存在せず、先頭は `:1` `{% extends '@admin/default_frame.twig' %}`、`:5-7` が title / sub_title / javascript ブロックで CSS 読み込みはない。`app/`・`html/`・`src/Eccube/Resource/template/` を `format.css` で再検索しても該当なし、リポジトリ全体の `find -name format.css` も 0 件で、`admin/assets/css/format.css` 自体が存在しない。",
-      "note": ""
+      "evidence": "`app/template/admin/Format/format_list.twig` 全81行に `{% block stylesheet %}` / css ブロックは存在せず、先頭は `:1` `{% extends '@admin/default_frame.twig' %}`、`:5-7` が title / sub_title / javascript ブロックで CSS 読み込みはない。スナップショット全体（src, app, html, script, bin, .github を含む）で `grep -rn 'format\\.css'` および `find -name format.css` はいずれも 0 件。`html/template/admin/assets/css/` の実在ファイルは app.css / customer.css / product.css / stock-history.css 等のみで format.css はない。",
+      "note": "セル縦位置は format_list.twig:49-55 の `align-middle` クラスで個別付与されており、専用CSSによる統一ではない。"
     },
     {
       "rowId": 1283,
@@ -70,7 +70,7 @@
     {
       "rowId": 1284,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Admin/Card/FormatController.php:50` `'Formats' => $this->formatRepository->findBy([], ['rank' => 'ASC']),` のままで、同一 rank 時の `id ASC` 安定化は実装されていない。`src/Eccube/Repository/Master/MtbFormatRepository.php` にも一覧用の rank+id 複合ソートは追加されていない。",
+      "evidence": "`src/Eccube/Controller/Admin/Card/FormatController.php:50` `'Formats' => $this->formatRepository->findBy([], ['rank' => 'ASC']),` のままで、同一 rank 時の `id ASC` 安定化は実装されていない（全件取得＝条件なし findBy である点のみ設計と一致）。`src/Eccube/Repository/Master/MtbFormatRepository.php` にも一覧用の rank+id 複合ソートは追加されていない。",
       "note": "rowId 1275 と同一箇所（M14-10 側の観点）。"
     }
   ]

@@ -4,73 +4,73 @@
     {
       "rowId": 175,
       "status": "未対応",
-      "evidence": "現 develop の `src/Eccube/Command/` 配下に商品部門未設定チェック用 Command は存在せず、`product:batch` / `checkNoSectionProduct` の全文検索ヒットは `src/Eccube/Command/InventoryReflectionCommand.php:32` の3系コメント `* 【3系】 bin/console product:batch inventoryReflection {arg-1} {arg-2} {arg-3} {arg-4}` のみ。近似の `src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:77` `$io->info('集計対象日: '.$summaryDate->format('Y-m-d'));` / `:87` `$io->success('店頭買取集計が完了しました。');` も監査時点と同じで、日時付きの開始・完了出力ではない。",
-      "note": ""
+      "evidence": "現 develop の `src/Eccube/Command/` の全 AsCommand 定義を列挙したが `product:batch` 名前空間のコマンドは 0 件（`product:batch` の全文ヒットは `src/Eccube/Command/InventoryReflectionCommand.php:32` `* 【3系】 bin/console product:batch inventoryReflection {arg-1} {arg-2} {arg-3} {arg-4}` の旧3系コメントのみ）。`checkNoSectionProduct` は develop 全体で 0 件で、部門未設定チェックは `src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php:50` `$noSectionProducts = $this->otcBuyOrderRepository->getNoSectionProducts($summaryDate);` と `src/Eccube/Service/MailService.php:1279` `public function sendNoSectionAlertMail(array $products): void` に残るのみ。近似の店頭買取集計バッチ `src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:76` `$io->info('集計対象日: '.$summaryDate->format('Y-m-d'));` / 同 :87 `$io->success('店頭買取集計が完了しました。');` は監査時点と同一で、日時付きの開始・完了出力ではない。",
+      "note": "再検証で script/ops/**（db, imgcheck, monthly-inventory-snapshot, stg-db-maintenance）, bin/, app/config/**, .github/workflows/** を `section|部門|product:batch` で Grep したがヒット 0 件。"
     },
     {
       "rowId": 176,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/FavoriteSaleNotificationCommand.php:34` `#[AsCommand(name: 'eccube:favorite-sale-notification', description: 'お気に入り商品セール通知バッチ')]` のままで、同ファイル:32 の使用例も `bin/console eccube:favorite-sale-notification`。src/html 全体を `product:batch` / `saleNotification` で検索しても該当 AsCommand 定義は無い。",
-      "note": ""
+      "evidence": "`src/Eccube/Command/FavoriteSaleNotificationCommand.php:34` `#[AsCommand(name: 'eccube:favorite-sale-notification', description: 'お気に入り商品セール通知バッチ')]` のままで、同 :32 のクラスコメントも `bin/console eccube:favorite-sale-notification`。develop 全 AsCommand を列挙しても `product:batch saleNotification` の定義は存在しない。",
+      "note": "script/ops/**, bin/, .github/workflows/** を `product:batch|saleNotification|favorite-sale-notification` で Grep したがヒット 0 件（別名でのシェル起動ラッパも無い）。"
     },
     {
       "rowId": 177,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:38` `$rows = $this->customerFavoriteProductRepository->findSaleFavoriteProducts();` のままで、実装は `src/Eccube/Repository/CustomerFavoriteProductRepository.php:230` `public function findSaleFavoriteProducts(): array` が `->select('c.id AS customer_id', 'c.name01', 'c.name02', 'c.email', ...)` `->join('cfp.Customer', 'c')` で dtb_customer_favorite_product + Customer を参照。`src/Eccube/Repository/DtbFavoriteProductRepository.php:40` は依然 `// public function findSaleFavoriteProducts(): IterableResult` のコメントのみで、dtb_favorite_product(player_id/language_id)・dtb_player は使われていない。",
+      "evidence": "`src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:25` `private readonly CustomerFavoriteProductRepository $customerFavoriteProductRepository,` / 同 :38 `$rows = $this->customerFavoriteProductRepository->findSaleFavoriteProducts();` のまま。抽出元は `src/Eccube/Repository/CustomerFavoriteProductRepository.php:230-254` の `findSaleFavoriteProducts()` で、`->select('c.id AS customer_id', 'c.name01', 'c.name02', 'c.email', ...)` `->join('cfp.Customer', 'c')` と dtb_customer_favorite_product + Customer を参照しており、dtb_favorite_product の player_id・language_id、dtb_player の first_name_jp/last_name_jp/email は使われていない（監査時点 :211 から行番号がずれただけで内容同一）。",
       "note": ""
     },
     {
       "rowId": 178,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/FavoriteSaleNotificationCommand.php:25-34` のクラスコメント／AsCommand にスケジュール・Step Functions・水曜17:30の記述は無い。src/html を `Step Functions|StepFunctions|17:30|水曜` で検索したヒットは `src/Eccube/Command/SmaregiOtcDeleteCommand.php:37` `* 実行タイミング: 毎日 4 時 / スケジュール起動 (Step Functions)` と `src/Eccube/Command/SmaregiStockBackfillCommand.php:30` の別バッチのみ。",
-      "note": ""
+      "evidence": "`src/Eccube/Command/FavoriteSaleNotificationCommand.php:25-34` のクラスコメントと AsCommand にスケジュール／Step Functions／水曜17:30 の記述は無く、`configure()` 自体が未定義。develop 全体の `Step Functions` ヒットは `src/Eccube/Command/SmaregiOtcDeleteCommand.php:37` `* 実行タイミング: 毎日 4 時 / スケジュール起動 (Step Functions)` と `src/Eccube/Command/SmaregiStockBackfillCommand.php:30` の別バッチのみで、本バッチ分は無い。",
+      "note": "再検証で script/ops/**, bin/, app/config/**, .github/workflows/**, infra/lib/** を `step ?function|stepfunction|17:30|schedule|cron|favorite` で Grep。ヒットは `infra/cdk.json:49` の CDK フィーチャーフラグ `\"@aws-cdk/aws-stepfunctions-tasks:enableEmrServicePolicyV2\": true` と `.github/workflows/vaddy-1.yml:4` `- cron: '0 15 * * 0'` 等の無関係なもののみ。`.github/workflows/deploy-batch.yml:3` は `on: workflow_dispatch:` のみで定期実行定義を持たない。"
     },
     {
       "rowId": 179,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:38` `$rows = $this->customerFavoriteProductRepository->findSaleFavoriteProducts();` で全件取得し、`:44` `$groupedByCustomer = $this->groupByCustomer($rows);` で全件を配列集約してから `:47` の foreach で送信しており、clear/detach/chunk/limit 等の一定件数ごとのメモリ解放処理は同ファイル内に存在しない（`findSaleFavoriteProducts()` も `->getQuery()->getResult()` で全件返す）。",
+      "evidence": "`src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:38` `$rows = $this->customerFavoriteProductRepository->findSaleFavoriteProducts();` で全件を配列取得し、同 :44 `$groupedByCustomer = $this->groupByCustomer($rows);`、:71-90 の `groupByCustomer()` で全件を `$grouped` に集約してから :47 の foreach で送信している。抽出側も `src/Eccube/Repository/CustomerFavoriteProductRepository.php:253-254` `->getQuery()->getResult();` で全件返しており、clear/detach/flush/chunk/limit 等の一定件数ごとのメモリ解放は無い。",
       "note": ""
     },
     {
       "rowId": 180,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:56-58` は依然 `} catch (\\Throwable $e) { log_error('お気に入りセール通知メール送信失敗', ['customer_id' => $customerId, 'message' => $e->getMessage()]); }` で再throwせず握りつぶすため、`src/Eccube/Command/FavoriteSaleNotificationCommand.php:50` `$io->error('お気に入り商品セール通知でエラーが発生しました: '.$e->getMessage());` に到達せず、送信時エラーはコンソール出力されない。",
+      "evidence": "`src/Eccube/Service/Product/BatchFavoriteSaleNotificationAction.php:56-58` は依然 `} catch (\\Throwable $e) { log_error('お気に入りセール通知メール送信失敗', ['customer_id' => $customerId, 'message' => $e->getMessage()]); }` で再throwしない。そのため `src/Eccube/Command/FavoriteSaleNotificationCommand.php:50` `$io->error('お気に入り商品セール通知でエラーが発生しました: '.$e->getMessage());` に到達せず、送信時エラーはコンソールに出力されない。",
       "note": ""
     },
     {
       "rowId": 181,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/FavoriteSaleNotificationCommand.php:43-61` の execute には開始出力が無く、完了相当は `:56` `$io->success('セール中のお気に入り商品はありませんでした。');` / `:58` `$io->success(sprintf('お気に入り商品セール通知を%d名に送信しました。', $count));` のみで日時の付与は無い（同ファイルに DateTime/format の使用なし）。",
+      "evidence": "`src/Eccube/Command/FavoriteSaleNotificationCommand.php:43-61` の `execute()` は `$io = new SymfonyStyle($input, $output);` 直後に処理へ入り開始メッセージが無く、完了出力も :56 `$io->success('セール中のお気に入り商品はありませんでした。');` / :58 `$io->success(sprintf('お気に入り商品セール通知を%d名に送信しました。', $count));` で日時を含まない。同 Command と `BatchFavoriteSaleNotificationAction.php` に DateTime/format による日時出力は無い。",
       "note": ""
     },
     {
       "rowId": 182,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Product/BatchInitialStockRegistrationAction.php:43` `$sourceBaseInfoId = \\Eccube\\Entity\\BaseInfo::TC_TOKYO_ID;` のままで、`src/Eccube/Entity/BaseInfo.php:45` `public const TC_TOKYO_ID = 1;`、同 :1639 コメントも `本店(TC東京)かどうかを判定する.`。TC大阪を複製元とする定数・実装は develop 全体に存在しない。",
+      "evidence": "`src/Eccube/Service/Product/BatchInitialStockRegistrationAction.php:43` `$sourceBaseInfoId = \\Eccube\\Entity\\BaseInfo::TC_TOKYO_ID;` のままで、`src/Eccube/Entity/BaseInfo.php:45` `public const TC_TOKYO_ID = 1;`。TC大阪を示す定数（TC_OSAKA 等）は develop 全体に存在せず、複製元の基準店舗は監査時点と同じ。",
       "note": ""
     },
     {
       "rowId": 183,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/ProductStockRepository.php:427` `public function copyStockForNewShop(int $sourceBaseInfoId, int $targetBaseInfoId): int` の SQL は :432-439 で `INSERT INTO dtb_product_stock (product_class_id, base_info_id, creator_id, stock, stock_location_id, total_cost, pick_up_flg, create_date, update_date) SELECT product_class_id, :target_base_info_id, 1, 0, stock_location_id, 0, false, :now, :now FROM dtb_product_stock WHERE base_info_id = :source_base_info_id` のままで、複製範囲は product_class_id と stock_location_id。「商品規格コード」「拡張タイプ」のみを複製する実装への変更は無い。",
+      "evidence": "`src/Eccube/Repository/ProductStockRepository.php:427-455` の `copyStockForNewShop()` は `INSERT INTO dtb_product_stock (product_class_id, base_info_id, creator_id, stock, stock_location_id, total_cost, pick_up_flg, create_date, update_date) SELECT product_class_id, :target_base_info_id, 1, 0, stock_location_id, 0, false, :now, :now FROM dtb_product_stock WHERE base_info_id = :source_base_info_id` のままで、複製範囲は product_class_id と stock_location_id。「商品規格コード」「拡張タイプ」のみを複製し他項目を初期値にする実装への変更は無い（監査時点 :431 から行番号がずれただけ）。",
       "note": ""
     },
     {
       "rowId": 184,
       "status": "未対応",
-      "evidence": "src/html を `insertStockHistory` / `product:batch` で検索してもヒット無し（`src/Eccube/Command/InventoryReflectionCommand.php:32` の3系コメントのみ）。B02-06 の Command は `src/Eccube/Command/InitialStockRegistrationCommand.php:35` `#[AsCommand(name: 'eccube:initial-stock-registration', description: '在庫初期化バッチ')]` で、引数も :45 `$this->addArgument('target_base_info_id', InputArgument::REQUIRED, '新店舗の base_info_id');` の1つのみ。開始日・終了日を受けて受注から在庫履歴を再作成するバッチ入口は存在しない。",
-      "note": ""
+      "evidence": "`grep -rn \"insertStockHistory\" .` は develop スナップショット全体（src/, script/, bin/, app/, html/, codeception/, .github/ を含む）で 0 件。B02-06 の Command は `src/Eccube/Command/InitialStockRegistrationCommand.php:35` `#[AsCommand(name: 'eccube:initial-stock-registration', description: '在庫初期化バッチ')]` のみで引数も target_base_info_id 1 つ。開始日・終了日を受けて過去受注から在庫履歴を再作成するバッチ入口は存在しない。",
+      "note": "再検証で script/ops/** の全ファイル（db/init.sh・keep_tables.txt、imgcheck/bigfilefinder.sh、monthly-inventory-snapshot/inventory.sh・query.sql、stg-db-maintenance/mask.sh・restoresnapshot_stg_from_tmp.sh・*.sql）と bin/console、.github/workflows/** を `insertStockHistory|stock_change_reason|product:batch` で Grep したがヒット 0 件。"
     },
     {
       "rowId": 191,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/UniSearch/UniSearchExportService.php:129` `public function getHeader(): array` の返却配列は依然 `:159` `'category_name_en',`、`:167` `'is_branch_published',`、`:171` `'search_word',` を含み、`branch_status` という項目名は develop 内に存在しない（設計外項目の追加と項目名変更が未是正）。",
-      "note": ""
+      "evidence": "`src/Eccube/Service/UniSearch/UniSearchExportService.php:129-173` の `getHeader()` は依然 :159 `'category_name_en',` / :167 `'is_branch_published',` / :171 `'search_word',` を含み、`branch_status` という項目名は develop 全体に存在しない（`grep -rn \"branch_status\"` は 0 件）。行生成側も同 :496 `'is_branch_published' => $row['is_branch_published'] ?? '0',`、SQL 側も `src/Eccube/Repository/ProductClassRepository.php:521` `CASE WHEN p.is_branch_published THEN '1' ELSE '0' END AS is_branch_published,` のまま。",
+      "note": "現 develop のヘッダは 40 項目（監査時点 39 項目から増加）で、設計表との列名・列順の乖離は解消していない。"
     },
     {
       "rowId": 192,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/ProductClassRepository.php:356` 以降の `stock_agg AS ( SELECT pc.id AS product_class_id, string_agg(DISTINCT ps.base_info_id::text, E'\\x01' ORDER BY ps.base_info_id::text) FILTER (WHERE ps.base_info_id IS NOT NULL AND (pc.stock_unlimited OR COALESCE(ps.stock, 0) >= 1)) AS stock ...)`（非高額側も :374 以降で同様に base_info_id を string_agg）のままで、stock 列は在庫数ではなく在庫のある base_info_id 集合。`src/Eccube/Service/UniSearch/UniSearchExportService.php:155` のヘッダ `'stock'` へその値をそのまま出力しており、数値の在庫数連携は無い。",
+      "evidence": "`src/Eccube/Repository/ProductClassRepository.php:356-365` の `stock_agg AS ( SELECT pc.id AS product_class_id, string_agg(DISTINCT ps.base_info_id::text, E'\\x01' ORDER BY ps.base_info_id::text) FILTER (WHERE ps.base_info_id IS NOT NULL AND (pc.stock_unlimited OR COALESCE(ps.stock, 0) >= 1)) AS stock ...)`、非高額側も :374-381 `... FILTER (WHERE s.base_info_id IS NOT NULL AND (s.stock_unlimited OR s.stock >= 1)) AS stock` のままで、stock 列は在庫数ではなく在庫のある base_info_id の集合。`src/Eccube/Repository/ProductClassRepository.php:509` `stock.stock AS stock,` の値を `src/Eccube/Service/UniSearch/UniSearchExportService.php:484` `'stock' => $row['stock'] ?? '',` がそのまま TSV へ出力しており、数値在庫数の連携は無い。",
       "note": ""
     }
   ]

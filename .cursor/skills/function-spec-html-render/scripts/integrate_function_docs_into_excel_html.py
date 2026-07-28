@@ -33,8 +33,10 @@ OLD_MYPAGE_END = "<!-- mypage-design-embed:end -->"
 
 SECTION_RE = re.compile(r'<section class="sheet-panel(?: is-active)?" id="(?P<id>[^"]+)">')
 NEXT_SECTION_RE = re.compile(r'\n\s*<section class="sheet-panel(?: is-active)?" id="[^"]+">')
-FEATURE_NO_RE = re.compile(r"<dt>機能No</dt><dd>(?P<value>.*?)</dd>", re.DOTALL)
-FEATURE_NAME_RE = re.compile(r"<dt>機能名</dt><dd>(?P<value>.*?)</dd>", re.DOTALL)
+KV_PAIR_RE = re.compile(
+    r"<dt\b[^>]*>(?P<label>.*?)</dt>\s*<dd\b[^>]*>(?P<value>.*?)</dd>",
+    re.DOTALL,
+)
 SHEET_HEADING_RE = re.compile(r'<div class="sheet-heading">\s*<h2>(?P<value>.*?)</h2>', re.DOTALL)
 MD_LINK_RE = re.compile(r"\[md\]\(([^)]+)\)")
 
@@ -281,10 +283,10 @@ def build_sheet_index() -> tuple[dict[str, list[SheetRef]], list[SheetRef]]:
         for pos, match in enumerate(starts):
             end = starts[pos + 1].start() if pos + 1 < len(starts) else len(document)
             section = document[match.start() : end]
-            feature_no = extract_kv(FEATURE_NO_RE, section)
+            feature_no = extract_named_kv("機能No", section)
             if not feature_no:
                 continue
-            feature_name = extract_kv(FEATURE_NAME_RE, section)
+            feature_name = extract_named_kv("機能名", section)
             sheet = SheetRef(
                 html_path=html_path,
                 section_id=match.group("id"),
@@ -303,8 +305,19 @@ def extract_kv(pattern: re.Pattern[str], section: str) -> str:
     match = pattern.search(section)
     if match is None:
         return ""
-    value = re.sub(r"<.*?>", "", match.group("value"))
-    return html.unescape(value).strip()
+    return strip_html_text(match.group("value"))
+
+
+def extract_named_kv(label: str, section: str) -> str:
+    """Read a key/value row even when the Excel renderer wraps cells in spans."""
+    for match in KV_PAIR_RE.finditer(section):
+        if strip_html_text(match.group("label")) == label:
+            return strip_html_text(match.group("value"))
+    return ""
+
+
+def strip_html_text(value: str) -> str:
+    return html.unescape(re.sub(r"<.*?>", "", value)).strip()
 
 
 def resolve_sheet(row: TodoRow, sheet_index: dict[str, list[SheetRef]], sheets: list[SheetRef]) -> SheetRef | None:
@@ -594,10 +607,10 @@ def build_sheet_index_for_document(html_path: Path, document: str) -> dict[str, 
     for pos, match in enumerate(starts):
         end = starts[pos + 1].start() if pos + 1 < len(starts) else max(limit, match.end())
         section = document[match.start() : end]
-        feature_no = extract_kv(FEATURE_NO_RE, section)
+        feature_no = extract_named_kv("機能No", section)
         if not feature_no:
             continue
-        feature_name = extract_kv(FEATURE_NAME_RE, section)
+        feature_name = extract_named_kv("機能名", section)
         index[normalize_feature_no(feature_no)].append(
             SheetRef(
                 html_path=html_path,

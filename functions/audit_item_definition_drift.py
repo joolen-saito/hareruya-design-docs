@@ -5,15 +5,16 @@
 
 - **HTML側（Excel由来）**: `excel_to_html/output/*.html` のシートパネル内「画面項目定義」テーブル。
   各行の 必須（◯/-）と 最大文字数（255字 等）。これは顧客合意済みのExcel基本設計の値。
-- **設計書側（現行ソースの正）**: 各シートパネルに埋め込まれた `function-design-embed` の
+- **実装確認値側**: 各シートパネルに埋め込まれた `function-design-embed` の
   `data-source` が指す機能設計書 `functions/**/*.md` の `### 入力項目` 節。
   この節はソースコード（FormType＋config定数＋Doctrine）から起こした値で、
   ラベル⇄フォームキー⇄DBカラム⇄`NotBlank`/`Length` の橋渡しを確立している。
 
 HTMLの識別IDと実装フィールドの直接リンクは無いため、突合は**シートパネル内でラベル名**で行う
 （シート内に閉じるので他書番のラベル衝突は起きない）。ソースの最大文字数は config.yml 定数参照で
-コードからの完全自動抽出が不可能なため、確立済みの設計書層を正典に使う（本スクリプトは
-config.yml もソースコードも読まない）。
+コードからの完全自動抽出が不可能なため、確立済みの機能設計書層を実装確認値として使う
+（本スクリプトは config.yml もソースコードも読まない）。重複仕様の正はExcelであり、
+不一致はExcelの欠陥と決めつけず、Excel要求と実装確認値の差として人が分類する。
 
 ## 出力（read-only。HTML・Excel・機能設計書は一切書き換えない）
 
@@ -351,8 +352,9 @@ def write_outputs(rows: list[dict]) -> dict:
     total_findings = sum(by_kind.values())
     lines = ["# 画面項目定義ドリフト差分レポート", ""]
     lines.append("HTML設計書の画面項目定義（Excel由来の 必須／最大文字数）を、機能設計書の入力項目節"
-                 "（現行ソースから起こした値）と突き合わせ、乖離を出力する。**HTMLは正典ではなく"
-                 "機能設計書を正とする**。生成物（HTML・Excel・機能設計書）は一切書き換えない。")
+                 "（現行ソースから起こした実装確認値）と突き合わせ、差分を出力する。"
+                 "**重複仕様の正はExcel基本設計**とし、差分は実装済み・実装違い・移行前後差へ分類する。"
+                 "生成物（HTML・Excel・機能設計書）は一切書き換えない。")
     lines.append("")
     lines.append(f"生成: `functions/audit_item_definition_drift.py` ／ "
                  f"全出力: `{TSV.relative_to(ROOT)}`（{total_findings}行）")
@@ -373,13 +375,14 @@ def write_outputs(rows: list[dict]) -> dict:
     lines.append("")
     lines.append("## 読み方")
     lines.append("")
-    lines.append("- **正典は機能設計書**（FormType＋config定数＋Doctrine からリバースした値）。HTMLがこれと"
-                 "食い違う箇所を乖離とする。設計書自体の実装忠実性は別途 config.yml 直読みで再検証できる。")
+    lines.append("- **重複仕様の正典はExcel基本設計**。機能設計書はFormType＋config定数＋Doctrineから"
+                 "リバースした実装確認値として比較し、食い違いを実装違いまたは移行前後差として分類する。"
+                 "機能設計書自体の実装忠実性は別途config.yml直読みで再検証できる。")
     lines.append("- **必須**: HTML の ◯/○/〇＝必須、-/空＝任意。条件付き（△・自由文）は判定保留で乖離に数えない。")
     lines.append("- **最大文字数**: 文字型（半角/全角/文字列/テキスト/メール/パスワード）のみ比較。"
                  "数値項目の「最大値」（金額の上限等）は文字数ではないので対象外。範囲は上限を採用。")
-    lines.append("- **maxlen-missing-html は必ずしも実装バグではない**。Excel の記載漏れの可能性が高く、"
-                 "ソース上限が過大（実質無制限）なら記載不要の判断もあり得る。人の判断が要る。")
+    lines.append("- **maxlen-missing-html は自動でExcelの記載漏れと断定しない**。Excel要求、実装上限、"
+                 "移行前後差を確認してから分類する。")
     lines.append("")
     lines.append("## 書番別")
     lines.append("")

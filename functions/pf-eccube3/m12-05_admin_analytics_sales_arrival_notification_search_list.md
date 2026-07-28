@@ -36,6 +36,10 @@ CSVダウンロードはM12-06で扱う。本書は一覧の表示までを扱�
 
 挙動は現行リポpf-eccube3を正とし、DB関連はec-cube-enterpriseを正とする。現行（pf-eccube3）と移行先（ec-cube-enterprise）でスキーマが異なる箇所を記録する。
 
+### Excel基本設計により廃止された仕様（刷新後は実装不要）
+
+本書は現行実装からのリバースであり、現行のキーワード検索は会員名を対象に含む。Excel基本設計 0211 入荷通知依頼 一覧表示(検索項目)「キーワード検索の会員名条件」により廃止されるため、刷新後はキーワード検索を商品名（日／英）のみに限定し、会員名では検索しない。ec-cube-enterpriseの実装も商品名・商品英名だけを検索対象としている。
+
 | 観点 | 現行（pf-eccube3） | 移行先（ec-cube-enterprise） |
 |------|--------------------|------------------------------|
 | 入荷通知依頼テーブル | `dtb_product_request`（`create_date`・`deleted_at`・`product_class_id`） | `dtb_product_request`（`create_date`・`deleted_at`・`product_class_id` は同名） |

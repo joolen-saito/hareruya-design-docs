@@ -4,74 +4,74 @@
     {
       "rowId": 144,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/AggregateSalesCommand.php:35` `#[AsCommand(name: 'eccube:aggregate-sales', description: '期間別販売数集計バッチ')]` のままで、設計の `product:batch updateProductSummary` は登録されていない。src/app/html/config 横断 grep でも `product:batch updateProductSummary` / `updateProductSummary` の実装入口はヒットせず、`src/Eccube/Repository/ProductClassRepository.php:1111` の `// // public function updateProductSummaryColumns(...)` というコメントアウトのみ。",
-      "note": ""
+      "evidence": "`src/Eccube/Command/AggregateSalesCommand.php:35` `#[AsCommand(name: 'eccube:aggregate-sales', description: '期間別販売数集計バッチ')]` のままで、設計の `product:batch updateProductSummary` は登録されていない。今回は探索を src/ に限定せず `src/`・`bin/`・`app/config/**`・`script/ops/**`（db, monthly-inventory-snapshot, imgcheck, stg-db-maintenance）・`.github/workflows/**`（deploy-batch.yml 含む）を横断 grep したが、`updateProductSummary` は `src/Eccube/Repository/ProductClassRepository.php:1111` `//     // public function updateProductSummaryColumns(Application $app, array $productClass): void` のコメントアウトのみ、`product:batch` は `src/Eccube/Command/InventoryReflectionCommand.php:29,32` の3系由来の説明コメントのみ。コマンド名不一致時に処理を行わず終了する分岐も無い。",
+      "note": "script/ops 配下は全ファイル（keep_tables.txt, init.sh, inventory.sh, query.sql, bigfilefinder.sh, mask.sh, restoresnapshot_stg_from_tmp.sh 等）を対象に grep 済み。指示にあった waf-log-count ディレクトリはこのスナップショットには存在しない。"
     },
     {
       "rowId": 145,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/AggregateSalesCommand.php:29` に `現在は EC 受注のみ対象。スマレジ実店舗販売は未実装のため除外される。` が残り、`src/Eccube/Service/Product/BatchAggregateSalesAction.php:39` にも `// TODO: スマレジ実店舗販売を dtb_order に取り込む処理が実装されたら、` の TODO が残存。集計SQL `src/Eccube/Repository/DtbSalesQuantityRepository.php:452-455` は `FROM dtb_order_item oi JOIN dtb_order o ... JOIN dtb_shipping s ... JOIN dtb_base_info bi ...` のみで、スマレジ取引データの UNION も店舗別ECCUBE/スマレジ分離集計も存在しない（同 438-440 行に `スマレジ受注が別テーブル管理の場合は UNION 等で本クエリを拡張すること` の TODO）。",
-      "note": ""
+      "evidence": "`src/Eccube/Command/AggregateSalesCommand.php:29` に `現在は EC 受注のみ対象。スマレジ実店舗販売は未実装のため除外される。` が残存。`src/Eccube/Service/Product/BatchAggregateSalesAction.php:39-41` にも `// TODO: スマレジ実店舗販売を dtb_order に取り込む処理が実装されたら、` の TODO が残り、`src/Eccube/Repository/DtbSalesQuantityRepository.php:438-440` にも `// スマレジ受注が別テーブル管理の場合は UNION 等で本クエリを拡張すること` が残る。集計SQL（同ファイル:452-455）は `FROM dtb_order_item oi JOIN dtb_order o ON oi.order_id = o.id JOIN dtb_shipping s ON oi.shipping_id = s.id JOIN dtb_base_info bi ON s.base_info_id = bi.id` のみで、スマレジ取引テーブルの UNION も店舗ごとの ECCUBE／スマレジ分離集計も存在しない。",
+      "note": "script/ops, bin/, .github/workflows を含めて `aggregate-sales` / `sales_quantity` / スマレジ集計を行う運用スクリプトは0件ヒット。"
     },
     {
       "rowId": 146,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/DtbSalesQuantityRepository.php:444` `s.base_info_id,` と同461行 `GROUP BY oi.product_class_id, s.base_info_id` で配送の base_info_id をそのまま出力し、`src/Eccube/Entity/BaseInfo.php:45` `public const TC_TOKYO_ID = 1;` のまま。`src/Eccube/Repository/DtbSalesQuantityRepository.php:39` `public const POPULAR_PRODUCT_RECOMMEND_SHOP_ID = 0;` および同96行 `'DELETE FROM dtb_sales_quantity WHERE base_info_id != :popular_shop_id'` により base_info_id=0 は依然として人気商品リコメンド用に予約されており、本店=支店ID0 として扱う実装はない。",
+      "evidence": "`src/Eccube/Repository/DtbSalesQuantityRepository.php:444` `s.base_info_id,` と同:461 `GROUP BY oi.product_class_id, s.base_info_id` で配送の base_info_id をそのまま出力する実装のまま。`src/Eccube/Entity/BaseInfo.php:45` `public const TC_TOKYO_ID = 1;` で本店は 1、`src/Eccube/Repository/DtbSalesQuantityRepository.php:39` `public const POPULAR_PRODUCT_RECOMMEND_SHOP_ID = 0;` と同:95-98 `'DELETE FROM dtb_sales_quantity WHERE base_info_id != :popular_shop_id'` により base_info_id=0 は依然として人気商品リコメンド用に予約され、B02-01 の本店集計IDとして扱われていない。",
       "note": ""
     },
     {
       "rowId": 147,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/DtbSalesQuantityRepository.php:457` `AND o.order_status_id != :cancel_status` が唯一の受注ステータス除外条件で、同435行 `$cancelStatus = OrderStatus::CANCEL;` のみをパラメータ化。処理中（PROCESSING/PENDING）を除外する `NOT IN` 条件は集計SQL（441-462行）に存在しない。",
+      "evidence": "`src/Eccube/Repository/DtbSalesQuantityRepository.php:457` `AND o.order_status_id != :cancel_status` が唯一の受注ステータス除外条件で、同:435 `$cancelStatus = OrderStatus::CANCEL;` のみをバインド（同:466 `->setParameter('cancel_status', $cancelStatus)`）。処理中ステータスを除外する `order_status_id NOT IN` 等の条件は集計SQL（同:441-462）に存在しない。",
       "note": ""
     },
     {
       "rowId": 148,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Product/BatchAggregateSalesAction.php:46-47` で `$this->salesQuantityRepository->clearSalesQuantityForAggregate();` を実行した後に `$salesData = $this->salesQuantityRepository->getSalesForAggregate();` を呼ぶ順序が変わっておらず、`src/Eccube/Repository/DtbSalesQuantityRepository.php:96` の `DELETE FROM dtb_sales_quantity WHERE base_info_id != :popular_shop_id` が対象有無の判定前に必ず走る。",
+      "evidence": "`src/Eccube/Service/Product/BatchAggregateSalesAction.php:46-48` は `$this->salesQuantityRepository->clearSalesQuantityForAggregate();` を先に実行し、その後 `$salesData = $this->salesQuantityRepository->getSalesForAggregate();` `foreach ($salesData as $data) {` を回す順序のまま。`src/Eccube/Repository/DtbSalesQuantityRepository.php:95-98` の `'DELETE FROM dtb_sales_quantity WHERE base_info_id != :popular_shop_id'` が対象有無の判定前に無条件実行される構造は監査時点と同一。",
       "note": ""
     },
     {
       "rowId": 149,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Product/BatchAggregateSalesAction.php:43-54` は `$connection->beginTransaction();` … `foreach ($salesData as $data) { $this->salesQuantityRepository->updateSalesQuantityColumns($data); }` … `$connection->commit();` / `catch (\\Throwable $e) { $connection->rollBack(); throw $e; }` の単一トランザクション構成のままで、100件ごとの flush/clear は無い。100件単位の反映は `src/Eccube/Repository/DtbSalesQuantityRepository.php:313` `updateRecommend()`（人気商品リコメンド）側にのみ存在し、B02-01 経路からは呼ばれない。",
+      "evidence": "`src/Eccube/Service/Product/BatchAggregateSalesAction.php:42-55` は `$connection->beginTransaction();` … 全件 foreach 後に `$connection->commit();`、`} catch (\\Throwable $e) { $connection->rollBack(); throw $e; }` という単一トランザクション構成のままで、100件ごとの flush/clear は無い。100件単位の反映は `src/Eccube/Repository/DtbSalesQuantityRepository.php:313` `public function updateRecommend(): void`（人気商品リコメンド更新）側にのみ存在し、B02-01 経路からは呼ばれない。",
       "note": ""
     },
     {
       "rowId": 150,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/AggregateSalesCommand.php:44-59`（execute 全体）と `src/Eccube/Service/Product/BatchAggregateSalesAction.php:37-56`（handle 全体）に `set_time_limit` / `setSQLLogger` の呼び出しは無い。スナップショット内の該当箇所は `src/Eccube/Repository/DtbSalesQuantityRepository.php:315` `set_time_limit(0);` と同320行 `$em->getConnection()->getConfiguration()->setSQLLogger(null);` のみで、いずれも同313行 `updateRecommend()` 内（人気商品リコメンド更新用）であり B02-01 の実行経路外。",
-      "note": ""
+      "evidence": "`src/Eccube/Command/AggregateSalesCommand.php:44-59`（execute 全体）と `src/Eccube/Service/Product/BatchAggregateSalesAction.php:37-56`（handle 全体）に `set_time_limit` / `setSQLLogger` の呼び出しは無い（両ファイル grep で0件）。該当処理は `src/Eccube/Repository/DtbSalesQuantityRepository.php:315` `set_time_limit(0);` と同:320 `$em->getConnection()->getConfiguration()->setSQLLogger(null);` のみで、いずれも同:313 `updateRecommend()` 内であり B02-01 の実行経路外。",
+      "note": "実行時間制限解除やロガー無効化をラップする起動スクリプトが script/ops/**、bin/console、.github/workflows/deploy-batch.yml に無いことも確認済み。"
     },
     {
       "rowId": 151,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/AggregateSalesCommand.php:56` `$io->success('期間別販売数集計が完了しました。');` のみで、開始出力は無く完了出力にも日時が無い。例外時は同51行 `$io->error('集計処理でエラーが発生しました: '.$e->getMessage());`。execute 内に `date(` 等の日時整形は存在しない。",
+      "evidence": "`src/Eccube/Command/AggregateSalesCommand.php:56` `$io->success('期間別販売数集計が完了しました。');` のみで、開始時の出力が無く完了メッセージにも日時が含まれない（同ファイルに `date(` / `format('Y` は0件ヒット）。例外時は同:51 `$io->error('集計処理でエラーが発生しました: '.$e->getMessage());`。",
       "note": ""
     },
     {
       "rowId": 152,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/DtbSalesQuantityRepository.php:113-141` は `INSERT INTO dtb_sales_quantity ( ... sales_quantity_01, ... sales_quantity_08, update_date)`、同143-155行は `UPDATE dtb_sales_quantity SET ... sales_quantity_08 = :sales_365day ...` で、反映先は補助表 dtb_sales_quantity のまま。`dtb_product_class.order_quantity_01`〜`08` を更新する処理は B02-01 経路（AggregateSalesCommand → BatchAggregateSalesAction → DtbSalesQuantityRepository）に存在せず、`src/Eccube/Repository/ProductClassRepository.php:1111` の updateProductSummaryColumns はコメントアウトのまま。",
-      "note": ""
+      "evidence": "B02-01 の反映先は補助表 `dtb_sales_quantity` のままで、`src/Eccube/Repository/DtbSalesQuantityRepository.php:113-141` `INSERT INTO dtb_sales_quantity ( product_class_id, base_info_id, sales_location, sales_quantity_01, … sales_quantity_08, update_date )`、同:143-155 `UPDATE dtb_sales_quantity SET … sales_quantity_08 = :sales_365day` を実行する。`dtb_product_class.order_quantity_01`〜`08` への書き込みは `src/Eccube/Service/ShoppingService.php:81-87` の受注時インクリメント（`->setOrderQuantity01($qty + $ProductClass->getOrderQuantity01())` ほか）のみで、B02-01 バッチ経路からの更新は無く、`ProductClassRepository.php:1111` の updateProductSummaryColumns はコメントアウトのまま。",
+      "note": "`SET order_quantity` 形式の生SQL更新も src 全体で0件。"
     },
     {
       "rowId": 153,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/CancelProductRequestCommand.php:34` `#[AsCommand(name: 'eccube:cancel-product-request', description: '入荷通知キャンセルバッチ')]` のままで、設計の `product:batch deleteProductRequest` は src/app/html/config 横断 grep でもヒットしない（`product:batch` の該当は `src/Eccube/Command/InventoryReflectionCommand.php:32` の3系由来コメントのみ）。",
+      "evidence": "`src/Eccube/Command/CancelProductRequestCommand.php:34` `#[AsCommand(name: 'eccube:cancel-product-request', description: '入荷通知キャンセルバッチ')]` のまま。`deleteProductRequest` は `src/`・`bin/`・`app/config/**`・`script/ops/**`・`.github/workflows/**` 横断 grep で0件ヒットで、設計コマンド名 `product:batch deleteProductRequest` の別登録・起動定義は不在。コマンド名不一致時に処理を行わず終了する分岐も無い。",
       "note": ""
     },
     {
       "rowId": 154,
       "status": "対応済み",
-      "evidence": "`src/Eccube/Entity/DtbProductRequest.php:38-40` に `#[ORM\\JoinColumn(name: 'product_id', nullable: true, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => '商品ID'])] #[ORM\\ManyToOne(targetEntity: Product::class)] private ?Product $Product = null;` が追加され、同97行 `public function setProduct(?Product $Product): DtbProductRequest` / 同104行 `public function getProduct(): ?Product` を保持。実際に `src/Eccube/Service/EntityManager/NotifylistProductEntityManager.php:43-46` の `$ProductRequest->setPlayer($Player)->setProductClass($ProductClass)->setProduct($Product)->setLanguage($Language);` で登録され、`src/Eccube/Repository/DtbProductRequestRepository.php:582` の `AND product_id IN (SELECT p.id FROM dtb_product p ...)` でも利用されている。設計の「入荷通知リクエストデータに商品IDを追加する」は充足。",
-      "note": "監査時点では product_id カラム／Product 関連が無かったが、現 develop では追加済み。"
+      "evidence": "`src/Eccube/Entity/DtbProductRequest.php:38-40` に `#[ORM\\JoinColumn(name: 'product_id', nullable: true, referencedColumnName: 'id', options: ['unsigned' => true, 'comment' => '商品ID'])] #[ORM\\ManyToOne(targetEntity: Product::class)] private ?Product $Product = null;` が存在し、監査時点で無かった商品IDカラム／Product 関連が追加済み。アクセサも同:97 `public function setProduct(?Product $Product): DtbProductRequest`、同:104 `public function getProduct(): ?Product` として実装。登録経路 `src/Eccube/Service/EntityManager/NotifylistProductEntityManager.php:43-46` の `$ProductRequest->setPlayer($Player)->setProductClass($ProductClass)->setProduct($Product)->setLanguage($Language);` で実際に設定され、`src/Eccube/Entity/DtbProductRequest.php:128-133` `isBulkRequest()` の `$this->ProductClass === null && $this->Product !== null` や `src/Eccube/Repository/DtbProductRequestRepository.php:582` `AND product_id IN (SELECT p.id FROM dtb_product p …)` でも利用されている。設計期待値「入荷通知リクエストデータに商品IDを追加する」は充足。",
+      "note": "カラムは Entity 属性で定義（app/DoctrineMigrations に dtb_product_request の差分マイグレーションは無く初期スキーマ管理）。"
     },
     {
       "rowId": 155,
       "status": "未対応",
-      "evidence": "B02-02 経路は `src/Eccube/Service/Product/BatchCancelProductRequestAction.php:33` `return $this->productRequestRepository->cancelRequestByProductStatus();` のみ。`src/Eccube/Repository/DtbProductRequestRepository.php:566-589` の条件は依然 `WHERE deleted_at IS NULL AND ( product_class_id IN (SELECT pc.id FROM dtb_product_class pc JOIN dtb_product p ON pc.product_id = p.id WHERE pc.product_status_id IN (:hide, :abolished) OR p.product_status_id IN (:hide, :abolished)) OR (product_class_id IS NULL AND product_id IN (SELECT p.id FROM dtb_product p WHERE p.product_status_id IN (:hide, :abolished))) )` で、設計が明記する商品規格の削除相当 `dtb_product_class.visible` は条件に無く、商品結合も `JOIN`（INNER）のままで商品不存在も抽出できない。商品不存在を扱う `deleteRequestByNonProduct()`（同528-556行）は 3系相当の `pc.del_flg` / `p.del_flg` 前提の未使用SQLで、B02-02 実行経路から呼ばれていない。",
-      "note": "監査後に product_class_id IS NULL（商品×言語まとめ通知）向けの product_id 分岐が追加されたが、指摘対象である visible 条件と商品不存在条件は未充足のまま。"
+      "evidence": "B02-02 の実行経路は `src/Eccube/Service/Product/BatchCancelProductRequestAction.php:34` `return $this->productRequestRepository->cancelRequestByProductStatus();` の1本のみ。`src/Eccube/Repository/DtbProductRequestRepository.php:566-596` の条件は `WHERE deleted_at IS NULL AND ( product_class_id IN (SELECT pc.id FROM dtb_product_class pc JOIN dtb_product p ON pc.product_id = p.id WHERE pc.product_status_id IN (:hide, :abolished) OR p.product_status_id IN (:hide, :abolished)) OR ( product_class_id IS NULL AND product_id IN (SELECT p.id FROM dtb_product p WHERE p.product_status_id IN (:hide, :abolished)) ) )` で、設計が商品規格の削除相当として明記する `dtb_product_class.visible` は依然条件に含まれない（同ファイル全体で `visible` は0件ヒット。カラムは `src/Eccube/Entity/ProductClass.php:202-203` `#[ORM\\Column(name: 'visible', type: Types::BOOLEAN, options: ['default' => true])] private ?bool $visible = null;` として存在）。商品結合も `JOIN dtb_product p ON pc.product_id = p.id`（INNER JOIN）のままで「商品が存在しない」商品規格は抽出できない。商品不存在を扱う `src/Eccube/Repository/DtbProductRequestRepository.php:528-555` `deleteRequestByNonProduct()` は 3系相当の `pc.del_flg = 1 OR p.product_id IS NULL OR p.del_flg = 1` を用いる未使用SQL（src 全体で呼び出し元0件）で、B02-02 から実行されない。",
+      "note": "監査後に product_class_id IS NULL（商品×言語まとめ通知）向けの product_id 分岐が追加されているが、指摘の中核である visible 条件と商品不存在条件は監査時点と同じく未充足のため、判断に迷う場合は未対応に倒す方針に従い未対応と判定。"
     }
   ]
 }

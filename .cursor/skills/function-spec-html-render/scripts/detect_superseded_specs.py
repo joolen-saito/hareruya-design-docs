@@ -58,7 +58,10 @@ EMBED_RE = re.compile(r"<!-- function-design-embed:start.*?<!-- function-design-
 SUPPLEMENT_RE = re.compile(r"<!-- endpoint-supplement:start -->.*?<!-- endpoint-supplement:end -->", re.S)
 PANEL_RE = re.compile(r'<section class="sheet-panel(?: is-active)?" id="(sheet-\d+)">')
 HEADING_RE = re.compile(r"<h2>([^<]*)</h2>")
-FEATURE_NO_RE = re.compile(r"<dt>機能No</dt><dd>([^<]*)</dd>")
+FEATURE_NO_RE = re.compile(
+    r"<dt\b[^>]*>.*?機能No.*?</dt>\s*<dd\b[^>]*>(.*?)</dd>",
+    re.S,
+)
 BLOCK_RE = re.compile(r"<(p|div|td)\b[^>]*>(.*?)</\1>", re.S)
 
 TODO = FUNCTIONS_DIR / "todo-list.md"
@@ -87,7 +90,7 @@ def sheet_map(body: str) -> list[tuple[int, str, str, str]]:
                 m.start(),
                 m.group(1),
                 H.unescape(head.group(1)) if head else "",
-                H.unescape(feature.group(1)).strip().upper() if feature else "",
+                plain(feature.group(1)).upper() if feature else "",
             )
         )
     return panels
@@ -163,13 +166,17 @@ def useful_targets(line: str) -> list[str]:
 
 def ledger_hit(book: str, ident: str, line: str) -> bool:
     """この指示行が既に台帳で判定済みか。"""
+    normalized_line = re.sub(r"[\s「」『』]", "", line)
     for entry in superseded_specs.load_ledger().get("entries", []):
         if entry.get("book") != book:
             continue
         if ident and str(entry.get("identifierId") or "") == ident:
             return True
         quote = entry.get("designQuote") or ""
-        if quote and (quote in line or line in quote):
+        normalized_quote = re.sub(r"[\s「」『』]", "", quote)
+        if normalized_quote and (
+            normalized_quote in normalized_line or normalized_line in normalized_quote
+        ):
             return True
     return False
 

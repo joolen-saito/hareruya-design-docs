@@ -10,7 +10,7 @@ stale = {os.path.basename(p)[:-5] for p in glob.glob(os.path.join(BASE, 'results
 
 counts, judged = Counter(), 0
 for pid in done:
-    for r in json.load(open(os.path.join(BASE, 'results', pid + '.json'), encoding='utf-8'))['results']:
+    for r in json.load(open(os.path.join(BASE, "results", pid + ".json"), encoding="utf-8"), strict=False)['results']:
         counts[r['status']] += 1
         judged += 1
 

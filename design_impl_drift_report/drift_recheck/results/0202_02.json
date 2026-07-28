@@ -4,43 +4,43 @@
     {
       "rowId": 597,
       "status": "未対応",
-      "evidence": "現 develop でも一日単位の総原価・原価単価スナップショットを保持する実装は不在。`src/Eccube/Entity/DtbDailySummary.php:22-45` は `#[ORM\\Table(name: 'dtb_daily_summary')]` / `#[ORM\\UniqueConstraint(name: 'uniq_dtb_daily_summary_date_base_info', columns: ['summary_date', 'base_info_id'])]` / `private string $totalCost = '0';` で店舗×日付の売上集計にとどまり商品規格単位ではない。`src/Eccube/Entity/DtbWeeklyStockHistory.php:45` `#[ORM\\Column(name: 'stock_01', ... 'comment' => '1週間前在庫数'])]` は在庫数のみの週次履歴。`src/Eccube/Entity/ProductStock.php:288` `#[ORM\\Column(name: 'total_cost', ...'comment' => '総原価'])]` と `:352 public function getUnitCost(): string` は現在値のみ。src/Eccube/Entity, Repository, Command 配下を daily/Daily/日次原価/cost_snapshot 等で再探索したが、日次原価履歴テーブル・バッチ・Repository は新設されていない（Command 一覧に DailySummaryAggregateCommand.php しかなく、これは上記の店舗別日次売上集計）。",
-      "note": "監査時点と同じ状態。"
+      "evidence": "src/ 外（script/**, bin/, app/config/**, app/DoctrineMigrations/**, .github/workflows/**）まで再探索したが、一日単位の総原価・原価単価スナップショットは不在。`src/Eccube/Entity/DtbDailySummary.php:34-47` は `#[ORM\\Column(name: 'summary_date', type: Types::DATE_MUTABLE)]` / `#[ORM\\Column(name: 'total_cost', type: Types::BIGINT, options: ['default' => 0])]` と店舗×日付の売上集計にとどまり商品規格単位ではない。`src/Eccube/Entity/DtbWeeklyStockHistory.php:45` `#[ORM\\Column(name: 'stock_01', ... 'comment' => '1週間前在庫数'])]` は在庫数のみの週次履歴。運用バッチは `script/ops/` 配下に db / imgcheck / monthly-inventory-snapshot / stg-db-maintenance の4件のみで、うち在庫系の `script/ops/monthly-inventory-snapshot/query.sql:1-16` は `-- 月次商品情報スナップショット 抽出クエリ` かつ抽出項目が `pc.product_code, pc.price02, pc.buy_price, bi.shop_name, ps.stock_location_id, ps.stock` と原価を含まない月次処理。`.github/workflows/` にも日次原価バッチの起動定義は無い（cron 記述は vaddy-1.yml / vaddy-2.yml のみ）。`app/DoctrineMigrations/` にも日次原価テーブル追加は無い。スナップショット全体の `daily.?cost|日次.*原価|一日単位|日単位` 検索ヒットは `src/Eccube/Repository/DtbDailySummaryRepository.php:37` のコメント1件のみ。",
+      "note": "再検証で script/ops/** を全件確認済み。バッチ実体は存在するが月次かつ原価対象外のため要求を満たさない。"
     },
     {
       "rowId": 598,
       "status": "未対応",
-      "evidence": "`src/Eccube/Form/Type/Admin/StockApprovalType.php:224-226` `private function getDepartmentChoices(BaseInfo $BaseInfo): array` / `$Members = $this->memberRepository->findBy(['baseInfo' => $BaseInfo]);` のままで、所属マスター（Department エンティティ / mtb_department）参照にも sort_no 昇順ソートにも変わっていない。同:141 `'choices' => $this->getDepartmentChoices($BaseInfo),`。`grep -rn \"DepartmentRepository|Department::class\" src/Eccube/Form/Type/Admin/` のヒットは MemberType.php:74 と SearchStockSplitJoinType.php:204,228 のみで在庫承認フォームには無く、`src/Eccube/Form/Type/Admin/StockBulkApprovalType.php:188-195` も同じメンバー由来の実装。",
+      "evidence": "`src/Eccube/Form/Type/Admin/StockApprovalType.php:224-226` `private function getDepartmentChoices(BaseInfo $BaseInfo): array` / `$Members = $this->memberRepository->findBy(['baseInfo' => $BaseInfo]);` のままで、以降 L228-236 は `$Member->getDepartment()` の名称を選択肢化するのみ。所属マスター（Department エンティティ / mtb_department）参照にも sort_no 昇順ソートにも変わっていない。この結果が同ファイル:141 `'choices' => $this->getDepartmentChoices($BaseInfo),` で承認通知先（所属選択）に使われている。",
       "note": ""
     },
     {
       "rowId": 599,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Admin/Stock/StockBulkApprovalController.php:213` `$this->addSuccess('admin.common.save_complete', 'admin');` および同:215-220 `foreach ($ProductStocks as $ps) { $params['productStockIds'][] = $ps->getId(); }` `return $this->redirectToRoute('admin_stock_bulk_approval_new', $params);` のままで、`admin.register.complete` 表示にも `admin_stock_list` へのリダイレクトにも変更されていない。",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockBulkApprovalController.php:213` `$this->addSuccess('admin.common.save_complete', 'admin');`、同:215-220 `foreach ($ProductStocks as $ps) { $params['productStockIds'][] = $ps->getId(); }` `return $this->redirectToRoute('admin_stock_bulk_approval_new', $params);` のまま。`src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました` であり、設計の `admin.register.complete`（同:1970 `登録が完了しました。`）表示にも `admin_stock_list` へのリダイレクトにも変更されていない。",
       "note": ""
     },
     {
       "rowId": 600,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Admin/Stock/StockBulkApprovalController.php:62-65` `if ($ProductStocks === []) { $this->addError('admin.stock.bulk_approval.no_product_stocks', 'admin'); return $this->redirectToRoute('admin_stock_bulk_approval_new'); }` と store() 側の同:117-128 `$this->addError('admin.common.save_error', 'admin'); return $this->redirectToRoute('admin_stock_bulk_approval_new');`（ID無しで自ルートへ戻す）は監査時点と同一。「商品が選択されていません。」表示や admin_stock_list へのリダイレクトへは変更されていない（`admin_stock_list` へのリダイレクトは:71,134,145 の店舗混在・権限エラー時のみ）。",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockBulkApprovalController.php:62-66` `if ($ProductStocks === []) { $this->addError('admin.stock.bulk_approval.no_product_stocks', 'admin'); return $this->redirectToRoute('admin_stock_bulk_approval_new'); }`、store() 側も同:117-121 / :125-129 `$this->addError('admin.common.save_error', 'admin'); return $this->redirectToRoute('admin_stock_bulk_approval_new');` とID無しで自ルートへ戻す実装のまま。文言も `src/Eccube/Resource/locale/messages.ja.yaml:4556` `admin.stock.bulk_approval.no_product_stocks: 指定された在庫が見つかりませんでした。` で設計の「商品が選択されていません。」と不一致。一覧側ディスパッチ `src/Eccube/Controller/Admin/Stock/StockListController.php:511-515` のみ `admin_stock_list` へ戻すが同じ no_product_stocks 文言で監査時点から変化なし。",
       "note": "空判定→自ルート再リダイレクトのループ懸念も未解消。"
     },
     {
       "rowId": 601,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Csv/Exporter/StockListCsvExportService.php:43-46` `'buy_price' => '買取価格',` `'stock' => '在庫',` `'unit_cost' => '原価単価',` `'total_cost' => '総原価',` の順のままで、設計の「原価単価→総原価→在庫」順に並べ替えられていない。同:76-77 `$header = self::CSV_HEADER; $headerKeys = array_keys($header);` で列順はこの定数に固定。",
+      "evidence": "`src/Eccube/Service/Csv/Exporter/StockListCsvExportService.php:42-45` `'buy_price' => '買取価格',` `'stock' => '在庫',` `'unit_cost' => '原価単価',` `'total_cost' => '総原価',` の順のままで、設計の「原価単価→総原価→在庫」順に並べ替えられていない。同:77-88 `$header = self::CSV_HEADER; $headerKeys = array_keys($header);` … `array_map(fn (string $key) => (string) ($row[$key] ?? ''), $headerKeys)` により列順はこの定数に固定され、並べ替える別実装は無い。",
       "note": ""
     },
     {
       "rowId": 602,
       "status": "未対応",
-      "evidence": "在庫移動/振替CSV取込のエラー分岐は現 develop でも resume 無しの自一覧リダイレクトのまま。`src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:261` `return $this->redirectToRoute('admin_stock_move_transfer');`（フォームエラー時）、同:270,276,287,322（形式不正・行数超過・権限・取込結果エラー時）、振替CSV側も同:369,378,384,394,431 で同一。対して移動指示作成側の同:702,710,718,725,738 は `array_merge($request->query->all(), ['resume' => '1'])` を付与しており、CSVエラー経路にのみ resume が無い。遷移先 index の通常GET分岐 `同:194-201` `$page_no = 1; $viewData = FormUtil::getViewData($searchForm); ... $this->session->set(self::SESSION_KEY_SEARCH, $viewData);` で検索条件が既定値に初期化される。",
+      "evidence": "在庫移動/振替CSV取込のエラー分岐は現 develop でも resume 無しの一覧リダイレクトのまま。`src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:316-322` `foreach ($result->getErrors() as $error) { $this->addError($error['message'], 'admin'); }` `return $this->redirectToRoute('admin_stock_move_transfer');`、同:261,270,276,287 も同様。振替CSV側も同:369,378,384,394 および:425-431 で同一実装。対して移動指示作成側の同:702,710,718,725,738 は `array_merge($request->query->all(), ['resume' => '1'])` を付与しており、CSV取込エラー経路にのみ resume が無い。遷移先 index の通常GET分岐 同:194-201 `$page_no = 1; $viewData = FormUtil::getViewData($searchForm); ... $this->session->set(self::SESSION_KEY_SEARCH, $viewData);` で検索条件が既定値に初期化され、一覧チェックボックスの選択状態を復元する処理も `src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig` に無い。",
       "note": ""
     },
     {
       "rowId": 603,
       "status": "未対応",
-      "evidence": "`src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:448-473` のクリアJSは `const $form = $('#form_search_stock_move_transfer');` `$form.find('input[type=\"checkbox\"]:checked').prop('checked', false);` `$form.find('input').each(function () { ... $i.val(''); });` `$form.find('select').each(function () { ... $s.val($s.find('option:first').val()).trigger('change'); });` と、フォーム全体を対象にしたまま。基本検索条件も同一フォーム内（同:496 `<form name=\"admin_search_stock_move_transfer\" id=\"form_search_stock_move_transfer\" ...>`、同:501-502 `{{ form_widget(searchForm.stock_move_transfer_id) }}`）にあるため 2-1〜2-9 も消える状態は変わっていない。",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:448-473` のクリアJSは `const $form = $('#form_search_stock_move_transfer');`(L450) を対象に、L451 `$form.find('input[type=\"checkbox\"]:checked').prop('checked', false);`、L452-460 で hidden/submit/_token 以外の全 input を `$i.val('')`、L461-465 で店舗・登録者・承認者 select を `.val(null).trigger('change')`、L466-471 で残る全 select を先頭 option に戻す実装のまま。詳細検索条件3-1〜3-9のみに限定するセレクタは無く、基本検索条件2-1〜2-9も消える。",
       "note": ""
     },
     {
@@ -52,26 +52,26 @@
     {
       "rowId": 605,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:751` `return $this->redirectToRoute('admin_stock_move_instruction_detail', ['id' => $Instruction->getId()]);` のままで、成功後の遷移先は依然として詳細画面。直前の同:749 `$this->addSuccess('admin.stock.move_transfer.create_instruction.success', 'admin');`。一覧ルート admin_stock_move_instruction_list への変更は無い。",
-      "note": "作成処理自体は StockMoveInstructionCreateAction で実装済みだが、監査時点から変化なし。"
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:751` `return $this->redirectToRoute('admin_stock_move_instruction_detail', ['id' => $Instruction->getId()]);` のままで、成功後の遷移先は依然として詳細画面。同メソッドの DocBlock（同:692-694「チェックした移動を対象に在庫移動指示を作成し、在庫移動指示一覧へ遷移する」）とも乖離しており、一覧ルート `admin_stock_move_instruction_list` への変更は無い。",
+      "note": "作成処理自体は StockMoveInstructionCreateAction で実装済みだが、遷移先は監査時点から変化なし。"
     },
     {
       "rowId": 606,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:115-171` `public function validateReturnListExportIds(array $stockMoveTransferIds, Member $Member): array` は依然として入庫先店舗 null 判定、`!in_array($shopId, $editableShopIds, true)`、`!in_array($stockMoveTransfer['statusId'], self::ALLOWED_STATUS_IDS, true)`、存在判定、`count(array_unique($shopIds)) > 1` のみで、moveTransferType の判定が無い。取得元 `src/Eccube/Repository/DtbStockMoveTransferRepository.php:333-343` `->select('smt.id AS transferId', 'bi.id AS shopId', 'status.id AS statusId',)` も moveTransferType を取得していない。呼び出し側 `src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:592-634` `private function validateReturnListExportRequest(Request $request): array` にも型判定は無く、CSV(:532)・PDF(:559) 双方が同関数のみを通る。",
+      "evidence": "`src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:115-171` の `public function validateReturnListExportIds(array $stockMoveTransferIds, Member $Member): array` は `$this->stockMoveTransferRepository->getMoveToBaseInfoAndStatusByIds($uniqueStockMoveTransferIds)` を使い、以降:182-235 で入庫先店舗 null 判定・`!in_array($shopId, $editableShopIds, true)`・`!in_array($stockMoveTransfer['statusId'], self::ALLOWED_STATUS_IDS, true)`・存在判定・`count(array_unique($shopIds)) > 1` のみを検証。取得元 `src/Eccube/Repository/DtbStockMoveTransferRepository.php:335-339` `->select('smt.id AS transferId', 'bi.id AS shopId', 'status.id AS statusId',)` は moveTransferType を取得していない（同リポジトリで moveTransferType を select しているのはバーコードCSV用の:368 のみ）。呼び出し側 `src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:592-634` の `validateReturnListExportRequest()` にも型判定は無く、CSV(:527)・PDF(:555) 双方が同関数のみを通る。",
       "note": ""
     },
     {
       "rowId": 607,
       "status": "未対応",
-      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:4797` `admin.stock.transfer.back_to_list: 在庫振替検索一覧へ` のままで「在庫移動・振替検索一覧」に修正されていない。表示側も `src/Eccube/Resource/template/admin/Stock/transfer_approval.twig:228` および `src/Eccube/Resource/template/admin/Stock/transfer_complete.twig:186` の `<span>{{ 'admin.stock.transfer.back_to_list'|trans }}</span>` で同キーを参照。",
-      "note": "行番号は 4737→4797 にずれているが文言は同一。"
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:4799` `admin.stock.transfer.back_to_list: 在庫振替検索一覧へ` のままで「在庫移動・振替検索一覧」に修正されていない。表示側も `src/Eccube/Resource/template/admin/Stock/transfer_approval.twig:228` および `src/Eccube/Resource/template/admin/Stock/transfer_complete.twig:186` の `<span>{{ 'admin.stock.transfer.back_to_list'|trans }}</span>` で同キーを参照。",
+      "note": "行番号は監査時点の 4737→4799 にずれているが文言は同一。同ファイル:4693 の `admin.stock.move.back_to_list: 在庫移動・振替一覧画面` は振替画面から参照されていない。"
     },
     {
       "rowId": 608,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Admin/Stock/StockTransferStoreAction.php:77-155` の明細ループは `if ($moveTransferQuantity <= 0 || $destProductCode === '') { continue; }` と振替元/先在庫の存在チェックのみで、`$moveTransferQuantity` と `$FromProductStock->getStock()` の比較・エラー処理が無い（同:123 `$afterFromStock = $FromProductStock->getStockQuantityAfterChange(bcmul($moveQuantity, '-1', 0));` をそのまま保存）。`src/Eccube/Entity/ProductStock.php:328-333` `public function getStockQuantityAfterChange(string $stockChangeQuantity): string { $stock = $this->getStock() ?? '0'; return bcadd($stock, $stockChangeQuantity); }` も負値を許容。フォームも `src/Eccube/Form/Type/Admin/StockTransferNewDetailType.php:68-71` `new Assert\\NotBlank(), new Assert\\GreaterThanOrEqual(['value' => 1]), new Assert\\LessThanOrEqual(['value' => $maxQuantity]),` の範囲チェックのみ。StockTransferController / transfer_new.twig を exceed・超え・不足 等で検索しても在庫超過エラーの実装は見つからない。",
-      "note": "参考: StockApprovalType.php:206-214 には廃棄区分向けの `bccomp($disposalQuantity, $currentStock, 0) > 0` チェックがあるが、振替登録経路には適用されていない。"
+      "evidence": "`src/Eccube/Service/Admin/Stock/StockTransferStoreAction.php:77-156` の明細ループは `if ($moveTransferQuantity <= 0 || $destProductCode === '') { continue; }`(:82-84) と振替元/先在庫の存在チェックのみで、`$moveTransferQuantity` と `$FromProductStock->getStock()` の比較・エラー処理が無く、:122 `$afterFromStock = $FromProductStock->getStockQuantityAfterChange(bcmul($moveQuantity, '-1', 0));` の結果を検査せず :145-153 `$this->productStockEntityManager->save(... stock: $afterFromStock ...)` で保存する。フォームも `src/Eccube/Form/Type/Admin/StockTransferNewDetailType.php:67-71` `new Assert\\NotBlank(), new Assert\\GreaterThanOrEqual(['value' => 1]), new Assert\\LessThanOrEqual(['value' => $maxQuantity]),` の範囲チェックのみ。在庫超過エラーは在庫移動 `src/Eccube/Form/Type/Admin/StockMoveQuantityType.php:77` `new FormError(trans('admin.stock.move.movement_quantity_exceeds_stock'))` と分割 `src/Eccube/Service/Admin/Stock/StockSplitRegisterAction.php:184` には存在するが、振替(StockTransfer)経路には StockTransferController・transfer_new.twig を含め存在しない。",
+      "note": "参考: StockApprovalType.php:206-214 に廃棄区分向けの `bccomp($disposalQuantity, $currentStock, 0) > 0` チェックがあるが、振替登録経路には適用されていない。"
     }
   ]
 }

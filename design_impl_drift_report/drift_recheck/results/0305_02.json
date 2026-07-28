@@ -4,32 +4,32 @@
     {
       "rowId": 371,
       "status": "未対応",
-      "evidence": "現 develop では `src/Eccube/Resource/template/default/Purchase/fill.twig:420-431` が Block/terms_modal.twig の include をやめ、モーダル本体を直書きして `{% include 'Purchase/include/net_purchase_terms_text.twig' %}`(fill.twig:430) を描画するよう変わったが、その中身は `src/Eccube/Resource/template/default/Purchase/include/net_purchase_terms_text.twig:2-4` の『晴れる屋 ネット買取利用規約 / 第1条 （適用範囲）…』＝買取専用規約を冒頭(第1条)から全文表示するもので、設計期待値の『サイト全体で共通の利用規約を表示』(sheet-8 部品ID23『・共通の利用規約を表示』)を満たさない。モーダル見出しも `front.purchase.fill.terms_heading: ネット買取利用規約`(src/Eccube/Resource/locale/messages.ja.yaml:209)、リンク文言も `net_terms_link: ネット買取規約`(同:210)で買取専用規約のまま。共通規約テンプレ Block/terms_modal.twig は `OtcBuy/index.twig:380` 等でのみ使用され Purchase/fill.twig からは参照されず、買取該当箇所へのアンカー/スクロール処理も無い。監査時点と表示物が入れ替わっただけで『共通の利用規約を、冒頭からではなく買取に該当する箇所から表示する』という★カスタマイズ要件は依然未充足。",
-      "note": "監査時点は『共通規約を冒頭から全文表示・買取専用テンプレはデッドコード』、現 develop は逆に『買取専用規約を冒頭から全文表示・共通規約は非表示』。いずれも設計の要求（共通規約＋買取該当箇所へのフォーカス）を満たさないため未対応と判定。"
+      "evidence": "現 develop の `src/Eccube/Resource/template/default/Purchase/fill.twig:410` `<button ... data-js-modal-trigger=\"purchase-terms-modal\">{{ 'front.purchase.fill.net_terms_link'|trans }}</button>` → `fill.twig:420` `<div class=\"p-hareruya-modal\" id=\"purchase-terms-modal\" ...>` → `fill.twig:430` `{% include 'Purchase/include/net_purchase_terms_text.twig' %}` となり、Block/terms_modal.twig の include をやめてモーダルを直書きする形に変わった（`grep -rn \"terms_modal\" src/` のヒットは OtcBuy/index.twig:380 等のみで Purchase/fill.twig には無い）。しかし描画されるのは `src/Eccube/Resource/template/default/Purchase/include/net_purchase_terms_text.twig:2-4` 『晴れる屋 ネット買取利用規約 / 第1条 （適用範囲）…』＝買取専用規約を冒頭から全文表示するもので、設計期待値（sheet-8 部品ID23『・共通の利用規約を表示 ・買取に該当する箇所を表示』）の『共通の利用規約を表示』を満たさない。見出しも `src/Eccube/Resource/locale/messages.ja.yaml:209` `front.purchase.fill.terms_heading: ネット買取利用規約`、リンク文言も同:210 `net_terms_link: ネット買取規約`。共通規約側 `messages.ja.yaml:531-` `front.agreement.heading: \"晴れる屋　利用規約\"` / `s1.title: \"1. 適用範囲\"` 以下にも買取該当条項は統合されておらず、買取箇所へのアンカー・スクロール処理も存在しない。",
+      "note": "監査時点は『共通規約を冒頭から全文表示・買取専用テンプレはデッドコード』、現 develop は『買取専用規約を冒頭から全文表示・共通規約は非表示』と表示物が入れ替わっただけで、★カスタマイズ要件（共通規約を表示し買取該当箇所を表示）は依然未充足のため未対応。script/ops/**（db, imgcheck, monthly-inventory-snapshot, stg-db-maintenance）, bin/, app/config/**, .github/workflows/** も確認したが規約表示に関する実装は無し。"
     },
     {
       "rowId": 372,
       "status": "未対応",
-      "evidence": "`src/Eccube/Resource/template/default/Purchase/complete.twig:62-65` は監査時点と同一で、`{# TODO: デザインタスク QRコード画像を表示する #}` の直後に `<a href=\"{{ path('mypage_identification') }}\">{{ 'front.mypage.nav__identification'|trans }}</a>` のテキストリンクのみ。`target=\"_blank\"` は付与されておらず別ウィンドウ遷移になっておらず、設計が求める『画像』(QRコード)も TODO のまま未表示。",
+      "evidence": "`src/Eccube/Resource/template/default/Purchase/complete.twig:63-64` は現 develop でも `{# TODO: デザインタスク QRコード画像を表示する #}` / `<a href=\"{{ path('mypage_identification') }}\">{{ 'front.mypage.nav__identification'|trans }}</a>` のままで、`target=\"_blank\"` は付与されず（同ファイル内 `_blank` grep 0件）同一ウィンドウ遷移。設計が求める『画像（QRコード）』も TODO コメントのとおり未表示。`src/`, `app/`, `html/`, `script/`, `bin/`, `.github/`, `codeception/`, `e2e-tests/` を `mypage_identification` で横断検索したがヒットは `app/DoctrineMigrations/Version20260127000000.php:32,69-70`（dtb_page への画面登録）のみで、別ウィンドウ化する JS・設定は存在しない。",
       "note": ""
     },
     {
       "rowId": 405,
       "status": "未対応",
-      "evidence": "`src/Eccube/Resource/template/default/Mypage/purchase_history.twig:144` は現 develop でも `<span class=\"c-hareruya-label--status c-hareruya-label--status-{{ statusCssModifier }}\">{{ row.statusIconAlt }}</span>` のままで、statusCssModifier は同136-142で completed/cancelled/pending の3種にしか分岐しない。一覧Twig全体を検索しても `statusIconPath` の参照は0件（grep 結果でヒットするのは詳細側 purchase_history_detail_net.twig:47 と purchase_history_detail_otc.twig:25 の `<img src=\"{{ asset(d.statusIconPath) }}\">` のみ）で、6状態の状態画像は一覧に描画されない。",
-      "note": ""
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/purchase_history.twig:136-144` は現 develop でも `{% if row.mappedStatus == 'purchase_completed' %}{% set statusCssModifier = 'completed' %}{% elseif row.mappedStatus == 'canceled' %}...{% else %}{% set statusCssModifier = 'pending' %}` の3分岐＋`purchase_history.twig:144` `<span class=\"c-hareruya-label--status c-hareruya-label--status-{{ statusCssModifier }}\">{{ row.statusIconAlt }}</span>` の色付きテキストラベルで、`<img>` を描画しない。`grep -rn \"statusIconPath\" src/` の結果、一覧Twigには参照が0件で、`src/Eccube/Service/Front/Mypage/PurchaseHistory/PurchaseHistoryRowBuilder.php:104,144` `statusIconPath: $icon['iconPath'],` が詰めた値は一覧では未使用（死にコードのまま）。img 描画は詳細画面 `src/Eccube/Resource/template/default/Mypage/purchase_history_detail_net.twig:47` / `purchase_history_detail_otc.twig:25` の `<img src=\"{{ asset(d.statusIconPath) }}\" ...>` のみで、6状態対応の状態画像一覧表示は未実装。",
+      "note": "script/**, bin/, app/config/**, .github/workflows/** も statusIconPath / purchase_history.col で横断検索したが該当実装なし。"
     },
     {
       "rowId": 406,
       "status": "未対応",
-      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:837-840` は現 develop でも `front.mypage.purchase_history.col.order_date: 依頼日` / `col.shop: 店舗` / `col.summary: 依頼内容` のままで、設計の『買取依頼日』『買取店舗』『買取依頼内容』の接頭辞『買取』が3列とも欠落。これらは `src/Eccube/Resource/template/default/Mypage/purchase_history.twig:95,101,113` の `<dt>{{ 'front.mypage.purchase_history.col.order_date'|trans }}</dt>` 等で列見出しとして描画される。",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:837` `front.mypage.purchase_history.col.order_date: 依頼日`、同`:838` `col.shop: 店舗`、同`:840` `col.summary: 依頼内容` と現 develop でも設計の『買取』接頭辞が3列で欠落したまま。これらは `src/Eccube/Resource/template/default/Mypage/purchase_history.twig:96,102,112` の `<dt>{{ 'front.mypage.purchase_history.col.order_date'|trans }}</dt>` 等として列見出しに描画される。設計一致分（同`:839` `col.order_id: 買取番号`、`:841` `col.application_total: 買取金額合計`、`:842` `col.status: 処理状態`）も監査時点と同じ。",
       "note": ""
     },
     {
       "rowId": 407,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Front/Mypage/PurchaseHistoryController.php:99-104` は `path: '/mypage/purchase_history/net/{buyOrderId}', name: 'mypage_purchase_history_detail_net', methods: ['GET']`、同:127-132 は `path: '/mypage/purchase_history/net/{buyOrderId}/confirm', name: 'mypage_purchase_history_net_confirm', methods: ['POST']`、同:189-194 は `path: '/mypage/purchase_history/otc/{otcBuyOrderId}'` で監査時点と同一。`grep -rn \"purchase_history/detail|purchase_history/update\" src html` は0件で、設計の統合パス `/mypage/purchase_history/detail/{id}` および `/mypage/purchase_history/update/{id}` は現 develop にも存在しない。",
-      "note": ""
+      "evidence": "`src/Eccube/Controller/Front/Mypage/PurchaseHistoryController.php:100` `path: '/mypage/purchase_history/net/{buyOrderId}'`、同`:128` `path: '/mypage/purchase_history/net/{buyOrderId}/confirm'`、同`:164` `path: '/mypage/purchase_history/net/{buyOrderId}/bulk'`、同`:190` `path: '/mypage/purchase_history/otc/{otcBuyOrderId}'` と、現 develop でも net/otc 分離＋confirm の URL 構造のまま。`grep -rn \"purchase_history/detail|purchase_history/update\" src/ html/ app/ script/ bin/ .github/ codeception/` は0件で、設計の統合詳細パス `/mypage/purchase_history/detail/{id}`・承諾パス `/mypage/purchase_history/update/{id}` は存在しない。",
+      "note": "ルート定義は PHP 属性のみで app/config/ 配下にも該当パスの routes 定義なし。"
     }
   ]
 }

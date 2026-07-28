@@ -4,74 +4,74 @@
     {
       "rowId": 199,
       "status": "対応済み",
-      "evidence": "`src/Eccube/Repository/OrderRepository.php:1909` `->where('o.order_date >= :targetDateTime')` に是正済み（監査時点の `o.order_date < :targetDateTime` は削除）。`src/Eccube/Command/OtcOrderSmaregiPostCommand.php:48-51` `$thirtyMinutesAgo = $now->modify('-30 minutes'); $this->smaregiOtcOrderPostAction->handle($thirtyMinutesAgo);` と合わせ、バッチ起動から30分前以降の注文が対象となり、設計「バッチ起動から30分前以降の注文」を満たす。`src/Eccube/Repository/OrderRepository.php:1894` のPHPDocのみ「注文日時 = 指定日時以前」と旧記述が残る。",
-      "note": "PHPDocコメントの記述が実クエリと逆のまま（コメントのみの残存）。"
+      "evidence": "`src/Eccube/Repository/OrderRepository.php:1909` `->where('o.order_date >= :targetDateTime')` に是正済み（監査時点の `o.order_date < :targetDateTime` は削除）。`src/Eccube/Command/OtcOrderSmaregiPostCommand.php:48-51` `$thirtyMinutesAgo = $now->modify('-30 minutes'); $this->smaregiOtcOrderPostAction->handle($thirtyMinutesAgo);` と合わせ、バッチ起動から30分前以降の注文が対象となり、設計「バッチ起動から30分前以降の注文」を満たす。",
+      "note": "`src/Eccube/Repository/OrderRepository.php:1894` のPHPDocのみ「注文日時 = 指定日時以前」と旧記述が残る（コメントのみの残存で挙動には影響なし）。"
     },
     {
       "rowId": 200,
       "status": "未対応",
-      "evidence": "親バッチは現 develop でも `src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:58` `$smaregiCode = $this->getProductBarcode('20', '1', sprintf('%03d', $smaregiShopId), $orderNumber);` を呼び、同ファイル `:97` `$janCode = $inStoreCode.$extension.$shopCode.substr($orderNumber, -6);` と8桁0埋めなしの末尾6桁切り出しのまま。8桁0埋め対応の `src/Eccube/Service/Smaregi/Otc/SmaregiOtcProductCodeGenerator.php:76-78` `str_pad($orderNumber, 8, '0', STR_PAD_LEFT)` は存在するが、`src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:76-79` が `$productCode = $Order->getSmaregiCode(); if ($productCode === null || $productCode === '')` と既存コード優先のため、親バッチ経路では呼ばれない。",
-      "note": "正しい採番クラスは実装済みだが、B05-01バッチ経路からは未使用。"
+      "evidence": "親バッチは現 develop でも `src/Eccube/Service/Smaregi/SmaregiOtcOrderPostAction.php:58` `$smaregiCode = $this->getProductBarcode('20', '1', sprintf('%03d', $smaregiShopId), $orderNumber);` を呼び、同ファイル `:97` `$janCode = $inStoreCode.$extension.$shopCode.substr($orderNumber, -6);` と8桁0埋めなしで末尾6桁を切り出したまま。8桁0埋め対応の `src/Eccube/Service/Smaregi/Otc/SmaregiOtcProductCodeGenerator.php:76-78` `$padded = str_pad($orderNumber, self::ORDER_NUMBER_PAD_LENGTH, '0', STR_PAD_LEFT); return substr($padded, -self::ORDER_NUMBER_TAIL_LENGTH);` は新設されているが、`src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:76-79` `$productCode = $Order->getSmaregiCode(); if ($productCode === null || $productCode === '') { $productCode = $this->productCodeGenerator->generate($storeId, $orderNumber); }` と既存 smaregi_code 優先のため、B05-01バッチ経路では新採番器が呼ばれない。",
+      "note": "設計どおりの採番クラスは実装済みだが、B05-01バッチ経路（親バッチが先に smaregi_code を設定）からは未使用のため、注文番号6桁未満時の桁不足は解消されていない。"
     },
     {
       "rowId": 201,
       "status": "未対応",
-      "evidence": "`src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:155-160` `$Option = $this->mtbOptionRepository->findOneBy(['option_key' => MtbOption::SMAREGI_CATEGORY_ID]); return trim($Option->getOptionValue());` で追加システム設定から取得し、`:96,110-117` で `$categoryId` として sync に渡し、`src/Eccube/Service/Smaregi/Otc/SmaregiOtcProductBodyBuilder.php:52` `'categoryId' => $categoryId,` に設定している。設計の「6: 店頭受取（固定）」の固定値化はされておらず、監査時点と同じ設定値依存。",
-      "note": "`app/DoctrineMigrations/Version20251125161057.php:170-172` で初期値 '6' が投入されるが、管理画面 `AdditionalSystemFormType.php:99` から変更可能で6固定は保証されない。"
+      "evidence": "`src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:153-160` `private function resolveSmaregiCategoryId(): string { $Option = $this->mtbOptionRepository->findOneBy(['option_key' => MtbOption::SMAREGI_CATEGORY_ID]); ... return trim($Option->getOptionValue()); }` で追加システム設定から取得し、`:96` `$categoryId = $this->resolveSmaregiCategoryId();` → `:110-117` `$result = $this->syncService->sync(..., $categoryId);` → `src/Eccube/Service/Smaregi/Otc/SmaregiOtcProductBodyBuilder.php:52` `'categoryId' => $categoryId,` として送信。設計の「6: 店頭受取（固定）」の固定値化はされておらず、監査時点と同じ設定値依存。",
+      "note": "`app/DoctrineMigrations/Version20251125161057.php:169-171` で `'option_key' => 'smaregi_category_id', 'option_value' => '6'` が初期投入されるが、`src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:99` の管理画面フォームで変更可能であり6固定は保証されない。"
     },
     {
       "rowId": 202,
       "status": "部分対応",
-      "evidence": "監査時点の `sprintf('店頭受取 %s', orderNumber)` は廃止され、`src/Eccube/Service/Smaregi/Otc/SmaregiOtcProductBodyBuilder.php:72-89` で分岐実装済み: `:76` `if ($this->isShopFrontOrder($Order))` → `:83` `$name .= \"/店頭注文: {$waitingNumber} のご注文\";`、else `:85` `$name .= \"/ {$Order->getKana01()} {$Order->getKana02()} 様のご注文\";`。店頭PCアカウント判定は `:106-119` `$Player->getCustomerGroup()->getShopFrontFlg()`。ただし `:74` `$name = (string) $Order->getOrderNumber();` により文言の先頭に注文番号＋`/` が付与され、設計の「店頭注文: 店頭注文番号 のご注文」「注文者姓カナ 注文者名カナ 様のご注文」そのものの文言にはなっていない。",
-      "note": "分岐条件・カナ利用は是正済み。残差は商品名先頭の `注文番号/` 付与（設計に記載なし）。"
+      "evidence": "監査時点の `sprintf('店頭受取 %s', orderNumber)` は廃止され、`src/Eccube/Service/Smaregi/Otc/SmaregiOtcProductBodyBuilder.php:72-89` `buildProductName()` に分岐実装済み: `:76` `if ($this->isShopFrontOrder($Order))` → `:83` `$name .= \"/店頭注文: {$waitingNumber} のご注文\";`、else `:85` `$name .= \"/ {$Order->getKana01()} {$Order->getKana02()} 様のご注文\";`。店頭PCアカウント判定は `:106-119` `$Player->getCustomerGroup()->getShopFrontFlg()`、店頭注文番号は `:80` `$this->waitingNumberRepository->findOneByOrderId($orderId)` から取得。ただし `:74` `$name = (string) $Order->getOrderNumber();` により両分岐とも文言の先頭に「注文番号」＋`/` が付与され、設計の「店頭注文: 店頭注文番号 のご注文」「注文者姓カナ 注文者名カナ 様のご注文」そのものの文言にはなっていない。",
+      "note": "分岐条件・注文者カナ利用は是正済み。残差は商品名先頭の `注文番号/` 付与（設計に記載なし）のみ。"
     },
     {
       "rowId": 203,
       "status": "未対応",
-      "evidence": "API失敗時は現 develop でも `src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:251-260` `markError()` が `$this->logger->error(...)` と `$Order->setSmaregiErrorFlg(true)` を行うのみ、`src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:163-176` `failJob()` も `setStatus(MessengerJob::STATUS_FAILED)` と `setErrorMessage($message)` のみでメール送信がない。`grep -rn \"MailService|mailer\" src/Eccube/Service/Smaregi src/Eccube/MessageHandler src/Eccube/Command/OtcOrderSmaregiPostCommand.php` は0件。追加設定 `MtbOption::SMAREGI_ERROR_MAIL_ADDRESS` の参照は `src/Eccube/Service/MailService.php:2465-2467` のポイント重複登録通知メール（`sendOrderDuplicateNotificationMail`）のみで、スマレジ連携エラー通知には使われていない。",
-      "note": ""
+      "evidence": "API失敗時は現 develop でも `src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:251-260` `markError()` が `$this->logger->error($message, [...]); $Order->setSmaregiErrorFlg(true);` を行うのみ、`src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php:163-176` `failJob()` も `$Job->setStatus(MessengerJob::STATUS_FAILED); $Job->setErrorMessage($message);` のみでメール送信がない。`src/Eccube/Service/Smaregi/**`, `src/Eccube/MessageHandler/SmaregiOtcSyncMessageHandler.php`, `src/Eccube/Command/OtcOrderSmaregiPostCommand.php` を `MailService|mailer|sendMail|Email(` でgrepして0件。`MtbOption::SMAREGI_ERROR_SEND_MAILADDRESS`（`src/Eccube/Entity/Master/MtbOption.php:45`）は定数定義のみで参照ゼロ、`SMAREGI_ERROR_MAIL_ADDRESS` の唯一の参照は `src/Eccube/Service/MailService.php:2466` `->findOneBy(['option_key' => MtbOption::SMAREGI_ERROR_MAIL_ADDRESS])`（`sendOrderDuplicateNotificationMail()`＝ポイント重複登録通知）で本要件とは別機能。`script/ops/**`(db, imgcheck, monthly-inventory-snapshot, stg-db-maintenance)、`bin/`、`app/config/**`、`.github/workflows/**` にもスマレジ連携エラー通知の実体はない。",
+      "note": "script/ops でメール送信するのは `script/ops/imgcheck/bigfilefinder.sh:108` `| /usr/sbin/sendmail -i -t -f \"${MAIL_FROM}\"` のみで、画像肥大検知用であり本要件と無関係。"
     },
     {
       "rowId": 204,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/OtcOrderSmaregiPostCommand.php:44` `$io->text('店頭受取注文スマレジ連携バッチ開始');`、`:61` `$io->success('店頭受取注文スマレジ連携処理が完了しました。');` と監査時点から変わらず、日時付与がない（設計 sheet-3「開始・完了のコンソール出力（日時付き）」）。",
+      "evidence": "`src/Eccube/Command/OtcOrderSmaregiPostCommand.php:44` `$io->text('店頭受取注文スマレジ連携バッチ開始');`、`:61` `$io->success('店頭受取注文スマレジ連携処理が完了しました。');` と監査時点から変わらず、日時の付与がない（同ファイル `:48` の `new \\DateTime()` は抽出条件算出専用で出力に使われない）。設計 sheet-3「ログ・監査 / 開始・完了 / 開始・完了のコンソール出力（日時付き）」を満たさない。",
       "note": ""
     },
     {
       "rowId": 205,
       "status": "対応済み",
-      "evidence": "B05-02のバッチ入口が新規追加済み。`src/Eccube/Command/ResendMailCommand.php:34` `#[AsCommand(name: 'eccube:resend-mail', description: '購入完了手続き再処理')]`、`:26` PHPDoc「購入完了手続き再処理バッチ（B05-02）」、`:49` `$summary = $this->resendMailAction->handle();`。実処理 `src/Eccube/Service/Admin/Order/ResendMailAction.php:61` `$Orders = $this->orderRepository->getNotSendMailOrders();` でメール未送信受注を取得し、`:74-80` ポイント処理、`:88` `$this->shoppingService->updateStock($Order, $orderNumber);` で在庫、`:90` `$this->mailService->resendOrderMail($Order, $this->getLang($Order->getCustomer()));` でメール再送信を行う。",
-      "note": "コマンド名は設計記載の旧pf-eccube3名 `order:batch resendMail` ではなく `eccube:resend-mail`。同書B05-01も設計は `order:batch copyOrderNumber` 記載に対し実装は `eccube:order:otc-smaregi-post` であり、移行後の命名規約差と判断した。"
+      "evidence": "B05-02のバッチ入口が新規追加済み。`src/Eccube/Command/ResendMailCommand.php:34` `#[AsCommand(name: 'eccube:resend-mail', description: '購入完了手続き再処理')]`、`:26` PHPDoc「購入完了手続き再処理バッチ（B05-02）」、`:49` `$summary = $this->resendMailAction->handle();`。実処理 `src/Eccube/Service/Admin/Order/ResendMailAction.php:50` `if (!$this->orderRepository->getLock('resendMail', 0))`（二重実行防止）、`:61` `$Orders = $this->orderRepository->getNotSendMailOrders();`（メール未送信受注取得）、`:74-80` ポイント整合、`:88` `$this->shoppingService->updateStock($Order, $orderNumber);`（在庫）、`:90` `$this->mailService->resendOrderMail($Order, $this->getLang($Order->getCustomer()));`（注文完了メール再送）と、設計の要求動作を一通り実装している。",
+      "note": "コマンド名は設計に記載の現行(pf-eccube3)名 `order:batch resendMail` ではなく移行先命名規約の `eccube:resend-mail`。設計書自身が「本文ではフレームワークのコマンド型名やサービス型名を主説明としない。実行はコンソールのバッチコマンドで行う」としているため、機能要件は充足と判断した。"
     },
     {
       "rowId": 206,
       "status": "部分対応",
-      "evidence": "`src/Eccube/Repository/OrderRepository.php:1961-1985` に `getNotSendMailOrders()` が新規追加され、`:1970` `->join('o.OrderStatus', 'os', 'WITH', 'os.id IN (:statusList)')` ＋ `:1976-1980` `[OrderStatus::NEW, OrderStatus::PAY_WAIT, OrderStatus::PICKING]`（新規・入金待ち・ピック中）、`:1971-1972` `->leftJoin('Eccube\\Entity\\MailHistory', 'mh', 'WITH', 'o = mh.Order')->where('mh.id IS NULL')`（送信履歴なし）を満たす。ただし時間条件は `:1963-1966` `$toDate = new \\DateTime('now', ...); $toDate->modify('-60 second'); $fromDate = clone $toDate; $fromDate->modify('-5 minute');` ＋ `:1973` `->andWhere('o.order_date > :fromDate AND o.order_date < :toDate')` で、下限が起動時刻の6分前となり設計の「5分前から1分前まで」と1分ずれる。",
-      "note": "ステータス・メール履歴条件は充足。残差は抽出下限が -6分（-1分から5分幅）である点のみ。"
+      "evidence": "`src/Eccube/Repository/OrderRepository.php:1961-1985` に `getNotSendMailOrders()` が新規追加され、`:1970` `->join('o.OrderStatus', 'os', 'WITH', 'os.id IN (:statusList)')` ＋ `:1976-1980` `[OrderStatus::NEW, OrderStatus::PAY_WAIT, OrderStatus::PICKING]`（新規・入金待ち・ピック中）、`:1971-1972` `->leftJoin('Eccube\\Entity\\MailHistory', 'mh', 'WITH', 'o = mh.Order')->where('mh.id IS NULL')`（注文完了メール送信履歴なし）を満たす。ただし時間条件は `:1963-1966` `$toDate = new \\DateTime('now', new \\DateTimeZone('UTC')); $toDate->modify('-60 second'); $fromDate = clone $toDate; $fromDate->modify('-5 minute');` ＋ `:1973` `->andWhere('o.order_date > :fromDate AND o.order_date < :toDate')` で抽出下限が起動時刻の6分前となり、設計「注文日時がバッチ起動時間の5分前から1分前まで」と1分ずれる。",
+      "note": "ステータス条件・メール履歴なし条件は充足。残差は抽出下限が -6分（-1分から5分幅）である点のみ。"
     },
     {
       "rowId": 207,
       "status": "対応済み",
-      "evidence": "`src/Eccube/Service/Admin/Order/ResendMailAction.php:74-80` `if ($Order->getSpendedPoints() > 0) { if (!$this->pointHistoryRepository->hasSpendPointHistoryForOrder($Order)) { $this->pointService->spendPoints($Order); } ... }` で受注サブの消費ポイントとポイント履歴有無を照合。冪等判定は `src/Eccube/Repository/DtbPointHistoryRepository.php:402-413` `->where('ph.Order = :order')->andWhere('ph.pointChange < 0')`（dtb_point_history.order_id 利用）。ポイント履歴作成と残高減算は `src/Eccube/Service/PointService.php:140-159` `$pointChange = $spendedPoints * $sign; $Player->setPoint($Player->getPoint() + $pointChange);` ＋ `$this->pointHistoryEntityManager->save(null, $Customer, $Order, $PointType, $pointChange, ...)`。",
+      "evidence": "`src/Eccube/Service/Admin/Order/ResendMailAction.php:74-80` `if ($Order->getSpendedPoints() > 0) { if (!$this->pointHistoryRepository->hasSpendPointHistoryForOrder($Order)) { $this->pointService->spendPoints($Order); } $shouldUpdateSmaregiPoint = true; }` で `dtb_order.spended_points` とポイント履歴有無を照合し、未履歴時のみ処理する冪等判定を実装。判定実体は `src/Eccube/Repository/DtbPointHistoryRepository.php:402-413` `->where('ph.Order = :order')->andWhere('ph.pointChange < 0')`（`dtb_point_history.order_id` 利用）。ポイント履歴作成と残高減算は `src/Eccube/Service/PointService.php:145-159` `$pointChange = $spendedPoints * $sign; $Player->setPoint($Player->getPoint() + $pointChange); $this->entityManager->persist($Player);` ＋ `$this->pointHistoryEntityManager->save(null, $Customer, $Order, $PointType, $pointChange, null, new \\DateTime(), $transactionId);`（`spendPoints()` は `:80-83` で `changeSpentPoints($Order, -1, ...)` を呼ぶ）。",
       "note": ""
     },
     {
       "rowId": 208,
       "status": "対応済み",
-      "evidence": "`src/Eccube/Service/Admin/Order/ResendMailAction.php:94-104` `if (!empty($shouldUpdateSmaregiPoint)) { $projectDir = $this->eccubeConfig->get('kernel.project_dir'); $process = Process::fromShellCommandline(\"nohup php {$projectDir}/bin/console eccube:smaregi:update-point {$Order->getId()} &\"); $process->run(); ... }` により、消費ポイントあり（`:79` `$shouldUpdateSmaregiPoint = true;`）の受注ごとに `eccube:smaregi:update-point` を別プロセス起動している。",
+      "evidence": "`src/Eccube/Service/Admin/Order/ResendMailAction.php:94-104` `if (!empty($shouldUpdateSmaregiPoint)) { $projectDir = $this->eccubeConfig->get('kernel.project_dir'); $process = Process::fromShellCommandline(\"nohup php {$projectDir}/bin/console eccube:smaregi:update-point {$Order->getId()} &\"); $process->run(); ... }` により、消費ポイントあり（`:79` `$shouldUpdateSmaregiPoint = true;`）の受注ごとに `eccube:smaregi:update-point` を別プロセスで起動している（`:27` `use Symfony\\Component\\Process\\Process;`）。監査時点で不在だった「B05-02側からの別プロセス起動」が実装された。",
       "note": ""
     },
     {
       "rowId": 209,
       "status": "対応済み",
-      "evidence": "`src/Eccube/Service/Admin/Order/ResendMailAction.php:66-115` の受注ループで `:69` `$this->entityManager->beginTransaction();`、`:88` `$this->shoppingService->updateStock($Order, $orderNumber);`（`src/Eccube/Service/ShoppingService.php:80-102` で販売数 `setOrderQuantity01`〜`08` 更新と `saveStockHistory()` による在庫履歴登録）、`:91` `$this->entityManager->commit();`。失敗時は `:105-114` `catch (\\Exception $e) { ++$failedCount; log_error('購入完了手続き再処理で受注処理に失敗しました', [...]); if ($this->entityManager->getConnection()->isTransactionActive()) { $this->entityManager->rollback(); } }` と当該受注のみ巻き戻してループを継続し、`src/Eccube/Command/ResendMailCommand.php:71-81` で失敗件数をコンソール出力する。",
-      "note": ""
+      "evidence": "`src/Eccube/Service/Admin/Order/ResendMailAction.php:66-115` の受注ループで `:69` `$this->entityManager->beginTransaction();`、`:88` `$this->shoppingService->updateStock($Order, $orderNumber);`、`:91` `$this->entityManager->commit();` と受注単位トランザクションを実装。在庫履歴と販売数の更新は `src/Eccube/Service/ShoppingService.php:80-87`（`setOrderQuantity01()`〜`setOrderQuantity08()` で販売数加算）と `:94-102` `$this->saveStockHistory($HistorySourceType, $StockChangeTypeDetail, $Order, $ProductStock, (string) $qty, $displayOrderNumber, ...)`（dtb_stock_history 登録）。失敗時は `:105-114` `catch (\\Exception $e) { ++$failedCount; log_error('購入完了手続き再処理で受注処理に失敗しました', ['order_id' => $Order->getId(), 'message' => $e->getMessage()]); if ($this->entityManager->getConnection()->isTransactionActive()) { $this->entityManager->rollback(); } }` と当該受注のみ巻き戻してループを継続し、`src/Eccube/Command/ResendMailCommand.php:71-81` で失敗件数付きメッセージを `$io->error()` でコンソール出力する。",
+      "note": "`src/Eccube/Service/ShoppingService.php:61-66` に同一受注のORDER_COMPLETE在庫履歴が既存なら return する二重登録防止もある。"
     },
     {
       "rowId": 210,
       "status": "対応済み",
-      "evidence": "言語判定は `src/Eccube/Service/Admin/Order/ResendMailAction.php:125-132` `private function getLang(?Customer $customer): string { ... return $customer->getPref()?->getId() === Pref::PREF_ABROAD ? 'en' : 'ja'; }` で会員都道府県が海外なら英語、それ以外は日本語。再送は `:90` `$this->mailService->resendOrderMail($Order, $this->getLang($Order->getCustomer()));`、テンプレート選択は `src/Eccube/Service/MailService.php:2565-2567` `$MailTemplate = ($lang === 'ja' || $lang === '') ? $Payment->getMailTemplateJp() : $Payment->getMailTemplateEn();`（監査時点の `getCurrentLocale()` 依存ではない専用メソッド）。送信履歴登録は `src/Eccube/Service/MailService.php:2641-2642` `$this->mailHistoryEntityManager->save($message, $Order->getBaseInfo(), $Order, $MailTemplate); $this->entityManager->flush();`。",
-      "note": ""
+      "evidence": "言語判定は `src/Eccube/Service/Admin/Order/ResendMailAction.php:125-132` `private function getLang(?Customer $customer): string { if ($customer === null) { return 'ja'; } return $customer->getPref()?->getId() === Pref::PREF_ABROAD ? 'en' : 'ja'; }` で会員の都道府県が海外なら英語・それ以外は日本語とし、`:90` `$this->mailService->resendOrderMail($Order, $this->getLang($Order->getCustomer()));` で渡す。テンプレート選択は再送専用メソッド `src/Eccube/Service/MailService.php:2555` `public function resendOrderMail(Order $Order, string $lang = ''): void` の `:2565-2567` `$MailTemplate = ($lang === 'ja' || $lang === '') ? $Payment->getMailTemplateJp() : $Payment->getMailTemplateEn();` で、監査時点に指摘された `getCurrentLocale()` 依存（`MailService.php:400`台の `sendOrderMail`）ではない。送信後の履歴登録は `src/Eccube/Service/MailService.php:2641-2642` `$this->mailHistoryEntityManager->save($message, $Order->getBaseInfo(), $Order, $MailTemplate); $this->entityManager->flush();`。",
+      "note": "`resendOrderMail` の呼び出しは commit 前（ResendMailAction.php:90→:91）で、設計フローの「トランザクションを確定する → 注文完了メールを再送信する」とは順序が逆。本findingの期待値（言語判定・履歴登録）自体は充足している。"
     }
   ]
 }

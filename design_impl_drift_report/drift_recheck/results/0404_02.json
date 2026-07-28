@@ -4,73 +4,73 @@
     {
       "rowId": 156,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/CancelProductRequestCommand.php:47-55` は監査時点と同一。`try {` の直後がいきなり `$count = $this->batchCancelProductRequestAction->handle();` で開始ログはなく、完了は `$io->success(sprintf('入荷通知キャンセルが完了しました。（%d件）', $count));` のみ。日時出力（DateTime/format）は同ファイル内に一切存在しない。",
-      "note": ""
+      "evidence": "`src/Eccube/Command/CancelProductRequestCommand.php:45-57` は監査時点と同一。`$io = new SymfonyStyle($input, $output);` の直後がいきなり `try { $count = $this->batchCancelProductRequestAction->handle(); }` で開始ログはなく、完了は `$io->success(sprintf('入荷通知キャンセルが完了しました。（%d件）', $count));` のみ。日時出力（DateTime/format）は同ファイルにも `src/Eccube/Service/Product/BatchCancelProductRequestAction.php` にも存在しない。`cancel-product-request` の全ツリー grep は同 Command の :32,:34 の2件のみで、`script/ops/**`・`bin/`・`app/config/**`・`.github/workflows/**` に日時付きログを出す起動ラッパは無い。",
+      "note": "script/ops 配下は db / imgcheck / monthly-inventory-snapshot / stg-db-maintenance の4群のみで、B02 系バッチの実体・起動定義は含まれないことを確認済み。"
     },
     {
       "rowId": 164,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/AggregateStockUpCommand.php:34` `#[AsCommand(name: 'eccube:aggregate-stock-up', description: '期間別入庫数集計バッチ')]` のままで、同:32 の使い方コメントも `bin/console eccube:aggregate-stock-up`。develop 全体を `grep -rn \"product:batch\" src` しても `InventoryReflectionCommand.php:29,32` の3系由来コメントのみで、`product:batch updateProductSummaryForStockUp` の登録は存在しない。",
-      "note": ""
+      "evidence": "`src/Eccube/Command/AggregateStockUpCommand.php:34` `#[AsCommand(name: 'eccube:aggregate-stock-up', description: '期間別入庫数集計バッチ')]` のままで、同:32 の使い方コメントも `bin/console eccube:aggregate-stock-up`。スナップショット全体の `grep -rn \"product:batch\"` は `src/Eccube/Command/InventoryReflectionCommand.php:29,32` の3系由来コメント2件のみで、`product:batch updateProductSummaryForStockUp` の登録は無い。`aggregate-stock-up` を `script/`・`bin/`・`app/config/`・`.github/`・`infra/`・`scripts/`・`dockerbuild/` で grep してもヒット0件。",
+      "note": "コマンド名不一致時に処理せず終了する分岐も無い。"
     },
     {
       "rowId": 165,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/DtbStockUpQuantityRepository.php:147-148` は `$beStocked = MtbStockChangeType::BE_STOCKED; $inventoryAdjustment = MtbStockChangeType::INVENTORY_ADJUSTMENT;` のままで、同:177 の SQL 条件も `AND sctd.stock_change_type_id IN (:be_stocked, :inventory_adjustment)`。同:109 のコメントも「入庫分類（入庫・棚卸）のレコードを対象に」のまま。`src/Eccube/Entity/Master/MtbStockChangeType.php:31` `const INVENTORY_ADJUSTMENT = 5;`（棚卸区分）で、マスタ更新相当区分への変更はない。",
+      "evidence": "`src/Eccube/Repository/DtbStockUpQuantityRepository.php:147-148` は `$beStocked = MtbStockChangeType::BE_STOCKED; $inventoryAdjustment = MtbStockChangeType::INVENTORY_ADJUSTMENT;` のままで、同:177 の SQL 条件も `AND sctd.stock_change_type_id IN (:be_stocked, :inventory_adjustment)`。同:109 の docコメントも「在庫履歴（dtb_stock_history）から入庫分類（入庫・棚卸）のレコードを対象に」のまま。`src/Eccube/Entity/Master/MtbStockChangeType.php:31` `public const INVENTORY_ADJUSTMENT = 5;`（棚卸区分）で、設計の「マスタ更新」に相当する区分定数は追加されていない。",
       "note": ""
     },
     {
       "rowId": 166,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Product/BatchAggregateStockUpAction.php:39-40` は依然 `$this->stockUpQuantityRepository->clearStockUpQuantityForAggregate();` の後に `$stockUpData = $this->stockUpQuantityRepository->getStockUpForAggregate();` の順序。`src/Eccube/Repository/DtbStockUpQuantityRepository.php:99-103` の `clearStockUpQuantityForAggregate()` は無条件に `'DELETE FROM dtb_stock_up_quantity'` を実行する。対象なし時の早期 return や空判定分岐は handle() 内に存在しない。",
+      "evidence": "`src/Eccube/Service/Product/BatchAggregateStockUpAction.php:39-40` は依然 `$this->stockUpQuantityRepository->clearStockUpQuantityForAggregate();` の後に `$stockUpData = $this->stockUpQuantityRepository->getStockUpForAggregate();` の順序。`src/Eccube/Repository/DtbStockUpQuantityRepository.php:99-103` の `clearStockUpQuantityForAggregate()` は無条件に `'DELETE FROM dtb_stock_up_quantity'` を実行する。handle() 全体（:34-49）に対象なし判定・空配列時の早期 return は無く、対象0件でも :44 `$connection->commit();` に到達する。",
       "note": ""
     },
     {
       "rowId": 167,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Product/BatchAggregateStockUpAction.php:37` `$connection->beginTransaction();` から同:44 `$connection->commit();` までバッチ全体を単一トランザクションで囲み、同:45-47 `catch (\\Throwable $e) { $connection->rollBack(); throw $e; }` のまま。部分コミット・件数単位 commit の実装は追加されていない。",
+      "evidence": "`src/Eccube/Service/Product/BatchAggregateStockUpAction.php:37` `$connection->beginTransaction();` から同:44 `$connection->commit();` までバッチ全体を単一トランザクションで囲み、同:45-47 `} catch (\\Throwable $e) { $connection->rollBack(); throw $e; }` のまま。件数単位の部分コミット実装は追加されていない。",
       "note": ""
     },
     {
       "rowId": 168,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Product/BatchAggregateStockUpAction.php:41-44` は `foreach ($stockUpData as $data) { $this->stockUpQuantityRepository->updateStockUpQuantityColumns($data); }` の後に一度だけ `$connection->commit();` するのみ。100件単位の反映境界も `EntityManager::clear()` / キャッシュクリアも AggregateStockUpCommand.php・BatchAggregateStockUpAction.php・DtbStockUpQuantityRepository.php のいずれにも存在しない（`clear` は同 Repository の `clearStockUpQuantityForAggregate`（DELETE）のみ）。",
+      "evidence": "`src/Eccube/Service/Product/BatchAggregateStockUpAction.php:41-44` は `foreach ($stockUpData as $data) { $this->stockUpQuantityRepository->updateStockUpQuantityColumns($data); }` の後に一度だけ `$connection->commit();` するのみ（ファイル全50行）。100件単位の反映境界も `EntityManager::clear()` / キャッシュクリアも `AggregateStockUpCommand.php`・`BatchAggregateStockUpAction.php`・`DtbStockUpQuantityRepository.php` のいずれにも存在しない（`clear` は同 Repository の `clearStockUpQuantityForAggregate`（DELETE文）のみ）。",
       "note": ""
     },
     {
       "rowId": 169,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/AggregateStockUpCommand.php:45` `$io = new SymfonyStyle($input, $output);` の直後は同:47-48 の `try { $this->batchAggregateStockUpAction->handle(); }` で開始出力なし。完了は同:55 `$io->success('期間別入庫数集計が完了しました。');` のみで日時を含まない。同ファイルに DateTime/now/writeln による日時出力はない。",
+      "evidence": "`src/Eccube/Command/AggregateStockUpCommand.php:45` `$io = new SymfonyStyle($input, $output);` の直後は同:47-48 の `try { $this->batchAggregateStockUpAction->handle(); }` で開始出力なし。完了は同:55 `$io->success('期間別入庫数集計が完了しました。');` のみで日時を含まない。`script/ops/**`・`.github/workflows/**` にも当該バッチを日時付きで起動・記録するスクリプトは無い（`aggregate-stock-up` の grep ヒットは同ファイル内2箇所のみ）。",
       "note": ""
     },
     {
       "rowId": 170,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/DtbStockUpQuantityRepository.php:153` は `sh.base_info_id,` をそのまま SELECT し、同:179 `GROUP BY ps.product_class_id, sh.base_info_id` のまま。登録側 `同:213-219` も `base_info_id` に `:base_info_id` をそのままバインドしており、本店を支店ID 0 に変換する CASE/条件は集計SQL・updateStockUpQuantityColumns のいずれにも存在しない。",
+      "evidence": "`src/Eccube/Repository/DtbStockUpQuantityRepository.php:153` は `sh.base_info_id,` をそのまま SELECT し、同:179 `GROUP BY ps.product_class_id, sh.base_info_id` のまま。登録側 同:205/:219 も `base_info_id` に `:base_info_id` をそのままバインドしており、本店を支店ID 0 に変換する CASE/条件は集計SQL・`updateStockUpQuantityColumns()` のいずれにも無い。本店判定は `src/Eccube/Entity/BaseInfo.php:45` `public const TC_TOKYO_ID = 1;` のままで、TC_TOKYO_ID の全参照（src 配下19箇所）に B02-03 集計での 0 変換は含まれない。",
       "note": ""
     },
     {
       "rowId": 171,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/` 配下に CheckNoSectionProduct 系 Command は存在せず、`grep -rn \"checkNoSectionProduct\" src app` はヒット0。部門未設定通知は依然 `src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:45` `#[AsCommand(name: 'eccube:otc-buy-order:aggregate-summary', description: '店頭買取集計バッチ')]` の副処理で、`src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php:50,52` の `getNoSectionProducts($summaryDate)` → `sendNoSectionAlertMail($noSectionProducts)` として実装されている。",
+      "evidence": "`src/Eccube/Command/` 配下（54エントリ）に CheckNoSectionProduct 系 Command は存在せず、`checkNoSectionProduct` / `product:batch checkNoSectionProduct` はスナップショット全体で grep ヒット0件。部門未設定通知は依然 `src/Eccube/Command/OtcBuyOrderAggregateSummaryCommand.php:45` `#[AsCommand(name: 'eccube:otc-buy-order:aggregate-summary', description: '店頭買取集計バッチ')]` の副処理で、`src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php:50,52` の `$noSectionProducts = $this->otcBuyOrderRepository->getNoSectionProducts($summaryDate);` → `$this->mailService->sendNoSectionAlertMail($noSectionProducts);` として実装されている。`script/ops/**`・`bin/`・`.github/workflows/**` にも B02-04 バッチの定義は無い。",
       "note": ""
     },
     {
       "rowId": 172,
       "status": "未対応",
-      "evidence": "有効な抽出は `src/Eccube/Repository/DtbOtcBuyOrderRepository.php:935` `getNoSectionProducts(\\DateTime $summaryDate)` のままで、SQL は同:947-951 `FROM dtb_otc_buy_order obo JOIN dtb_otc_buy_order_detail obod ... AND obod.section_id IS NULL`、同:964-968 の `dtb_otc_buy_order_indivisual_input_product oboi ... AND oboi.section_id IS NULL` を対象にし、`dtb_product.product_status_id` による公開判定はない。`src/Eccube/Repository/ProductClassRepository.php:2336-2372` の `getNoSectionProductClassCount` / `getNoSectionProductClasses` は全行 `//` コメントアウトのまま。",
+      "evidence": "有効な抽出は `src/Eccube/Repository/DtbOtcBuyOrderRepository.php:935` `public function getNoSectionProducts(\\DateTime $summaryDate): array` のままで、SQL は `FROM dtb_otc_buy_order obo JOIN dtb_otc_buy_order_detail obod ON obod.otc_buy_order_id = obo.id AND obod.section_id IS NULL`（:941-955）と `dtb_otc_buy_order_indivisual_input_product oboi ... AND oboi.section_id IS NULL` の UNION（:958-969）を対象とし、`dtb_product.product_status_id` による公開判定は無い。設計どおりの商品規格側抽出 `src/Eccube/Repository/ProductClassRepository.php:2338` `//     public function getNoSectionProductClassCount() : int` / 同:2372 `//     public function getNoSectionProductClasses(int $limit, int $offset) : mixed` は現 develop でも全行コメントアウトのまま。",
       "note": ""
     },
     {
       "rowId": 173,
       "status": "未対応",
-      "evidence": "`grep -rn \"10000\\|10,000\"` を ProductClassRepository.php / DtbOtcBuyOrderRepository.php / BatchAggregateSummaryAction.php / OtcBuyOrderAggregateSummaryCommand.php に対して実行しヒット0。有効経路の `src/Eccube/Repository/DtbOtcBuyOrderRepository.php:935` `getNoSectionProducts()` は LIMIT/OFFSET を持たず一括取得のみ。LIMIT/OFFSET 付き取得は `src/Eccube/Repository/ProductClassRepository.php:2372` `//     public function getNoSectionProductClasses(int $limit, int $offset) : mixed` としてコメントアウトされたまま。",
+      "evidence": "有効経路の `src/Eccube/Repository/DtbOtcBuyOrderRepository.php:935-985` `getNoSectionProducts()` は LIMIT/OFFSET を持たない一括取得で、`src/Eccube/Service/Admin/OtcBuyOrder/BatchAggregateSummaryAction.php:50` も1回呼び出すのみで反復取得しない。10000 件上限・オフセット反復を持つのは `src/Eccube/Repository/ProductClassRepository.php:2372` 以降の `//     public function getNoSectionProductClasses(int $limit, int $offset) : mixed`（`//             LIMIT :limit` / `//             OFFSET :offset`）でコメントアウト状態のまま。",
       "note": ""
     },
     {
       "rowId": 174,
       "status": "未対応",
-      "evidence": "`app/DoctrineMigrations/Version20260303143331.php:38-41` は依然 mail_key `'eccube.mail.mall.otc_buy_order_no_section_alert'`、name `'店頭買取集計バッチ 部門未設定商品通知メール'`、mail_subject `'【店頭買取】部門未設定商品通知'` を登録しており、設計の件名「部門未設定商品通知メール」と一致しない。本文 `src/Eccube/Resource/template/default/Mail/Mall/otc_buy_order_no_section_alert.twig:1-4` は `商品名, 商品コード` ヘッダと `{{ product.product_name }}, {{ product.product_code }}` のままで、B02-04 商品管理バッチ用テンプレートは追加されていない（`app/config/eccube/packages/eccube.yaml:232` も店頭買取集計バッチ用としてのみ定義）。",
+      "evidence": "`app/DoctrineMigrations/Version20260303143331.php:38-41` は依然 mail_key `'eccube.mail.mall.otc_buy_order_no_section_alert'`、name `'店頭買取集計バッチ 部門未設定商品通知メール'`、mail_subject `'【店頭買取】部門未設定商品通知'` を登録しており、設計の件名「部門未設定商品通知メール」と一致しない。本文 `src/Eccube/Resource/template/default/Mail/Mall/otc_buy_order_no_section_alert.twig:1-4` は `商品名, 商品コード` ヘッダと `{{ product.product_name }}, {{ product.product_code }}` のままで項目は近いが、`app/config/eccube/packages/eccube.yaml:232` `eccube_otc_buy_order_no_section_alert_mail_template_id: \"eccube.mail.mall.otc_buy_order_no_section_alert\" #店頭買取集計バッチ 部門未設定商品通知メール` の通り店頭買取集計バッチ専用のまま。B02-04 商品管理バッチ用テンプレートは新設されていない。",
       "note": ""
     }
   ]

@@ -4,73 +4,73 @@
   {
    "rowId": 47,
    "status": "未対応",
-   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:52-65` `if (!$this->authenticationService->verify($request)) { ... return new JsonResponse(['status' => 'error', 'message' => 'Authentication failed'], Response::HTTP_UNAUTHORIZED); }` および `:67-78` `$smaregiEventId = $request->headers->get('smaregi-event-id'); if ($smaregiEventId === null) { ... return new JsonResponse([...], Response::HTTP_BAD_REQUEST); }` が現 develop でもそのまま存在。401/400 分岐は削除されておらず監査時点と同一（行番号も一致）。",
-   "note": ""
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:52-65` `if (!$this->authenticationService->verify($request)) { ... return new JsonResponse(['status' => 'error', 'message' => 'Authentication failed'], Response::HTTP_UNAUTHORIZED); }` および `:67-78` `$smaregiEventId = $request->headers->get('smaregi-event-id'); if ($smaregiEventId === null) { ... return new JsonResponse([...], Response::HTTP_BAD_REQUEST); }` が現 develop でもそのまま存在。401/400 分岐は削除されておらず監査時点と同一。",
+   "note": "認証実体は `src/Eccube/Service/Smaregi/Webhook/AuthenticationService.php:40` `hash_equals($this->secret, $receivedSecret)`。script/ops/**（db, imgcheck, monthly-inventory-snapshot, stg-db-maintenance）, bin/, app/config/**, .github/workflows/** も確認したが当該分岐を無効化・代替する実装は無い。"
   },
   {
    "rowId": 48,
    "status": "未対応",
-   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:107-109` `return new JsonResponse(['status' => 'ok'], Response::HTTP_OK);`、`:85-88` `return new JsonResponse(['status' => 'ok', 'message' => 'Event is duplicate'], Response::HTTP_OK);` のまま。`result` / `TransactionHead` を返すコードは Controller・Service/Smaregi/Webhook 配下に存在せず（grep で `TransactionHead` の一致は `extractTransactionHeadIds`・`disposeServerTransactionHeadId` のみ）、更新件数の集計・返却は未実装。",
-   "note": ""
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:107-109` `return new JsonResponse(['status' => 'ok',], Response::HTTP_OK);`、重複時は `:85-88` `return new JsonResponse(['status' => 'ok', 'message' => 'Event is duplicate'], Response::HTTP_OK);` のまま。`result` / `TransactionHead` を更新件数として組み立てて返すコードは Controller・Service/Smaregi/Webhook 配下に存在せず、更新件数の集計・返却は未実装。",
+   "note": "非同期側（SmaregiTransactionProcessMessageHandler 経路）で処理件数が扱われても応答へは還元されない。script/ops/** にも件数応答を代替するバッチは無い。"
   },
   {
    "rowId": 49,
    "status": "未対応",
-   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:91-109` `$Event = $this->eventService->createEventFromRequest($request); $this->entityManager->persist($Event); ... $this->messageBus->dispatch(new SmaregiWebhookEventMessage($Event->getId())); ... return new JsonResponse(['status' => 'ok'], Response::HTTP_OK);` と、監査時点と同一の非同期dispatch即時200方式のまま。`app/config/eccube/packages/messenger.yaml:16` `Eccube\\Message\\SmaregiWebhookEventMessage: async` も維持されており、同期実行＋更新件数応答への変更はない。",
-   "note": ""
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:91-109` `$Event = $this->eventService->createEventFromRequest($request); $this->entityManager->persist($Event); $this->entityManager->flush(); ... $this->messageBus->dispatch(new SmaregiWebhookEventMessage($Event->getId())); ... return new JsonResponse(['status' => 'ok',], Response::HTTP_OK);` と、監査時点と同一の非同期dispatch＋即時200方式のまま。`app/config/eccube/packages/messenger.yaml:16` `Eccube\\Message\\SmaregiWebhookEventMessage: async` も維持。取引取得・受注反映は `src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/CreatedHandler.php:52-54` `foreach ($transactionHeadIds as $transactionHeadId) { $this->processDispatcher->dispatch($event, self::ACTION, $transactionHeadId, $parentJobId); }` で子ジョブへ委譲。",
+   "note": "CreatedHandler の Docコメント `:24-28` に「設計変更 (2026-06-04): 取引取得 API 呼出と Pattern Handler 実行は同期実行から子 MessengerJob に委譲」と明記され、非同期方式が現行仕様として維持されている。"
   },
   {
    "rowId": 50,
    "status": "未対応",
-   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:67` `$smaregiEventId = $request->headers->get('smaregi-event-id');`、`src/Eccube/Service/Smaregi/Webhook/EventService.php:31` `$body = json_decode($request->getContent(), true);` / `:40` `$Event->setContractId($body['contractId'] ?? '');` のまま。`params` フォーム値・`proc_name`・`X_contract_id`/`X_access_token` を参照するコードは develop の Smaregi 配下に存在しない（grep で `X_contract_id`/`X_access_token` 一致なし）。",
-   "note": ""
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:67` `$smaregiEventId = $request->headers->get('smaregi-event-id');`、`src/Eccube/Service/Smaregi/Webhook/EventService.php:31` `$body = json_decode($request->getContent(), true);` / `:40` `$Event->setContractId($body['contractId'] ?? '');` のまま。`params` フォーム値・`proc_name`・`X_contract_id`/`X_access_token` を参照するコードは src/・script/・app/config/ のいずれにも存在しない。",
+   "note": "`X-Contract-Id` の参照は `src/Eccube/Controller/App/PointGranterController.php:65` の別APIのみで、スマレジ Webhook 経路とは無関係。"
   },
   {
    "rowId": 51,
    "status": "未対応",
-   "evidence": "`src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentReverter.php:96-110` `// 残高を差し戻し、相殺用の逆仕訳履歴 (元履歴は保持) を残す。` `$player->setPoint($player->getPoint() - $net);` `$this->pointHistoryEntityManager->save(null, $customer, null, $pointType, -$net, self::REVERT_NOTE, new \\DateTime(), $transactionId);` のまま。クラスDocコメント `:34-36` にも「元の付与/減算履歴は監査用に残し、相殺用の逆仕訳履歴 (符号反転) を追加して残高を戻す」と明記され、設計が求める取引IDキーの DELETE は実装されていない。",
-   "note": ""
+   "evidence": "`src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentReverter.php` の `revert()` は現 develop でも `// 残高を差し戻し、相殺用の逆仕訳履歴 (元履歴は保持) を残す。` の下で `$player->setPoint($player->getPoint() - $net);` `$this->pointHistoryEntityManager->save(null, $customer, null, $pointType, -$net, self::REVERT_NOTE, new \\DateTime(), $transactionId);` を実行するのみ。同ファイル内に元履歴を削除する `remove(` / DELETE は一切無い。",
+   "note": "同ファイル `:36` に「元履歴を削除しないことで created 再送時の forward 冪等性 (`existsByTransactionId`) も維持する。」と設計意図が明記されており、設計書の「取引IDをキーに削除」とは依然相違。"
   },
   {
    "rowId": 52,
    "status": "未対応",
-   "evidence": "`src/Eccube/Service/Smaregi/Webhook/Transaction/` 配下（TransactionEventDispatcher.php / SmaregiTransactionProcessDispatcher.php / Handler/CreatedHandler.php 等）に支店転送処理は無く、src/Eccube 全体を `支店転送|支店システム|branch.?transfer|transferToBranch|X_contract_id|X_access_token` で grep しても Smaregi Webhook 経路の一致はゼロ（一致は `Service/Csv/Importer/Event/ProductGoodsImportHandler.php:184` 等の商品連携コメントのみ）。設計の支店転送・件数合算は依然未実装。",
-   "note": ""
+   "evidence": "`src/Eccube/Service/Smaregi/Webhook/Transaction/` 配下（TransactionEventDispatcher.php / SmaregiTransactionProcessDispatcher.php / Handler/CreatedHandler.php / Processor/* 等）に支店転送の HTTP 送信・件数合算処理は無い。`grep -rniE '支店転送|branch.?transfer|X_contract_id|X_access_token|forward|relay' src script app bin .github` の一致は `src/Eccube/Entity/DtbCustomerGroup.php:100` の `branch_shop_front_flg` 等の無関係なカラムコメントとライセンスヘッダ URL のみ。",
+   "note": "今回は script/ops/**（db, imgcheck, monthly-inventory-snapshot, stg-db-maintenance）と .github/workflows/**、bin/、app/config/** も走査したが、smaregi 関連は `script/ops/stg-db-maintenance/smaregi_clear.sql` / `smaregi_staging.sql`（STG 用 DB データ整備 SQL）のみで支店転送とは無関係。"
   },
   {
    "rowId": 53,
    "status": "未対応",
-   "evidence": "src/Eccube 配下を `dtb_order_sub|OrderSub|order_sub` で grep しても一致ゼロで、注文サブ相当のエンティティ／テーブルは現 develop にも存在しない。created 処理は `src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/CreatedHandler.php:45` `public function handle(SmaregiWebhookEvent $event, array $transactionHeadIds, ?int $parentJobId = null): void` から `PurchasePatternResolver` 経由でパターン判定する監査時点と同じ構成のまま。",
+   "evidence": "`grep -rln 'order_sub' app/ src/ script/` の一致は 0 件で、注文サブ（dtb_order_sub）相当のエンティティ・マイグレーション（app/DoctrineMigrations/**）は現 develop にも存在しない。created 処理は `src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/CreatedHandler.php:44` `public function handle(SmaregiWebhookEvent $event, array $transactionHeadIds, ?int $parentJobId = null): void` から `SmaregiTransactionProcessDispatcher`→`PurchasePatternResolver` 経由でパターン判定する監査時点と同じ構成のまま。",
    "note": "設計側も『ec-cube-enterprise 実装で要確認』と留保付きの記述。"
   },
   {
    "rowId": 54,
    "status": "未対応",
-   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:110-121` `} catch (\\Throwable $e) { log_error('Error processing webhook', [...]); return new JsonResponse(['status' => 'error', 'message' => 'Error processing webhook'], Response::HTTP_INTERNAL_SERVER_ERROR); }` が現 develop でもそのまま存在（行番号も監査時点と一致）。明示的 try-catch の撤去はされていない。",
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:110-121` `} catch (\\Throwable $e) { log_error('Error processing webhook', [...]); return new JsonResponse(['status' => 'error', 'message' => 'Error processing webhook'], Response::HTTP_INTERNAL_SERVER_ERROR); }` が現 develop でもそのまま存在。明示的 try-catch の撤去・標準例外ハンドラ委譲への変更は行われていない。",
    "note": ""
   },
   {
    "rowId": 55,
    "status": "未対応",
-   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:80-88` `if ($this->eventService->isDuplicate($smaregiEventId)) { log_warning('Smaregi webhook event is duplicate', ...); return new JsonResponse(['status' => 'ok', 'message' => 'Event is duplicate'], Response::HTTP_OK); }` のまま。`src/Eccube/Service/Smaregi/Webhook/EventService.php:52` `public function isDuplicate(string $smaregiEventId): bool` も残存し、設計に無い受信段階の重複排除層はそのまま。",
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:80-89` `if ($this->eventService->isDuplicate($smaregiEventId)) { log_warning('Smaregi webhook event is duplicate', ...); return new JsonResponse(['status' => 'ok', 'message' => 'Event is duplicate'], Response::HTTP_OK); }` のまま。`src/Eccube/Service/Smaregi/Webhook/EventService.php:52` `public function isDuplicate(string $smaregiEventId): bool` も残存。子ジョブ側の冪等チェックも `src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderPointApplier.php:104` `if ($this->pointHistoryRepository->existsByTransactionId($transactionId))` および `SmaregiPointAdjustmentApplier.php:137` に維持されており、設計に無い受信重複排除層はそのまま。",
    "note": ""
   },
   {
    "rowId": 56,
    "status": "未対応",
-   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:107-109` は `return new JsonResponse(['status' => 'ok'], Response::HTTP_OK);` のみで、Content-Type 明示・キャッシュ抑止・CORS ヘッダの付与は無い。グローバル付与も無いことを確認済み（`src/Eccube/EventListener/`・`src/Eccube/Event/`・`app/config/` を `Access-Control-Allow-Origin|Cache-Control|nocache|must-revalidate` で grep して一致ゼロ。EventListener 配下に存在するのは `CSPHeaderListener.php` のみで CORS/キャッシュ制御ではない）。",
-   "note": "監査時点で『網羅確認できず』とされた点を今回確認し、レスポンスリスナでの付与も無いことを確定。"
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:107-109` は素の `return new JsonResponse(['status' => 'ok',], Response::HTTP_OK);` のみで、Content-Type `application/json;charset=UTF-8` の明示・キャッシュ抑止・`Access-Control-Allow-Origin: *` の付与は無い。グローバル付与も無いことを確認（`grep -rn 'Access-Control-Allow-Origin|no-store|no-cache|Cache-Control' src/Eccube/EventListener src/Eccube/Event app/config` の一致 0 件）。",
+   "note": "監査時点で『網羅確認できず』とされた点を今回確認し、レスポンスリスナ等での付与も無いことを確定。"
   },
   {
    "rowId": 60,
    "status": "未対応",
-   "evidence": "`src/Eccube/Service/Smaregi/Webhook/AuthenticationService.php:33-46` `public function verify(Request $request): bool { $headers = $request->headers->all(); $headerKey = strtolower($this->secretHeader); if (isset($headers[$headerKey])) { $receivedSecret = $headers[$headerKey][0]; if (hash_equals($this->secret, $receivedSecret)) { return true; } } return false; }` とヘッダ共有シークレット認証のまま（`app/config/eccube/services.yaml:26-27` `smaregi_webhook_secret` / `smaregi_webhook_secret_header`）。`app/config/eccube/packages/security.yaml:67-69` の smaregi ファイアウォールは `security: false` のみで IP 制限なし。`src/Eccube/EventListener/IpAddrListener.php` は `eccube_front_allow_hosts`/`eccube_admin_allow_hosts` による全体制御で、スマレジ Webhook 専用の許可IP判定は存在しない。",
-   "note": ""
+   "evidence": "認証は `src/Eccube/Service/Smaregi/Webhook/AuthenticationService.php:33-46` `public function verify(Request $request): bool { $headers = $request->headers->all(); $headerKey = strtolower($this->secretHeader); if (isset($headers[$headerKey])) { $receivedSecret = $headers[$headerKey][0]; if (hash_equals($this->secret, $receivedSecret)) { return true; } } return false; }` のヘッダ共有シークレット方式のまま（`app/config/eccube/services.yaml:26-27` `smaregi_webhook_secret` / `smaregi_webhook_secret_header`、注入は `:635-636`）。IP制限は未実装で、`app/config/eccube/packages/security.yaml:67-69` の smaregi ファイアウォールは `pattern: '^/%eccube_smaregi_webhook_route%/'` / `security: false` のみ。`src/Eccube/EventListener/IpAddrListener.php:43,58` は `eccube_front_allow_hosts` / `eccube_admin_allow_hosts` による front/admin 向け制御、`src/Eccube/Event/IpCheckSubscriber.php:54` は会員ログイン(INTERACTIVE_LOGIN)向けで、いずれも Webhook 経路の許可IP判定ではない。",
+   "note": "app/config/**、infra/lib/constructs/network.ts、nginx.conf.sample（`:42-43` の allow/deny はコメントアウト）、script/ops/**、.github/workflows/** まで走査したが Webhook 用 IP 許可リストは存在しない。"
   },
   {
    "rowId": 61,
    "status": "未対応",
-   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:74-77` `return new JsonResponse(['status' => 'error', 'message' => 'Smaregi-Event-Id header is required'], Response::HTTP_BAD_REQUEST);`、`:85-88` `JsonResponse(['status' => 'ok', 'message' => 'Event is duplicate'], Response::HTTP_OK)`、`:107-109` `JsonResponse(['status' => 'ok'], Response::HTTP_OK)` がいずれも監査時点と同一行・同一内容で残存。設計が要求する「200かつ空レスポンス」への変更はなく、Smaregi-Event-Id 必須の400分岐も維持されている。",
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:74-77` `return new JsonResponse(['status' => 'error', 'message' => 'Smaregi-Event-Id header is required'], Response::HTTP_BAD_REQUEST);`、`:85-88` `JsonResponse(['status' => 'ok', 'message' => 'Event is duplicate'], Response::HTTP_OK)`、`:107-109` `JsonResponse(['status' => 'ok'], Response::HTTP_OK)` がいずれも監査時点と同一内容で残存。設計が要求する「200かつ空レスポンス（ステータスコードのみ）」への変更はなく、設計に無い Smaregi-Event-Id 必須の400分岐も維持されている。",
    "note": ""
   }
  ]

@@ -71,7 +71,7 @@
 | 項目（フォームキー） | 型 | 必須 | バリデーション |
 |----------------------|----|------|----------------|
 | 在庫変動区分 `stock_change_type_detail` | EntityType（`MtbStockChangeTypeDetail`） | 必須 | `NotBlank`。入庫／廃棄の区分詳細のみ選択可。 |
-| 在庫変動理由 `stock_change_reason` | Textarea | 必須 | `NotBlank` + `Length(max=eccube_product_stock_change_reason_max_len)`。 |
+| 在庫変動理由 `stock_change_reason` | Textarea | 必須 | `NotBlank` + `Length(max=eccube_product_stock_change_reason_max_len)`。設定値は16384文字で、Excel識別ID 3-2 と一致する。 |
 | 在庫増減数 `stock_change_quantity` | Number | 必須 | `NotBlank` + `Range(min/max=eccube_product_stock_change_quantity_min/max)`。 |
 | 仕入単価 `purchase_price` | Number | 任意 | `Range(min/max=eccube_product_stock_purchase_price_min/max)`。未入力は登録時に `0` 扱い。 |
 | 承認部署 `approval_department` | Choice | 任意 | 対象店舗メンバーの部署候補（画面上の絞り込み用）。 |

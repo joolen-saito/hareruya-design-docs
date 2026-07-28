@@ -4,73 +4,73 @@
     {
       "rowId": 21,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/App/OrderController.php:43` `#[Route(path: '/api/order/prints/direct/{base_info_id}', name: 'order_direct_print', requirements: ['base_info_id' => '\\d+'], methods: ['POST'])]` のまま。設計の GET /order/print/direct（GetRequest）ルートは存在せず、methods は POST のみ。GetRequest/SetResponse は同ルート内の `$connectionType = $request->get('ConnectionType');`（行46）→ `if ($connectionType === 'GetRequest')`（行48）/ `elseif ($connectionType === 'SetResponse')`（行64）分岐で処理。`grep -rn \"order/prints\" src/ html/` でも他の GET ルートは存在しない。",
-      "note": "da9c2ba276..HEAD で本ファイルに差分なし（git diff 空）。"
+      "evidence": "`src/Eccube/Controller/App/OrderController.php:43` `#[Route(path: '/api/order/prints/direct/{base_info_id}', name: 'order_direct_print', requirements: ['base_info_id' => '\\d+'], methods: ['POST'])]` のまま。設計の GET /order/print/direct（GetRequest）ルートは存在せず methods は POST のみで、GetRequest/SetResponse は同ルート内の `:46` `$connectionType = $request->get('ConnectionType');` → `:48` `if ($connectionType === 'GetRequest')` / `:64` `elseif ($connectionType === 'SetResponse')` 分岐で処理。",
+      "note": "探索範囲を src に限定せず src/, html/, app/, script/, bin/, codeception/, tests/, e2e-tests/ を `order/prints|prints/direct|order_direct_print|orderDirectPrint` で横断 Grep したが、ヒットは当コントローラと tests/Eccube/Tests/Web/App/OrderControllerTest.php の `'/api/order/prints/direct/1'`（:62,99,140,177）のみ。script/ops 配下は db/imgcheck/monthly-inventory-snapshot/stg-db-maintenance の4系統のみで印刷API関連は皆無、.github/workflows にも該当なし。"
     },
     {
       "rowId": 22,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:74` `$paymentTotal = $Order['payment_total'];`、同 `:126-129` `<text>合計金額</text> ... <text>{$paymentTotal}</text>` で配送方法を判定せず生値を出力。「スムーズ店頭受取」文言への置換分岐は存在しない（ファイル内に該当リテラルなし）。取得元 `src/Eccube/Repository/OrderRepository.php:1609` `'o.payment_total AS payment_total'` / `:1689` `o.payment_total` も配送方法を SELECT していないため、印刷側で判定不能なまま。",
-      "note": ""
+      "evidence": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:74` `$paymentTotal = $Order['payment_total'];`、同 `:126-129` `<text>合計金額</text> ... <text>{$paymentTotal}</text>` で配送方法を判定せず生値を出力。「スムーズ店頭受取」への文言置換分岐はファイル内に存在しない。取得元 `src/Eccube/Repository/OrderRepository.php:1609` `'o.payment_total AS payment_total'` / 同 `:1689` `o.payment_total` も配送方法列を SELECT しておらず、印刷側で判定不能なまま。",
+      "note": "`SMOOTH_OTC` をスナップショット全体で Grep しても印字系のヒットは無く、OrderRepository.php:1624/1640 の抽出条件パラメータのみ。"
     },
     {
       "rowId": 23,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:94` `<text>店頭注文番号</text>` に対する値は `:97` `<text width=\"5\" height=\"5\">{$orderNumber}</text>`、注文番号欄 `:114` `<text>注文番号</text>` の値も `:117` `<text>{$orderNumber}</text>` で同一。`:77` `$orderNumber = htmlspecialchars((string) $Order['order_number'], ENT_XML1, 'UTF-8');` の通り order_number 由来。両リポジトリの SELECT（OrderRepository.php:1603-1614 / :1661-1670）に dtb_order_number・waiting_number 列は無く、`grep -rn \"waiting_number\" src/` でも印刷系での参照はゼロ。",
-      "note": ""
+      "evidence": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:94` `<text>店頭注文番号</text>` の値欄 `:97` `<text width=\"5\" height=\"5\">{$orderNumber}</text>` と注文番号欄 `:114`→`:117` `<text>{$orderNumber}</text>` が同一値で、`:77` `$orderNumber = htmlspecialchars((string) $Order['order_number'], ENT_XML1, 'UTF-8');` の通り order_number 由来。両リポジトリの SELECT（OrderRepository.php:1603-1614 / :1661-1670）に dtb_order_number・waiting_number 列は無い。",
+      "note": "`waiting_number|WaitingNumber|dtb_order_number` の Grep で OrderRepository.php のヒットは検索条件 :563-567 のみ、印刷経路での参照は 0 件。"
     },
     {
       "rowId": 24,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/App/OrderController.php:52-63` の GetRequest 分岐は `$xmlData = $this->orderDirectPrintAction->handle(...)` 後に `$response = new StreamedResponse(); $response->setCallback(function () use ($xmlData) { echo $xmlData; });` と返すのみで、ファイル書き出しが一切ない。監査時点でコメントアウトされていた TODO ブロックは commit `cca06f0266 ログファイル出力に関するコメントアウト部分を削除（対応不要となったため）` により削除され、実装されていない。`grep -rn \"print_logs\\|file_put_contents\" src/ html/` に print_logs 出力の実装なし。",
-      "note": "コメントアウト削除は「対応不要」判断であり、設計期待値（XMLログ書き出し・ディレクトリ作成）は依然未充足。"
+      "evidence": "`src/Eccube/Controller/App/OrderController.php:52-63` の GetRequest 分岐は `$xmlData = $this->orderDirectPrintAction->handle(new OrderDirectPrintInput(...));` の後 `$response = new StreamedResponse(); $response->setCallback(function () use ($xmlData) { echo $xmlData; }); $response->headers->set('Content-Type', 'application/octet-stream'); return $response;` のみで、XML のファイル書き出し・ディレクトリ生成が一切ない。監査時点の TODO コメントブロックは削除されたが、代替実装は追加されていない。",
+      "note": "`print_logs` をスナップショット全体（src/, script/ops/**, bin/, app/config/**, html/, .github/workflows/**, codeception/）で Grep してヒット 0 件。バッチ・運用スクリプト側でのログ出力実装も無いことを script/ops 全ファイル列挙（db, imgcheck, monthly-inventory-snapshot, stg-db-maintenance の計16ファイル）で確認済み。"
     },
     {
       "rowId": 25,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/App/OrderController.php:79-84` `$response = new StreamedResponse(); $response->setCallback(function () { }); $response->setStatusCode(Response::HTTP_BAD_REQUEST); $response->headers->set('Content-Type', 'text/plain; charset=utf-8'); return $response;` のまま。設計の「応答を組み立てず本文を返さない」に対し、明示的に HTTP 400・text/plain の応答を組み立てて返している。",
+      "evidence": "`src/Eccube/Controller/App/OrderController.php:79-84` `$response = new StreamedResponse(); $response->setCallback(function () { }); $response->setStatusCode(Response::HTTP_BAD_REQUEST); $response->headers->set('Content-Type', 'text/plain; charset=utf-8'); return $response;` のままで、設計の「応答を組み立てず本文を返さない」に対し HTTP 400・text/plain の応答を明示的に組み立てて返している。",
       "note": ""
     },
     {
       "rowId": 26,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:44-48` `if ($BaseInfo && $BaseInfo->isMainShop()) { $OrderDataList = $this->orderRepository->getPrintOrderListMainShop($base_info_id); } else { $OrderDataList = $this->orderRepository->getDirectPrintOrderList($base_info_id); }` の本店/支店分岐が残存。支店側 `src/Eccube/Repository/OrderRepository.php:1657-1701` の getDirectPrintOrderList は `s.delivery_id = :otc AND o.order_status_id = :orderNew AND o.smaregi_code IS NOT NULL`（:1676-1678）と `o.browser_print_flg = true`（:1697）の 2 系統 UNION のみで、`Delivery::SMOOTH_OTC` 分岐が無い（本店側 :1624 `'s.Delivery = :smoothOtc'` にのみ存在）。",
+      "evidence": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:44-48` `if ($BaseInfo && $BaseInfo->isMainShop()) { $OrderDataList = $this->orderRepository->getPrintOrderListMainShop($base_info_id); } else { $OrderDataList = $this->orderRepository->getDirectPrintOrderList($base_info_id); }` の本店/支店分岐が残存。支店側 `src/Eccube/Repository/OrderRepository.php:1657-1701` は `s.delivery_id = :otc AND o.order_status_id = :orderNew AND o.smaregi_code IS NOT NULL`（:1676-1678）と `o.browser_print_flg = true`（:1697）の2系統 UNION のみで、smoothOtc 抽出ブランチが依然欠落（`'s.Delivery = :smoothOtc'` は本店側 :1624 のみ）。",
       "note": ""
     },
     {
       "rowId": 27,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:89-98` `} else { $Order->setOrderStatus($pickingStatus); if ($BaseInfo->isMainShop()) { // 本店の場合、注文確定日を更新 $Order->setConfirmDate(new \\DateTime()); } else { // 支店の場合、ピック開始日を更新 $Order->setPickingDate(new \\DateTime()); } }` のまま。設計に無い本店/支店分岐が残り、pick_finish_date は同ファイル内で一切設定されず（setPickFinishDate の呼び出しなし）、支店では confirm_date を設定しない。",
-      "note": "設計自体が処理フロー(confirm_date)とDBカラム(picking_date/pick_finish_date)で揺れている点は監査時点と同様。"
+      "evidence": "`src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:90-97` `$Order->setOrderStatus($pickingStatus); if ($BaseInfo->isMainShop()) { // 本店の場合、注文確定日を更新 $Order->setConfirmDate(new \\DateTime()); } else { // 支店の場合、ピック開始日を更新 $Order->setPickingDate(new \\DateTime()); }` のままで、設計に無い本店/支店分岐が残り支店では confirm_date を設定しない。",
+      "note": "`pick_finish` を src/ 全体で Grep すると src/Eccube/Entity/Order.php:679（カラム定義）・:1877/:1882（アクセサ）のみで、setPickFinishDate() の呼び出し箇所は 0 件。script/ops のバッチ SQL（monthly-inventory-snapshot/query.sql 等）にも該当更新なし。"
     },
     {
       "rowId": 29,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/App/OrderController.php:43` `#[Route(path: '/api/order/prints/direct/{base_info_id}', name: 'order_direct_print', requirements: ['base_info_id' => '\\d+'], methods: ['POST'])]` の単一ルートのみ。設計の GET /order/prints/{店舗ID}（shop_id パス引数）ルートは存在せず、A05-01(GetRequest) と A05-02(SetResponse) は行48/行64 の ConnectionType 分岐で同一 POST ルートに同居したまま。`grep -rn \"order/prints\\|order_direct_print\" src/ html/` の該当は当該 1 行のみ。",
-      "note": ""
+      "evidence": "`src/Eccube/Controller/App/OrderController.php:43` のルートは `methods: ['POST']` の単一定義のみで、設計の GET /order/prints/{店舗ID}（shop_id パス引数）は存在しない。A05-01(GetRequest) と A05-02(SetResponse) は `:48` / `:64` の ConnectionType 分岐により同一 POST ルートに同居したまま。",
+      "note": "src/, html/, app/, script/, bin/, tests/ を横断 Grep しても他の印刷ルート定義は無し。"
     },
     {
       "rowId": 30,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/App/OrderController.php:44-55` の GetRequest 分岐に BaseInfo 存在チェックは無く、`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:42-48` `$BaseInfo = $this->baseInfoRepository->find($base_info_id); if ($BaseInfo && $BaseInfo->isMainShop()) { ... } else { $OrderDataList = $this->orderRepository->getDirectPrintOrderList($base_info_id); }` の通り、BaseInfo が null でも else 側で検索を続行し `:50-52` `if (empty($OrderDataList)) { return ''; }` で空文字＝200 応答になる。404 を返す分岐は存在しない。",
-      "note": "UpdatePrintedOrderStatusAction.php:64-68 には `if (!$BaseInfo) { ... return; }` があるが SetResponse 側かつ 404 ではなくログ出力＋正常復帰であり、設計要件を満たさない。"
+      "evidence": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:42-52` `$BaseInfo = $this->baseInfoRepository->find($base_info_id); if ($BaseInfo && $BaseInfo->isMainShop()) { ... } else { $OrderDataList = $this->orderRepository->getDirectPrintOrderList($base_info_id); } if (empty($OrderDataList)) { return ''; }` の通り、BaseInfo が null でも else 側で検索を続行し空文字＝200 応答になる。`OrderController.php` / `OrderDirectPrintAction.php` を `NOT_FOUND|createNotFoundException` で Grep してヒット 0 件。",
+      "note": "`$BaseInfo &&` の null ガード自体は存在するが 404 応答ではなく支店扱いへのフォールバックであり設計期待値を満たさない。UpdatePrintedOrderStatusAction.php:64-68 の `if (!$BaseInfo) { ...error log...; return; }` も SetResponse 側かつ 404 ではない。"
     },
     {
       "rowId": 31,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/App/OrderController.php:57-63` の GetRequest 応答生成部に XML ログ書き出しは存在しない（`$response->setCallback(function () use ($xmlData) { echo $xmlData; });` のみ）。監査時点の TODO コメントブロックは commit `cca06f0266` で削除済みで、代替実装は追加されていない。`grep -rn \"print_logs\" src/ html/ app/` は 0 件、`var/log/print_logs` への file_put_contents も存在しない。",
-      "note": "rowId 24 と同一の未実装事象。"
+      "evidence": "rowId 24 と同一箇所。`src/Eccube/Controller/App/OrderController.php:57-63` は `$response->setCallback(function () use ($xmlData) { echo $xmlData; });` でストリーム出力するのみで、`var/log/print_logs/` へのファイル書き出しもディレクトリ生成も無い。",
+      "note": "`print_logs` はスナップショット全体（src/, script/ops/**, bin/, app/config/**, html/, .github/workflows/**）で Grep ヒット 0 件。バッチ側への実装移管も無いことを確認済み。"
     },
     {
       "rowId": 32,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/OrderRepository.php:1618-1636` の本店側 OR 条件のうち、店頭受取分岐 `$qb->expr()->andX('s.Delivery = :otc', 'o.OrderStatus = :orderNew')`（:1619-1622）とブラウザ印刷分岐 `'o.browser_print_flg = true'`（:1635）には smaregi_code 条件が無い（`'o.smaregi_code IS NOT NULL'` は :1633 の smoothOtc 分岐のみ）。支店側も `:1697` `AND o.browser_print_flg = true` の分岐に smaregi_code 条件が無い。`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:78` `$smaregiCode = htmlspecialchars((string) $Order['smaregi_code'], ENT_XML1, 'UTF-8');` → `:135` `<barcode type=\"jan13\" ...>{$smaregiCode}</barcode>` に空値チェックなしで埋め込まれる。",
+      "evidence": "`src/Eccube/Repository/OrderRepository.php:1618-1636` の本店側 OR 条件のうち、店頭受取分岐 `$qb->expr()->andX('s.Delivery = :otc', 'o.OrderStatus = :orderNew')`（:1619-1622）とブラウザ印刷分岐 `'o.browser_print_flg = true'`（:1635）に smaregi_code 条件が無く、`'o.smaregi_code IS NOT NULL'` は :1633 の smoothOtc 分岐のみ。支店側も `:1697` `AND o.browser_print_flg = true` 分岐に同条件が無い。`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:78` `$smaregiCode = htmlspecialchars((string) $Order['smaregi_code'], ENT_XML1, 'UTF-8');` → `:135` `<barcode type=\"jan13\" hri=\"below\" font=\"font_b\" width=\"2\" height=\"50\">{$smaregiCode}</barcode>` と、XML 生成前の存在確認・スキップ処理なしで埋め込んでいる。",
       "note": ""
     },
     {
       "rowId": 33,
       "status": "未対応",
-      "evidence": "`src/Eccube/Repository/OrderRepository.php:1659-1701` の getDirectPrintOrderList は `AND s.delivery_id = :otc AND o.order_status_id = :orderNew AND o.smaregi_code IS NOT NULL`（:1676-1678）と `AND o.browser_print_flg = true`（:1697）の 2 ブランチ UNION + `LIMIT 10`（:1700）のみで、`Delivery::SMOOTH_OTC` 分岐は無い（`setParameters` :1718-1722 にも smoothOtc パラメータ無し）。合計金額欄の文言置換も `src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:129` `<text>{$paymentTotal}</text>` の生値出力のままで、配送方法が印刷側に渡されていない。",
+      "evidence": "`src/Eccube/Repository/OrderRepository.php:1659-1701` の getDirectPrintOrderList は `AND s.delivery_id = :otc AND o.order_status_id = :orderNew AND o.smaregi_code IS NOT NULL`（:1676-1678）と `AND o.browser_print_flg = true`（:1697）の2ブランチ UNION ＋ `LIMIT 10`（:1700）のみで、smoothOtc 分岐が無い（`setParameters`（:1718-1722）にも smoothOtc パラメータ無し）。合計金額欄も `src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:129` `<text>{$paymentTotal}</text>` の生値出力のままで、配送方法が印字側に渡っていない。",
       "note": "rowId 22・26 と重複する事象。"
     }
   ]
