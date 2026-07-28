@@ -48,9 +48,9 @@ Gate A(G1-G5 PASS)＋Gate B自己監査済みを前提に:
 - Minorは記録のみ（確定を止めない）。
 
 ## Gate D｜concretized.tsv 出力（候補確定後・母集合テンプレートの派生ビュー）
-候補確定（Gate C通過）後、**母集合 `all_it_cases.tsv` と同一11列テンプレート**の具体化TSVを出力する:
+候補確定（Gate C通過）後、**母集合 `all_it_cases.tsv` の11列＋トレーサビリティ2列＝13列**の具体化TSVを出力する:
 `python3 .codex/skills/hareruya-message-inventory/scripts/emit_concretized_tsv.py --fid <fid>`
-→ `integration_test/e2e/exec/tsv/<fid>_<slug>_concretized.tsv`（LF・タブ・列＝機能名/テストID/I/FID/観点/優先度/項目名/前提条件/入力/操作手順/期待結果／レスポンス/実行方法）。
+→ `integration_test/e2e/exec/tsv/<fid>_<slug>_concretized.tsv`（LF・タブ・列＝機能名/テストID/I/FID/観点/優先度/項目名/前提条件/**使用シード**/入力/操作手順/期待結果／レスポンス/**自動検証（内部: session/DB/URL）**/実行方法）。**使用シード**列=各行が参照するSEEDコードをソース(前提/fixtureタグ)から収集して可視化（ログイン前提は§2定義のSEED-M01-ADMINを付与・未ログインテストは「—」）。
 - **要実機の扱い**: 期待/手順中の『（…要実機…）』注記（セレクタ具体・失敗再現手段等）は**出力から除去**（正本md §6/§9に保持）。**操作手順の手段自体が要実機**（例: 削除トリガー・D&D再現）で人間が机上でテストできない行は**tsv非出力**（md §8/§9で管理）。
 - **人間可読化**: concretized.tsv の前提/入力/操作手順/期待結果は**人が読める自然文**にする。emit時に機械タグ([L1:..]/fixture/@TBD-D5)除去・SEEDコード→前提の自然文・URL可読化。TBD行は前提/入力=「—」・操作手順=「自動判定不可、人が仕様/実機確認で確定」・期待=「【要確認】期待挙動＋人の対応」。excluded行は「【対象外】理由（母集合の観点テンプレ機械生成で当機能に該当なし 等）」。著者は§4も内部コードを避け自然文で書く。
 **出力は bound(実行可能)行のみ**（実行方法=Playwright/Playwright+DB確認）。**TBD(保留)・excluded(対象外)行はtsvに出さず**、candidate md §8(会計)/§9(TBD理由)で管理する（ユーザー方針）。

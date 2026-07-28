@@ -30,7 +30,7 @@ ALL_IT = ROOT / "integration_test/all_it_cases.tsv"
 COLS = ["機能名", "テストID", "I/FID", "テスト観点", "優先度", "テスト項目名",
         "前提条件", "入力データ/リクエスト内容", "操作手順/実行方法", "期待結果／レスポンス", "実行方法"]
 # 出力は母集合11列に「自動検証（内部）」を期待結果と実行方法の間へ挿入した12列。
-OUT_COLS = COLS[:10] + ["自動検証（内部: session/DB/URL）"] + [COLS[10]]
+OUT_COLS = COLS[:7] + ["使用シード"] + COLS[7:10] + ["自動検証（内部: session/DB/URL）"] + [COLS[10]]
 
 # 目視できない内部状態の手掛かり（この語を含む句は「自動検証(内部)」列へ寄せる）
 INTERNAL_HINT = re.compile(
@@ -150,6 +150,16 @@ def parse_seed_map(dtext: str) -> dict:
     # 汎用（内部注記の付いた§2記述より優先）
     m["SEED-M01-ADMIN"] = "管理者でログイン済み"
     return m
+
+
+def extract_seeds(*texts: str) -> str:
+    """前提/入力/操作/期待(fixtureタグ含む)からSEED-*コードを収集し、使用シード列の値にする。"""
+    joined = " ".join(t for t in texts if t)
+    codes = set(re.findall(r"SEED-[A-Z0-9\-]+", joined))  # SEED-M0302-IMG@TBD-D5 の @以降は含めない
+    # ログイン前提は canonical に管理者ログインシード(SEED-M01-ADMIN・§2)が供給する
+    if re.search(r"ログイン済|管理者でログイン", joined):
+        codes.add("SEED-M01-ADMIN")
+    return ", ".join(sorted(codes)) if codes else "—"
 
 
 def humanize(text: str, seed: dict) -> str:
@@ -331,6 +341,7 @@ def main() -> int:
         d = disp.get(nnn)
         is_exec = False
         internal = "—"
+        seeds = "—"
         if d is None:
             n_raw += 1
         else:
@@ -350,6 +361,8 @@ def main() -> int:
                     if cref:
                         emitted_cref.add(cref)
                     c = cases[cref]
+                    seeds = extract_seeds(c.get("前提", ""), c.get("入力", ""),
+                                          c.get("操作", ""), c.get("期待", ""))
                     row[6] = strip_parens(humanize(c["前提"], seedmap))
                     row[7] = strip_parens(humanize(c["入力"], seedmap))
                     row[8] = strip_parens(clean_operation_steps(humanize(c["操作"], seedmap)))
@@ -358,6 +371,7 @@ def main() -> int:
                     row[10] = c["method"]
                     is_exec = True
                 else:
+                    seeds = extract_seeds(str(row[6]))  # §4対応が引けない(shared)は母集合前提から
                     row[9] = yoshi_h  # §4対応が引けない(shared) → 要旨
                     is_exec = True
             elif dstat in ("TBD", "要ソース確認"):
@@ -378,7 +392,7 @@ def main() -> int:
                 row[10] = "対象外"; n_excl += 1
         # TSVは bound(実行可能)行のみ出力。TBD/excludedはcandidate md §8/§9で管理し、tsvには出さない。
         if is_exec:
-            out_row = row[:10] + [internal] + [row[10]]
+            out_row = row[:7] + [seeds] + row[7:10] + [internal] + [row[10]]
             exec_rows.append(out_row)
 
     # ★会計完全性(ハードゲート): 母集合の全行が bound/TBD/excluded のいずれかに分類され取りこぼしゼロ。
