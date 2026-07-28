@@ -4,74 +4,74 @@
     {
       "rowId": 258,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/AdjustPointVarianceCommand.php:25` は現 develop でも `#[AsCommand(name: 'eccube:customer:adjust-point-variance', description: 'ポイント差分発生通知バッチ')]` のままで、設計の `customer:batch adjustPointVariance` は登録されていない。`src/Eccube/Command/` 全ファイル（AdjustPointVarianceCommand.php 含む）を確認したが `customer:batch` 名のコマンドは存在しない。",
+      "evidence": "`src/Eccube/Command/AdjustPointVarianceCommand.php:25` は現 develop でも `#[AsCommand(name: 'eccube:customer:adjust-point-variance', description: 'ポイント差分発生通知バッチ')]` のまま。src/app/html/script/infra を `customer:batch` / `adjustPointVariance` で横断検索しても一致は同ファイル `:29` の DI プロパティ名と `:41` `$this->adjustPointVarianceAction->handle();` のみで、設計名 `customer:batch adjustPointVariance` のコマンド登録・エイリアスは存在しない。",
       "note": ""
     },
     {
       "rowId": 259,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/AdjustPointVarianceCommand.php:38` `$io->text('ポイント差分発生通知バッチ開始');`、同 `:51` `$io->success('ポイント差分発生通知処理が完了しました。');` と、監査時点と同一で日時の付与はない。同ファイル全55行に date/format/`\\DateTime` 等の日時生成コードは存在しない。",
+      "evidence": "`src/Eccube/Command/AdjustPointVarianceCommand.php:38` `$io->text('ポイント差分発生通知バッチ開始');`、同 `:51` `$io->success('ポイント差分発生通知処理が完了しました。');` と監査時点と同一で、日時は付与されていない。同ファイル全55行に date/format/`new \\DateTime` 等の日時生成コードは存在しない。",
       "note": ""
     },
     {
       "rowId": 260,
       "status": "未対応",
-      "evidence": "`src/Eccube/Service/MailService.php:1447-1452` の `sendAdjustPointVarianceMail()` は `try { $this->mailer->send($message); log_info('ポイント差分発生通知メール送信完了'); } catch (TransportExceptionInterface $e) { log_critical($e->getMessage()); }` のままで再throwしない。呼び出し元 `src/Eccube/Service/Admin/Customer/AdjustPointVarianceAction.php:73` `$this->mailService->sendAdjustPointVarianceMail($pointVarianceList);` も例外を受け取らないため、`src/Eccube/Command/AdjustPointVarianceCommand.php:42-49` の `catch (\\Throwable $e) { $io->error(...) }` に送信エラーは到達しない。",
+      "evidence": "`src/Eccube/Service/MailService.php:1447-1452` の `sendAdjustPointVarianceMail()` 末尾は `try { $this->mailer->send($message); log_info('ポイント差分発生通知メール送信完了'); } catch (TransportExceptionInterface $e) { log_critical($e->getMessage()); }` のままで再throwしない。呼び出し元 `src/Eccube/Service/Admin/Customer/AdjustPointVarianceAction.php:73` `$this->mailService->sendAdjustPointVarianceMail($pointVarianceList);` は try ブロック外にあり、`src/Eccube/Command/AdjustPointVarianceCommand.php:42-49` の `catch (\\Throwable $e) { $io->error([...]); }` に送信時エラーは到達しない。",
       "note": ""
     },
     {
       "rowId": 261,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/SmaregiUpdatePointCommand.php:26` は現 develop でも `#[AsCommand(name: 'eccube:smaregi:update-point', description: 'スマレジ使用ポイント連携バッチ')]`。呼び出し側も `src/Eccube/Service/Admin/Order/ResendMailAction.php:98` `\"nohup php {$projectDir}/bin/console eccube:smaregi:update-point {$Order->getId()} &\"` と実装名のままで、設計の `smaregi:batch updatePoint <受注ID>` の登録は src/ 全体を検索しても存在しない。",
-      "note": ""
+      "evidence": "`src/Eccube/Command/SmaregiUpdatePointCommand.php:26` は現 develop でも `#[AsCommand(name: 'eccube:smaregi:update-point', description: 'スマレジ使用ポイント連携バッチ')]`。別プロセス呼び出し側も `src/Eccube/Service/Admin/Order/ResendMailAction.php:98` `\"nohup php {$projectDir}/bin/console eccube:smaregi:update-point {$Order->getId()} &\"` と実装名のまま。`smaregi:batch` / `updatePoint` での src・app・html・script・infra 横断検索で設計名 `smaregi:batch updatePoint <受注ID>` の登録は0件。",
+      "note": "購入完了処理側は Messenger 化され `eccube:smaregi:update-point` の直接起動はなくなったが、コマンド名の不一致自体は解消していない。"
     },
     {
       "rowId": 262,
       "status": "対応済み",
-      "evidence": "監査時点の「TODO・固定成功レスポンス」は解消済み。`src/Eccube/Service/Smaregi/SmaregiCustomerService.php:375` `public function postSmaregiPoint(?string $smaregiId = null, ?int $point = null, bool $isRollback = false): array` は、`:386-392` で `$this->accessTokenService->getAccessToken(...)`、`:398` で `resolveSmaregiCustomerId()`、`:404-410` で `$this->customerApiClient->addPoint($this->smaregiApiUrl, $this->smaregiApiContractId, $accessToken, $smaregiCustomerId, $delta)` を実行し、`:412-417` で HTTP ステータス判定を行う。実通信側は `src/Eccube/Service/Smaregi/Api/SmaregiCustomerApiClient.php:215` `$url = sprintf('%s/%s/pos/customers/%s/point/add', ...)` と `:217-230` の `POST` リクエストで、スマレジのポイント増減API(`point/add`)へ実際に送信している。使用ポイントの減算連携は `src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:54` `postSmaregiPoint($player->getSmaregiId(), -$suspendPoint, false)` のとおり負値で送信されており、設計の「スマレジ連携ポイント増減APIに使用ポイントを送信しポイント減算処理を行う」を満たす。",
-      "note": "同経路は `src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:94` でも `postSmaregiPoint($smaregiId, -$spendedPoints, false)` として利用される。"
+      "evidence": "監査時点の「TODO・未実装のため仮の固定レスポンス」は削除済み。`src/Eccube/Service/Smaregi/SmaregiCustomerService.php:375` `public function postSmaregiPoint(?string $smaregiId = null, ?int $point = null, bool $isRollback = false): array` が `:386-392` で `$this->accessTokenService->getAccessToken(...)`、`:398` で `resolveSmaregiCustomerId($accessToken, $smaregiId)`、`:403-410` で `$delta = $isRollback ? -$point : $point;` と `$this->customerApiClient->addPoint($this->smaregiApiUrl, $this->smaregiApiContractId, $accessToken, $smaregiCustomerId, $delta)` を実行し、`:412-417` で `!$this->isHttpSuccess($response['statusCode'])` をエラー化する。実通信は `src/Eccube/Service/Smaregi/Api/SmaregiCustomerApiClient.php:215-230` `$url = sprintf('%s/%s/pos/customers/%s/point/add', ...)` に対する `'POST'` リクエスト。使用ポイントの減算連携は `src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:54` `$this->smaregiCustomerService->postSmaregiPoint($player->getSmaregiId(), -$suspendPoint, false)` と負値で送信され、設計の「ポイント増減APIに使用ポイントを送信しポイント減算処理を行う」を満たす。",
+      "note": "Messenger 経路も `src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:94` `postSmaregiPoint($smaregiId, -$spendedPoints, false)` で同じAPIを利用する。"
     },
     {
       "rowId": 263,
       "status": "未対応",
-      "evidence": "`src/Eccube/Command/SmaregiUpdatePointCommand.php:53-57` は現 develop でも `if (!is_numeric($orderId)) { $io->error('orderId は数値で指定してください'); return Command::FAILURE; }` のままで、設計（sheet-8「受注IDが未指定・数値でない → 処理を行わずに終了する」）が求める正常終了扱いになっていない。未入力時のみ `:47-51` で `Command::SUCCESS` を返す。",
+      "evidence": "`src/Eccube/Command/SmaregiUpdatePointCommand.php:53-56` は現 develop でも `if (!is_numeric($orderId)) { $io->error('orderId は数値で指定してください'); return Command::FAILURE; }` のまま。未入力時のみ `:47-51` で `Command::SUCCESS` を返しており、設計（sheet-8「受注IDが未指定・数値でない → 処理を行わずに終了する(正常終了扱い)」）と不一致。",
       "note": ""
     },
     {
       "rowId": 264,
       "status": "対応済み",
-      "evidence": "購入完了再処理側の別プロセス起動が追加された。`src/Eccube/Service/Admin/Order/ResendMailAction.php:94-101`（`log_error('購入完了手続き再処理で受注処理に失敗しました', ...)` を持つ再処理アクション）に `if (!empty($shouldUpdateSmaregiPoint)) { ... $process = Process::fromShellCommandline(\"nohup php {$projectDir}/bin/console eccube:smaregi:update-point {$Order->getId()} &\"); $process->run(); ... }` が実装されている。購入完了処理側は `src/Eccube/Controller/Front/ShoppingController.php:523` `$usePointJob = $this->smaregiOrderUsePointEventService->registerUsePointJob($Order);` と `:601` `$this->smaregiOrderUsePointEventService->dispatchUsePointMessage($usePointJob, $Order);` により、`app/config/eccube/packages/messenger.yaml:35` で `Eccube\\Message\\SmaregiOrderUsePointMessage: async` に振られた非同期メッセージとして別プロセス（messenger worker）の `src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:53` で処理される。双方から連携が本処理外プロセスで起動される設計要求を満たす。",
-      "note": "購入完了処理側は監査時点の `Process::fromShellCommandline` からメッセンジャー非同期ジョブへ方式変更されているが、いずれも本処理とは別プロセス実行である。"
+      "evidence": "購入完了再処理側の別プロセス起動が新設された。`src/Eccube/Service/Admin/Order/ResendMailAction.php:94-104`（`:107` に `log_error('購入完了手続き再処理で受注処理に失敗しました', ...)` を持つ再処理アクション）に `if (!empty($shouldUpdateSmaregiPoint)) { // スマレジポイント連携を別プロセスで実行 ... $process = Process::fromShellCommandline(\"nohup php {$projectDir}/bin/console eccube:smaregi:update-point {$Order->getId()} &\"); $process->run(); ... }` が実装され、条件は `:74-80` の `$Order->getSpendedPoints() > 0` で立つ。購入完了処理側は `src/Eccube/Controller/Front/ShoppingController.php:523` `$usePointJob = $this->smaregiOrderUsePointEventService->registerUsePointJob($Order);` と `:601` `$this->smaregiOrderUsePointEventService->dispatchUsePointMessage($usePointJob, $Order);` で、`app/config/eccube/packages/messenger.yaml:35` `Eccube\\Message\\SmaregiOrderUsePointMessage: async` により別プロセス（messenger worker）の `src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:53` `__invoke(SmaregiOrderUsePointMessage $message)` で処理される。設計の「購入完了処理・購入完了再処理の双方から別プロセスとして呼び出される」を双方とも満たす。",
+      "note": "購入完了処理側は監査時点の `Process::fromShellCommandline` から Messenger 非同期ジョブへ方式変更されているが、いずれも本処理とは別プロセスでの実行である。"
     },
     {
       "rowId": 265,
       "status": "部分対応",
-      "evidence": "失敗時のエラー保存は強化された（`src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:57-58` `$order->setPointErrorMessage(json_encode(['message' => $e->getMessage()], JSON_UNESCAPED_UNICODE))->setSmaregiErrorFlg(true);`、`src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:152-153` `$Order->setSmaregiErrorFlg(true)->setPointErrorMessage(...)`、成功時は同 `:129-130` で `setSmaregiErrorFlg(false)` にクリア）。しかし設計が要求する「スマレジEC受注連携エラー再連携バッチ」は依然不在で、エラー受注抽出 `src/Eccube/Repository/OrderRepository.php:980-987` `public function getSmaregiErrorOrder(): mixed { ... ->where('o.smaregi_error_flg = 1') ... }` は `rg getSmaregiErrorOrder src/` の一致が Repository 定義1件のみ（呼び出し元なし）。`src/Eccube/Command/` 全53ファイルにも使用ポイント連携の再連携バッチはなく、`再連携` を名乗る `src/Eccube/Command/SmaregiStockBackfillCommand.php:32` は在庫変動Webhookの再連携、`src/Eccube/Command/SmaregiOrderShippingBackfillCommand.php:29-34` は Shipping バックフィルの一度きり運用コマンドで、いずれも使用ポイント連携の再試行ではない。",
-      "note": "外部未適用が確定するケースのみ `SmaregiOrderUsePointMessageHandler.php:117-119` で例外を再送出し messenger のリトライに委ねるが、これは設計の再連携バッチではない。"
+      "evidence": "失敗時のエラー記録は維持・拡充されている（`src/Eccube/Service/Smaregi/SmaregiUpdatePointAction.php:57-58` `$order->setPointErrorMessage(json_encode(['message' => $e->getMessage()], JSON_UNESCAPED_UNICODE))->setSmaregiErrorFlg(true);`、同 `:75-76`、および新設の `src/Eccube/MessageHandler/SmaregiOrderUsePointMessageHandler.php:152-153` `$Order->setSmaregiErrorFlg(true)->setPointErrorMessage(...)`、成功時は同 `:129-130` `setSmaregiErrorFlg(false)->setPointErrorMessage(null)` でクリア）。一方、設計が要求する「スマレジEC受注連携エラー再連携バッチ」は依然不在で、エラー受注抽出 `src/Eccube/Repository/OrderRepository.php:980-987` `public function getSmaregiErrorOrder(): mixed { ... ->where('o.smaregi_error_flg = 1') ... }` の呼び出し元は src・tests 全体で0件（定義のみ）。`src/Eccube/Command/` 配下のスマレジ系コマンドは `eccube:smaregi:stock:backfill`（`SmaregiStockBackfillCommand.php:32`、在庫変動Webhook再連携）・`eccube:smaregi:otc:delete`・`eccube:order:otc-smaregi-post` 等で、使用ポイント連携の再連携バッチは存在しない。",
+      "note": "外部未適用が確定するケースのみ `SmaregiOrderUsePointMessageHandler.php:115-118` で例外を再送出し Messenger のリトライに委ねるが、加算API実行後の失敗は `:109-113` で意図的にリトライせず FAILED 止まり。設計の再連携バッチには相当しない。"
     },
     {
       "rowId": 266,
       "status": "対応済み",
-      "evidence": "実行入口が新設された。`src/Eccube/Command/IdExpireNotificationCommand.php:30` `#[AsCommand(name: 'eccube:customer:id-expire-notification', description: '身分証有効期限切れ通知バッチ')]` が `:46` で `$this->idExpireNotificationAction->handle();` を呼び、`src/Eccube/Service/Admin/Customer/IdExpireNotificationAction.php:42-44` で `$daysBefore = (int) $this->eccubeConfig->get('eccube_days_before_expiration_warning'); $targetDate = (new \\DateTime())->modify(\"+{$daysBefore} days\")->setTime(0, 0, 0); $expiringPlayers = $this->playerRepository->findCustomersForNotificationIdExpire($targetDate);` と2週間先の日付を算出して対象を取得する。日数は `app/config/eccube/packages/eccube.yaml:327` `eccube_days_before_expiration_warning: 14` で2週間。検索条件は `src/Eccube/Repository/DtbPlayerRepository.php:163-164` `->where('p.idExpirationDate <= :target_date')->setParameter('target_date', $targetDate, Types::DATE_MUTABLE)` で設計の「プレイヤーデータ.身分証有効期限日 <= 2週間(先)の日付」に一致する。",
-      "note": ""
+      "evidence": "実行入口が新設された。`src/Eccube/Command/IdExpireNotificationCommand.php:30` `#[AsCommand(name: 'eccube:customer:id-expire-notification', description: '身分証有効期限切れ通知バッチ')]` が `:46` `$this->idExpireNotificationAction->handle();` を呼び、`src/Eccube/Service/Admin/Customer/IdExpireNotificationAction.php:42-44` `$daysBefore = (int) $this->eccubeConfig->get('eccube_days_before_expiration_warning'); $targetDate = (new \\DateTime())->modify(\"+{$daysBefore} days\")->setTime(0, 0, 0); $expiringPlayers = $this->playerRepository->findCustomersForNotificationIdExpire($targetDate);` で2週間先を基準に対象を取得する。日数は `app/config/eccube/packages/eccube.yaml:327` `eccube_days_before_expiration_warning: 14`。検索条件は `src/Eccube/Repository/DtbPlayerRepository.php:163-164` `->where('p.idExpirationDate <= :target_date')->setParameter('target_date', $targetDate, Types::DATE_MUTABLE)` で、設計の「プレイヤーデータ.身分証有効期限日 <= 2週間の日付」「idExpirationDate から2週間前に有効期限が切れるユーザーを取得」に一致する。",
+      "note": "監査時点で未使用だった `findCustomersForNotificationIdExpire` に実行入口が接続された。"
     },
     {
       "rowId": 267,
       "status": "対応済み",
-      "evidence": "`src/Eccube/Service/Admin/Customer/IdExpireNotificationAction.php:46-50` `if ($expiringPlayers === []) { $this->logger->info('身分証有効期限切れ通知対象なし'); return; }` で該当者ゼロ時に処理を終了し、`:55-67` `foreach ($expiringPlayers as $Player) { ... }` で取得一覧のユーザー毎にステータス判定・身分証有効期限削除・会員向けメール送信を行い、`:70` `$this->mailService->sendIdExpireNotificationMailToAdmin($expiringPlayers);` で管理者へ一覧送信する。オーケストレーション層は `src/Eccube/Command/IdExpireNotificationCommand.php:46` から起動される。",
+      "evidence": "`src/Eccube/Service/Admin/Customer/IdExpireNotificationAction.php:46-50` `if ($expiringPlayers === []) { $this->logger->info('身分証有効期限切れ通知対象なし'); return; }` で該当者ゼロ時に処理を終了し、`:55-67` `foreach ($expiringPlayers as $Player) { ... $this->identificationImageEntityManager->save($Player, null, $IdentityConfirmStatus); $this->entityManager->flush(); $this->mailService->sendIdExpireNotificationMailToCustomer($Player); }` で取得一覧のユーザー毎に処理する。ループ後 `:70` `$this->mailService->sendIdExpireNotificationMailToAdmin($expiringPlayers);`。Command/Action のオーケストレーション層は `src/Eccube/Command/IdExpireNotificationCommand.php:31` `class IdExpireNotificationCommand extends Command` として存在する。",
       "note": ""
     },
     {
       "rowId": 268,
       "status": "対応済み",
-      "evidence": "`src/Eccube/Service/Admin/Customer/IdExpireNotificationAction.php:61-63` で対象者ごとに `// 身分証有効期限削除（=null)` として `$this->identificationImageEntityManager->save($Player, null, $IdentityConfirmStatus); $this->entityManager->flush();` を実行する。`src/Eccube/Service/EntityManager/IdentificationImageEntityManager.php:28-38` の `save(DtbPlayer $Player, ?\\DateTime $idExpirationDate, MtbIdentityConfirmStatus $IdentityConfirmStatus)` が `$Player->setIdentityConfirmStatus($IdentityConfirmStatus)->setIdExpirationDate($idExpirationDate);` と `$this->entityManager->persist($Player);` を行うため、第2引数 null により `idExpirationDate` が NULL 更新・永続化される。",
+      "evidence": "`src/Eccube/Service/Admin/Customer/IdExpireNotificationAction.php:61-63` で対象者ごとに `// 身分証有効期限削除（=null)` `$this->identificationImageEntityManager->save($Player, null, $IdentityConfirmStatus); $this->entityManager->flush();` を実行する。呼び先 `src/Eccube/Service/EntityManager/IdentificationImageEntityManager.php:28-38` の `save(DtbPlayer $Player, ?\\DateTime $idExpirationDate, MtbIdentityConfirmStatus $IdentityConfirmStatus)` が `$Player->setIdentityConfirmStatus($IdentityConfirmStatus)->setIdExpirationDate($idExpirationDate);` と `$this->entityManager->persist($Player);` を行うため、第2引数 null により idExpirationDate が NULL 更新・永続化される。",
       "note": ""
     },
     {
       "rowId": 269,
       "status": "対応済み",
-      "evidence": "条件付きステータス更新が実装された。`src/Eccube/Service/Admin/Customer/IdExpireNotificationAction.php:53` `$UnconfirmedStatus = $this->identityConfirmStatusRepository->find(MtbIdentityConfirmStatus::STATUS_UNCONFIRMED);`、`:56-59` `// 本人確認ステータスを未確認にする（「簡易書留確認済み」の場合は変更しない）  $IdentityConfirmStatus = $Player->isRegisteredMailConfirmed() ? $Player->getIdentityConfirmStatus() : $UnconfirmedStatus;` により、簡易書留確認済みは現状ステータスを維持し、それ以外（オンライン本人確認）のみ未確認へ更新して `:62` の `identificationImageEntityManager->save()` で永続化する。判定は `src/Eccube/Entity/DtbPlayer.php:552-555` `return $this->getIdentityConfirmStatus()->getId() === MtbIdentityConfirmStatus::STATUS_REGISTERED_MAIL_CONFIRMED;`。",
-      "note": "設計の記載値は `0(未設定)` だが `src/Eccube/Entity/Master/MtbIdentityConfirmStatus.php:31-34` に id=0 は存在せず未確認は `STATUS_UNCONFIRMED = 1`。設計書本文のメール例（sheet-9）も「ステータスは『未確認』に切り替わっています」と記載しており、実装の 1(未確認) への更新が設計意図に一致すると判断した。設計書の `0` 表記自体は要訂正。"
+      "evidence": "条件付きステータス更新が実装された。`src/Eccube/Service/Admin/Customer/IdExpireNotificationAction.php:52-53` `/** @var MtbIdentityConfirmStatus $UnconfirmedStatus */ $UnconfirmedStatus = $this->identityConfirmStatusRepository->find(MtbIdentityConfirmStatus::STATUS_UNCONFIRMED);`、`:56-59` `// 本人確認ステータスを未確認にする（「簡易書留確認済み」の場合は変更しない）` `$IdentityConfirmStatus = $Player->isRegisteredMailConfirmed() ? $Player->getIdentityConfirmStatus() : $UnconfirmedStatus;` により、簡易書留確認済みは現行値を維持し、オンライン本人確認側のみ未確認へ更新して `:62` の `identificationImageEntityManager->save()` で永続化する。判定は `src/Eccube/Entity/DtbPlayer.php:552-555` `return $this->getIdentityConfirmStatus()->getId() === MtbIdentityConfirmStatus::STATUS_REGISTERED_MAIL_CONFIRMED;`。",
+      "note": "設計の記載値は `0(未設定)` だが、`src/Eccube/Entity/Master/MtbIdentityConfirmStatus.php:31-34` および `app/DoctrineMigrations/Version20251125145047.php:62-83` のマスタ登録（1:未確認 / 2:確認中 / 3:オンライン本人確認済み / 4:簡易書留確認済み）に id=0 は存在しない。設計書 sheet-9 のメール本文も「ステータスは『未確認』に切り替わっています」と記載しており、実装の 1(未確認) への更新が設計意図に一致すると判断した。設計書の `0` 表記は要訂正。"
     }
   ]
 }

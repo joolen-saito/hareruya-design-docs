@@ -4,68 +4,68 @@
     {
       "rowId": 292,
       "status": "未対応",
-      "evidence": "現 develop 全体で `redash`/`Redash` は 0 ヒット（`grep -ril redash .` が無出力）。`smaregi_contract_id` / `smaregi_access_token` は `src/Eccube/Entity/Master/MtbOption.php:42` `public const SMAREGI_CONTRACT_ID = 'smaregi_contract_id';` と同 `:68` `public const SMAREGI_ACCESS_TOKEN = 'smaregi_access_token';`、および `app/DoctrineMigrations/Version20251125161057.php:142,149` のオプション定義のみで、Redash用DBから当該値を削除/マスクする SQL・Repository・Command は存在しない。`src/Eccube/Command` の AsCommand 一覧（全56ファイル確認）にも Redash 用DB作成バッチの入口はない。",
-      "note": "監査時点と同状態。"
+      "evidence": "現 develop 全体で `redash`/`Redash` の一致は 0 件（スナップショット全体に対する `grep -ril redash` が無出力）。Redash用DBを対象にスマレジ接続ID/アクセストークンを削除する SQL/Repository/Command は存在しない。`src/Eccube/Entity/Master/MtbOption.php:42` `public const SMAREGI_CONTRACT_ID = 'smaregi_contract_id';` / 同 `:68` `public const SMAREGI_ACCESS_TOKEN = 'smaregi_access_token';` は設定キー定義のみ。反証として新規追加された `script/ops/stg-db-maintenance/smaregi_clear.sql:5` `UPDATE mtb_option SET option_value = '' WHERE option_key LIKE 'smaregi%';` があるが、これは B16-10 ステージングDB保守バッチが一時DBに対して実行するもの（`script/ops/stg-db-maintenance/restoresnapshot_stg_from_tmp.sh:133` `run_sql_on \"${TMP_ENDPOINT}\" \"${SCRIPT_DIR}/smaregi_clear.sql\"`）で、Redash用DBの加工ではない。",
+      "note": "Redash用DB作成機能自体が不在のため監査時点と同状態。"
     },
     {
       "rowId": 293,
       "status": "未対応",
-      "evidence": "Redash用DBを対象に注文ステータス別 smaregi 削除フラグを一括更新する処理は現 develop に不在（`redash` 全体0ヒット）。smaregi_del_flg を扱うのは従来どおり本番 Order 側のみで、`src/Eccube/Repository/OrderRepository.php:883` `->andWhere('o.smaregi_del_flg = :flgFalse')`、`src/Eccube/Repository/OrderRepository.php:965` `->andWhere('o.smaregi_del_flg = :flgFalse')` と `src/Eccube/Command/SmaregiOtcDeleteCommand.php:39` `#[AsCommand(name: 'eccube:smaregi:otc:delete', description: '店頭受取注文スマレジ商品削除バッチ (MessengerJob を enqueue する)')]`（同ファイル冒頭コメントで対象は PASSED/DELIVERED/CANCEL、API削除成功後にフラグON）で、設計のRedash用DB加工とは対象・条件とも別物のまま。",
+      "evidence": "Redash用DBに対して注文ステータス「注文取消し」「発送済み」のスマレジ削除フラグを一括ONにする処理は現 develop に存在しない（`redash` 全体0ヒット）。smaregi_del_flg をONにするのは従来どおり本番 Order 側のみで、`src/Eccube/Command/SmaregiOtcDeleteCommand.php:32-33` `* 手続き完了済み (引渡し済み PASSED / 出荷完了 DELIVERED / キャンセル CANCEL) かつ smaregi_code 連携済み・ * smaregi_del_flg 未 ON の店頭受取注文を抽出し、1 件ごとに MessengerJob を enqueue する。` と `src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php:135-138` `private function markDeleted(Order $Order): void { $Order->setSmaregiDelFlg(true); $this->entityManager->flush(); }` のまま。対象DB・条件（PASSED を含む／API削除成功依存）とも設計要求と異なる。",
       "note": "監査時点と同状態。"
     },
     {
       "rowId": 294,
       "status": "未対応",
-      "evidence": "Redash用DB作成を毎日4時にStep Functionsで起動する契約の実装証跡は現 develop に不在。毎日4時/Step Functions の記述は依然として別バッチのもので、`src/Eccube/Command/SmaregiOtcDeleteCommand.php:38` `* 実行タイミング: 毎日 4 時 / スケジュール起動 (Step Functions)` が `#[AsCommand(name: 'eccube:smaregi:otc:delete', ...)]`（同:39）に付いているだけ。`infra/lib`・`infra/bin` に StateMachine/Lambda/events.Rule の定義は0ヒット、`dockerbuild/eccube/crontab` も `* * * * * /usr/local/bin/file_sync_command ...` の1行のみ。",
+      "evidence": "Redash用DB作成を毎日午前4時にStep Functionsで起動する定義は現 develop に不在。`src/Eccube/Command/SmaregiOtcDeleteCommand.php:37` ` * 実行タイミング: 毎日 4 時 / スケジュール起動 (Step Functions)` は同 `:39` `#[AsCommand(name: 'eccube:smaregi:otc:delete', description: '店頭受取注文スマレジ商品削除バッチ (MessengerJob を enqueue する)')]` に付随するコメントで、B16-07 の起動契約ではない。`infra/lib`・`infra/bin` に StateMachine/Lambda/EventBridge Rule の定義は無く、唯一のスケジュールは `infra/lib/constructs/datastore.ts:82-85` `// at 04:00 JST` + `new BackupPlanRule({ ... scheduleExpression: Schedule.cron({` の AWS Backup 用。",
       "note": "監査時点と同状態。"
     },
     {
       "rowId": 295,
       "status": "未対応",
-      "evidence": "同期スクリプトは今も3系統のみ。`dockerbuild/eccube/file_sync_command.sh:58-60` が `aws s3 sync \"s3://${AWS_S3_CONTENT_BUCKET}/app/template/default\" /var/ec-cube/app/template/default`、同 `app/template/user_data`、同 `html/user_data` を同期し（S3_ENDPOINT 分岐の同:62-64 も同一3系統）、`dockerbuild/docker-php-entrypoint:183-185` の起動時同期も同じ3ディレクトリ。`grep -rn sitemap dockerbuild Dockerfile infra` は0ヒットで、`s3://.../html/sitemap.xml` → `/var/ec-cube/html/sitemap.xml` の同期は追加されていない。",
+      "evidence": "`dockerbuild/eccube/file_sync_command.sh:58-60` は現 develop でも `aws s3 sync \"s3://${AWS_S3_CONTENT_BUCKET}/app/template/default\" /var/ec-cube/app/template/default --delete --exact-timestamps`、同 `app/template/user_data`、同 `html/user_data` の3系統のみ（LocalStack分岐の同 `:62-64` も同一）。`dockerbuild/docker-php-entrypoint:183-185` の起動時同期も同じ3ディレクトリで、`dockerbuild` 配下に `sitemap` の一致は0件。設計の ★ 項 `s3://[S3バケット名]/html/sitemap.xml` → `/var/ec-cube/html/sitemap.xml` の同期行は追加されていない。",
       "note": "監査時点と同状態。"
     },
     {
       "rowId": 296,
       "status": "未対応",
-      "evidence": "`src/Eccube/Controller/Front/SitemapController.php:56` `#[Route(path: '/sitemap.xml', name: 'sitemap_xml', methods: ['GET'])]` の HTTP 出力実装が監査時点のまま存続し、同:102-115 で `pageRepository`/`productRepository`/`categoryRepository`/`dtbDeckRepository` から取得した結果を `'sitemap_index.xml.twig'` にレンダリングして返すだけ。トップページ起点のリンク巡回・URLリストからのファイル生成・S3アップロードはなく、`composer.json` の crawler 系依存は `\"symfony/dom-crawler\": \"^7.4\"`（:75、テスト用DOMパーサ）のみで Sitemap-Generator-Crawler 相当は不在。",
+      "evidence": "`src/Eccube/Controller/Front/SitemapController.php:56` `#[Route(path: '/sitemap.xml', name: 'sitemap_xml', methods: ['GET'])]` / `:57` `public function index(PaginatorInterface $paginator): Response` が監査時点のまま存続。同 `:42-48` の `categoryRepository`/`pageRepository`/`productRepository`/`mtbFormatRepository`/`dtbDeckRepository` からDB取得してTwig XMLをHTTP出力する実装で、トップページ起点のリンク巡回・URLリストからのファイル生成・S3アップロードはない。`composer.json:75` の crawler 系依存は `\"symfony/dom-crawler\": \"^7.4\",` のみで Sitemap-Generator-Crawler 相当は不在。",
       "note": "監査時点と同状態。"
     },
     {
       "rowId": 297,
       "status": "未対応",
-      "evidence": "前回サイトマップとの比較・差異時のみS3アップロードする制御は現 develop に不在。サイトマップ実装は `src/Eccube/Controller/Front/SitemapController.php:56` 以下のGETルート群と `src/Eccube/Resource/template/default/sitemap*.xml.twig` のみで、`grep -rn 'S3\\|s3' src/Eccube/Resource/template/default/sitemap*.twig` は0ヒット。S3のオブジェクト操作は汎用の `src/Eccube/Service/S3AccessService.php:55` `$this->client->putObject([` / 同:102 `$objects = $this->client->listObjects([` に限られ、サイトマップ差分判定から呼ばれていない。",
+      "evidence": "前回（昨日）のサイトマップ取得・今回分との比較・差異時のみS3アップロードする制御は現 develop に不在。サイトマップ実装は `src/Eccube/Controller/Front/SitemapController.php:56` 以降のGETルート群と `src/Eccube/Resource/template/default/sitemap_index.xml.twig` ほかのTwigのみ。S3側は汎用の `src/Eccube/Service/S3AccessService.php:49` `public function putFile(array $fileInfo, string $suffix = ''): string` / 同 `:102` `$objects = $this->client->listObjects([` に限られ、サイトマップ差分判定から呼ばれる箇所は存在しない。",
       "note": "監査時点と同状態。"
     },
     {
       "rowId": 298,
       "status": "未対応",
-      "evidence": "サイトマップ生成用Command・EventBridge/Lambda・毎日4:00設定はいずれも現 develop に不在。`src/Eccube/Command` 配下56ファイルの `#[AsCommand(...)]` を全列挙してもサイトマップ生成コマンドはなく（例: `src/Eccube/Command/SmaregiOtcDeleteCommand.php:39` 等、既存バッチのみ）、`grep -rn 'StateMachine|stepfunctions|aws_events|events.Rule|Lambda' infra/lib infra/bin` は0ヒット、`dockerbuild/eccube/crontab` は `* * * * * /usr/local/bin/file_sync_command >> /var/ec-cube/var/log/cron/s3_sync.log 2>&1` の1行のみ。",
+      "evidence": "サイトマップ生成用の Symfony Command は現 develop の `src/Eccube/Command/` 配下（AdjustPointVarianceCommand.php 〜 UpdateWeeklyStockHistoryCommand.php の全エントリ）に存在しない。新設された `script/ops/` にも `db` / `imgcheck` / `monthly-inventory-snapshot` / `stg-db-maintenance` の4ディレクトリのみでサイトマップ用スクリプトはない。EventBridge+Lambda・毎日4:00 の定義も無く、`infra/lib/constructs/datastore.ts:82-85` の `// at 04:00 JST` + `Schedule.cron({` は AWS Backup の BackupPlanRule、`dockerbuild/eccube/crontab:2` は `* * * * * /usr/local/bin/file_sync_command >> /var/ec-cube/var/log/cron/s3_sync.log 2>&1` の1行のみ。",
       "note": "監査時点と同状態。"
     },
     {
       "rowId": 299,
       "status": "未対応",
-      "evidence": "巡回除外設定ではなく固定XMLルート生成のまま。`src/Eccube/Controller/Front/SitemapController.php:164-165` `#[Route(path: '/sitemap_page.xml', name: 'sitemap_page_xml', methods: ['GET'])] public function page(): Response` は同:167 で `meta_robots not like '%noindex%'` によるページ抽出、同:172 `if ($Page->getEditType() === Page::EDIT_TYPE_USER) { return false; }` と同:181 `return count($route->compile()->getPathVariables()) < 1;` の除外のみ。他ルートも同:121 `/sitemap_category.xml`、:134 `/sitemap_product_{page}.xml`、:196 `/sitemap_purchase_{page}.xml`、:216 `/sitemap_deck.xml` の固定生成で、管理ページ/商品検索/カードリスト購入/デッキ検索/イベント情報の日英URLを巡回除外する設定は存在しない。",
+      "evidence": "`src/Eccube/Controller/Front/SitemapController.php:164` `#[Route(path: '/sitemap_page.xml', name: 'sitemap_page_xml', methods: ['GET'])]` / `:167` `$Pages = $this->pageRepository->getPageList(\"((p.meta_robots not like '%noindex%' and p.meta_robots not like '%none%') or p.meta_robots IS NULL)\");` は監査時点のまま。他ルートも `:121` `/sitemap_category.xml`、`:134` `/sitemap_product_{page}.xml` などDBからの固定XML生成であり、階層制限なしクロール設定や、管理ページ・商品検索・カードリスト購入・デッキ検索・イベント情報（日本語/英語）以下を巡回除外する設定は存在しない。",
       "note": "監査時点と同状態。"
     },
     {
       "rowId": 300,
-      "status": "未対応",
-      "evidence": "ステージングDB保守バッチの入口は現 develop に不在。`grep -rn 'staging|ステージング環境|ステージングDB|stg-filepool' src app dockerbuild infra bin` は0ヒットで、`src/Eccube/Command` の `#[AsCommand]` 全列挙にも該当なし。近傍は依然として `src/Eccube/Command/TestS3UploadDemoCommand.php:22` `#[AsCommand(name: 'eccube:demo:s3-upload', description: 'Upload a file to S3')]` と `src/Eccube/Command/InstallerCommand.php:29` `#[AsCommand(name: 'eccube:install', description: 'Install EC-CUBE')]` のみで、本番DBスナップショット取得・テンポラリDB作成加工・ステージングDB再作成・S3同期・個人情報マスクのいずれも実装されていない。",
-      "note": "監査時点と同状態。"
+      "status": "対応済み",
+      "evidence": "監査時点以降に新規追加された `script/ops/stg-db-maintenance/restoresnapshot_stg_from_tmp.sh:3` `# ステージングデータベース保守バッチ (ECCUBE_HARERUYA-783 / B16-10)` が設計期待値の全要素を実装。(1)本番DBスナップショット取得: 同 `:102-105` `SNAPSHOT_ID=$(aws rds describe-db-cluster-snapshots --db-cluster-identifier \"${PROD_CLUSTER_ID}\" ...)`。(2)テンポラリDB作成・復元: 同 `:113-127` `aws rds restore-db-cluster-from-snapshot --snapshot-identifier \"${SNAPSHOT_ID}\" --db-cluster-identifier \"${TMP_CLUSTER_ID}\"` + `aws rds create-db-instance`。(3)テンポラリDB加工（スマレジID/トークン削除）: 同 `:133` `run_sql_on \"${TMP_ENDPOINT}\" \"${SCRIPT_DIR}/smaregi_clear.sql\"` → `script/ops/stg-db-maintenance/smaregi_clear.sql:5-6` `UPDATE mtb_option SET option_value = '' WHERE option_key LIKE 'smaregi%'; UPDATE dtb_player SET smaregi_id = NULL;`。(4)個人情報マスク: 同 `:137` `PGHOST=\"${TMP_ENDPOINT}\" STAGING_MASK_CONFIRM=\"${STAGING_MASK_CONFIRM:-}\" bash \"${SCRIPT_DIR}/mask.sh\"`（`script/ops/stg-db-maintenance/mask.sh:3` `# ステージングDB 個人情報マスキングバッチ (ECCUBE_HARERUYA-783)`）。(5)テンポラリDBスナップショット生成: 同 `:141-145` `aws rds create-db-cluster-snapshot --db-cluster-identifier \"${TMP_CLUSTER_ID}\" --db-cluster-snapshot-identifier \"${TMP_SNAPSHOT_ID}\"`。(6)現ステージングDB削除: 同 `:150-153` `aws rds delete-db-instance --db-instance-identifier \"${STG_INSTANCE_ID}\" --skip-final-snapshot` / `aws rds delete-db-cluster --db-cluster-identifier \"${STG_CLUSTER_ID}\"`。(7)ステージングDB再作成: 同 `:160-174` `aws rds restore-db-cluster-from-snapshot --snapshot-identifier \"${TMP_SNAPSHOT_ID}\" --db-cluster-identifier \"${STG_CLUSTER_ID}\"` + `create-db-instance`。(8)一時リソース削除: 同 `:180` `cleanup || log \"WARNING: ...\"`（`:55-65` の cleanup で instance/cluster/snapshot を削除）。(9)STG用スマレジID付与: 同 `:186` `run_sql_on \"${STG_ENDPOINT}\" \"${SCRIPT_DIR}/smaregi_staging.sql\"`。(10)S3同期: 同 `:190-191` `aws s3 sync \"s3://${S3_SRC_BUCKET}/product\" \"s3://${S3_DST_BUCKET}/product\" --exact-timestamps --delete` と同 `/set`（`script/ops/stg-db-maintenance/config.sh:18-19` に `S3_SRC_BUCKET=\"filepool-resized\"` / `S3_DST_BUCKET=\"stg-filepool-resized\"` の例示）。",
+      "note": "設計書 sheet-12 の「Fargate で実行」も `restoresnapshot_stg_from_tmp.sh:17` `# ※ Fargate(起動時間制限なし)での実行を想定。Step Functions からのスケジュール起動は別管理。` と整合。本 finding の設計期待値（スナップショット取得／テンポラリDB作成・加工／ステージングDB再作成／S3同期／個人情報マスク）は全て充足。監査時点は `script/` 配下を探索範囲に含めていなかったため未実装と判定されていた。"
     },
     {
       "rowId": 301,
-      "status": "未対応",
-      "evidence": "15分毎のS3画像サイズチェック＋メール通知の実装は現 develop に不在。`src/Eccube/Command` の `#[AsCommand]` 全列挙に画像サイズチェック/ファイルサイズアラート相当なし。S3のオブジェクト列挙は汎用ヘルパ `src/Eccube/Service/S3AccessService.php:100-123` `public function getFiles(string $dir, ?string $key = null): array { $objects = $this->client->listObjects([...]);` があるのみで、規定サイズ超過判定・超過ファイル一覧作成・宛先メール送信は行っていない（同ファイル他メソッドは putFile/putFileData/isFileExist）。`grep -rln 'ファイルサイズ|画像ファイルサイズ|超過' src/Eccube/Resource/template/*/Mail ...` は0ヒットで、設計の件名・From/To/CC/BCC・本文に該当するメールテンプレートも存在しない。",
-      "note": "監査時点と同状態。"
+      "status": "部分対応",
+      "evidence": "監査時点以降に新規追加された `script/ops/imgcheck/bigfilefinder.sh` が本体処理を実装済み。設計の指定5パスからのファイル名・サイズ一覧取得: 同 `:16-18` `aws s3 ls \"s3://${S3_BUCKET}/img/goods/L/\" --recursive | awk '{print $3, $4}'`（C/ と I/ も同様に追記）、`:20` `img/goods/L/NUM/`、`:22` `banner/`、`:24` `product/`、`:26` `set/`。画像種別ごとの規定サイズ判定も設計値と一致: `:44` `if( $1 >= 256000 )`（商品サムネイル250kB）、`:52` `if( $1 >= 409600 )`（オリジナル400kB）、`:60` `if( $1 >= 512000 )`（バナー500kB）、`:68` `if( $1 >= 409600 )`（商品画像400kB）、`:76` `if( $1 >= 5120 )`（絵文字5kB）。超過ファイル一覧作成とメール通知: `:83` `sed -e \"s@s3://${S3_BUCKET}/@${S3_PUBLIC_URL}@g\" ... > \"${WORK_DIR}/result.log\"`、`:93-108` `echo \"From: ${MAIL_FROM}\" / \"To: ${MAIL_TO}\" / \"CC: ${MAIL_CC}\" / \"BCC: ${MAIL_BCC}\" / \"Subject: $(echo 画像ファイルサイズ超過アラート | nkf --mime ...)\"` と本文 `\"※※送信専用アドレスの為返信不可※※\"` / `\"規定サイズを超過している画像ファイルが見つかりました\"` を `| /usr/sbin/sendmail -i -t -f \"${MAIL_FROM}\"` で送信。宛先は `script/ops/imgcheck/config.sh:33-35` `export MAIL_FROM=\"${MAIL_FROM:-info@hareruyamtg.com}\"` / `MAIL_TO=\"${MAIL_TO:-hareruya_filesize_alert@hareruyamtg.com}\"` / `MAIL_CC=\"${MAIL_CC:-it_common@hareruyamtg.com}\"` で設計と一致。未充足は2点: (a) 設計の実行トリガー「スケジュール起動(Step Functions) 15分毎」に該当する定義がリポジトリ内に存在しない（`script/`・`infra/lib`・`infra/bin` に StateMachine/Schedule 定義なし、`dockerbuild/eccube/crontab:2` は `* * * * * /usr/local/bin/file_sync_command ...` の1行のみ）。(b) BCC が `script/ops/imgcheck/config.sh:36` `export MAIL_BCC=\"${MAIL_BCC:-ex-hareruya-eccube-al-aaaat4a5x3pzbmyj2q2bc6gd5u@wakuwaku-impact.slack.com}\"` で、設計書 sheet-13 指定の `r9y9k6q2h2i8d9b5@sekappy-dev.slack.com` と不一致。",
+      "note": "S3 5パス・種別別しきい値・From/To/CC・件名・本文は充足。残課題は 15分毎の起動スケジュール定義と BCC 宛先。監査時点は `script/` 配下を探索範囲に含めていなかったため未実装と判定されていた。"
     },
     {
       "rowId": 302,
       "status": "未対応",
-      "evidence": "デッドロック検知バッチは現 develop に不在。`grep -rin 'deadlock|デッドロック' src/` は0ヒット、`infra/lib infra/bin dockerbuild bin app/config` でも0ヒット。`src/Eccube/Command` の `#[AsCommand]` 全列挙にも該当入口がなく、5分毎起動を定義する StateMachine/EventBridge も `infra/lib`・`infra/bin` に存在しない（`dockerbuild/eccube/crontab` は s3 sync 1行のみ）。dtb_order 対象のデッドロック検知SQL・管理者メール通知処理も追加されていない。",
-      "note": "監査時点と同状態。"
+      "evidence": "デッドロック検知バッチは現 develop に不在。`deadlock`/`デッドロック` はスナップショット全体でも `html/bundle/*.js` と `app/DoctrineMigrations/sql/mtb_card.sql` 等のカード名データにしかヒットせず、`src/Eccube`・`script/`・`infra/`・`dockerbuild/` では0件。`src/Eccube/Command/` 配下に検知コマンドはなく、新設の `script/ops/` も `db` / `imgcheck` / `monthly-inventory-snapshot` / `stg-db-maintenance` の4種のみ。dtb_order を対象とした検知SQL、管理者メール通知処理、5分毎の Step Functions 起動定義のいずれも追加されていない。",
+      "note": "設計書 sheet-14 の図形テキスト C6 に「Auroraのパラメータグループで設定するため、実装しない」との注記があるが、機能仕様処理内容および実行トリガー（5分毎）は通知バッチを要求しており、コード側に該当実装なし。"
     }
   ]
 }
