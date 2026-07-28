@@ -1,0 +1,77 @@
+{
+  "packetId": "0506_03",
+  "results": [
+    {
+      "rowId": 87,
+      "status": "未対応",
+      "evidence": "現 develop でも `src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:80-82` は `if (empty($productIds)) { return new JsonResponse(['cards' => []]); }` のままで、`src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:123` も `return ['cards' => empty($cards) ? new \\stdClass() : $cards];` のまま。0件時に `[]` を返す実装にはなっていない（カード商品以外のIDのみで検索0件なら `{\"cards\":{}}`）。",
+      "note": ""
+    },
+    {
+      "rowId": 88,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:113-120` は `'productClassId' => $dto->productClassId, 'productClassCode' => $dto->productClassCode, 'buyPrice' => ..., 'price' => $dto->standardPrice, 'stock' => $dto->stock, 'sectionId' => ...` のままで `productCode` キーは存在しない。`src/Eccube/Repository/Master/MtbCardRepository.php:193` も `productClass.code AS productClassCode` のまま。型も `src/Eccube/Dto/Repository/Master/GetBuyingCardsQueryResponseDto.php:31,44,45` で `public int $foilFlg`, `public ?int $standardPrice`, `public int $stock` であり、foilFlg の boolean 化・price/stock の string 化は未実施（formatter:88 `'foilFlg' => $dto->foilFlg`）。",
+      "note": ""
+    },
+    {
+      "rowId": 89,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:99` は `#[Route('/%eccube_api_v1_route%/search', name: 'api_search', methods: ['POST'])]` のままで、:102 も `$cardName = $request->request->get('name', '');`。src/Eccube/Controller/App 配下を `api_search` / `/search'` で再検索しても GET+クエリパラメータ版の実装は存在しない（他ヒットは `src/Eccube/Controller/App/ProductController.php:88` のフロント商品検索のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 90,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:104-106` は `if (empty($cardName)) { return new JsonResponse(['cards' => []]); }`、:115-117 も検索後そのまま `return new JsonResponse($this->buyingCardsFormatter->format($cards));` で `empty($cards)` 時の `NotFoundException` 分岐は無い。404 分岐は同ファイル :57-59 のカード詳細ID取得のみ。`BuyingCardsFormatter.php:123` により空結果は HTTP 200 の `{\"cards\":{}}` になる。",
+      "note": ""
+    },
+    {
+      "rowId": 91,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/Master/MtbCardRepository.php:136-137` は `->andWhere('product.name LIKE :cardName')` `->setParameter('cardName', $cardName.'%')` のままで、`addcslashes` 等のエスケープは無い。同ファイル内の `addcslashes($text, '%_\\\\')` は :471/:485 の別メソッド（カードテキスト検索）にのみ存在し、`getBuyingCardsByCardName` には適用されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 92,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:68` `$cardId = $dto->cardId;`、:74-75 `if (!isset($cards[$cardId])) { $cards[$cardId] = [...]`、:123 `return ['cards' => empty($cards) ? new \\stdClass() : $cards];` のままで、1始まり連番への採番し直し（array_values 等）は存在しない。DBのカードIDがそのままキーになる。",
+      "note": ""
+    },
+    {
+      "rowId": 93,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:115` `'productClassCode' => $dto->productClassCode,`（設計名 `productCode` 無し）、:117 `'price' => $dto->standardPrice,`、:118 `'stock' => $dto->stock,` のまま。`src/Eccube/Dto/Repository/Master/GetBuyingCardsQueryResponseDto.php:44-45` も `public ?int $standardPrice, public int $stock` で string 整形は無い（:106 `(int) $row['stock']`）。",
+      "note": ""
+    },
+    {
+      "rowId": 94,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/SectionController.php:38-49` は `findBy(['visible' => true], ['code' => 'ASC'])` の結果を `array_map(... ['section_id' => ..., 'name' => ..., 'code' => ...])` した `$payload` を `return new JsonResponse($payload);` で裸配列のまま返す。src/ 全体を `get sections success` / `'sections' =>` で再検索してもヒットは `src/Eccube/Service/Csv/Exporter/RestockListPdfSectionBuilder.php:102` と `src/Eccube/Controller/Admin/Product/SectionController.php:89,132`（管理画面Twig用）のみで、code/message/sections ラッパー実装は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 95,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:53-59` は `$Option = $this->mtbOptionRepository->findOneBy(['option_key' => MtbOption::FIXED_PRICE_SECTION]); $value = $Option?->getOptionValue() ?? ''; return new JsonResponse($value);` のままで、`code` / `section_id` を持つオブジェクトは組み立てていない。`tests/Eccube/Tests/Web/App/MTGBuyer/V1/Admin/OptionControllerTest.php:184-185` も `assertSame(Response::HTTP_OK, ...)` / `assertSame(json_encode($expectedValue), ...)`（$expectedValue = '29'）を期待したまま。FIXED_PRICE_SECTION の全ヒットを確認しても別実装は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 96,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:57` `$value = $Option?->getOptionValue() ?? '';` / :59 `return new JsonResponse($value);` のままで、オプション未設定時も例外を投げず HTTP 200 で `\"\"` を返す。`tests/.../OptionControllerTest.php:190` 「オプションが存在しない場合は空文字を返すこと」、:217-218 `assertSame(Response::HTTP_OK, ...)` / `assertSame(json_encode(''), ...)` も監査時点のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 97,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:288-291` は `$Identification = $this->mtbIdentificationRepository->find($identificationId); if (!$Identification instanceof MtbIdentification) { throw new NotFoundException('正しい証明書IDを入力してください'); }` のままで、`src/Eccube/Exception/App/NotFoundException.php:29-34` が `statusCode: Response::HTTP_NOT_FOUND` を指定するため HTTP 404 のまま。未指定時のみ :282-284 の `MissingRequiredParameterException` で 400。マスタ不存在を 400 にする実装は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 98,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:273` の `#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/identification.json', name: 'api_admin_otc_buy_order_update_identification', methods: ['PUT'])]` が現 develop でも唯一のルート定義。src/ と html/ を `otcBuyOrder/{id}/identification` および `api_admin_otc_buy_order_update_identification` で再検索してもヒットはこの1行のみで、拡張子なしの alias ルートは追加されていない。",
+      "note": ""
+    }
+  ]
+}

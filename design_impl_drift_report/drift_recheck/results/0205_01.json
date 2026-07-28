@@ -1,0 +1,77 @@
+{
+  "packetId": "0205_01",
+  "results": [
+    {
+      "rowId": 837,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:155-181` の application_date_from/application_date_to は監査時点と同じく単項目制約のみ（from 側 `new Assert\\Range(['min' => '0003-01-01', 'minMessage' => 'form_error.out_of_range'])`、to 側は制約なし）で、From>To の相関チェックがない。`src/Eccube/Repository/DtbOtcBuyOrderRepository.php:124-138` も `$qb->andWhere('obo.applyDate >= :applicationDateFrom')` / `$qb->andWhere('obo.applyDate <= :applicationDateTo')` を AND で付与するだけでエラー化しない（同ファイル:105-108 の金額は `if ($priceFrom !== null && $priceTo !== null && $priceFrom > $priceTo) { [$priceFrom, $priceTo] = [$priceTo, $priceFrom]; }` と入替処理があるが、日付には同等処理すらない）。`src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php` / `src/Eccube/Controller/Admin/SearchControllerTrait.php` に FormError/addError による日付相関エラーはなく、`html/template/admin/assets/js/OtcBuyOrder/otc-buy-order.js` にも date_from/date_to の検証はない。",
+      "note": ""
+    },
+    {
+      "rowId": 838,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:96-121` の complete_date_from は `new Assert\\Range(['min' => '0003-01-01', ...])` のみ、complete_date_to は制約なしで相関チェックが存在しない。`src/Eccube/Repository/DtbOtcBuyOrderRepository.php:142-165` も監査時点と同じく `(obos.id = :cancelStatusId AND obo.cancelDate >= :cancelDateFrom) OR (obos.id != :cancelStatusId AND obo.completeDate >= :completeDateFrom)` と To 側の同型条件を andWhere で積むだけ。Controller/JS(`html/template/admin/assets/js/OtcBuyOrder/otc-buy-order.js`)にも complete_date_from > complete_date_to の検証分岐はない。",
+      "note": ""
+    },
+    {
+      "rowId": 839,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderType.php:96-111` の complete_date_from 定義は `'required' => false, 'input' => 'datetime', 'widget' => 'single_text', 'attr' => [...], 'constraints' => [new Assert\\Range([...])]` のみで `data` 指定がない。対して同ファイル:159 の application_date_from には `'data' => (new \\DateTime('first day of last month'))->setTime(0, 0, 0),` があり、complete_date_from にだけ初期値がないことが確認できる。`OtcBuyOrderController::index()`(同Controller:131-150)も `$this->formFactory->createBuilder(OtcBuyOrderType::class)` を呼ぶだけで初期値補完はなく、index.twig:112 も `form_widget(searchForm.complete_date_from)` を出すのみ。3か月前0時の初期表示は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 840,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:182` が `<a class=\"dropdown-toggle\" data-bs-toggle=\"dropdown\">ダウンロード<svg class=\"cb cb-angle-down icon_down\">...</a>` に変更済み。監査時点の「CSVダウンロード」直書きは削除され、設計の識別ID:3 ラベル「ダウンロード」を満たす。配下のメニュー項目（同:184-187 古物台帳入力用CSV / 買取商品一覧CSV / 戻しリストCSV / 戻しリストPDF）もドロップダウン内に維持されている。",
+      "note": ""
+    },
+    {
+      "rowId": 841,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:193` に外側ループ `{% for OtcBuyOrder in pagination %}` が残っており（閉じは同:234 `{% endfor %}`）、その内側 `src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:212` にも `{% for OtcBuyOrder in pagination %}`（閉じは同:229）がある。二重ループのため `<div id=\"result_list_main__list\" class=\"table_list\">`(同:194)以下のテーブル全体が件数分複製される状態は監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 846,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:153` に `<input type=\"hidden\" name=\"{{ constant('Eccube\\\\Common\\\\Constant::TOKEN_NAME') }}\" value=\"{{ csrf_token(constant('Eccube\\\\Common\\\\Constant::TOKEN_NAME')) }}\">` が result_form 内に残存。`src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:193` の export() 冒頭も `$this->isTokenValid();` のままで、古物台帳(old_goods_account)種別だけ検証を外す分岐は同メソッド:196-232 に存在しない。設計の「CSRFフィールドなし・検証なし」とは依然不一致。",
+      "note": ""
+    },
+    {
+      "rowId": 847,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:239-242` の0件時分岐が `{% else %}<div id=\"result_list_main__header\" class=\"box-header with-arrow\"><h3 class=\"box-title\">検索条件に該当するデータがありませんでした。</h3></div>` のままで、設計の「該当なし」表示になっていない。同テンプレート内に「該当なし」を出力する箇所はない。",
+      "note": ""
+    },
+    {
+      "rowId": 848,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:605-610` で `if ($form->isSubmitted() && $form->isValid()) { try { if (!$Member->isEditableShop($OtcBuyOrder->getBaseInfo())) { throw new \\InvalidArgumentException('編集可能な店舗と買取情報の買取店舗が一致しません。'); }` と、在庫増減の有無に依らず保存処理の先頭で店舗一致検証が行われる。この検証は同:612 の `if (!empty($stockDiffs))`（UpdateOtcBuyOrderStockAction 経由）と同:618-623 の else 分岐（フリーコメントのみ `$this->entityManager->flush();`）の**両方より前**に位置し、監査時点の「フリーコメントのみ保存は無検証で flush」は解消されている。不一致時は同:635-637 `catch (\\Exception $e) { $this->addError($e->getMessage(), 'admin'); }` でエラーメッセージが表示される。",
+      "note": "ログインMember未取得時は同:591-594 で AuthenticationException。"
+    },
+    {
+      "rowId": 849,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:342` `if (!$this->isAccessibleRouteExtension->isAccessibleRoute('admin_otcbuyorder_status'))`、同:388 `isAccessibleRoute('admin_otcbuyorder_status_update')` のみで、ITチーム限定のロール判定はない。`src/Eccube/Twig/Extension/IsAccessibleRouteExtension.php:49-84` の isAccessibleRoute は今も deny-list 型で、`if (preg_match(\"/^(\\/{$adminRoute}{$denyUrl})/i\", (string) $path)) { return false; }` に該当しない限り最後に `return true;` を返す。ITチーム/it_team/ROLE_IT 相当の権限キーは src/Eccube 配下の PHP/YAML/Twig 全文検索でヒットせず、`app/DoctrineMigrations/*.php` に otcbuyorder 関連の権限登録もなく、`app/config/eccube/packages/eccube_nav.yaml:133,136,139` も url 登録のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 850,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:447-486` の statusUpdateAccountTeamPaid は監査時点と同じく CSRF(同:450 `isCsrfTokenValid('account_team_paid', ...)`)、Member取得(同:461-464)、編集可能店舗(同:467 `if (!$Member->isEditableShop($OtcBuyOrderBaseInfo))`)、ルート deny 判定(同:471 `isAccessibleRoute('admin_otcbuyorder_update_status_account_team_paid')`)、ステータス確認(同:482)のみ。経理ロール／経理専用権限に限定する判定は存在せず、`src/Eccube/Resource/template/admin/OtcBuyOrder/detail.twig:471` の `<button class=\"btn btn-ec-conversion px-5\" type=\"submit\" form=\"update_status_account_team_paid\">経理払出し済</button>` にも権限による表示制御（is_accessable_route 等）が付いていない。経理ロールの権限定義・マイグレーション登録も見当たらない。",
+      "note": ""
+    },
+    {
+      "rowId": 851,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:523-547` の statusUpdateRestocked は `isCsrfTokenValid('restocked', ...)`(同:526)、Member 型チェック(同:538-541)、`if (!$Member->isEditableShop($OtcBuyOrderBaseInfo))`(同:543)の後すぐ `$NextStatus = $this->otcBuyOrderStatusRepository->find(MtbOtcBuyOrderStatus::STATUS_STOCKING_COMPLETE);`(同:547)へ進み、他の POST にある isAccessibleRoute('admin_otcbuyorder_update_status_restocked') 相当のルート権限チェックが依然として存在しない。`src/Eccube/Resource/template/admin/OtcBuyOrder/detail.twig:474` の `<button ... form=\"update_status_restocked\">入庫済みにする</button>` にも権限制御はない。",
+      "note": ""
+    },
+    {
+      "rowId": 852,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php:105-129` は監査時点と同じく `$keywords = preg_split(\"/[\\s,　]+/u\", trim($searchData->customerName));` の後 `foreach ($keywords as $i => $keyword) { ... $qb->andWhere($qb->expr()->orX(like('obo.lastName', \":keyword{$i}\"), like('obo.firstName', ...), like('obo.lastNameKana', ...), like('obo.firstNameKana', ...)))->setParameter(...); }` と、キーワードごとに andWhere を積む実装。分割語間は AND のままで、設計の「空白で区切ったいずれかの入力が一致していれば出力」を満たさない（OR 化する実装は同リポジトリにも DtbOtcBuyOrderRepository.php:167-190 の同型実装にも存在しない）。",
+      "note": ""
+    }
+  ]
+}

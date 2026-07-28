@@ -1,0 +1,77 @@
+{
+ "packetId": "0206_02",
+ "results": [
+  {
+   "rowId": 874,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/MailService.php:1643-1677` `sendManualPurchaseMail()` は末尾 1676行 `$this->mailHistoryEntityManager->save($message, $BaseInfo, $input->BuyOrder, $input->MailTemplate);` で終わり flush なし。`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:67` は `$this->entityManager->persist($MailHistory);` のみで flush しない。`src/Eccube/Controller/Admin/Purchase/MailController.php:130-144` も `$this->mailService->sendManualPurchaseMail($input);` → `$this->addSuccess('admin.order.mail_send_complete', 'admin');` → redirect で flush 呼び出しなし（同ファイル内に flush/entityManager の記述自体が存在しない）。`src/Eccube/EventListener/TransactionListener.php:119` も `$this->em->commit();` のみ。監査時点と同一。",
+   "note": "MailService 内の他メソッド（1717, 1770, 1985 行等）には flush があるが、sendManualPurchaseMail 経路には到達しない。"
+  },
+  {
+   "rowId": 875,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Csv/Exporter/BuyOrderDepositCsvExportService.php:123` `'bank_account_no' => $bank['bank_account_no'] ?? '',` とゼロ埋めなしで出力。取得元は `src/Eccube/Repository/DtbBuyOrderRepository.php:469` `'ba.accountNo AS bank_account_no',`、`src/Eccube/Entity/DtbBankAccount.php:43` `private int $accountNo;` と int のまま。同ファイル内の `sprintf('%07d', ...)` は 88行のファイル名生成用のみで口座番号には適用されていない。監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 876,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:34` `'standard_price' => '基準価格',` のまま。`src/Eccube/Service/Csv/` 配下を「販売価格」で再検索しても該当するのは StockListCsvExportService/ProductCardCsv 等の別機能のみで、本CSVのヘッダを「販売価格」とする実装はない。監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 877,
+   "status": "未対応",
+   "evidence": "キャンセル側も同一サービスを使用（`src/Eccube/Controller/Admin/Purchase/PurchaseController.php:727` `return $this->buyOrderProductListCsvExportService->exportByIds($buyOrderIds, $isSale);`）。ヘッダは `src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:34` `'standard_price' => '基準価格',` で、`:70-72` の非売却時上書きは `'product_count' => 'キャンセル数'` のみ。監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 878,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Repository/DtbBuyOrderRepository.php:643` 通常商品（状態なし）ブランチ（`:636` `-- 通常商品（状態なし）`、`:666` `AND bmc.card_condition_id IS NULL`）で `bmc.language_id AS language_id,` を出力。1 固定は `:617` `1 AS language_id,` の個別入力商品ブランチのみ。後段補正なし（`getProductListDataForExportCsv` は `:677` の `iterateAssociative` をそのまま返す）。監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 879,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Repository/DtbBuyOrderRepository.php:644` 通常商品（状態なし）ブランチで `sc.name AS storage_code,` を出力（空文字固定は `:618` `'' AS storage_code,` の個別入力商品ブランチのみ）。監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 880,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Repository/DtbBuyOrderRepository.php:645` 通常商品（状態なし）ブランチで `r.code AS rarity_code,` を出力（空文字固定は `:619` `'' AS rarity_code,` の個別入力商品ブランチのみ）。監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 881,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:54-63` `buildPdfViewData()` は `:56` データ取得、`:57` `buildSections()` の後 `:58` `$this->markBuyOrdersAsRestocked($buyOrderIds);` を呼ぶ。同ファイル `:68-86` で `$BuyOrder->setRestockedFlg(true); $this->entityManager->persist($BuyOrder);`（:77-78）、`:80` `$this->entityManager->flush();`、`:81` `commit()`。PDF経路 `src/Eccube/Controller/Admin/Purchase/PurchaseController.php:805-806` `'@admin/Purchase/restock_list.twig', $this->buyOrderRestockListService->buildPdfViewData($buyOrderIds),` から到達する。監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 882,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Resource/template/admin/Purchase/restock_list.twig`（全106行）に作成日時の描画がない。`:11-13` の印刷ボタン、`:24` `{{ section.titleBase }} {{ loop.index // maxPageRows + 1 }}/...`、`:28-36` のヘッダ列（No/棚番号/言語状態/略称/色R/数/商品名/価格/備考）のみで、`作成日時`/`create_date`/`date(`/`now` のいずれも grep でヒットしない。`src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:60-62` が Twig へ渡すのは `'restockListSections' => $built['sections'],` のみ。`src/Eccube/Service/Csv/Exporter/RestockListPdfSectionBuilder.php` にも date/Date/now の記述なし。監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 883,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Csv/Exporter/BuyOrderRestockListCsvExportService.php:77-78` StreamedResponse コールバック内で `$this->csvExportService->fclose();` の直後に `$this->buyOrderRestockListService->markBuyOrdersAsRestocked($buyOrderIds);` を実行。更新本体は `src/Eccube/Service/Admin/Purchase/BuyOrderRestockListService.php:77-78` `$BuyOrder->setRestockedFlg(true); $this->entityManager->persist($BuyOrder);` と `:80` `$this->entityManager->flush();`。抑止分岐・参照専用経路は存在しない。監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 884,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:90-108` 申込者名は `:91-94` `preg_split(\"/[\\s,　]+/u\", trim($searchData->customerName))` で分割後、`:95` `foreach ($keywords as $i => $keyword)` の中で `:99` `$qb->andWhere($qb->expr()->orX(...))` を繰り返しており、キーワード間は依然 AND。OR は各キーワード内の lastName/firstName/lastNameKana/firstNameKana（:101-104）のみ。監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 885,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:60-63` `->add('customer_id', TextType::class, ['label' => ..., 'required' => false,])` と TextType のままで半角数字制約・constraints 指定なし（同 `:56` の buy_order_id は IntegerType）。`src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:25` `public ?string $customerId = null,`、`src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:82-87` `if ($searchData->customerId !== null && $searchData->customerId !== '') { $qb->andWhere('IDENTITY(bo.Customer) = :customerId')->setParameter('customerId', (int) $searchData->customerId,); }` と整数キャストで完全一致。監査時点と同一。",
+   "note": "完全一致検索自体は充足しているが、設計の「半角数字(整数)」入力制限が未実装のため部分未充足＝未対応判定を維持。"
+  }
+ ]
+}

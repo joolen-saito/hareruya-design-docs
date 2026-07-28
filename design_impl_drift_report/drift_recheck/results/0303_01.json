@@ -1,0 +1,77 @@
+{
+  "packetId": "0303_01",
+  "results": [
+    {
+      "rowId": 319,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:1104` `front.product.search__product_not_found: お探しの商品は見つかりませんでした` のままで、設計文言「ご指定の条件に一致する商品が見つかりませんでした。」は src 配下に grep 0件（近似は :1107 `front.product.unisearch_results_exceeded_line1: ご指定の条件に一致する商品が多すぎます。` のみ）。DB検索経路 `src/Eccube/Resource/template/default/Product/list.twig:991` `<p class=\"ec-text ec-mb0\">{{ 'front.product.search__product_not_found'|trans }}</p>`、ユニサーチ経路 `同 list.twig:735` `emptyResultMsg: 'front.product.search__product_not_found'|trans,` の双方が監査時点と同じ翻訳キーを使用。",
+      "note": "0件時文言は現 develop でも設計指定文字列と相違。"
+    },
+    {
+      "rowId": 320,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Product/detail.twig:513-514` に `{% if deckFormat.decks is empty %}` `<p class=\"c-hareruya-text\">該当なし</p>` が残存。Controller も `src/Eccube/Controller/Front/ProductController.php:676-690` で全 CardFormat をループし `$decksOfUsingDetailCard[] = ['formatDetail' => $CardFormat->getFormat(), 'decks' => $decks];` とデッキ0件でも無条件追加するため、セクションゲート `detail.twig:505` `{% if isMainShop and usingDecks|length > 0 %}` は全フォーマットが空でも真になる。",
+      "note": "『該当なし』廃止・空フォーマット非表示・セクション非表示のいずれも未実装。"
+    },
+    {
+      "rowId": 321,
+      "status": "対応済み",
+      "evidence": "使用可能フォーマット行は `src/Eccube/Resource/template/default/Product/_card_detail_specs.twig`（detail.twig:431,440 から include）へ切り出され、:117 で `{% set legalFormats = legalFormats|merge([{'rank': CardFormat.Format.rank, 'id': CardFormat.Format.id, 'name': isEn ? CardFormat.Format.nameEn : CardFormat.Format.nameJp}]) %}` とロケール判定（:2 `{% set isEn = app.request.locale == 'en' %}`）で日本語ページは `MtbFormat.name_jp`(`src/Eccube/Entity/Master/MtbFormat.php:69-74`) を表示。無条件 nameEn join は解消。",
+      "note": "dt は `front.product.card.legality`（messages.ja.yaml:1156 = 使用可能フォーマット）。"
+    },
+    {
+      "rowId": 322,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Product/_card_detail_specs.twig:120` `{{ legalFormats|sort((a, b) => a.rank <=> b.rank ?: a.id <=> b.id)|map(f => f.name)|join(',') }}` で MtbFormat.rank（`src/Eccube/Entity/Master/MtbFormat.php:327-332` `#[ORM\\Column(name: '`rank`' ...)]`）昇順に整列してから出力しており、Card.CardFormats の DB既定順そのまま出力は解消。",
+      "note": "同値時は Format.id で安定化。"
+    },
+    {
+      "rowId": 323,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Product/_card_detail_specs.twig:79-84` `{% if Card.loyalty %}` … `<dt>{{ 'front.product.card.loyalty'|trans }}</dt><dd>{{ Card.loyalty }}</dd>` … `{% endif %}` と非表示ガードが追加され、忠誠度未登録カードでは specs-row 自体が描画されない。",
+      "note": "直上のパワー/タフネス(:73 `{% if CardDetail.power and CardDetail.toughness %}`)と同様のガード。"
+    },
+    {
+      "rowId": 324,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Product/detail.twig:357` `{% if _can_show_restock_notify and Product.CardDetail %}` でカード限定ガードが追加され、直下:359 の `id=\"bulk_restock_notice\"` ボタンは CardDetail を持つ商品のみ描画。本店条件は `detail.twig:15` `{% set _can_show_restock_notify = can_show_restock_notify|default(false) %}` ← `src/Eccube/Controller/Front/ProductController.php:765-768` `canShowRestockNotifyFeature($this->getShop(), ...)` ← `src/Eccube/Service/Product/ProductRestockNotifyPolicy.php:27-38` `if (!$shop->isMainShop()) { return false; }` で担保。",
+      "note": "本店のみ＋カード商品のみの双方を充足。"
+    },
+    {
+      "rowId": 325,
+      "status": "対応済み",
+      "evidence": "在庫なし時の入荷通知ボタンは `src/Eccube/Resource/template/default/Product/detail.twig:319` `{% if _can_show_restock_notify and _restock_notify_eligible_by_class_id[class.id] is defined %}` でガードされ、そのマップは `src/Eccube/Controller/Front/ProductController.php:769-771` `buildEligibleClassIdMap($Product->getProductClasses())` 由来。`src/Eccube/Service/Product/ProductRestockNotifyPolicy.php:56-64` が `if ($productClass->isHighPriceProduct()) { continue; }` で高額商品コード保持規格を除外し、判定は `src/Eccube/Entity/ProductClass.php:859-864` `$highPriceCode !== null && $highPriceCode !== ''`。",
+      "note": "一覧・ユニサーチ経路(ProductController.php:1419,1564,1879)でも同ポリシーを使用。"
+    },
+    {
+      "rowId": 326,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Entity/Product.php:690-698` `getSnsShareText(...)` は `return $langTag.' '.$productName.' '.$productDetailUrl.' '.$hashTag.' '.$mention;` と受け取った URL をそのまま連結。呼び出し側 `src/Eccube/Controller/Front/ProductController.php:716-722` も `$productDetailUrl = $this->generateUrl('product_detail', ['id' => ..., 'lang' => ...], UrlGeneratorInterface::ABSOLUTE_URL);` のフルURLを渡すのみで短縮URL化処理は存在しない。",
+      "note": "src 配下に短縮URL生成の実装は見当たらない。"
+    },
+    {
+      "rowId": 327,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Product/_card_detail_specs.twig:88-92` `{% if Cardset %}<a href=\"{{ path('product_list', {cardset: Cardset.id}) }}\" class=\"p-hareruya-product-detail__specs-link\">{{ isEn ? Cardset.nameEn : Cardset.nameJp }}</a>{% endif %}` とセット名がリンク化され、遷移先の検索条件 `cardset` は `src/Eccube/Form/Type/Front/SearchType.php:116` `->add('cardset', EntityType::class, [... 'class' => MtbCardset::class ...])` で受理される。",
+      "note": "dt は front.product.card.set_name（messages.ja.yaml:1153 = セット名）。"
+    },
+    {
+      "rowId": 328,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Product/_card_detail_specs.twig:104-108` `{% if CardDetail.Illustrator %}<a href=\"{{ path('product_list', {illustrator: CardDetail.Illustrator.id}) }}\" class=\"p-hareruya-product-detail__specs-link\">{{ CardDetail.Illustrator.nameEn }}</a>{% endif %}` とアンカー化済み。検索条件 `illustrator` は `src/Eccube/Form/Type/Front/SearchType.php:186-187` `->add('illustrator', EntityType::class, ['label' => 'form.illustrator.label', ...])` で受理される。",
+      "note": "プレーンテキスト表示のみだった監査時点から解消。"
+    },
+    {
+      "rowId": 329,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Front/SearchType.php:95` `$categories = $this->categoryRepository->getList(null, true);` → :111 `'choices' => $categories,` は現 develop でも front_search_hide_flg で絞っておらず、`src/Eccube/Repository/CategoryRepository.php:141` `->orderBy('c.sort_no', 'DESC')` の全件取得＋`getSelfAndDescendants()`(:158-161) のまま。UI は階層プルダウン化されたが、その供給元 `src/Eccube/Service/Front/Product/ProductSearchCategoryCascadeBuilder.php:36-63,68-100`（`buildTree()`/`buildNode()`）にも frontSearchHideFlg 判定が一切なく、非表示親配下も選択肢に出る（`src/Eccube/Resource/template/default/Block/_product_search_form_fields.twig:30` `data-category-tree=\"{{ product_search_category_tree|... }}\"`）。",
+      "note": "frontSearchHideFlg の利用は TopCategoryListBuilder.php:96,107,194 と CategoryTreeResponseBuilder.php:56,193,201 のみで、商品詳細検索フォーム経路は対象外。"
+    },
+    {
+      "rowId": 330,
+      "status": "部分対応",
+      "evidence": "マイページから種別 mypage のブロックが呼ばれるようになった: `src/Eccube/Resource/template/default/Mypage/index.twig:238` `{{ render(url('block_product_recommend', {'context': 'mypage'})) }}`。基準商品決定は `src/Eccube/Controller/Block/ProductRecommendController.php:55-60` `$LatestItem = $this->orderItemRepository->findLatestExpensiveItem($Customer);`（`src/Eccube/Repository/OrderItemRepository.php:150-152` `->addOrderBy('o.order_date','DESC')->addOrderBy('oi.price','DESC')->setMaxResults(1)`）、抽出は同Controller:69 `$this->recommendService->getRecommendProductClasses($productId, $locale, $shopId, $Customer);`。スライダーと0件文言は `src/Eccube/Resource/template/default/Block/user_recommend_product.twig:2-7,26-44,45-47` `{% if Products|length > 0 %}`…`{% else %}<p class=\"...\">{{ 'front.product.recommend_no_items'|trans }}</p>`（messages.ja.yaml:1189 = 表示するおすすめ商品はまだありません。）で、Mypage/index.twig:24-25 `window.initProductCarousel({ target: '[data-js-target=\"mypage-recommend-carousel\"]', ...})` によりカルーセル初期化。ただし設計の『ブロックはページ表示後に非同期で内容を取得する』(0303 sheet-7) は未充足で、`render(url(...))` はページ描画時のインラインサブリクエスト（同期）であり、非同期取得する JS は src 配下に存在しない（block_product_recommend の参照は Twig の render のみ）。",
+      "note": "監査時点の TODO・死コード状態は解消。残課題は非同期読み込み（およびリクエスト冒頭のセッションクローズ）の未実装。"
+    }
+  ]
+}

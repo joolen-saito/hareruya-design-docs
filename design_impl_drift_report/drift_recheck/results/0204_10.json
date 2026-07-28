@@ -1,0 +1,41 @@
+{
+  "packetId": "0204_10",
+  "results": [
+    {
+      "rowId": 579,
+      "status": "未対応",
+      "evidence": "現 develop でも画面は分離したまま。`src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:693` `#[Route(path: '/%eccube_admin_route%/product/category_csv_upload', name: 'admin_product_category_csv_import', methods: ['GET', 'POST'])]` の画面は `@admin/Product/csv_category.twig` を描画し、テンプレート内に件数選択・インポート履歴・ページングのブロックは存在しない（`src/Eccube/Resource/template/admin/Product/csv_category.twig:75` `action=\"{{ url('admin_product_category_csv_import') }}\"` とフォーマット表のみ）。件数選択・履歴・ページングは依然として別URL側の `src/Eccube/Controller/Admin/Product/Csv/CategoryCsvController.php:82` `#[Route(path: '/%eccube_admin_route%/product/category/category_bulk_csv_upload', name: 'admin_product_category_bulk_csv_upload', methods: ['GET'])]` に実装されており、同ファイル:104-120 で `'import_histories_pagination' => $importHistoriesPagination`, `'page_count' => $pageCount`, `'pageMax' => $pageCountOptions` を `@admin/Product/csv_category_bulk.twig` へ渡し、POST先も `src/Eccube/Controller/Admin/Product/Csv/CategoryCsvController.php:128` `#[Route(path: '/%eccube_admin_route%/product/category/import', name: 'admin_product_category_bulk_import', methods: ['POST'])]` と別ルートのまま。",
+      "note": "監査時点から統合されていない。"
+    },
+    {
+      "rowId": 580,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/CategoryCsvImportHandler.php:236` `$this->targetProductCountColumn = (new BaseCsvColumn('対象商品数', '対象商品数'))->setConverter(new IntConverter())...->setRequired(false);` と列定義・バリデーションのみで、取込本体（同ファイル 140-175 の `setFrontSearchHideFlg` / `setBranchHideFlg` / `setSearchParameters` / `setBannerImage` / `setIconImage` / `setSortNo` の並び）に対象商品数の代入は存在しない。`src/Eccube/Entity/Category.php` を `target_product_count|targetProductCount` で検索してもヒットは 0 件（`search_parameters` のみ存在: 同ファイル:491）で、保存列・setter は現 develop でも未追加。`src/Eccube/Controller/Admin/Product/Csv/CategoryCsvController.php:221` `'対象商品数' => '取込では使用しません。更新時はDBの値を維持します。'` と、取込非対象である旨の表記も監査時点と同じ。よって新規時の 0 設定も行われない。",
+      "note": "src/ app/ 全体を target_product_count / TargetProductCount / 対象商品数 で横断検索したが、Category への永続化実装は存在せず、ヒットは在庫承認一覧CSV（別機能）と dtb_csv 定義マイグレーション `app/DoctrineMigrations/Version20260401120000.php:48` のみ。"
+    },
+    {
+      "rowId": 581,
+      "status": "未対応",
+      "evidence": "設計入口 `src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:693` `admin_product_category_csv_import` は同ファイル:708 `$headers = $this->getCategoryCsvHeader();` を使い、その定義 `src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:2112-2136` は `category_id_col` / `category_name_col` / `parent_category_id_col` / `delete_flag_col` の4列のみ（12列ではない）。12列フォーマットは別ルート側の `src/Eccube/Controller/Admin/Product/Csv/CategoryCsvController.php:207-223` `getCsvHeader()` に `'カテゴリID' … '表示ランク' … 'カテゴリ名(日)' … 'カテゴリ名(英)' … '親カテゴリID' … '階層' … 'フロント非表示フラグ' … '支店非表示フラグ' … '検索パラメータ' … '最新セット用バナー画像パス' … 'カテゴリアイコン画像パス' … '対象商品数'` と定義され、`admin_product_category_bulk_csv_upload`(GET)/`admin_product_category_bulk_import`(POST) に接続されたまま。",
+      "note": "ルート名 category_csv_upload / category_bulk_csv_upload / admin_product_category_csv_import で src 全体を横断検索し、12列実装が旧ルートへ接続された形跡がないことを確認。"
+    },
+    {
+      "rowId": 582,
+      "status": "未対応",
+      "evidence": "CSV列は依然 `src/Eccube/Service/Csv/Importer/Event/CategoryCsvImportHandler.php:224` `$this->searchParametersColumn = (new BaseCsvColumn('検索パラメータ', '検索パラメータ'))` の1列のみで、取込も同ファイル:154-155 `$search = $this->searchParametersColumn->getValue($row); $Category->setSearchParameters(...)` だけ。`src/Eccube/Entity/Category.php:491` `#[ORM\\Column(name: 'search_parameters', ...)]` のみで検索条件名に相当する列は無く、`src/Eccube/Controller/Admin/Product/Csv/CategoryCsvController.php:207-223` の12列ヘッダにも「検索条件:名称」「検索条件:パラメータ」は含まれない。",
+      "note": "src/ app/ を 検索条件名 / 条件名 / search_condition_name / searchConditionName で横断検索したがヒット 0 件（`src/Eccube/Form/Type/Admin/SearchOrderType.php:306` の「検索条件名」コメントは受注検索の別機能）。"
+    },
+    {
+      "rowId": 583,
+      "status": "未対応",
+      "evidence": "フィルタ有無の分布は監査時点と同一。フィルタ側は `src/Eccube/Service/TopCategoryListBuilder.php:96-110` `if ($Category->getFrontSearchHideFlg()) { … } if ($isBranch && $Category->getBranchHideFlg()) { … }`（子側も同:107-110, 194-197）で残る一方、未フィルタ導線は現 develop でもそのまま: `src/Eccube/Form/Type/SearchProductBlockType.php:49` `->getList(null, true);`、`src/Eccube/Form/Type/Front/SearchType.php:95` `$categories = $this->categoryRepository->getList(null, true);`、`src/Eccube/Controller/Front/SitemapController.php:124` `$Categories = $this->categoryRepository->getList(null, true);`、`src/Eccube/Resource/template/default/Block/category_nav_sp.twig:11` `{% set Categories = load_repository_by_read_me('__readOnlyCategoryRepository').getList() %}`。`src/Eccube/Repository/CategoryRepository.php:133-163` の `getList()` 自体にも front_search_hide_flg / branch_hide_flg による除外は無く、`createQueryBuilder('c')->orderBy('c.sort_no','DESC')` の全件取得のまま。",
+      "note": "SearchProductType.php は現 develop では getList 呼び出しを持たない（buildForm はタグ・ページング等のみ）が、他4導線が未フィルタのため全般的表示制御は未充足。"
+    },
+    {
+      "rowId": 584,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/CategoryController.php:208` `log_info('カテゴリ登録開始');` と、開始ログは現 develop でもカテゴリ id 配列を渡していない。完了側のみ `src/Eccube/Controller/Admin/Product/CategoryController.php:289` `log_info('カテゴリ登録完了', [$TargetCategory->getId()]);` で id を渡しており、監査時点と同じ非対称のまま。",
+      "note": "同ファイルの log_info 全件（208, 289, 738, 753, 757, 878）を確認。カテゴリ削除は開始・完了とも id 配列付きだが、登録開始のみ欠落。"
+    }
+  ]
+}

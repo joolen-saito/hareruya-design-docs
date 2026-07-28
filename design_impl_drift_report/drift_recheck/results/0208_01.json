@@ -1,0 +1,77 @@
+{
+  "packetId": "0208_01",
+  "results": [
+    {
+      "rowId": 1225,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Card/index.twig:176` `{{ form_start(searchForm, { 'action': url('admin_card_list'), 'method': 'POST', 'attr': { 'id': 'admin_search_form' } }) }}` のままで、検索フォームの action は依然として `admin_card_list`（POST /{admin_route}/card）。`admin_card_search` は `src/Eccube/Controller/Admin/Card/CardController.php:67` で定義されているが、Twig 内での使用は表示件数プルダウン(index.twig:370)とページャ(index.twig:445)のみで、検索ボタン送信先には使われていない。",
+      "note": "src/Eccube/Resource/template/admin 配下を admin_card_search / admin_card_list で横断検索したが、page_no=1 固定の検索ルートへ送信する実装は他に存在しない。"
+    },
+    {
+      "rowId": 1226,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchCardType.php:208-213` `public function configureOptions(OptionsResolver $resolver): void { $resolver->setDefaults(['csrf_protection' => true, 'allow_extra_fields' => true]); }` で CSRF 保護は有効のまま。index.twig:176 の `form_start(searchForm, ...)` にそのまま適用される。",
+      "note": "SearchCardType を参照するのは CardController のみ（grep -rln SearchCardType src/ app/）で、オプション上書き箇所はない。"
+    },
+    {
+      "rowId": 1227,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/CardController.php:108-118` の初期表示分岐は `$viewData = FormUtil::getViewData($searchForm); $this->session->set($this->sessionKey, $viewData); $this->session->set($this->sessionKey.'.page_no', 1);` と set のみで、remove は一切ない。検索セッションの正本キーは `src/Eccube/Controller/Admin/SearchControllerTrait.php:110-118` の `eccube.admin.{$sessionkey}.search.page_count` / `.search.page_no` / `.search` / `.sort` / `.order` だが、これらを削除する処理は develop 全体に存在しない（`grep -rn \"eccube.admin.card\" src/ app/` のヒットは CardsetController の cardset キーのみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 1228,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/Master/MtbCardRepository.php:225-229` `if (isset($searchData['multi']) && StringUtil::isNotBlank($searchData['multi'])) { $multi = $searchData['multi']; $qb->andWhere('c.name_jp LIKE :multi OR c.name_en LIKE :multi OR c.text_jp LIKE :multi OR c.text_en LIKE :multi')->setParameter('multi', '%'.$multi.'%'); }` と、入力文字列全体を単一 LIKE 値として適用したまま。スペース・カンマ分割も語間 AND もない。`splitSearchText()` は同ファイル:621 に存在するが呼び出しは :466 / :480（別API系 params['name'] / params['text']）のみで、この admin 検索 QueryBuilder からは使われていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1229,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Card/index.twig:423-425` カード名セルは `<td class=\"align-middle\">{{ card.getNameJpWithEn }}</td>` とテキスト表示のみでリンクではない。編集遷移は同 :428 の `<a class=\"btn btn-ec-actionIcon me-2\" href=\"{{ url('admin_card_edit', {id: card.id}) }}\">` （アイコンリンク）で、ルートは `src/Eccube/Controller/Admin/Card/CardController.php:217` `#[Route('/%eccube_admin_route%/card/{id}/edit', name: 'admin_card_edit', ...)]` のまま。GET /card/{id} のルートは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1230,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Card/index.twig:137-146` `.done(function(data) { alert(data.message); }).fail(function(jqXHR) { alert('エラーが発生しました'); console.error(jqXHR.responseText); }).always(function() { $btn.prop('disabled', false).html(btnText); });` と、alert 後はボタン再有効化のみ。`grep -rn \"location.reload\" src/Eccube/Resource/template/admin/Card/` は 0 件で、全画面リロード処理は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1231,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Card/index.twig:346-352` CSV出力ボタンは `<button type=\"button\" class=\"btn btn-ec-conversion action-submit\" {{ csrf_token_for_anchor() }} data-action=\"{{ url('admin_card_export_csv') }}\" data-method=\"POST\">` と type=button のままで、submit 化も pointer-events 制御もない。クリック処理 index.twig:51-94 の共通 bulk ハンドラも確認・CSRF注入・`$form.attr('action', ...).submit()` のみ。`grep -rn \"pointer-events\" html/template/admin/assets/js/` のヒットは `html/template/admin/assets/js/function.js:164,168`（`$('a[token-for-anchor]').click` 内のリンク用制御で、約500msのタイマー復帰も持たない）と Purchase/purchasedetail.js のみで、このCSVボタンには適用されない。",
+      "note": "探索範囲（Card/index.twig, function.js, html/template/admin/assets/js 配下）を再探索したが、CSVボタン固有の約500ms無効化/復帰処理は新規追加されていない。"
+    },
+    {
+      "rowId": 1232,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/CardController.php:108-118` の GET 初期表示分岐は `$viewData = FormUtil::getViewData($searchForm); $this->session->set($this->sessionKey, $viewData); $this->session->set($this->sessionKey.'.page_no', 1); return ['searchForm' => $searchForm->createView(), 'pagination' => null, 'is_search_filter_active' => false];` で、監査時点と同じく set のみ。`src/Eccube/Controller/Admin/SearchControllerTrait.php:110-118` が定義する `eccube.admin.card.search` / `.search.page_no` / `.search.page_count` / `eccube.admin.card.sort` / `.order` を remove する実装は develop 全体に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1233,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchCardType.php:208-213` `configureOptions()` は `'csrf_protection' => true` を設定したまま。Twig 側も `src/Eccube/Resource/template/admin/Card/index.twig:176` の通常の `form_start(searchForm, ...)` で描画しており、CSRF 無効化は行われていない。",
+      "note": "rowId 1226 と同一箇所の重複指摘。"
+    },
+    {
+      "rowId": 1234,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchCardType.php:45-51` `->add('multi', TextType::class, ['label' => false, 'required' => false, 'attr' => ['placeholder' => 'admin.card.multi_search_placeholder']])` に Length 制約も maxlength 属性もなく50文字制限なし。`src/Eccube/Repository/Master/MtbCardRepository.php:227-228` も `c.name_jp LIKE :multi OR c.name_en LIKE :multi OR c.text_jp LIKE :multi OR c.text_en LIKE :multi` に `'%'.$multi.'%'` を単一値で適用しており、スペース／カンマ分割とトークン間 AND は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 1235,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchCardType.php:70-79` は単一の `->add('cmc', TextType::class, ['label' => 'admin.card.cmc', 'required' => false, 'constraints' => [new Assert\\Regex([...])]])` のみで `cmc_start` / `cmc_end` は存在しない。`src/Eccube/Repository/Master/MtbCardRepository.php:239-241` も `$qb->andWhere('c.cmc = :cmc')->setParameter('cmc', (float) $searchData['cmc'])` の完全一致条件のみ（同ファイル :535 の `addNumericRangeCondition(..., 'mana_value', 'c.cmc')` は別系統のフロント検索SQL用で、この admin 検索 QueryBuilder では使われていない）。",
+      "note": ""
+    },
+    {
+      "rowId": 1236,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchCardType.php:161-173` は `->add('restriction', EntityType::class, ['class' => MtbRestriction::class, 'choice_label' => 'name_jp', 'multiple' => true, 'expanded' => true, ...])` の複数選択チェックボックスで、`legalFlg` は develop 全体に存在しない。JS は `src/Eccube/Resource/template/admin/Card/index.twig:96-110` でフォーマット選択時に最初の restriction を自動チェックするだけ。Repository も `src/Eccube/Repository/Master/MtbCardRepository.php:314-316` `if ($this->isNotEmpty($searchData['restriction'] ?? null)) { $qb->andWhere('cf.Restriction IN (:restrictions)')->setParameter('restrictions', $searchData['restriction']); }` と選択された制限区分での絞り込みのまま。",
+      "note": "設計の「オフ=レガル+レストリクション / オン=バンも含む」に相当する分岐（MtbCardRepository.php:524-526 の `cf.restriction_id IN (1,2,3)` / `IN (1,2)`）は別系統のフロント検索SQL側にのみ存在し、admin検索フォームには適用されていない。"
+    }
+  ]
+}

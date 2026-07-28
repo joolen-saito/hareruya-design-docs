@@ -1,0 +1,59 @@
+{
+  "packetId": "0205_02",
+  "results": [
+    {
+      "rowId": 853,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderHistoryType.php:103-122` は `->add('complete_date_from', DateTimeType::class, ['required' => false, 'input' => 'datetime', 'widget' => 'single_text', ...])` / 同 `complete_date_to` のみで、Callback や GreaterThan/LessThan 等の相関制約は無い（`grep -n \"Callback|GreaterThan|LessThan\" src/Eccube/Form/Type/Admin/OtcBuyOrder/ src/Eccube/Controller/Admin/OtcBuyOrder/` はヒット0）。`src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderHistoryController.php:130-137` の `getQueryBuilder()` も `HistorySearchDataDto::fromFormData($args['searchData'])` を Repository に渡すだけで大小判定なし、`src/Eccube/Controller/Admin/SearchControllerTrait.php` にも form isValid による日付相関エラーは無い。`html/template/admin/assets/js/OtcBuyOrder/otc-buy-order-history.js:1-25` も datetimepicker・全選択・CSV submit のみ。`src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php:191-200` は From 条件を独立に追加するのみ。",
+      "note": "監査時点と実質同じ状態。"
+    },
+    {
+      "rowId": 854,
+      "status": "未対応",
+      "evidence": "一覧検索: `src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php:283-286` `$qb->addOrderBy('obo.completeDate', 'DESC')->addOrderBy('obosh.createDate', 'DESC');`、CSV用: 同 `:343-344` `->addOrderBy('obo.completeDate', 'DESC') ->addOrderBy('obosh.createDate', 'DESC');`。`grep -n \"orderBy|applyDate|apply_date\" src/Eccube/Repository/DtbOtcBuyOrderStockHistoryRepository.php` の結果は上記2箇所のみで、査定申込日時 `obo.applyDate` によるソートは現 develop にも存在しない。",
+      "note": "第2ソートは依然 obosh.createDate（履歴作成日時）で、設計の査定申込日時ではない。"
+    },
+    {
+      "rowId": 855,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderSummaryType.php:58-67` は `->add('summary_date_from', DateType::class, ['required' => true, 'input' => 'datetime', 'widget' => 'single_text'])` / 同 `summary_date_to` のままで書式指定なし。`html/template/admin/assets/js/OtcBuyOrder/otc-buy-order-summary.js:2-7` も `$(\"input[id$=_date_from],input[id$=_date_to]\").datetimepicker({ locale: \"ja\", format: \"YYYY-MM-DD\", ... })` とハイフン区切りのまま。設計の yyyy/mm/dd 形式になっていない。",
+      "note": "必須入力は満たすが書式が未是正のため未対応。"
+    },
+    {
+      "rowId": 856,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderSummaryType.php:75-80` `->add('section', EntityType::class, ['required' => false, 'expanded' => false, 'multiple' => true, 'class' => MtbSection::class])` と、監査時点同様 `multiple => true` の複数選択のまま。単一選択への変更は現 develop にない。",
+      "note": ""
+    },
+    {
+      "rowId": 857,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/OtcBuyOrder/OtcBuyOrderSummaryType.php:68-74` `->add('shop', EntityType::class, ['required' => false, 'expanded' => false, 'multiple' => true, 'class' => BaseInfo::class, 'data' => $DefaultShop !== null ? [$DefaultShop] : []])`。`multiple => true` のままで初期値も配列 `[$DefaultShop]` のまま。デフォルト検索表示店舗の初期選択（同ファイル:96-110 `getMemberDefaultSearchBaseInfo()`）は満たすが、単一選択セレクトボックス化は未実装。",
+      "note": "設計期待値のうち単一選択要件が未充足のため未対応（部分的充足は対応済みに含めない方針）。"
+    },
+    {
+      "rowId": 858,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:763-765` `$html = $this->renderView('@admin/Purchase/restock_list.twig', $this->otcBuyOrderRestockListService->buildPdfViewData($otcBuyOrderIds));` のままで、作成日時を渡していない。`src/Eccube/Service/Admin/OtcBuyOrder/OtcBuyOrderRestockListService.php:49-58` の `buildPdfViewData()` は `return ['restockListSections' => $built['sections']];` のみ。`src/Eccube/Resource/template/admin/Purchase/restock_list.twig:1-106` にも作成日時ラベルの描画は無い（`grep -n \"作成日時|createdAt|'now'|date(\"` はヒット0）。",
+      "note": ""
+    },
+    {
+      "rowId": 859,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Exporter/RestockListPdfSectionBuilder.php:80` `'total_quantity' => 0,` と同 `:85` `$buckets[$pickingTypeSort]['total_quantity'] += $quantity;` でセクション単位に累積したままで、ページ単位の集計は存在しない。`src/Eccube/Resource/template/admin/Purchase/restock_list.twig:69` `{% if loop.last %}` 内の同 `:92` `{{ 'admin.picking_item_list.all'|trans }}{{ section.total_quantity }}` で最終ページに一度だけセクション総計を表示する実装のまま（ページ区切りは同 `:21` `{% if loop.index % maxPageRows == 1 %}` / `:97` `{% if loop.index % maxPageRows == 0 or loop.last %}` だが、そこに小計行は無い）。",
+      "note": ""
+    },
+    {
+      "rowId": 860,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbOtcBuyOrderRepository.php:503-512`（UNION の「-- 3. 通常商品（状態/Conditionなし）」branch）は `pc.standard_price AS \"standardPrice\"`(:507), `pc.language_id AS \"languageId\"`(:509), `sc.name AS \"storageCode\"`(:510), `r.code AS \"rarityCode\"`(:511) を出力し、空欄化されているのは `'' AS \"conditionCode\"`(:512) のみ。言語IDの `1` 固定も無い（個別入力商品 branch の `1 AS \"languageId\"` は別 branch）。`src/Eccube/Service/Csv/Exporter/OtcBuyOrderCsvExportService.php:105-111` も `$orderedRow = array_map(fn ($key) => $row[$key] ?? '', array_keys($header));` とヘッダ順に並べてそのまま fputcsv するだけで補正処理は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 861,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Exporter/OtcBuyOrderCsvExportService.php:33-75` の `public const CSV_TYPES = [...]` は依然 `old_goods_account` / `otc_buy_order_product_list` / `otc_buy_order_restock_list_csv` の3種のみで、キャンセル用CSV種別・`キャンセル数`・`販売価格` ヘッダは存在しない（`otc_buy_order_product_list` のヘッダは `'productCount' => '在庫増減数'`, `'standardPrice' => '基準価格'` のまま）。画面メニューも `src/Eccube/Resource/template/admin/OtcBuyOrder/index.twig:184-187` に `data-type=\"old_goods_account\"` / `otc_buy_order_product_list` / `otc_buy_order_restock_list_csv` / `otc_buy_order_restock_list_pdf` の4項目のみ。データ取得SQLも `src/Eccube/Repository/DtbOtcBuyOrderRepository.php:470,497,533` で `AND o.otc_buy_order_status_id <> :cancel_status_id` とキャンセルを除外したまま。`キャンセル数`/`cancel_count`/`cancelCount`/`otc_buy_order_cancel` の横断検索でヒットするのはネット買取側の `src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:71` `$header = array_merge($header, ['product_count' => 'キャンセル数']);` および `src/Eccube/Controller/Admin/Purchase/PurchaseController.php:115,684`（dtb_buy_order 系）のみで、店頭買取 dtb_otc_buy_order 系の実装ではない。",
+      "note": ""
+    }
+  ]
+}

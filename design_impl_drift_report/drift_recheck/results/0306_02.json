@@ -1,0 +1,77 @@
+{
+  "packetId": "0306_02",
+  "results": [
+    {
+      "rowId": 385,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/ForgotController.php:184-187` `if (count($errors) > 0) { // リセットキーに異常がある場合 throw new HttpException\\NotFoundHttpException(); }`、`:192-195` `if (null === $Customer) { // リセットキーから会員データが取得できない場合 throw new HttpException\\NotFoundHttpException(); }` と、GET表示時も含め全ケースが一律404のまま。専用文言は `src/Eccube/Resource/locale/messages.ja.yaml:507` `front.forgot.reset_error: 有効期限が切れているか、無効なURLです。` に定義があるのみで、`grep -rn reset_error src/ app/` の結果は ja/en の locale 2件のみ（コード・テンプレートでの参照ゼロ）。E-1/E-2 の『アクセスできません。』画面は現 develop でも未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 386,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/ForgotController.php:204-233` の更新成功パスは `$password = $this->passwordHasher->hashPassword(...)` → `executeQuery('UPDATE registration_view SET password = :password, reset_key = :reset_key ...')` → `$this->eventDispatcher->dispatch($event, EccubeEvents::FRONT_FORGOT_RESET_COMPLETE);` → `return $this->redirectToRoute('forgot_resetcomplete');` で、ログ出力が一切ない。同ファイルのログ呼び出しは `:103` `log_info('send reset password mail to:'.\"{$Customer->getSecretKey()} {$Customer->getEmail()} {$request->getClientIp()}\");` と `:105` の log_warning のみ（再発行メール送信時）で、更新完了ログは監査時点と同じく欠落。",
+      "note": ""
+    },
+    {
+      "rowId": 387,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/js/point_barcode_js.twig:22-23` は現 develop でも `{#$(\"#js-ec_point_barcode\").barcode('{{ Customer.getSmaregiMemberCode }}', \"ean13\", ...);#}` がコメントアウトのままで、`$(\"#js-ec_point_barcode\").barcode('2900065596792', \"ean13\", { barWidth:2, fontSize:14 });` の全会員共通固定EAN13を描画している。getSmaregiMemberCode() は依然未使用。",
+      "note": ""
+    },
+    {
+      "rowId": 388,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/index.twig:168` `<a class=\"p-hareruya-mypage__menu-link\" href=\"{% if Customer.Player.deckUserId is not null %}/decks/user/{{ Customer.Player.deckUserId }}{% else %}/decks{% endif %}\">` となり、監査時点の `href=\"\"` は解消。170行の `{{ 'front.mypage.index.menu.my_deck'|trans }}` ラベルと対になるリンクで、会員に deckUserId がある場合は当該会員のマイデッキページ `/decks/user/{deckUserId}`、無い場合はデッキ掲載サイト `/decks` へ遷移する。`/decks` はヘッダ `src/Eccube/Resource/template/default/Block/header.twig:74,92` およびフッタ `Block/footer_sitemap.twig:36` でも使われる既存デッキ構築サイトの遷移先で、設計『押下すると、マイデッキ画面へ遷移する』(sheet-7 画面部品19) を満たす。",
+      "note": "遷移先 /decks 自体は本リポジトリ外（既存デッキ掲載サイト）。リンク未設定という指摘事象は解消済み。"
+    },
+    {
+      "rowId": 389,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/index.twig:147` `<span class=\"p-hareruya-mypage__menu-text\">{{ 'front.mypage.nav__purchase_history'|trans }}</span>` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:834` `front.mypage.nav__purchase_history: 買取履歴` と旧名称が残る（`:835 front.mypage.purchase_history.title: 買取履歴一覧`、`:836 ... not_found: 買取履歴はありません。` も同様）。『買取一覧』はフロント側には存在せず admin 側キー（`messages.ja.yaml:5519 admin.purchase.store.list: 買取一覧` 等）のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 390,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/Mypage/MypageController.php:128-139` `public function index(Request $request, PaginatorInterface $paginator): array { $Customer = $this->getUser(); $NextDeadlinePointHistory = $this->pointHistoryRepository->getNextDeadlinePointHistory($Customer->getPlayer()); return ['Customer' => $Customer, 'nextDeadlinePointHistory' => $NextDeadlinePointHistory]; }` で、セッションからの戻り先取得・消去・リダイレクトは無い。戻り先セッションキー `PRODUCT_SEARCH_REFERER` は `NotifylistController.php:100,186` と `CartController.php:489` で `set` されるのみで、リポジトリ全体に `get('PRODUCT_SEARCH_REFERER')` の読み出しが存在しない（設定値が消費されない）。previousUrl/search_return/product_list_url 等での Front・EventListener 横断 grep も 0 件。",
+      "note": ""
+    },
+    {
+      "rowId": 396,
+      "status": "未対応",
+      "evidence": "コントローラは `src/Eccube/Controller/Front/Mypage/NotifylistController.php:67` `$ProductRequests = $this->notifyListEntryBuilder->build($Customer->getPlayer());` へリファクタされたが、`src/Eccube/Service/Front/Mypage/NotifyListEntryBuilder.php:75-88` で対象商品の同一言語の可視 ProductClass を全件 `$languageClasses` に集め `'Requests' => array_fill_keys(array_keys($languageClasses), false)` と初期化し、`:96` `$ProductRequests[$key]['Requests'][$TargetClass->getId()] = true;` で依頼済みのみ true にする構造は監査時点と同じ。テンプレート `src/Eccube/Resource/template/default/Mypage/notifylist.twig:78-80` `{% for ProductClass in ProductRequest.ProductClasses %}{% if ProductClass.visible %}{% set isRequested = ProductRequest.Requests[ProductClass.id] ?? false %}` で未設定規格も価格・状態を表示し、`:95-101` の `{% else %}<button class=\"... notifyme\" ...>` によりロード時点で入荷通知(登録)ボタンを描画している。",
+      "note": "言語による絞り込みが加わっただけで、未設定規格の非表示化・ロード時の登録ボタン非表示という設計要求は未充足。"
+    },
+    {
+      "rowId": 397,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/notifylist.twig:26-32` は `{% if ProductRequests|length > 0 %}<p class=\"c-hareruya-text\">{{ 'front.mypage.notifylist.body'|trans }}</p>{% else %}<div class=\"p-hareruya-message-box--info\"><p>{{ 'front.mypage.notifylist.empty'|trans }}</p></div>{% endif %}` のみで、上限拡張の案内要素は無い。翻訳も `src/Eccube/Resource/locale/messages.ja.yaml:952-955` の `front.mypage.notifylist.body/empty/notify_all_label/notify_remove` 4キーのみ。ja locale 全体の『拡張』出現は admin のファイル拡張子エラー等（`:2886, :3386, :3738-3740, :6394`）で無関係。",
+      "note": ""
+    },
+    {
+      "rowId": 398,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/notifylist.twig:51-55` は `<button class=\"p-hareruya-product-card__img-wrap\" type=\"button\" data-js-target=\"product-img-zoom\" aria-label=\"{{ 'front.mypage.favorite_list.aria_zoom_image'|trans }}\">` で画像をラップしたままで（内部に img とズームオーバーレイ／expand-icon）、商品詳細への遷移は `:59` `<a class=\"p-hareruya-product-card__name\" href=\"{{ url('product_detail', { id: Product.id }) }}\">` の商品名リンクのみ。画像押下では商品詳細へ遷移しない。",
+      "note": ""
+    },
+    {
+      "rowId": 399,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:700` `front.mypage.favorite_list.lead: 下記の商品が入荷した際、ご登録されているメールアドレスにお知らせをお送りいたします。`、`src/Eccube/Resource/locale/messages.en.yaml:624` `front.mypage.favorite_list.lead: When the items below are back in stock, we will notify you by email.` と入荷通知文言のままで、設計の『セール対象になった際／become on sale』へは未修正。参照元も `src/Eccube/Resource/template/default/Mypage/favorite.twig:51` `<p class=\"c-hareruya-text\">{{ 'front.mypage.favorite_list.lead'|trans }}</p>` で変わらず。",
+      "note": ""
+    },
+    {
+      "rowId": 400,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/favorite.twig:50-57` は `{% if FavoriteProducts|length > 0 %}<p class=\"c-hareruya-text\">{{ 'front.mypage.favorite_list.lead'|trans }}</p>{% endif %}{% if FavoriteProducts|length == 0 %}<div class=\"p-hareruya-message-box--info\"><p>{{ 'front.mypage.favorite_not_found'|trans }}</p></div>{% endif %}` のままで、0件時に lead を出力する経路が無い。設計の『一覧表示時に常時表示』は未充足。",
+      "note": ""
+    },
+    {
+      "rowId": 401,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/favorite.twig:134-144` で商品画像は `<button class=\"p-hareruya-product-card__img-wrap\" type=\"button\" data-js-target=\"product-img-zoom\" aria-label=\"{{ 'front.mypage.favorite_list.aria_zoom_image'|trans }}\">` … `<span class=\"p-hareruya-product-card__img-overlay\">...image_zoom_overlay...</span><span class=\"p-hareruya-product-card__expand-icon\">` とズーム用ボタンのままで、商品詳細遷移は `:148` `<a class=\"p-hareruya-product-card__name\" href=\"{{ url('product_detail', { id: Product.id, lang: FavoriteLanguage.code }) }}\">` の商品名リンクのみ。画像押下→商品詳細遷移は未実装。",
+      "note": ""
+    }
+  ]
+}

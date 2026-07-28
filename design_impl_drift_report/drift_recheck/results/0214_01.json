@@ -1,0 +1,77 @@
+{
+  "packetId": "0214_01",
+  "results": [
+    {
+      "rowId": 1130,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventController.php:63-64` は監査時点と同じく `#[Route(path: '/%eccube_admin_route%/event', name: 'admin_event_index', methods: ['GET','POST'])]` / `#[Route(path: '/%eccube_admin_route%/event/page/{page_no}', name: 'admin_event_index_page', ...)]`、新規登録は `EventController.php:212` `#[Route(path: '/%eccube_admin_route%/event/create', name: 'admin_event_create', ...)]` のまま。`src/Eccube/Resource/template/admin/Event/index.twig:39` `<form id='search_form' method=\"post\" action=\"{{ url('admin_event_index') }}\">`、同 `:56` `href=\"{{ url('admin_event_create') }}\"`。develop 全体を `grep -rn \"admin_event_list|admin_event_search|admin_event_page|event/list|event/search\" src/ app/ html/` で探索したが 0 件で、設計の URL/bind 名は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1131,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchEventType.php:139-143` は `public function getBlockPrefix(): string { return 'admin_search_event'; }` のままで、`configureOptions`（同 `:130-137`）は `base_info_default` のみ設定し `csrf_protection => false` は存在しない。`src/Eccube/Resource/template/admin/Event/index.twig:40` も `{{ form_widget(searchForm._token) }}` を描画したままで、設計のフォーム名 admin_event_list／CSRFなし契約は未反映。",
+      "note": ""
+    },
+    {
+      "rowId": 1132,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventController.php:44,46,48` のセッションキーは `'eccube.admin.event.search'` / `'eccube.admin.event.search.page_no'` / `'eccube.admin.event.search.page_count'` のまま。初期表示分岐（同 `:192-198`）は `$this->session->set(self::SESSION_SEARCH_KEY, $viewData); $this->session->set(self::SESSION_PAGE_NO_KEY, $pageNo);` と set しており remove は無い（`session->remove` はファイル内に存在しない）。検索時（同 `:113-114`）も set のみで、`admin.event.sort` / `admin.event.order` 相当のセッション保存は develop 全体に無い。",
+      "note": ""
+    },
+    {
+      "rowId": 1133,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchEventType.php:107-114` で `sortkey` / `sorttype` を HiddenType として保持し、`src/Eccube/Resource/template/admin/Event/index.twig:24-32` の JS が `$('#{{ searchForm.sortkey.vars.id }}').val(sortkey)` で POST、同 `:127-133` の選択肢は `default` / `eventName` と `a` / `d` のまま。`src/Eccube/Repository/DtbEventRepository.php:134-140` も `$sortType = (isset($searchData['sorttype']) && $searchData['sorttype'] === 'a') ? 'ASC' : 'DESC';` と `else { $qb->addOrderBy('e.id', 'DESC'); }` のフォールバックのままで、`admin.error.sort` は develop の messages.ja.yaml にも Controller にも存在しない（grep 0 件）。",
+      "note": ""
+    },
+    {
+      "rowId": 1134,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchEventType.php:95-106` は `->add('base_info', EntityType::class, ['class' => BaseInfo::class, 'label' => 'admin.event.base_info', 'multiple' => true, ...])` のままで、`src/Eccube/Resource/template/admin/Event/index.twig:84-85` が `{{ 'admin.event.base_info'|trans }}` ラベル付きで `{{ form_widget(searchForm.base_info) }}` を表示。`src/Eccube/Repository/DtbEventRepository.php:122-131` も `$qb->andWhere('IDENTITY(e.BaseInfo) IN (:baseInfoIds)')` のまま。`grep -rn \"MtbVenue\" src/ app/ html/` は 0 件、`searchData['venue']` / `venue_id` も admin イベント一覧側に存在せず、会場検索は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 1135,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchEventType.php:40-43` は `->add('multi', TextType::class, ['label' => 'admin.event.multi', 'required' => false])` のみで Length(max=50) 制約なし。`src/Eccube/Repository/DtbEventRepository.php:74` は `$searchColumns = ['nameJp', 'nameEn'];` の2列のみ、同 `:88-90` で `$qb->andWhere('('.implode(' OR ', $queries).')');` と全語・全列を単一 OR に結合したまま（語ごとの AND ではない）。`src/Eccube/Entity/DtbEvent.php:46,49` も `name_jp` / `name_en` のみで、`grep -rn \"shortName|short_name\" src/Eccube/Entity/DtbEvent.php` は 0 件（略称列自体が無い）。",
+      "note": ""
+    },
+    {
+      "rowId": 1136,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:1735` `admin.common.search_result: \"検索結果：%count%件が該当しました\"`、同 `:1739` `admin.common.search_no_result: 検索条件に合致するデータが見つかりませんでした`、同 `:1740` `admin.common.search_try_change_condition: 検索条件を変えて、再度検索をお試しください` のままで、`src/Eccube/Resource/template/admin/Event/index.twig:103` が `{{ 'admin.common.search_result'|trans({\"%count%\":pagination.totalItemCount})|raw }}`、同 `:211-212` が `search_no_result` と `search_try_change_condition` を描画。設計文言「検索結果 N件が該当しました」「検索条件に該当するデータがありませんでした。」とは不一致のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1137,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbEventRepository.php:62-64` の `getQueryBuilderBySearchData` は `$qb = $this->createQueryBuilder('e')->leftJoin('e.Details', 'ed')->leftJoin('e.Formats', 'ef');` のままで、以降 `:143` の return まで `deletedAt` 条件は一切追加されない（同ファイル内で `isNull('e.deletedAt')` を持つのは `:267` `getEventsByShopAndMonth` と `:299` `getEventsByShopAndDateRange` のフロント用メソッドのみ）。`src/Eccube/Entity/DtbEvent.php:135-136` に `#[ORM\\Column(name: 'deleted_at', ...)] private ?\\DateTime $deletedAt = null;` は存在するが一覧検索では未使用。",
+      "note": ""
+    },
+    {
+      "rowId": 1138,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventController.php:63-64` は `name: 'admin_event_index'` / `name: 'admin_event_index_page'` で `methods: ['GET','POST']` のまま。`src/Eccube/Resource/template/admin/Event/index.twig:39-40` は `action=\"{{ url('admin_event_index') }}\"` と `{{ form_widget(searchForm._token) }}`、`src/Eccube/Form/Type/Admin/SearchEventType.php:142` は `return 'admin_search_event';`。develop 全体の grep で `admin_event_list` / `admin_event_search` / `admin_event_page` / `/event/list` / `/event/search` はいずれも 0 件で、設計の外部契約は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 1139,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventController.php:44,46,48` のキーは `eccube.admin.event.search` / `eccube.admin.event.search.page_no` / `eccube.admin.event.search.page_count` のまま。初期表示分岐の同 `:196-197` は `$this->session->set(self::SESSION_SEARCH_KEY, $viewData); $this->session->set(self::SESSION_PAGE_NO_KEY, $pageNo);` で削除ではなく保存しており、ファイル内に `session->remove` は 1 件も無い。`admin.event.sort` / `admin.event.order` のセッションキーも develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1140,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventController.php:71,74` が `$DefaultBaseInfo = $Member->getDefaultSearchBaseInfo();` を `'base_info_default' => $DefaultBaseInfo ? [$DefaultBaseInfo] : []` として検索フォーム初期値に渡す実装のまま。`src/Eccube/Form/Type/Admin/SearchEventType.php:95` `->add('base_info', EntityType::class, [...])`、`src/Eccube/Resource/template/admin/Event/index.twig:84-85` で店舗欄を画面表示、`src/Eccube/Repository/DtbEventRepository.php:128` `$qb->andWhere('IDENTITY(e.BaseInfo) IN (:baseInfoIds)')` で検索条件化。`MtbVenue` / `venue_id` は develop の src 配下に存在せず（grep 0 件）、会場検索は未実装のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1141,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbEventRepository.php:70-72` の `mb_convert_kana($multi, 's', 'UTF-8')` と `preg_split('/[\\s,　]+/u', $multi)` による正規化・分割は残るが、同 `:74` `$searchColumns = ['nameJp', 'nameEn'];` の2列のみで、同 `:83-89` は分割語ループ内で `$queries[] = \"e.{$column} LIKE :{$column}{$num}\";` を積み上げた後 `$qb->andWhere('('.implode(' OR ', $queries).')');` と全語を OR 結合したまま（語間 AND ではない）。`src/Eccube/Entity/DtbEvent.php:46,49` は `name_jp` / `name_en` のみで `short_name_jp` / `short_name_en` は存在しない（`grep -rn \"shortName|short_name\" src/Eccube/Entity/DtbEvent.php` 0 件）。",
+      "note": ""
+    }
+  ]
+}

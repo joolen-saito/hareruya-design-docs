@@ -1,0 +1,77 @@
+{
+  "packetId": "0214_07",
+  "results": [
+    {
+      "rowId": 1202,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:158` は現 develop でも `$this->addSuccess('admin.common.csv_upload_complete', 'admin');` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1606` は `admin.common.csv_upload_complete: CSVファイルをアップロードしました`。`grep -rn \"イベント情報を登録しました\" src/` は 0 件で、設計文言は locale にも Controller にも存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1203,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:114` `log_info('イベント一括登録CSV登録開始');`、同 `:148` `log_info('イベント一括登録CSV登録完了');` のみで、完了ログに取込件数の引数はない（`$result` の件数を渡していない）。`grep -rn \"異常終了\" src/Eccube/Controller/Admin/Event/ src/Eccube/Service/Csv/` は 0 件で、`:138-140` の catch も `$errors[] = $e->getMessage();` のみでログ出力なし。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1204,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:289-295` は `$credit !== '' && !\\in_array($credit, [self::LABEL_OPTION_YES, self::LABEL_OPTION_NO], true)` のクレジット列選択肢検証のみ、同 `:364-400` は `$online === self::LABEL_OPTION_YES` 時の From/To 必須・書式・前後関係検証のみ、同 `:453-458` は `$payments = new ArrayCollection(... Payment::EC_CREDIT ...)` の紐付けのみ。クレジット未設定かつオンライン受付「あり」かつ有料（参加費>0 / 参加費_日程>0）を横断判定してエラー化する処理は `onValidateRow`（:213-434）全体に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1205,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:55-99` の `ORDERED_HEADERS` は現 develop でも `'店舗'`(:58)、`'チーム戦'`(:65)、`'フリー入力エリア1項目名(日)'`(:70) 等で、設計の「会場」「チーム人数」「備考（日）・備考（英）」列は存在しない。`公開状態_日程` は `:808-810` `(new BaseCsvColumn('公開状態_日程', ...))->setRequired(true)` かつ `:101-111` の `REQUIRED_ON_CELL` で `true`、さらに `:410-416` で開始時間がある場合 `$dispS === ''` を `addInvalidFormatError` としており任意項目化されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1206,
+      "status": "未対応",
+      "evidence": "取込経路は `src/Eccube/Service/Csv/Importer/CsvImporter.php:175` `new CsvImportService($splFile, $delimiter, ...)` で、`src/Eccube/Service/CsvImportService.php:178-179` は `preg_replace('/^\\x{FEFF}/u', '', $s)` によるヘッダーBOM除去のみ。ゼロ幅除去ヘルパー `removeWhite()` は `src/Eccube/Service/Csv/AbstractCsvService.php:404` に定義され呼び出し元は同ファイル `:174` の1箇所だけ（`grep -rn \"removeWhite\" src/` の結果は該当2行のみ）で、イベント一括登録の import 経路からは呼ばれていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1207,
+      "status": "未対応",
+      "evidence": "`grep -rn \"set_time_limit|max_execution_time|ini_set\" src/Eccube/Controller/Admin/Event/ src/Eccube/Service/Csv/` の結果に `EventEntryBulkCsvController.php` と `Service/Csv/Importer/` 配下は含まれず、ヒットは `src/Eccube/Service/Csv/AbstractCsvService.php:187`、`src/Eccube/Controller/Admin/Event/EntryController.php:392`（別機能）等のみ。`EventEntryBulkCsvController.php:90-167` の POST 分岐にも実行時間制限解除はない。",
+      "note": ""
+    },
+    {
+      "rowId": 1208,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:58-59` は `'店舗',` の次が `'フォーマット',` で「会場」列は無く、列定義（:630-819）・`getColumns()`（:574-618）・`onValidateRow()`（:213-434）・`onReadRow()`（:437-566）のいずれにも会場の必須検証／マスタ参照／保存がない。`grep -rn \"会場|MtbVenue|event_place\" EventBulkCsvImportHandler.php DtbEvent.php EventEntityManager.php` は 0 件。",
+      "note": ""
+    },
+    {
+      "rowId": 1209,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:68,69` は `'賞品 (日)',` `'賞品 (英)',`（半角スペース＋半角括弧）、同 `:97,98` は `'賞品_日程(日)',` `'賞品_日程(英)',`。列定義も同 `:692` `new BaseCsvColumn('賞品 (日)', '賞品 (日)')`、`:696`、`:812` `new BaseCsvColumn('賞品_日程(日)', ...)`、`:816` と同じ別名のままで、設計の全角括弧表記「賞品（日）」等とは一致しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1210,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:62-64` は `path: '/%eccube_admin_route%/event/entry/bulk_csv_import', name: 'admin_event_entry_bulk_csv_import', methods: ['GET', 'POST']`、同 `:177-179` は `path: '/%eccube_admin_route%/event/entry/bulk_csv_template'`。テンプレートも `src/Eccube/Resource/template/admin/Event/Entry/event_bulk_csv_import.twig:64` `action=\"{{ url('admin_event_entry_bulk_csv_import') }}\"`、`:89` `href=\"{{ url('admin_event_entry_bulk_csv_template') }}\"`。`grep -rn \"bulkentry|entry_csv_template\" src/` は 0 件で、設計の `/entry/bulkentry` 系ルートは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1211,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Event/Entry/event_bulk_csv_import.twig:69` は現 develop でも `{{ form_widget(form.import_file, {'attr': {'accept': 'text/csv,.csv', 'class': 'd-none'}}) }}` で `text/tsv`／`.tsv` を受理タイプに含まない。バックエンド側 `src/Eccube/Service/Csv/Importer/CsvImporter.php:172-173` の `$delimiter = ($fileExtension === 'tsv') ? \"\\t\" : ...` は監査時点と同じくTSV分岐のみ存在。",
+      "note": ""
+    },
+    {
+      "rowId": 1212,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Event/Entry/event_bulk_csv_import.twig:13-16` の submit ハンドラは `$('#upload-button').attr('disabled', 'disabled'); $('#download-button').attr('disabled', 'disabled');` のみ、`:72` のボタンも `<button class=\"btn btn-ec-conversion\" id=\"upload-button\" type=\"submit\" disabled>` でスピナー要素なし。ファイル全体（115行）に spinner / Ladda / fa-spinner / loading 系のDOM・クラス・JS呼び出しは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1213,
+      "status": "未対応",
+      "evidence": "rowId 1207 と同一事象。`src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php` の POST 分岐（:90-167、取込実行は `:137` `$result = $importer->import($formFile);`）に `set_time_limit(0)` 等はなく、`grep -rn \"set_time_limit|max_execution_time|ini_set\" src/Eccube/Controller/Admin/Event/ src/Eccube/Service/Csv/` のヒットは `src/Eccube/Service/Csv/AbstractCsvService.php:187`（本取込経路外）と `src/Eccube/Controller/Admin/Event/EntryController.php:392`（別機能）等のみ。",
+      "note": ""
+    }
+  ]
+}

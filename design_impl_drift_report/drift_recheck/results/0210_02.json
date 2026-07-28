@@ -1,0 +1,77 @@
+{
+  "packetId": "0210_02",
+  "results": [
+    {
+      "rowId": 976,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Content/BlockController.php:118-120` は現 develop でも `if ($id && !$Block->isDeletable()) { throw new NotFoundHttpException(); }` のままで、削除不可ブロックに 404 を返す。同ファイル全体を確認したが `AccessDeniedHttpException` / `createAccessDeniedException` の import も分岐も存在せず（use 句は line 32 の `NotFoundHttpException` のみ）、403 と 404 の区別は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 977,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Content/block_edit.twig:30-51` に `var editor = ace.edit('editor');` `editor.session.setMode('ace/mode/twig');` `editor.setTheme('ace/theme/tomorrow');` `enableBasicAutocompletion/enableSnippets/enableLiveAutocompletion/showInvisibles` `$(\"#editor\").resizable(...)` `$('#content_block_form').on('submit', ...) { $('#block_block_html').val(editor.getValue()); }` が現存。`block_edit.twig:130-133` も `<div id=\"editor\" style=\"height: 480px\" class=\"form-control...\">` ＋ `<div class=\"d-none\">{{ form_widget(form.block_html) }}</div>` のままで、設計の「行数15・等幅の素の textarea」ではなく ACE リッチエディタ構成が維持されている。",
+      "note": ""
+    },
+    {
+      "rowId": 978,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Content/block.twig:112` は `<p class=\"text-start\">{{ 'admin.common.delete_modal__message'|trans({ '%name%' : Block.name }) }}</p>` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1790` の `admin.common.delete_modal__message: \"この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？\"` を表示する。設計指定の「このブロックを削除してもよろしいですか？」という固定文言は messages.ja.yaml 内に存在しない（`grep delete_modal__message` の結果は customer/delivery.fee/csv の3件のみで block 用キーは無い）。",
+      "note": ""
+    },
+    {
+      "rowId": 979,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Content/BlockController.php:247` は `public function delete(Request $request, Block $Block, Filesystem $fs, CacheUtil $cacheUtil): RedirectResponse` のままで Block 型ヒント（EntityValueResolver）解決のため存在しないIDは 404。本文 249-298 は `if ($Block->isDeletable())` 内で `addSuccess('admin.common.delete_complete')` を出すのみで、削除失敗フラッシュは無い。`grep -rn delete_error src/Eccube/Controller/Admin/Content/` の結果は NewsController.php:161 と LayoutController.php:81（いずれも delete_error_foreign_key）だけで、BlockController からは未参照のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 980,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Content/BlockController.php:196-204` の他ロケール生成は `// 新規ブロック作成時は、もう一方のlocaleファイルも同じ内容で作成する` `if ($previousFileName === null) { ... $fs->dumpFile($otherFilePath, $source); $fileAdapter->upload(...); }` と新規登録限定のまま。更新時の処理は `BlockController.php:207-218` の `if (null !== $previousFileName && $Block->getFileName() !== $previousFileName) { $oldLocaleFileName = $previousFileName.$localeSuffix.'.twig'; ... }` で選択ロケール1本の旧ファイル削除のみ、書き出しも `BlockController.php:175-189` の `$localeFileName = $Block->getFileName().$localeSuffix;` による選択ロケール1本のみ。ファイル名変更を伴う更新で日英2ファイルを作る実装は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 981,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:3658` は `tooltip.content.block_source_code: テンプレートファイルを編集します。twigで記述します。` のままで、設計の「テンプレートファイルを記述します。Twigで記述します。」と第一文の動詞・Twig表記が不一致。参照側 `src/Eccube/Resource/template/admin/Content/block_edit.twig:124` も `title=\"{{ 'tooltip.content.block_source_code'|trans }}\"` のまま（ブロック名 3656 / ファイル名 3657 のtooltipは設計一致）。",
+      "note": ""
+    },
+    {
+      "rowId": 982,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Content/BranchTopPageController.php:47` は `#[Route(path: '/%eccube_admin_route%/content/branch_toppage', name: 'admin_content_branch_toppage', methods: ['GET'])]` で {id} を持たず、支店選択は `BranchTopPageController.php:78` の `#[Route(path: '/%eccube_admin_route%/content/branch_toppage/select', name: 'admin_content_branch_toppage_select', methods: ['POST'])]` へのPOST＋`renderPage()`（91行）で再描画する構造のまま。`grep -rn toppage_management src/ app/` の結果も branch_toppage.twig のフォーム名・翻訳キー・BranchTopPageManagementType のみで、`integration/toppage_management/{id}` ルートは develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 983,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Content/BranchTopPageController.php:101` は `#[Route(path: '/%eccube_admin_route%/content/branch_toppage/register', name: 'admin_content_branch_toppage_register', methods: ['POST'])]` で {id} を持たない。成功時も `BranchTopPageController.php:134` `return $this->renderPage($BaseInfo);` / `:167` `return $this->renderPage($BaseInfo);`、失敗時も `:118,146,150` が `renderPage()` で、`renderPage()` 実体（`:216-219`）は `$this->render('@admin/Content/branch_toppage.twig', ...)` の200再描画。`redirectToRoute` / `RedirectResponse` 返却は register 内に無く、302リダイレクトは未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 984,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Content/BranchTopPageController.php:124,156` はともに `$this->addSuccess('admin.common.save_complete', 'admin');` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1595` の `admin.common.save_complete: 保存しました` を表示する。設計文言「登録しました。」を出す分岐・専用キーは追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 985,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Content/BranchTopPageController.php:288-297` の画像未指定パス（`if ($originalBannerImage === $postedBannerImage) { if ($originalBannerImage === '') { $this->addError('admin.content.branch_toppage.banner_image_required', 'admin'); return false; } } elseif ($postedBannerImage === '') { $this->addError('admin.content.branch_toppage.banner_image_required', 'admin'); ... }`）が、S3保存失敗時（`:282`）と同一キーを流用したまま。`src/Eccube/Resource/locale/messages.ja.yaml:4178` は `admin.content.branch_toppage.banner_image_required: バナー画像の登録に失敗しました。` で、設計文言「バナーイメージファイルを指定してください。」は messages.ja.yaml に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 986,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Shop/ShopTopController.php:38` は `private const TILE_PRODUCT_LIMIT = 8;` のままで、`ShopTopController.php:138` `$ProductClasses = $this->productRepository->findTopPickUpProductsByBaseInfo($shopId, $locale, self::TILE_PRODUCT_LIMIT);`、`:142` `$ProductClasses = $this->productRepository->findTopPublicProductsByTag($Tag->getId(), $locale, self::TILE_PRODUCT_LIMIT, $shopId);` が8件上限を渡す。設計の最大3件への是正は入っていない。",
+      "note": ""
+    },
+    {
+      "rowId": 987,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/shop_item_list.twig:26-28` は `{% if tile.tile_type_id == constant('Eccube\\\\Entity\\\\Master\\\\MtbTileType::PICKUP_PRODUCT') %}` … `{% set tileUrl = url('product_list') %}` のままで、もっと見るリンク（`shop_item_list.twig:49` の `href=\"{{ tileUrl }}\"`）は汎用商品一覧へ遷移する。`src/Eccube/Controller/Front/ProductController.php:140-144` の product_list 系ルートにもピックアップ用パラメータは無く、`grep -rn pick_up_flg src/` の結果は ProductStock エンティティ（`src/Eccube/Entity/ProductStock.php:205-216`）と在庫移動系サービスのみで、商品一覧検索条件としての pick_up_flg は実装されていない。",
+      "note": ""
+    }
+  ]
+}

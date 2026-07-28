@@ -1,0 +1,23 @@
+{
+  "packetId": "ZZZZ_02",
+  "results": [
+    {
+      "rowId": 817,
+      "status": "未対応",
+      "evidence": "設計書 function_spec_html_preview/pf-eccube3/m05-07_admin_order_order_labels_csv_export.html:306,318 は「画面上のボタン文言は翻訳キー admin.order.output_labels_Export で『送り状出力』」「出荷指示編集で行をチェックし『送り状出力』を押す」と規定。現 develop でも `src/Eccube/Resource/template/admin/ShippingStandby/edit.twig:130` は `{{ 'admin.stock.move_instruction.csv_download_invoice'|trans }}`（button id=\"labelsExport\"）のままで、`src/Eccube/Resource/locale/messages.ja.yaml:5305` `admin.stock.move_instruction.csv_download_invoice: 送り状CSVダウンロード`。受注一覧側の `src/Eccube/Resource/template/admin/Order/index.twig:1160` のみ `{{ 'admin.order.output_labels_Export'|trans }}`（`messages.ja.yaml:2501` `admin.order.output_labels_Export: 送り状出力`）で設計どおり。加えて `src/Eccube/Resource/template/admin/Stock/stock_move_instruction_index.twig:161` も同じ csv_download_invoice を使用。監査時点と同一状態。",
+      "note": "翻訳キーの全文検索（output_labels_Export / csv_download_invoice）で他テンプレートへの移管がないことも確認済み。差異は文言のみで重要度low。"
+    },
+    {
+      "rowId": 819,
+      "status": "未対応",
+      "evidence": "設計書 m05-24_admin_order_order_shipping_export_for_import.html:321 は「キー一覧を整数IDの並びとして解釈し、出荷実績用CSV生成関数へ渡す」と規定。現 develop の `src/Eccube/Controller/Admin/Order/OrderCsvController.php:215` は `$orderIdList = array_keys($rawOrderIds);` のままで整数キャスト（array_map('intval',...) 等）が無く、`OrderCsvController.php:218` `$response = $this->orderCsv->exportCsv($orderIdList);` → `src/Eccube/Service/Csv/OrderCsv.php:59` `$this->orderRepository->generateResultCsv($orderIdList)` → `src/Eccube/Repository/OrderRepository.php:1465` `generateResultCsv(array $orderIdList)` 内の `->where('o IN (:orders)')` / `->setParameter('orders', $orderIdList)`（同ファイル 1552-1553 行）へそのまま渡している。監査時点と同一状態。",
+      "note": "array_keys の戻りはPHPの数値文字列キー自動変換で実際にはint化されるケースが多いが、設計が求める明示的な整数解釈のコードは追加されていない。"
+    },
+    {
+      "rowId": 831,
+      "status": "未対応",
+      "evidence": "設計書 m05-26_admin_order_order_shipping_result_csv_import.html:321 は「サービス側で各行について列数・注文番号必須を検証したあと、sprintf で桁埋めされた注文番号でサブ注文情報を検索する」と規定。現 develop の `src/Eccube/Service/Csv/OrderCsv.php:112` は `$order = $this->orderRepository->findOneBy(['order_number' => $row['注文番号']]);` のままで、sprintf/str_pad による桁埋めもサブ注文（dtb_order_sub 相当）検索も行っていない。`src/Eccube/Service/Csv/OrderCsv.php` 内の sprintf 使用箇所は 115 行のエラーメッセージ整形のみで、桁埋め用途は存在しない。`src/Eccube/Service/Csv/`・`src/Eccube/Controller/Admin/Order/` 配下を str_pad / sprintf('%0 で横断検索しても注文番号桁埋めの実装は無く、`src/Eccube/Entity/` に OrderSub 系エンティティも存在しない。監査時点と同一状態。",
+      "note": "設計書 308 行自身が dtb_order_sub は ec-cube-enterprise に存在せず dtb_shipping へ移行する旨を記すが、桁埋め検索の要件は解消されておらず、CSV値そのままの完全一致検索のまま。"
+    }
+  ]
+}

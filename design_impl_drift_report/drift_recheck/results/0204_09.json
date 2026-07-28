@@ -1,0 +1,77 @@
+{
+  "packetId": "0204_09",
+  "results": [
+    {
+      "rowId": 567,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/StorageCodeController.php:306-370` の `public function import()` は checkFormValid → getFormFile → getImportData → `checkHeaderValues` → `$storageCodeCsv->checkDataSize($data);`(:353) → register の順のままで、行数上限分岐がない。`src/Eccube/Service/Csv/AbstractCsvService.php:256-260` の `checkDataSize()` は `if ($data->count() < 1) { throw new \\RuntimeException(...'admin.csv.error.data.empty'); }` と空チェックのみ。develop 全体を `5010` / `ADMIN_CSV_IMPORT_MAX_ROWS` / `maxrecord` で再検索しても、ヒットするのは CategoryCsvController.php:40,155 / SectionController.php:383 / ProductShelfNumberCsvController.php:40,151 など他機能のみで、StorageCodeController・StorageCodeCsv には上限定数も countCsvRows 呼び出しも存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 568,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/StorageCodeController.php:306-312` の import は依然 `new StorageCodeCsv(..., $this->storageCodeRepository, $this->getCsvHeader(), $this->getRequiredCsvHeader())` を生成するのみで ProductRepository は注入されない。更新実体は `src/Eccube/Service/Csv/StorageCodeCsv.php:118-121` の `$mtbStorageCode->setName($row['名称'])->setRank((int) $row['並び順']); $this->entityManager->persist($mtbStorageCode);` で、mtb_storage_code の名称・並び順の登録/更新のまま。develop 全体で `setStorageCode` を検索しても `src/Eccube/Entity/Product.php:1193` の定義のみで、略称タグCSV取込経路からの呼び出し（商品IDによる dtb_product.storage_code_id 更新）は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 569,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/StorageCodeController.php:398-404` の `getCsvHeader()` は `['ID' => 'ID', '名称' => '名称', '並び順' => '並び順']` を返し、:412-418 の `getRequiredCsvHeader()` は `['名称','並び順']`、:426-429 の `getNotRequiredCsvHeader()` は `return ['ID'];`（ID は比較除外・任意扱い）。雛形も :47 `public const EXPORT_HEADER = ['ID', '名称', '並び順'];`。画面 `src/Eccube/Resource/template/admin/Product/csv_product_storage_code.twig:99,106` はこの headers をそのまま描画する。設計の「商品ID」「略称タグ」2列は現 develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 570,
+      "status": "未対応",
+      "evidence": "rowId 569 と同じ実装が現 develop にそのまま残存。`src/Eccube/Controller/Admin/Product/StorageCodeController.php:398-404` `getCsvHeader()` = `['ID','名称','並び順']`、`src/Eccube/Service/Csv/StorageCodeCsv.php:118-119` `->setName($row['名称'])->setRank((int) $row['並び順'])` で MtbStorageCode のみを更新。「商品ID」(主キー・入力例1) / 「略称タグ」(入力例POR) の2列フォーマットを受ける実装は無く、`setStorageCode` の呼び出し箇所も `src/Eccube/Entity/Product.php:1193` の定義のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 571,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:73-75` は `<button id=\"upload-button\" type=\"submit\" class=\"btn btn-ec-conversion px-5\">{{ 'admin.common.csv_upload'|trans }}</button>` のままで、:29-31 の JS も `$('#upload-form').on('submit', function() { $.changeLoading(true); });` のみ。同ファイルおよび `src/Eccube/Resource/template/admin/Product/csv_product_status.twig`（:1 で base_csv_upload.twig を extends するだけの5行）を `modal` / `confirm` で検索してもヒット0件で、確認モーダルは追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 572,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Product/csv_import_history.twig:1-61` は履歴カード見出し(:6)、page_count_pulldown(:10-14)、ファイル名/日時/操作者テーブル(:24-40)、pager include(:46) のみで、総件数表示がない。同ファイルと csv_product_status.twig を `totalItemCount` / `該当件数` / `search_result` で検索してヒット0件（:38 の `admin.common.search_no_result` は0件時の文言）。ProductStatusCsvController も `'import_histories_pagination' => $importHistoriesPagination` を渡すのみ。",
+      "note": ""
+    },
+    {
+      "rowId": 573,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/ProductStatusCsvController.php:200-207` の `getCsvHeader()` は `'商品公開ステータス' => '2:非公開 1:公開'` を返し（支店側のみ `'0:非公開 1:公開'`）、設計の「0: 非公開 1:公開」になっていない。取込検証も `src/Eccube/Service/Csv/Importer/Event/ProductStatusUpdateImportHandler.php:122-124` で `->addValidator(new ChoiceValidator((string) ProductStatus::DISPLAY_HIDE, (string) ProductStatus::DISPLAY_SHOW))`、`src/Eccube/Entity/Master/ProductStatus.php:39,49` は `DISPLAY_SHOW = 1` / `DISPLAY_HIDE = 2` のままで、非公開は依然 2。",
+      "note": "廃止(2)を選択項目に含めない点は ChoiceValidator が 1/2 のみ許容するため副次的に満たされるが、そもそも 2 が非公開として使われており設計の 0/1 契約とは不一致。"
+    },
+    {
+      "rowId": 574,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:2032` `admin.product.product_shelf_number_csv: 棚番号登録CSVアップロード`（`app/config/eccube/packages/eccube_nav.yaml:74-75` でナビ名として使用）、:2034 `admin.product.product_shelf_number_csv_format_title: 棚番号登録CSVファイルフォーマット`、:1744 `admin.common.csv_upload: CSVファイルをアップロード`（`src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:73-74` のボタン文言）。設計の「棚番号更新CSV登録」「棚番号更新CSVファイルフォーマット」「CSVファイルのアップロード」はいずれも現 develop の翻訳値に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 575,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:478-482` は `public static function shelfNumberId(string $name = '棚番号名称'): BaseCsvColumn { return self::createStringColumn($name, '棚番号名称')->addValidator(new RegexValidator('/^[A-Z][-][0-9]{3}$/')); }` と文字列列＋名称形式の正規表現のまま。`src/Eccube/Service/Csv/Importer/Event/ProductShelfNumberUpdateImportHandler.php:162-165` `$shelfNumberName = (string) $this->shelfNumberIdColumn->getValue($row); $ShelfNumber = $this->shelfNumberRepository->findOneByName($shelfNumberName);`、:182-185 も `findOneByName($name)` で ID 解決。さらに :115 `->setRequired(true)` のため空欄は NULL 更新にならずエラーとなり、0以下→NULLクリアの分岐も存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 576,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:2032` は `admin.product.product_shelf_number_csv: 棚番号登録CSVアップロード` のままで、設計値「棚番号更新CSV登録」ではない。同キーは `app/config/eccube/packages/eccube_nav.yaml:74` の `name: admin.product.product_shelf_number_csv` からナビ表示名として参照されている。",
+      "note": ""
+    },
+    {
+      "rowId": 577,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:480-481` `self::createStringColumn($name, '棚番号名称')->addValidator(new RegexValidator('/^[A-Z][-][0-9]{3}$/'))` と、S-002 形式の名称文字列列のまま。`src/Eccube/Service/Csv/Importer/Event/ProductShelfNumberUpdateImportHandler.php:164` `$ShelfNumber = $this->shelfNumberRepository->findOneByName($shelfNumberName);` および :183 で名称検索し、:196-198 `$shelfNumberId = $this->getShelfNumberIdFromRow($event); $this->productClassRepository->replaceShelfNumber($productCode, $shelfNumberId);`。正の整数 ID 受理・ID 実在確認・0以下/空を NULL 更新にする実装は現 develop に無く、「0」は正規表現不一致でエラーになる。",
+      "note": ""
+    },
+    {
+      "rowId": 578,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/ProductShelfNumberCsvController.php:203-209` の `getCsvHeader()` が `return ['商品コード' => '', '棚番号名称' => ''];` となり、2列目の項目名が監査時点の「棚番号」から設計どおり「棚番号名称」に是正済み。:217-222 の `getRequiredCsvHeader()` も `return ['商品コード' => '商品コード', '棚番号名称' => '棚番号名称'];` と2列目を必須に追加し、:106 `'csv_required_header_keys' => array_keys($this->getRequiredCsvHeader())` 経由で `src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:99-103` が必須バッジを描画する。取込側も `src/Eccube/Service/Csv/Importer/Event/ProductShelfNumberUpdateImportHandler.php:115` `$this->shelfNumberIdColumn = ColumnDefinitions::shelfNumberId()->setRequired(true);` で必須検証され、列定義は `src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:478-481` の `createStringColumn('棚番号名称', '棚番号名称')`（文字型）＋ `RegexValidator('/^[A-Z][-][0-9]{3}$/')`（入力例 S-002 に合致）。",
+      "note": "本 finding が求めるのは項目名・文字型・必須・入力例のフォーマット表定義であり、それらは全て充足。ID解釈契約（rowId 575/577）は別 finding として未対応のまま。"
+    }
+  ]
+}

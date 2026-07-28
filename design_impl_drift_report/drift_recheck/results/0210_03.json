@@ -1,0 +1,23 @@
+{
+  "packetId": "0210_03",
+  "results": [
+    {
+      "rowId": 988,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Shop/ShopTopController.php:127-162` `buildTiles()` は `$Tiles = $TileBaseInfo->getTiles()->toArray(); usort(... $a->getSection() <=> $b->getSection());` の後 `foreach ($Tiles as $Tile)` で保存済みタイルのみを配列化しており、タグ未設定時は `continue;`（149行）でスキップするだけで4枠の欠落補完は行わない。表示側 `src/Eccube/Resource/template/default/Block/shop_item_list.twig:25` も `{% for tile in tiles|default([]) %}` と渡された件数だけ描画する。横断検索でも `DtbTile::SECTIONS` / `UPPER_LEFT` / `LOWER_RIGHT` の参照は `src/Eccube/Entity/DtbTile.php:34-43` と管理画面フォーム `src/Eccube/Form/Type/Admin/Content/BranchTopPageTileType.php:29-33,49`・`src/Eccube/Resource/template/admin/Content/branch_toppage.twig:90` のみで、フロント側に補完実装は追加されていない。`getTiles()` の利用箇所も ShopTopController:129 と BranchTopPageController:314（管理画面バリデーション）のみ。",
+      "note": "監査時点と同一。フロント表示時の未設定タイル補完は develop に存在しない。"
+    },
+    {
+      "rowId": 989,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Content/BranchTopPageController.php:364-376` の `storeBannerImage()` は `try { $this->fileManager->uploadFile($imageFile->getPathname(), $uploadDir, $fileName, ...); if ($originalBannerImage !== '' && $adapter->exists($originalBannerImage, [])) { $adapter->delete($originalBannerImage, []); } return $uploadDir.'/'.$fileName; }` の順序で、依然として新規アップロード後に既存画像を削除している。設計の「既存画像削除 → 新規アップロード」の順序にはなっていない。",
+      "note": "監査時点（旧319,326,327,330行）と処理順は同一。行番号のみ365/372/373へ移動。"
+    },
+    {
+      "rowId": 990,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Content/BranchTopPageManagementType.php:73-87` の `image_file` は `new Assert\\Image(['maxSize' => '5M', 'mimeTypes' => ['image/jpeg','image/png','image/gif','image/webp']])` のままで、許可形式をハードコードしている。`eccubeConfig` 参照は同ファイル69行の `eccube_mtext_len`（banner_image の Length）のみで、`app/config/eccube/packages/eccube.yaml:272` の `eccube_file_uploadable_extensions` など環境設定の許可拡張子を参照する箇所は本フォームに存在しない。",
+      "note": "5MB制約のみ充足という監査時点の状態から変化なし。"
+    }
+  ]
+}

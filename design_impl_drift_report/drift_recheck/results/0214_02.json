@@ -1,0 +1,77 @@
+{
+  "packetId": "0214_02",
+  "results": [
+    {
+      "rowId": 1142,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchEventType.php:115-126` に POST_SUBMIT リスナーが現存し `if ($startDateFrom > $startDateTo) { $form['start_date_to']->addError(new FormError(trans('admin.common.date_range_error'))); }` のまま。start_date_from/to も `src/Eccube/Form/Type/Admin/SearchEventType.php:44-78` で `DateType` + `new Range(['min' => '1900-01-01', 'minMessage' => 'form_error.out_of_range'])` を保持。さらに `src/Eccube/Controller/Admin/Event/EventController.php:144-153` で `$searchForm->isValid()` が false のとき `'pagination' => [], 'has_errors' => true` を返し検索結果0件表示へ進まない。設計の『範囲整合性チェックなし・AND条件で0件』とは依然異なる。",
+      "note": "監査時点から実装に実質変更なし。"
+    },
+    {
+      "rowId": 1143,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchEventType.php:107-114` は依然 `->add('sortkey', HiddenType::class, ...)` `->add('sorttype', HiddenType::class, ...)` で、`src/Eccube/Resource/template/admin/Event/index.twig:24-32` の `$('#sort_by_pulldown, #sort_order_pulldown')` が `searchForm.sortkey` / `searchForm.sorttype` に値を流し込む方式のまま。`src/Eccube/Repository/DtbEventRepository.php:134-140` も `$sortKey = $searchData['sortkey'] ?? 'default';` `$sortType = (isset($searchData['sorttype']) && $searchData['sorttype'] === 'a') ? 'ASC' : 'DESC';` `if (isset($this->sortKeys[$sortKey])) {...} else { $qb->addOrderBy('e.id', 'DESC'); }` で、不正 sortkey は e.id へフォールバック・'a' 以外は無条件 DESC。`admin.error.sort` は `src/Eccube/Controller/Admin/SearchControllerTrait.php:142-146` にのみ存在するが `EventController` は同トレイトを use しておらず（`src/Eccube/Controller/Admin/Event/EventController.php:42` `class EventController extends AbstractController` のみ）、request の sort/order も参照していない。",
+      "note": "設計の sort/order パラメータ体系・不正値エラーは未実装のまま。"
+    },
+    {
+      "rowId": 1144,
+      "status": "未対応",
+      "evidence": "開催店舗列は `src/Eccube/Resource/template/admin/Event/index.twig:146` `<th ...>{{ 'admin.event.base_info'|trans }}</th>` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:6009` `admin.event.base_info: 店舗`（設計の『開催店舗』ではない）。検索結果文言は `index.twig:103` `{{ 'admin.common.search_result'|trans({\"%count%\":pagination.totalItemCount})|raw }}` で `messages.ja.yaml:1735` `admin.common.search_result: \"検索結果：%count%件が該当しました\"`。0件時は `index.twig:209-211` が `{{ 'admin.common.search_no_result'|trans }}` と `{{ 'admin.common.search_try_change_condition'|trans }}` の2行を表示し、`messages.ja.yaml:1739` `admin.common.search_no_result: 検索条件に合致するデータが見つかりませんでした`。3項目とも設計文言と不一致のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1145,
+      "status": "未対応",
+      "evidence": "`grep -rn \"eventlist\" src html` の結果ヒット0件。`src/Eccube/Resource/template/admin/Event/index.twig:1-35` にも `{% block stylesheet %}` や eventlist.css の読込は存在せず、`{% block javascript %}` で `assets/js/select2.min.js` を読むのみ。専用CSSは現 develop にも未配置。",
+      "note": ""
+    },
+    {
+      "rowId": 1146,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/EventType.php:68-73` は `$paymentsFormData = []; foreach ($Event->getPayments() as $p) { if ($p->getId() === Payment::EC_CREDIT) { $paymentsFormData[] = Payment::EC_CREDIT; } }` のままで、`同:159-169` の payments フィールドが `'data' => $paymentsFormData` を使用。`src/Eccube/Controller/Admin/Event/EventController.php:214-233` の create は `$Event = new DtbEvent();` と `setBaseInfo()` のみで Payments 初期値付与なし。`src/Eccube/Service/Admin/Event/EventCreateAction.php:33-46` も `foreach (array_map('intval', $input->payments) as $paymentId)` と送信値をそのまま使うのみ。新規時のクレジットカード初期選択は現 develop にも存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1147,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Event/edit.twig:517` は `{{ (Event.details|length > 0 ? 'admin.event.delete.not.schedule_exists' : 'admin.common.delete_modal__message')|trans(Event.details|length > 0 ? {} : {'%name%': 'admin.event.event_management'|trans}) }}` で、削除可能時の確認文言の `%name%` は依然 `'admin.event.event_management'`（＝「イベント管理」）であり Event.nameJp ではない。日程有無で分岐する条件式が追加されただけで、イベント名埋め込みは未実装。",
+      "note": "監査時点から分岐は追加されたが、設計要求の『イベント名埋め込み』は未充足。"
+    },
+    {
+      "rowId": 1148,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventController.php:361-365` は `if ($Event->getDetails()->count() > 0) { $this->addError('admin.event.delete.schedule_exists', 'admin'); ... }` のまま（行番号は314→362へ移動）。`grep -rn \"schedule_exists\" src` の結果、locale 定義は `src/Eccube/Resource/locale/messages.ja.yaml:6078` `admin.event.delete.not.schedule_exists: 日程情報が登録されているため削除できません。先に日程を削除してください。` のみで、`admin.event.delete.schedule_exists`（.not なし）の定義は依然ゼロ。",
+      "note": "翻訳キー取り違えは未是正。"
+    },
+    {
+      "rowId": 1149,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/ScheduleController.php:188` `$this->addError('admin.event.delete.deckerror', 'admin');`、`同:194` `$this->addError('admin.event.delete.entryerror', 'admin');` のまま（行番号は146,152→188,194へ移動）。`grep -rn \"deckerror|entryerror\" src` は上記2箇所のみで locale 定義ゼロ。実在キーは `src/Eccube/Resource/locale/messages.ja.yaml:6080` `admin.event.delete.not.deck_exists: デッキ登録があるため削除できません` / `同:6081` `admin.event.delete.not.entry_exists: 申込があるため削除できません` で名称不一致のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1150,
+      "status": "未対応",
+      "evidence": "`grep -rn \"paymenterror\" src` の結果ヒット0件（`admin.event.save.paymenterror` は現 develop にも未定義）。`src/Eccube/Controller/Admin/Event/EventController.php:296-316` の edit は `$form->isValid()` 後に `$this->eventEditAction->handle($input)` を呼ぶだけで、payments 差分比較・申込有無ゲート・referer リダイレクトのいずれも無い。抑止は `src/Eccube/Form/Type/Admin/EventType.php:67` `$hasEntry = $Event->getDetails()->exists(fn ... => $EventDetail->getEventEntries()->count() > 0);` と `同:165` `'disabled' => $hasEntry,` のフィールド無効化、および `同:280-290` の別条件 `form_error.payment_off_paid_online_schedule_error` のみで、監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 1151,
+      "status": "未対応",
+      "evidence": "`grep -rn \"admin_schedule_new|schedule/new\" src` の結果ヒット0件。`src/Eccube/Controller/Admin/Event/ScheduleController.php:47` は依然 `#[Route(path: '/%eccube_admin_route%/event/{eventId}/schedule/create', name: 'admin_schedule_create', requirements: ['eventId' => '\\d+'], methods: ['GET', 'POST'])]` の GET/POST 兼用1本のみで、コメントも `スケジュール新規登録（GET: フォーム表示、POST: 登録処理）`。設計の admin_schedule_new / GET /schedule/new は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1152,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/ScheduleController.php:67-90` の create は `if ($form->isSubmitted() && $form->isValid()) { ... $this->scheduleStoreAction->handle($input); ... }` を先に実行し、権限判定は保存後の `同:92-93` `$Member = $this->getMember(); $isEditableBaseInfo = $Event->getBaseInfo() && $Member->isEditableShop($Event->getBaseInfo());` で画面変数として渡すのみ。edit（`同:133-157`）も同構造。`grep -n \"isEditableShop\"` で `src/Eccube/Form/Type/Admin/ScheduleType.php` および `src/Eccube/Service/Admin/Event/Schedule*Action.php` にヒット無し。対照的に `src/Eccube/Controller/Admin/Event/RepeatScheduleController.php:60-61` は `$isEditableBaseInfo = ...; if (!$isEditableBaseInfo) {` と保存前ガードを持つ。ScheduleController 側のサーバサイドガードは監査時点同様に不在。",
+      "note": "テンプレート `src/Eccube/Resource/template/admin/Event/Schedule/edit.twig` の disabled 抑止のみで直POSTは防げない。"
+    },
+    {
+      "rowId": 1153,
+      "status": "部分対応",
+      "evidence": "受付ありは是正済み: `src/Eccube/Form/Type/Admin/ScheduleType.php:181-186` `->add('offlineEntryFlg', CheckboxType::class, ['mapped' => false, ..., 'data' => ($options['is_new'] ?? true) ? true : ($EventDetail?->hasStoreEntried() ?? false)])` となり、新規（is_new=true、`ScheduleController.php:53` で `['event' => $Event, 'is_new' => true]` を渡す）ではオン固定＝設計の『受付ありの初期値はオン』を充足。一方、定員/参加費/公開状態は未是正で、`src/Eccube/Form/Type/Admin/ScheduleType.php:137-148,161-168` の capacity/entryFee/disp に 'data' 指定が無く、`src/Eccube/Entity/DtbEventDetail.php:129-136` のコンストラクタ `if ($event) { ... $this->setCapacity($event->getCapacity()); $this->setEntryFee($event->getEntryFee()); $this->setDisp($event->getDisp()); }` が親イベント値をコピーするため、設計の固定初期値 定員=10 / 参加費=0 / 公開状態=公開（設計書 sheet-7 識別ID:15,16,17）とは一致しない。",
+      "note": "4項目中1項目（受付あり）のみ是正。"
+    }
+  ]
+}

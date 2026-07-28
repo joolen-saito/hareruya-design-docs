@@ -1,0 +1,77 @@
+{
+  "packetId": "0212_04",
+  "results": [
+    {
+      "rowId": 1326,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/CsvImporter.php:221` `$headers = $importService->getColumnHeaders();` を `src/Eccube/Service/Csv/Importer/CsvImporter.php:236` `$csvRow->setHeaders($headers);` でそのまま CsvRow に渡すのみで、`validateBeforeImport()`（同ファイル:185-208）はヘッダ行の有無と2行目データ有無しか見ない。`src/Eccube/Service/Csv/Importer/Model/CsvRow.php:68` `$this->headers = array_flip(array_values($headers));` で名前引き。`src/Eccube/Service/Csv/Importer/Event/BaseCsvImportHandler.php:72` `if (count($row) !== count($columns))` と同:86 `if (!$row->exists($name))` の列数一致・列名存在検査のみ。array_keys($expected) と $headers の順序比較は現 develop にも存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1327,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:281-299` は公開デッキ時に `$this->decodeCardList($mainList, ...)` / `decodeCardList($sideList, ...)` を呼ぶだけで、枚数合計と MtbFormat の上限下限比較がない。`getMainMaxCardCount|getMainMinCardCount|getSideMaxCardCount|getSideMinCardCount` の grep ヒットは `src/Eccube/Entity/Master/MtbFormat.php`、`src/Eccube/Service/App/Article/ArticleResponseBuilder.php:502-505`、`src/Eccube/Service/Deck/DeckValidationService.php:294-300` のみ。DeckValidationService の参照元も `src/Eccube/Service/Admin/Deck/DeckStoreAction.php:34` と `src/Eccube/Controller/Front/Mypage/DeckEntryController.php:42` だけで、`src/Eccube/Controller/Admin/Deck/DeckCsvController.php`・DeckUpdateImportHandler からの参照はなく、CSV取込経路の枚数チェックは未実装のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1328,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckCsvController.php:157` `$this->addSuccess('admin.common.csv_upload_complete', 'admin');`、同:159 `return $this->redirectToRoute('admin_deck_csv_import');` と成功時のみリダイレクト。失敗時は同:83/89/93/102/107/138/144 がいずれも `return $this->renderWithErrors($form, [...])` で、同:165-172 の `renderWithErrors()` は `$this->render('@admin/Deck/csv_import.twig', [...'errors' => $errors])` を直接描画（HTTP 200・フラッシュ無し・リダイレクト無し）。成功キーも `admin.register.complete` ではない。監査時点と実質同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 1329,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:357` `$this->deleteDeckCards($Deck);` が保存前に無条件で呼ばれ、同:614-619 `private function deleteDeckCards(DtbDeck $Deck): void { foreach ($this->deckCardRepository->findBy(['Deck' => $Deck]) as $DeckCard) { $this->em->remove($DeckCard); } }`。その後同:358-364 で `$isDisplayAndPublic` の場合のみ `saveDeckCards()`（同:595-612 の `$this->em->persist($DeckCard);`）が走る。設計の「INSERT のみ・削除なし」とは異なる状態が現 develop でも継続。",
+      "note": ""
+    },
+    {
+      "rowId": 1330,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckCsvController.php:58` `#[Route('/%eccube_admin_route%/deck/csv_import', name: 'admin_deck_csv_import', methods: ['GET', 'POST'])]` で GET/POST 共用のまま。リダイレクトも同:159 `redirectToRoute('admin_deck_csv_import')`、`src/Eccube/Resource/template/admin/Deck/index.twig:226` `<a href=\"{{ url('admin_deck_csv_import') }}\" ...>`、`src/Eccube/Resource/template/admin/Deck/csv_import.twig:89` `action=\"{{ url('admin_deck_csv_import') }}\"`。src/・html/・app/ を `admin_deck_csv`（単体）/`deck/csvimport`/`m15-06_admin_deck_deck_csv_import` で grep しても該当なし。",
+      "note": ""
+    },
+    {
+      "rowId": 1331,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/csv_import.twig:5` `{{ 'admin.deck.csv_upload_title'|trans }}`、同:83 `{{ 'admin.deck.csv_upload_header'|trans }}`、同:105 `{{ 'admin.deck.csv_format_title'|trans }}` が参照する文言は `src/Eccube/Resource/locale/messages.ja.yaml:4448-4450` で `デッキ登録CSVアップロード` / `デッキ登録CSV` / `デッキ登録CSVファイルフォーマット`、`messages.en.yaml:3814-3816` も `Deck Registration CSV Upload` 等。TSV 表記は追加されていない（Deck テンプレート配下の `.tsv`/`text/tsv` grep もヒット無し）。",
+      "note": ""
+    },
+    {
+      "rowId": 1332,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/csv_import.twig:94` `{{ form_widget(form.import_file, {'attr': {'accept': 'text/csv,.csv', 'class': 'd-none'}}) }}` で accept は CSV のみ。`src/Eccube/Form/Type/Admin/CsvImportType.php:54-56` の制約は `new Assert\\File(['maxSize' => $this->csvMaxSize.'M'])` のみで mimeTypes 指定なし。`src/Eccube/Controller/Admin/Deck/DeckCsvController.php:100-103` `$extension = strtolower($formFile->getClientOriginalExtension()); if ($extension !== 'csv') { return $this->renderWithErrors(...); }` により、`src/Eccube/Service/Csv/Importer/CsvImporter.php:173` `$delimiter = ($fileExtension === 'tsv') ? \"\\t\" : ...` の TSV 分岐には当機能から到達できない。",
+      "note": ""
+    },
+    {
+      "rowId": 1333,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/CsvImportType.php:47-73` の項目は `import_file` / `force_file_to_db` / `is_split_csv` / `csv_file_no` のみで strict チェックボックスなし。`src/Eccube/Resource/template/admin/Deck/csv_import.twig:86-98` のフォームも import_file とアップロードボタンのみ。src/Eccube/ 全体を `form.deck.strict|setIsStrict|isStrict|厳密` で grep しても `src/Eccube/Service/PlayerService.php:31` と `src/Eccube/Service/UniSearch/UniSearchService.php:371` のコメントのみで、Deck CSV 経路の strict 実装は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1334,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/csv_import.twig:46-64` の `{% block javascript %}` は `$fileInput.on('change', ...)` でファイル名表示と `$('#upload-button').prop('disabled', false);` を行うだけ。同テンプレート配下を `spin.min|card-csvimport|spinner` で grep してもヒット無しで、submit 時のボタン無効化・`#spinner` 表示・スクリプト読込は現 develop にも無い。",
+      "note": ""
+    },
+    {
+      "rowId": 1335,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckCsvController.php:179-200` の `getCsvHeader()` は player_name〜image_card_name の20項目で、`'tags' => 'タグ'`（同:187）を含む一方 win_count/loss_count/draw_count/dci_no/old_deck_id は無い。`src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:387-408` の `$definitions` も同じ20列。読み取りは `src/Eccube/Service/Csv/Importer/Model/CsvRow.php:68` の `array_flip` による名前引きで、`src/Eccube/Service/Csv/Importer/Event/BaseCsvImportHandler.php:72,86` の列数一致・列名存在検査のみ。設計の24列・並び完全一致とは不一致のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1336,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:357` `$this->deleteDeckCards($Deck);` → 同:616-618 `foreach ($this->deckCardRepository->findBy(['Deck' => $Deck]) as $DeckCard) { $this->em->remove($DeckCard); }` の後、同:359-363 `saveDeckCards(...)` が同:610 `$this->em->persist($DeckCard);` で新規明細を作る。設計の「再取込時も dtb_deck_card は INSERT のみ・削除なし」に反する既存明細全削除→再作成の実装が現 develop でも継続。",
+      "note": ""
+    },
+    {
+      "rowId": 1337,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckCsvController.php:110` `log_info('admin.deck.csv.import.start');`、同:147 `log_info('admin.deck.csv.import.complete');`、同:157 `$this->addSuccess('admin.common.csv_upload_complete', 'admin');` で、`src/Eccube/Resource/locale/messages.ja.yaml:1606` `admin.common.csv_upload_complete: CSVファイルをアップロードしました`。`admin.register.complete` は同ファイル:1970 に `登録が完了しました。` として存在するが Deck CSV 経路からは使われず、「デッキCSV登録開始/完了」の短文ログも grep で該当なし。監査時点と同じ。",
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "packetId": "0214_05",
+  "results": [
+    {
+      "rowId": 1178,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php:144` で `'eventName' => $eventDetail?->getEvent()?->getNameJp() ?? '',` のまま。`src/Eccube/Resource/template/admin/Event/Entry/decklist.twig:324-325` も `<span class=\"decklist-meta__label\">Event:</span>` / `<span class=\"decklist-meta__value\">{{ page.eventName }}</span>` で日本語名を表示。同ファイル内で `getNameEn()` を使うのは `resolveMainCards()`/`toDisplayCard()` のカード名のみ（:165, :324）で、イベント名（英）表示への変更はない。",
+      "note": ""
+    },
+    {
+      "rowId": 1179,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php:127-148` の `buildPage()` はデッキごとに 1 要素を返し `'pageNo' => 1, 'totalPages' => 1`（:140-141）、`build()`:71-75 が `$totalPages = count($pages);` で全ページ数を上書きするのみ。`grep -rn \"array_chunk|BOARD_ID_SIDE|getTextSide|サイドボード|sideboard\" src/Eccube/Service/Admin/Event/ src/Eccube/Controller/Admin/Event/ src/Eccube/Resource/template/admin/Event/` は 0 件で、40枚分割もサイドボード先頭ページ制御も存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1180,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php:129` `$mainCards = $this->resolveMainCards($deck);`、:146 `'mainboard' => $this->buildMainboard($mainCards, $cardtypes),` のみで、サイド用のキー・集計は無い。`resolveMainCards()`:161 も `if ($deckCard->getBoard()->getId() !== MtbBoard::BOARD_ID_MAIN) { continue; }` とメインボードのみ抽出。テンプレートも `src/Eccube/Resource/template/admin/Event/Entry/decklist.twig:333-334` の `<section class=\"decklist-mainboard\">` / `<h2 ...>メインボード({{ page.mainboard.totalCount }})</h2>` だけで、サイドボード見出し・枚数・一覧は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 1181,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Event/Entry/decklist.twig:299-301` は `{% if pages is empty %}` / `<p class=\"decklist-empty\">{{ 'admin.common.search_no_result'|trans }}</p>` / `{% endif %}` のままで、0件時に検索結果なしメッセージを出力する（対応する CSS `.decklist-empty` も :33-36 に残存）。",
+      "note": ""
+    },
+    {
+      "rowId": 1182,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryController.php:59` `private const SESSION_KEY = 'eccube.enterprise.admin.entry.search';` のままで、`deckList()`（:580）が :584 `$viewData = $session->get(self::SESSION_KEY, []);` でこのキーを読む。`grep -rn \"admin.event_entry.search\" src/` は 0 件で、設計指定キーへの変更は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 1183,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryController.php:317` `$this->addSuccess('admin.common.save_complete', 'admin');`、:323 `$this->addError('admin.common.save_error', 'admin');` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1595-1596` の「保存しました」「保存に失敗しました」が表示される。設計指定の `admin.register.complete: 登録が完了しました。` / `admin.register.failed: 登録できませんでした。`（messages.ja.yaml:1970-1971）は定義済みだが edit() では未使用。",
+      "note": ""
+    },
+    {
+      "rowId": 1184,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:74-78` は `$defaultBaseInfo = $member->getDefaultSearchBaseInfo();` を `'base_info_default' => $defaultBaseInfo ? [$defaultBaseInfo] : []` として初期値に渡すのみ。`src/Eccube/Form/Type/Admin/EntryRegisterSearchType.php:50-51` の `'query_builder' => fn (EntityRepository $er) => $er->createQueryBuilder('b')->orderBy('b.id', 'ASC')` は BaseInfo 全件を選択肢にする。`src/Eccube/Repository/DtbEventRepository.php:189-196` も `$baseInfos = $searchData['base_info'] ?? []; if ($baseInfos !== []) { ... IDENTITY(e.BaseInfo) IN (:baseInfoIds) ... }` と未選択時は店舗条件を付けない。`src/Eccube/Resource/template/admin/Event/EntryRegistration/index.twig:110` の新規登録リンクにも権限条件は無い（`isEditableShop` は `EntryRegistrationController.php:164` の create 入口のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 1185,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:66-67` は `#[Route(path: '/%eccube_admin_route%/entry_registration', name: 'admin_entry_registration', methods: ['GET', 'POST'])]` と `.../entry_registration/page/{page_no}` の同期ページのままで、`grep -rn \"search/event/html|entry/search/event\" src/` は 0 件。同コントローラの `isXmlHttpRequest()` 分岐は :235 の `searchPlayer()`（プレイヤー検索モーダル）にのみ存在する。",
+      "note": ""
+    },
+    {
+      "rowId": 1186,
+      "status": "未対応",
+      "evidence": "`grep -rn \"entry/search/event\" src/` は 0 件で、POST /entry/search/event/id 相当ルートは develop に存在しない。`src/Eccube/Controller/Admin/Event/EntryRegistrationController.php` のルートは :66-67 index、:159 `admin_entry_new`、:232 `admin_entry_registration_search_player` のみ。イベントID直接検索は `src/Eccube/Controller/Admin/Event/EntryController.php:521` の `#[Route(path: '/%eccube_admin_route%/event/entry/search_event/set', name: 'admin_entry_search_event_by_id', methods: ['POST'])]` のみで、対象画面・URLが設計と異なり M13-11 に接続されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1187,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:69` の `index()` に非同期判定は無く、:128-145 で `if ($shouldSearch) { ... }` としてページ全体を描画する。`isXmlHttpRequest()` は :235 `if (!$request->isXmlHttpRequest()) {` のプレイヤー検索 `searchPlayer()` のみで、イベント検索の非AJAX時に空結果のモーダル枠を返す経路は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1188,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryController.php:437-438` は `#[Route(path: '/%eccube_admin_route%/event/entry/search_event', name: 'admin_entry_event_html', methods: ['GET'])]` / `.../search_event/page/{page_no}` の GET のまま、直接検索も :521 `.../event/entry/search_event/set` POST のままで、設計の `/entry/search/event/html`（POST）系 URL は `grep -rn \"search/event/html\" src/` で 0 件。`entryEventHtml()`(:439-) は :441 `$modalPayload = $request->query->all()[...]` から始まり `isXmlHttpRequest` 判定を持たず、非同期でない GET でも :461 `$form->submit($modalPayload, false);` 以降の検索・描画に進む。",
+      "note": ""
+    },
+    {
+      "rowId": 1189,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/EntryRegisterSearchType.php:42,50-51` で店舗選択肢は `'class' => BaseInfo::class` を `createQueryBuilder('b')->orderBy('b.id','ASC')` で全件生成。`src/Eccube/Repository/DtbEventRepository.php:189-196` は base_info 未選択時に `IDENTITY(e.BaseInfo) IN (:baseInfoIds)` を付けない。`src/Eccube/Resource/template/admin/Event/EntryRegistration/index.twig:110` `<a class=\"btn btn-ec-conversion px-3\" href=\"{{ url('admin_entry_new', {eventDetailId: data.eventDetailId}) }}\">{{ 'admin.event.entry.register'|trans }}</a>` は各行に無条件表示（同 twig に isEditableShop 参照なし）。権限チェックは遷移先 `src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:164` `if ($baseInfo === null || !$this->getMember()->isEditableShop($baseInfo)) { throw $this->createNotFoundException(); }` のみで、監査時点と同一。",
+      "note": ""
+    }
+  ]
+}

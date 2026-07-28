@@ -1,0 +1,77 @@
+{
+  "packetId": "0306_05",
+  "results": [
+    {
+      "rowId": 429,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Front/EntryType.php:225-227` の POST_SUBMIT は今も `// 海外の場合、都道府県 = 国外を固定で設定` `$Customer->setPref($this->prefRepository->find(Pref::PREF_ABROAD));` と海外時の強制上書きのみ。`同ファイル:240-243` の日本時分岐も `if ($Customer->getPref() === null) { $form['address']['pref']->addError(new FormError(trans('front.entry.error.pref_required'))); }` と必須チェックだけで、国×都道府県の組み合わせ整合検証は無い。`src/` `app/` 全体を `country.*addError` / `get('country')->addError` で横断検索しても country 欄へエラーを付与する箇所は0件、`src/Eccube/Form/Type/AddressType.php` にも country 参照・addError は0件。F06-18 会員情報変更は `src/Eccube/Controller/Front/Mypage/ChangeController.php:81` で `EntryType::class` を使用しており別クラスへの実装移管も無い。",
+      "note": ""
+    },
+    {
+      "rowId": 430,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/Mypage/DeliveryController.php:217-226` の complete() は `if ($form->isValid()) { log_info('お届け先登録開始', [$id]); $this->entityManager->persist($CustomerAddress); $this->entityManager->flush(); ... return $this->redirectToRoute('mypage_delivery'); }` のみで、ブラックリスト照合も `entry_regist_error` への遷移も無い。`src/Eccube/Repository/DtbBlacklistRepository.php:37` は依然 `public function FindBlacklistByCustomer(Customer $Customer): mixed` の1メソッドのみで、配送先の氏名/住所/電話番号を照合するメソッドは無い。`src/Eccube/Controller/Front/` 配下と `src/Eccube/Form/Type/Front/CustomerAddressType.php`、`app/` を blacklist で横断検索しても、フロントの照合実装は `src/Eccube/Controller/Front/Mypage/ChangeController.php:121`（会員情報変更）と OtcBuyController のみで配送先フローには不在。",
+      "note": ""
+    },
+    {
+      "rowId": 431,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/Mypage/WithdrawController.php:124-155` の mode=complete は `$Customer->setStatus($CustomerStatus)` / `$Customer->setEmail(StringUtil::random(60).'@dummy.dummy')` / `$Customer->setDelFlg(Constant::ENABLED)` / `$this->entityManager->flush()` / 退会メール / ログアウトのみで、DtbPlayer の削除・deleted_at 設定は無い。`FRONT_MYPAGE_WITHDRAW_INDEX_COMPLETE` の出現箇所は `src/Eccube/Event/EccubeEvents.php:1411`（定数定義）と `WithdrawController.php:141`（dispatch）のみで購読リスナは存在しない。`src/Eccube/Entity/Customer.php:1014` も `#[ORM\\OneToOne(targetEntity: DtbPlayer::class, mappedBy: 'Customer')]` のままで cascade 指定が無く、flush では削除されない。",
+      "note": ""
+    },
+    {
+      "rowId": 432,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/withdraw_complete.twig:37,39` は今も `<h1 ...>{{ 'front.mypage.withdraw_complete_page__title'|trans }}</h1>`(=退会完了) と `<p ...>{{ 'front.mypage.withdraw_complete_message__body'|trans|nl2br }}</p>` の2箇所のみ。`src/Eccube/Resource/locale/messages.ja.yaml:735` の `front.mypage.withdraw_complete_message__title: 退会が完了いたしました` は定義されているが、`src/` `app/` 全体を検索しても ja.yaml:735 / en.yaml:672 の定義行以外に参照が無く、テンプレートで render されていない。設計の完了メッセージ先頭文が欠落したまま。",
+      "note": ""
+    },
+    {
+      "rowId": 433,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Contact/index.twig:387` は `<a class=\"c-hareruya-btn c-hareruya-btn--lg\" href=\"{{ url('homepage') }}\">{{ 'common.back'|trans }}</a>` のまま（監査時 388行、内容同一で行番号のみ移動）。`src/Eccube/Resource/template/default/` 配下を `history.go(-1)` / `history.back` で検索してもフロント Contact 系には0件（ヒットは admin/Store/plugin_confirm.twig:200 のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 434,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/breadcrumb_nav.twig:155-156` は `{% elseif route in ['contact', 'contact_confirm', 'contact_complete'] %}` の直後に `{{ hareruya_breadcrumb.current_li('front.contact.title'|trans, 2) }}` のみで position=2、中間のマイページ link_li が無く2階層のまま。対して `同ファイル:162-165` の contact_history_detail は position 3,4 で mypage を挟む実装があり、contact 系のみ未修正。",
+      "note": ""
+    },
+    {
+      "rowId": 435,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Front/ContactType.php:141-154` の eventShop の query_builder は `->where('s.isPublicShop = true')` `->andWhere('s.isOpenShop = true')`（147-152行）のままで、`同ファイル:124-137` の shop の query_builder（130-135行）と完全に同一フィルタ。閉店/非公開店舗が eventShop の選択肢から除外され続けている。",
+      "note": ""
+    },
+    {
+      "rowId": 436,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Contact/index.twig:62-64` は `<div class=\"p-hareruya-entry__title\"><h1 class=\"c-hareruya-heading--lev1\">{{ 'front.contact.title'|trans }}</h1></div>` のみで案内文段落が無い。`src/` `app/` 全体を `当店へのご要望` / `To contact the shop` で検索しても0件。`src/Eccube/Resource/template/default/Contact/confirm.twig:27` は依然 `{{ 'front.contact.confirm_lead_before_br'|trans }}` の別文言。`front.contact.order_notice` は `messages.ja.yaml:367` / `messages.en.yaml:250` の定義のみで Resource 配下のテンプレート参照は0件。",
+      "note": ""
+    },
+    {
+      "rowId": 437,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Contact/history.twig:31-37` の一覧日時は `{% if isLocaleJa %}{{ contactHistory.createDate|date('Y/m/d H:i') }}{% else %}{{ contactHistory.createDate|date('m/d/Y H:i') }}{% endif %}`（33行が日本語分岐）でスラッシュ区切りのまま。設計の `Y年m月d日 H:i` になっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 438,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Contact/history.twig:11-15` で `{% if contactHistories is empty %}` → `<p>{{ 'front.contact_history.empty'|trans }}</p>`（messages.ja.yaml:411『お問い合わせ履歴はありません。』）を表示し、総件数を出力する `{{ 'front.contact_history.toolbar_count'|trans({ '%count%': contactHistories|length }) }}`（22行、messages.ja.yaml:412 `\"%count%件\"`）は `{% if contactHistories is not empty %}`（17行）ブロック内のまま。0件時に『0件』は表示されない。",
+      "note": ""
+    },
+    {
+      "rowId": 439,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Contact/history_detail.twig:47-50` は `<div class=\"p-hareruya-history-detail__btn\"><a class=\"c-hareruya-btn c-hareruya-btn--lg u-hareruya-w-full\" href=\"{{ url('contact_history') }}\"><span class=\"c-hareruya-btn__text\">{{ 'common.back'|trans }}</span></a>` のままで、押下時に contact_history へ GET が発生する。`src/Eccube/Resource/template/default/` を `history.go(-1)` / `history.back` で検索しても Contact 系には0件。",
+      "note": ""
+    },
+    {
+      "rowId": 440,
+      "status": "未対応",
+      "evidence": "rowId 439 と同一箇所。`src/Eccube/Resource/template/default/Contact/history_detail.twig:48` は `<a class=\"c-hareruya-btn c-hareruya-btn--lg u-hareruya-w-full\" href=\"{{ url('contact_history') }}\">` のままで onclick 等の JS 履歴戻し実装は付与されていない。`src/Eccube/Resource/template/default/` 配下に `history.go(-1)` 相当の記述は Contact 系に存在しない。",
+      "note": "設計内に機構の内部矛盾がある旨は監査時の記載どおりだが、現 develop でコードは無変更。"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "packetId": "0207_04",
+  "results": [
+    {
+      "rowId": 925,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:173` `$MailHistories = $this->mailHistoryRepository->findBy($criteria, ['id' => 'DESC']);` のまま。`src/Eccube/Entity/MailHistory.php:25` `#[ORM\\Table(name: 'dtb_mail_history')]`、`:53` `#[ORM\\Column(name: 'mail_subject', ...)]` で列名も subject ではない。一覧Twig `src/Eccube/Resource/template/admin/Customer/mail_history.twig:68` も `{{ MailHistory.mail_subject }}` を表示。`src/Eccube/Entity/DtbUserMailHistory.php:21,24` は `#[ORM\\Table(name: 'dtb_user_mail_history')]` かつ `/* @deprecated dtb_mail_historyに統合されたため、使用しない */` のままで、リポジトリ全体を grep しても dtb_user_mail_history を検索する実装は DtbUserMailHistory エンティティ定義以外に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 926,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:188` `#[Route(path: '/%eccube_admin_route%/customer/manual_mail/{id}/{template_id}', name: 'admin_customer_manual_mail', requirements: ['id' => '\\d+', 'template_id' => '\\d+|null'], defaults: ['template_id' => null], methods: ['GET', 'POST'])]` のみ。src/ app/ を `customer/manual_mail` で横断検索しても会員IDをクエリで受ける `/customer/manual_mail` 入口は存在せず、呼び出し側（`Customer/edit.twig:1053`、`Customer/index.twig:483`）もパスパラメータ形式の `url('admin_customer_manual_mail', { 'id': Customer.id})` を生成している。",
+      "note": "id はパス必須のまま。template_id のみ defaults:null で省略可。"
+    },
+    {
+      "rowId": 927,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:190` `public function manual_mail(Request $request, Customer $Customer, #[MapEntity(id: 'template_id')] ?MailTemplate $MailTemplate)` のままで、メソッド本体（:192-293）に $MailTemplate のベース種別を検証して 404 を投げる処理はない。`src/Eccube/Form/Type/Admin/CustomerManualMailType.php:54-57` の `$qb->andWhere('mt.file_name IN (:fileNames)')` は選択肢の絞り込みのみ。",
+      "note": ""
+    },
+    {
+      "rowId": 928,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Customer/mail_manual.twig:78` `{{ form_widget(form.mail_subject) }}` と `:85` `{{ form_widget(form.body, { 'attr': { 'rows': 20 }}) }}` は MailTemplate の有無で分岐する `{% if %}` に囲まれておらず、常に描画される（ファイル全体に MailTemplate 判定の分岐は :18,:36 の URL 生成のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 929,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/CustomerManualMailType.php:62` `->add('mail_subject', TextType::class, ...)`、`:70` `->add('body', TextareaType::class, ...)`、`:95` `return 'admin_customer_manual_mail';` のままで、`header`/`footer` フィールドの add は存在しない。`mail_manual.twig` / `mail_manual_confirm.twig` にも header/footer の hidden 送信はない（confirm 側の hidden は `:63` mailTemplate、`:74` mail_subject、`:81` body のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 930,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:279-281` `$this->addSuccess('admin.customer.manual_mail.success', 'admin'); return $this->redirectToRoute('admin_customer_edit', ['id' => $Customer->getId()]);` のままで、作成画面 `admin_customer_manual_mail` へのリダイレクトになっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 931,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-44` `$MailHistory = new MailHistory(); $MailHistory->setMailSubject($Message->getSubject())->setBaseInfo($BaseInfo)->setMailBody($Message->getTextBody())->setSendDate(new \\DateTime());`、`:67` `$this->entityManager->persist($MailHistory);` のままで保存先は `src/Eccube/Entity/MailHistory.php:25` の `dtb_mail_history`。`src/Eccube/Entity/DtbUserMailHistory.php:24` は `@deprecated ... 使用しない` のままで永続化処理から参照されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 932,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:50-55` `if (method_exists($entity, 'setCreator')) { $creator = $this->resolveManagedCreator($args); if ($creator !== null) { $entity->setCreator($creator); } }` が prePersist で動作し、`src/Eccube/Entity/MailHistory.php:181` `public function setCreator(?Member $creator = null): MailHistory` が存在するため、手動メール履歴にも creator が設定される状態は監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 933,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/MailService.php:1028-1029` `$message = (new Email())->subject('['.$this->BaseInfo->getShopName().'] '.$formData['mail_subject'])` のままで、入力件名に店舗名プレフィックスを付与している。履歴側も `src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:41` `->setMailSubject($Message->getSubject())` で Message の件名を保存する。",
+      "note": ""
+    },
+    {
+      "rowId": 934,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Customer/mail_manual.twig:44` `{{ 'admin.customer.manual_mail'|trans }}`（カードタイトル、:5 のページタイトルも同キー）で、`src/Eccube/Resource/locale/messages.ja.yaml:2747` `admin.customer.manual_mail: 手動メール通知`。「手動メール送信」の訳語は `admin.order.manual_mail.box_title`(:2722) と `admin.purchase.online.manual_mail.box_title`(:5630) のみで会員手動メール画面では使われていない。",
+      "note": ""
+    },
+    {
+      "rowId": 935,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig:91` `<a class=\"c-baseLink\" href=\"javascript:void(0)\" id=\"back\">...<span>{{ 'admin.customer.manual_mail'|trans }}</span></a>` のままで、`:13-18` の JS が `$('#mode').val('back')` を POST する。`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:242-284` の switch は `confirm`/`complete` のみで back 分岐がなく、:288-292 で作成画面を再表示する。会員編集画面へ直接戻すリンク（`admin_customer_edit`）は confirm 側に存在しない（同 URL リンクがあるのは入力画面 mail_manual.twig:94 のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 936,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:213-224` の `if ($MailTemplate) { ... $form->get('mail_subject')->setData(...); $form->get('body')->setData($body); }` は値のセットのみで、Twig 側 `src/Eccube/Resource/template/admin/Customer/mail_manual.twig:78` `{{ form_widget(form.mail_subject) }}` と `:85` `{{ form_widget(form.body, { 'attr': { 'rows': 20 }}) }}` は MailTemplate の有無に関係なく常に描画されるまま。",
+      "note": "rowId 928 と同一箇所の重複指摘。"
+    }
+  ]
+}

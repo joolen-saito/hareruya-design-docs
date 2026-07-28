@@ -1,0 +1,77 @@
+{
+  "packetId": "0211_06",
+  "results": [
+    {
+      "rowId": 1114,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:46` `#[Route(path: '/%eccube_admin_route%/analysis/format-sales', name: 'admin_analysis_format_sales', methods: ['GET'])]`、同 `:74` `#[Route(path: '/%eccube_admin_route%/analysis/format-sales/search', name: 'admin_analysis_format_sales_search', methods: ['POST'])]` と、現 develop でも hyphen パス `/analysis/format-sales` と `/search` のまま。`src/Eccube/Resource/template/admin/Analysis/format_sales.twig:94` `<form method=\"post\" action=\"{{ path('admin_analysis_format_sales_search') }}\"` も変更なし。`grep -rn \"format_sales|format-sales\" src/ app/` で underscore の `/analysis/format_sales` や `/result` ルートは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1115,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:50-53` で `$form = $this->createForm(FormatSalesType::class);` の直後に `$form->get('month')->setData((new \\DateTime())->format('Y-m'));` を実行しており、当月初期値の投入は現 develop でも残存。`src/Eccube/Form/Type/Admin/Analysis/FormatSalesType.php:40-47` の `month` 定義にも空初期値・`empty_data` 指定はない。",
+      "note": ""
+    },
+    {
+      "rowId": 1116,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:33` `private const SESSION_KEY = 'eccube.admin.analysis.format_sales.search';`、同 `:103` `$this->session->set(self::SESSION_KEY, FormUtil::getViewData($form));`、同 `:127-139` の export ルート（GET `/analysis/format-sales/export`）で `$viewData = $this->session->get(self::SESSION_KEY);` → `$form->submit($viewData);` と、セッション保存・セッション依存の再集計が現 develop でも継続。M12-07 画面内の CSV 導線 `src/Eccube/Resource/template/admin/Analysis/format_sales.twig:136` `<a href=\"{{ path('admin_analysis_format_sales_export') }}\"` も残っている。",
+      "note": ""
+    },
+    {
+      "rowId": 1117,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:46` `'/%eccube_admin_route%/analysis/format-sales'`（GET, name: `admin_analysis_format_sales`）、同 `:74` `'/%eccube_admin_route%/analysis/format-sales/search'`（POST, name: `admin_analysis_format_sales_search`）。設計の `format_sales` / `/result` ルートは現 develop に存在せず、`src/Eccube/Resource/template/admin/Analysis/format_sales.twig:94` の送信先も `admin_analysis_format_sales_search` のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1118,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:51` `$form->get('month')->setData((new \\DateTime())->format('Y-m'));` が現 develop にもそのまま存在し、初回表示で当月が設定される。",
+      "note": ""
+    },
+    {
+      "rowId": 1119,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Analysis/FormatSalesType.php:48` `->add('mail_order_enabled', CheckboxType::class, ['required' => false, 'label' => '通販'])`、同 `:52` `->add('store_enabled', CheckboxType::class, ['required' => false, 'label' => '全店舗'])` と設計外の集計対象フィルタが残存。`src/Eccube/Resource/template/admin/Analysis/format_sales.twig:108` `<label class=\"form-label d-block\">{{ 'admin.analysis.format_sales.target'|trans }}</label>`（messages.ja.yaml:6269 で「集計対象」）で画面表示され、`FormatSalesController.php:99-102` の `resolveBaseInfoFilter(...)` で base_info 絞り込みに使われている。",
+      "note": ""
+    },
+    {
+      "rowId": 1120,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:33` `private const SESSION_KEY = 'eccube.admin.analysis.format_sales.search';` と同 `:103` `$this->session->set(self::SESSION_KEY, FormUtil::getViewData($form));` が現 develop にもそのまま存在し、検索条件のセッション保存は継続している。",
+      "note": ""
+    },
+    {
+      "rowId": 1121,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:127` `#[Route(path: '/%eccube_admin_route%/analysis/format-sales/export', name: 'admin_analysis_format_sales_export', methods: ['GET'])]` と GET のまま。`src/Eccube/Resource/template/admin/Analysis/format_sales.twig:136-139` も `<a href=\"{{ path('admin_analysis_format_sales_export') }}\" class=\"btn btn-ec-conversion\">` の href リンクで、集計フォーム（同 twig:94 の form）の submit ボタンではないため集計月は送信されない。",
+      "note": ""
+    },
+    {
+      "rowId": 1122,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:130-139` `$viewData = $this->session->get(self::SESSION_KEY); if (!is_array($viewData)) { ... return $this->redirectToRoute('admin_analysis_format_sales'); } $form = $this->createForm(FormatSalesType::class); $form->submit($viewData);` と、CSV出力は依然としてセッション値依存。送信値から集計月を得る実装（`$request` からの取得）は export メソッド内に無い。",
+      "note": ""
+    },
+    {
+      "rowId": 1123,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/FormatSalesController.php:177` `$filename = 'format_sales_'.(new \\DateTime())->format('YmdHis').'.csv';` と接頭辞は `format_sales_` のままで、設計の `format_sales_report_` になっていない。BOM は同 `:162` `fwrite($handle, \"\\xEF\\xBB\\xBF\");` で付与済み（監査時と同じ状態）。`grep -rn \"format_sales_report\" src/ app/` は 0 件。",
+      "note": "BOM 付与のみ設計を満たすが、これは監査時点でも満たしていた要素であり、指摘対象のファイル名接頭辞は未是正のため 未対応。"
+    },
+    {
+      "rowId": 1124,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/UsedCardController.php:41` `#[Route(path: '/%eccube_admin_route%/analysis/used-card', name: 'admin_analysis_used_card', methods: ['GET'])]`、同 `:62` `#[Route(path: '/%eccube_admin_route%/analysis/used-card', name: 'admin_analysis_used_card_export', methods: ['POST'])]` の2本のみで現 develop も変化なし。`grep -rn \"used_card|used-card\" src/ app/` でも `/analysis/used_card`、`/analysis/used_card/export/{mode}`、`admin_used_card_result` 相当のルートは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1125,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/UsedCardController.php:82` `return $this->csvExportService->exportBySearchData($searchForm->getData());` と、POST が即 CSV を返す構造のまま。セッション保存処理は同ファイルに存在しない。`src/Eccube/Resource/template/admin/Analysis/used_card.twig:28` `<form name=\"search_form\" id=\"search_form\" method=\"post\" action=\"{{ path('admin_analysis_used_card_export') }}\">`、同 `:63` `<button class=\"btn btn-ec-conversion px-5\" type=\"submit\">{{ 'admin.analysis.used_card.csv_download'|trans }}</button>` のみで、集計結果表示領域・結果用変数は無い（`index()`/`export()` の返却も `searchForm` のみ）。",
+      "note": ""
+    }
+  ]
+}

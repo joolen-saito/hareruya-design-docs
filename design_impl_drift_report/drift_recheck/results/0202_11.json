@@ -1,0 +1,77 @@
+{
+  "packetId": "0202_11",
+  "results": [
+    {
+      "rowId": 705,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:79-81` は `{{ form_row(form.memo, { 'attr': { 'class': 'form-control', 'rows': 2 } }) }}` を無条件に描画し、移動ステータス条件の `{% if %}` は無い。`src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:206` `if ($form->isSubmitted() && $form->isValid()) {` 以降も trackingNo クリア判定のみで、219行 `$this->detailUpdateAction->handle($input);` をステータス確認なしに呼ぶ。`src/Eccube/Service/Admin/Stock/StockMoveInstructionDetailUpdateAction.php:34-55` の `handle()` も出庫承認済み/移動中/入庫完了の判定を持たず `$this->EntityManager->flush();` する。監査時点から未変更。",
+      "note": ""
+    },
+    {
+      "rowId": 706,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:83` `<button type=\"submit\" class=\"btn btn-ec-conversion\">{{ 'admin.stock.move_instruction.register'|trans }}</button>` に disabled 属性が無く、同 twig 全185行に変更検知の script ブロックも存在しない。`src/Eccube/Form/Type/Admin/StockMoveInstructionDetailType.php:34,42` の trackingNo/memo にも `disabled` 指定は無い。`html/template/default/assets` 配下を `move_instruction` で再検索したがヒット0件。監査時点から未変更。",
+      "note": ""
+    },
+    {
+      "rowId": 707,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/stock_move_instruction_detail.twig:84-88` は `{% if instruction.trackingNo %}` … `{% else %}` で削除ボタンの活性/非活性を切り替えるのみ、144行 `{% if not instruction.trackingNo %}` でモーダル表示も送り状No.のみで判定。サーバ側も `src/Eccube/Controller/Admin/Stock/StockMoveInstructionController.php:353-356` `$trackingNo = $Instruction->getTrackingNo(); if ($trackingNo !== null && $trackingNo !== '') { throw new StockMoveInstructionDeleteException(); }` だけで、紐づく在庫移動の「出庫待ち」ステータス確認は無い。監査時点から未変更。",
+      "note": ""
+    },
+    {
+      "rowId": 708,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/BarcodeReplacementListType.php:77-93` の POST_SUBMIT は `if ($fromComparable > $toComparable) { $form->get('price_change_period_to')->addError(new FormError(trans('admin.stock.barcode_replacement_list.price_change_period_invalid')), ); }` のみで、1か月上限の検証は無い（同ファイルを `P1M/DateInterval/month/modify` で検索してヒット0件）。`src/Eccube/Controller/Admin/Stock/BarcodeReplacementListController.php:98-99` も `setTime(0,0,0)` / `setTime(23,59,59)` の時刻補正のみ。監査時点から未変更。",
+      "note": ""
+    },
+    {
+      "rowId": 709,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Exporter/StockMoveTransferReturnListCsvExportService.php:44-48` `private const ALLOWED_STATUS_IDS = [ MtbStockMoveTransferStatus::STATUS_MOVING, MtbStockMoveTransferStatus::STATUS_INBOUND_APPROVAL_PENDING, MtbStockMoveTransferStatus::STATUS_INBOUND_APPROVED, ];` と3件のままで `STATUS_OUTBOUND_APPROVED`(=4) を含まない。同154行 `if (!in_array($stockMoveTransfer['statusId'], self::ALLOWED_STATUS_IDS, true))` でエラー化。src配下を `ALLOWED_STATUS_IDS` で横断検索しても戻しリスト用の別定義は無い。監査時点から未変更。",
+      "note": ""
+    },
+    {
+      "rowId": 710,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbStockMoveTransferRepository.php:206-212` が `SELECT STRING_AGG(cl.name_jp, '' ORDER BY cl.id) FROM dtb_card_color dcc JOIN mtb_color cl ON cl.id = dcc.color_id WHERE dcc.card_id = c.id ) AS \"colorName\", r.code AS \"rarityCode\",` と、色/Rをカード色マスタ・レアリティマスタから取得している。商品名から色/Rを抽出する処理は無い。監査時点から未変更。",
+      "note": ""
+    },
+    {
+      "rowId": 711,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:5475` `admin.stock.move_transfer.return_list.title_per_item: 戻しリスト（商品単位_` とアンダースコア付きのままで、`src/Eccube/Resource/template/admin/Stock/MoveTransfer/return_list.twig:23` が `{{ 'admin.stock.move_transfer.return_list.title_per_item'|trans }}{{ group.thresholdLabel }}）` と直後に閾値ラベルを連結するため「戻しリスト（商品単位_500円未満）」表示となる。補正処理は無い。監査時点から未変更。",
+      "note": ""
+    },
+    {
+      "rowId": 712,
+      "status": "未対応",
+      "evidence": "src配下を `StockMoveTransferReturnListPdfFormatter` / `getReturnListExportRows` で全文検索してヒット0件。`src/Eccube/Service/Pdf/Exporter/` には `StockMoveTransferListPdfFormatter.php` のみ存在し、`src/Eccube/Service/Pdf/Exporter/StockMoveTransferListPdfFormatter.php:53` `final class StockMoveTransferListPdfFormatter`、同73行 `public function buildReturnListDataByStockMoveTransferIds(array $stockMoveTransferIds): array` が同84-86行で `$this->stockMoveTransferRepository->getListExportRows( ..., DtbStockMoveTransferRepository::LIST_EXPORT_TYPE_RETURN, )` を呼ぶ共用実装のまま。設計が指定する専用クラス名・専用取得メソッド名は develop に不在。監査時点から未変更。",
+      "note": "機能面（閾値グループ化・ページ分割）は共用クラスで実装済みだが、設計が明記するクラス名/メソッド名は依然不一致。"
+    },
+    {
+      "rowId": 713,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:177` `'page_count' => (int) $this->eccubeConfig->get('eccube_default_page_count'),` のままで、`app/config/eccube/packages/eccube.yaml:142` `eccube_default_page_count: 10`。検索時も `src/Eccube/Controller/Admin/SearchControllerTrait.php:155` `$defaultPageCount = (string) $this->eccubeConfig['eccube_default_page_count'];` を使用。`src/Eccube/Form/Type/Admin/Stock/InventoryPlanListType.php` に表示件数の初期値100設定は無く、`inventory_plan_index.twig:72-75` も渡された page_count を selected にするだけ。監査時点から未変更。",
+      "note": "選択肢(mtb_page_max)は設計通り。初期値100のみ未充足。"
+    },
+    {
+      "rowId": 714,
+      "status": "対応済み",
+      "evidence": "develop には棚卸計画新規作成画面が実装済み。`src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:187-192` `#[Route(path: '/%eccube_admin_route%/product/stock/inventory_plan/new', name: 'admin_stock_inventory_plan_new', methods: ['GET'])] #[Template(template: '@admin/Stock/inventory_plan.twig')]` の `newData()` が `new DtbInventoryPlan()` を `InventoryPlanType` (`isNew => true`) で表示。入力項目は `src/Eccube/Form/Type/Admin/Stock/InventoryPlanType.php:59`(`'name'`=棚卸名)、`:67`(`'memo'`=備考)、`:80`(`'BaseInfo'`=店舗)、`:93`(`'stockLocationId'`=在庫区分)。画面 `src/Eccube/Resource/template/admin/Stock/inventory_plan.twig:29,37,45,53` で4項目を描画し、`:72` `<button class=\"btn btn-ec-conversion px-5\" type=\"submit\">{{ 'admin.common.registration'|trans }}</button>` が `:20` `action=\"{{ path('admin_stock_inventory_plan_create') }}\"` へ POST。登録処理 `InventoryPlanController.php:308-312` の `admin_stock_inventory_plan_create` は `:375-376` `$this->entityManager->persist($InventoryPlan); $this->entityManager->flush();` 後、`:389` `return $this->redirectToRoute('admin_stock_inventory_plan_edit', ['id' => $InventoryPlan->getId()]);` で棚卸計画編集画面へ遷移する。",
+      "note": "監査時点で不在とされた Controller/FormType/Twig/登録ルートが develop に実在することをファイル読み込みで確認。"
+    },
+    {
+      "rowId": 715,
+      "status": "対応済み",
+      "evidence": "設計4要素すべてが実装済み。(1)必須セレクトボックス: `src/Eccube/Form/Type/Admin/Stock/InventoryPlanType.php:80-91` `->add('BaseInfo', EntityType::class, [ 'class' => BaseInfo::class, 'choice_label' => 'shop_name', ... 'required' => true, 'placeholder' => 'admin.common.select', ... 'constraints' => [ new Assert\\NotBlank(), ], ])`。(2)デフォルト店舗を初期値: `src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:196-199` `$DefaultBaseInfo = $this->getMember()->getDefaultSearchBaseInfo(); if ($DefaultBaseInfo !== null && $DefaultBaseInfo->getIsOpenShop()) { $InventoryPlan->setBaseInfo($DefaultBaseInfo); }`（`src/Eccube/Entity/Member.php:269` に `getDefaultSearchBaseInfo()` 実在）。(3)閉店店舗の除外: `InventoryPlanType.php:86-88` `'query_builder' => fn () => $this->baseInfoRepository->createQueryBuilder('bi')->andWhere('bi.isOpenShop = :isOpenShop')->setParameter('isOpenShop', BaseInfo::SHOP_OPEN),`。(4)編集権限のない店舗でエラー: `InventoryPlanType.php:106-121` の POST_SUBMIT で `if (!$Member->isEditableShop($BaseInfo)) { $form->get('BaseInfo')->addError(new FormError(trans('form_error.event_not_editable', [], 'validators'))); }`（`src/Eccube/Entity/Member.php:78` に `isEditableShop()` 実在）。エンティティ側も `src/Eccube/Entity/DtbInventoryPlan.php:63-65` に `#[ORM\\ManyToOne(targetEntity: BaseInfo::class)] #[ORM\\JoinColumn(name: 'base_info_id', ... 'comment' => '店舗'])] private ?BaseInfo $BaseInfo = null;` を保持。",
+      "note": "監査時点で「店舗カラム自体が無い」とされたが、develop には base_info_id カラム・FormType・権限チェックが実在。"
+    },
+    {
+      "rowId": 716,
+      "status": "部分対応",
+      "evidence": "必須ラジオと選択肢は実装済み: `src/Eccube/Form/Type/Admin/Stock/InventoryPlanType.php:93-105` `->add('stockLocationId', ChoiceType::class, [ 'label' => 'admin.stock.list.stock_zone', 'required' => true, 'expanded' => true, 'choices' => [ 'admin.stock.list.stock_zone__eccube' => ProductStock::STOCK_LOCATION_ECCUBE, 'admin.stock.list.stock_zone__smaregi' => ProductStock::STOCK_LOCATION_SMAREGI, ], ... 'constraints' => [ new Assert\\NotBlank(), ], ])`（`expanded => true` によりラジオ描画、`src/Eccube/Resource/template/admin/Stock/inventory_plan.twig:45-48` で必須バッジ付き描画）。永続化先も `src/Eccube/Entity/DtbInventoryPlan.php:67-68` `#[ORM\\Column(name: 'stock_location_id', ... 'comment' => '在庫区分 1:EC-CUBE 2:スマレジ'])] private ?int $stockLocationId = null;` に実在。ただし初期値EC-CUBEは未充足: FormType に `'data'` 指定が無く、エンティティ初期値は `null`（同68行）、`src/Eccube/Entity/DtbInventoryPlan.php:83-86` の `__construct()` も `$this->InventoryPlanDetails = new ArrayCollection();` のみで stockLocationId を設定せず、`src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:195-199` の `newData()` も `setStockLocationId()` を呼ばないため、新規作成画面の初期表示ではどちらも未選択となる。",
+      "note": "必須・ラジオ・選択肢2種は充足、初期値EC-CUBEのみ未充足。"
+    }
+  ]
+}

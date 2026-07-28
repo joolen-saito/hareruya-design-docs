@@ -1,0 +1,77 @@
+{
+  "packetId": "0213_02",
+  "results": [
+    {
+      "rowId": 1375,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/HolidayAddType.php:74` `$context->buildViolation('admin.data.holiday.overlap')->addViolation();`、`src/Eccube/Controller/Admin/Data/HolidayController.php:122-123` `if ($error->getMessageTemplate() === 'admin.data.holiday.overlap') { $this->addError('admin.data.holiday.overlap', 'admin');`、`src/Eccube/Resource/locale/messages.ja.yaml:6200` `admin.data.holiday.overlap: 入力した日付が、登録済みの祝日と重複しています。` と監査時点から不変。`hareruyaec.holiday` を src/app/html 全体で grep したが 0 件で、設計期待のキー hareruyaec.holiday.overlap は現 develop にも存在しない。",
+      "note": "リダイレクト先(admin_data_holiday 一覧)は満たすが、メッセージ鍵が設計と不一致のまま。"
+    },
+    {
+      "rowId": 1376,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Data/MtgMasterDataController.php:242-244` に `'contact_subject' => [ ... 'label' => 'お問い合わせ件名',` が MTGマスターデータの $entityConfigs として残存。移動先の `src/Eccube/Form/Type/Admin/MasterdataType.php:63-67` は `str_contains($meta->rootEntityName, 'Master') && $meta->hasField('id') && $meta->hasField('name') && $meta->hasField('sort_no')` を条件とするが、`src/Eccube/Entity/Master/MtbContactSubject.php:50-51,65-66,115-116` は `subject` / `subject_en` / `sort_no` を持ち `name` フィールドが無いため依然として選択肢に載らない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1377,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Data/mtg_master_data.twig:101` および `:122` に `type=\"{{ column.set_type in ['int', 'nullable_int'] ? 'number' : (column.type == 'datetime' ? 'datetime-local' : 'text') }}\"`、値は `row.values[column.field]|default('')|replace({' ': 'T'})` とネイティブ datetime-local のまま。同 Twig に calendar クラス／moment／tempusdominus／DateTimePicker の記述は grep で 0 件、`hareruya-masterdata` も src・html・app 全体で 0 件。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1378,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Data/BuyPriceListController.php:47` `#[Route(path: '/%eccube_admin_route%/data/buy_price_list', name: 'admin_data_buy_price_list', methods: ['GET'])]`、`:85` `path: '/%eccube_admin_route%/data/buy_price_list/{id}/edit', name: 'admin_data_buy_price_list_edit'`。一覧セルも `src/Eccube/Resource/template/admin/Data/buy_price_list.twig:73` `path('admin_data_buy_price_list_edit', {id: ...})` を参照。`app/config/eccube/packages/eccube_nav.yaml:367` も `url: admin_data_buy_price_list`。設計の `/{admin_route}/buy_price_list` 系ルートは app・config 配下にも存在せず、監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1379,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Data/buy_price_list.twig:13` `{% set menus = ['data_management', 'buy_price_list_management'] %}`、`:15` `{% block title %}{{ 'admin.data.buy_price_list_management'|trans }}`、`:16` `{% block sub_title %}{{ 'admin.data.data_management'|trans }}`。`src/Eccube/Resource/locale/messages.ja.yaml:6201` `admin.data.buy_price_list_management: 買取価格対応表`、`:6152` `admin.data.data_management: データ管理`。設計の sub_title「一覧」・menus ['data_menu','buy_price_list'] にはなっておらず監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1380,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Data/BuyPriceListController.php:54-60` `$this->cardConditionRepository->findBy(['id' => [MtbCardCondition::SP, MtbCardCondition::MP, MtbCardCondition::HP]])`、`:62` `$this->buyPriceListRepository->findBy([], ['nmPrice' => 'ASC', 'specialFlg' => 'ASC'])`、`:72` `ksort($buyPriceMap, SORT_NUMERIC);`。findAll／識別子昇順への是正はなく監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1381,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Data/buy_price_list.twig:72-76` `{% if buyPriceForFlg[specialFlg] is defined and buyPriceForFlg[specialFlg][CardCondition.id] is defined %} <td><a href=...>...</a></td> {% else %} <td>-</td> {% endif %}` と、欠損組み合わせでも `<td>-</td>` を描画する実装のまま。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1382,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Data/buy_price_list.twig:54-55` `<th colspan=\"{{ CardConditions|length }}\" ...>{{ 'admin.data.buy_price_list.normal_card'|trans }}</th>` / `<th colspan=\"{{ CardConditions|length }}\" ...>{{ 'admin.data.buy_price_list.special_card'|trans }}</th>` と両ブロックとも動的同値のまま。`src/Eccube/Resource/locale/messages.ja.yaml:6207-6208` も `normal_card: ノーマルカード` / `special_card: Foil&プロモ版カード`。Controller は SP/MP/HP の3件のみ取得（BuyPriceListController.php:54-60）のため特別版も colspan=3 となり、設計の静的 colspan=4 と不一致。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1383,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Data/BuyPriceListController.php:47` 一覧 `/%eccube_admin_route%/data/buy_price_list`、`:85` 編集GET `/%eccube_admin_route%/data/buy_price_list/{id}/edit`、`:112` 更新POST `/%eccube_admin_route%/data/buy_price_list/{id}/update`。編集Twig も `buy_price_list_edit.twig:42` で `path('admin_data_buy_price_list_update', {id: BuyPriceList.id})` を action に指定。設計の GET/POST 同一 `/buy_price_list/{id}` 形式は存在せず監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1384,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Data/buy_price_list_edit.twig:13` `{% set menus = ['data_management', 'buy_price_list_management'] %}`、`:15` title `'admin.data.buy_price_list_edit'`（messages.ja.yaml:6202 = 買取価格対応表編集）、`:16` sub_title `'admin.data.data_management'`（messages.ja.yaml:6152 = データ管理）、`:79` 戻るは `<a class=\"btn btn-primary ...\" href=\"{{ path('admin_data_buy_price_list') }}\">{{ 'admin.common.back'|trans }}</a>` で button type=\"button\" ではない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1385,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Data/BuyPriceListController.php:89` `$builder = $this->formFactory->createBuilder(BuyPriceListEditType::class, $BuyPriceList);`、`:116` も同様に `createBuilder(BuyPriceListEditType::class, ...)`。`src/Eccube/Form/Type/Admin/BuyPriceListEditType.php` は全49行中 buildForm と configureOptions のみで `getBlockPrefix()` の実装が無く、createNamedBuilder('admin_buy_price_list', ...) も無い。よってフォーム名は既定の buy_price_list_edit のままで、設計の admin_buy_price_list には未対応。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1386,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/BuyPriceListEditType.php:33-39` `$builder->add('price', IntegerType::class, ['label' => 'admin.data.buy_price_list.price', 'required' => true, 'constraints' => [new Assert\\GreaterThanOrEqual(0)]]);` と、IntegerType かつ GreaterThanOrEqual(0) 制約が残存。設計の NumberType・追加制約なしにはなっておらず監査時点と同一。",
+      "note": ""
+    }
+  ]
+}

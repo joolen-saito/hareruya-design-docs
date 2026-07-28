@@ -1,0 +1,77 @@
+{
+  "packetId": "0506_01",
+  "results": [
+    {
+      "rowId": 63,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php:45` `#[Route('/%eccube_api_v1_route%/admin/login.json', name: 'api_admin_login', methods: ['POST'])]` のまま。`app/config/eccube/packages/eccube.yaml:6` `env(ECCUBE_API_V1_ROUTE): 'api/v1'`、同 `:72` `eccube_api_v1_route: '%env(ECCUBE_API_V1_ROUTE)%'` で実URLは POST /api/v1/admin/login.json。`eccube.yaml:317` の eccube_member_login_user_routes も `- '/api/v1/admin/login.json'` のみ。`admin/login` / `api_admin_login` / `api/admin/login.json` を src/Eccube と app/config で横断検索したが、設計の /api/admin/login.json・/admin/login.json・/admin/login を提供するルート定義は存在しない（`src/Eccube/Controller/Admin/AdminController.php:68` のヒットは `#[Template(template: '@admin/login.twig')]` でAPIルートではない）。",
+      "note": ""
+    },
+    {
+      "rowId": 64,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php:48-71` は `$loginId = (string) $request->request->get('login_id', '');` → `$viewMember = $this->loginMemberViewRepository->findOneBy(['login_id' => $loginId, 'work_id' => Work::ACTIVE]);`（:55） → `if (!$this->passwordHasher->isPasswordValid($member, $password))`（:69）と、EC-CUBE内部ビュー＋UserPasswordHasherInterface による直接認証のまま。`login_check` / `admin_api/login_check` / `tmp/login` / `.cookie` を src/Eccube・app/config で再探索したが、/admin/login へのCookie取得アクセス、/admin_api/login_check への中継、`/tmp/login{$loginId}.cookie` の作成・削除に相当する実装は存在しない（ヒットは `src/Eccube/Session/Storage/Handler/SameSiteNoneCompatSessionHandler.php` のセッションCookie設定とフロントのcookie同意JS/翻訳のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 65,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php:51-53` に `if ($loginId === '' || $password === '') { throw new UnauthenticatedException('ログインIDまたはパスワードが入力されていません'); }` が現 develop でもそのまま残存。pf-api入口での未入力判定は削除されておらず、中継先の認証判定への委譲にはなっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 66,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/LoginController.php:52,58,70` は `throw new UnauthenticatedException('ログインIDまたはパスワードが入力されていません')` / `throw new UnauthenticatedException('ログインIDまたはパスワードが正しくありません')` と pf-api 独自文言のまま。`src/Eccube/Exception/App/UnauthenticatedException.php:29-32` `parent::__construct(errors: [$message], statusCode: Response::HTTP_UNAUTHORIZED, ...)` で errors 配列に格納され、`src/Eccube/EventListener/ExceptionListener.php:140-143` `$response = new JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode);` が返る。設計の {code, message} 契約への変更も、中継先画面エラー文言の抽出も実装されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 67,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Security/AccessToken/JwtTokenService.php:79-87` `$payload = json_encode(['sub' => (string) $memberId], JSON_THROW_ON_ERROR);` … `->addSignature($this->secretKey, ['alg' => 'HS256'])` のまま。src/Eccube 全体を `'iss'` / `'aud'` で検索してもヒット0件で、発行者・利用者IDクレームは未追加。",
+      "note": ""
+    },
+    {
+      "rowId": 68,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Entity/Views/LoginMemberView.php:63-64` は `#[ORM\\Column(name: 'base_info_id', type: Types::INTEGER, length: 255, nullable: true)] private ?int $base_info_id = null;` のまま。`src/Eccube/Entity/Member.php:189-197` も `#[ORM\\JoinColumn(name: 'base_info_id', referencedColumnName: 'id', nullable: false)] public BaseInfo $baseInfo;` / `public function getBaseInfo(): BaseInfo` と非nullable。`LoginController.php:67` `$member->setBaseInfo($this->entityManager->find(BaseInfo::class, $viewMember->getBaseInfoId()));` の後、`:73-85` で無条件に `$baseInfo->getAddr01()` / `$baseInfo->getAddr02()` / `$baseInfo->getShopName() ?? ''` を呼んでおり、店舗未紐付け時に shopName/shopAddr を空文字にする分岐は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 69,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:69` `#[Route('/%eccube_api_v1_route%/admin/otcBuyOrders.json', name: 'api_admin_otc_buy_orders', methods: ['GET'])]` のみ。`app/config/eccube/packages/eccube.yaml:6` `env(ECCUBE_API_V1_ROUTE): 'api/v1'` により実URLは /api/v1/admin/otcBuyOrders.json。`otcBuyOrders` を src/Eccube・app/config で全文検索してもルート定義はこの1件だけで、設計の /api/admin/otcBuyOrders.json も拡張子なし別名 /admin/otcBuyOrders も実装されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 70,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:84-89` `public const ASSESSMENT_UNCOMPLETED_STATUSES = [self::STATUS_ASSESSMENT_PENDING, self::STATUS_ASSESSMENT_IN_PROGRESS, self::STATUS_ASSESSMENT_PAUSED, self::STATUS_ASSESSMENT_RESUMED];`（同ファイル :50,:51,:55,:56 でそれぞれ 5,6,8,9）で、`:54` `public const STATUS_BEFORE_PAY = 7;` は依然含まれず `:78-82` の DEPRECATED_STATUSES 側にある。`OtcBuyOrderController.php:79` `$this->dtbOtcBuyOrderRepository->getOtcBuyOrdersByShopIdAndStatus($shopId, MtbOtcBuyOrderStatus::ASSESSMENT_UNCOMPLETED_STATUSES)` も変更なしで、7 を加える別経路も見つからない。",
+      "note": "実装側では STATUS_BEFORE_PAY(7) に `@deprecated 廃止されたステータスです` が付与されており設計側が旧仕様の可能性はあるが、実装は監査時点と同一のため未対応と判定。"
+    },
+    {
+      "rowId": 71,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:77` `$shopId = $Member->getBaseInfo()->getId();` と無条件取得のまま。`src/Eccube/Repository/DtbOtcBuyOrderRepository.php:997-1003` は `public function getOtcBuyOrdersByShopIdAndStatus(int $shopId, array $statusIds): array { if (empty($shopId) || empty($statusIds)) { return []; }` と shopId 必須で、`:1047-1050` `$qb->where('baseInfo.id = :shopId')->andWhere('otcBuyOrderStatus.id IN (:statusIds)')->setParameter('shopId', $shopId)` と常に店舗絞り込みを付与する。店舗未紐付け時に絞り込みなしで返す分岐は追加されていない（むしろ空配列を返す）。",
+      "note": ""
+    },
+    {
+      "rowId": 72,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:97` `'applyDate' => $otcBuyOrder['applyDate']?->format('Y/m/d H:i:s') ?? null,`、同 `:113` `'birth' => $otcBuyOrder['birth']->format('Y-m-d'),` のまま。src/Eccube/Controller/App 配下を `DATE_ATOM` / `ISO8601` / `format('c')` で検索してもヒット0件で、ISO8601化されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 73,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbOtcBuyOrderRepository.php:1011` `->leftJoin('otcBuyOrder.Identification', 'identification')`、`:1041` `'identification.id as identificationId',` で未登録時は null のまま。`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:106` も `'identificationId' => $otcBuyOrder['identificationId'] ?? null,` で、設計の既定値 0 への補正（`?? 0` / COALESCE）は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 74,
+      "status": "未対応",
+      "evidence": "`src/Eccube/EventListener/ExceptionListener.php:76` `if ($this->requestContext->isAppApi()) {` 配下で `:102` `Response::HTTP_UNAUTHORIZED => ['認証エラー'],`、`:140-143` `$response = new JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode);` と、401 でも JSON 本文 {\"code\":401,\"errors\":[\"認証エラー\"]} を返す実装のまま。本文なしで 401 を返す分岐は存在しない。",
+      "note": ""
+    }
+  ]
+}

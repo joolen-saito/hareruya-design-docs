@@ -1,0 +1,77 @@
+{
+  "packetId": "0209_03",
+  "results": [
+    {
+      "rowId": 1015,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Mall/MallAutoMailController.php:91-94` は現 develop でも `if ($request->getMethod() === 'POST') { if ($Mail->getId() === null) { throw new BadRequestHttpException(trans('admin.setting.shop.custom_automail.new')); } }` のまま。監査時点同様 `$Mail->getId()` を直接呼び、addError/addFlash も `redirectToRoute('admin_mall_auto_mail')` も存在しない（同ファイル内の redirectToRoute は 117 行の保存成功時 `admin_mall_auto_mail_edit` のみ）。画面側も `src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig:39-46` の JS で `alert('...custom_automail.new'|trans)` して preventDefault するだけ、`:167` `{% if Mail and Mail.id %}` で submit ボタンを出さない構造も同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 1016,
+      "status": "未対応",
+      "evidence": "現 develop でも `src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig:53` `{{ form_widget(form._token) }}` を描画し、`src/Eccube/Controller/Admin/Mall/MallAutoMailController.php:96` `$form->handleRequest($request);`、`:98` `if ($form->isSubmitted() && $form->isValid()) {` に依存するのみ。スナップショット全体で `grep -rn \"FormValidHelper|refreshToken|removeToken\" src/ app/` は 0 件で、明示的なアクセス拒否例外もトークン更新処理も追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1017,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Mall/MallAutoMailController.php:138-161` の `replaceBody()` は現 develop でも `strpos($source, '{{ header }}')` / `strpos($body, '{{ footer }}')` で `substr` 分割し `['header_prefix','body','footer_suffix']` を返すだけ。注釈ブロック除去（preg_replace 等）、改行の `<br>` 置換（nl2br）、注文内容インクルード相当の文言置換は同メソッド・同クラスに存在しない。`:83-85` は `$twig->getLoader()->getSourceContext($Mail->getFileName())->getCode()` を直読するのみ。表示側も `src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig:102` `<textarea readonly class=\"form-control bg-light\" ...>{{ template_header }}</textarea>`、`:117` `form_widget(form.tpl_data, {'attr': {'rows': 20, 'readonly': true, ...}})`、`:109`/`:125` のヘッダー・フッター別行 form_widget、`:133` `<pre ...>{{ template_footer }}</pre>` で監査時点と同構造。",
+      "note": ""
+    },
+    {
+      "rowId": 1018,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Mall/MallAutoMailController.php:83-85` は現 develop でも `$source = $twig->getLoader()->getSourceContext($Mail->getFileName())->getCode();` と既存ローダを直接使うだけで、Twig ローダへの追加パス登録はない。スナップショットで `grep -rn \"addPath|prependPath|setPaths\" src/Eccube/` は 0 件（Controller 配下も 0 件）で、プラグイン既定本文ディレクトリの追加登録実装は develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1019,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/mall/AutoMail/detail.twig:71` `{% if Mail and Mail.id %}` の配下で、`:75` `{{ Mail.Creator ? Mail.Creator.name : '' }}`、`:81` `{{ Mail.update_date ? Mail.update_date|date('Y-m-d H:i:s') : '' }}` と現 develop でも記述が同一。設計の「更新日の年が 2018 より大きい場合のみ日時表示」に相当する年条件（`|date('Y') > 2018` 等）は当ファイルに存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1020,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/MailType.php:52-56` は現 develop でも `'query_builder' => fn (EntityRepository $er) => $er->createQueryBuilder('mt')->where('mt.baseInfo = :baseInfo')->andWhere('mt.isAutoSend = false')->setParameter('baseInfo', $options['baseInfo'])->orderBy('mt.id', 'ASC')` のままで、isAutoSend=true のテンプレートを除外している。自動送信側は `src/Eccube/Form/Type/Admin/AutoMailType.php:51-53` `->andWhere('mt.isAutoSend = :isAutoSend')->setParameter('isAutoSend', MailTemplate::SEND_AUTO)` と別画面に分離されたままで、全種を1つの選択肢に含める実装は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1021,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/mall/mail/detail.twig:197` は現 develop でも `<span>{{ 'admin.setting.shop.mail.mail_text'|trans }}</span>` で、`src/Eccube/Resource/locale/messages.ja.yaml:3152` `admin.setting.shop.mail.mail_text: テキスト` のため画面表示は「テキスト」のまま（設計の「本文」ではない）。`src/Eccube/Form/Type/Admin/MailType.php:71-78` の `->add('tpl_data', TextareaType::class, ['label' => false, 'mapped' => false, 'required' => false, 'constraints' => [new TwigLint()],])` も監査時点と同じで、`Assert\\Length(['max' => 65536])` も maxlength 属性もない（`grep -rn 65536 src/Eccube/Form/Type/Admin/` は 0 件）。",
+      "note": ""
+    },
+    {
+      "rowId": 1022,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig` は現 develop でも `business_hour`(:137-141) の直後に `business_hour_en`(:144-147) が入り、以降のメール欄は `form.email01`(:156 送信元) → `form.email03`(:166 返信先/email_reply_to) → `form.email04`(:176 送信エラー/email_return_path) → `form.email02`(:186 問い合わせ用/email_for_inquiries) の順で並ぶ。設計の email02 を2番目に置く順序への並べ替えも、店舗営業時間直下配置も行われていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1023,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/MailService.php:345-347` は現 develop でも `$adminEmail = ($subjectEmail !== null && $subjectEmail !== '') ? $subjectEmail : $baseEmail02;` と問い合わせ種別メールで email02 を上書きし、`:357` `->from(new Address($adminEmail, $this->BaseInfo->getShopName()))`、`:359` `->bcc($adminEmail)`、`:360` `->replyTo($adminEmail)` に使用する（email02 固定ではない）。`sendAdminCustomerConfirmMail` も `:542` `->from(new Address($this->BaseInfo->getEmail01(), $this->BaseInfo->getShopName()))` のままで、設計が求める From=email03 になっていない（email03 は `:544` の replyTo のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 1024,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/Shop/CsvController.php:52-56` は現 develop でも `$excludeCsvTypeIds = [CsvType::CSV_TYPE_CLASS_NAME, CsvType::CSV_TYPE_CLASS_CATEGORY, CsvType::CSV_TYPE_GMO_MEMBER];` を保持し、`:66-68` の `'query_builder' => fn (EntityRepository $er) => $er->createQueryBuilder('m')->where('m.id NOT IN (:excludeIds)')->setParameter('excludeIds', $excludeCsvTypeIds)->orderBy('m.sort_no','ASC')` で3種別を選択肢から除外している。`admin_setting_shop_csv` を持つ Controller は当ファイルと CustomerCsvController のみで、除外を解除する別実装はない。",
+      "note": ""
+    },
+    {
+      "rowId": 1025,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Setting/Shop/csv.twig:15` `{% block title %}{{ 'admin.setting.shop.csv_setting'|trans }}{% endblock %}`、`:16` `{% block sub_title %}{{ 'admin.setting.basic_info'|trans }}{% endblock %}`、`:13` `{% set menus = ['setting', 'basic_info', 'shop_csv'] %}` が現 develop でも変わらず、タイトル帯は「基本情報設定／CSV出力項目設定」相当のまま。sub_title を「システム設定」にする分岐や別キーは当ファイルに存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1026,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Setting/Shop/csv.twig:200` は現 develop でも `<button class=\"btn btn-ec-conversion px-5\" type=\"submit\">{{ 'admin.common.registration'|trans }}</button>` で、`src/Eccube/Resource/locale/messages.ja.yaml:1633` `admin.common.registration: 登録` により表示は「登録」のまま。設計の「設定」を表示する別キーや分岐は当ファイルにない。",
+      "note": ""
+    }
+  ]
+}

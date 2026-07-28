@@ -1,0 +1,77 @@
+{
+  "packetId": "0211_03",
+  "results": [
+    {
+      "rowId": 1078,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:72` `#[Route(path: '/%eccube_admin_route%/analysis/sales/search', name: 'admin_analysis_sales_search', methods: ['POST'])]` のまま。`src/Eccube/Resource/template/admin/Analysis/sales.twig:105` も `<form name=\"search_form\" id=\"search_form\" method=\"post\" action=\"{{ path('admin_analysis_sales_search') }}\">`。src/ app/ 全体で `analysis/sales` を再検索したが定義ルートは admin_analysis_sales(GET /analysis/sales), admin_analysis_sales_search(POST /analysis/sales/search), admin_analysis_sales_export(GET /analysis/sales/export) の3本のみで、/analysis/sales/result・admin_analysis_sales_result は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1079,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/OrderItemRepository.php:225-228` は `SUM(oi.price * oi.quantity) AS total` / `SUM(oi.quantity) AS sales` / 平均単価 `AS price` / `COUNT(DISTINCT o.id) AS order_count` のみを select し、`:333-342` の整形も total/sales/price/order_count と合計加算のみで割合を算出しない。`src/Eccube/Resource/template/admin/Analysis/sales.twig:274-277`（th: avg_price/quantity/total/count）と `:289-292`（td: row.price/row.sales/row.total/row.order_count）に割合列は無い。sales.twig 全文および messages.ja.yaml の admin.analysis.sales.* を ratio/割合/percent で再検索したが該当キー・実装は皆無（`messages.ja.yaml:6257-6264` の result.* も product_code/product_name/category/avg_price/quantity/total/count/cumulative のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 1080,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Analysis/SalesType.php:50-53` `public const SUMMARY_TYPE = ['admin.analysis.sales.summary_type.product' => 'product_id', 'admin.analysis.sales.summary_type.category' => 'class_category_name'];` と商品・カテゴリの2択のまま。`src/Eccube/Repository/OrderItemRepository.php:214` `$summaryType = ($searchData['summary_type'] ?? null) === 'class_category_name' ? 'class_category_name' : 'product_id';`、`:230-240` も `groupBy('cat.category_name')` / `groupBy('oi.product_code')` の2分岐のみで、支払方法・購入グループ・都道府県・性別・利用端末・年代のグループ化キーは無い。",
+      "note": ""
+    },
+    {
+      "rowId": 1081,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Analysis/SalesType.php:94-218` の buildForm が add するのは multi, summary_date_from/to, date_type, summary_type, sort_key, asc_desc, page_count, category_id, card_condition, tag_sales_analysis, cardset, price_from/to, quantity_from/to, mail_order_enabled, store_sales_all, store_sales_targets のみで pref/sex/birth_from/birth_to/device_type は無い。`src/Eccube/Resource/template/admin/Analysis/sales.twig:193-236` の絞り込み欄も category_id / card_condition / tag_sales_analysis / cardset / price / quantity のみ（twig 全320行を pref・sex・birth・device で検索してヒット0）。`src/Eccube/Repository/OrderItemRepository.php:269-316` の条件も multi/category_id/card_condition/tag_sales_analysis/cardset/price/quantity のみで、dtb_customer 等への都道府県・性別・誕生日・利用端末の結合や条件追加は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 1082,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Analysis/SalesType.php:106-112` `->add('summary_date_to', DateTimeType::class, [... 'data' => new \\DateTime('last day of this month 23:59:59')])` と当月末日23:59:59のまま（翌月初日相当ではない）。`src/Eccube/Repository/OrderItemRepository.php:264-267` `if (!empty($searchData['summary_date_to'])) { $qb->andWhere(\"o.{$dateType} <= :summaryDateTo\") ... }` で上限を含む比較のまま。`< :summaryDateTo` の半開区間実装は同メソッド内に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1083,
+      "status": "未対応",
+      "evidence": "rowId 1078 と同一事象。`src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:72` が `path: '/%eccube_admin_route%/analysis/sales/search', name: 'admin_analysis_sales_search'`、`src/Eccube/Resource/template/admin/Analysis/sales.twig:105` の form action が `path('admin_analysis_sales_search')`。/analysis/sales/result ルートは develop に存在しない（src・app 全体検索で0件）。集計結果は同一 sales.twig 内に描画される（`sales.twig:250-318`）点のみ設計と一致。",
+      "note": ""
+    },
+    {
+      "rowId": 1084,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Analysis/SalesType.php:94-218` に pref / sex / birth_from / birth_to / device_type の add は無く、監査時点と同じ項目構成（multi〜store_sales_targets）。`src/Eccube/Resource/template/admin/Analysis/sales.twig` 全320行に pref・sex・birth・device の描画は無い。`src/Eccube/Repository/OrderItemRepository.php:212-345` の getAnalysisSummary にも dtb_customer 結合や該当条件が無い。`src/Eccube/Resource/locale/messages.ja.yaml` の admin.analysis.sales.* にも都道府県・性別・誕生日・利用端末のラベルキーは追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1085,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/OrderItemRepository.php:225-228` の select は total/sales/price(平均単価)/order_count のみで割合式が無く、`:331-342` の集計も `$total['sales'|'total'|'order_count']` を加算するだけ。`src/Eccube/Resource/template/admin/Analysis/sales.twig:274-277,289-292` の列も平均単価・数量・合計・件数の4列のみ。`src/Eccube/Resource/locale/messages.ja.yaml:6257-6264` の admin.analysis.sales.result.* に数量割合・合計割合・件数割合のキーは無い。CSV 側 `src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php:46-51,68-92` も同4項目のみ出力。",
+      "note": ""
+    },
+    {
+      "rowId": 1086,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/OrderItemRepository.php:264-267` `$qb->andWhere(\"o.{$dateType} <= :summaryDateTo\")->setParameter('summaryDateTo', $searchData['summary_date_to']->format('Y-m-d H:i:s'));` のままで、設計の「To 未満」（`<`）に変わっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1087,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:47-67` の index() は `$searchForm = $this->createForm(SalesType::class);` と `$searchForm->get('store_sales_targets')->setData($this->resolveMemberShopIds());` とイベント dispatch のみで、`self::SESSION_KEY`（`:34` `'eccube.admin.analysis.sales.search'`）に対する remove/clear/invalidate 呼び出しが無い。同ファイル内の session 操作は `:100` `$this->session->set(self::SESSION_KEY, ...)` と `:129` `$viewData = $this->session->get(self::SESSION_KEY);` の2箇所のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 1088,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php:38` `$rows = $this->orderItemRepository->getAnalysisSummary($searchData)['result'];` とセッション由来 searchData をそのまま渡すのみで page_count の除去が無く、`src/Eccube/Repository/OrderItemRepository.php:326-329` `$limit = (int) ($searchData['page_count'] ?? 0); if ($limit > 0) { $qb->setMaxResults($limit); }` が CSV 経路でもそのまま適用される。Controller の export() (`SalesAnalysisController.php:126-156`) も page_count の unset/上書きを行っていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1089,
+      "status": "未対応",
+      "evidence": "rowId 1078/1083 と同一。`src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:72` は依然 `'/%eccube_admin_route%/analysis/sales/search'` (admin_analysis_sales_search)、`src/Eccube/Resource/template/admin/Analysis/sales.twig:105` の action も `path('admin_analysis_sales_search')`。src/Eccube 配下および app/config を横断検索しても admin_analysis_sales_result / analysis/sales/result の定義・エイリアスは存在しない。",
+      "note": ""
+    }
+  ]
+}

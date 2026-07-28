@@ -1,0 +1,77 @@
+{
+  "packetId": "0506_02",
+  "results": [
+    {
+      "rowId": 75,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:130` `public function updateOtcBuyOrder(int $id, #[MapRequestPayload] UpdateOtcBuyOrderDto $updateOtcBuyOrderDto)` は今も validationFailedStatusCode 未指定のため検証失敗は既定の422のまま。`src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDto.php:35` `#[Assert\\Choice(choices: MtbOtcBuyOrderStatus::ASSESSMENT_COMPLETED_STATUSES, message: 'order_status is invalid')]` もマスタ存在チェックではなく定数配列のChoiceのままで、メッセージも 'order_status is invalid'。`src/Eccube/EventListener/ExceptionListener.php:76` `if ($this->requestContext->isAppApi()) {` 〜 同:140-143 `new JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode)` により401/404も本文付きJSONを返す。監査時点から変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 76,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDetailDto.php:37` `public ?int $quantity,` / 同:41 `public ?int $price,` は NotNull なしのままだが、`src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/BuildOtcBuyOrderDetailUpdatePlan.php:51-53` に `if ($detail->price === null || $detail->quantity === null) { ... throw new InvalidRequestParameterException('価格または数量が指定されていません'); }` が全明細ループ（同:50 `foreach ($orderDetails as $detail)`、productClassId の有無による分岐は同:58 以降）の先頭に残っており、個別入力商品でも null を拒否する。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 77,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDto.php:40` `public ?bool $qualifiedInvoiceIssuerConfirmationFlg,` の受け口は nullable bool のまま。`src/Eccube/Service/EntityManager/OtcBuyOrderEntityManager.php:62-64` `if ($qualifiedInvoiceIssuerConfirmationFlg) { $OtcBuyOrder->setQualifiedInvoiceIssuerConfirmationFlg($qualifiedInvoiceIssuerConfirmationFlg); }` のままで、false 指定は無視され、受注が適格請求書発行事業者かどうかの条件判定も追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 78,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/EntityManager/OtcBuyOrderEntityManager.php:52-60` `if ($OtcBuyOrderStatus->isComplete()) { $OtcBuyOrder->setCompleteDate($currentTime)->setTransactionId($smaregiTransactionId); } elseif ($OtcBuyOrderStatus->isCancel()) { $OtcBuyOrder->setCancelDate($currentTime); }` のままで、成立以外を一律キャンセル日時設定にする修正は入っていない。`src/Eccube/Entity/Master/MtbOtcBuyOrderStatus.php:57` `public const STATUS_ACCOUNTING_PAYMENT_PENDING = 10;` は同:91-94 の `ASSESSMENT_COMPLETED_STATUSES` に含まれ受付対象だが isComplete/isCancel いずれにも該当せず、cancelDate は設定されない。",
+      "note": ""
+    },
+    {
+      "rowId": 79,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:156` `#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/freeComment.json', name: 'api_admin_otc_buy_order_update_free_comment', methods: ['PUT'])]` のまま。`app/config/eccube/packages/eccube.yaml:6` `env(ECCUBE_API_V1_ROUTE): 'api/v1'` / 同:72 `eccube_api_v1_route: '%env(ECCUBE_API_V1_ROUTE)%'` により既定の実パスは /api/v1/admin/otcBuyOrder/{id}/freeComment.json。`grep -rn \"freeComment\" src/Eccube app/config html` でも設計どおりの /api/admin/... ルートは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 80,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:156` の `.json` 付き Route が唯一の定義で、`grep -rn \"freeComment\" src/Eccube app/config html` の結果は同:156 と `src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:93`（ネット買取側、同じく .json 付き）のみ。拡張子なし /admin/otcBuyOrder/{id}/freeComment のルートは `app/config/eccube/routes.yaml`（app_controllers は `resource: '../../../src/Eccube/Controller/App', type: attribute` で属性ルートのみ、追加 path 定義なし）にも存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 81,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:199-200` `if ($raw === null || $raw === '' || !ctype_digit((string) $raw)) { throw new MissingRequiredParameterException('ステータスが不正です'); }`、同:205-206 `if (!$Status instanceof MtbOtcBuyOrderStatus) { throw new InvalidParameterException('ステータスが見つかりません'); }` のままで文言は変わっていない。設計文言は `src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:137,143` の `'正しい店頭買取ステータスIDを入力してください'` にのみ存在し、店頭買取側には反映されていない（`grep -rn \"正しい店頭買取ステータスID\" src/Eccube` の結果は BuyOrderController の2件のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 82,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateStatusAction.php:101` `throw new InvalidStatusTransitionException(\"この受注は{$input->OtcBuyOrder->getMember()->getName()}が査定中です\");` のままで、設計の鉤括弧「」と末尾句点は付いていない。`src/Eccube/Exception/App/InvalidStatusTransitionException.php:31` `statusCode: Response::HTTP_BAD_REQUEST,` で400である点も監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 83,
+      "status": "未対応",
+      "evidence": "`src/Eccube/EventListener/ExceptionListener.php:76` `if ($this->requestContext->isAppApi()) {` 配下で、同:140-143 `$response = new JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode);` が無条件に実行され、401/404 でも本文付きJSONになる。同:102 `Response::HTTP_UNAUTHORIZED => ['認証エラー'],`、`src/Eccube/Exception/App/NotFoundException.php:31` `statusCode: Response::HTTP_NOT_FOUND,`（BaseApiException 派生で errors を持つ）も変わっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 84,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:190` `#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/status.json', name: 'api_admin_otc_buy_order_update_status', methods: ['PUT'])]` のみが定義されている。`grep -rn \"otcBuyOrder/{id}\" src/Eccube app/config` の結果は同ファイルの:129,156,190,231,273 の5件（すべて .json 付き）だけで、拡張子なし /status の別名ルートは属性・`app/config/eccube/routes.yaml` いずれにも無い。",
+      "note": ""
+    },
+    {
+      "rowId": 85,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:46` `#[Route('/%eccube_api_v1_route%/buying/{cardDetailId}.json', name: 'api_buying', methods: ['GET'])]` のまま。`app/config/eccube/packages/eccube.yaml:6` `env(ECCUBE_API_V1_ROUTE): 'api/v1'` / 同:72 `eccube_api_v1_route: '%env(ECCUBE_API_V1_ROUTE)%'` により既定実パスは /api/v1/buying/{cardDetailId}.json で、設計の /api/buying/{detailId}.json とは一致しない。",
+      "note": ""
+    },
+    {
+      "rowId": 86,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php:115` `'productClassCode' => $dto->productClassCode,` のままで、同:45 の返却配列 PHPDoc も `productClassCode: string,`。`grep -n \"productClassCode\\|productCode\\|product_code\" src/Eccube/Service/App/MTGBuyer/V1/BuyingCardsFormatter.php` のヒットは:45,:115 の2件のみで、設計の productCode キーへの変換は追加されていない。",
+      "note": ""
+    }
+  ]
+}

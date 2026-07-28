@@ -1,0 +1,77 @@
+{
+  "packetId": "0204_08",
+  "results": [
+    {
+      "rowId": 553,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:133` `$this->standardPriceColumn = ColumnDefinitions::standardPrice()->setRequired(true);` は監査時点と同一。`src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:434-437` `public static function standardPrice(string $name = '基準価格'): BaseCsvColumn { return self::createUnsignedNumericColumn($name, '基準価格', 9); }` で桁数は 9 のまま。`src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:722-724` `if (is_int($maxLength)) { $column->addValidator(new NumericMaxLengthValidator($maxLength)); }` により NumericMaxLengthValidator(9) が付与され、`src/Eccube/Service/Csv/Importer/Validator/NumericMaxLengthValidator.php:53` `return strlen($value) <= $this->maxLength;` で 10 桁以上を拒否する。設計の最大 11 への是正は未反映。",
+      "note": ""
+    },
+    {
+      "rowId": 556,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:201-207` の getCsvHeader() は `'商品コード' => '', '販売価格' => '', 'セールフラグ' => '0: セールではない, 1: セールあり', '帯URL' => '', 'タグ(ID)' => 'カンマ区切りで複数指定可能。'` の5列のまま。`同:215-219` getRequiredCsvHeader() も商品コード・販売価格・セールフラグの3件のみ。`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:167-173` getColumns() も `$this->productCodeColumn, $this->sellPriceColumn, $this->saleFlgColumn, $this->beltUrlColumn, $this->productTagListColumn` の5列で、買取価格・スマレジ連携フラグ列は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 557,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:96` `$csvSellPrice = (int) bcfloor((string) $this->sellPriceColumn->getValue($row));` のみで買取価格のCSV読取はなく、`同:140-145` `$this->productClassRepository->updateProductClassForHighPriceSaleCsv($ProductClass->getId(), $newSellPrice, $beltUrl, $newSaleFlg,);` に buy_price 引数がない。`同:147` のコメント `// 今回のcsv登録では買取価格・基準価格の更新はないので一緒の値を入れる` と `同:148-157` の履歴呼び出しで新買取価格に `$oldBuyPrice` を渡す実装も変わっていない。`src/Eccube/Repository/ProductClassRepository.php:2596-2604` の UPDATE も `SET price02 = ?, belt_url = ?, sale_flg = ?, update_date = ? WHERE id = ?` で buy_price を含まない。",
+      "note": ""
+    },
+    {
+      "rowId": 558,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:41-49` のコンストラクタ引数は ProductClassRepository/ProductRepository/CsvExportService/PaginatorInterface/DtbPriceHistoryRepository/DtbCsvImportHistoryRepository のみでスマレジ関連の注入がなく、`同:149-154` の `new SaleHighPriceImportHandler($this->entityManager, $this->productRepository, $this->productClassRepository, $this->priceHistoryRepository,)` にもコーディネータを渡していない。`grep -n 'Smaregi\\|smaregi' src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php` は0件。`src/Eccube/Repository/ProductClassRepository.php:2596-2604` の UPDATE にも smaregi_alignment_flg はない。",
+      "note": ""
+    },
+    {
+      "rowId": 559,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductClassRepository.php:2240-2247` `$qb->innerJoin('pc.Product', 'p')->where('pc.code = :productCode')->andWhere('pc.high_price_code IS NOT NULL')->andWhere('pc.high_price_code <> :emptyHighPriceCode')` のままで、ProductClass.Status / product_status_id（DISPLAY_HIDE）の非公開条件は追加されていない。`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:86,196` も同メソッドをそのまま利用している。",
+      "note": ""
+    },
+    {
+      "rowId": 560,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:199-208` getCsvHeader() は5列（商品コード/販売価格/セールフラグ/帯URL/タグ(ID)）、`同:213-220` getRequiredCsvHeader() は3列（商品コード/販売価格/セールフラグ）のまま。`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:165-174` getColumns() も同5列で、`同:51-55` の onBeforeImport() でも buyPrice()/smaregiAlignmentFlg() は生成されていない。ColumnDefinitions には `src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:377` `public static function buyPrice(...)` と `同:444` `public static function smaregiAlignmentFlg(...)` が存在するが本ハンドラから未参照。",
+      "note": ""
+    },
+    {
+      "rowId": 561,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:29-37` の列プロパティは productCodeColumn/sellPriceColumn/saleFlgColumn/beltUrlColumn/productTagListColumn のみで buyPriceColumn は存在しない。`同:147` のコメント `// 今回のcsv登録では買取価格・基準価格の更新はないので一緒の値を入れる` と `同:155` の新買取価格引数 `$oldBuyPrice` はそのまま。`src/Eccube/Repository/ProductClassRepository.php:2596-2604` の UPDATE も buy_price を更新しない。",
+      "note": ""
+    },
+    {
+      "rowId": 562,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:41-49` のコンストラクタに SmaregiProductClassCsvImportUpsertCoordinatorFactory はなく、`同:149-154` のハンドラ生成にも渡していない。`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php` 全207行に smaregiAlignmentFlgColumn / deferIfEligible / afterCsvImportFinished の記述は無く（grep 0件）、`同:167-173` getColumns() も5列のまま。`src/Eccube/Repository/ProductClassRepository.php:2596-2604` の UPDATE も smaregi_alignment_flg を含まない。",
+      "note": ""
+    },
+    {
+      "rowId": 563,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductClassRepository.php:2233-2249` findHighPriceProductClassForSaleCsv() は `->where('pc.code = :productCode')->andWhere('pc.high_price_code IS NOT NULL')->andWhere('pc.high_price_code <> :emptyHighPriceCode')` のみで、Status/visible 等の非公開条件は未追加。`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:196` `if ($this->productClassRepository->findHighPriceProductClassForSaleCsv($productCode) === null) {` で同メソッドを利用しており、公開規格も対象になり得る状態のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 564,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:131-133` `if ($csvSellPrice) { $messageStore->addInfo('admin.product.sale_high_price_csv.alert_off_sale_buy_only', $rowNumber); }` は変更なし。`src/Eccube/Resource/locale/messages.ja.yaml:2013` の文言も `admin.product.sale_high_price_csv.alert_off_sale_buy_only: \"%d行目: セール外のため、買取価格および販売価格はデータベースにある基準価格で更新してます。\"` のままで、CSV価格が反映されていない旨の表現には修正されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 565,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Product/csv_product_section.twig:3,5` `{% set menus = ['product', 'product_csv_management', 'admin_product_section_import'] %}` / `{% block sub_title %}{{ 'admin.product.product_section_csv'|trans }}{% endblock %}` と `app/config/eccube/packages/eccube_nav.yaml:67-69` `admin_product_section_import: name: admin.product.product_section_csv` は監査時点と同一。`src/Eccube/Resource/locale/messages.ja.yaml:2017-2019` は `admin.product.product_section_csv: 部門登録CSVアップロード` / `admin.product.product_section_csv_upload_title: 部門登録CSV` / `admin.product.product_section_csv_format_title: 部門登録CSVファイルフォーマット` のままで「部門更新CSV登録」表示になっていない。src/ app/ 全体の `部門更新CSV` 一致は ProductSectionCsvController のログ文言・PHPDoc のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 566,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Product/csv_product_section.twig:5` `{{ 'admin.product.product_section_csv'|trans }}` は変更なし。`src/Eccube/Resource/locale/messages.ja.yaml:2017` `admin.product.product_section_csv: 部門登録CSVアップロード`、`同:2018` `admin.product.product_section_csv_upload_title: 部門登録CSV`、`同:2019` `admin.product.product_section_csv_format_title: 部門登録CSVファイルフォーマット` で、いずれも設計期待の「部門更新CSV登録」系表示に是正されていない（ja.yaml 直前の見出しコメントも `# 部門登録CSV画面`）。",
+      "note": ""
+    }
+  ]
+}

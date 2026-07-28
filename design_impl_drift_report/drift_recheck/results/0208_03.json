@@ -1,0 +1,77 @@
+{
+  "packetId": "0208_03",
+  "results": [
+    {
+      "rowId": 1249,
+      "status": "未対応",
+      "evidence": "カードCSV画面 `src/Eccube/Resource/template/admin/Card/csv_card.twig` は 1行目 `{% extends '@admin/Product/base_csv_upload.twig' %}` のみで javascript ブロックを上書きしておらず、継承元 `src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:29-31` は `$('#upload-form').on('submit', function() { $.changeLoading(true); });` だけ。`#upload-button`（同 :73 `<button id=\"upload-button\" type=\"submit\" ...>`）への disabled 付与はなく、spin.min.js の読み込みも同ファイルに無い。card-csvimport.js はリポジトリ内に存在しない（find で src/app/html 配下ヒット 0、spin.min.js は html/template/admin/assets/js/vendor/spin.min.js に実体のみ存在）。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1250,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/CardCsv.php:578-586` は `->setNameEn($normalizedNameEn)->setArenaFormatNameEn(...)->setTextEn((string) ($row['text_en'] ?? ''))->setManaCost($this->convertManaCost(...))->setCmc((float) $this->getCmc($row))->setPower((string) ($row['power'] ?? ''))->setToughness(...)->setLoyalty(...)` と値をそのまま setter に渡すのみ。`src/Eccube/Service/Csv/CardCsv.php:757-767` の CardDetail 側も `->setCardNo((string) ($row['card_no'] ?? ''))` 等で最大長検証なし。検証は `checkHeaderSize`/`checkRequiredHeaders`（同 :470-471, 536-544）と `card_detail_id`/`back_card_detail_id` の `ctype_digit`（:733, :830）、foil/frame の値検証（:965-996）のみ。`AbstractCsvService.php` にも Length/mb_strlen/strlen 系の長さ検証は無く、`getCmc()`（AbstractCsvService.php:106-120）も非数値をそのまま返す。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1251,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/CardCsvController.php:141-153` は取込成功後 `log_info('カードCSV登録完了');` → イベント dispatch → `$this->addSuccess('admin.register.complete', 'admin');` → `return $this->redirectToRoute('admin_card_csv_upload');` のみで、更新カードID収集・支店更新通知サービス呼び出し・dtb_branch_update_error 登録は無い。`src/Eccube/Service/Csv/CardCsv.php::register`（:458-528）にも通知処理なし。BranchUpdate 系の唯一の言及は `src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:200` の `// $branchUpdate = new BranchUpdateService($this->app);` というコメントアウト（別経路）で、`DtbBranchUpdateError` エンティティ/Repository は存在するがカードCSV取込経路からの呼び出しは無い。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1252,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/CardCsv.php:466` `$this->entityManager->beginTransaction();`、:517-518 `$this->entityManager->persist($Card); $this->entityManager->flush();`、:521 `$this->entityManager->commit();` のみで、100行ごと・全行後の `clearCache()` 呼び出しは無い（`AbstractCsvService.php:370-373` に `protected function clearCache(): void { $this->entityManager->clear(); }` は定義されているが CardCsv からの呼び出し 0、`rowIndex % 100` も無し）。SQLロガー無効化は `src/Eccube/Controller/Admin/Card/CardCsvController.php:172` `$this->entityManager->getConfiguration()->setSQLLogger(null);` が export() にのみ存在し、import()（:81-154）には無い。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1253,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/CardsetController.php:51-52` は `#[Route('/%eccube_admin_route%/cardset', name: 'admin_cardset_list')]` / `#[Route('/%eccube_admin_route%/cardset/page/{page_no}', name: 'admin_cardset_list_paged', requirements: ['page_no' => '\\d+'])]` のままで、設計の `admin_cardset` / `admin_cardset_page`・`/cardset/{page_no}` は不在（リポジトリ全体の grep でも Route 名 admin_cardset_page はヒット 0）。言語別ダウンロードも同 :310 `#[Route('/%eccube_admin_route%/cardset/download_each_lang', name: 'admin_cardset_download_each_lang', methods: ['POST'])]` で `/cardset/download_lang` は無い。Twig も `app/template/admin/Cardset/index.twig:97,110` `path('admin_cardset_list_paged', ...)`、:191 `'routes': 'admin_cardset_list_paged'`、:79 `formaction=\"{{ url('admin_cardset_download_each_lang') }}\"` と実装側 route 名を参照。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1254,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/CardsetController.php:58-72` は `$request->query->getString('sort_key')` / `$request->query->getString('sort_order')` を受け取り、sort_order は値検証なしで `$this->session->set($sortOrderSessionKey, $sortOrder);`（:72）し :74-77 `getQueryBuilder(['sortKey' => $sortKey, 'sortOrder' => $sortOrder])` へ渡す。表示件数も :91 `$pageCountParam = $request->query->getInt('page_count');` で設計名 pageCount ではない（mtb_page_max との突合 :92-102 はあるがクエリ名が異なる）。設計の `sortSelect` は CardsetController 内にヒット 0（grep 済み）。監査時点と同一。",
+      "note": "page_count 値は mtb_page_max.name と一致した場合のみ採用する処理（:93-102）はあるが、クエリ名が設計の pageCount ではなく、sortSelect の4文言完全一致検証は依然不在。"
+    },
+    {
+      "rowId": 1255,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/CardsetController.php:54-119` の index() に `resume` の参照は無く（CardsetController.php と app/template/admin/Cardset/ 配下の grep で resume ヒット 0）、`$this->session->remove(...)` 等のクリア処理も無い。使用セッションキーは :57 `'eccube.admin.cardset.sort'`、:66 `'eccube.admin.cardset.order'`、:87 `'eccube.admin.cardset.search.page_count'`、:109 `$this->session->set('eccube.admin.cardset.page_no', $page_no);` で、設計の `eccube.admin.cardset.pageCount` / `eccube.admin.cardset.sortSelect` は存在しない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1256,
+      "status": "未対応",
+      "evidence": "`app/template/admin/Cardset/index.twig:176` は `data-message=\"{{ 'admin.common.delete_modal__message'|trans({ \"%name%\" : Cardset.nameJp }) }}\"` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1790` の当該文言は「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」。実行ボタンも `app/template/admin/Cardset/delete_modal.twig:21-24` の `<a class=\"btn btn-ec-delete\" ... data-method=\"delete\">{{ 'admin.common.delete'|trans }}</a>`（＝「削除」）で、設計の「このカードセットを削除してもよろしいですか？」「実行」ではない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1257,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/CardsetController.php:261-265` で `catch (\\Doctrine\\DBAL\\Exception\\ForeignKeyConstraintViolationException $e)` 時に `$this->addError($message, 'admin');` するが、メソッド末尾 :280 は成功・失敗にかかわらず `return $this->redirectToRoute('admin_cardset_list');`。同ファイル内に Referer / headers->get('referer') の参照は無い。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1258,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/CardsetController.php:310` `#[Route('/%eccube_admin_route%/cardset/download_each_lang', name: 'admin_cardset_download_each_lang', methods: ['POST'])]` のままで、設計の `admin_cardset_download_lang` / `/cardset/download_lang` はリポジトリ全体の grep でヒット 0。`app/template/admin/Cardset/index.twig:79` も `formaction=\"{{ url('admin_cardset_download_each_lang') }}\"` を参照。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1259,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:97-100` は `$cardDetails = $this->cardDetailRepository->findWithImagesAndPromotionForDownload($cardsetId); if ($cardDetails === []) { continue; }` と 0 件時は次 ID へ進むだけ。最終的に :168-173 `if ($addedCount === 0) { ... throw new \\RuntimeException('admin.card.cardset.error.download_no_images'); }` を投げ、`src/Eccube/Controller/Admin/Card/CardsetController.php:300-304` の catch は `return $this->redirectToRoute('admin_cardset_list');`。翻訳キー `admin.cardset.download.failed.set_not_exist_card` と route `admin_cardset_page` はリポジトリ全体の grep でヒット 0。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1260,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:140-161` は `$fileName = $this->s3AccessService->downloadCardImageToDirectory(...)` の戻りが偽値の場合に何もせず次画像へ進むだけで、カード詳細単位のフラッシュ追加は無い（同クラスに addError/addFlash は存在しない）。翻訳キー `admin.download.card.not_found` は src/app 配下の grep でヒット 0（messages.ja.yaml に存在するカードセットDL系エラーは :4514 `admin.card.cardset.error.download_no_images` のみ）。監査時点と同一。",
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "packetId": "0201_01",
+  "results": [
+    {
+      "rowId": 1043,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/System/MemberController.php:301` `public function delete(Request $request, Member $Member): RedirectResponse` は監査時点と同じく型付きエンティティ引数のままで、存在しないIDでは EntityValueResolver が本体到達前に 404 を投げる。本体は `:303` `$this->isTokenValid();` から `:341` `return $this->redirectToRoute('admin_setting_system_member');` までで、不在時の警告フラッシュ＋リダイレクト分岐は存在しない。`src/Eccube/EventListener/` 配下に NotFoundHttpException をリダイレクトへ変換するリスナも無い（NotFoundHttpException 出現は TemplateUpdateListener.php / FilterNonActiveTenantProductList.php のみで管理メンバー削除とは無関係）。up()/down() も同じ `Member $Member` 署名（:243, :272）で、設計が区別する『削除は404にしない』の差は解消されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1044,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/MemberType.php:171` `->add('smaregiMemberFlg', CheckboxType::class, [` は制約なしのまま。POST_SUBMIT リスナは `:176`（テナント baseInfo 未選択→`:188` `$form['baseInfo']->addError(...tenant_not_selected)`）、`:226`（非稼働 Work / `:251` login_id 重複）、`:256` の3本のみでスマレジ一意性検証は無い。`src/Eccube/Entity/Member.php:37` `#[UniqueEntity(fields: 'login_id', message: 'form_error.member_already_exists')]` は login_id のみで、`:622` `#[ORM\\Column(name: 'smaregi_member_flg', type: Types::BOOLEAN, options: ['default' => false, ...])]` に一意制約は無い。`app/DoctrineMigrations` 配下に smaregi_member_flg のユニークインデックス追加は無し。`MemberCreateAction.php`/`MemberEditAction.php` に smaregi の文字列は 0 件。`src/Eccube/Resource/locale/messages.ja.yaml` に exist_smaregi_member_error / 「スマレジ用アカウントフラグが立っているアカウントが既に存在しています。」は不在。",
+      "note": ""
+    },
+    {
+      "rowId": 1045,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:72-79` で初期表示時に `$event = new EventArgs(['builder' => $builder, 'AuthorityRoles' => $AuthorityRoles], $request); $this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_SETTING_SYSTEM_AUTHORITY_INDEX_INITIALIZE);` を発火し、`:99-106` で保存成功後に `$this->eventDispatcher->dispatch($event, EccubeEvents::ADMIN_SETTING_SYSTEM_AUTHORITY_INDEX_COMPLETE);` を発火している。定数は `src/Eccube/Event/EccubeEvents.php:1284` `ADMIN_SETTING_SYSTEM_AUTHORITY_INDEX_INITIALIZE = 'admin.setting.system.authority.index.initialize'`、`:1285` `..._COMPLETE = 'admin.setting.system.authority.index.complete'` で、設計が求める初期表示・保存完了の両イベント名が実際に dispatch 経路へ接続された。",
+      "note": "監査時点は定数定義のみで dispatch 無しだったが、現 develop では Controller に dispatch が追加されている。"
+    },
+    {
+      "rowId": 1046,
+      "status": "未対応",
+      "evidence": "`src/Eccube/EventListener/TwigInitializeListener.php:187` `$AuthorityRoles = $this->authorityRoleRepository->findBy(['Authority' => $Member->getAuthority()]);` → `:189` `$eccubeNav = $this->getDisplayEccubeNav($eccubeNav, $AuthorityRoles, $baseUrl);` → `:191` `$this->twig->addGlobal('eccubeNav', $eccubeNav);` と、監査時点と同じくナビを事前フィルタして eccubeNav のみを公開する方式のまま。スナップショット全体で `addGlobal('AuthorityRoles'` は 0 件で、Twig グローバル AuthorityRoles（拒否URLフルパス配列）は登録されていない。なお二重初期化回避フラグ自体は `:48` `protected bool $initialized = false;` / `:63` `if ($this->initialized) {` / `:78` `$this->initialized = true;` として存在するが、設計が求める公開名 AuthorityRoles の契約は未充足。",
+      "note": ""
+    },
+    {
+      "rowId": 1047,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:108` `$this->addSuccess('admin.common.save_complete', 'admin');` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました` と共通文言。スナップショット src 配下に「権限設定を保存しました」は 0 件、locale の admin.setting.system.authority.* にも該当メッセージキーは無い（存在するのは `:3246 admin.setting.system.authority__card_title: 権限設定`、`:3251 ...exists_already_name` 等のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 1048,
+      "status": "部分対応",
+      "evidence": "受注編集の更新系は新たにガードされた: `src/Eccube/Controller/Admin/Order/EditController.php:519-523` `if (\\in_array($mode, ['status_change', 'clear_date', 'register'], true) && !$this->canMutateOrder($OriginOrder)) { $this->addError('admin.common.error_invalid_request', 'admin'); return $this->redirectToRoute('admin_order_edit', ['id' => $TargetOrder->getId()]); }`、`:608` `private function canMutateOrder(Order $Order)` → `:598-601` `private function isOrderEditableByLoginMember(Order $Order): bool { return $this->getMember()->isEditableShop($Order->getBaseInfo()); }`（`src/Eccube/Entity/Member.php:78` 定義）。ただし受注管理の他の更新経路は未ガードで、`src/Eccube/Controller/Admin/Order/OrderController.php:308` `public function delete(Request $request, int $id)`、`:369` `public function bulkDelete(Request $request)`、`:503` `public function updateOrderStatus(Request $request, Shipping $Shipping)`、`:606` `public function updateTrackingNumber(Request $request, Shipping $shipping)` には isEditableShop 判定が無い（OrderController.php・ShippingController.php に isEditableShop / editableBaseInfos / AccessDenied は 0 件、Admin/Order 配下でのヒットは EditController.php と WaitingTagController.php:122,168 のみ）。設計の『受注管理の更新処理時に権限エラー』は編集画面のみ充足。",
+      "note": "在庫・店頭買取・イベント系は監査時点から実装済み。今回新規に EditController の register/status_change/clear_date が是正された。"
+    },
+    {
+      "rowId": 1049,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:68` `$builder = $this->formFactory->createBuilder(AuthorityMatrixType::class, ['AuthorityRoles' => $AuthorityRoles]);` のままで、`src/Eccube/Form/Type/Admin/AuthorityMatrixType.php:30` の `buildForm()` は空実装（子フィールド無し）。画面は依然チェックボックス行列で、`src/Eccube/Resource/template/admin/Setting/System/authority.twig:317` `name=\"authority[{{ Authority.id }}][{{ PermissionAccessUrl.id }}]\"`、`:182` `name=\"new_authority_name[' + uniqueId + ']\"`、`:188` `checkbox.name = 'authority[' + uniqueId + '][' + permissionId + ']';` と POST 形も監査時点と同じ。設計の権限セレクト＋拒否URLテキストの行フォーム／data-prototype 行追加／片入力フィールドエラーは無く、`src/Eccube/Form/Type/Admin/AuthorityRoleType.php` と `src/Eccube/Resource/template/admin/Setting/System/authority_prototype.twig` はファイルとして残存するが AuthorityController/authority.twig から参照されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1050,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Setting/System/AuthorityIndexAction.php:114-136` は監査時点と同じ差分更新のまま: `:118` `$desiredDeniedUrls[$PermissionAccessUrl->getUrl()] = true;` で希望拒否URLを算出し、`:125-129` `foreach ($existingDeniedUrls as $denyUrl => $ExistingAuthorityRole) { if (!isset($desiredDeniedUrls[$denyUrl])) { $this->authorityRoleEntityManager->delete($ExistingAuthorityRole); } }` と不要分のみ削除、`:132-136` `foreach (array_keys($desiredDeniedUrls) as $denyUrl) { if (!isset($existingDeniedUrls[$denyUrl])) { $this->authorityRoleEntityManager->save($Authority, $denyUrl); } }` と不足分のみ追加。設計が求める『既存権限ロール行を全削除してから再 persist』は実装されておらず、変更のない AuthorityRole 行はID・作成日時ごと温存される。",
+      "note": ""
+    },
+    {
+      "rowId": 1051,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:72-79` で `$builder->getForm()`（:81）より前に `new EventArgs(['builder' => $builder, 'AuthorityRoles' => $AuthorityRoles], $request)` を `EccubeEvents::ADMIN_SETTING_SYSTEM_AUTHORITY_INDEX_INITIALIZE` で dispatch しており、購読側がビルダと一覧を変更できる。保存完了側は `:97` `$this->authorityIndexAction->handle($input);` 直後の `:99-106` で `new EventArgs(['form' => $form, 'AuthorityRoles' => $AuthorityRoles], $request)` を `EccubeEvents::ADMIN_SETTING_SYSTEM_AUTHORITY_INDEX_COMPLETE` で dispatch。定数は `src/Eccube/Event/EccubeEvents.php:1284,1285` に `admin.setting.system.authority.index.initialize` / `.complete` として定義され、実行経路へ接続済み。",
+      "note": "監査時点の『定数のみで dispatch 未接続』は解消されている。"
+    },
+    {
+      "rowId": 1052,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/System/AuthorityController.php:108` `$this->addSuccess('admin.common.save_complete', 'admin');`、`:114` `return $this->redirectToRoute('admin_setting_system_authority');` と監査時点から変わらず、翻訳は `src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました`。専用文言「権限設定を保存しました。」は src 配下に 0 件で、リダイレクトのみ一致・メッセージ文言は共通文言のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1053,
+      "status": "未対応",
+      "evidence": "`src/Eccube/EventListener/TwigInitializeListener.php:187` で `$AuthorityRoles` を取得後、`:189` `$eccubeNav = $this->getDisplayEccubeNav($eccubeNav, $AuthorityRoles, $baseUrl);`（`:204` の再帰メソッド、`:238` `foreach ($AuthorityRoles as $AuthorityRole)` で拒否URL照合）でナビ配列自体を事前フィルタし、`:191` `$this->twig->addGlobal('eccubeNav', $eccubeNav);` のみを公開。`addGlobal('AuthorityRoles'` はスナップショット src 配下 0 件、`src/Eccube/Resource/template/admin/nav.twig` にも AuthorityRoles の参照は 0 件で、設計が外部契約とする Twig グローバル AuthorityRoles と nav.twig 側の条件分岐は依然存在しない。",
+      "note": ""
+    }
+  ]
+}

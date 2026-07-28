@@ -1,0 +1,77 @@
+{
+  "packetId": "0212_05",
+  "results": [
+    {
+      "rowId": 1338,
+      "status": "未対応",
+      "evidence": "現 develop の src/Eccube・html 配下を `DeckTagController` / `admin_decktag_list_disabled` / `admin_decktag_sort` / `admin_decktag_update` / `admin_decktag_delete` / `deckTag.twig` / `deck-tag.js` で再探索したがヒット 0 件。入口は監査時点と同じく `app/config/eccube/packages/eccube_nav.yaml:339-342` の `deck_tag_list: / name: admin.deck.deck_tag_list / url: admin_data_mtg_master_data / param: { entity: deck_tag }` であり、専用ルートではなく汎用画面へ委譲。汎用側も `src/Eccube/Controller/Admin/Data/MtgMasterDataController.php:335` `#[Route(path: '/%eccube_admin_route%/data/mtg_master_data', name: 'admin_data_mtg_master_data', methods: ['GET', 'POST'])]` の GET/POST 1本のみで、/{admin_route}/deckTag 系の GET/POST/DELETE ルートは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1339,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Data/mtg_master_data.twig:48` は依然 `<form method=\"get\" action=\"{{ url('admin_data_mtg_master_data') }}\">` の entity 選択フォームで始まり、`:80` `<table class=\"table table-bordered table-striped mtg-master-table\">` の全行インライン入力テーブルと `:148` `<button class=\"btn btn-ec-conversion px-5\" type=\"submit\" form=\"edit_form\">{{ 'admin.common.registration'|trans }}</button>` の一括登録ボタンのみ。同ファイルを `page_count` / `sortKey` / `editModal` / `pagination` で検索してもヒットせず、表示件数ドロップダウン・並び順ドロップダウン・ページネーション・行ごとの編集ボタン/削除リンク・Bootstrap モーダル #editModal・deck-tag.js は現 develop にも存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1340,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/EntityManager/MtgMasterDataEntityManager.php:62-66` は監査時点と同じく `} elseif ($setType === 'int') { if ($rawValue !== '' && !is_numeric($rawValue)) { throw new \\RuntimeException('admin.data.mtg_master_data.int_invalid'); } $Entity->$setter((int) $rawValue); }` で数値性のみ確認して (int) キャスト。文字列は NotBlank/Length 32 の検証なしに setter へ渡る。`hasOverlapSortNo` を src 配下全体で検索した結果、定義元 `src/Eccube/Repository/Master/MtbDeckTagRepository.php:61` `public function hasOverlapSortNo(int $id, int $sortNo): bool` の 1 件のみで呼び出し側が存在せず、表示順 1〜999999 および重複チェックのフォームエラー経路は現 develop にも未接続。",
+      "note": ""
+    },
+    {
+      "rowId": 1341,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Data/MtgMasterDataStoreAction.php:75-79` は現 develop でも `if ($allEmpty) { if ($isFixed) { continue; } $this->entityManager->remove($Entity); }` のまま、全カラム空欄を削除契機にしている。MtbDeckTag の Decks / archetypes 関連数を数える処理・デッキ用/アーキタイプ用のエラーフラッシュ出し分け・`admin_decktag_list` へのリダイレクトは同ファイルにも他ファイルにも存在しない（`admin_decktag` の全文検索ヒット 0 件）。",
+      "note": ""
+    },
+    {
+      "rowId": 1342,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/index.twig:57-64` は監査時点と同じ `const initSelect2 = function($el) { const opts = { width: '100%' }; if ($el.prop('multiple')) { opts.placeholder = multiSelectPlaceholder; } $el.select2(opts); }; $('.select2-select').each(function() { initSelect2($(this)); });` で、`allowClear` の指定も `#admin_search_deck_archetypes` の option disabled 制御もない。`src/Eccube/Form/Type/Admin/SearchDeckType.php:84-88` の `->add('archetypes', EntityType::class, [ 'class' => DtbArchetype::class, 'choice_label' => 'nameJp', ...` にも `choice_attr` による format_id_{id}/color_id_{id} クラス付与はなく、deck-search.js / archetypeFilter は src・html 配下に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1343,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchDeckType.php:86` は現 develop でも `'choice_label' => 'nameJp',` のまま。`getNameWithFormatNameJp` を src 配下で全文検索すると `src/Eccube/Entity/DtbArchetype.php:309` `public function getNameWithFormatNameJp(): string` の定義 1 件のみで、フォーム・テンプレートからの呼び出しは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1344,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckController.php:77` は現 develop でも `#[Route('/%eccube_admin_route%/deck/search/{page_no}', name: 'admin_deck_search', requirements: ['page_no' => '\\d+'], methods: ['GET', 'POST'])]` であり、設計の assert `^[1-9][0-9]*$` に是正されておらず 0 もマッチする。",
+      "note": ""
+    },
+    {
+      "rowId": 1345,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/index.twig:52` `<script src=\"{{ asset('assets/js/select2.min.js', 'admin') }}\" nonce=\"{{ csp_nonce }}\"></script>` と `:57-64` の `opts = { width: '100%' }` / placeholder のみの初期化は監査時点から変わらず、`:257` は `{{ form_widget(searchForm.archetypes) }}` を素で出力するのみ。`src/Eccube/Form/Type/Admin/SearchDeckType.php:84-88` にも format_id_* / color_id_* の option class 生成はなく、archetypeFilter・allowClear を含む連動実装は src・html 配下に見つからない。",
+      "note": ""
+    },
+    {
+      "rowId": 1346,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/index.twig:230` は現 develop でも `{{ form_start(searchForm, { 'action': url('admin_deck_list'), 'method': 'POST', 'attr': { 'id': 'admin_search_deck' } }) }}` で、POST 先は `/{admin_route}/deck`（`DeckController.php:76` `name: 'admin_deck_list'`）のまま。設計の POST /deck/search/1 固定送信にはなっておらず、検索ルート `DeckController.php:77` の requirements も `'\\d+'` のままである。",
+      "note": ""
+    },
+    {
+      "rowId": 1347,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchDeckType.php:209` は現 develop でも `'csrf_protection' => true,` のままで、設計が求める当該検索フォームの CSRF 無効化設定は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1348,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckController.php:67` `$this->sessionKey = 'deck';` に対し `src/Eccube/Controller/Admin/SearchControllerTrait.php:110-118` は `\"eccube.admin.{$sessionkey}.search.page_count\"` / `\".search.page_no\"` / `\".sort\"` / `\".order\"` / `\"eccube.admin.{$sessionkey}.search\"` を使用しており、設計値 `admin.deck.search` ではなく `eccube.admin.deck.search` のまま。さらに `DeckController.php:107-108` で `$this->session->set($this->sessionKey, $viewData); $this->session->set($this->sessionKey.'.page_no', $page_no);` と素の `deck` / `deck.page_no` も併存しており、監査時点と同じ状態。",
+      "note": ""
+    },
+    {
+      "rowId": 1349,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchDeckType.php:84-86` の `->add('archetypes', EntityType::class, [ 'class' => DtbArchetype::class, 'choice_label' => 'nameJp',` は現 develop でも日本語名のみをラベルにしている。`getNameWithFormatNameJp` の実体は `src/Eccube/Entity/DtbArchetype.php:309` に定義されるのみで、デッキ検索フォームからは呼ばれていない。",
+      "note": "rowId 1343 と同一の実装箇所に対する重複指摘。"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+ "packetId": "0211_05",
+ "results": [
+  {
+   "rowId": 1102,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Repository/DtbProductRequestRepository.php:390-393` の実行コードは `->from('dtb_product_request','pr')->leftJoin('pr','dtb_product_class','pc',...)->innerJoin('pr','dtb_product','p',...)->leftJoin('pr','mtb_language','l',...)` のみで、dtb_order/dtb_order_item への結合は無い。購入判定・購入日の最早注文日算出は同ファイル 246-360 行のコメントアウト片（`// \"min(date_format(o.order_date, '%Y/%m/%d %H:%i')) as order_date\",` 258行、`// $bought = $searchData['bought'];` 338行）にのみ存在。src 配下を `order_date_from` / `'bought'` で横断検索してもヒットは同ファイルのコメント行と無関係の ShippingStandby/OrderRepository のみ。",
+   "note": ""
+  },
+  {
+   "rowId": 1103,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Analysis/ProductRequestController.php` のルートは 48行 `admin_analysis_product_request`(GET)、72行 `..._search`(POST)、111行 `..._export`(GET) の3本のみで削除ルートは無い。`src/Eccube/Resource/template/admin/Analysis/product_request.twig:127-148` の一覧テーブルに規格編集リンク・削除フォーム・csrf_token・確認ダイアログは無く、134行 `<th>削除</th>` は 144行 `<td>{{ row.deleted_count }}</td>` の集計列名。`src/Eccube/Controller/Admin/` 全体を 入荷通知/RestockRequest/NotifyList で検索しても該当 admin 削除実装は不在。",
+   "note": ""
+  },
+  {
+   "rowId": 1104,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:50-67` の index() は `$searchForm = $this->createForm(SearchProductRequestType::class);` の後 `return ['searchForm'=>..., 'searched'=>false, 'summary'=>null];` を返すのみで、`self::SESSION_KEY`(33行) に対する remove/invalidate/clear は一切呼ばれない。session への書き込みは 88行 `$this->session->set(self::SESSION_KEY, FormUtil::getViewData($searchForm));`（search 内）のみ。監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 1105,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:48` `#[Route(path: '/%eccube_admin_route%/analysis/product-request', name: 'admin_analysis_product_request', methods: ['GET'])]`、72行 `path: '/%eccube_admin_route%/analysis/product-request/search'` のままで、設計の /analysis/request・/analysis/request/result は存在しない。src・app 配下を `analysis/request` / `admin_analysis_request` で検索してもヒット0件。サイドメニューも `app/config/eccube/packages/eccube_nav.yaml:293` `url: admin_analysis_product_request`。",
+   "note": ""
+  },
+  {
+   "rowId": 1106,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Form/Type/Admin/Analysis/SearchProductRequestType.php:49-119` のフィールドは multi/create_date_from/create_date_to/price_from/price_to/language/sort_key/asc_desc/page_count/tag_sales_analysis のままで、order_date_from・order_date_to・bought・会員名は未定義。50-53行 `->add('multi', TextType::class, ['attr'=>['placeholder'=>'admin.analysis.product_request.form.multi.placeholder']])` のみで会員名入力は無く、33-36行 `SORT_KEYS` も product_name / price の2つのみ。設計キー limit/tagSalesAnalyses に対し実装は page_count(103行)/tag_sales_analysis(109行)。",
+   "note": ""
+  },
+  {
+   "rowId": 1107,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Repository/DtbProductRequestRepository.php:377-401` の getAnalysisSummary は `'COUNT(DISTINCT CASE WHEN pr.deleted_at IS NULL THEN pr.player_id ELSE NULL END) AS pending_count'`(386行) を select し `->groupBy('p.id')->addGroupBy('p.name')->addGroupBy('l.id')->addGroupBy('l.code')`(398-401行) と商品ID×言語で集計。dtb_player/dtb_order/dtb_order_item への結合も `groupBy('pr.id')` も実行コードに無い（依頼単位検索は 246-275 行のコメントアウト `// ->groupBy('pr.id');` のみ）。",
+   "note": ""
+  },
+  {
+   "rowId": 1108,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Resource/template/admin/Analysis/product_request.twig:129-135` のヘッダは `<th>商品ID</th><th>言語</th><th>商品名</th><th>通知待ち</th><th>削除</th>` の5列、139-145行の行も `row.product_id / row.language_code / row.product_name / row.pending_count / row.deleted_count` のみ。商品コード・状態・販売金額・在庫数・会員名・依頼日・購入日・通知日/通知設定削除日の列も、行操作メニュー・規格編集リンク・削除操作も存在しない。",
+   "note": ""
+  },
+  {
+   "rowId": 1109,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:50-67` の index() には `self::SESSION_KEY`(33行 `'eccube.admin.analysis.product_request.search'`) の remove/invalidate/clear が無く、session 操作は 88行の `$this->session->set(...)`（search）と 114行 `$viewData = $this->session->get(self::SESSION_KEY);`（export）のみ。日付初期値と昇順初期値は `SearchProductRequestType.php:58,64,101`（`new \\DateTime('first day of this month')` / `'last day of this month'` / `'data'=>'ASC'`）に存在するが、破棄処理のみ未実装で監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 1110,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:111` `#[Route(path: '/%eccube_admin_route%/analysis/product-request/export', name: 'admin_analysis_product_request_export', methods: ['GET'])]` のままで、設計の /analysis/request/export は不在。src・app 配下を `analysis/request` / `admin_analysis_request` で検索してもヒット0件。twig 側の CSV リンクも `product_request.twig:121` `path('admin_analysis_product_request_export')`。",
+   "note": ""
+  },
+  {
+   "rowId": 1111,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:114-120` は `$viewData = $this->session->get(self::SESSION_KEY); if ($viewData === null) { $this->addError('検索条件がありません。先に検索を実行してください。', 'admin'); return $this->redirectToRoute('admin_analysis_product_request'); }` のままで、空条件でのCSV出力は行わない。他に product_request CSV を出力する入口は無く、CSV 生成は `src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:41 exportBySearchData()` の1系統のみ。",
+   "note": ""
+  },
+  {
+   "rowId": 1112,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:24-30` `private const CSV_HEADER = ['product_id'=>'商品ID','language_id'=>'言語ID','product_name'=>'商品名','pending_count'=>'通知待ち','deleted_count'=>'削除'];` の5列のままで、43行 `$rows = $this->productRequestRepository->getAnalysisSummary($searchData);` が返すのは商品ID×言語の集計行（Repository:398-401 の groupBy）。商品コード・状態・販売金額・在庫数・会員名・依頼日・購入日・通知日/通知設定削除日は出力されない。",
+   "note": ""
+  },
+  {
+   "rowId": 1113,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Csv/Exporter/ProductRequestCsvExportService.php:29` `'deleted_count' => '削除',` のままで「通知済み/削除」ではない。画面側も `src/Eccube/Resource/template/admin/Analysis/product_request.twig:134` `<th>削除</th>`。src・app 配下を `通知済み/削除` `通知済/削除` で検索してもヒット0件。",
+   "note": ""
+  }
+ ]
+}

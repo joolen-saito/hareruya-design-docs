@@ -1,0 +1,77 @@
+{
+  "packetId": "0206_01",
+  "results": [
+    {
+      "rowId": 862,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Purchase/index.twig:97` は現 develop でも `<label class=\"col-form-label\">{{ 'admin.purchase.online.form.product_name_select.label'|trans }}</label>` のまま。翻訳は `src/Eccube/Resource/locale/messages.ja.yaml:5569` `admin.purchase.online.form.product_name_select.label: AND/OR選択` で、リポジトリ全体を `AND/OR検索` で grep しても該当なし。",
+      "note": ""
+    },
+    {
+      "rowId": 863,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Purchase/PurchaseListType.php:171-174` は `->add('restock_incomplete_only', CheckboxType::class, ['required' => false, 'label' => trans('admin.purchase.store.form.restock_incomplete_only.label')])` のまま store 用キーを参照。`src/Eccube/Resource/locale/messages.ja.yaml:5537` は `admin.purchase.store.form.restock_incomplete_only.label: 棚戻し未完了のみ表示`。online 用の `admin.purchase.online.form.return_incomplete_only.label: 戻し未完了のみ表示`(messages.ja.yaml:5589) は依然未使用で、`src/Eccube/Resource/template/admin/Purchase/index.twig:134` も `form_label(searchForm.restock_incomplete_only)` を出力するのみ。",
+      "note": ""
+    },
+    {
+      "rowId": 864,
+      "status": "未対応",
+      "evidence": "`html/template/admin/assets/js/Purchase/purchase.js:7-9` は `$(\".search-clear\").click(function () { $(\"#admin_purchase_list_buy_order_status\").val(null).trigger(\"change\"); });` のままで、買取番号・注文者名・商品名・AND/OR・本人確認・日付・戻し未完了チェックのクリアはない。`src/Eccube/Resource/template/admin/Purchase/index.twig:143` の `class=\"btn btn-ec-conversion px-5 search-clear\"` ボタンに対する処理は他になく、リポジトリ横断で `search-clear` を grep しても Purchase 用ハンドラは purchase.js のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 865,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Purchase/index.twig:144` は `<button type=\"submit\" class=\"btn btn-ec-conversion px-5\">{{ 'admin.common.search'|trans }}</button>` のまま。`src/Eccube/Resource/locale/messages.ja.yaml:1643` `admin.common.search: 検索` であり、専用キー `admin.purchase.online.form.search.label: 検索する`(messages.ja.yaml:5591) は依然未使用。",
+      "note": "検索実行自体は admin_purchase_search で従来どおり動作するが、ボタン文言「検索する >」は未反映。"
+    },
+    {
+      "rowId": 866,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Purchase/index.twig:247-254` は監査時点と同一。STATUS_CONFIRMED のみ `{{ attribute(additionalData, 'identityConfirmStatusNameJp') }}`(:248)、STATUS_REGISTERED_MAIL_CONFIRMED は文字列リテラル `書留確認済み`(:250)、STATUS_NOW_CONFIRMING は `<svg class=\"cb cb-tag\"><use xlink:href=\"#cb-eye\" /></svg>`(:252)、その他は `<use xlink:href=\"#cb-warning\" />`(:254) のみでテキストを出力しない。",
+      "note": ""
+    },
+    {
+      "rowId": 867,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Exporter/BuyOrderProductListCsvExportService.php:30-39` の `public const CSV_HEADER` は4列目が `'standard_price' => '基準価格'` のまま。`同ファイル:70-72` も `if (!$isSale) { $header = array_merge($header, ['product_count' => 'キャンセル数']); }` と product_count だけを差し替える実装で、4列目は両CSVとも「基準価格」。",
+      "note": ""
+    },
+    {
+      "rowId": 868,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Purchase/PurchaseController.php:618-619` は `$buyOrderIds = $request->request->all('buyOrderIds'); $buyOrderIds = array_filter(array_map('intval', $buyOrderIds));` のままで、同:636 `return $this->BuyOrderCsvExportService->exportByIds($buyOrderIds);` に検索条件・権限・店舗/支店条件を渡していない。`src/Eccube/Service/Csv/Exporter/BuyOrderCsvExportService.php:66-70` も `$BuyOrders = $this->buyOrderRepository->findBy(['id' => $buyOrderIds], ['id' => 'ASC']);` とID一致のみで絞り込む。",
+      "note": ""
+    },
+    {
+      "rowId": 869,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Purchase/detail.twig:144-150` は現 develop でも `{% if Player is not null and (Player.identityConfirmStatus.id == constant('\\\\Eccube\\\\Entity\\\\Master\\\\MtbIdentityConfirmStatus::STATUS_CONFIRMED') or ... STATUS_REGISTERED_MAIL_CONFIRMED') %} 本人確認済み {% else %}{{ Player is not null ? Player.identityConfirmStatus.nameJp }}{% endif %}` で、確認済み2区分をマスタ名称ではなく一律「本人確認済み」に集約表示している。",
+      "note": ""
+    },
+    {
+      "rowId": 870,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Purchase/PurchaseManualMailType.php:91-94` は `public function getBlockPrefix(): string { return 'admin_purchase_manual_mail'; }` のまま。`src/` `html/` 全体を `m07-04_admin_online_purchase_purchase_manual_mail` で grep しても 0 件。",
+      "note": ""
+    },
+    {
+      "rowId": 871,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/MailService.php:1676` は送信成功後に `$this->mailHistoryEntityManager->save($message, $BaseInfo, $input->BuyOrder, $input->MailTemplate);` を呼ぶのみで flush なし。`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:67` も末尾が `$this->entityManager->persist($MailHistory);` のみ。`src/Eccube/EventListener/TransactionListener.php:113-121` の onKernelTerminate も `$this->em->commit();`／`rollback()` のみで `flush()` を呼ばない。",
+      "note": ""
+    },
+    {
+      "rowId": 872,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Purchase/PurchaseManualMailType.php:80-86` の baseFiles には `MailTemplate::BASE_BUY_ORDER_OLD`, `BASE_BUY_ORDER_ASSESSMENT_OLD`, `BASE_BUY_ORDER_INCLUDE_DELIVERY_FEE_OLD` が残る一方、`src/Eccube/Controller/Admin/Purchase/MailController.php:168-173` の createBody は `$this->renderView($fileName, ['BuyOrder' => $BuyOrder, 'header' => ..., 'footer' => ..., 'BaseInfo' => $this->getShop()])` と大文字 BuyOrder のみを渡す。`src/Eccube/Resource/template/default/Mail/buy_order_old.twig:1` は `{{ buyOrder.lastName }}`、同:12 は `constant('Plugin\\HareruyaEc\\Entity\\DtbBuyMainCard::SALE')` を参照し、`Plugin/HareruyaEc` ディレクトリはリポジトリ内に存在しない（find で 0 件）。createBody は catch \\Throwable で空文字を返すため本文は空のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 873,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Purchase/PurchaseManualMailType.php:91-94` は `return 'admin_purchase_manual_mail';` のままで、確認画面 (manual_mail_confirm.twig) も同一 FormType を使用。`src/` `html/` 全体の `m07-04_admin_online_purchase_purchase_manual_mail` 検索は 0 件で、別名・互換受け口も追加されていない。",
+      "note": ""
+    }
+  ]
+}

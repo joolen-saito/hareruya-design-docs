@@ -1,0 +1,77 @@
+{
+  "packetId": "ZZZZ_01",
+  "results": [
+    {
+      "rowId": 28,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:87-100` は現 develop でも `if ($Order->isBrowserPrintFlg()) { $Order->setBrowserPrintFlg(false); } else { $Order->setOrderStatus($pickingStatus); ... $Order->setConfirmDate(new \\DateTime()); ... $Order->setPickingDate(new \\DateTime()); }` の直後に `$this->entityManager->persist($Order); $this->entityManager->flush();` を実行しており、SetResponse 経路で受注を更新する DB 書き込みがそのまま残る。`beginTransaction()`/`commit()`（76,103行）も監査時点と同一で、参照系のみとする設計 DB操作節との衝突は解消していない。",
+      "note": "設計書 pf-api/a05-01 の DB操作節は現時点でも参照系のまま。"
+    },
+    {
+      "rowId": 42,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:90-100` で `$Order->setOrderStatus($pickingStatus);`、`93` で `$Order->setConfirmDate(new \\DateTime());`、`96` で `$Order->setPickingDate(new \\DateTime());`、`99-100` で `$this->entityManager->persist($Order); $this->entityManager->flush();` と、印刷応答後に受注へ日時を設定して flush する実装が現 develop でも変わっていない。「検索のみ」とする設計 DB操作節は依然未充足。",
+      "note": ""
+    },
+    {
+      "rowId": 57,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:44-50` に `log_info('Smaregi webhook received', [... 'headers' => $request->headers->all(), 'query' => ..., 'content' => $request->getContent()]);`、`52-59` の認証失敗時にも `log_warning('Smaregi webhook authentication failed', [... 'headers' => $request->headers->all(), 'content' => $request->getContent()])` が残存。さらに `69-72` の Smaregi-Event-Id 欠落時にも `'headers' => $request->headers->all()` を出力しており、マスキング処理は一切追加されていない。",
+      "note": "監査時点より headers 出力箇所は 3 箇所に増えている。"
+    },
+    {
+      "rowId": 58,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/CreatedHandler.php:47-53` は `if ($transactionHeadIds === []) { $this->logger->warning('Smaregi created webhook has no transactionHeadIds', ...); return; }` のまま（Canceled/Edited/Disposed 各 Handler も同一構造）。`TransactionEventDispatcher.php:89` 相当の `extractTransactionHeadIds()` も `if (!is_array($raw)) { return []; }` で空配列を返すのみで例外化されていない。受信側 `src/Eccube/Controller/Smaregi/WebhookController.php:107-109` は `return new JsonResponse(['status' => 'ok'], Response::HTTP_OK);` を返すため、取引ヘッダ不足でも HTTP 200 になる状態が継続している。",
+      "note": ""
+    },
+    {
+      "rowId": 59,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderPointApplier.php:99-101` に `$this->entityManager->beginTransaction();` / `$this->entityManager->lock($player, LockMode::PESSIMISTIC_WRITE);`、`src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentApplier.php:132-134` にも同じ `beginTransaction()` + `lock($player, LockMode::PESSIMISTIC_WRITE)` が現 develop で残存。明示ロックなしとする設計と依然不一致。",
+      "note": "同種の PESSIMISTIC_WRITE は SmaregiStockChangeApplier.php:122、SmaregiMessengerJobProcessingLock.php:43 にも存在。"
+    },
+    {
+      "rowId": 554,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php:199-208` の `getCsvHeader()` は `['商品コード' => '', '販売価格' => '', 'セールフラグ' => '0: セールではない, 1: セールあり', '帯URL' => '', 'タグ(ID)' => 'カンマ区切りで複数指定可能。']` の 5 列のまま。設計（買取価格・スマレジ連携フラグを含む 7 列）に必要な 2 列は未追加。この `$headers` が `:95` で `csv(...)` へ渡され `@admin/Product/csv_product_sale_high_price.twig`（`{% extends '@admin/Product/base_csv_upload.twig' %}`）経由で `src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:95` の `{% for key, value in headers %}` で描画されるため、画面のフォーマット表も 5 行のまま。`getRequiredCsvHeader()`（:213-219）の必須も商品コード/販売価格/セールフラグの 3 件で、設計の買取価格・スマレジ連携フラグは含まれない。",
+      "note": "base_csv_upload.twig は Product/Csv/ から Product/ 直下へ移動しているがヘッダ描画ロジックは同一。"
+    },
+    {
+      "rowId": 555,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/SaleHighPriceImportHandler.php:51-55` の `onBeforeImport()` は `productCodeColumn`/`sellPriceColumn`/`saleFlgColumn`/`beltUrlColumn`/`productTagListColumn` の 5 列のみを構築し、`:167-173` の `getColumns()` も同じ 5 要素を返す。買取価格・スマレジ連携フラグに相当する列定義は現 develop に存在せず、設計の列名・列順とは揃っていない。",
+      "note": ""
+    },
+    {
+      "rowId": 778,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/MailService.php:2333` の一括用手動メール送信 `sendManualMailForBulk()` は `$this->saveUserMailHistory($message, $template, $order);` と第4引数を渡さず呼び出しており、`:2341` の定義 `private function saveUserMailHistory(..., ?Member $creator = null)` の既定値 null がそのまま `:2348` `->setCreator($creator)` に流れる。操作会員 creator_id は履歴に紐付かないまま。",
+      "note": "現 develop で saveUserMailHistory の呼び出し元は 2333 の 1 箇所のみ。"
+    },
+    {
+      "rowId": 793,
+      "status": "未対応",
+      "evidence": "登録経路は `src/Eccube/Controller/Admin/Order/EditController.php:694-699` で `$TargetOrder->getShippings()->map(function (Shipping $Shipping): void { if (!$Shipping->isShipped()) { $Shipping->setShippingDate(new \\DateTime()); } });` と Shipping のみを更新し、`$TargetOrder->setShippingDate()` を呼ばない。一方 status_change 経路 `tryCommitOrderStatusChange()` の `:872-875` は `$TargetOrder->setShippingDate($now); foreach ($TargetOrder->getShippings() as $Shipping) { $Shipping->setShippingDate($now); }` と受注＋全配送を更新。入口によって dtb_order.shipping_date の更新有無が変わる構造は監査時点と同一。",
+      "note": "行番号は 623-628→694-699、775-779→872-875 にシフトしているがコードは同一。"
+    },
+    {
+      "rowId": 794,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/OrderType.php:546-553` は `if (!$this->orderStateMachine->can($Order, $newStatus)) { $form['OrderStatus']->addError(new FormError(trans('admin.order.failed_to_change_status__short', ...))); }` とフォームエラーを付与するのみ。受け側の `src/Eccube/Controller/Admin/Order/EditController.php:865-867` は `if (!$form->isValid()) { return $this->redirectToRoute('admin_order_edit', ['id' => $TargetOrder->getId()]); }` とリダイレクトするため、設計が求める「編集画面を再表示してステータス変更不可エラーを表示」は満たされない。監査時点から変更なし。",
+      "note": ""
+    },
+    {
+      "rowId": 795,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.en.yaml:2496` に `admin.order.cancel.complete: Order cancellation completed.` が現 develop でも存在する（日本語は messages.ja.yaml:2620 `全キャンセルが完了しました。`）。設計（英語ロケール資源なし＝'-'）とは依然不一致。",
+      "note": "行番号は 2361→2496 にシフトしているが記述内容は同一。"
+    },
+    {
+      "rowId": 796,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Order/edit.twig` の出荷情報ブロック（`:1709` `{{ 'admin.order.shipping_info'|trans }}`、以降 `:1760-1830` 付近で form.Shipping.name/kana/postalCode/Country/address 等を描画）に `form.Shipping.note` の描画は現 develop にも存在しない（`grep 'Shipping.note' edit.twig` は 0 件。出荷用メモを描画するのは `src/Eccube/Resource/template/admin/Order/shipping.twig:689-690` の `{{ form_widget(shippingForm.note, ...) }}` のみ）。`src/Eccube/Form/Type/Admin/ShippingType.php:207` に `->add('note', TextareaType::class, [...])` はあるが受注編集画面に入口がない状態は不変。",
+      "note": "加えて `src/Eccube/Controller/Admin/Order/EditController.php:86` に「管理画面からの受注新規登録は廃止済み（`admin_order_new` は提供しない）」とあり、`:157` のルートは `/order/{id}/edit` のみ。設計が求める GET/POST /order/new 自体が現 develop に存在せず、設計期待値は充足していない。"
+    }
+  ]
+}

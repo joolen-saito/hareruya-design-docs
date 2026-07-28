@@ -1,0 +1,77 @@
+{
+  "packetId": "0214_03",
+  "results": [
+    {
+      "rowId": 1154,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Event/Schedule/edit.twig:258`（既存更新側）と `:264`（新規登録側）はいずれも `<button class=\"btn btn-ec-conversion px-5\" type=\"submit\" ...>{{ 'admin.common.save'|trans }}</button>` のままで、新規/既存の分岐（`{% else %}` :261）はあるがラベルは共通。`src/Eccube/Resource/locale/messages.ja.yaml:1631` `admin.common.save: 保存` のため表示は両方「保存」。設計の「登録」/「更新」ラベルは未実装。",
+      "note": "grep で edit.twig 内の submit ボタンは上記2箇所のみ。「登録」「更新」を出す分岐は存在しない。"
+    },
+    {
+      "rowId": 1155,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/RepeatScheduleController.php:40` `#[Route(path: '/%eccube_admin_route%/event/{eventId}/repeatSchedule/create', name: 'admin_repeat_schedule_create', requirements: ['eventId' => '\\d+'], methods: ['GET', 'POST'])]` のまま。src/ 全体を `admin_repeat_schedule_new` および `repeatschedule`（小文字）で grep したがヒット0件で、設計の `GET /{admin_route}/event/repeatschedule/{eventId}/new` は不在。",
+      "note": ""
+    },
+    {
+      "rowId": 1156,
+      "status": "部分対応",
+      "evidence": "監査時点に無かった支払方法チェックが追加されている: `src/Eccube/Form/Type/Admin/RepeatScheduleType.php:187` `->addEventListener(FormEvents::POST_SUBMIT, ...)` 内の `:192` `if ($entryFlg && (int) $Event->getEntryFee() > 0 && $Event->getPayments()->isEmpty()) {` → `:193` `$form->get('entryFlg')->addError(new FormError(trans('form_error.schedule_credit_payment_required', [], 'validators')));`。フォームエラーとなるため入力画面が再表示される。ただし設計（0214 sheet-8 業務ルール「申込受付を有効にする場合、イベントに支払い方法が設定されている必要がある」）に無い `getEntryFee() > 0` の条件が付いており、参加費0円のイベントで申込受付を有効にした場合は支払方法未設定でもエラーにならない。",
+      "note": "単一日程用 `src/Eccube/Form/Type/Admin/ScheduleType.php:194-198` と同じ「有料時のみ」条件を踏襲した実装。"
+    },
+    {
+      "rowId": 1157,
+      "status": "部分対応",
+      "evidence": "支払い方法未設定時のメッセージ表示は新設された: `src/Eccube/Form/Type/Admin/RepeatScheduleType.php:193` `trans('form_error.schedule_credit_payment_required', [], 'validators')` / `src/Eccube/Resource/locale/validators.ja.yaml:64` `form_error.schedule_credit_payment_required: オンライン受付ありかつ参加費が有料の場合は、イベント編集画面で支払方法を設定してください。`。一方、設計が指定するロケールキーは両方とも不在で、`grep -rn \"admin.schedule.save.failed|admin.schedule.error.payment\" src/Eccube/Resource/locale/` はヒット0件。保存失敗メッセージも `src/Eccube/Controller/Admin/Event/RepeatScheduleController.php:91` `$this->addError('admin.common.save_error', 'admin');` が catch 節のみで、フォーム検証失敗時（`:67` `if ($form->isSubmitted() && $form->isValid())` の else 経路なし）には保存失敗メッセージを出さない。",
+      "note": "設計キー admin.schedule.save.failed / admin.schedule.error.payment.not.exists は依然未定義。"
+    },
+    {
+      "rowId": 1158,
+      "status": "部分対応",
+      "evidence": "日前日数系は初期値0が追加済み: `src/Eccube/Form/Type/Admin/RepeatScheduleType.php:147-150` `->add('deckRegistDeadlineDays', IntegerType::class, [... 'data' => 0,])`、`:163-165` `->add('onlineEntryStartDays', IntegerType::class, [... 'data' => 0,])`、`:175-177` `->add('onlineEntryEndDateDays', IntegerType::class, [... 'data' => 0,])`。デッキ登録締切時刻も `:152-156` `'data' => Carbon::now()->setTime(23, 59, 59)` で23:59。しかし時刻系4項目には data 未設定のまま: `:132-136` `->add('entryStartTime', TimeType::class, ['label' => ..., 'required' => false, 'widget' => 'single_text'])`、`:137-141` `entryEndTime` 同様、`:171-174` `onlineEntryStartTime`、`:183-186` `onlineEntryEndTime` いずれも `data` キーなし。設計の初期値00:00（受付開始/終了時間、オンライン受付開始/終了時刻）が未充足。`src/Eccube/Resource/template/admin/Event/RepeatSchedule/create.twig` の JS（:13-59）にも初期値設定はなく `form_widget` 描画のみ。",
+      "note": "監査時点は日前日数にも data が無かったため一部前進あり。"
+    },
+    {
+      "rowId": 1159,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Event/RepeatSchedule/create.twig:92-95` は `{% if form.eventDetailId.vars.value %}{% set eventPageUrl = url('event_detail', {detailId: form.eventDetailId.vars.value}) %}<a href=\"{{ eventPageUrl }}\" ...>` のままで条件付き。`src/Eccube/Form/Type/Admin/RepeatScheduleType.php:65` `$eventDetailId = ($options['is_new'] ?? true) ? null : ($EventDetail?->getId() ?? null);` かつ `src/Eccube/Controller/Admin/Event/RepeatScheduleController.php:44` で `['event' => $Event, 'is_new' => true]` を渡すため、繰返日程新規登録画面では常に null となりURL欄は空。eventId 経由の代替リンクも同テンプレートに存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1160,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventController.php:273` `#[Route(path: '/%eccube_admin_route%/event/{id}/copy', name: 'admin_event_copy', requirements: ['id' => '\\d+'], methods: ['GET'], defaults: ['isCopy' => true])]` のまま。画面側も `src/Eccube/Resource/template/admin/Event/edit.twig:497` `<a class=\"btn btn-ec-conversion px-4\" href=\"{{ url('admin_event_copy', {id: Event.id}) }}\">`。`grep -rn \"admin_event_duplicate\" src/ app/` はヒット0件で、設計の `admin_event_duplicate` / `/event/{duplicateId}/duplicate` は不在。requirements も `\\d+` のままで1以上の制約なし。",
+      "note": ""
+    },
+    {
+      "rowId": 1161,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/EventType.php:88-91` `->add('baseInfo', EntityType::class, ['class' => BaseInfo::class, 'query_builder' => fn (EntityRepository $er) => $er->createQueryBuilder('b')->orderBy('b.id', 'ASC')])` のままで、編集権限による選択肢の絞り込みが無い（BaseInfo 全件）。エラー付与のみ `:295` `if (!$Member->isEditableShop($BaseInfo)) {` に存在し、これは監査時点と同一。EventType 内の `isEditableShop` 出現箇所は :295 の1件のみ。",
+      "note": "監査時点と実質同じ状態（エラー付与は既存、権限店舗への選択肢絞り込みは未実装）。"
+    },
+    {
+      "rowId": 1162,
+      "status": "未対応",
+      "evidence": "`grep -rni \"venue\" src/Eccube/Entity/ src/Eccube/Form/Type/Admin/ src/Eccube/Controller/Admin/Event/` はヒット0件。`src/Eccube/Form/Type/Admin/EventType.php` に `->add('venue', ...)` は無く、`src/Eccube/Entity/DtbEvent.php` に venue/venueId プロパティも無い。locale の「会場」は `src/Eccube/Resource/locale/messages.ja.yaml:6647-6648` の front.event.header.venue.* のみでイベント登録項目ではない。複製時の初期表示処理も存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1163,
+      "status": "未対応",
+      "evidence": "`grep -rn \"remarks|remarkJp|noteJp\" src/Eccube/Entity/DtbEvent.php src/Eccube/Form/Type/Admin/EventType.php` はヒット0件で、備考(日)/備考(英) に対応する FormType 項目・エンティティプロパティは develop に存在しない。`src/Eccube/Form/Type/Admin/EventType.php` の add 定義には賞品・フリー入力エリアのみで備考欄は無く、複製時の初期表示経路も無い。",
+      "note": ""
+    },
+    {
+      "rowId": 1164,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/EventType.php:319-322` `public function getBlockPrefix(): string { return 'admin_event'; }` のまま。複製新規は `src/Eccube/Controller/Admin/Event/EventController.php:273` の admin_event_copy → `:281` `$builder = $this->formFactory->createBuilder(EventType::class, $Event, ['Member' => $Member]);` で EventType を生成するため、フォーム名は `admin_event`。設計の `admin_event_detail` を返すのは日程フォームの `src/Eccube/Form/Type/Admin/ScheduleType.php:293` であり、イベント登録フォームではない。",
+      "note": ""
+    },
+    {
+      "rowId": 1165,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Event/Entry/index.twig:114-119` `$('.search-clear').on('click', function(e) { e.preventDefault(); $('#search_form input[name=\"' + searchModeRadioName + '\"][value=\"event_entry\"]').prop('checked', true).trigger('change'); });` のままで、他入力のクリア処理なし。change 先の `:39-54` `applyEntryListSearchModeUi()` も deck_registration 時に entry_status/payment/payment_no を空にするのみで、event_entry モードでは `prop('disabled', false)` を行うだけ。event_name/base_info/開始日From・To/player_name 等の値は残る。",
+      "note": ""
+    }
+  ]
+}

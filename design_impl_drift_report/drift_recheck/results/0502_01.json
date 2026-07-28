@@ -1,0 +1,77 @@
+{
+  "packetId": "0502_01",
+  "results": [
+    {
+      "rowId": 6,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ProductController.php:158-162` `$languageCode = match (strtolower($lang)) { 'ja' => 'JP', 'en' => 'EN', default => throw new NotFoundException('Not Found'), };` と監査時点と同一。`jp` は default に落ちて404のまま。src/ 全体を `popup` で横断検索しても popup 系APIの別実装・別ルートは存在しない（唯一の関連は `src/Eccube/Controller/Front/GoodsApiController.php` で findPopupProductByCardId を再利用するフロント fallback のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 7,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ProductController.php:177-181` `} catch (BaseApiException $e) { return $this->json(['code' => $e->getStatusCode(), 'errors' => $e->getErrors()], $e->getStatusCode()); }` のままで `message` キーは返さない。`src/Eccube/Exception/App/NotFoundException.php:29-34` も `parent::__construct(errors: [$message], statusCode: Response::HTTP_NOT_FOUND, ...)` と errors 配列保持のまま。",
+      "note": "NotFoundException.php はファイル全体が36行に整理されているが、errors 配列を保持する構造は監査時点と同じ。"
+    },
+    {
+      "rowId": 8,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductRepository.php:2163-2165,2170`（findPopupProductByProductId）で `$rsm->addScalarResult('price01', 'price01', 'integer');` `('price02', 'price02', 'integer')` `('stock', 'stock', 'integer')` `('weeklysold', 'weeklySold', 'integer')` と integer マッピングのまま。`src/Eccube/Service/App/Popup/PopupResponseBuilder.php:35,41` も `'stock' => (int) ($result['stock'] ?? 0)` / `'weeklySold' => (int) ($result['weeklySold'] ?? 0)` で int キャストのまま。文字列化処理は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 9,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ProductController.php:265-266` `#[Route(path: '/api/popup/card/{lang}/{cardId}', name: 'popup_product_by_card_id', methods: ['GET'])]` / `public function getPopupProductByCardId(string $lang, string $cardId): JsonResponse` と、Request を受け取らないシグネチャのまま。foil_flg / price のクエリ取得は無い。`src/Eccube/Controller/App/ProductController.php:278` の呼び出しも `findPopupProductByCardId((int) $cardId, $languageCode, $this->getShop()->getId())` で、追加されたのは在庫参照店舗IDのみ。`src/Eccube/Repository/ProductRepository.php:2320` `findPopupProductByCardId(int $cardId, string $languageCode, ?int $stockBaseInfoId = null)` に foil_flg/price 引数は無く、`ProductRepository.php:2362` の `cd.foil_flg ASC,` は固定で price02 の昇降順切替も存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 10,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ProductController.php:279-281` で `throw new NotFoundException('Not Found');`、`src/Eccube/Controller/App/ProductController.php:291-295` `} catch (BaseApiException $e) { return $this->json(['code' => $e->getStatusCode(), 'errors' => $e->getErrors()], ...); }` と、A02-02 経路も errors 配列のまま。`src/Eccube/Exception/App/NotFoundException.php:30` `errors: [$message],` で message キーは生成されない。",
+      "note": ""
+    },
+    {
+      "rowId": 11,
+      "status": "未対応",
+      "evidence": "旧商品ID系2ルートとも本文キーは errors のまま。`src/Eccube/Controller/App/ProductController.php:324,335-339`（言語指定なし `/popup/old/{oldProductId}`）`throw new NotFoundException('Not Found');` → `catch (BaseApiException $e) { return $this->json(['code' => $e->getStatusCode(), 'errors' => $e->getErrors()], ...); }`、`src/Eccube/Controller/App/ProductController.php:373,384-388`（`/popup/old/{lang}/{oldProductId}`）も同一。`src/Eccube/Exception/App/NotFoundException.php:30` `errors: [$message],`。",
+      "note": ""
+    },
+    {
+      "rowId": 12,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/Popup/PopupResponseBuilder.php:29-49` のレスポンスは `productId / name / productClassId / price01 / price02 / stock / nameEn / subFileName / fileName / code / conditionCode / weeklySold / productUrl` ＋ `if ($includeBeltUrl) { $response['beltUrl'] = ...; } else { $response['foilFlg'] = ...; }` で cardId は依然含まれない。A02-03 の呼び出し `src/Eccube/Controller/App/ProductController.php:334` も `build($result, $productUrl, true)`。リポジトリ側 `src/Eccube/Repository/ProductRepository.php:2496-2513`（findPopupProductByOldProductIdWithoutLang の SELECT）および `:2538-2550` の RSM にも cardId は無い（mtb_card は `INNER JOIN mtb_card c`（`:2524`）しているが c.id を SELECT していない）。",
+      "note": "cardId 取得用の `getCardIdsByProductIds`（ProductRepository.php:2281）は develop に存在するが、ポップアップAPI経路からは呼ばれていない。"
+    },
+    {
+      "rowId": 13,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductRepository.php:2543-2545`（findPopupProductByOldProductIdWithoutLang の RSM）`$rsm->addScalarResult('price01', 'price01', 'integer');` `('price02', 'price02', 'integer')` `('stock', 'stock', 'integer')` と integer のまま。`src/Eccube/Service/App/Popup/PopupResponseBuilder.php:33-35` も `'price01' => $result['price01'], 'price02' => $result['price02'], 'stock' => (int) ($result['stock'] ?? 0),` で文字列化していない。",
+      "note": ""
+    },
+    {
+      "rowId": 14,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ProductController.php:366-369` `$languageCode = match (strtolower($lang)) { 'ja' => 'JP', default => 'EN', };` と監査時点と同一で、`jp` は default に落ちて EN 扱いのまま。`jp` を JP に変換する実装は src/ 内に見当たらない。",
+      "note": ""
+    },
+    {
+      "rowId": 15,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ProductController.php:384-388` `} catch (BaseApiException $e) { return $this->json(['code' => $e->getStatusCode(), 'errors' => $e->getErrors()], $e->getStatusCode()); }` のままで message キーは無い。`src/Eccube/Exception/App/NotFoundException.php:30` `errors: [$message],`。",
+      "note": ""
+    },
+    {
+      "rowId": 16,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductRepository.php:2463-2465,2470`（findPopupProductByOldProductId の RSM）で price01/price02/stock/weeklySold がすべて `'integer'` マッピングのまま。`src/Eccube/Service/App/Popup/PopupResponseBuilder.php:35,41` の `(int)` キャストも変更なし。",
+      "note": ""
+    },
+    {
+      "rowId": 17,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ProductController.php:383` `return $this->json($this->popupResponseBuilder->build($result, $productUrl, true), Response::HTTP_OK);` で includeBeltUrl=true のまま。`src/Eccube/Service/App/Popup/PopupResponseBuilder.php:45-49` `if ($includeBeltUrl) { $response['beltUrl'] = $result['beltUrl'] ?? null; } else { $response['foilFlg'] = $result['foilFlg']; }` により旧商品IDルートでは foilFlg が除外される。`src/Eccube/Repository/ProductRepository.php:2412-2429` の findPopupProductByOldProductId の SELECT にも foil_flg AS foilFlg は無い（`cd.foil_flg` は ORDER BY `:2448` で使うのみ）。",
+      "note": ""
+    }
+  ]
+}

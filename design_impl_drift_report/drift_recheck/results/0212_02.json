@@ -1,0 +1,77 @@
+{
+ "packetId": "0212_02",
+ "results": [
+  {
+   "rowId": 1302,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Form/Type/Admin/SearchDeckType.php:206-212` `configureOptions` は今も `'csrf_protection' => true, 'allow_extra_fields' => true` のまま。`src/Eccube/Controller/Admin/Deck/DeckController.php:68` `$this->formType = SearchDeckType::class;` で SearchControllerTrait の `getForm()`/`createBuilder($this->formType, null, $this->formCreateOption)` に渡すのみで csrf_protection の上書きはなく、監査時点と同じ。",
+   "note": ""
+  },
+  {
+   "rowId": 1303,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Form/Type/Admin/SearchDeckType.php:44-203` の buildForm に win_count_from/to・loss_count_from/to・draw_count_from/to は無し（数値レンジは `ranking_from`/`ranking_to` のみ）。`src/Eccube/Repository/DtbDeckRepository.php:88` に `* ★カスタマイズ: winCount, lossCount, drawCount, dciNo を除去` のコメントが残存。`grep -rn \"win_count\\|winCount\\|loss_count\\|draw_count\" src/Eccube/Form/Type/Admin/SearchDeckType.php src/Eccube/Resource/template/admin/Deck/ src/Eccube/Repository/DtbDeckRepository.php` の該当は上記コメント1件のみで、検索条件の実装は無い。",
+   "note": ""
+  },
+  {
+   "rowId": 1304,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Form/Type/Admin/SearchDeckType.php:100` `->add('private_flg', ChoiceType::class, [` （設計キー `private` ではない）、同 `:171` `->add('event_detail_id', TextType::class, [` （設計キー `event_id` ではない）。検索側も `src/Eccube/Repository/DtbDeckRepository.php:296-297` `if (!empty($searchData['event_detail_id'])) { SqlUtil::searchByIds($qb, $searchData['event_detail_id'], 'ed', 'id');` で ed.id に対する検索のまま、`:227-229` も `$searchData['private_flg']` を参照しており監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 1305,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Form/Type/Admin/SearchDeckType.php:164-170` `->add('card', TextType::class, ['label' => 'admin.deck.card', 'required' => false, 'constraints' => [new Assert\\Length(...)]])` で data-list 属性なし。`src/Eccube/Resource/template/admin/Deck/index.twig:352-356` もカード名欄は `{{ form_widget(searchForm.card) }}` のみで `ul.cardNameList` が無く、`:51-52` javascript block は `select2.min.js` のみで deck_card.js の読み込みが無い。`cardNameList`/`data-list-card` の実装はフロント `src/Eccube/Resource/template/default/Block/deck_detailed_search_modal.twig:98-99` にのみ存在し、管理画面側には未反映。",
+   "note": ""
+  },
+  {
+   "rowId": 1306,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Resource/template/admin/Deck/index.twig:53-216` のインラインJSは select2 初期化・ページ件数・ソート・一括編集・CSRF差し替えのみで、format/color の change で archetypes の option を絞る処理は無い（`:57-64` `const initSelect2 = ...; $('.select2-select').each(...)`）。同ファイル内の 'archetype' 出現は `:256-257` の検索欄 `{{ form_widget(searchForm.archetypes) }}` と `:442-444` の一括編集欄のみ。`src/Eccube/Form/Type/Admin/SearchDeckType.php:84-91` の archetypes も `'attr' => ['class' => 'select2-select']` だけでフィルタ用データ属性なし。`html/template/admin/assets/js` にも deck 関連JSは存在しない。",
+   "note": ""
+  },
+  {
+   "rowId": 1307,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Resource/template/admin/Deck/index.twig:205-215` の `$('#bulk_form').on('submit', function(e) {...}` は formaction に応じた CSRF トークン差し替えのみで未選択時の alert/preventDefault が無く、`:404` の CSV出力ボタン `<button type=\"submit\" id=\"csv_export\" ... formaction=\"{{ url('admin_deck_csv_export') }}\">` にもガード無し。サーバ側 `src/Eccube/Controller/Admin/Deck/DeckController.php:813-815` `$this->addError('admin.deck.csv_export_no_selection', 'admin'); return $this->redirectToRoute('admin_deck_search', ['page_no' => $pageNo]);` のままで監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 1308,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Deck/DeckController.php:389-426` の個別削除 `delete()` は成功時 `:424-426` `$this->addSuccess('admin.common.delete_complete', 'admin'); return $this->redirectToRoute('admin_deck_list');` で、セッション `deck.search.page_no` を参照しない。一括削除 `bulkDelete()` は `:159` `$pageNo = $this->session->get($this->sessionKey.'.page_no', 1);` → `:192` `return $this->redirectToRoute('admin_deck_search', ['page_no' => $pageNo]);` と分岐したままで監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 1309,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/SearchControllerTrait.php:142-146` `if (!preg_match('/^(ASC|DESC|asc|desc)$/', $order)) { $this->addError('admin.error.sort', 'admin'); return $this->index($request, $this->paginator); }` のままで、検索条件・ページ関連セッション（`eccube.admin.deck.search` / `.search.page_no` 等）の削除処理は無い。ソートキーも `src/Eccube/Repository/DtbDeckRepository.php:319` `$sortColumn = $this->sortKeys[$sortKey] ?? $this->sortKeys[self::DEFAULT_SORT_KEY];` で不正時に黙って default フォールバックし、admin.error.sort は出ない。",
+   "note": ""
+  },
+  {
+   "rowId": 1310,
+   "status": "未対応",
+   "evidence": "CSV出力ルートは `src/Eccube/Controller/Admin/Deck/DeckController.php:796-797` `#[Route('/%eccube_admin_route%/deck/csv_export', name: 'admin_deck_csv_export', methods: ['POST'])] public function csvExport(...)` の1系統のみ。`src/Eccube/Service/Csv/Exporter/DeckCsvExporterService.php:27-30` も `@var array{deck: array{header: array<int, string>}}` / `private const CSV_TYPES = ['deck' => [...]]` で標準レイアウトのみ。`grep -rn \"csvexport_old|csv_export_old|csvExportOld|旧サイト\" src/ html/ app/` は無関係な `app/DoctrineMigrations/Version20251204111453.php:1504` の文言1件のみでヒットせず、`src/Eccube/Resource/template/admin/Deck/index.twig:404` のCSV出力ボタンも1つだけ。",
+   "note": ""
+  },
+  {
+   "rowId": 1311,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Resource/template/admin/Deck/edit.twig:101-117` の `$('#admin_deck_Archetype').on('change select2:select', function() {` 内、`:106-108` `const currentCardImageId = $('#admin_deck_cardImageId').val(); if (currentCardImageId && currentCardImageId !== '0') { return; }` の早期returnガードがそのまま残存し、代表カード既設定時は AJAX 更新されない。",
+   "note": ""
+  },
+  {
+   "rowId": 1312,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Resource/template/admin/Deck/index.twig:205-215` の submit ハンドラは CSRF トークン差し替えのみで `alert('CSV出力するデッキをひとつ以上選択してください。')` 相当のクライアントガードが無い。サーバ側は `src/Eccube/Controller/Admin/Deck/DeckController.php:813-815`/`:819-821` `$this->addError('admin.deck.csv_export_no_selection', 'admin');` → `redirectToRoute('admin_deck_search', ...)` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:4385` `admin.deck.csv_export_no_selection: CSV出力対象のデッキが選択されていません。` は存在するが設計の `admin.csv.error.export.require` は grep で 0 件。",
+   "note": ""
+  },
+  {
+   "rowId": 1313,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Deck/DeckValidationService.php:247-248` `if ($Restriction->getId() === MtbRestriction::RESTRICTION_ID && $card['count'] > 1) { return ['key' => 'admin.deck.validation.restricted', ...]` 、`:257-259` `'key' => 'admin.deck.validation.more_than_max', 'params' => array_merge($baseParams, ['%count%' => self::MAX_COUNT_PER_CARD])` のまま。文言も `src/Eccube/Resource/locale/messages.ja.yaml:4408-4410` `admin.deck.validation.restricted: \"%row% 行目の %name% は制限カードです\"` / `admin.deck.validation.highlander_only: \"%row% 行目の %name% が2枚以上登録されています\"` / `admin.deck.validation.more_than_max: \"%row% 行目の %name% が%count%枚を超えて登録されています\"` で監査時点と同一。設計の『5枚以上登録されています』表現・1枚制限カードへの『2枚以上登録されています』割当は未反映。",
+   "note": ""
+  }
+ ]
+}

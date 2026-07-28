@@ -1,0 +1,71 @@
+{
+  "packetId": "0416_02",
+  "results": [
+    {
+      "rowId": 292,
+      "status": "未対応",
+      "evidence": "現 develop 全体で `redash`/`Redash` は 0 ヒット（`grep -ril redash .` が無出力）。`smaregi_contract_id` / `smaregi_access_token` は `src/Eccube/Entity/Master/MtbOption.php:42` `public const SMAREGI_CONTRACT_ID = 'smaregi_contract_id';` と同 `:68` `public const SMAREGI_ACCESS_TOKEN = 'smaregi_access_token';`、および `app/DoctrineMigrations/Version20251125161057.php:142,149` のオプション定義のみで、Redash用DBから当該値を削除/マスクする SQL・Repository・Command は存在しない。`src/Eccube/Command` の AsCommand 一覧（全56ファイル確認）にも Redash 用DB作成バッチの入口はない。",
+      "note": "監査時点と同状態。"
+    },
+    {
+      "rowId": 293,
+      "status": "未対応",
+      "evidence": "Redash用DBを対象に注文ステータス別 smaregi 削除フラグを一括更新する処理は現 develop に不在（`redash` 全体0ヒット）。smaregi_del_flg を扱うのは従来どおり本番 Order 側のみで、`src/Eccube/Repository/OrderRepository.php:883` `->andWhere('o.smaregi_del_flg = :flgFalse')`、`src/Eccube/Repository/OrderRepository.php:965` `->andWhere('o.smaregi_del_flg = :flgFalse')` と `src/Eccube/Command/SmaregiOtcDeleteCommand.php:39` `#[AsCommand(name: 'eccube:smaregi:otc:delete', description: '店頭受取注文スマレジ商品削除バッチ (MessengerJob を enqueue する)')]`（同ファイル冒頭コメントで対象は PASSED/DELIVERED/CANCEL、API削除成功後にフラグON）で、設計のRedash用DB加工とは対象・条件とも別物のまま。",
+      "note": "監査時点と同状態。"
+    },
+    {
+      "rowId": 294,
+      "status": "未対応",
+      "evidence": "Redash用DB作成を毎日4時にStep Functionsで起動する契約の実装証跡は現 develop に不在。毎日4時/Step Functions の記述は依然として別バッチのもので、`src/Eccube/Command/SmaregiOtcDeleteCommand.php:38` `* 実行タイミング: 毎日 4 時 / スケジュール起動 (Step Functions)` が `#[AsCommand(name: 'eccube:smaregi:otc:delete', ...)]`（同:39）に付いているだけ。`infra/lib`・`infra/bin` に StateMachine/Lambda/events.Rule の定義は0ヒット、`dockerbuild/eccube/crontab` も `* * * * * /usr/local/bin/file_sync_command ...` の1行のみ。",
+      "note": "監査時点と同状態。"
+    },
+    {
+      "rowId": 295,
+      "status": "未対応",
+      "evidence": "同期スクリプトは今も3系統のみ。`dockerbuild/eccube/file_sync_command.sh:58-60` が `aws s3 sync \"s3://${AWS_S3_CONTENT_BUCKET}/app/template/default\" /var/ec-cube/app/template/default`、同 `app/template/user_data`、同 `html/user_data` を同期し（S3_ENDPOINT 分岐の同:62-64 も同一3系統）、`dockerbuild/docker-php-entrypoint:183-185` の起動時同期も同じ3ディレクトリ。`grep -rn sitemap dockerbuild Dockerfile infra` は0ヒットで、`s3://.../html/sitemap.xml` → `/var/ec-cube/html/sitemap.xml` の同期は追加されていない。",
+      "note": "監査時点と同状態。"
+    },
+    {
+      "rowId": 296,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/SitemapController.php:56` `#[Route(path: '/sitemap.xml', name: 'sitemap_xml', methods: ['GET'])]` の HTTP 出力実装が監査時点のまま存続し、同:102-115 で `pageRepository`/`productRepository`/`categoryRepository`/`dtbDeckRepository` から取得した結果を `'sitemap_index.xml.twig'` にレンダリングして返すだけ。トップページ起点のリンク巡回・URLリストからのファイル生成・S3アップロードはなく、`composer.json` の crawler 系依存は `\"symfony/dom-crawler\": \"^7.4\"`（:75、テスト用DOMパーサ）のみで Sitemap-Generator-Crawler 相当は不在。",
+      "note": "監査時点と同状態。"
+    },
+    {
+      "rowId": 297,
+      "status": "未対応",
+      "evidence": "前回サイトマップとの比較・差異時のみS3アップロードする制御は現 develop に不在。サイトマップ実装は `src/Eccube/Controller/Front/SitemapController.php:56` 以下のGETルート群と `src/Eccube/Resource/template/default/sitemap*.xml.twig` のみで、`grep -rn 'S3\\|s3' src/Eccube/Resource/template/default/sitemap*.twig` は0ヒット。S3のオブジェクト操作は汎用の `src/Eccube/Service/S3AccessService.php:55` `$this->client->putObject([` / 同:102 `$objects = $this->client->listObjects([` に限られ、サイトマップ差分判定から呼ばれていない。",
+      "note": "監査時点と同状態。"
+    },
+    {
+      "rowId": 298,
+      "status": "未対応",
+      "evidence": "サイトマップ生成用Command・EventBridge/Lambda・毎日4:00設定はいずれも現 develop に不在。`src/Eccube/Command` 配下56ファイルの `#[AsCommand(...)]` を全列挙してもサイトマップ生成コマンドはなく（例: `src/Eccube/Command/SmaregiOtcDeleteCommand.php:39` 等、既存バッチのみ）、`grep -rn 'StateMachine|stepfunctions|aws_events|events.Rule|Lambda' infra/lib infra/bin` は0ヒット、`dockerbuild/eccube/crontab` は `* * * * * /usr/local/bin/file_sync_command >> /var/ec-cube/var/log/cron/s3_sync.log 2>&1` の1行のみ。",
+      "note": "監査時点と同状態。"
+    },
+    {
+      "rowId": 299,
+      "status": "未対応",
+      "evidence": "巡回除外設定ではなく固定XMLルート生成のまま。`src/Eccube/Controller/Front/SitemapController.php:164-165` `#[Route(path: '/sitemap_page.xml', name: 'sitemap_page_xml', methods: ['GET'])] public function page(): Response` は同:167 で `meta_robots not like '%noindex%'` によるページ抽出、同:172 `if ($Page->getEditType() === Page::EDIT_TYPE_USER) { return false; }` と同:181 `return count($route->compile()->getPathVariables()) < 1;` の除外のみ。他ルートも同:121 `/sitemap_category.xml`、:134 `/sitemap_product_{page}.xml`、:196 `/sitemap_purchase_{page}.xml`、:216 `/sitemap_deck.xml` の固定生成で、管理ページ/商品検索/カードリスト購入/デッキ検索/イベント情報の日英URLを巡回除外する設定は存在しない。",
+      "note": "監査時点と同状態。"
+    },
+    {
+      "rowId": 300,
+      "status": "未対応",
+      "evidence": "ステージングDB保守バッチの入口は現 develop に不在。`grep -rn 'staging|ステージング環境|ステージングDB|stg-filepool' src app dockerbuild infra bin` は0ヒットで、`src/Eccube/Command` の `#[AsCommand]` 全列挙にも該当なし。近傍は依然として `src/Eccube/Command/TestS3UploadDemoCommand.php:22` `#[AsCommand(name: 'eccube:demo:s3-upload', description: 'Upload a file to S3')]` と `src/Eccube/Command/InstallerCommand.php:29` `#[AsCommand(name: 'eccube:install', description: 'Install EC-CUBE')]` のみで、本番DBスナップショット取得・テンポラリDB作成加工・ステージングDB再作成・S3同期・個人情報マスクのいずれも実装されていない。",
+      "note": "監査時点と同状態。"
+    },
+    {
+      "rowId": 301,
+      "status": "未対応",
+      "evidence": "15分毎のS3画像サイズチェック＋メール通知の実装は現 develop に不在。`src/Eccube/Command` の `#[AsCommand]` 全列挙に画像サイズチェック/ファイルサイズアラート相当なし。S3のオブジェクト列挙は汎用ヘルパ `src/Eccube/Service/S3AccessService.php:100-123` `public function getFiles(string $dir, ?string $key = null): array { $objects = $this->client->listObjects([...]);` があるのみで、規定サイズ超過判定・超過ファイル一覧作成・宛先メール送信は行っていない（同ファイル他メソッドは putFile/putFileData/isFileExist）。`grep -rln 'ファイルサイズ|画像ファイルサイズ|超過' src/Eccube/Resource/template/*/Mail ...` は0ヒットで、設計の件名・From/To/CC/BCC・本文に該当するメールテンプレートも存在しない。",
+      "note": "監査時点と同状態。"
+    },
+    {
+      "rowId": 302,
+      "status": "未対応",
+      "evidence": "デッドロック検知バッチは現 develop に不在。`grep -rin 'deadlock|デッドロック' src/` は0ヒット、`infra/lib infra/bin dockerbuild bin app/config` でも0ヒット。`src/Eccube/Command` の `#[AsCommand]` 全列挙にも該当入口がなく、5分毎起動を定義する StateMachine/EventBridge も `infra/lib`・`infra/bin` に存在しない（`dockerbuild/eccube/crontab` は s3 sync 1行のみ）。dtb_order 対象のデッドロック検知SQL・管理者メール通知処理も追加されていない。",
+      "note": "監査時点と同状態。"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "packetId": "0203_04",
+  "results": [
+    {
+      "rowId": 791,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Order/EditController.php:819-824` に `$isPartCancel = $this->isPartCancel($TargetOrder, $OriginOrder);` / `if ($newStatusId === OrderStatus::CANCEL) { $this->addSuccess('admin.order.cancel.complete', 'admin'); } elseif ($isPartCancel) { $this->addSuccess('admin.order.part_cancel.complete', 'admin'); } else { $this->addSuccess('admin.order.save.complete', 'admin'); }` が現存。監査時点と同じ3分岐（設計に無い一部キャンセル完了メッセージ）のまま。`isPartCancel()` の定義も `EditController.php:981` に残存。",
+      "note": ""
+    },
+    {
+      "rowId": 792,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Order/EditController.php:1107-1114` に `if ($TargetOrder->getOrderStatus()?->getId() === OrderStatus::CANCEL) { $gainedPoints = 0; } ... $gainedPoints = $taxedBase > 0 ? (int) floor($taxedBase * $pointPercentage / 100) : 0;` が現存。設計未記載の「CANCEL 時は無条件で獲得ポイント0」分岐が再計算ルールに先行する構造は監査時点と同一。",
+      "note": "行番号は監査時点の956からズレているが同一ロジック。"
+    },
+    {
+      "rowId": 797,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:2513` `admin.order.add_product_item: 商品を追加` のままで、設計の「商品の追加」に変更されていない。`src/Eccube/Resource/template/admin/Order/edit.twig:1251,1253,1258` で同キーをボタン／モーダルタイトルに表示している点も監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 798,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:2527` `admin.order.payment_total: お支払い合計` のままで、設計の「お支払合計」になっていない。`src/Eccube/Resource/template/admin/Order/edit.twig:1325` `<div class=\"col-auto\"><span class=\"align-middle\">{{ 'admin.order.payment_total'|trans }}</span></div>` で表示している点も変わらず。",
+      "note": ""
+    },
+    {
+      "rowId": 799,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Order/EditController.php:157` のルートは `#[Route(path: '/%eccube_admin_route%/order/{id}/edit', name: 'admin_order_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]` のみとなり、`admin_order_new` / `/order/new` のルート定義はリポジトリ全体（src/, app/）から消滅（grep で残るのは `EditController.php:86` のコメント `管理画面からの受注新規登録は廃止済み（\\`admin_order_new\\` は提供しない）.` のみ）。`index()` のシグネチャも `int $id` 必須（`EditController.php:159`）で、id が null の新規 Order/Shipping 生成経路は削除されている。設計の「新規登録機能は廃止」を満たす。",
+      "note": ""
+    },
+    {
+      "rowId": 800,
+      "status": "対応済み",
+      "evidence": "サーバ側ガードが新設された。`src/Eccube/Controller/Admin/Order/EditController.php:598-601` `private function isOrderEditableByLoginMember(Order $Order): bool { return $this->getMember()->isEditableShop($Order->getBaseInfo()); }`、`EditController.php:608-615` `canMutateOrder()` がこれを最初に評価し、`EditController.php:519-524` で `if (\\in_array($mode, ['status_change', 'clear_date', 'register'], true) && !$this->canMutateOrder($OriginOrder)) { $this->addError('admin.common.error_invalid_request', 'admin'); return $this->redirectToRoute('admin_order_edit', ...); }` と更新系 POST を拒否する。画面側も `src/Eccube/Resource/template/admin/Order/edit.twig:937,946,956,968,978,993,1063,1231,1252,1272,1388,2065,2100` で `{% if selectedBaseInfo is not null and app.user.isEditableShop(selectedBaseInfo) and not action_disabled %}` により日付クリア・ステータス変更・削除・商品追加・登録ボタンを出し分ける。設計の「編集可能店舗に紐づく受注のみ編集可能」を満たす。",
+      "note": ""
+    },
+    {
+      "rowId": 801,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Order/EditController.php:606-615` に `編集可能店舗外、またはスマレジ連携受注（smaregi_transaction_id あり）は更新不可.` の `canMutateOrder()` があり `return !$Order->hasSmaregiTransactionId();` で拒否、`EditController.php:519-524` で register/status_change/clear_date を弾いてエラーフラッシュ＋リダイレクトする。画面側も `src/Eccube/Resource/template/admin/Order/edit.twig:812-814` `{% if Order.hasSmaregiTransactionId %}{% set action_disabled = true %}{% endif %}` により、日付クリア・受注ステータス変更・明細削除・商品の追加・受注情報を登録の各ボタンが非表示/disabled になり（`edit.twig:937-993,1063,1231,1252,1272,1388,2065,2100-2102`）、`edit.twig:1029` でスマレジメモも `readonly` になる。設計の「スマレジ連携データは更新不可」を満たす。",
+      "note": ""
+    },
+    {
+      "rowId": 802,
+      "status": "対応済み",
+      "evidence": "受注データ更新履歴が新規実装された。Entity `src/Eccube/Entity/DtbOrderHistory.php:25-58`（`#[ORM\\Table(name: 'dtb_order_history')]`、`changed_at` / `member_id` / `source` / `snapshot` JSON 列）、記録サービス `src/Eccube/Service/Order/OrderHistoryRecorder.php:67-80`、保存側は `src/Eccube/Controller/Admin/Order/EditController.php:164` `$beforeSnapshot = $request->isMethod('POST') ? $this->orderHistoryRecorder->capture($TargetOrder) : null;` と `EditController.php:768,919,1071` の `$this->orderHistoryRecorder->recordIfChanged(...)`（register / status_change / clear_date の各経路）。参照側は `EditController.php:208` `'orderHistories' => $this->orderHistoryRepository->findByOrderDesc($TargetOrder),` と `src/Eccube/Resource/template/admin/Order/edit.twig:1947-1994` の「受注データ更新履歴」カード（変更日時・変更内容リンク・変更者を表示）。設計の「履歴として保持し、編集画面で参照できる」を満たす。",
+      "note": ""
+    },
+    {
+      "rowId": 803,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/admin/Order/edit.twig:1939` `<div class=\"collapse {{ id ? '' : 'show' }} ec-cardCollapse\" id=\"pointErrorMessage\">` に修正され、既存受注（id あり）では `show` が付かず初期状態は閉じる。ヘッダの矢印/aria も `edit.twig:1936` `aria-expanded=\"{{ id ? 'false' : 'true' }}\"` と連動。注文者情報・お支払情報・お届け先情報も同形式（`edit.twig:1431,1663,1714`）で、監査時点の無条件 `collapse show` は解消されている。",
+      "note": ""
+    },
+    {
+      "rowId": 804,
+      "status": "対応済み",
+      "evidence": "受注情報履歴画面が新設された。`src/Eccube/Controller/Admin/Order/HistoryController.php:56-63` `#[Route(path: '/%eccube_admin_route%/order/{orderId}/history/{historyId}', name: 'admin_order_history', ... methods: ['GET'])] #[Template(template: '@admin/Order/edit.twig')] public function index(...)`。`HistoryController.php:70-76` で `DtbOrderHistory` を取得し `$this->snapshotHydrator->hydrate($History->getSnapshot())` で受注データ更新履歴の履歴データを復元して表示する。入口は `src/Eccube/Resource/template/admin/Order/edit.twig:1972` `<a href=\"{{ url('admin_order_history', { orderId: id, historyId: OrderHistory.id }) }}\" ...>`。対象会員の購入履歴は、スナップショットに `Customer` 関連が ID として含まれ（`src/Eccube/Service/Order/OrderHistorySnapshotSerializer.php:37-48` の ORDER_EXCLUDE に Customer は無い）、`src/Eccube/Service/Order/OrderHistorySnapshotHydrator.php:103-104,152-156` で `getReference()` により復元されるため、`edit.twig:1624-1638`（最終購入日 / 購入回数 `Order.Customer.buy_times` / 購入金額 `Order.Customer.buy_total`）が履歴画面でも描画される。",
+      "note": ""
+    },
+    {
+      "rowId": 805,
+      "status": "部分対応",
+      "evidence": "読み取り専用化はほぼ実装された。`src/Eccube/Controller/Admin/Order/HistoryController.php:78-80` `$builder = $this->formFactory->createBuilder(OrderType::class, $TargetOrder, ['disabled' => true]);` でフォーム全体を disabled にし、`src/Eccube/Resource/template/admin/Order/edit.twig:845` `{% set history_disabled_attr = isHistoryView ? ' disabled=\"disabled\"' : '' %}` を各ボタンへ付与（日付クリア `edit.twig:939,948,958,970,980,995`、受注ステータス変更 `edit.twig:1064`、明細削除 `edit.twig:1236`、受注情報を登録 `edit.twig:1273,1389,2066,2102`）。リンクも `edit.twig:873,1073,1187,1251,1398,1418,1466,1720,2092` で `order-history-inert` の span に置換され、メール作成・納品書印刷は `edit.twig:854` `{% if Order.id is not null and not isHistoryView %}` で非表示。ただし設計の「明細部では欠品登録以外のボタンは非活性とする」（sheet-16:5777、項目4-3 欠品登録ボタンに非活性指定なし）に対し、実装は `edit.twig:1164` `<button type=\"button\" class=\"btn btn-sm ... btn-stockout edit\"{{ history_disabled_attr|raw }}>欠品登録</button>` で欠品登録ボタンまで disabled にしており、設計の例外条件を満たしていない。",
+      "note": "残差分は欠品登録ボタンのみ（設計は履歴画面でも活性を想定）。"
+    },
+    {
+      "rowId": 806,
+      "status": "部分対応",
+      "evidence": "EC受注時注文番号の括弧内カンマ区切り表示は実装された。`src/Eccube/Resource/template/admin/Order/edit.twig:879-881` `{% if linkedEcOrderNumbers is defined and linkedEcOrderNumbers|length > 0 %}({{ linkedEcOrderNumbers|join(', ') }}){% endif %}` で、データ源は `src/Eccube/Controller/Admin/Order/EditController.php:1194-1204`（`applyOtcSmaregiLinkedDisplayData()` → `getOtcSmaregiLinkedOrderNumbers()` から自番号を除外）および履歴画面用の `src/Eccube/Service/Order/OrderHistorySnapshotSerializer.php:296-306`。店頭販売用整理番号も `edit.twig:884-897` で `{% if waitingNumber %}` の存在時のみリンク表示。一方、設計の「複数存在する場合はカンマ区切りにし、リンクとする／リンクを選択すると受注詳細に遷移する」は未充足で、`edit.twig:880` は `join(', ')` の素テキストのみ、`admin_order_edit` への href は付与されていない。",
+      "note": "リンク化・受注詳細遷移が未実装のため部分対応。"
+    }
+  ]
+}

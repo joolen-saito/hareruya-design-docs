@@ -1,0 +1,35 @@
+{
+  "packetId": "0501_01",
+  "results": [
+    {
+      "rowId": 1,
+      "status": "未対応",
+      "evidence": "現 develop の `src/Eccube/Service/Smaregi/Api/SmaregiStockApiClient.php` の public メソッドは `add`(43行) / `getStockChange`(86行) / `listStocks`(128行) / `listStockChanges`(158行) のみで、Patch一括（在庫一括相対値更新）相当のメソッドは存在しない。唯一の更新系 `add()` も `$url = sprintf('%s/%s/pos/stock/%s/add', ...)`（69-73行）の個別加算APIで、呼び出し元は `src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:120` `$stockResult = $this->stockApiClient->add(` の店頭受取(OTC)注文連携1箇所のみ。`grep -rni smaregi src/Eccube/Service/Admin/Stock src/Eccube/Controller/Admin/Stock` の結果は在庫場所区分定数（例 `src/Eccube/Service/Admin/Stock/StockJoinUpdateSourceStockLocationAction.php:51` `ProductStock::STOCK_LOCATION_SMAREGI`）の参照のみで、在庫編集・一括編集・CSV登録・在庫移動指示・分割結合・棚卸しからスマレジ在庫更新APIを呼ぶ実装は無い。監査時点と実質同じ。",
+      "note": "監査時点の記述は「参照系のみ」だが、実際には個別加算API add() は存在する。ただし用途はOTC注文連携限定で、設計が求める管理画面在庫操作起点のECCUBE→スマレジ反映（個別/Patch一括）は未実装のため判定は変わらない。"
+    },
+    {
+      "rowId": 2,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Stock/StockApprovalStoreAction.php` は `$this->productStockEntityManager->save(...)`(96行付近) / `$this->stockHistoryEntityManager->save(...)`(106行付近) / `$this->stockApprovalListEntityManager->save(...)`(130行付近) のみで、Smaregi 関連の依存注入・呼び出しが1つも無い（`grep -n 'Smaregi|smaregi|上限|limit' ` ヒット0）。`src/Eccube/Service/Admin/Stock/StockBulkApprovalStoreAction.php` も `foreach ($input->items as $item) { ... $this->processOne($item, ...); }`(74-81行) と `$this->stockApprovalListEntityManager->save(`(85行) のみでヒット0。件数上限とCSV登録誘導のエラーも、`src/Eccube/Resource/template/admin/Stock/bulkapproval.twig` / `approval.twig` / `stock_list_index.twig` に `上限|超えて|MAX_ROWS|件まで` のヒットが無い（唯一 `src/Eccube/Resource/template/admin/Stock/change.twig:70` `const MAX_ROWS = 10000;` / `:156` `else if (dataRows.length > MAX_ROWS)` があるが、これはCSV一括登録画面自身の行数上限であり、在庫編集画面でCSV登録を促す上限判定ではない）。",
+      "note": ""
+    },
+    {
+      "rowId": 3,
+      "status": "部分対応",
+      "evidence": "S3保存とCSVファイル履歴の記録は新たに実装済み: `src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:44` `private const S3_PREFIX = 'csv/stock-change/';`、同 `:159-170` `$s3Path = sprintf('%s%s/%s/%d', self::S3_PREFIX, $now->format('Y'), $now->format('m'), $this->requireStockEditApprovalId()); ... $fileAdapter->upload($importFilePath, $s3Path, $s3Filename, $contentBucketOptions);`、同 `:179-184` `$this->stockEditCsvRepository->insertCsvFilename(['fileName' => ..., 's3ObjectKey' => $s3ObjectKey, ...]);`（履歴エンティティ `src/Eccube/Entity/DtbStockEditCsv.php:53` `s3_object_key`）。一方、残りの設計要素は未充足: (a) 同ハンドラ `:124-197` の onAfterImport は承認一覧保存とS3アップロードのみでスマレジ在庫一括相対値更新APIを呼ばない、(b) `src/Eccube/Service/Smaregi/Api/SmaregiStockApiClient.php` の public メソッドは `add:43` / `getStockChange:86` / `listStocks:128` / `listStockChanges:158` のみで一括相対値更新メソッドが無い、(c) 100件毎のCSV分割（`array_chunk`/chunk）は `src/Eccube/Service/Csv`・`src/Eccube/Service/Admin/Stock`・`src/Eccube/Service/Smaregi` の検索でヒット無し、(d) `src/Eccube/Entity/DtbStockEditCsv.php` にスマレジ処理結果を保持する列が無く（列は id/file_name/s3_object_key/create_date/member_id/stock_edit_id のみ）、処理結果のCSV履歴反映は未実装。",
+      "note": "S3保存＋CSVファイル履歴レコードのみ前進。スマレジ一括API連携部分は未実装。"
+    },
+    {
+      "rowId": 4,
+      "status": "未対応",
+      "evidence": "スマレジ関連の受信ルートは依然 1本のみで、`src/Eccube/Controller/Smaregi/WebhookController.php:41` `#[Route('', name: 'smaregi_webhook', methods: ['POST'])]` 以外に `#[Route(` は存在しない（`grep -rn 'Route(' src/Eccube/Controller/Smaregi/*.php` の結果が当該1件）。`src/Eccube/Service/Smaregi/Webhook/Stock/StockEventDispatcher.php` は pos:stock の ids を分解する実装のままで、`src/Eccube/Service/Smaregi` 配下の `callback|問合せ|inquiry|chunk` 検索ヒットは0件（`bulk` は `Webhook/Transaction/Handler/BulkUpdateHandler.php:33` `public const ACTION = 'bulk-update';` 等の取引webhookのみで、しかも `:47` `'Smaregi transaction bulk-update webhook received but handler not implemented yet'`）。在庫一括相対値更新APIのcallback受信・S3からのCSV再取得・CSV処理履歴への結果登録はいずれも存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 5,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/SmaregiStockBackfillCommand.php:44` は依然 `$this->addArgument('target-date', InputArgument::OPTIONAL, '取得対象日 (未指定時は駆動日)', '');` の日付引数のみで、時間幅の引数が無い。`src/Eccube/Service/Smaregi/Stock/SmaregiStockBackfillAction.php:65-69` `public function handle(?string $targetDate = null)` / `$targetDate = ($targetDate === null || $targetDate === '') ? ... : $targetDate;`、同 `:176` `'target_date' => $targetDate,` で listStockChanges に日付のみを渡す。同ファイルに `hours|from|to|period|since` 等の時間幅指定は無く（`grep -n` で該当なし）、バッチ駆動時刻X〜X-Y時間（5時間前）の範囲指定は未実装。",
+      "note": ""
+    }
+  ]
+}

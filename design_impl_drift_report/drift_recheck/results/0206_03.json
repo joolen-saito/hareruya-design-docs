@@ -1,0 +1,17 @@
+{
+  "packetId": "0206_03",
+  "results": [
+    {
+      "rowId": 886,
+      "status": "未対応",
+      "evidence": "現 develop でも日付専用入力になっていない。`src/Eccube/Form/Type/Admin/Purchase/PurchaseHistoryType.php:82-92` `->add('transfer_complete_date_from', DateTimeType::class, [... 'input' => 'datetime', 'widget' => 'single_text', 'attr' => ['class' => 'datetimepicker-input', ...]])`、同 `:93-103` に `transfer_complete_date_to` も DateTimeType のまま（DateType 化されていない）。画面JSも `src/Eccube/Resource/template/admin/Purchase/history.twig:36-41` `$('.datetimepicker-input').datetimepicker({ locale: 'ja', format: 'YYYY-MM-DD HH:mm', ... })` で時刻付きフォーマットのまま（yyyy/mm/dd ではない）。Repository も `src/Eccube/Repository/DtbBuyOrderStockHistoryRepository.php:136-144` `if ($searchData->transferCompleteDateFrom !== null) { $qb->andWhere($createTcSubQuery('bosh_tc_from').' >= :transferCompleteDateFrom')...}` / `... .' <= :transferCompleteDateTo'` と MAX(createDate) への DateTime 比較のままで、To の日終端補正（23:59:59 等）は存在しない。横断確認として `transferCompleteDate` を含む全ファイル（Dto/Controller/CsvExportService/twig/FormType/Repository）を確認したが、`src/Eccube/Dto/Admin/Purchase/HistorySearchDataDto.php:29-30` `public ?\\DateTime $transferCompleteDateFrom = null,` / `public ?\\DateTime $transferCompleteDateTo = null,` および同 `:77-78` の素通し代入のみで、別クラスへの日付正規化の移管もない。",
+      "note": "監査時点と実質同一。設計の「日付(yyyy/mm/dd)」入力・日単位比較は未充足。"
+    },
+    {
+      "rowId": 887,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Purchase/history.twig:208-210` `<div id=\"result_list__custom_csv_menu\" class=\"d-inline-block dropdown\"> <button type=\"button\" class=\"btn btn-ec-regular dropdown-toggle\" ...> {{ 'admin.common.download'|trans }}` のままで、翻訳キーは汎用の `admin.common.download`。`src/Eccube/Resource/locale/messages.ja.yaml:1656` `admin.common.download: ダウンロード` のため利用者可視ラベルは「ダウンロード」で、設計の「CSVダウンロード」と不一致。`admin.common.csv_download: CSVダウンロード` は `src/Eccube/Resource/locale/messages.ja.yaml:1743` に存在するが当テンプレートでは未使用（`grep -n \"download\\|csv\" history.twig` のヒットは 15行目のCSS・208/210行のみ）。横断確認として `CSVダウンロード` 直書きを admin テンプレート全体で検索したが、`src/Eccube/Resource/template/admin/OtcBuyOrder/history.twig:187`（店頭買取）等の別画面のみで、ネット買取側 Purchase/history.twig への反映はない。",
+      "note": "監査時点と同一。locale の行番号のみ 1466→1656 に移動しているが定義内容は不変。"
+    }
+  ]
+}

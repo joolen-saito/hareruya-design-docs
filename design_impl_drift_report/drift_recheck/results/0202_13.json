@@ -1,0 +1,77 @@
+{
+  "packetId": "0202_13",
+  "results": [
+    {
+      "rowId": 729,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:640-648` に在庫反映済みチェックが新設された。`if ($InventoryPlanDetail->getStockReflectionedDate() !== null || $InventoryPlanDetail->getInventoryPlan()->getStockReflectionedDate() !== null) { $this->addError('admin.inventory_plan_detail.update.already_reflected', 'admin'); return $this->redirectToRoute('admin_stock_inventory_plan_detail_edit', ['id' => $id]); }` により、保存処理（`detailUpdate`）に入る前にエラーメッセージ表示＋保存ブロックされる。設計の「在庫数量へ最新数量を反映」ボタン側も `src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:754-762` の `detailSyncStock` で同一チェックを実施。翻訳キーは `src/Eccube/Resource/locale/messages.ja.yaml` に定義済み。",
+      "note": "監査時点で不在だった棚卸在庫確認画面（Controller/Twig/Form）一式が develop に実装済み。"
+    },
+    {
+      "rowId": 730,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:708-718` `$isNew = $request->get('is_new', false); if ($isNew || $id === $request->getSession()->get('previousId')) { ... if ($nextInventoryPlanDetail = $this->inventoryPlanDetailRepository->selectNextInventoryPlanDetail($InventoryPlanDetail, $onlyDiff)) { ... return $this->redirectToRoute('admin_stock_inventory_plan_detail_edit', ['id' => $nextInventoryPlanDetail->getId()]); } }` で「登録」後に次商品の在庫確認画面へ遷移。次商品がない場合は同ファイル `:730-736` で `admin_stock_inventory_plan_edit_page` へリダイレクトし棚卸計画編集画面へ戻る。次レコード探索は `src/Eccube/Repository/DtbInventoryPlanDetailRepository.php:272-294` `selectNextInventoryPlanDetail()`（`ivd.inventoryPlanId = :inventoryPlanId AND ivd.id > :id` を ID 昇順・1件取得）で実装。`is_new` フラグは `src/Eccube/Resource/template/admin/Stock/inventory_plan_detail_edit.twig:43` の form action `{'is_new': (inventoryPlanDetail.actualStock is null ? true : false)}` で付与される。",
+      "note": ""
+    },
+    {
+      "rowId": 731,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:729-736` `$pagingData = $request->getSession()->get(self::INVENTORY_PLAN_DETAIL_PAGING_SESSION_KEY, ['page_no' => 1, 'page_count' => 10]); return $this->redirectToRoute('admin_stock_inventory_plan_edit_page', ['id' => $InventoryPlanDetail->getInventoryPlanId(), 'page_no' => $pagingData['page_no'], 'page_count' => $pagingData['page_count']]);` により、更新後は棚卸計画編集画面へ戻りページ位置を保持する。ページ位置は `src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:261-264` `$request->getSession()->set(self::INVENTORY_PLAN_DETAIL_PAGING_SESSION_KEY, ['page_no' => $page_no, 'page_count' => $page_count]);` でセッション保存され、ページ番号付きルート `admin_stock_inventory_plan_edit_page`（同ファイル `:234-239`）が新設されている。",
+      "note": ""
+    },
+    {
+      "rowId": 732,
+      "status": "対応済み",
+      "evidence": "(1) 差異時のみ表示: `src/Eccube/Resource/template/admin/Stock/inventory_plan_detail_edit.twig:172-178` `{% if canEditInventoryPlanDetail and inventoryPlanDetail.stockDiff != 0 and inventoryPlanDetail.stockDifferenceConfirmed != true %}` 配下に `<button ... id=\"stock_difference_confirm_button\">{{ 'admin.product.inventory_plan.detail_confirm_diff'|trans }}</button>`。(2) 押下でフラグ設定: 同 twig `:27-33` の JS `$('#{{ form.stockDifferenceConfirmed.vars.id }}').val(true); form.attr('action', \"{{ path('admin_stock_inventory_plan_detail_update', {'id': ..., 'is_confirmed': true}) }}\"); form.submit();`。(3) 次の差異未確認商品へ遷移: `src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:719-727` `$isConfirmed = $request->get('is_confirmed', false); if ($isConfirmed) { $onlyDiff = true; $unconfirmed = true; if ($nextInventoryPlanDetail = $this->inventoryPlanDetailRepository->selectNextInventoryPlanDetail($InventoryPlanDetail, $onlyDiff, $unconfirmed)) { return $this->redirectToRoute('admin_stock_inventory_plan_detail_edit', ...); } }`（`src/Eccube/Repository/DtbInventoryPlanDetailRepository.php:289-291` で `ivd.stockDifferenceConfirmed <> true` 条件を付加）。(4) 確認後の入力不可: `src/Eccube/Form/Type/Admin/Stock/InventoryPlanDetailType.php:77-80` `if ($data->isStockDifferenceConfirmed()) { $theoreticalStockOptions['disabled'] = true; $actualStockOptions['disabled'] = true; }` で棚卸数量・在庫数量とも disabled 化。",
+      "note": ""
+    },
+    {
+      "rowId": 733,
+      "status": "対応済み",
+      "evidence": "(1) アラート表示: `src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:1021-1027` `$inventoryPlanCreateDate = $InventoryPlanDetail->getInventoryPlan()->getCreateDate(); if ($this->stockHistoryRepository->existsStockHistoryAfterDateByProductStockId($InventoryPlanDetail->getProductStockId(), $inventoryPlanCreateDate)) { $this->addError('admin.product.inventory_plan.stock_changed_after_plan_create', 'admin'); }`。(2) 直近1週間の履歴取得: 同ファイル `:1009-1013` `$recentStockHistories = $this->stockHistoryRepository->getRecentStockHistoriesByProductStockId($InventoryPlanDetail->getProductStockId(), (new \\DateTime('-1 week'))->setTime(0, 0, 0));`（`src/Eccube/Repository/DtbStockHistoryRepository.php:446-468` に `andWhere('sh.createDate >= :createDateFrom')`）。(3) ハイライト: `src/Eccube/Resource/template/admin/Stock/inventory_plan_detail_edit.twig:216` `<tr{% if stockHistory.createDate > inventoryPlanCreateDate %} class=\"table-danger\"{% endif %}>` で棚卸計画作成日より新しい在庫変動行を強調表示。",
+      "note": ""
+    },
+    {
+      "rowId": 734,
+      "status": "対応済み",
+      "evidence": "(1) 識別ID:4「店舗」の表示（店舗名＋在庫区分名）: `src/Eccube/Resource/template/admin/Stock/inventory_plan_detail_edit.twig:71-77` `<label ...>{{ 'admin.product.inventory_plan.base_info'|trans }}</label> ... {{ inventoryPlanDetail.shopName }} {{ constant('Eccube\\\\Entity\\\\ProductStock::STOCK_LOCATION_ID_TO_NAME')[inventoryPlanDetail.stockLocationId]|default('') }}`。(2) 権限のない店舗の登録不可: `src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:650-654` `if (!$InventoryPlanDetail->isEditableBy($this->getMember())) { $this->addError('admin.inventory_plan_detail.not_editable_store', 'admin'); return $this->redirectToRoute(...); }`。同判定は `detailSyncStock`（同 `:764-768`）、`import`（`:407-411`）、`quantityImport`（`:486-490`）、`update`（`:335-339`）にも適用。判定本体は `src/Eccube/Entity/DtbInventoryPlanDetail.php:267-270` `return $this->InventoryPlan->isEditableBy($Member);` → `src/Eccube/Entity/DtbInventoryPlan.php:216-219` `return $Member->isEditableShop($this->BaseInfo);`。(3) 指定店舗の在庫のみ処理対象: `src/Eccube/Service/Csv/InventoryPlanCsv.php:100` コメント「商品在庫のID、在庫数を取得（棚卸計画の店舗・在庫区分に一致する ProductStock）」の通り、棚卸詳細は計画の BaseInfo／stockLocationId に一致する ProductStock にのみ紐付けて生成される。フォーム側の disabled 制御も `src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:1042-1050` `createInventoryPlanDetailForm()` で実施。",
+      "note": ""
+    },
+    {
+      "rowId": 735,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/inventory_plan_detail_edit.twig:147` `{% set pagingData = app.request.session.get(constant('Eccube\\\\Controller\\\\Admin\\\\Stock\\\\InventoryPlanController::INVENTORY_PLAN_DETAIL_PAGING_SESSION_KEY')) %}`、同 `:153-160` `<a class=\"c-baseLink\" href=\"{{ path('admin_stock_inventory_plan_edit_page', { id: inventoryPlanDetail.inventoryPlanId, page_no: pagingData.page_no|default(1), page_count: pagingData.page_count|default(10) }) }}\"> ... {{ 'admin.product.inventory_plan.detail_back_to_plan'|trans }}` で「詳細へ戻る」リンクが棚卸計画編集画面へページ番号付きで遷移する。ページ番号はセッション（`src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:261-264`）に保持され、棚卸計画編集画面を再読み込みするまで書き換わらないため、複数商品を連続更新しても元ページに戻る（更新後リダイレクトも同セッション値を使用: 同 `:730-736`）。",
+      "note": ""
+    },
+    {
+      "rowId": 736,
+      "status": "対応済み",
+      "evidence": "(1) 直前に更新した商品の保持: `src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:713-714` `// 次の商品から「1つ前の商品に戻る」ですぐ戻れるようIDを保存しておく` `$request->getSession()->set('previousId', $id);`（棚卸計画編集画面を開いた時点で `:255` `$request->getSession()->remove('previousId');` によりクリア）。(2) 画面への引き渡し: 同 `:1038` `'previousId' => $this->session->get('previousId', null),`。(3) 保持値がある場合のみリンク表示: `src/Eccube/Resource/template/admin/Stock/inventory_plan_detail_edit.twig:161-167` `{% if previousId is not null and previousId != inventoryPlanDetail.id %}<a href=\"{{ path('admin_stock_inventory_plan_detail_edit', { id: previousId }) }}\" ...>{{ 'admin.product.inventory_plan.detail_back_previous'|trans }}</a>{% endif %}`。(4) 戻り先での更新後も遷移が続く: `:709` `if ($isNew || $id === $request->getSession()->get('previousId'))`。",
+      "note": "保持キーは設計原文の「商品のコード」ではなく棚卸詳細ID（previousId）だが、「更新した商品を一意に特定して戻る／保持値がある場合のみリンクを出す」という設計要求は充足している。"
+    },
+    {
+      "rowId": 737,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/inventory_plan_stock_reflect_confirm.twig` が新設され、設計の識別ID 1〜8 を全て表示する。棚卸名 `:26-28` `{{ 'admin.product.inventory_plan.name'|trans }} / {{ inventoryPlan.name }}`、店舗（店舗名・在庫区分名）`:30-39` `{{ inventoryPlan.baseInfo.shopName }}` ＋ `constant('Eccube\\\\Entity\\\\ProductStock::STOCK_LOCATION_ID_TO_NAME')[inventoryPlan.stockLocationId]`、商品数 `:41-42` `{{ inventoryPlan.productCount|number_format }}`、計上済み商品数 `:45-46` `{{ inventoryPlan.productRegisteredCount|number_format }}`、差異あり商品数 `:49-50` `{{ inventoryPlan.productStockDiffCount|number_format }}`、備考 `:53-54` `{{ inventoryPlan.memo }}`、実行ボタン `:72` `<button class=\"btn btn-ec-conversion px-5\" type=\"submit\">{{ 'admin.common.execute'|trans }}</button>`、詳細へ戻る `:63-66` `<a class=\"c-baseLink\" href=\"{{ path('admin_stock_inventory_plan_edit', {id: inventoryPlan.id}) }}\">...{{ 'admin.product.inventory_plan.back_to_detail'|trans }}`。画面を組み立てる Controller は `src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:808-851` `stockReflectConfirm()`（ルート `admin_stock_inventory_plan_stock_reflect_confirm`）。",
+      "note": ""
+    },
+    {
+      "rowId": 738,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/InventoryPlanController.php` の在庫反映フローで設計のエラー条件を全て実装。(a) 権限のない店舗は実行不可: `:868-872` `if (!$InventoryPlan->isEditableBy($this->getMember())) { $this->addError('admin.inventory_plan_detail.not_editable_store', 'admin'); ... }`（`stockReflectConfirm` 側も `:820-824`）。(b) 在庫反映済み: `:874-879` `if ($InventoryPlan->getStockReflectionedDate() !== null) { $this->addError('admin.inventory_plan.update.already_reflected', 'admin'); ... }`。(c) 商品数0／計上済み商品数0／商品数と計上済み商品数の不一致: `:881-889` `if (!($InventoryPlan->getProductCount() > 0 && $InventoryPlan->getProductCount() === $InventoryPlan->getProductRegisteredCount())) { $this->addError('admin.inventory_plan.stock_reflect.product_count_mismatch', 'admin'); ... }`。(d) 未確認の在庫差異あり: `:833-838` `if ($this->inventoryPlanDetailRepository->checkUnconfirmedStockDifferenceDetailExists($InventoryPlan->getId())) { $this->addError('admin.inventory_plan.stock_reflect.unconfirmed_stock_difference', 'admin'); ... }`（判定は `src/Eccube/Repository/DtbInventoryPlanDetailRepository.php:299-315` `ipd.stockDifferenceConfirmed != :confirmed AND ipd.theoreticalStock != ipd.actualStock`）。加えて `src/Eccube/Resource/template/admin/Stock/inventory_plan_edit.twig:135-142` で `not canEditInventoryPlan or productRegisteredCount == 0 or hasUnconfirmedStockDifferenceDetail or productCount != productRegisteredCount` の場合に反映ボタンを disabled にする。(e) 指定店舗のみ処理対象: `src/Eccube/Repository/DtbInventoryPlanDetailRepository.php:320-355` `getQueryBuilderForStockReflect()` が `->where('ivd.inventoryPlanId = :inventoryPlanId')` で当該棚卸計画（＝計画の店舗・在庫区分で紐付けられた ProductStock）に限定。",
+      "note": "「未確認の在庫差異あり」だけは実行エンドポイント stockReflect() 内ではなく直前の確認画面 stockReflectConfirm()（:833-838）と編集画面のボタン disabled で担保している。実行画面へは確認画面の POST 経由でしか到達できないため設計要求は満たすが、実行エンドポイント単体での再チェックはない。"
+    },
+    {
+      "rowId": 739,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Service/Product/InventoryReflectService.php`（新設）と `src/Eccube/Command/InventoryReflectionCommand.php` で実装。(a) 差異分をEC在庫へ反映: `:125-157` `$stockDiff = (int) $inventoryPlanDetail['stockDiff']; $stockAfter = $stockBefore + $stockDiff; ... $this->productStockRepository->updateProductStockById($productStockId, $stockAfter, $costCalculation['totalCostAfter']);`。(b) 総原価・原価単価: `:141-147` `$costCalculation = $this->inventoryReflectCostCalculator->calculate($totalCostBefore, (string) $stockBefore, $stockDiff, (string) $stockAfter);` → 履歴登録時に `:179-182` `unitCostPriceBefore: ..., unitCostPriceAfter: ..., totalCostPriceBefore: ..., totalCostPriceAfter: ...`。(c) 在庫変動区分「棚卸結果の反映」: `:163` `$StockChangeTypeDetail = $this->getStockChangeTypeDetail($stockDiff);` → `:197-205` `$detailId = $stockDiff > 0 ? 12 : 13;`（`app/DoctrineMigrations/Version20260108130821.php:130-141` で id=12「棚卸発見」/ id=13「棚卸ロス」、いずれも `stock_change_type_id => MtbStockChangeType::INVENTORY_ADJUSTMENT`）。(d) 在庫区分: `:173` `ProductStock: $ProductStock` で在庫区分（stockLocationId）を持つ ProductStock に紐付け。(e) 棚卸計画ID/名前の理由: `:165-169` `$stockChangeReason = sprintf($this->translator->trans('stock_change.inventory_reflect'), $inventoryPlanDetail['inventoryPlanId'], $inventoryPlanDetail['inventoryPlanName']);`（`src/Eccube/Resource/locale/messages.ja.yaml:4099` `stock_change.inventory_reflect: 棚卸計画[%d] %s`）。(f) プラス差異は仕入総価格0: `src/Eccube/Service/Product/Util/InventoryReflectCostCalculator.php:46-48` `} else { $totalCostAfter = $totalCostBefore; }`（クラス docblock「過剰: 仕入原価 0 として総原価は据え置き」）。(g) 在庫0→1以上で入荷通知: `:108` `$this->restockNotificationMailSender->processQueueAfterCommit();` ＋ `src/Eccube/Doctrine/EventSubscriber/RestockNotificationOnStockHistoryEntityListener.php:26,41-49`（DtbStockHistory postPersist で enqueue）、`src/Eccube/Service/Stock/RestockNotificationDeterminer.php:42-66` `if ($oldStock !== 0) return false; if ($newStock < 1) return false;`、`src/Eccube/Entity/Master/MtbStockChangeTypeDetail.php:68-81` の `RESTOCK_NOTIFICATION_ELIGIBLE_IDS` に `self::INVENTORY_DISCOVERED` を含む。(h) 完了後の遷移と反映日登録: `src/Eccube/Controller/Admin/Stock/InventoryPlanController.php:964-965` `$InventoryPlan->setStockReflectionedDate(new \\DateTime('now', new \\DateTimeZone('UTC'))); $InventoryPlan->setMember($Member);`、`:993` `return $this->redirectToRoute('admin_stock_inventory_plan_edit', ['id' => $InventoryPlan->getId()]);`。棚卸詳細の反映日は `src/Eccube/Service/Product/InventoryReflectService.php:194` `$this->inventoryPlanDetailRepository->updateInventoryDetailReflectionedDate((int) $inventoryPlanDetail['id']);`。",
+      "note": "支店システム連携（BranchUpdateService）は `src/Eccube/Service/Product/InventoryReflectService.php:110-112` で TODO 未移植だが、当該指摘の設計期待値には含まれない。"
+    },
+    {
+      "rowId": 740,
+      "status": "未対応",
+      "evidence": "現 develop でも `src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:92-102` の `approval_status` は `'choices' => ['admin.stock.approval_list.approval_status_unapproved' => self::APPROVAL_STATUS_UNAPPROVED, 'admin.stock.approval_list.approval_status_approved' => self::APPROVAL_STATUS_APPROVED, 'admin.stock.approval_list.approval_status_rejected' => self::APPROVAL_STATUS_REJECTED]` の3値のまま。ロケールも `src/Eccube/Resource/locale/messages.ja.yaml:5371-5373` `approval_status_unapproved: 未承認 / approval_status_approved: 承認済み / approval_status_rejected: 却下` の3キーのみで、設計が要求する「スマレジ連携中」「スマレジ連携失敗」に対応する選択肢・翻訳キーは追加されていない（`grep approval_status` で該当キーなし）。",
+      "note": "監査時点から変化なし。"
+    }
+  ]
+}

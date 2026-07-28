@@ -1,0 +1,77 @@
+{
+  "packetId": "0207_05",
+  "results": [
+    {
+      "rowId": 937,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:188-190` は `#[Route(path: '/%eccube_admin_route%/customer/manual_mail/{id}/{template_id}', ... requirements: ['template_id' => '\\d+|null'])]` / `public function manual_mail(Request $request, Customer $Customer, #[MapEntity(id: 'template_id')] ?MailTemplate $MailTemplate)` のままで、base 判定も `throw new NotFoundHttpException()` も無い。`同:213-224` は `if ($MailTemplate) { $body = $this->renderView($MailTemplate->getFileName(), ...); ... }` と、存在する MailTemplate であれば無条件に描画へ進む。base 絞り込みは `src/Eccube/Form/Type/Admin/CustomerManualMailType.php:48-57` の `query_builder`（`$qb->andWhere('mt.file_name IN (:fileNames)')`）のみで選択肢側に限定されており、監査時点と変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 938,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/MailService.php:1028-1029` は `$message = (new Email())->subject('['.$this->BaseInfo->getShopName().'] '.$formData['mail_subject'])` のままで店舗名プレフィックスを強制付与する。`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-41` も `$MailHistory = new MailHistory(); $MailHistory->setMailSubject($Message->getSubject())` とプレフィックス付き件名を履歴保存しており、確認画面（`mail_manual_confirm.twig:73` の `{{ form.mail_subject.vars.data }}`）の件名と不一致。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 939,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/CustomerManualMailType.php:93-96` は `public function getBlockPrefix(): string { return 'admin_customer_manual_mail'; }`、フィールドは `同:44 ->add('mailTemplate', ...)` / `同:62 ->add('mail_subject', TextType::class, ...)` / `同:70 ->add('body', TextareaType::class, ...)` のみで、`header` / `footer` フィールドは存在しない。確認画面 `src/Eccube/Resource/template/admin/Customer/mail_manual_confirm.twig:63,74,81` も `form_widget(form.mailTemplate, { type : 'hidden' })` / `form_widget(form.mail_subject, { type : 'hidden' })` / `form_widget(form.body)` のみで header/footer の hidden は無い（`grep -n 'header\\|footer' mail_manual*.twig` でヒット無し）。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 940,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:188` は `#[Route(path: '/%eccube_admin_route%/customer/manual_mail/{id}/{template_id}', name: 'admin_customer_manual_mail', requirements: ['id' => '\\d+', 'template_id' => '\\d+|null'], defaults: ['template_id' => null], methods: ['GET', 'POST'])]` のままで、クエリで会員IDを渡す `GET /customer/manual_mail` ルートは無い。`src/Eccube/Controller/Admin/Customer` と `src/Eccube/Resource/template/admin/Customer` を `admin_customer_manual_mail` で再探索してもパス形式のルート定義とリンク（`mail_manual_confirm.twig:33` の `url('admin_customer_manual_mail', { 'id': Customer.id, 'template_id': ... })`）のみで、新規入口の追加は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 941,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-44` は `$MailHistory = new MailHistory(); $MailHistory->setMailSubject(...)->setBaseInfo(...)->setMailBody(...)->setSendDate(new \\DateTime());` のままで `同:67 $this->entityManager->persist($MailHistory);`。`src/Eccube/Entity/MailHistory.php:25` は `#[ORM\\Table(name: 'dtb_mail_history')]`、`src/Eccube/Entity/DtbUserMailHistory.php:21,24` は `#[ORM\\Table(name: 'dtb_user_mail_history')]` かつ `/* @deprecated dtb_mail_historyに統合されたため、使用しない */` で、src 配下を `DtbUserMailHistory` で横断検索してもエンティティ定義以外の参照は 0 件。保存先・列名とも監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 942,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/CustomerManualMailType.php:62-69` の `->add('mail_subject', TextType::class, [... 'constraints' => [ new NotBlank(), ],])` は NotBlank のみで Length 制約が無い。比較対象の `src/Eccube/Form/Type/Admin/MailType.php:64-70` は `new Assert\\NotBlank(), new Assert\\Length(['max' => $this->eccubeConfig['eccube_stext_len']])` を持つ。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 943,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:45-46,127` は `path: '/%eccube_admin_route%/customer/{id}/delivery/new'`（admin_customer_delivery_new）、`path: '/%eccube_admin_route%/customer/{id}/delivery/{did}/edit'`（admin_customer_delivery_edit）、`path: '/%eccube_admin_route%/customer/{id}/delivery/{did}/delete'`（admin_customer_delivery_delete, methods: ['DELETE']）のままで、設計の `/customer/{id}/delivery`（一覧）・`/customer/delivery/{id}/update`・`/customer/delivery/{id}/delete` は存在しない。Twig リンクも `src/Eccube/Resource/template/admin/Customer/edit.twig:753,786` の `url('admin_customer_delivery_edit', { 'id': Customer.id, 'did': CustomerAddress.id })` / `url('admin_customer_delivery_delete', {'id' : Customer.id, 'did': CustomerAddress.id})` で会員編集画面内に埋め込まれたまま。`customer/delivery` および `m08-09_admin_customer_customer_delivery` で Controller/テンプレートを再探索してもヒット無し。",
+      "note": ""
+    },
+    {
+      "rowId": 944,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Front/CustomerAddressType.php:165-186` の POST_SUBMIT リスナは `if ($CustomerAddress->getCountry()->isJapan()) { if (empty(...postalCode01...)) { $form['postalCode']['postalCode01']->addError(new FormError(trans('form.type.select.notselect', [], 'validators'))); } ... } else { ...abroadPostalCode... }` と国別必須制御のみ。`src/Eccube/Form/Type/SplitPostalType.php:40-67` も `new Type(type: 'numeric', ...)` と `new Length(['max' => eccube_zip01_len, 'min' => ...])` の桁数検証のみ。`src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:89-113` の保存処理に郵便番号と都道府県/住所の整合確認は無く、`zip2addr` のヒットは `src/Eccube/Resource/template/admin/Customer/delivery_edit.twig:25` の AjaxZip3 画面補助のみ。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 945,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:107` は `$this->addSuccess('admin.common.save_complete', 'admin');` のまま。`src/Eccube/Resource/locale` を `admin.customer.save` で再探索しても `messages.ja.yaml:2806 admin.customer.save_pattern: 検索条件保存` のみで、`admin.customer.save.complete` キーは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 946,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerDeliveryEditController.php:166` は `return $this->redirectToRoute('admin_customer_edit', ['id' => $Customer->getId()]);` のままで、削除後は会員編集画面へ戻る。配送先一覧専用ルートも同ファイル `45-46,127` の Route 属性に存在しない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 947,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Customer/edit.twig:82-94` の `$('#submit_confirm').click(...)` が動的生成する POST フォームは `form.append($('<input>', {'type': 'hidden', 'name': 'id_expiration_date', 'value': $('input[name=\"admin_customer[Player][id_expiration_date]\"]').val()}));` のみで `_token` を載せない（`form._token` は `同:334` の会員編集本体フォーム内のみ）。受け側 `src/Eccube/Controller/Admin/Customer/CustomerEditController.php:231-235` の `completeIdentification` も `$paramIdExpirationDate = $request->request->get('id_expiration_date');` から始まり、同ファイルを `isTokenValid|isCsrfTokenValid|_token` で検索してもヒット 0 件。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 948,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerEditController.php:252` の `$Player = $Customer->getPlayer();` に対し `同:264-270` は `if ($Player === null) { $this->addError('admin.common.system_error', 'admin'); return $this->redirectToRoute('admin_customer_edit', ['id' => $Customer->getId()]); }` のままで、`NotFoundHttpException`（404）にはしていない。監査時点と同一。",
+      "note": ""
+    }
+  ]
+}

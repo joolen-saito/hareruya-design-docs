@@ -1,0 +1,77 @@
+{
+  "packetId": "0505_02",
+  "results": [
+    {
+      "rowId": 34,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/OrderController.php:79-84` に `$response = new StreamedResponse(); $response->setCallback(function () { }); $response->setStatusCode(Response::HTTP_BAD_REQUEST); $response->headers->set('Content-Type', 'text/plain; charset=utf-8'); return $response;` が現 develop でもそのまま残存。ConnectionType が GetRequest/SetResponse のいずれにも一致しない場合に 400 応答を組み立てる実装は変わっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 35,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/OrderController.php:43` `#[Route(path: '/api/order/prints/direct/{base_info_id}', name: 'order_direct_print', requirements: ['base_info_id' => '\\d+'], methods: ['POST'])]` のまま。設計の `/order/print/direct`（GET+POST）は存在せず、GET 許可も追加されていない（`grep -rn \"prints/status\\|order/print/direct\" src app html` は無ヒット）。base_info_id 必須パスパラメータも残存。",
+      "note": ""
+    },
+    {
+      "rowId": 36,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/OrderController.php:48-63` の GetRequest 分岐は `$xmlData = $this->orderDirectPrintAction->handle(...)` の後すぐ `$response = new StreamedResponse(); ... $response->headers->set('Content-Type', 'application/octet-stream'); return $response;` のみで、印刷情報XMLのファイル書き出し処理は存在しない（監査時点の `// TODO :後ほど対応` コメントブロックは削除されたが、実装として復活していない）。`grep -rn \"print_logs|printLog|print_log\" src app` は 0 件、`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php` にもファイル出力・ディレクトリ作成処理なし。",
+      "note": "監査時点はコメントアウト、現 develop はコメント自体が削除。いずれにせよログ書き出しは未実装。"
+    },
+    {
+      "rowId": 37,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:90-97` `$Order->setOrderStatus($pickingStatus); if ($BaseInfo->isMainShop()) { $Order->setConfirmDate(new \\DateTime()); } else { $Order->setPickingDate(new \\DateTime()); }` と base_info 依存分岐のまま。`setPickFinishDate` の呼び出しは当ファイルに存在しない（pick_finish_date 未設定）。",
+      "note": ""
+    },
+    {
+      "rowId": 38,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:44-48` `if ($BaseInfo && $BaseInfo->isMainShop()) { ...getPrintOrderListMainShop($base_info_id); } else { ...getDirectPrintOrderList($base_info_id); }` と本店/支店分岐が残存。支店側 `src/Eccube/Repository/OrderRepository.php:1657-1701` の `getDirectPrintOrderList` は `s.delivery_id = :otc AND o.order_status_id = :orderNew AND o.smaregi_code IS NOT NULL` の UNION `o.browser_print_flg = true` のみで、`Delivery::SMOOTH_OTC` ブランチを持たない（本店側 1624-1634 行のみ smoothOtc 条件あり）。",
+      "note": ""
+    },
+    {
+      "rowId": 39,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:74,129` `$paymentTotal = $Order['payment_total'];` … `<text>{$paymentTotal}</text>` のままで、配送方法による「スムーズ店頭受取」文言置換は存在しない。抽出クエリ（`src/Eccube/Repository/OrderRepository.php:1603-1614` および 1661-1670）も配送種別（delivery_id）を select しておらず、判定材料自体が取得されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 40,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Order/OrderDirectPrintAction.php:94-97` `<text>店頭注文番号</text> … <text width=\"5\" height=\"5\">{$orderNumber}</text>` で、`$orderNumber = htmlspecialchars((string) $Order['order_number'], ...)`（同77行）＝ dtb_order.order_number を印字。抽出クエリ `getPrintOrderListMainShop`/`getDirectPrintOrderList`（`src/Eccube/Repository/OrderRepository.php:1600-1726`）は dtb_order_number を join も select もしておらず、`DtbOrderNumber` の value は取得されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 41,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/OrderController.php:79-84` `$response->setStatusCode(Response::HTTP_BAD_REQUEST); $response->headers->set('Content-Type', 'text/plain; charset=utf-8'); return $response;` が現 develop に残存し、ConnectionType 不一致時に 400 応答を組み立てている（設計は「応答を組み立てず本文を返さない」）。",
+      "note": "rowId 34 と同一箇所の指摘。"
+    },
+    {
+      "rowId": 43,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/OrderController.php:43` の単一ルート `#[Route(path: '/api/order/prints/direct/{base_info_id}', name: 'order_direct_print', methods: ['POST'])]` 内で `if ($connectionType === 'GetRequest') { ... } elseif ($connectionType === 'SetResponse') { ... }`（46,48,64行）と ConnectionType 分岐を継続。`grep -rn \"prints/status/printed|prints/status|status/printed\" src app html` は 0 件で、A05-02 専用エンドポイントは未追加。",
+      "note": ""
+    },
+    {
+      "rowId": 44,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Order/UpdatePrintedOrderStatusAction.php:48-59` はパース失敗時 `$this->logger->error('XMLパースエラー')`、`if ((string) $xml->ServerDirectPrint === 'false' || count($xml->ePOSPrint) < 1) { $this->logger->error($responseFile); return; }` のみ。78-79行 `foreach ($xml->ePOSPrint as $print) { $orderId = explode('_', (string) $print->Parameter->printjobid)[0];` と printjobid だけを参照し、`grep -rn \"PrintResponse|EX_BADPORT|EX_TIMEOUT|->attributes()\" src/Eccube` は 0 件＝ success/code 属性のログ追記は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 45,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/WaitingNumberController.php:63` `#[Route(path: '/waiting_api/get_waiting_number/{base_info_id}', name: 'get_waiting_number', requirements: ['base_info_id' => '\\d+'], methods: ['GET'])]` のままで、66行 `if ($base_info_id > 0) {` 以降で `findBy(['BaseInfo' => $base_info_id], ...)`（69-72行）・`getWaitingNumberByStatus(OrderStatus::PICKED, (int) $base_info_id)`（75-78行）と base_info で絞り込み。Twig も `src/Eccube/Resource/template/default/Block/js/waiting_get_js.twig:96` `url: '{{ url('get_waiting_number', {'base_info_id': BaseInfo.id}) }}'` のまま。`grep -rn \"get_waiting|waiting_api\" src app html` の結果はこの2件のみで、設計通りの `/{_locale}/waiting_api/get_waiting`（パラメータなし）は不在。",
+      "note": ""
+    },
+    {
+      "rowId": 46,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:41` `#[Route('', name: 'smaregi_webhook', methods: ['POST'])]` のままで、`app/config/eccube/routes.yaml:9-12` の `smaregi_webhook_controllers: resource: '../../../src/Eccube/Controller/Smaregi' type: attribute prefix: /%eccube_smaregi_webhook_route%` 配下。`grep -rn \"smaregi/transaction\" src app html` は 0 件で、`{_locale}` も `/transaction` サブパスも存在しない。",
+      "note": ""
+    }
+  ]
+}

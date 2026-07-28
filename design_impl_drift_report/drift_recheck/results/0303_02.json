@@ -1,0 +1,65 @@
+{
+  "packetId": "0303_02",
+  "results": [
+    {
+      "rowId": 331,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Cart/index.twig:349` は現 develop でも `{{ render(url('block_product_recommend', cartBaseProductId ? {'product_id': cartBaseProductId, 'context': 'checkout'} : {'context': 'checkout'})) }}` と空カートでも context のみで無条件 render する（`Cart/index.en.twig:352` も同一）。受け側の `src/Eccube/Controller/Block/ProductRecommendController.php:50-60` も `$productId = $request->query->getInt('product_id', 0);` … `if ($productId === 0 && $Customer !== null) { $LatestItem = $this->orderItemRepository->findLatestExpensiveItem($Customer); … }` のままで context を一切参照しない。よって空カート×ログイン会員では直近注文の最高額商品が基準に採用され、設計の『カートが空なら基準商品なし＝おすすめ0件』にならない。監査時点と実質同じ。",
+      "note": "context の値は同ブロックのテンプレート `Block/user_recommend_product.twig:1` が表示レイアウト切替に使うのみで、コントローラ側の基準商品決定には未使用。"
+    },
+    {
+      "rowId": 332,
+      "status": "部分対応",
+      "evidence": "共通ブロックに0件分岐が追加された。`src/Eccube/Resource/template/default/Block/user_recommend_product.twig:26,45-47` が `{% if Products|length > 0 %}` … `{% else %}` `<p class=\"p-hareruya-product-carousel__empty c-hareruya-text p-hareruya-recommend-empty\">{{ 'front.product.recommend_no_items'|trans }}</p>` `{% endif %}` となり、見出し `h2` も if の外（:23-25）で常時描画。英語版 `Block/user_recommend_product.en.twig:45-47` も同様。この共通ブロックは detail(`Product/detail.twig:563`)・cart(`Cart/index.twig:349`)・complete(`Shopping/complete.twig:149`)・mypage(`Mypage/index.twig:238`) すべてが render しており、0件文言は全ページで表示される。日本語文言も `src/Eccube/Resource/locale/messages.ja.yaml:1189` `front.product.recommend_no_items: 表示するおすすめ商品はまだありません。` で設計原文と一致。ただし英語値が `src/Eccube/Resource/locale/messages.en.yaml:1018` `front.product.recommend_no_items: No recommended products to display.` で、設計書（0303 sheet-7 メッセージ一覧『おすすめなし』行）が規定する `No recommended items to display yet.` と文言が異なるため、設計期待値の英語文言部分が未充足。",
+      "note": "監査時点に指摘された『Mypage/index.twig でのみキー使用』は解消済み（現 Mypage/index.twig に recommend_no_items の直接使用は無く、共通ブロックに集約）。残差は英語文言の不一致のみ。"
+    },
+    {
+      "rowId": 333,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/recently_viewed.twig:4` が `{% if ProductClasses|length > 0 %}` でブロック全体を囲み、:58 の `{% endif %}` まで else 分岐が無いまま（3レイアウト分岐 list/top/detail はすべてこの if の内側）。ビルダ側も `src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php:50-56,63-68` が history Cookie 空・有効ID無しで `['ProductClasses' => [], 'layout' => …]` を返すのみ。翻訳キーも `grep -rn 'no_content\\|recently_viewed' messages.ja.yaml messages.en.yaml` の結果が `messages.ja.yaml:1216 front.top.recently_viewed.title: 最近チェックした商品` / `messages.en.yaml:1032 front.top.recently_viewed.title: Recently Viewed` の title のみで、『最近見た商品はありません。』/『No Recently Seen Items』相当のキーは現 develop に存在しない。監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 334,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Block/RecentlyViewedBlockPayloadBuilder.php:87-94` の `resolveLayout` は現 develop でも `match ($route) { 'homepage' => 'top', 'product_list' => 'list', default => 'detail' }` で本店ECTOP に 'top' を返す。その `top` 分岐 `src/Eccube/Resource/template/default/Block/recently_viewed.twig:19-42` は `<div class=\"p-hareruya-product-carousel p-hareruya-product-carousel--simple\">` / `<div class=\"p-hareruya-product-carousel__slider\" data-js-target=\"product-carousel-slider\">` と prev/next ナビボタン(:36-39) を持つスライダー描画のまま。設計（0303 sheet-8『最大15件をスライダーなしで表示する』）の要求に不一致。件数上限 15 自体は `RecentlyViewedBlockPayloadBuilder.php:27` `private const MAX_HISTORY_COUNT = 15;` と :70 の `array_slice($productIds, 0, self::MAX_HISTORY_COUNT)` で従来どおり満たされるが、スライダー廃止は未着手。",
+      "note": ""
+    },
+    {
+      "rowId": 335,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/_product_card_simple.twig:5-20` のサムネイル画像セクション（`p-hareruya-product-card__img-section` 〜 `__img-wrap` / `<img class=\"p-hareruya-product-card__img\" …>`）には現 develop でも foil 判定に基づくクラス・バッジ・枠等の装飾が一切無く、条件付き表示は `{% if not hasStock %}` の SOLD OUT オーバレイ(:7-12)と `{% if hasSale %}` のセールラベル(:16-18)のみ。foil の出現箇所は商品名テキスト先頭の `{% if Product.CardDetail and Product.CardDetail.foil_flg %}{{ 'front.product.foil_prefix'|trans }}{% endif %}`（:29、監査時点の :28 相当）だけで、設計（0303 sheet-8 :106,123『フォイル商品のサムネイルにはフォイル用の装飾を付す』）と差異が残る。",
+      "note": "監査時点の行番号 :28 は現 develop で :29 にずれているが内容は同一。"
+    },
+    {
+      "rowId": 336,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:700` は現 develop でも `front.mypage.favorite_list.lead: 下記の商品が入荷した際、ご登録されているメールアドレスにお知らせをお送りいたします。` で通知契機が『入荷』のまま（英語も `messages.en.yaml:624` `When the items below are back in stock, we will notify you by email.`）。表示側 `src/Eccube/Resource/template/default/Mypage/favorite.twig:51` `<p class=\"c-hareruya-text\">{{ 'front.mypage.favorite_list.lead'|trans }}</p>` も同キーを参照したまま。設計が要求する『お気に入り登録した商品がセール対象になった際…』（セール契機）に未修正。",
+      "note": "監査時点の ja.yaml:697 は現 develop で :700 にずれているが値は同一。"
+    },
+    {
+      "rowId": 337,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/ProductController.php:887-890`（removeFavorite 内）は現 develop でも `$Player = $this->dtbPlayerRepository->findOneBy(['Customer' => $Customer]); if (empty($Player)) { return $this->json(['status' => 'nologin', 'message' => trans('front.product.favorite_product.favorite_notlogin.message')]); }` で、HTTP400 ではなく文言入り JSON(HTTP200) を返す。同ファイル :837 の addFavorite と同一の応答形のままで、設計の『解除時の選手情報なしは HTTP400・文言なし』と HTTPステータス・文言有無ともに相違。BadRequestHttpException は :873-875 のトークン不正時のみ。",
+      "note": "監査時点の :773-775 は現 develop で :887-890 に移動しているが処理内容は同一。"
+    },
+    {
+      "rowId": 338,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:699` は `front.mypage.favorite_list.page_title: お気に入り商品一覧` のままで『登録』が欠落。H1 出力箇所 `src/Eccube/Resource/template/default/Mypage/favorite.twig:49` `<h1 class=\"c-hareruya-heading--lev1\">{{ 'front.mypage.favorite_list.page_title'|trans }}</h1>` も同キー参照のまま。設計の『お気に入り登録商品一覧』と不一致。",
+      "note": "監査時点の ja.yaml:696 は現 develop で :699 にずれているが値は同一。"
+    },
+    {
+      "rowId": 339,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:701` は `front.mypage.favorite_list.sale_only: セール対象のみ` のままで短縮表記。ラベル出力箇所 `src/Eccube/Resource/template/default/Mypage/favorite.twig:79` `<span class=\"c-hareruya-checkbox__label\">{{ 'front.mypage.favorite_list.sale_only'|trans }}</span>` も同キー参照のまま。設計の『セール対象商品のみ表示する』に未修正。",
+      "note": "監査時点の ja.yaml:698 は現 develop で :701 にずれているが値は同一。"
+    },
+    {
+      "rowId": 340,
+      "status": "未対応",
+      "evidence": "現 develop の `src/Eccube/Resource/template/default/Mypage/favorite.twig`（全260行）を `grep -n 'Customer\\|welcome\\|name01\\|氏名'` しても一致0件で、会員氏名を出力する記述は無い（:49 見出し／:51 リード文／:88 商品数／:91-119 並べ替え／:123-234 商品グリッドのみ）。会員氏名を出す `front.mypage.welcome` を含む `Mypage/navi.twig` の include も `grep -rn 'navi.twig' template/default/` の結果が `Mypage/history.twig:23` の1件のみで、favorite.twig（:11 `{% extends 'default_frame.twig' %}`）および default_frame.twig からは読み込まれない。設計が表示要素に挙げる『会員氏名』は未実装のまま。",
+      "note": ""
+    }
+  ]
+}

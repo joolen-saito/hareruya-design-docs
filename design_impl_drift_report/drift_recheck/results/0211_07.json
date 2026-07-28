@@ -1,0 +1,29 @@
+{
+  "packetId": "0211_07",
+  "results": [
+    {
+      "rowId": 1126,
+      "status": "未対応",
+      "evidence": "現 develop でも `src/Eccube/Controller/Admin/Analysis/UsedCardController.php:43-56` の `public function index(Request $request): array` は `$searchForm = $this->createForm(SearchUsedCardType::class);` を作って `return ['searchForm' => $searchForm->createView()];` するのみで、保持条件（セッション）の消去処理は存在しない（Session/session の参照が同ファイルに一切ない）。`src/Eccube/Form/Type/Admin/Analysis/SearchUsedCardType.php:34-36` は依然 `$resolver->setDefaults(['csrf_protection' => false,]);`、同 43-49 行 `'start_date'` は `'required' => true` かつ `'data' => new \\DateTime('2 weeks ago')`、同 55-65 行 `'formats'` は `'required' => true` かつ `'constraints' => [new Count(min: 1)]`。mode フィールドは無い。`src/Eccube/Resource/template/admin/Analysis/used_card.twig:28` も `<form name=\"search_form\" id=\"search_form\" method=\"post\" action=\"{{ path('admin_analysis_used_card_export') }}\">` のままで mode 入力・_token 出力なし。監査時点と同一。",
+      "note": "used_card/UsedCard を src, app, html 全体で再検索したが、関連ファイルは UsedCardController / SearchUsedCardType / used_card.twig / UsedCardCsvExportService / DtbDeckRepository / eccube_nav.yaml / messages.ja.yaml / EccubeEvents.php のみで、別クラスへの実装移管はない。"
+    },
+    {
+      "rowId": 1127,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/UsedCardController.php:62` は依然 `#[Route(path: '/%eccube_admin_route%/analysis/used-card', name: 'admin_analysis_used_card_export', methods: ['POST'])]` で、hyphen パスの POST 同一URL。設計の `GET /{admin_route}/analysis/used_card/export/{mode}` 相当のルートも `{mode}` パラメータも存在しない（同ファイル内の Route 属性は 41 行の GET `analysis/used-card` と 62 行の POST のみ）。ファイル名も `src/Eccube/Service/Csv/Exporter/UsedCardCsvExportService.php:77` `$filename = 'used_card_product_'.$now->format('YmdHis').'.csv';` の固定形式のままで、出力形式別のファイル名分岐はない。監査時点と同一。",
+      "note": "src/app/html を横断して used_card/used-card/UsedCard を検索したが export/{mode} 相当のルート定義は不在。"
+    },
+    {
+      "rowId": 1128,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/UsedCardController.php:43-56` の GET は空フォームを返すのみ（`return ['searchForm' => $searchForm->createView()];`）、同 63-83 の POST は `return $this->csvExportService->exportBySearchData($searchForm->getData());` で即CSVを返すのみ。集計結果の表示、検索条件のセッション保存、GET 時のセッション消去はいずれも存在しない（同ファイルに SessionInterface / `$request->getSession()` の使用なし）。`src/Eccube/Resource/template/admin/Analysis/used_card.twig:26-67` も検索フォームと `admin.analysis.used_card.csv_download` ボタン（63行）のみで集計結果表示領域がない。監査時点と同一。",
+      "note": "admin_used_card_result 相当のルートも develop に存在しない。"
+    },
+    {
+      "rowId": 1129,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Analysis/SearchUsedCardType.php:32-37` は現 develop でも `public function configureOptions(OptionsResolver $resolver): void { $resolver->setDefaults(['csrf_protection' => false,]); }` でCSRF保護を明示的に無効化している。同 42-69 行の buildForm のフィールドは `start_date` / `end_date` / `formats` / `include_basic` の4つのみで `mode` フィールドはない。`src/Eccube/Resource/template/admin/Analysis/used_card.twig:28-65` の form も個別 form_widget のみで `form_rest` / `_token` の出力がない。監査時点と同一。",
+      "note": ""
+    }
+  ]
+}

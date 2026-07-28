@@ -1,0 +1,77 @@
+{
+  "packetId": "0212_03",
+  "results": [
+    {
+      "rowId": 1314,
+      "status": "未対応",
+      "evidence": "現 develop でも保存系に dciNo/oldDeckId が残存。`src/Eccube/Service/Admin/Deck/DeckStoreAction.php:105` `dciNo: $Deck->getDciNo(),`、同 `:122` `oldDeckId: $Deck->getOldDeckId(),`。`src/Eccube/Service/EntityManager/DeckEntityManager.php:88` `$Deck->setDciNo($dciNo);`、同 `:105` `$Deck->setOldDeckId($oldDeckId);`（引数も `:50` `?string $dciNo,` / `:67` `?string $oldDeckId,` のまま）。複製も `src/Eccube/Service/Admin/Deck/DeckCopyAction.php:53` `dciNo: $Source->getDciNo(),`、同 `:70` `oldDeckId: $Source->getOldDeckId(),`。さらに `src/Eccube/Service/Admin/Deck/DeckBulkUpdateAction.php:81` `dciNo: $Deck->getDciNo(),`、同 `:98` `oldDeckId: $Deck->getOldDeckId(),` も同様。監査時点の行番号と完全一致で無変更。",
+      "note": "翻訳キー admin.deck.dci_no も src/Eccube/Resource/locale/messages.ja.yaml:4433 に残存。"
+    },
+    {
+      "rowId": 1315,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckCsvController.php:58` `#[Route('/%eccube_admin_route%/deck/csv_import', name: 'admin_deck_csv_import', methods: ['GET', 'POST'])]` で GET/POST 単一ルートのまま。リンクは `src/Eccube/Resource/template/admin/Deck/index.twig:226` `<a href=\"{{ url('admin_deck_csv_import') }}\"`、フォームは `src/Eccube/Resource/template/admin/Deck/csv_import.twig:89` `action=\"{{ url('admin_deck_csv_import') }}\"`。src/Eccube・html・app 全体を grep しても `admin_deck_csv`（単体）/`m15-06_admin_deck_deck_csv_import`/`deck/csvimport` は存在せず（ヒットは admin_deck_csv_import と admin_deck_csv_export のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 1316,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckCsvController.php:100-103` `$extension = strtolower($formFile->getClientOriginalExtension()); if ($extension !== 'csv') { return $this->renderWithErrors($form, [$this->translator->trans('admin.common.csv_upload_error')]); }` で tsv は依然拒否。Twig の accept も `src/Eccube/Resource/template/admin/Deck/csv_import.twig:94` `{'attr': {'accept': 'text/csv,.csv', 'class': 'd-none'}}` のまま（.tsv/text-tsv 無し）。`src/Eccube/Form/Type/Admin/CsvImportType.php:54-56` の `new Assert\\File(['maxSize' => $this->csvMaxSize.'M',])` は MIME 制約無し。下位の `src/Eccube/Service/Csv/Importer/CsvImporter.php:173` `$delimiter = ($fileExtension === 'tsv') ? \"\\t\" : ...` のTSV分岐は存在するが到達不能なままで、監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1317,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckCsvController.php:61` `$form = $this->createForm(CsvImportType::class);` のままで strict 用オプション無し。`src/Eccube/Form/Type/Admin/CsvImportType.php:48-73` の項目は import_file / force_file_to_db / is_split_csv / csv_file_no のみで strict は不在。`src/Eccube/Resource/template/admin/Deck/csv_import.twig` に strict 入力欄なし。`src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:380-383` `protected function getRowValidators(): array { return []; }` と空のまま。src/Eccube・app 全体で `setIsStrict` / `form.deck.strict` / `isStrict` / `is_strict` は 0 件、messages.ja.yaml にも deck.strict のキー無し。",
+      "note": ""
+    },
+    {
+      "rowId": 1318,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckCsvController.php:179-200` の getCsvHeader() は player_name/format/archetype/event_detail_id/deck_name/ranking/result/tags/event_name_en/event_name_jp/event_date/source_url/participants/disp_flg/private_flg/main_list/side_list/commander/deck_id/image_card_name の20列で、win_count/loss_count/draw_count/dci_no/old_deck_id が無く設計に無い `'tags' => 'タグ',` を含む。`src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:387-408` の initializeColumns() 定義も同じ20列（`'tags' => ['タグ', false],` 含む）。ヘッダ検証は `src/Eccube/Service/Csv/Importer/Event/BaseCsvImportHandler.php:72` `if (count($row) !== count($columns)) {` の列数一致＋必須列名確認のみで並び完全一致検証ではなく、`src/Eccube/Service/Csv/Importer/Model/CsvRow.php:68` `$this->headers = array_flip(array_values($headers));` でヘッダ名から値を引く方式のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1319,
+      "status": "未対応",
+      "evidence": "成功時のみリダイレクト: `src/Eccube/Controller/Admin/Deck/DeckCsvController.php:157-159` `$this->addSuccess('admin.common.csv_upload_complete', 'admin'); return $this->redirectToRoute('admin_deck_csv_import');`。失敗系は全て直接描画のまま: 同 `:83` `return $this->renderWithErrors($form, $errors);`（フォーム無効）、`:102` 拡張子エラー、`:138` `catch (\\Exception $e) { return $this->renderWithErrors($form, [$e->getMessage()]); }`、`:144` import結果エラー。`:165-172` の renderWithErrors() は `$this->render('@admin/Deck/csv_import.twig', [... 'errors' => $errors])` で、`src/Eccube/Resource/template/admin/Deck/csv_import.twig:70-80` が errors 配列を画面内 alert 表示。302リダイレクト＋フラッシュ化されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1320,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/DeckUpdateImportHandler.php:357` `$this->deleteDeckCards($Deck);` が保存前に呼ばれ、`:614-617` `private function deleteDeckCards(DtbDeck $Deck): void { foreach ($this->deckCardRepository->findBy(['Deck' => $Deck]) as $DeckCard) { $this->em->remove($DeckCard);` で既存明細を削除。その後 `:359-362` `$this->saveDeckCards($mainCards, $Deck, MtbBoard::BOARD_ID_MAIN);` 等で再作成。監査時点と同一構造で無変更。",
+      "note": ""
+    },
+    {
+      "rowId": 1321,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/csv_import.twig:46-64` の javascript ブロックは `$('#file-select').on('click', ...)` と `$fileInput.on('change', ...)` 内の `$('#admin_csv_import_import_file_name').text(files[0].name); $('#upload-button').prop('disabled', false);` のみ。spin.min.js / card-csvimport.js の読込、`#spinner` 要素、submit 時の無効化処理は無い（送信ボタンは `:97` `<button ... id=\"upload-button\" type=\"submit\" disabled>` で選択後に有効化されるだけ）。src/Eccube/Resource/template/admin 配下および html 配下の grep で card-csvimport は 0 件、spin.min.js は admin/Product/csv_class_name.twig:21 等の別機能のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 1322,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/csv_import.twig:5` `{% block title %}{{ 'admin.deck.csv_upload_title'|trans }}{% endblock %}`、`:6` `{% block sub_title %}{{ 'admin.deck.deck_management'|trans }}{% endblock %}` と配置は逆のまま。翻訳値も `src/Eccube/Resource/locale/messages.ja.yaml:4448` `admin.deck.csv_upload_title: デッキ登録CSVアップロード`、`:4449` `admin.deck.csv_upload_header: デッキ登録CSV`、`:4450` `admin.deck.csv_format_title: デッキ登録CSVファイルフォーマット` で TSV 表記無し。フォーマット表 tbody は `csv_import.twig:120` `<td class=\"align-middle text-nowrap\">{{ value }}</td>` で nl2br 未適用（Deck テンプレート配下に nl2br は 0 件）。",
+      "note": ""
+    },
+    {
+      "rowId": 1323,
+      "status": "未対応",
+      "evidence": "rowId 1315 と同一の外部契約差分が現 develop でも継続。`src/Eccube/Controller/Admin/Deck/DeckCsvController.php:58` `#[Route('/%eccube_admin_route%/deck/csv_import', name: 'admin_deck_csv_import', methods: ['GET', 'POST'])]`、`src/Eccube/Resource/template/admin/Deck/index.twig:226` `url('admin_deck_csv_import')`、`src/Eccube/Resource/template/admin/Deck/csv_import.twig:89` `action=\"{{ url('admin_deck_csv_import') }}\"`。加えて POST 失敗時は `:83`/`:138`/`:144` の renderWithErrors() で GET 取込画面へ戻らない。`deck/csvimport` / `admin_deck_csv`(単体) / `m15-06_admin_deck_deck_csv_import` は src/Eccube・html・app に不在。",
+      "note": ""
+    },
+    {
+      "rowId": 1324,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/csv_import.twig:46` `{% block javascript %}` 配下（`:48-62`）はファイル選択転送・ファイル名表示・`$('#upload-button').prop('disabled', false);` のみで submit 時処理なし。src/Eccube/Resource/template/admin/Deck・admin 配下・html 配下の grep で card-csvimport は 0 件、spin.min / #spinner は admin/Product/csv_class_category.twig:21,91 等の別機能のみ。デッキCSV画面には未実装のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1325,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/CsvImportType.php:52-57` `'constraints' => [ new Assert\\NotBlank(), new Assert\\File(['maxSize' => $this->csvMaxSize.'M',]), ],` で mimeTypes 指定なし。Controller は `src/Eccube/Controller/Admin/Deck/DeckCsvController.php:100-103` で `$formFile->getClientOriginalExtension()` が 'csv' かのみ判定。画面は `src/Eccube/Resource/template/admin/Deck/csv_import.twig:94` `'accept': 'text/csv,.csv'`。MIME 検証は Symfony 制約にも Controller にも依然存在しない。",
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "packetId": "0306_07",
+  "results": [
+    {
+      "rowId": 453,
+      "status": "対応済み",
+      "evidence": "専用画面が新規追加済み。`src/Eccube/Controller/Front/Mypage/PasswordChangeController.php:51` `#[Route(path: '/mypage/password_change', name: 'mypage_password_change', methods: ['GET','POST'])]` / `:52` `#[Template(template: 'Mypage/password_change.twig')]`。案内文言は `src/Eccube/Resource/locale/messages.ja.yaml:808` `front.mypage.password_change.help_password_first: 半角英字・数字をそれぞれ1文字以上含め、%min%文字以上で入力してください。` として定義され、`src/Eccube/Resource/template/default/Mypage/password_change.twig:46` `<p class=\"p-hareruya-entry__help-text\" id=\"help_password_first\">{{ 'front.mypage.password_change.help_password_first'|trans({ '%min%': eccube_config.eccube_password_min_len })|nl2br }}</p>` で画面表示（英語版は `Mypage/password_change.en.twig:46`）。`%min%` は `app/config/eccube/packages/eccube.yaml:195` `eccube_password_min_len: 12` により「12文字以上」と描画される。文字種ポリシー検証も追加済みで、ログイン時は `src/Eccube/Security/Http/Authentication/EccubeAuthenticationSuccessHandler.php:92` `$isPatternViolation = $password !== '' && !preg_match($this->eccubeConfig['eccube_password_pattern'], $password);` `:93-94` `if ($isShort || $isPatternViolation) { $request->getSession()->set(PasswordPolicyListener::SESSION_KEY, true); }`（パターンは `app/config/eccube/packages/eccube.yaml:210` `eccube_password_pattern: '/\\A(?=.*?[a-z])(?=.*?\\d)[!-~]+\\z/i'` ＝英字・数字それぞれ1文字以上）、変更フォーム側も `src/Eccube/Form/Type/RepeatedPasswordType.php:49-56` `new Assert\\Length(['min' => $this->eccubeConfig['eccube_password_min_len'], ...])` ＋ `new Assert\\Regex(['pattern' => $this->eccubeConfig['eccube_password_pattern'], 'message' => 'form_error.password_pattern_invalid'])` を課す（`src/Eccube/Form/Type/Front/PasswordChangeType.php:35` が同型を使用）。監査時点の `LoginPasswordLengthCheckListener.php`（mb_strlen のみ）は削除され、`src/Eccube/EventListener/PasswordPolicyListener.php:79`/`:92-93` の除外ルート制御＋`mypage_password_change` へのリダイレクトに置き換わっている。",
+      "note": "設計書 0306 sheet-23 の付随要求（未変更中は他のログイン要画面から当画面へ戻す＝PasswordPolicyListener.php:44-49,92-93、変更完了でセッションフラグ削除＝PasswordChangeController.php:71）も併せて充足を確認。"
+    }
+  ]
+}

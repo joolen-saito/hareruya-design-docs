@@ -1,0 +1,77 @@
+{
+  "packetId": "0204_02",
+  "results": [
+    {
+      "rowId": 481,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Product/ProductController.php:541-544` に `// NOTE: 商品新規登録は不要機能のため使用禁止として404を返す` `if ($id === null) { throw new NotFoundHttpException(); }` が追加済み。`admin_product_product_new` ルート (`src/Eccube/Controller/Admin/Product/ProductController.php:531` `#[Route(path: '/%eccube_admin_route%/product/product/new', ... methods: ['GET','POST'])]`) は残るが、id=null となる /product/product/new への GET/POST は全て NotFoundHttpException で 404 になり、監査時点にあった新規 Product/ProductClass 生成とフォーム表示、および new へのリダイレクト分岐は削除されている。設計『商品新規登録のURLにアクセスすると404(Page Not Found)エラーを返す』を満たす。",
+      "note": "ルート定義自体は存在するが、設計要求は『404を返す』であり、コントローラ入口の NotFoundHttpException で充足。"
+    },
+    {
+      "rowId": 482,
+      "status": "未対応",
+      "evidence": "更新は現 develop でも GET/POST 共用の編集ルートのまま: `src/Eccube/Controller/Admin/Product/ProductController.php:532` `#[Route(path: '/%eccube_admin_route%/product/product/{id}/edit', name: 'admin_product_product_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]`。`edit/update` ルートおよび `m03-02_admin_product_product_edit` は src 配下の全文検索で 0 件。HTML フォームは `src/Eccube/Resource/template/admin/Product/product.twig:124` `<form role=\"form\" name=\"form1\" id=\"form1\" method=\"post\" action=\"\" ...>`、block prefix は `src/Eccube/Form/Type/Admin/ProductType.php:380-383` `return 'admin_product';`。画像隠しCollectionは `src/Eccube/Form/Type/Admin/ProductType.php:305,312,319,326` の `images` / `add_images` / `delete_images` / `copy_images` のみで `rank_images` は src 全体で 0 件、並び順は `src/Eccube/Controller/Admin/Product/ProductController.php:769-775` の `$request->request->all()['admin_product']['product_image']` から読む実装のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 483,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/ProductController.php:389` `#[Route(path: '/%eccube_admin_route%/product/product/image/process', name: 'admin_product_image_process', methods: ['POST'])]` のままで、`product/image/add` ルートは src 全体に存在しない（`src/Eccube/Resource/template/admin/Product/product_js.twig:52` も `path('admin_product_image_process')` を参照）。判定は `:392` `if (!($request->isXmlHttpRequest() && $this->isTokenValid())) { throw new BadRequestHttpException(); }` のままでファイル配列なし/0件は `:400` `if (count($images) > 0)` でスキップするだけ、応答も `:433` `return new Response(array_shift($files));` で先頭1件の文字列返却であり JSON 一覧ではない。非画像MIMEの415のみ `:406-414` `throw new UnsupportedMediaTypeHttpException();` で実装済み。",
+      "note": ""
+    },
+    {
+      "rowId": 484,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/ProductType.php:91-95` `->add('name_en', TextType::class, ['constraints' => [new Length(['max' => $this->eccubeConfig['eccube_stext_len']])]])` で商品名(英)は Length のみ（NotBlank なし）。`:248-255` `->add('Category', ChoiceType::class, [...])` に constraints なし。`:165` `->add('SellGroup', EntityType::class, [... 'required' => false ...])`、`:195` `->add('Discount', EntityType::class, [... 'required' => false ...])` も制約なし。サイズ/重量は `:177-184` `->add('size', IntegerType::class, ['required' => false, 'empty_data' => 0, 'attr' => ['min' => 0, 'maxlength' => $this->eccubeConfig['eccube_int_len']]])` および `:186-193` の weight で、いずれも HTML attr のみで NotBlank / Length max 9 / 上限 999999999 のサーバ側 constraints は無い。監査時点から変更なし。",
+      "note": "販売制限(sale_limit)も ProductType 側には制約定義が無いまま。"
+    },
+    {
+      "rowId": 485,
+      "status": "未対応",
+      "evidence": "廃止判定は Twig の表示制御のみ: `src/Eccube/Resource/template/admin/Product/product.twig:817` `{% if Product.Status.id != constant('Eccube\\\\Entity\\\\Master\\\\ProductStatus::DISPLAY_ABOLISHED') %}`。ProductController 内の `ABOLISHED` 出現は `src/Eccube/Controller/Admin/Product/ProductController.php:1472` `'Status' => ProductStatus::DISPLAY_ABOLISHED,`（bulkProductStatus の一括更新）の1箇所のみで、編集POST経路 `:614-890`（`if ('POST' === $request->getMethod())` 〜 `:828` `$Product->setUpdateDate(new \\DateTime()); $this->entityManager->flush();`）に現ステータスが廃止かを拒否する分岐は無い。Form/EventListener 配下にも編集を禁止する ABOLISHED 判定は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 486,
+      "status": "未対応",
+      "evidence": "商品編集POST確定部は `src/Eccube/Controller/Admin/Product/ProductController.php:824-828` `// 支店の商品公開ステータス` `$Product->setBranchPublished((bool) $form->get('isBranchPublished')->getData());` `$Product->setUpdateDate(new \\DateTime());` `$this->entityManager->flush();` で終わり、支店システムへの通知ジョブ/API/メッセージ投入は無い（`:857` `log_info('商品登録完了', [$id]);` の後は EventArgs dispatch とリダイレクトのみ）。src/Eccube 配下で `支店システム` `支店.*通知` を検索しても、ヒットするのは `src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:194,199`（`// TODO: 支店システムとの連携処理`）等の CSV インポート系と `src/Eccube/Service/Product/InventoryReflectService.php:110` の在庫連携コメントのみで、商品編集確定後の通知処理は不在のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 487,
+      "status": "未対応",
+      "evidence": "編集POSTのスマレジ連携は商品名変更時の upsert のみ: `src/Eccube/Controller/Admin/Product/ProductController.php:830-843` `if ($Product->getName() !== $previousProductName) { foreach ($Product->getProductClasses() as $ProductClass) { ... $smaregiProductClassEventService->dispatchUpsert($ProductClass); ... } }`。同ファイル内に `DISPLAY_ABOLISHED` を条件とする削除投入は無く（ABOLISHED 出現は `:1472` の一括ステータス更新のみ）、`dispatchDeleteMessage` の呼び出し元は `src/Eccube/Service/Admin/Product/ProductClassDeleteAction.php:72` と `src/Eccube/Controller/Admin/Product/ProductClassController.php:472` の規格削除経路に限られ、商品編集からは呼ばれていない。",
+      "note": ""
+    },
+    {
+      "rowId": 488,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/ProductController.php:868` `$this->addSuccess('admin.common.save_complete', 'admin');` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました`。設計文言のキー `admin.register.complete: 登録が完了しました。` は `src/Eccube/Resource/locale/messages.ja.yaml:1970` に定義されているがこの更新経路では未使用。リダイレクト先は `:889` `return $this->redirectToRoute('admin_product_product_edit', ['id' => $Product->getId()]);` で設計どおり。",
+      "note": "遷移先のみ設計一致、フラッシュ文言の差異は監査時点から未変更。"
+    },
+    {
+      "rowId": 489,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/ProductCardCsv.php:152` `$productClasses = $this->productClassRepository->getProductClassesForProductCardCsv($Product);` のままで、`src/Eccube/Repository/ProductClassRepository.php:759-771` の同メソッドは `->andWhere($qb->expr()->eq('pc.CardCondition', ':cardConditionId'))` `->setParameter('cardConditionId', MtbCardCondition::NM)` で NM 規格に絞り込んでいる。`ProductCardCsv.php:99-102` の対象判定 `if (!$Product->getCardDetail()) { continue; } if (count($Product->getProductClasses()) === 0) { continue; }` も変わらず、getProductClasses() 全要素を走査する経路は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 490,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/ProductCardCsv.php:65` `$response->setCallback(function () use ($csvRows, $headerKeys): void {` で callback を登録し、`:74` `$filename = $this->createFileName('product_card_');`、`:77-79` `if (function_exists('log_info')) { log_info('カード商品CSV出力ファイル名', [$filename]); }`、`:81` `return $response;` の順で、ログは callback 実行（fputcsv/fclose によるストリーム送信）前のまま。callback 内・完了後にログを出す実装は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 491,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/ProductGoodsCsv.php:57-59` `if ($csvRows === []) { throw new \\RuntimeException($this->translator->trans('admin.csv.error.export.no_goods_data')); }` は残るが、`no_goods_data` の grep ヒットはこの1件のみで `src/Eccube/Resource/locale/messages.ja.yaml` / `messages.en.yaml` に翻訳定義が無い（類似キーは `messages.ja.yaml:2451` `admin.csv.error.export.no_card_data: カードデータが存在しないためエクスポートできません。` と `:5246` `admin.csv.error.export.no_stock_history_data:` のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 492,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/ProductGoodsCsv.php:63` `$response->setCallback(function () use ($csvRows, $headerKeys): void {` の後、`:72` `$filename = $this->createFileName('product_goods_');`、`:75-77` `if (function_exists('log_info')) { log_info('グッズ商品CSV出力ファイル名', [$filename]); }`、`:79` `return $response;` と、callback 外・レスポンス返却前でログ出力する構造のまま。",
+      "note": ""
+    }
+  ]
+}

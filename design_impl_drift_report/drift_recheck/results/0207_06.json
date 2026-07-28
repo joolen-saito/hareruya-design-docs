@@ -1,0 +1,77 @@
+{
+  "packetId": "0207_06",
+  "results": [
+    {
+      "rowId": 949,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Customer/edit.twig:253,266,281,294` は今も `<img src=\"{{ path('admin_identification_image', {'imageUrl': IdentificationImage.url}) }}\" class=\"expand-image\" ...>` を無条件に出力し、else 側は `:255,268,283,296` の `<span>{{ 'admin.customer.identification_image.no_image'|trans }}</span>`（登録データなし）のみ。`grep -rn 閲覧不可 src/Eccube html` は 0 件で、閲覧権限判定による分岐も翻訳キーも存在しない。権限拒否は依然 `src/Eccube/Controller/Admin/Customer/CustomerEditController.php:315` の identificationImage 内 `if (!empty($AccessDeniedAuthorityRole)) { throw new AccessDeniedHttpException(); }` のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 950,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Customer/edit.twig:253` の `class=\"expand-image\"` は残るが、`grep -rn 'expand-image\\|expandImage'` のヒットは同 twig の 4 行（253/266/281/294）のみで、JS ハンドラ・`data-bs-toggle`/`data-bs-target`・種別別の拡大モーダル定義は存在しない。`html/template/admin/assets/css/customer.css` は全 14 行で `.modal-online_identification { --bs-modal-width: 600px; }` と `.modal-top-border` のみを定義し、expand-image 用 CSS は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 951,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerEditController.php:307` `$this->addSuccess('admin.common.save_complete', 'admin');`（completeIdentification 内）のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました`。設計文言「会員情報を保存しました。」に該当する翻訳キーは追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 952,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerEditController.php:232-310` の completeIdentification は playerEntityManager->save / flush / dispatch / `:307` addSuccess のみで、log_info 等の記録呼び出しが無い。同ファイルの log_info は `:157` 「会員登録開始」と `:200` 「会員登録完了」の 2 箇所のみで、いずれも編集画面の index() 側であり確認済変更を記録しない。",
+      "note": ""
+    },
+    {
+      "rowId": 953,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerGroupController.php:40-41` は `#[Route('/%eccube_admin_route%/customer/customer_group', name: 'admin_customer_group_new', methods: ['GET', 'POST'])]` と `#[Route('/%eccube_admin_route%/customer/customer_group/{id}', ..., methods: ['GET', 'POST'])]` の GET/POST 共用のまま、削除は `:89` `/customer/customer_group/{id}/delete` (DELETE)。設計の `/{admin_route}/customer_group/new`・`/{admin_route}/customer_group/{id}/update` は存在せず、パスも customer/ 配下のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 954,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/CustomerGroup/index.twig:5` `{% block title %}{{ 'admin.customer.customer_group_edit'|trans }}{% endblock %}`、`:6` および `:20` `{{ 'admin.customer.customer_group_management'|trans }}` と固定翻訳キーのままで、TargetCustomerGroup.id による「新規追加」/「編集」切替は無い（`:13` の form action だけが id 有無で分岐）。翻訳も `messages.ja.yaml:4134,4135` の 顧客グループ管理／顧客グループ編集 のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 955,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/CustomerGroup/index.twig:111` `<p class=\"text-start\">{{ 'admin.common.delete_modal__message'|trans({'%name%': CustomerGroup.name}) }}</p>` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1790` `admin.common.delete_modal__message: \"この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？\"`。設計文言「[顧客グループ名称]を削除してもよろしいですか？」の専用キーは追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 956,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/CustomerGroupType.php:57-63` は `'expanded' => true, 'multiple' => true` のチェックボックスだが query_builder が `->where('p.visible = true')->andWhere('p.id NOT IN (:excludeIds)')->setParameter('excludeIds', [Payment::EC_CREDIT, Payment::EC_CVS])` と絞り込みを維持しており、登録済み支払方法を全表示していない。",
+      "note": ""
+    },
+    {
+      "rowId": 957,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:52-53` に `// 電話番号の場合、半角数字チェックの前にハイフンを除去する` `$builder->addEventListener(FormEvents::PRE_SUBMIT, [$this, 'removeHyphenFromTelKeywords']);` が追加され、`:61-92` の removeHyphenFromTelKeywords が新規行 `:75` `$data['new_keyword'] = str_replace('-', '', $data['new_keyword']);` と既存行 `:86` `$data['Blacklists'][$index]['keyword'] = str_replace('-', '', $row['keyword']);` の双方で、`(string) $data['new_blacklist_tag'] === $telId`（MtbBlacklistTag::TEL_ID）判定のもとハイフンを除去する。除去後に走る半角数字チェックは電話番号のみ（`:121-126` `if ($BlacklistTag->isTel()) { if (!preg_match('/^[0-9]+$/', $keyword))...`、新規は `:151-156`）で、設計期待値の「チェック前のハイフン除去」「電話番号のみ半角数字チェック」を両方満たす。",
+      "note": "監査時に接続されていないと指摘された TruncateHyphenListener ではなく、フォーム内 PRE_SUBMIT リスナーとして自前実装された。"
+    },
+    {
+      "rowId": 958,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/BlacklistUpdateType.php:36` `->add('new_blacklist_tag', BlacklistTagType::class, ...)` と `src/Eccube/Form/Type/Admin/BlacklistType.php:32` `->add('BlacklistTag', BlacklistTagType::class, ...)` のままで、`src/Eccube/Form/Type/Master/BlacklistTagType.php:29-32` は `->orderBy('bt.id', 'ASC')`、親は `:47` `return MasterType::class;`。`src/Eccube/Form/Type/MasterType.php:29-30` は `'multiple' => false, 'expanded' => false` なので依然 select 表示。",
+      "note": ""
+    },
+    {
+      "rowId": 959,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/BlacklistController.php:107` `$this->addSuccess('admin.common.save_complete', 'admin');` のままで、`messages.ja.yaml:1595` `admin.common.save_complete: 保存しました`。設計指定の `admin.register.complete`（`messages.ja.yaml:1970` 登録が完了しました。）は同コントローラで使用されていない（grep で addSuccess は :107 の 1 箇所のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 960,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/Purchase/OtcBuyController.php:380` `$registerResult = $this->registerCustomer($form) ? self::ENTRY_SUCCESS : self::ENTRY_FAILED;`、`:437-438` `if ($registerResult !== self::NO_ENTRY) { $urlComplete = $urlComplete.'?register='.$registerResult; }` のままで、買取時はブラックリスト該当（`:67` ENTRY_FAILED = 2）でも買取申込完了画面へ遷移する。`src/Eccube/Resource/template/default/OtcBuy/complete.twig:16-19` が ENTRY_FAILED 時に「ご入力いただいた内容では会員登録ができませんでした。」を表示するのみで、`entry_regist_error` へのリダイレクトは `src/Eccube/Controller/Front/EntryController.php:155` の通常会員登録側にしか存在しない。",
+      "note": ""
+    }
+  ]
+}

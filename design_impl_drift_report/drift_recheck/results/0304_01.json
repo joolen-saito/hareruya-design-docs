@@ -1,0 +1,77 @@
+{
+  "packetId": "0304_01",
+  "results": [
+    {
+      "rowId": 341,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Cart/index.twig:237` `{% set saleLimit = ProductClass.saleLimit %}`、`:238-242` `{% if ProductClass.stockUnlimited %}{% set maxQty = saleLimit is not null ? saleLimit : 99999 %}{% else %}{% set stockQty = eccubeStock|default(0) %}{% set maxQty = saleLimit is not null and saleLimit < stockQty ? saleLimit : stockQty %}` と、在庫と購入上限の小さい方を maxQty に採用するよう是正済み。`:266` の数量入力に `max=\"{{ maxQty }}\" data-max-quantity=\"{{ maxQty }}\"`、`:267` の＋ボタンに `{% if CartItem.quantity >= maxQty %} disabled{% endif %}` が付与され、JS 側も `:46` `$item.find('[data-operation=\"up\"]').prop('disabled', !isNaN(qty) && max !== null && qty >= max);`、`:110-111` `const max = getItemMaxQuantity($item); if (max !== null && qty > max) { qty = max; $input.val(qty); }`、`:130-134` の up クリック時上限判定で、Ajax(`sendCartRequest`)による非リロード制御を行っている。監査時点の「在庫のみ参照」は解消。",
+      "note": ""
+    },
+    {
+      "rowId": 342,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Shopping/index.twig:734-740` で備考欄が `{% if not isDeliveryOTC %}<div class=\"p-hareruya-shipping__remarks-textarea\"><label ...>{{ 'front.shopping.message_info'|trans }}</label>{{ form_widget(form.message, ...) }}` と店頭受取以外のみ描画に変更。`:614-620` で `{% if isDeliveryOTC %}<p>{{ 'front.shopping.remarks.otc_request'|trans }}</p>` と `<a ... href=\"{{ url('contact', {'tctokyo': 'true'}) }}\" ...>{{ 'front.shopping.remarks.otc_contact_link'|trans }}</a>` のお問合せフォーム誘導を表示、`:621-622` の else で通常配送向け文言を表示。文言は `src/Eccube/Resource/locale/messages.ja.yaml:1433-1434` `front.shopping.remarks.otc_contact_link: 【お問い合わせフォーム】はこちら` に追加済み。",
+      "note": ""
+    },
+    {
+      "rowId": 343,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Front/ShoppingController.php:318` `if ($response = $this->redirectToCartIfShoppingTimeout($Order, '[注文確認]')) { return $response; }`、`:438` に注文処理(checkout)側の同判定が追加。`:1271-1281` `private function redirectToCartIfShoppingTimeout(Order $Order, string $logPrefix): ?RedirectResponse { if (!$this->shoppingService->isTimeout($Order)) { return null; } ... $this->addRequestError(trans('front.shopping.error.timeout')); return $this->redirectToRoute('cart'); }` でカート画面へ遷移（カートのクリアは行わないため商品は保持）。判定本体は `src/Eccube/Service/ShoppingService.php:286-298` `$createDate = $order->getCreateDate(); ... $timeoutLimitMinutes = (int) $this->eccubeConfig->get('eccube_shopping_timeout_limit_minute'); ... return $createDate < $timeoutLimit;`、閾値は `app/config/eccube/packages/eccube.yaml:288` `eccube_shopping_timeout_limit_minute: 30`。",
+      "note": ""
+    },
+    {
+      "rowId": 344,
+      "status": "対応済み",
+      "evidence": "rowId342 と同一箇所。`src/Eccube/Resource/template/default/Shopping/index.twig:734-740` の `{% if not isDeliveryOTC %}` により店頭受取・スムーズ店頭受取では `form.message` の備考欄 textarea を描画せず、`:616-620` で `<a ... href=\"{{ url('contact', {'tctokyo': 'true'}) }}\">{{ 'front.shopping.remarks.otc_contact_link'|trans }}</a>`（お問合せフォームはこちら）を表示。それ以外(`:621` else)は備考欄を表示しお問合せ誘導は非表示。",
+      "note": ""
+    },
+    {
+      "rowId": 345,
+      "status": "部分対応",
+      "evidence": "支払方法によるボタン文言変更は実装済み: `src/Eccube/Resource/template/default/Shopping/index.twig:136-142` `{% if selectedPaymentMethod in creditPaymentMethods %}{% set checkoutButtonLabel = 'front.shopping.checkout.credit'|trans %}{% elseif selectedPaymentMethod == constant('Eccube\\\\Entity\\\\Payment::EC_CVS_METHOD') %}{% set checkoutButtonLabel = 'front.shopping.checkout.cvs'|trans %}{% else %}{% set checkoutButtonLabel = 'front.shopping.checkout'|trans %}{% endif %}`、`:846-847` `<button type=\"submit\" ... data-js-payment-submit>{{ checkoutButtonLabel }}`、文言は `src/Eccube/Resource/locale/messages.ja.yaml:1539-1540` `front.shopping.checkout.credit: クレジットカード決済へ` / `front.shopping.checkout.cvs: コンビニ決済へ`。ただし設計(0304 sheet-4 「・支店の場合、「注文する」ボタンの文言は「購入する」に変更する」)の支店分岐が未実装で、上記条件に `isMainShop` は含まれず、locale にも「購入する」に相当する front.shopping.checkout.* キーは存在しない(grep で `front.shopping.checkout` 系は 1538-1540 の3件のみ)。支店ではデフォルトの `front.shopping.checkout: 注文する` が表示される。",
+      "note": "コンビニ/クレカは対応済み、支店→「購入する」のみ未充足。"
+    },
+    {
+      "rowId": 346,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Shopping/index.twig:130-134` で `{% set creditPaymentMethods = [constant('Eccube\\\\Entity\\\\Payment::EC_CREDIT_METHOD'), constant('Eccube\\\\Entity\\\\Payment::EC_REGIST_CREDIT_METHOD')] %}` `{% set isCreditPaymentSelected = Order.Payment is not null and Order.Payment.method in creditPaymentMethods %}` を定義し、`:530-532` `<div class=\"p-hareruya-shipping__payment-creditcard-notice\" id=\"notice-creditcard-payment\"{% if not isCreditPaymentSelected %} hidden{% endif %}> ... <button ... id=\"about-3dsv2\" data-js-modal-trigger=\"shopping-modal-3dsecure\">{{ 'front.shopping.credit_3ds.link'|trans }}</button>` でクレジットカード決済選択時のみ本人認証サービスリンクを表示（`:536-545` に説明モーダル）。文言は `src/Eccube/Resource/locale/messages.ja.yaml:1512` `front.shopping.credit_3ds.link: 本人認証サービス（3Dセキュア2.0）について`。",
+      "note": ""
+    },
+    {
+      "rowId": 347,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Shopping/index.twig:762` `{% if isMainShop and not isDeliveryOTC %}` で集計エリア全体が分岐し、小計(`:767`)・送料・手数料・ポイント残高/発生(`:806-815`)は本店かつ非店頭受取のみ描画。`:818-830` `{% else %}` `{# 支店/本店・店頭受取の場合 #}` では `common.payment_total`(税込) と `{% for rate, total in Order.total_by_tax_rate %}` の合計＋`{{ 'common.tax_included'|trans }} {{ Order.tax_by_tax_rate[rate]|price }}`（内税）のみを表示。`:833` のポイント注意文も `isMainShop and not isDeliveryOTC` ガード付きに是正済み。",
+      "note": ""
+    },
+    {
+      "rowId": 348,
+      "status": "対応済み",
+      "evidence": "rowId343 と同一の是正。`src/Eccube/Controller/Front/ShoppingController.php:438` `if ($response = $this->redirectToCartIfShoppingTimeout($Order, '[注文処理]')) { return $response; }` が checkout() の受注取得直後に追加され、`:1271-1281` で `$this->shoppingService->isTimeout($Order)` 判定→`return $this->redirectToRoute('cart');`。`src/Eccube/Service/ShoppingService.php:288-297` が `$order->getCreateDate()` と `now -eccube_shopping_timeout_limit_minute 分` を比較、`app/config/eccube/packages/eccube.yaml:288` で 30 分。リダイレクト時にカートのクリア処理は無く商品は保持される。",
+      "note": ""
+    },
+    {
+      "rowId": 349,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Shopping/index.twig:218-223` `{% set membershipAddressId = CustomerAddressList[0].id %}` `{% if selectedCustomerAddressId is null %}{% set selectedCustomerAddressId = membershipAddressId %}{% endif %}` `{% set isMembershipAddressSelected = selectedCustomerAddressId == membershipAddressId %}`（コメント `:217` 「未選択時も会員住所を既定とし、「お届け先情報を変更する」を非表示」）を追加し、`:254-255` `{% if not isMembershipAddressSelected and selectedCustomerAddressId is defined and selectedCustomerAddressId > 0 %}<button ... >{{ 'front.shopping.delivery.change'|trans }}</button>{% endif %}` と条件付き描画に変更。監査時点の無条件描画は解消。",
+      "note": ""
+    },
+    {
+      "rowId": 350,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/ShoppingController.php:745-749` `$addressCurrNum = count($Customer->getCustomerAddresses()); $addressMax = $this->eccubeConfig['eccube_deliv_addr_max']; if ($addressCurrNum >= $addressMax) { throw new NotFoundHttpException(); }`（登録処理側 `:891-895` も同様に `throw new NotFoundHttpException();`）で、現 develop でも 404 を返すのみ。`front.shopping.error.customer_address_max` は src/html/app 全体を grep しても 0 件で、ご注文方法指定画面のエラー領域への上限超過エラー表示および同画面への差し戻しは未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 351,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Shopping/shipping_edit.twig` を全文確認したが、`front.mypage.delivery.edit_notice`（`src/Eccube/Resource/locale/messages.ja.yaml:747` に存在）や「変更されません」「弊社へご連絡」の文字列は 0 件。タイトル直下 `:64-68` `<div class=\"p-hareruya-entry__title\"><h1 ...>{{ 'front.shopping.shipping_edit_title_management'|trans }}</h1></div>` の次はいきなり `:69` の form で、注意文の出力箇所が無い。監査時点と同じ状態。",
+      "note": ""
+    },
+    {
+      "rowId": 352,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Shopping/shipping_edit.twig:221-247`（国内住所: `{{ form_widget(form.address.pref) }}` / `form.address.addr01` / `form.address.addr02`）および `:250-273`（海外住所 addr01-03）を確認したが、住所欄の下に注意文の出力は無く、続くのは `:280` 以降の電話番号ブロック。`front.entry.address.note`(messages.ja.yaml:463) / `front.mypage.delivery.address_help`(同:748) の「町名・番地の入力漏れにご注意ください。」は当テンプレートで未使用（grep 0 件）。監査時点と同じ状態。",
+      "note": ""
+    }
+  ]
+}

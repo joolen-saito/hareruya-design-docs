@@ -1,0 +1,77 @@
+{
+  "packetId": "0305_01",
+  "results": [
+    {
+      "rowId": 359,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/purchase_new_product.twig:3` は現 develop でも `{% set tagUnisearch = tagged_unisearch_request(constant('Eccube\\\\Entity\\\\Tag::NEW_ITEMS_ID'), purchaseUnisearchPageSize|default(60), true) %}` のままで、:8 の見出しも `<h2 class=\"c-hareruya-heading--lev2\">買取新着商品</h2>`。`src/Eccube/Entity/Tag.php:55-71` の定数は NEW_ITEMS_ID=1 / FEATURE_PURCHASE_ID=5 等のみで『強化買取』相当の定数は無く、src/・html/ 配下を『強化買取』で grep しても 0 件。",
+      "note": "TOP2番目コーナー自体は存在するが表示対象タグが新着固定のまま。"
+    },
+    {
+      "rowId": 360,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Twig/Extension/TaggedUnisearchRequestExtension.php:72-74` は現在も `if ($isBuy) { $query['sort'] = 'release_date'; }` のみで、優先表示商品・商品コード順を渡す処理は無い。`src/Eccube/Service/UniSearch/UniSearchService.php:323-325` も `} elseif ($sortKey === 'release_date') { $params[] = 'sort='.urlencode('release_date desc,product desc,language asc,foil_flg asc'); }` のまま。`src/Eccube/Util/ProductSearch/Event/Subscriber/TagSubscriber.php:42-68` の `addCondition()` は `// TODO: 使用する際にコメントはずす` 以下が全てコメントアウトのまま。`Tag::getPriorityProducts()` を使う `src/Eccube/Repository/ProductRepository.php:520-611` (`findTopPublicProductsByTag`) は存在するが、呼び出し元は PriceDownBlockPayloadBuilder / RestockedBlockPayloadBuilder / NewItemsBlockPayloadBuilder / SaleBlockPayloadBuilder / ShopTopController / SaleTwoRowController のみで、買取3コーナー（purchase_new_product.twig / purchase_feature_product.twig / purchase_special_corner.twig の UniSearch 経路）からは呼ばれていない。",
+      "note": "販売側ブロックには優先表示商品順ロジックがあるが買取UniSearch経路へは未適用。"
+    },
+    {
+      "rowId": 361,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/purchase_special_corner.twig:34` は現在も `lazyRender: 'purchase_special_corner'` を送るが、`src/Eccube/Controller/Front/Purchase/PurchaseController.php:822-841` の `$listRenderTemplates` は `'detail' / 'search' / 'purchase_feature' / 'purchase'` の4キーのみで `purchase_special_corner` を含まず、既定の `return $this->render('Block/purchase_product_list_unisearch.twig', ['cards' => $cards]);`(:838-840) にフォールバックする。同twig(`Block/purchase_product_list_unisearch.twig:1-43`)のカードは画像・言語ラベル・商品名・買取価格(:29-38)のみで週間販売数の出力要素が無い。`Block/`・`Purchase/`・買取JS を weekly/週間販売 で grep しても買取側は 0 件（販売側は `Block/_product_card.twig:94-95` 等に存在）。",
+      "note": ""
+    },
+    {
+      "rowId": 362,
+      "status": "部分対応",
+      "evidence": "監査時点に無かったパス型ルートが追加されている: `src/Eccube/Controller/Front/Purchase/PurchaseController.php:400-402` に `#[Route(path: '/purchase/search/cate/{categoryId}/tag/{tagId}', name: 'purchase_search_category_tag', ...)]` / `#[Route(path: '/purchase/search/cate/{categoryId}', name: 'purchase_search_category', ...)]` / `#[Route(path: '/purchase/search/tag/{tagId}', name: 'purchase_search_tag', ...)]` があり、:405-411 で `$request->query->set('category', ...)` / `$request->query->set('tags', ...)` にマップ。`:563-580 resolvePurchaseSearchFormAction()` でフォーム action も当該パスルートを維持する。ただし設計(sheet-4 「★SEO対策として、タグやカテゴリの検索条件は「/tag/category」のようにURLのパスに含め」「https://~/purchase/search/New%20Items/Single%20Cards」)が示す“タグ名/カテゴリ名”形式ではなく `\\d+` 制約のID形式（requirements: ['categoryId' => '\\d+', 'tagId' => '\\d+(?:-\\d+)*']）であり、`src/Eccube/Service/App/Category/CategorySidebarLinkContext.php:42-49` は依然 `return new self('purchase_search', 'purchase_search', ['purchaseFlg' => true], ...)` とクエリ方式のまま、`src/Eccube/Resource/template/default/Purchase/search.twig:70` も `url('purchase_search', { purchaseFlg: true })`。",
+      "note": "パス埋め込みルート自体は新設されたが、設計例のname形式でなくID形式、サイドバー導線は未移行のため部分対応。"
+    },
+    {
+      "rowId": 363,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/js/Purchase/purchase_js.twig:16-27` は現 develop でも `$(document).on('click', '.purchase_page .purchase-detail-qty .btn-minus', function () { ... // 買取カートは1枚以上が前提のため、販売詳細の0下限とは合わせず1で止める / if (v > 1) { v--; ... } });` のままで、商品数1のとき20へ循環させる処理は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 364,
+      "status": "未対応",
+      "evidence": "現 develop でも `src/Eccube/Controller/Front/Purchase/PurchaseController.php` の `search()`(:404-471) の返却配列に タグ説明/フリーエリア の変数は無く、`Front/Purchase/` 配下を `FreeArea|freeArea` で grep して 0 件。`src/Eccube/Resource/template/default/Purchase/search.twig` および `Block/` 配下も `FreeArea|free_area|tagDescription|tag_description` で 0 件で、一覧上部にタグ説明文を描画する箇所は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 365,
+      "status": "未対応",
+      "evidence": "0件時描画は `html/template/default/assets/hareruya/js/hareruya-unisearch-list-client-core.js:290-297` の `function showEmptyResult() { resetStatusMessages(); $shelf().html(statusWrapperHtml('<p class=\"ec-text ec-mb0\" ...>' + cfg.emptyResultMsg + '</p>')); }` で単一メッセージのみ（監査時の purchase 専用JSは core へ統合されたが内容は同じ）。`src/Eccube/Resource/template/default/Purchase/search.twig:57` で `emptyResultMsg: 'front.product.search__product_not_found'|trans` を渡しており、`src/Eccube/Resource/locale/messages.ja.yaml:1104` は `front.product.search__product_not_found: お探しの商品は見つかりませんでした` のまま。src/・html/ 全体を『最低保証』で grep して 0 件。",
+      "note": "設計の『お探しのカードは…』文言・買取最低保証/ヘルプ導線とも未実装。"
+    },
+    {
+      "rowId": 366,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/Purchase/PurchaseController.php` の `#[Route` は :139,181,252,342,366,399-402,475,798,812,958,1076,1166,1205 の14箇所で、`/purchase/forward/{oldCode}` 相当は無い（src/・app/ を `purchase/forward|purchase_forward` で grep して 0 件）。`src/Eccube/Repository/Master/MtbProductCodeMappingRepository.php:25-31` は `class MtbProductCodeMappingRepository extends AbstractRepository { public function __construct(ManagerRegistry $registry) { parent::__construct($registry, MtbProductCodeMapping::class); } }` のみで旧コード検索メソッドが無く、`MtbProductCodeMapping` の参照も Entity/Repository 定義以外に 0 件。",
+      "note": ""
+    },
+    {
+      "rowId": 367,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Purchase/detail.twig` を `weekly|週間|sold` で grep して 0 件、`src/Eccube/Controller/Front/Purchase/PurchaseController.php` も `weekly|weekly_sold|salesQuantity` で 0 件。買取詳細に週間販売数の表示要素・集計・view変数は依然存在しない（販売側は `Block/_product_card.twig:94-95` 等で `weeklySales` を出力）。",
+      "note": ""
+    },
+    {
+      "rowId": 368,
+      "status": "部分対応",
+      "evidence": "セット名とイラストレーターはリンク化済み: `src/Eccube/Resource/template/default/Purchase/detail.twig:424-431` で `<dt>セット名</dt>` の値が `<a href=\"{{ path('purchase_search', {cardset: cardDetail.Cardset.id}) }}\" class=\"p-hareruya-product-detail__specs-link\">{{ cardDetail.Cardset.nameJp }}</a>`、:442-449 で `<dt>イラストレーター</dt>` が `<a href=\"{{ path('purchase_search', {illustrator: cardDetail.Illustrator.id}) }}\" class=\"p-hareruya-product-detail__specs-link\">` となり、監査時点のプレーンテキスト出力から是正されている。一方 :436-438 の `<dt>ブロック</dt>` は `<dd>{{ cardDetail.Cardset.Cardsetblock.nameJp }}</dd>` の静的テキスト、:452-458 の `<dt class=\"legal\">使用可能フォーマット</dt>` も `{{ CardFormat.Format.nameEn }}{% if not loop.last %},{% endif %}` の静的テキストで `<a>`/href が無い。設計(sheet-6 識別ID11-14)は4項目すべて書式『リンク』。",
+      "note": "セット名の押下→カードセット検索一覧遷移は満たすが、ブロック・使用可能フォーマットが未リンク。"
+    },
+    {
+      "rowId": 369,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Purchase/detail.twig:202-204` は `<a class=\"c-hareruya-btn--md p-hareruya-conditions-btn\" href=\"{{ url('user_data', { route: 'purchase_example' }) }}\">査定例はこちら<i class=\"icon-hareruya-arrow-right\"></i></a>` で、依然としてモーダルではなく別ページへの遷移リンク。唯一の `.p-hareruya-conditions-btn` ハンドラ `src/Eccube/Resource/template/default/Block/js/product_detail_js.twig:436-441` は `const href = $(this).attr('href'); if (!href || href.charAt(0) !== '#') { return; }` とアンカー(#)以外は素通しするスクロール処理で、モーダル生成は行わない。",
+      "note": "ハードコード外部URL(https://www.hareruyamtg.com/ja/user_data/purchase_example)は url('user_data',...) の内部ルートに改善されたが、設計要求のモーダル表示は未実装。"
+    },
+    {
+      "rowId": 370,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:147` は `front.purchase.cart.empty_body: \"現在、カートには商品が入っておりません。\\nお買取りを続けるには下の「TOPへ戻る」をクリックしてください。\"`、:166 は `front.purchase.cart.back_to_list: TOPへ戻る` のままで、設計が正とする『商品一覧へ戻る』へ変更されていない。`src/Eccube/Resource/template/default/Purchase/cart.twig:137,143,157` も `{{ 'front.purchase.cart.empty_body'|trans|nl2br }}` / `href=\"{{ path('purchase_index') }}\">{{ 'front.purchase.cart.back_to_list'|trans }}` を参照（リンク先 purchase_index は設計どおり）。",
+      "note": "行番号は監査時(148/167)から1行ずれているが内容は同一。"
+    }
+  ]
+}

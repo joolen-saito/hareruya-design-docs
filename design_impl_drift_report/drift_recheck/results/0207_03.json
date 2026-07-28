@@ -1,0 +1,77 @@
+{
+  "packetId": "0207_03",
+  "results": [
+    {
+      "rowId": 913,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:2836` `admin.customer.point_update.purchase: ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）` のまま（行番号は2780→2836にずれたが値は同一）。`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:136-138` `$pointTypeLabelKey = $type === MtbPointType::GRANTED ? 'admin.customer.point_update.granted' : 'admin.customer.point_update.purchase';` で同キーを画面タイトルに渡す構造も変わっていない。設計の「ポイント付与（…ご返金）」表記への是正なし。",
+      "note": ""
+    },
+    {
+      "rowId": 914,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:64` `#[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_update', requirements: ['id' => '\\d+', 'type' => 'granted|purchase'], methods: ['POST'])]` で、設計の `/update/{type}` セグメントは無い。`src/Eccube/Resource/template/admin/Customer/point_update.twig:18` も `action=\"{{ url('admin_customer_point_update', { id : Customer.id, type: type }) }}\"` で同ルートを生成。src配下を `customer/point/{id}/update` で再検索しても該当ルートは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 915,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:66,140-146` は `string $type` を受け取るがフォーム生成・タイトル・`pointUpdateFlg` にのみ使用し、履歴取得条件に用いていない（Controller全体に PointHistoryRepository 呼び出し自体が無い）。`src/Eccube/Resource/template/admin/Customer/point_update.twig:123` `{% for PointHistory in Customer.PointHistories %}` で全件ループ。`src/Eccube/Entity/Customer.php:1330-1332` の関連は `#[ORM\\OneToMany(targetEntity: DtbPointHistory::class, mappedBy: 'Customer')]` + `#[ORM\\OrderBy(['id' => Criteria::DESC])]` のみで point_type_id 条件なし。種別絞り込みは未実装のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 916,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:107` `$Customer->getPlayer()->addPoint($PointHistory->getPointChange());` と依然 null チェック無しで呼び出す。`src/Eccube/Entity/Customer.php:1145-1148` `public function getPlayer(): ?DtbPlayer` は null を返し得る。Controller 全体に `createNotFoundException` / 404 変換処理は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 917,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:2836` `admin.customer.point_update.purchase: ポイント履歴追加（余剰入金へのご返金、注文金額変更によるご送金）` で画面タイトルは「ご送金」のまま。一方 `src/Eccube/Form/Type/Admin/CustomerPointType.php:42-45` `NOTE_CHOICES_REFUND = ['余剰入金へのご返金' => ..., '注文金額変更によるご返金' => ...]` は「ご返金」で、監査時点と同じ不一致が残存。",
+      "note": ""
+    },
+    {
+      "rowId": 918,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:64` の POST ルートは `'/%eccube_admin_route%/customer/point/{id}/{type}'`（name: admin_customer_point_update）で `/update/{type}` を含まない。`src/Eccube/Resource/template/admin/Customer/point_update.twig:18` の form action も同ルートを url() 生成。互換ルートの追加なし。",
+      "note": "rowId 914 と同一事象（M08-06 側の記載）。"
+    },
+    {
+      "rowId": 919,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Customer/point_update.twig:123` `{% for PointHistory in Customer.PointHistories %}` のまま全件表示。`src/Eccube/Entity/Customer.php:1330-1332` の `#[ORM\\OrderBy(['id' => Criteria::DESC])]` 以外に絞り込み条件はなく、Controller からも DtbPointHistoryRepository の顧客別 QueryBuilder は呼ばれていない。ポイント種別ごとの履歴表示は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 920,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/CustomerPointType.php:85-94` `->add('note', ChoiceType::class, ['label' => 'admin.customer.point.note', 'required' => true, 'choices' => $noteChoices, ..., 'constraints' => [new NotBlank()]])` と必須のまま。`src/Eccube/Resource/template/admin/Customer/point_update.twig:70` `<span class=\"badge bg-primary ms-1\">{{ 'admin.common.required'|trans }}</span>` も残存。設計の「任意・初期値空」への是正なし。",
+      "note": ""
+    },
+    {
+      "rowId": 921,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:107` `$Customer->getPlayer()->addPoint(...)` は null 判定なしのまま。`src/Eccube/Entity/Customer.php:1145` `public function getPlayer(): ?DtbPlayer`。`src/Eccube/Resource/template/admin/Customer/point_update.twig:105` `ポイント残高: {{ Customer.Player.point }}pt` も直接参照。選手情報不在を 404 とする処理は現 develop に存在しない。",
+      "note": "rowId 916 と同一事象（M08-06 側の記載）。"
+    },
+    {
+      "rowId": 922,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:43` `#[Route('/%eccube_admin_route%/customer/point/{id}/select', name: 'admin_customer_point_select', ...)]` でルート名は依然 admin_customer_point_select。`src/Eccube/Resource/template/admin/Customer/edit.twig:1038` `href=\"{{ url('admin_customer_point_select', { 'id': Customer.id}) }}\"`。src 配下を `admin_customer_point_type_select` で全文検索してもヒット無し（設計の名称は未実装）。",
+      "note": ""
+    },
+    {
+      "rowId": 923,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:173-176` `$MailHistories = $this->mailHistoryRepository->findBy($criteria, ['id' => 'DESC']);` のままで、`src/Eccube/Entity/MailHistory.php:50-51` の `send_date` カラムを並び順に使う実装は無い。処理日降順への是正なし。",
+      "note": ""
+    },
+    {
+      "rowId": 924,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:145` `#[Route(path: '/%eccube_admin_route%/customer/mail/{id}/history', name: 'admin_customer_mail_history', requirements: ['id' => '\\d+'], methods: ['GET'])]` で設計 URL `/customer/{id}/mail_history` とは異なる。リンク生成元（`src/Eccube/Resource/template/admin/Customer/edit.twig:1048`、`src/Eccube/Resource/template/admin/Customer/index.twig:459`、`src/Eccube/Resource/template/admin/Customer/mail_history.twig:36`）はすべて同ルート名を参照し、設計 URL の互換ルートは src 全文検索でも見つからない。",
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "packetId": "0214_06",
+  "results": [
+    {
+      "rowId": 1190,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:66` `#[Route(path: '/%eccube_admin_route%/entry_registration', name: 'admin_entry_registration', methods: ['GET', 'POST'])]`、同:159 `#[Route(path: '/%eccube_admin_route%/entry_registration/new/{eventDetailId}', name: 'admin_entry_new', ... methods: ['GET', 'POST'])]`（登録送信も同一パスの POST）、同:232 `#[Route(path: '/%eccube_admin_route%/entry_registration/search_player', name: 'admin_entry_registration_search_player', methods: ['GET'])]` で監査時点と同じ。`grep -rn \"entry/select|entry/search/player\" src` はヒットなしで、設計指定の /entry/select・/entry/{eventDetailId}/new・/entry/{eventDetailId}/create・POST /entry/search/player/html は現 develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1191,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:164` `if ($baseInfo === null || !$this->getMember()->isEditableShop($baseInfo)) { throw $this->createNotFoundException(); }` は新規画面到達時のみ。一覧側は `src/Eccube/Form/Type/Admin/EntryRegisterSearchType.php:41-52` の base_info EntityType が `query_builder => $er->createQueryBuilder('b')->orderBy('b.id','ASC')` で全店舗を選択肢に出し、`src/Eccube/Repository/DtbEventRepository.php:151` `getQueryBuilderByEntryRegistrationSearchData()` は189行目以降で `$baseInfos = $searchData['base_info'] ?? []` が空なら店舗条件を一切付けない。`src/Eccube/Resource/template/admin/Event/EntryRegistration/index.twig:110` も `<a class=\"btn btn-ec-conversion px-3\" href=\"{{ url('admin_entry_new', {eventDetailId: data.eventDetailId}) }}\">` を無条件表示で、監査時点から変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 1192,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:193,205` `$this->entryRegistrationStoreAction->handle($input);` の戻り値を破棄し `return $this->redirectToRoute('admin_event_entry_event_detail', ['event_detail_id' => $eventDetail->getId()]);` のまま。編集画面ルート `admin_event_entry_edit` は成功時に使われておらず、監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 1193,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/EventEntryDetailType.php:60` `->add('entryPlayer', HiddenType::class, [...])` は単一プレイヤーIDのみで entryPlayerList JSON は無し。`src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:269-285` は `<tr class=\"detail_players\" data-row=\"1\">` と `<input type=\"hidden\" id=\"player_id--1\" ...>` の1行固定。`src/Eccube/Service/Admin/Event/EntryRegistrationStoreAction.php:63-69` も `$this->entryPlayerEntityManager->save(EntryPlayer: null, EventEntry: $EventEntry, Player: $player, confirmFlg: false, seatOrder: 1,);` と1件固定値保存で、チーム人数分の行・確認フラグ・席順の指定は実装されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1194,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/EventEntryDetailType.php:63-71` の制約は `new NotBlank(['message' => 'admin.event.entry.player_required'])` と `new Regex(['pattern' => '/^[1-9]\\d*$/', ...])` のみ。`src/Eccube/Service/Admin/Event/EntryRegistrationStoreAction.php:39-75` の handle() には重複申込検査がなく、プレイヤー存在確認と Customer 有無のみで保存する。`isEntriedByPlayerIdExceptEntry` の呼び出しは `src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:306` の検索モーダル表示用 `$entriedFlgs[]` のみで、`src/Eccube/Resource/template/admin/Event/Entry/search_player_modal_list.twig:26` の disabled ボタン表示に使われるだけ。サーバー側の重複弾き・申込重複メッセージ・新規画面リダイレクトは監査時点同様に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1195,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:240-257` の読み取り専用表示行は `'admin.event.name'|trans`（イベント名）、`'admin.event.base_info'|trans`（店舗）、`'admin.event.format'|trans`（フォーマット）の3行のみで、会場ラベル・値の行は依然無い。`grep -rn \"venue|Venue\" src/Eccube/Entity/DtbEvent.php src/Eccube/Entity/DtbEventDetail.php` はヒット無し、`messages.ja.yaml` の「会場」は 6647-6648 の front.event.header.venue.* のみで管理画面申込用の会場項目は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1196,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:359`（新規時ブロック）`<button class=\"btn btn-ec-conversion px-5\" type=\"submit\" id=\"submit_entry\" disabled>{{ 'admin.common.save'|trans }}</button>` のまま。`src/Eccube/Resource/locale/messages.ja.yaml:1631` `admin.common.save: 保存` で表示は「保存」、`同:1633 admin.common.registration: 登録` は編集時ブロック（edit.twig:353）でしか使われていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1197,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Event/EntryRegistration/edit.twig:342` `<a class=\"c-baseLink\" href=\"{{ url('admin_entry_registration') }}\"><i class=\"fa fa-backward\" aria-hidden=\"true\"></i><span>{{ 'admin.event.entry.back'|trans }}</span></a>`、`src/Eccube/Resource/locale/messages.ja.yaml:5928` `admin.event.entry.back: 戻る` で、前画面名ではなく汎用「戻る」の固定文言のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1198,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryRegistrationController.php:203` `$this->addSuccess('admin.common.save_complete', 'admin');`、同:209 `$this->addError('admin.common.save_error', 'admin');` のまま。`src/Eccube/Resource/locale/messages.ja.yaml:1595-1596` は `admin.common.save_complete: 保存しました` / `admin.common.save_error: 保存に失敗しました` で、設計文言に一致する `admin.register.complete: 登録が完了しました。`（同:1970）・`admin.register.failed: 登録できませんでした。`（同:1971）はこの処理で未使用。支払金額は `src/Eccube/Form/Type/Admin/EventEntryDetailType.php:109-116` で `->add('price', IntegerType::class, ['disabled' => true, ...])` のままで「半角数字で金額を入力してください。」の分岐は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1199,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:61-66` `#[Route(path: '/%eccube_admin_route%/event/entry/bulk_csv_import', name: 'admin_event_entry_bulk_csv_import', methods: ['GET', 'POST'], priority: 10,)]`、同:176-178 `path: '/%eccube_admin_route%/event/entry/bulk_csv_template', name: 'admin_event_entry_bulk_csv_template'` のまま。`src/Eccube/Resource/template/admin/Event/Entry/event_bulk_csv_import.twig:64,89` も `url('admin_event_entry_bulk_csv_import')` / `url('admin_event_entry_bulk_csv_template')` を参照。`grep -rn \"bulkentry|entry_csv_template\" src`（php/twig/yaml）はヒット0件で、設計指定の /entry/bulkentry・POST /entry/bulkentry/upload・/entry/entry_csv_template は現 develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1200,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Event/Entry/event_bulk_csv_import.twig:69` `{{ form_widget(form.import_file, {'attr': {'accept': 'text/csv,.csv', 'class': 'd-none'}}) }}` で text/tsv は未許可のまま。同:13-16 の submit ハンドラも `$('#upload-button').attr('disabled', 'disabled'); $('#download-button').attr('disabled', 'disabled');` のみで、スピナー/ladda 表示はテンプレートに存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1201,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/AbstractController.php:364` `protected const ADMIN_CSV_IMPORT_MAX_ROWS = 5010;` のまま。`src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:95` `if ($this->countCsvRows($formFile) > static::ADMIN_CSV_IMPORT_MAX_ROWS) {` で 5011 行以上のみエラーとなり、同:100-102 の `'%maxRecord%' => static::ADMIN_CSV_IMPORT_MAX_ROWS` も 5010 で展開される。設計の 5000 行以上不可は未反映。",
+      "note": ""
+    }
+  ]
+}

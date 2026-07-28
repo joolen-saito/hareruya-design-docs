@@ -1,0 +1,59 @@
+{
+  "packetId": "0302_01",
+  "results": [
+    {
+      "rowId": 310,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/header.twig:103` `{% set switchLabel = app.request.locale == 'en' ? 'front.nav.lang.jp'|trans : 'front.nav.lang.en'|trans %}`、同 `:117` `<i class=\"icon-hareruya-language-{{ app.request.locale == 'en' ? 'jp' : 'en' }} ...\">` と監査時点のまま。en サイトで 'JP'、ja サイトで 'EN'（切替先言語）を表示しており、設計(en→EN / ja→JP)と逆。翻訳値も `src/Eccube/Resource/locale/messages.ja.yaml:6392-6393` `front.nav.lang.jp: JP` / `front.nav.lang.en: EN`、`src/Eccube/Resource/locale/messages.en.yaml:3975-3976` で不変。英語版テンプレート `src/Eccube/Resource/template/default/Block/header.en.twig:76` も同一の三項演算子で同じ挙動。",
+      "note": "行番号は監査時点の102-106,115-117から103,117へ微移動しているのみで内容は同一。"
+    },
+    {
+      "rowId": 311,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/mega_menu.twig:42-47` に `{# TODO: ECCUBE_HARERUYA-XXX デッキ構築 TOP ルート実装後に href を差し替え #}` と `<a class=\"p-hareruya-header__menu-link\" href=\"#\">` + `{{ 'front.nav.menu.deck_build'|trans }}` が現 develop でもそのまま残存。`grep 'href=\"#\"' mega_menu.twig` の唯一のヒットが当該行(44)で、デッキTOPへの遷移先は未設定のまま。比較として同ファイル:37 のデッキ検索は `url('deck_index')`、`header.twig:92` は `/decks` を指す。",
+      "note": ""
+    },
+    {
+      "rowId": 312,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/footer_sitemap.twig:50-52` に `{# TODO: ECCUBE_HARERUYA-XXX FAQ ページ (user_data/hareruya_faq) 実装後に href を差し替え #}` と `<a class=\"p-hareruya-footer__nav-link\" href=\"#\">{{ 'front.footer.sitemap.faq'|trans }}</a>` が現 develop でも残存。`src/Eccube/Controller` 配下および Block テンプレート全体を `faq|hareruya_faq` で横断検索しても、ヒットは同ファイル:50,52 のみで FAQ 画面ルートの新規実装は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 313,
+      "status": "未対応",
+      "evidence": "rowId 311 と同一箇所。`src/Eccube/Resource/template/default/Block/mega_menu.twig:44` `<a class=\"p-hareruya-header__menu-link\" href=\"#\">`（直前 :42 に「TODO: ECCUBE_HARERUYA-XXX デッキ構築 TOP ルート実装後に href を差し替え」）が現 develop でも未変更。一方 `src/Eccube/Resource/template/default/Block/header.twig:92` は `href=\"/decks\"` で実装済みのため、スマホ版ハンバーガーメニューの 4-6 のみ遷移不可のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 314,
+      "status": "未対応",
+      "evidence": "rowId 312 と同一箇所。`src/Eccube/Resource/template/default/Block/footer_sitemap.twig:52` `<a class=\"p-hareruya-footer__nav-link\" href=\"#\">{{ 'front.footer.sitemap.faq'|trans }}</a>` が現 develop でも未変更で、直前 :50 の TODO コメントも残存。同ブロック内の他リンク（:42 `url('user_data', { route: 'store_menu' })`、:45 `url('contact')`、:48 `url('help_guide')`）は url() 実装済みで FAQ のみプレースホルダ。",
+      "note": ""
+    },
+    {
+      "rowId": 315,
+      "status": "部分対応",
+      "evidence": "現 develop の `src/Eccube/Resource/template/default/Block/header.en.twig:57-72` のナビ list は `homepage`('front.nav.shop')／article 外部リンク('front.nav.article')／`url('deck_index')`('front.nav.deck_search')／`url('event_top')`('front.nav.events')／`url('user_data', {route:'store_menu'})`('front.nav.store') のみで、監査時点にあった買取(`front.nav.purchase`)・デッキ構築(`front.nav.deck_build`)の項目は削除済み（同ファイルに `front.nav.purchase`／`front.nav.deck_build` の出力は0件。ja 版 `header.twig:64` `{{ 'front.nav.purchase'|trans }}`、`header.twig:92` `{{ 'front.nav.deck_build'|trans }}` は存置）。ただし設計(0302 sheet-4「ナビ項目（en）…英語表示では買取・デッキ構築を表示せず、選手一覧を加える」)が求める『選手一覧』(pros)の追加は未実装で、`header.en.twig` 全域に pros/選手一覧 の導線は0件（pros リンクは `src/Eccube/Resource/template/default/Block/mega_menu.twig:49` の `https://pros.hareruyamtg.com/` のみ、上部ナビには無い）。",
+      "note": "非表示要件は充足、選手一覧追加要件が未充足のため部分対応。"
+    },
+    {
+      "rowId": 316,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Event/index.twig:104` `<option value=\"{{ OpenShop.id }}\"...>{% if app.request.locale == 'en' %}{{ OpenShop.shopNameEng ?? OpenShop.shopName }}{% else %}{{ OpenShop.shopName }}{% endif %}</option>` が現 develop でも監査時点と同一で、正式店舗名(shop_name／shop_name_eng)を出力。供給元も `src/Eccube/Controller/Front/EventTopController.php:67` `$OpenShops = $this->baseInfoRepository->getOpenShops();` のまま。テンプレート全域の `shortName` 参照は `Contact/confirm.twig:104,106,188,190` と `Contact/confirm.en.twig:99,172` のみで、Event 配下は0件＝短縮店舗名(shortNameJp／shortNameEn)は依然不使用。",
+      "note": ""
+    },
+    {
+      "rowId": 317,
+      "status": "未対応",
+      "evidence": "現 develop 全体（src/・app/ を .php/.twig/.js/.yaml で横断）で `ShopPageElement` の参照は `src/Eccube/Entity/DtbShopPageElement.php` と `src/Eccube/Repository/DtbShopPageElementRepository.php` の定義2ファイルのみ（それらを除外した grep のヒットは0件）で、Controller／Twig／JS からの利用は依然として無い。支店ページ本体 `src/Eccube/Resource/template/default/shop_top.twig` は全64行で、`初心者講習会`／`取り扱い商品`／セクションナビ用の anchor/section/nav いずれの記述も0件＝右カラム項目のセクションナビ（定義順表示・値無し非表示・末尾クラス付与・ページ内アンカー移動）は未実装のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 318,
+      "status": "未対応",
+      "evidence": "現 develop の src/・app/ 全域で文字列『閲覧店舗』のヒットは0件（監査時点の admin 側も含め、front 側に該当UIなし）。`src/Eccube/Resource/template/default/shop_top.twig`（64行）および `src/Eccube/Resource/template/default/Block/branch_header.twig`（74行）には店舗一覧の反復（for ループ）が無く、branch_header.twig:11 `{% set branchShopName = app.request.locale == 'en' ? (BaseInfo.shopNameEng ?? BaseInfo.shopName) : BaseInfo.shopName %}`／:18 `url('shop_top', {_shop: '/' ~ BaseInfo.htmlClassName})` と自店舗単体の表示のみ。`shoppage` を含むルート定義も src/・app/ の .php/.yaml で0件で、GET /{_locale}/shoppage/{name} 相当の独立ルートは未実装。",
+      "note": ""
+    }
+  ]
+}

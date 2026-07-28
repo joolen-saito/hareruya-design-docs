@@ -1,0 +1,77 @@
+{
+  "packetId": "0211_04",
+  "results": [
+    {
+      "rowId": 1090,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:47-67` の index() は `$searchForm = $this->createForm(SalesType::class);` … `return ['searchForm' => ..., 'searched' => false, 'summary' => null, ...];` のみで、SESSION_KEY の破棄処理がない。`src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:34` の `private const SESSION_KEY = 'eccube.admin.analysis.sales.search';` の使用箇所は 100行目 `$this->session->set(self::SESSION_KEY, ...)` と 129行目 `$viewData = $this->session->get(self::SESSION_KEY);` の2箇所のみで、`session->remove`/`clear` は Controller/Admin/Analysis 配下に一件も存在しない（grep で 0 件）。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1091,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Analysis/sales.twig:274-277` のヘッダは `avg_price` / `quantity` / `total` / `count` の4列のみ、`sales.twig:289-292` の行も `{{ row.price }} {{ row.sales }} {{ row.total }} {{ row.order_count }}` で割合列がない。`src/Eccube/Repository/OrderItemRepository.php:225-228` の select も `SUM(oi.price * oi.quantity) AS total` / `SUM(oi.quantity) AS sales` / avg price / `COUNT(DISTINCT o.id) AS order_count` のみで、`ratio|割合` は Analysis テンプレート・OrderItemRepository に grep 0 件。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1092,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Analysis/SalesType.php:50-53` は `public const SUMMARY_TYPE = ['admin.analysis.sales.summary_type.product' => 'product_id', 'admin.analysis.sales.summary_type.category' => 'class_category_name'];` のままで商品/カテゴリの2軸のみ。`SalesType.php:94-218` の buildForm が持つ項目は multi / summary_date_from,to / date_type / summary_type / sort_key / asc_desc / page_count / category_id / card_condition / tag_sales_analysis / cardset / price_from,to / quantity_from,to / mail_order_enabled / store_sales_all / store_sales_targets のみで、都道府県・性別・誕生日・利用端末・支払方法・購入グループ・年代のフィールドは存在しない。`src/Eccube/Repository/OrderItemRepository.php:212-345` の getAnalysisSummary も `$summaryType = (... === 'class_category_name') ? 'class_category_name' : 'product_id'` の2分岐のみ。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1093,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/OrderItemRepository.php:264-267` は `if (!empty($searchData['summary_date_to'])) { $qb->andWhere(\"o.{$dateType} <= :summaryDateTo\") ... }` で包含上限のまま（From は 261行目 `>= :summaryDateFrom`）。初期値も `src/Eccube/Form/Type/Admin/Analysis/SalesType.php:111` `'data' => new \\DateTime('last day of this month 23:59:59')` で変更なし。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1094,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Analysis/SalesType.php:193-204` は `->add('price_from', IntegerType::class, ['required' => false,])` … `->add('quantity_to', IntegerType::class, ['required' => false,])` で attr(min) も constraints も付与されていない。`src/Eccube/Resource/template/admin/Analysis/sales.twig:223,231` も `{{ form_widget(searchForm.price_from) }} ～ {{ form_widget(searchForm.price_to) }}` と属性追加なし。集計後 HAVING 絞り込み自体は `src/Eccube/Repository/OrderItemRepository.php:305-316` に存在するが、0以上の入力補助は監査時点と同一で未実装。",
+      "note": "HAVING 絞り込みは実装済みだが、指摘対象である「0以上の入力補助」が未実装のため未対応。"
+    },
+    {
+      "rowId": 1095,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:129-134` は `$viewData = $this->session->get(self::SESSION_KEY); if ($viewData === null) { $this->addError('検索条件がありません。先に検索を実行してください。', 'admin'); return $this->redirectToRoute('admin_analysis_sales'); }` のままで、空条件で処理を続行する経路はない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1096,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php:38` は `$rows = $this->orderItemRepository->getAnalysisSummary($searchData)['result'];` と検索条件をそのまま渡し、`src/Eccube/Repository/OrderItemRepository.php:326-329` の `$limit = (int) ($searchData['page_count'] ?? 0); if ($limit > 0) { $qb->setMaxResults($limit); }` が CSV でも適用される。Service/Csv/Exporter 配下に `page_count` の unset/0 設定は grep 0 件。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1097,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:129-134` の export() 冒頭が `if ($viewData === null) { $this->addError('検索条件がありません。先に検索を実行してください。', 'admin'); return $this->redirectToRoute('admin_analysis_sales'); }` のままで、カテゴリ集計時も空条件フォールバックはない（`SalesAnalysisCsvExporterService::exportBySearchData` は 155行目でのみ呼ばれる）。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1098,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/OrderItemRepository.php:326-329` `$limit = (int) ($searchData['page_count'] ?? 0); if ($limit > 0) { $qb->setMaxResults($limit); }` は CSV 経路（`src/Eccube/Service/Csv/Exporter/SalesAnalysisCsvExporterService.php:38` の `getAnalysisSummary($searchData)`）でも共通に適用され、`src/Eccube/Controller/Admin/Analysis/SalesAnalysisController.php:139-144` でもセッション復元後に page_count を除去していない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1099,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Analysis/ProductRequestController.php:48` `#[Route(path: '/%eccube_admin_route%/analysis/product-request', name: 'admin_analysis_product_request', methods: ['GET'])]`、同 `:72` `'/%eccube_admin_route%/analysis/product-request/search'`、同 `:111` `'/%eccube_admin_route%/analysis/product-request/export'` のままで、`/analysis/request` 系ルートは src/app 全体に grep 0 件。`app/config/eccube/packages/eccube_nav.yaml:293` も `url: admin_analysis_product_request`。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1100,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Analysis/SearchProductRequestType.php:49-119` の項目は multi / create_date_from / create_date_to / price_from / price_to / language / sort_key / asc_desc / page_count / tag_sales_analysis のみで購入日・購入状況・会員名がなく、`SearchProductRequestType.php:33-36` の `SORT_KEYS` は `product_name` と `price` の2件のみ。`src/Eccube/Resource/template/admin/Analysis/product_request.twig:31-97` も同項目しか描画しない。`src/Eccube/Repository/DtbProductRequestRepository.php:404-408` の multi 条件は `(p.name LIKE :multi OR p.name_en LIKE :multi)` のみ、同 411-420 行の日付条件は `pr.create_date`（依頼日）で購入日ではない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 1101,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Analysis/product_request.twig:130-134` のヘッダは `<th>商品ID</th><th>言語</th><th>商品名</th><th>通知待ち</th><th>削除</th>` の5列、`product_request.twig:140-144` の行も `row.product_id / row.language_code / row.product_name / row.pending_count / row.deleted_count` のみ。`src/Eccube/Repository/DtbProductRequestRepository.php:377-401` の getAnalysisSummary も product_id/product_name/language_id/language_code/pending_count/deleted_count/min_price を `groupBy('p.id')` + language で集計しており、依頼ID単位の明細・商品コード・状態・在庫数・会員名・依頼日・購入日・通知日・行操作メニューは存在しない。監査時点と同一。",
+      "note": ""
+    }
+  ]
+}

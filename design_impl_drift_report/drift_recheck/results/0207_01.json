@@ -1,0 +1,77 @@
+{
+  "packetId": "0207_01",
+  "results": [
+    {
+      "rowId": 888,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:1804` `admin.common.save_pattern.error.name_empty: 検索パターン名を入力して下さい。` のまま（「ください」表記に修正されていない）。`src/Eccube/Controller/Admin/SearchControllerTrait.php:247` `$this->addError('admin.common.save_pattern.error.name_empty', 'admin');` も監査時点と同一。",
+      "note": "行番号は 1756→1804 にずれているが内容は同一。admin.order.save_pattern.error.name_empty (messages.ja.yaml:5884) も同じく「下さい」。"
+    },
+    {
+      "rowId": 890,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:52` `#[Route(path: '/%eccube_admin_route%/customer/mail', name: 'admin_customer_mail', methods: ['POST'])]` の単一ルートのままで、同ファイル:82-103 の `switch ($mode) { case 'confirm': ... case 'complete': ...}` で mail_confirm.twig / mail_complete.twig を render している。`src html` 配下を customer/mail_confirm, customer/mail_complete, admin_customer_mail_confirm, admin_customer_mail_complete, mail_all_confirm/execute/complete で grep しても会員一括メールの独立ルートは存在しない（CustomerMailController のルートは admin_customer_mail と admin_customer_mail_history のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 891,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:115` `$this->mailHistoryEntityManager->save($message, $this->getMember()->getBaseInfo(), $Customer, null);` のまま。`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39` `$MailHistory = new MailHistory();`／同:67 `$this->entityManager->persist($MailHistory);` で、`src/Eccube/Entity/MailHistory.php:25` `#[ORM\\Table(name: 'dtb_mail_history')]`。`src/Eccube/Entity/DtbUserMailHistory.php:21,24` は `#[ORM\\Table(name: 'dtb_user_mail_history')]` かつ `/* @deprecated dtb_mail_historyに統合されたため、使用しない */` で、当該送信処理から未参照。",
+      "note": ""
+    },
+    {
+      "rowId": 892,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:52` の `admin_customer_mail`(POST /customer/mail) 1ルートのみ。同:83 `case 'confirm':`→:97 `return $this->render('@admin/Customer/mail_confirm.twig', ...)`、:103 `case 'complete':`→:128 `return $this->render('@admin/Customer/mail_complete.twig', ...)` と mode 分岐のまま。POST /customer/mail_confirm・POST/GET /customer/mail_complete の独立ルートは src/html 全体の grep で不在。",
+      "note": ""
+    },
+    {
+      "rowId": 893,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Repository/CustomerRepository.php:579-585` が `$qb = $this->createQueryBuilder('c'); $qb->where($qb->expr()->in('c.id', ':ids'))->setParameter('ids', $customerIds)->orderBy('c.id', 'ASC');` となり、監査時点で無かった会員ID昇順の ORDER BY が追加されている。確認画面は `src/Eccube/Controller/Admin/Customer/CustomerMailController.php:86` `$Customers = $this->customerRepository->findByIds(...)` の結果を `src/Eccube/Resource/template/admin/Customer/mail_confirm.twig:85` `{% for Customer in Customers %}` でそのまま表示するため、設計期待値「配信対象者を会員IDの昇順で表示」を満たす。",
+      "note": ""
+    },
+    {
+      "rowId": 894,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:115` `$this->mailHistoryEntityManager->save($message, $this->getMember()->getBaseInfo(), $Customer, null);`、`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39,67` で `new MailHistory()` を persist、`src/Eccube/Entity/MailHistory.php:25` `#[ORM\\Table(name: 'dtb_mail_history')]` と監査時点から変化なし。dtb_user_mail_history への保存経路は develop に存在しない（DtbUserMailHistory は deprecated のまま未使用）。",
+      "note": ""
+    },
+    {
+      "rowId": 895,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:52` `#[Route(path: '/%eccube_admin_route%/customer/mail', name: 'admin_customer_mail', methods: ['POST'])]` のみで、:97/:128 の render 分岐で確認・完了画面を出し分ける構造が継続。POST /customer/mail_confirm、POST/GET /customer/mail_complete、m08-02_admin_customer_customer_mail_all_confirm/execute/complete は src/Eccube・html の grep で不在。",
+      "note": ""
+    },
+    {
+      "rowId": 896,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39-44` `$MailHistory = new MailHistory(); $MailHistory->setMailSubject(...)->setBaseInfo(...)->setMailBody(...)->setSendDate(new \\DateTime());` と:67 persist のまま。creator_id 相当の設定も無い（`src/Eccube/Controller/Admin/Customer/CustomerMailController.php:115` は BaseInfo と Customer を渡すのみ）。保存先は `src/Eccube/Entity/MailHistory.php:25` `#[ORM\\Table(name: 'dtb_mail_history')]` で、`src/Eccube/Entity/DtbUserMailHistory.php:21,24` は deprecated のまま未使用。",
+      "note": ""
+    },
+    {
+      "rowId": 897,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/CustomerType.php:79-83` `->add('postalCode', SplitPostalType::class, ['mapped' => false, 'required' => true, 'initial_postal_code' => $Customer->getPostalCode(),])` で required=true のまま。`src/Eccube/Form/Type/SplitPostalType.php:44-51,58-66` も `new Length(['max' => eccube_zip01_len, 'min' => eccube_zip01_len, ...])` （zip02 は zip02_len）を無条件付与で、必須解除・任意入力化の分岐は追加されていない。",
+      "note": "CustomerType.php:209-221 の POST_SUBMIT で zip1/zip2 が空なら postalCode に null をセットする処理はあるが、フォーム側の required=true と桁数制約は監査時点のまま。"
+    },
+    {
+      "rowId": 898,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/AddressType.php:110` `new Assert\\Length(['max' => $this->config['eccube_address1_len']]),`、同:119 `new Assert\\Length(['max' => $this->config['eccube_address2_len']]),` と通常の文字数制約のみ。src/Eccube/Form・src/Eccube/Validator・src/Eccube/Controller/Admin/Customer を sjis/shift_jis/cp932/mb_strwidth/mb_convert_encoding で grep してもヒット 0 件で、SJIS換算バイト長の超過検証は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 899,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Customer/edit.twig:33-46` の `#register_btn` クリック処理は `$('input[name=\"admin_customer[Player][IdentityConfirmStatus]\"][value=\"${identityConfirmStatusUnconfirmed}\"]').prop('checked', true);` で未確認に戻すのみで、身分証有効期限入力の空欄化は行っていない。`src/Eccube/Form/Type/Admin/PlayerType.php:79-81` `->add('id_expiration_date', DateType::class, ['required' => false, 'mapped' => false, ...])` は依然 mapped=false で、`src/Eccube/Controller/Admin/Customer/CustomerEditController.php:156-195` の会員編集保存経路に setIdExpirationDate(null) は無い。setIdExpirationDate を渡すのは本人確認完了専用の `src/Eccube/Controller/Admin/Customer/CustomerEditController.php:231`(admin_customer_identification_complete) から `:294` `$idExpirationDate,` で PlayerEntityManager::save に渡す経路のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 900,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Customer/edit.twig:961` `<a href=\"{{ url('admin_order_edit', { 'id' : BuyOrder.id }) }}\">` のままで、買取詳細の route（admin_purchase_edit）へは変更されていない。同 twig 内の BuyOrder ループ(:957-968)にも他の遷移先リンクは無い。",
+      "note": ""
+    }
+  ]
+}

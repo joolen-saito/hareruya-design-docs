@@ -1,0 +1,71 @@
+{
+  "packetId": "0214_08",
+  "results": [
+    {
+      "rowId": 1214,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/AbstractController.php:364` `protected const ADMIN_CSV_IMPORT_MAX_ROWS = 5010;` は 5010 のままで、`src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:95` も `if ($this->countCsvRows($formFile) > static::ADMIN_CSV_IMPORT_MAX_ROWS) {` と「5010超過のみエラー」の判定が変わっていない。エラーメッセージ `src/Eccube/Resource/locale/messages.ja.yaml:1626` `admin.csv.error.upload.maxrecord: \"%maxRecord% 行を超えるCSVファイルは登録できません。\"` に渡す値も `EventEntryBulkCsvController.php:101` `'%maxRecord%' => static::ADMIN_CSV_IMPORT_MAX_ROWS,` で 5010。設計の「5000行以上不可」は未充足。",
+      "note": ""
+    },
+    {
+      "rowId": 1215,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:158` `$this->addSuccess('admin.common.csv_upload_complete', 'admin');` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1606` `admin.common.csv_upload_complete: CSVファイルをアップロードしました` と汎用文言。設計の「イベント情報を登録しました。」は現 develop の messages.ja.yaml に該当キー・文言とも存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1216,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:136-146` は `try { $result = $importer->import($formFile); } catch (\\Exception $e) { $errors[] = $e->getMessage(); }` および `if ($errors === [] && $result->hasError()) { $errors = array_map(...); }` と errors への詰め替えのみで log_info 呼び出しがない。`log_info` は同ファイル 114 行 `log_info('イベント一括登録CSV登録開始');` と 148 行 `log_info('イベント一括登録CSV登録完了');` の2箇所だけで、`イベント一括登録 異常終了`/`異常終了` は src/Eccube 配下・EventBulkCsvImportHandler.php・messages.ja.yaml のいずれにも存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1217,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EventEntryBulkCsvController.php:148` は `log_info('イベント一括登録CSV登録完了');` のままで第2引数（コンテキスト）がなく、取込件数を渡していない。件数自体は `src/Eccube/Service/Csv/Importer/CsvImporter.php:281-282` `$importResult->setCount($importCount)` で保持されるが、コントローラは `$result` の count をログに使っていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1218,
+      "status": "未対応",
+      "evidence": "取込経路は監査時と同一。`src/Eccube/Service/CsvImportService.php:97-100` `$filters = [ConvertLineFeedFilter::class];` `if (!\\mb_check_encoding($file->current(), 'UTF-8')) { $filters[] = SjisToUtf8EncodingFilter::class; }` で改行フィルタとUTF-8変換、`同:179` `$columnHeaders = array_map(fn (string $s) => preg_replace('/^\\x{FEFF}/u', '', $s), $columnHeaders);` でヘッダBOM除去のみ。ゼロ幅スペース除去 helper は `src/Eccube/Service/Csv/AbstractCsvService.php:404` `protected function removeWhite(string $str): string` に存在するが、`removeWhite` の呼び出しは develop 全体の grep で0件で、`EventBulkCsvImportHandler`（`src/Eccube/Service/Csv/Importer/Event/EventBulkCsvImportHandler.php:45` `class EventBulkCsvImportHandler extends BaseCsvImportHandler`）は AbstractCsvService を継承しておらず、値の正規化は `trim()`（同915,948行ほか）のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 1219,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/BannerController.php:59-60` `#[Route(path: '/%eccube_admin_route%/event/banner', name: 'admin_event_banner', methods: ['GET'])]` / `#[Route(path: '/%eccube_admin_route%/event/banner/{htmlClass}', name: 'admin_event_banner_narrow', ...)]`、`同:81-82` POST は `/event/banner/settings` と `/event/banner/{htmlClass}/settings`、`同:148` `#[Route(path: '/%eccube_admin_route%/event/banner/delete', name: 'admin_event_banner_delete', methods: ['DELETE'])]` と、監査時と同じ /event/banner 系のまま。`grep -rn \"banner/event\" src app` のヒットは `src/Eccube/Service/Admin/Event/EventBannerStorageService.php:26` の S3 プレフィックス定数のみで、設計の /banner/event 系ルートは develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1220,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/BannerController.php:149-191` の delete は `$selectFile = $this->eventBannerStorage->normalizeObjectKey($request->query->get('select_file'));`（168行）→ `$this->eventBannerStorage->deleteObjectIfExists($selectFile);`（183行）のままで、実体は `src/Eccube/Service/Admin/Event/EventBannerStorageService.php:162-167` `if ($this->s3AccessService->isFileExist($key)) { $this->s3AccessService->deleteFile($key); }` の S3 画像削除。BannerController には MtbBanner の remove / EntityManager::remove は一切なく（use しているのは `MtbBannerRepository` の `findBy` のみ、207行 `$this->bannerRepository->findBy([], ['id' => 'ASC'])`）、バナー設定そのものの削除は実装されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1221,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/BannerController.php:59,60,81,82,110,111,148` の Route 定義は監査時と同じで、設定POSTは `/event/banner/settings`、画像アップロードPOSTは `#[Route(path: '/%eccube_admin_route%/event/banner/image/upload', name: 'admin_event_banner_image_upload', methods: ['POST'])]`（110行）と別URLに分離されたまま。削除も `/event/banner/delete` の1本のみ（148行）で `delete/{htmlClass}` は無く、店舗絞り込みは `$request->query->get('htmlClass')`（153行）のクエリ渡し。`banner/event` 系ルートは develop 全体の grep でも存在しない（ヒットは EventBannerStorageService.php:26 のS3定数のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 1222,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Event/EventBannerStorageService.php:26` `private const S3_BANNER_PREFIX = 'banner/event/';` は変わらず、アップロードは `同:92` `$uploadDirectory = self::S3_BANNER_PREFIX.$BaseInfo->getHtmlClassName().'/';`、一覧は `同:172-178` `resolveListPrefix()` が `self::S3_BANNER_PREFIX` または `self::S3_BANNER_PREFIX.$htmlClass.'/'` を返す。削除側の検証も `同:128` `if (!str_starts_with($selectFile, self::S3_BANNER_PREFIX))` で同プレフィックス依存。設計の `banner/` `banner/{店舗HTMLクラス名}/` にはなっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1223,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/Event/EventBannerUploadType.php:38` `->add('file', FileType::class, [...])`、`同:42` `->add('baseInfos', EntityType::class, [`、`同:48` `'required' => true,`、`同:51-53` `'constraints' => [ new NotBlank(message: 'admin.event.banner.upload_shops_required'), ]` のままで、設計のフォームキー `shops` は存在しない。コントローラ `src/Eccube/Controller/Admin/Event/BannerController.php:120-121` も `$page['uploadForm']->get('baseInfos')->getData();` を使い、サービス側 `src/Eccube/Service/Admin/Event/EventBannerStorageService.php:67-69` `if ($targetShops === []) { return ['message' => 'admin.event.banner.upload_shops_required']; }` で店舗未指定アップロードを拒否するため、設計の「店舗未指定なら banner/ へ保管」分岐も無い。",
+      "note": ""
+    },
+    {
+      "rowId": 1224,
+      "status": "未対応",
+      "evidence": "文言は監査時と同一。`src/Eccube/Service/Admin/Event/EventBannerStorageService.php:64,79,87` が返すキーに対し `src/Eccube/Resource/locale/messages.ja.yaml:5988` `admin.event.banner.upload_no_file: ファイルを選択してください。`、`同:5989` `admin.event.banner.upload_size_over: ファイルサイズが大きすぎます（最大 %max% バイト）。`、`同:5990` `admin.event.banner.upload_not_image: 画像ファイル（JPEG/PNG/GIF）を指定してください。` で設計文言と不一致。削除確認も `src/Eccube/Resource/template/admin/Event/banner.twig:327,330` が `data-message=\"{{ 'admin.event.banner.delete_confirm'|trans }}\"` を参照し、`messages.ja.yaml:5997` `admin.event.banner.delete_confirm: この画像を削除します。よろしいですか？`。設計文言「一度削除したデータは元に戻せません。削除してもよろしいですか？」は `messages.ja.yaml:6171` の `admin.data.top_banner.delete_confirm`（トップバナー用）にのみ存在し、イベントバナー画面では使われていない。",
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "packetId": "0516_01",
+  "results": [
+    {
+      "rowId": 127,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/Content/TopBannerResponseBuilder.php:41-47` は現 develop でも `'id' => $TopBanner->getId(), 'image_url' => $TopBanner->getImageUrl(), 'link' => ..., 'disp_type' => $TopBanner->getDispType(), 'languages' => $languages` と snake_case で構築し、同36-38行の languages 要素も `'name_jp' => $Language->getNameJp(), 'name_en' => $Language->getNameEn()` のまま。`src/Eccube/Controller/App/ContentController.php:67-69` も `$response = $this->topBannerResponseBuilder->build($TopBanner); return $this->json($response, Response::HTTP_OK);` と配列をそのまま返すだけで camelCase 変換はない。src/Eccube 全体を `'imageUrl'`/`'dispType'`/`nameJp'` キーで横断検索しても当該API用の整形層・シリアライザは存在しない（ヒットは Deck/Event 等の無関係箇所のみ）。",
+      "note": "設計期待値の camelCase 応答フィールド（imageUrl/dispType/nameJp/nameEn）は未充足。"
+    },
+    {
+      "rowId": 128,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ContentController.php:64` で `throw new NotFoundException('Not Found');`、同70-75行の catch は現 develop でも `return $this->json(['code' => $e->getStatusCode(), 'errors' => $e->getErrors()], $e->getStatusCode());` と `errors` キーを返す。`src/Eccube/Exception/App/NotFoundException.php:29-34` は `parent::__construct(errors: [$message], statusCode: Response::HTTP_NOT_FOUND, ...)`、`src/Eccube/Exception/App/BaseApiException.php:48-51` は `getErrors()` のみを公開しており、`{code, message}` へ変換する処理は存在しない。",
+      "note": "HTTP 404 は返るが本文キーが message ではなく errors 配列のままで、監査時点と同一。"
+    },
+    {
+      "rowId": 129,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ContentController.php:91-110` は現 develop でも `$Language = $this->languageRepository->findOneBy(['code' => $languageCode]);` → `$TopBanners = $Language->getTopBanners();` → `$this->topBannersResponseBuilder->build($TopBanners)` の経路で、表示状態(disp_type)・画像URL空でないことの絞り込みを一切行わない。`src/Eccube/Entity/Master/MtbLanguage.php:175-176` の関連定義 `#[ORM\\ManyToMany(targetEntity: MtbTopBanner::class, mappedBy: 'Languages')] private Collection $TopBanners;` にも条件はない。絞り込みを持つ `src/Eccube/Repository/Master/MtbTopBannerRepository.php:38-55` `findWhereUrlIsNotEmpty()`（`->andWhere($qb->expr()->in('tb.dispType', ':dispTypes'))->andWhere(\"tb.imageUrl <> ''\")`）は、TopBanner 参照18ファイルを横断確認しても ContentController からは呼ばれていない。",
+      "note": "「設定済み（設定状態で絞り込み）」要求は依然未充足。"
+    },
+    {
+      "rowId": 130,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ContentController.php:102,110` は `$TopBanners = $Language->getTopBanners();` の Collection をそのまま `$this->topBannersResponseBuilder->build($TopBanners)` に渡すのみで、`src/Eccube/Service/App/Content/TopBannersResponseBuilder.php:34-41` も `foreach ($TopBanners as $TopBanner)` で反復するだけ。`src/Eccube/Entity/Master/MtbLanguage.php:175` の ManyToMany 定義に `#[ORM\\OrderBy]` はなく、`src/Eccube/Entity/Master/MtbTopBanner.php:64-65` に `sort_no` カラムはあるが並び替えに使われていない。sort_no ASC を持つのは未使用の `src/Eccube/Repository/Master/MtbTopBannerRepository.php:50-52` `->orderBy('tb.sortNo', 'ASC')->addOrderBy('tb.id', 'ASC')->setMaxResults($limit)` のみで、A16-02 経路からの呼び出しはない。",
+      "note": "sort_no ASC の表示順・件数上限とも A16-02 実装経路に未接続。"
+    },
+    {
+      "rowId": 131,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ContentController.php:95-108` は言語未存在時・`$TopBanners->isEmpty()` 時ともに `throw new NotFoundException('Not Found');` のままで、同113-118行の catch が `['code' => $e->getStatusCode(), 'errors' => $e->getErrors()]` を返す。`src/Eccube/Exception/App/NotFoundException.php:29-34` が `errors: [$message]` に格納し `src/Eccube/Exception/App/BaseApiException.php:48` `getErrors()` で取り出す構造も不変。スナップショット src 配下を `Language code is not found` で全文検索してもヒット 0 件。",
+      "note": "404 ステータスのみ一致、本文キー message と設計文言は未実装。"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "packetId": "0402_01",
+  "results": [
+    {
+      "rowId": 157,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/AggregateStockUpCommand.php:34` `#[AsCommand(name: 'eccube:aggregate-stock-up', description: '期間別入庫数集計バッチ')]` のままで、設計の `product:batch updateProductSummaryForStockUp` は不在。`grep -rn \"updateProductSummaryForStockUp\" src html app` は 0 件、`product:batch` は `src/Eccube/Command/InventoryReflectionCommand.php:29,32` の3系コメント言及のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 158,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbStockUpQuantityRepository.php:151-152,179` は依然 `SELECT ps.product_class_id, sh.base_info_id ... GROUP BY ps.product_class_id, sh.base_info_id` で、stock_location_id / 在庫区分は SELECT にも GROUP BY にも無い。保存側 `同ファイル:199` `findOneBy(['ProductClass' => ..., 'BaseInfo' => ...])`、`:246` `WHERE product_class_id = :product_class_id AND base_info_id = :base_info_id` も2キーのみで監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 159,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbStockUpQuantityRepository.php:147-148` `$beStocked = MtbStockChangeType::BE_STOCKED; $inventoryAdjustment = MtbStockChangeType::INVENTORY_ADJUSTMENT;`、`:177` `AND sctd.stock_change_type_id IN (:be_stocked, :inventory_adjustment)`、`:109` のコメントも「入庫分類（入庫・棚卸）」のまま。`src/Eccube/Entity/Master/MtbStockChangeType.php:28` の `PURCHASE = 2`（買取）は当該SQLで使われていない。",
+      "note": ""
+    },
+    {
+      "rowId": 160,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Product/BatchAggregateStockUpAction.php:39-40` で `clearStockUpQuantityForAggregate();` を呼んだ後に `$stockUpData = ...getStockUpForAggregate();` を実行しており、対象有無の判定前に全削除する順序は変わっていない。`src/Eccube/Repository/DtbStockUpQuantityRepository.php:101-103` は `executeStatement('DELETE FROM dtb_stock_up_quantity')` のままで、空結果時の復元・早期 return も無い。",
+      "note": ""
+    },
+    {
+      "rowId": 161,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Product/BatchAggregateStockUpAction.php:36-48` は `$connection->beginTransaction();` … `foreach ($stockUpData as $data) { ...updateStockUpQuantityColumns($data); }` … `$connection->commit();` / `catch { $connection->rollBack(); throw $e; }` の全体1トランザクション構成のままで、100件ごとの flush/clear・部分コミットは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 162,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/AggregateStockUpCommand.php:49-53` は `catch (\\Exception $e) { $io->error('集計処理でエラーが発生しました: '.$e->getMessage()); return Command::FAILURE; }` のみ。`src/Eccube/Service/Product/BatchAggregateStockUpAction.php:23-27` のコンストラクタ依存は `DtbStockUpQuantityRepository` と `EntityManagerInterface` だけで MailService を持たない。`src/Eccube/Service/MailService.php` にも stockup/stock_up 関連の送信メソッドは 0 件（週間在庫履歴向けの `sendWeeklyStockHistoryErrorMail`:1908 のみ存在）。",
+      "note": ""
+    },
+    {
+      "rowId": 163,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/AggregateStockUpCommand.php:43-57` の execute() は `$io = new SymfonyStyle(...)` 直後に処理を開始し開始メッセージが無く、完了は `:55` `$io->success('期間別入庫数集計が完了しました。');` のみで日時出力は無い。同ファイルに `date`/`DateTime`/`format` の日時生成コードは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 185,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:35` `#[AsCommand(name: 'eccube:update-weekly-stock-history', description: '週間在庫履歴更新バッチ')]` のままで、設計の `product:batch exportWeeklyStockHistoryCsv` は不在。`grep -rni \"exportWeeklyStockHistoryCsv\" src html app` は 0 件。",
+      "note": ""
+    },
+    {
+      "rowId": 186,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:41-46` に `TODO: スマレジ在庫との合算対応 … 現時点ではスマレジ在庫の取り込みが未実装のため、ECCUBE在庫のみを対象としている。… stock_location_id=1(ECCUBE) と stock_location_id=2(スマレジ) の在庫を合算する処理を追加すること。` が現 develop でもそのまま残る。集計SQL `src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:69-79` にも stock_location_id の合算分岐は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 187,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:54,71,76` は `truncate()` → `insertBatch($data)` → `replaceFromTemp()` の DB 洗い替えのままで、`src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:167` `TRUNCATE TABLE dtb_weekly_stock_history_temp`、`src/Eccube/Repository/DtbWeeklyStockHistoryRepository.php:73` `TRUNCATE TABLE dtb_weekly_stock_history` を実行する。`weekly_stock_history.csv` / `csv_path` / `HareruyaEc.const.weekly_stock_history` の grep は src・app/config で 0 件、CSV書き出し実装は不在。",
+      "note": ""
+    },
+    {
+      "rowId": 188,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:69-79` の SQL は `FROM dtb_stock_history sh WHERE sh.product_stock_id BETWEEN :start AND :end GROUP BY sh.product_stock_id` のままで、ProductStock 起点の LEFT JOIN は無い。`:148-158` `getLastProductStockId()` は ProductStock の MAX(id) をバッチ範囲上限に使うだけで、履歴の無い product_stock_id の行は生成されない（欠損週0埋めは `:99` の `$column === null ? 0 : ...` により履歴が1件以上ある規格の週にのみ効く）。",
+      "note": ""
+    },
+    {
+      "rowId": 189,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php`、`src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php`、`src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php`、`src/Eccube/Repository/DtbWeeklyStockHistoryRepository.php` に対する `grep -n \"ini_set|memory_limit|set_time_limit|SQLLogger|setSQLLogger\"` は全ファイル 0 件（exit 1）。execute() は `src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:46-49` で `SymfonyStyle` 生成後すぐ `handle()` を呼ぶだけで実行環境設定は無い。",
+      "note": ""
+    }
+  ]
+}

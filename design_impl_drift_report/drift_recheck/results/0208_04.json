@@ -1,0 +1,77 @@
+{
+ "packetId": "0208_04",
+ "results": [
+  {
+   "rowId": 1261,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:140-161` は `$fileName = $this->s3AccessService->downloadCardImageToDirectory(...)` の後 `if ($fileName && $this->filesystem->exists(...)) { ... $zip->addFile(...) }` で ZIP 追加するのみ。`setDeadLinkFlg`/`persist`/`flush` の呼び出しは同ファイル全体（1-224行）に存在せず、コンストラクタ(34-41行)も EntityManager を受け取らない。横断検索 `grep -rn \"setDeadLinkFlg|dead_link_flg|DeadLink\" src/Eccube app html` のヒットは `src/Eccube/Entity/Master/MtbCardImage.php:106,111`（`isDeadLinkFlg()`/`setDeadLinkFlg()` の定義のみ）、`src/Eccube/Repository/Master/MtbCardImageRepository.php:186` `->andWhere('ci.dead_link_flg = false')`（参照のみ）、DoctrineMigrations の SQL のみで、更新実装は develop に無い。",
+   "note": ""
+  },
+  {
+   "rowId": 1262,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Card/CardsetController.php:333-343` `private function createZipResponse(string $filePath): BinaryFileResponse { $response = new BinaryFileResponse($filePath); $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, 'card_image.zip'); $response->deleteFileAfterSend(true); return $response; }` のままで、Content-Type `aplication/octet-stream;` の明示設定も RFC 5987 の `filename*` 指定も無い（ファイル名も ZIP ベース名ではなく固定文字列 'card_image.zip'）。監査時点から変化なし。",
+   "note": ""
+  },
+  {
+   "rowId": 1263,
+   "status": "未対応",
+   "evidence": "`grep -rn \"admin_cardset_download\" src/Eccube app html` のヒットは `src/Eccube/Controller/Admin/Card/CardsetController.php:288,310` のルート定義と `app/template/admin/Cardset/index.twig:40,70,72,77,79` の formaction のみで、`eccube.event.controller.admin_cardset_download.finish` の定義・リスナーは develop に存在しない。掃除は依然 `CardsetController.php:340` `$response->deleteFileAfterSend(true);`（ZIP のみ）と `CardsetDownloadAction.php:71-74` `if ($this->filesystem->exists($workRoot)) { $this->filesystem->remove($workRoot); } $this->filesystem->mkdir($workRoot, 0777);`（次回開始時）に限られる。",
+   "note": ""
+  },
+  {
+   "rowId": 1264,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:84-94` `if ($ids === []) { $idList = [null]; } else { $idList = array_values(array_unique(array_filter(array_map(static fn (int|string $id): int => filter_var($id, FILTER_VALIDATE_INT) !== false ? (int) $id : 0, $ids), static fn (int $id): bool => $id > 0))); }` と、同96-100行 `$cardDetails = $this->cardDetailRepository->findWithImagesAndPromotionForDownload($cardsetId); if ($cardDetails === []) { continue; }` は監査時点と同一。不正 ID のダミープロモーション扱い分岐もセット別のエラー分岐も無い。",
+   "note": ""
+  },
+  {
+   "rowId": 1265,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Card/CardsetController.php:310` `#[Route('/%eccube_admin_route%/cardset/download_each_lang', name: 'admin_cardset_download_each_lang', methods: ['POST'])]`、`app/template/admin/Cardset/index.twig:79` `formaction=\"{{ url('admin_cardset_download_each_lang') }}\"` のままで、設計の `admin_cardset_download_lang` / `/{admin_route}/cardset/download_lang` は `grep -rn \"admin_cardset_download\" src/Eccube app html` でヒットしない。",
+   "note": ""
+  },
+  {
+   "rowId": 1266,
+   "status": "未対応",
+   "evidence": "言語別（`$eachLang=true`）も同一の `CardsetDownloadAction::execute()` を通り、`src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:140-161` で `downloadCardImageToDirectory()` の戻り値により ZIP 追加するだけ。失敗時（`$fileName` が null）の分岐は `if ($fileName && ...)` を通らないのみで何も更新せず、リストに溜めて最後にまとめて永続化する処理も存在しない。`setDeadLinkFlg`/`persist`/`flush` は同ファイルに一切無く、`src/Eccube/Entity/Master/MtbCardImage.php:111` の setter 定義と `src/Eccube/Repository/Master/MtbCardImageRepository.php:186` の読み取り条件以外に dead_link_flg を扱うコードは develop に無い。",
+   "note": ""
+  },
+  {
+   "rowId": 1267,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Admin/Cardset/CardsetDownloadAction.php:98-100` `if ($cardDetails === []) { continue; }`、同168-174行 `if ($addedCount === 0) { ... throw new \\RuntimeException('admin.card.cardset.error.download_no_images'); }` のまま。`src/Eccube/Controller/Admin/Card/CardsetController.php:322-326` `catch (\\Exception $e) { $this->addError(trans($e->getMessage()), 'admin'); return $this->redirectToRoute('admin_cardset_list'); }` で汎用キー1つ・リダイレクト先固定。設計の3キーは `grep -rn \"set_not_exist_card|admin.download.card.not_found|image_not_exist\" src/Eccube app html` で0件、セッション `eccube.admin.cardset.page_no` はダウンロード系では未使用（`CardsetController.php:109,163,221` の一覧/編集画面のみ）。",
+   "note": ""
+  },
+  {
+   "rowId": 1268,
+   "status": "未対応",
+   "evidence": "rowId 1263 と同じく `eccube.event.controller.admin_cardset_download.finish` は develop に不在（`grep -rn \"admin_cardset_download\" src/Eccube app html` はルート定義と twig の formaction のみ）。掃除の実装は `src/Eccube/Controller/Admin/Card/CardsetController.php:330-343` のコメント「送信完了後に ZIP ファイルのみ削除する（Symfony の deleteFileAfterSend）。作業ディレクトリ内の展開画像などは、次回 CardsetDownloadAction::execute 開始時にまとめてクリアされる。」の通りで、監査時点と同一。",
+   "note": ""
+  },
+  {
+   "rowId": 1269,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Card/CardsetController.php:126` `#[Route('/%eccube_admin_route%/cardset/new', name: 'admin_cardset_new', methods: ['GET', 'POST'])]`、同177行 `#[Route('/%eccube_admin_route%/cardset/{id}/edit', name: 'admin_cardset_edit', methods: ['GET', 'POST'])]` で、設計の `admin_cardset_update` / `/{admin_route}/cardset/edit` は不在（`grep -rn \"admin_cardset_update\" src/Eccube app html` 0件）。成功フラッシュは同158,211行 `$this->addSuccess('admin.common.save_complete', 'admin');`、フォーム prefix は `src/Eccube/Form/Type/Admin/CardsetType.php:174-177` `public function getBlockPrefix(): string { return 'admin_cardset'; }`（設計の `card_set` ではない）。`app/template/admin/Cardset/edit.twig:27-30` は `action=\"{% if Cardset.id %}{{ url('admin_cardset_edit', {id: Cardset.id}) }}{% else %}{{ url('admin_cardset_new') }}{% endif %}\"` で hidden id は無く、同164行 送信ボタンは常に `{{ 'admin.common.registration'|trans }}`（`messages.ja.yaml:1633` = 「登録」）。",
+   "note": ""
+  },
+  {
+   "rowId": 1270,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Card/CardsetController.php:145` `if ($form->isSubmitted() && $form->isValid()) {`（new）、同198行 同一条件（edit）のままで、else 側の addError が無く 165-169行 / 223-228行 でそのままフォームを返す。`grep -rn \"admin.register.failed\" src/Eccube` のヒットは SectionController・HolidayController 等の他コントローラのみで CardsetController には無い。",
+   "note": ""
+  },
+  {
+   "rowId": 1271,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Card/CardsetController.php:234-239` `#[Route('/%eccube_admin_route%/product/cardset/{id}/delete', requirements: ['id' => '\\d+'], name: 'admin_cardset_delete', methods: ['DELETE'])]` で設計の `/{admin_route}/cardset/{id}/delete` と不一致。確認文言は `app/template/admin/Cardset/edit.twig:155` `data-message=\"{{ 'admin.common.delete_modal__message'|trans({ \"%name%\" : Cardset.nameJp }) }}\"` → `src/Eccube/Resource/locale/messages.ja.yaml:1790` 「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」で、設計の固定文言「このカードセットを削除してもよろしいですか？」ではない。実行ボタンは `app/template/admin/Cardset/delete_modal.twig:23` `{{ 'admin.common.delete'|trans }}`（=「削除」、設計の「実行」ではない）。",
+   "note": ""
+  },
+  {
+   "rowId": 1272,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Card/CardsetController.php:240-281` の delete() は cardDetails 件数の事前判定を持たず、246-253行で先に `$fileAdapter->delete($symbolImage, []);`（シンボル画像削除）を実行してから 256-257行 `$this->cardsetRepository->delete($Cardset); $this->entityManager->flush();` を試み、261-265行 `catch (\\Doctrine\\DBAL\\Exception\\ForeignKeyConstraintViolationException $e) { ... $message = trans('admin.card.cardset.error.delete_has_cards', ['%name%' => $Cardset->getNameJp()]); $this->addError($message, 'admin'); }` で処理する。成功時は259行 `$this->addSuccess('admin.common.delete_complete', 'admin');`、最後は成功・失敗とも280行 `return $this->redirectToRoute('admin_cardset_list');` で Referer 復帰もセッション `eccube.admin.cardset.page_no` によるページ復帰も無い。設計キー `admin.cardset.delete.failed` は `grep -rn \"admin.cardset.delete.failed\" src/Eccube app html` で0件。",
+   "note": ""
+  }
+ ]
+}

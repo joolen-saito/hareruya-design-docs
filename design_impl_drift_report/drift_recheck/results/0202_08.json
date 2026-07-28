@@ -1,0 +1,77 @@
+{
+  "packetId": "0202_08",
+  "results": [
+    {
+      "rowId": 669,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/EntityManager/ProductStockEntityManager.php:42-47` は `$ProductStock->setProductClass()/setBaseInfo()/setStock()/setPickUpFlg()/setStockLocationId()/setTotalCost()` のみで、引数の `ProductClass $ProductClass` に対する stock 更新は行っていない（`src/Eccube/Entity/ProductClass.php` にも `stock` カラムは存在せず `stock_unlimited` のみ）。承認時の `src/Eccube/Service/Admin/Stock/Util/StockEditApprovalLineItemApprover.php:111-119` も `productStockEntityManager->save(ProductStock: ..., ProductClass: $ProductStock->getProductClass(), ...)` を呼ぶだけ。取込時（`src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:319` `$repository->insertStockChangeDetail($stock)`）は承認明細登録のみで在庫更新なし。`grep -rn '->setStock('` でも ProductClass への stock 反映箇所は存在しない。",
+      "note": "規格ごとの在庫履歴は承認時に StockHistoryEntityManager::save で1件作られるが、設計が求める規格在庫と規格本体の同一更新は満たされない。"
+    },
+    {
+      "rowId": 670,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:336-341` の取込成功後の送信は `$this->mailService->sendStockApprovalAlertMail($approvalMember, ...)`（承認者向け）のみ。`src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:124-197` の onAfterImport も StockApprovalList 登録と S3 アップロードのみで、入荷通知対象の収集・入荷通知メール・支店在庫通知の呼び出しはない。入荷通知は `src/Eccube/Doctrine/EventSubscriber/RestockNotificationOnStockHistoryEntityListener.php:26,34` の DtbStockHistory postPersist 経由のみで、取込時には DtbStockHistory を作らないため発火しない。支店在庫通知の `InventoryReflectService` は `src/Eccube/Command/InventoryReflectionCommand.php` からのみ利用され、CSV取込経路からの呼び出しはない。",
+      "note": ""
+    },
+    {
+      "rowId": 671,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:359` `$this->addSuccess('admin.common.save_complete', 'admin');` のままで、「商品登録CSVファイルをアップロードしました。」に相当する専用メッセージキーは追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 672,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:269` `log_info('在庫変更CSV登録開始');` のみが存在し、正常終了時（同 348-361 行の EventArgs dispatch → addSuccess）に件数付き完了ログはなく、`catch (\\Exception) { $this->addError('admin.common.save_error', 'admin'); }`（同 342-346 行）も log_error 等の異常終了ログを出していない。`StockChangeCsvImportHandler` 側にもログ出力はない。",
+      "note": ""
+    },
+    {
+      "rowId": 673,
+      "status": "対応済み",
+      "evidence": "ファイル名リンクは `src/Eccube/Resource/template/admin/Stock/change.twig:496-500` で `{% if StockEditCsv.isDownloadable %}<a href=\"{{ url('admin_stock_change_csv_download', { stock_edit_id: StockEditCsv.StockEdit.id }) }}\">{{ StockEditCsv.fileName }}</a>` となり、`href=\"#\"` は解消。ダウンロード実装は `src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:488-557` の `downloadCsv()`（`admin_stock_change_csv_download` ルート、S3 から `$fileAdapter->get($s3ObjectKey, ...)` を StreamedResponse で返し `Content-Disposition: attachment` を付与）。ファイルパスは `src/Eccube/Entity/DtbStockEditCsv.php:53-54` に `s3_object_key` カラムが追加され、`src/Eccube/Repository/DtbStockEditCsvRepository.php:48-78` の `INSERT INTO dtb_stock_edit_csv (file_name, s3_object_key, create_date, member_id, stock_edit_id)` で file_name とともに登録される（登録元は `src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:158-184` の S3 アップロード後 `insertCsvFilename(['fileName' => ..., 's3ObjectKey' => $s3ObjectKey, ...])`）。",
+      "note": "ダウンロードは登録日から1年以内（DtbStockEditCsv::isDownloadable）に限定される。"
+    },
+    {
+      "rowId": 674,
+      "status": "部分対応",
+      "evidence": "ソートは是正済み: `src/Eccube/Repository/DtbStockEditCsvRepository.php:115-120` `->addSelect('CASE WHEN sa.approvedAt IS NOT NULL AND (sc.createDate IS NULL OR sa.approvedAt > sc.createDate) THEN sa.approvedAt ELSE sc.createDate END AS HIDDEN baseDate')->orderBy('baseDate', 'DESC')->addOrderBy('sa.id', 'DESC')` で登録日時と承認日時の後の方を基準日時とした降順になった。一方、承認日の表示は `src/Eccube/Resource/template/admin/Stock/change.twig:511` `{{ StockEditCsv.StockEdit.approvedAt|date('Y/m/d') }}` のままで時刻（HH:mm）が欠落（登録日時は同 507 行で `date('Y/m/d H:i')`）。",
+      "note": ""
+    },
+    {
+      "rowId": 675,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:322` `$this->totalCostPriceBefore += $ProductStock !== null ? (int) $ProductStock->getTotalCost() : 0;` で変更前総原価を合算し、同 147 行 `TotalCostPriceBefore: $this->totalCostPriceBefore,` として承認一覧に保存している。`src/Eccube/Entity/DtbStockApprovalList.php:274-284` も `totalCostPriceBefore` のみで、総原価増減額を保持するプロパティは追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 676,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:91-95` で `insertStockChange(['stockChangeTypeDetail' => ..., 'approvalNotificationTargetMembers' => $this->input->approvalNotificationTargetMembers, ...])` を渡し、`src/Eccube/Repository/DtbStockEditApprovalRepository.php:48-79` の `INSERT INTO dtb_stock_edit_approval (stock_change_type_detail_id, registered_member_id, ...)` の第2バインドが `$stockChange['approvalNotificationTargetMembers']` のまま。値は `src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:295` `approvalNotificationTargetMembers: (int) $formData['approval_notification_target_members'],` で、同 337 行 `foreach ($formData['approval_notification_target_members'] as $approvalMemberId)` の通り配列を int キャストしたもの。操作者（ログインメンバー）は登録されていない。",
+      "note": "承認一覧（dtb_stock_approval_list）側は StockChangeCsvImportHandler.php:142 で `RegisteredMember: $this->entityManager->getReference(Member::class, $this->Member->getId())` と操作者になっているが、指摘対象の在庫編集承認情報の registered_member_id は未修正。"
+    },
+    {
+      "rowId": 677,
+      "status": "対応済み",
+      "evidence": "固定値 `STOCK_LOCATION_ID_TO_NAME[1]` は解消。`src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:175-181` で `$this->stockApprovalListRepository->createStockLocationIdsByStockEditApprovalIdsQueryBuilder($stockEditApprovalIds)` から在庫編集承認IDごとの `stockLocationId` を取得し、同 191-192 行 `$stockLocationId = $stockLocationIds[$stockEditApprovalId] ?? 0; $summary['stock_location_name'] = ProductStock::STOCK_LOCATION_ID_TO_NAME[$stockLocationId] ?? '-';` と実値で解決。テンプレートは `src/Eccube/Resource/template/admin/Stock/change.twig:502` `{{ StockEditCsv.StockEdit.baseInfo }}<br>{{ summary.stock_location_name }}` で店舗と在庫区分を表示。保存元はアップロード時に選択した値で、`src/Eccube/Service/Csv/Importer/Event/StockChangeCsvImportHandler.php:136` `StockLocationId: $this->input->changeStockLocationId,`（入力は StockChangeCsvController.php:291 `changeStockLocationId: (int) $formData['change_stock_location_id']`）。",
+      "note": ""
+    },
+    {
+      "rowId": 678,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/change.twig:298-300` のモーダル本文は `100点以上の在庫変動がある商品が含まれています。このまま登録してよろしいですか？` のままで、設計文言および後半の「※問題がある場合、キャンセルしてCSVファイルを修正してください。」は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 679,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/StockMoveCsvImportType.php:110-121` の `import_file` 制約は `new Assert\\NotBlank(), new Assert\\File(['maxSize' => $this->csvMaxSize.'M'])` のみで mimeTypes/extensions 指定なし（`StockJoinCsvUploadType.php:73` や `StockSplitCsvUploadType.php:106` にはある `'mimeTypes' => ['text/csv','text/plain','application/csv']` 相当がない）。`src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:267-271` の `admin.common.csv_invalid_format` はファイル未指定（`$formFile === null`）時のみ。`src/Eccube/Service/Csv/Importer/CsvImporter.php:172-173` の `getClientOriginalExtension()` は区切り文字判定（tsv 判定）にのみ使用。画面の `accept` も `src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:852` `accept: 'text/csv,.csv,text/plain'` のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 680,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:273` `if ($this->countCsvRows($formFile) >= static::ADMIN_CSV_IMPORT_MAX_ROWS) {` で、`StockMoveTransferController`（同 69 行 `class StockMoveTransferController extends AbstractController`）に定数のオーバーライドはなく `src/Eccube/Controller/AbstractController.php:364` `protected const ADMIN_CSV_IMPORT_MAX_ROWS = 5010;` を継承したまま。同 442-447 行のメッセージも `%maxRecord%` に 5010 を渡す。比較対象の StockChangeCsvController には `src/Eccube/Controller/Admin/Stock/StockChangeCsvController.php:61` `protected const ADMIN_CSV_IMPORT_MAX_ROWS = 10002;` と 69-76 行の 10000 件用メッセージオーバーライドが存在する。",
+      "note": ""
+    }
+  ]
+}

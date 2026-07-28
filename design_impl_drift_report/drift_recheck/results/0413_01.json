@@ -1,0 +1,41 @@
+{
+  "packetId": "0413_01",
+  "results": [
+    {
+      "rowId": 273,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:191-196` は現 develop でも `public function getApiResponse(?string $paymentNo): ?string { // SP.LINKS取引照会API未実装のため、後続PRで実装予定 throw new \\LogicException('SP.LINKS取引照会API未実装のため、決済処理中チェックはまだ実行できません。'); // return 'OK'; // TODO: 後続PRでSP.LINKS APIのレスポンスを返す }` のまま。呼び出し側 `同ファイル:105` `$resultApi = $this->getApiResponse($paymentNo);  // TODO APIからのレスポンスから取得` も変わらず、必ず例外に落ちる。リポジトリ全体を `SP.LINKS|取引照会|ResponseCd|MerchantId` で横断検索しても API クライアント実装は `src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php` 内のコメント/例外文言と `src/Eccube/Command/PaymentStatusCheckCommand.php:29` の説明コメントのみで、別クラスへの実装移管もない。",
+      "note": "MerchantId/ResponseCd 相当は `同ファイル:38-47` の `$pendingResponseCds` 配列（K02〜K99）が定義されているだけで、実 API 呼び出しは無い。"
+    },
+    {
+      "rowId": 274,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbEventEntryRepository.php:272` `->orderBy('ee.paymentNo');` は残るが、`src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:88-173` の `foreach ($EventEntries as $EventEntry)` ループ内は毎回 `同ファイル:100,105` `$paymentNo = $EventEntry->getPaymentNo();` → `$resultApi = $this->getApiResponse($paymentNo);` を実行するだけで、前回 paymentNo / 前回照会結果を保持する変数（$prev*, $last* 等）も同一決済番号の分岐も存在しない。ループ前の初期化は `同ファイル:81-85` の `$cntEntries/$cntUpdate/$cntPending/$cntDeleted/$cntError` の件数カウンタのみ。`前回|直前|同一決済|同じ決済|previous|prev|last` の横断検索でも該当実装なし。",
+      "note": ""
+    },
+    {
+      "rowId": 275,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:164-172` の catch 節は現 develop でも `catch (\\Throwable $e) { try { $this->mailService->sendEventPaymentErrorAlertMail($EventEntry, $e->getMessage()); } ... log_error('決済処理中チェックでエラー発生: '.$e->getMessage(), ...); $cntError++; }` と申込みごとの即時送信のまま。ループ終了後の処理は `同ファイル:175-178` の `$result = ['error' => $cntError, 'detail' => '対象：'....]` のみで、エラーメッセージ配列への蓄積・重複排除・一括通知は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 276,
+      "status": "未対応",
+      "evidence": "取引不在・失敗時の分岐 `src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:154-163` は `} else { // イベント申込を削除（論理削除）する、トランザクション不要 $time = new \\DateTime(); $EventEntry->setDeletedAt($time); $this->entityManager->persist($EventEntry); $this->entityManager->flush(); $cntDeleted++; }` のままで、理由メッセージの収集配列は無い。未完了（保留）側 `同ファイル:150-153` も `log_error(...)` と `$cntPending++` のみ。戻り値 `同ファイル:176-177` も `'detail' => '対象：'.$cntEntries.'件、更新：'.$cntUpdate.'件、保留：'.$cntPending.'件、削除：'.$cntDeleted.'件、エラー：'.$cntError.'件'` と件数集計だけ。",
+      "note": ""
+    },
+    {
+      "rowId": 277,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:113` `$this->entityManager->getConnection()->beginTransaction(); // ← トランザクション開始` は foreach（`同ファイル:88`）の内側にあり、`同ファイル:127,129` `$this->entityManager->flush(); ... $this->entityManager->getConnection()->commit();` も申込みごとに実行される。取引不在時も `同ファイル:160` `$this->entityManager->flush();` を申込みごとに実行。ループ後に確定する箇所（ループ外の flush/commit）は存在せず、`同ファイル:179-181` の finally は `$lock->release();` のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 278,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/` 配下54ファイルを確認したが CVS 支払チェック用コマンドは無く、`checkCvsPayment|CvsPayment|コンビニ支払チェック|entry:batch` の全文検索もヒット0（`src/Eccube/Util/PaymentUtil.php:49` の `getCvsPaymentLink()` はメール用リンク生成で無関係）。近傍の `src/Eccube/Command/PaymentStatusCheckCommand.php:35` は `#[AsCommand(name: 'eccube:payment-status-check', description: '決済処理中チェックバッチ')]` のままで B13-01 用。抽出も `src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:78` `$EventEntries = $this->eventEntryRepository->getBeforeMinutesEntry(30);` と既定引数のみの呼び出しで、`src/Eccube/Repository/DtbEventEntryRepository.php:261` `getBeforeMinutesEntry(int $beforeMinute, array $payments = [], int $entryStatusId = ES::PROCESSING_PAYMENT)` の既定＝決済処理中ステータス基準（`同:266-272`）。Payment::EC_CVS / MtbEntryStatus::WAITING_RECEIVED を指定する呼び出し元はリポジトリ全体に存在しない（`getBeforeMinutesEntry` の呼び出しは上記1箇所のみ）。さらに `src/Eccube/Service/Admin/Payment/PaymentStatusCheckAction.php:194` の `throw new \\LogicException('SP.LINKS取引照会API未実装...')` により取引照会自体が不能。",
+      "note": "`getBeforeMinutesEntry` に `$payments` / `$entryStatusId` の引数枠はあるが、コンビニ入金待ち抽出に使う呼び出し元・バッチともに未実装のため設計期待値は未充足。"
+    }
+  ]
+}

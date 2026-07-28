@@ -1,0 +1,77 @@
+{
+  "packetId": "0202_14",
+  "results": [
+    {
+      "rowId": 741,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Repository/DtbStockApprovalListRepository.php:96-120` で filter_approval_target 有効時に `a.approvalStatus = :filter_approval_status`(未承認) に加え、`innerJoin(MemberBaseInfo::class,'filter_mbi',Join::WITH,'filter_mbi.BaseInfo = a_BaseInfo AND IDENTITY(filter_mbi.Member) = :filter_login_member_id')` でログインメンバー所属店舗に限定し、`->andWhere('IDENTITY(a.RegisteredMember) != :filter_login_member_id')` と `filter_login_member.Authority NOT IN (... AuthorityRole ... deny_url = '/approval_authority')` で承認権限を判定している（login_member_id 未指定時は :99-101 で InvalidArgumentException）。1-4の除外は `src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:221-232` の PRE_SUBMIT `$data['approval_status'] = [];`、および同 Repository:124 `if (!$filterApprovalTarget && !empty($searchData['approval_status']))` で検索条件から外れる。選択不可化は同 Form `finishView()` :309-319 `$childView->vars['attr']['disabled'] = 'disabled';` と `src/Eccube/Resource/template/admin/Stock/approval_list.twig:66-79` の `syncApprovalStatusDisabledByFilter()`（`$approvalStatusInputs.prop('disabled', filterChecked)`）で実装済み。設計 sheet-44 1-3 の「1-1で選択された中で承認権限を持つ承認対象かつ未承認のみ」「1-4を選択不可・検索条件から除外」を満たす。",
+      "note": ""
+    },
+    {
+      "rowId": 742,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:103-119` の `->add('stock_change_type_detail', EntityType::class, [... 'multiple' => true, ...])` は監査時点と同じ複数選択のままで、`src/Eccube/Repository/DtbStockApprovalListRepository.php:131-135` も `$qb->expr()->in('a.StockTransferTypeDetail', ':stock_change_type_detail')` と IN 句で複数値を受ける。設計 sheet-44 1-5「在庫変動区分 単一選択(セレクトボックス)」と相違したまま。",
+      "note": ""
+    },
+    {
+      "rowId": 743,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:166-217` で registered_date_start / registered_date_end / approved_date_start / approved_date_end の4項目とも `DateType::class` + `'widget' => 'single_text'` のままで時分入力不可。`src/Eccube/Repository/DtbStockApprovalListRepository.php:152-173` も `->format('Y-m-d 00:00:00')` / `->format('Y-m-d 23:59:59')` で時刻を固定して丸めており、監査時点から変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 744,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:116` `$pageCount = (int) ($page_count ?? $session->get($sessionKeyPageCount, $this->eccubeConfig['eccube_default_page_count']));` のままで、`app/config/eccube/packages/eccube.yaml:142` は `eccube_default_page_count: 10`。設計 sheet-45 1-3 の初期値100件になっていない（選択肢は :118 `$this->pageMaxRepository->findAll()` で mtb_page_max から表示）。",
+      "note": "eccube.yaml の行番号は監査時点の124から142へ移動しているが値は10のまま。"
+    },
+    {
+      "rowId": 745,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Entity/DtbStockApprovalList.php:28-36` は `APPROVAL_STATUS_UNAPPROVED = 1` / `APPROVAL_STATUS_APPROVED = 2` / `APPROVAL_STATUS_REJECTED = 3` と `APPROVAL_STATUS_LABELS` の3値のみで、スマレジ連携中/連携失敗の定数・ラベルは存在しない。検索条件も `src/Eccube/Form/Type/Admin/SearchStockApprovalListType.php:92-102` で未承認/承認済/却下の3択のみ。操作対象判定も `src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-93` で `$ApprovalList->getApprovalStatus() === DtbStockApprovalList::APPROVAL_STATUS_UNAPPROVED` に限定され、直後に `// TODO 承認状態が「スマレジ連携失敗」の場合も一括操作を可能にする` のTODOコメントが残ったまま。",
+      "note": ""
+    },
+    {
+      "rowId": 746,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbStockApprovalListRepository.php:184-187` `->addOrderBy('a.approvedDate','DESC')->addOrderBy('a.registeredDate','ASC')->addOrderBy('a.id','ASC')` のままで監査時点と同一。承認済/却下済で承認日が同一の場合も registeredDate が a.id より先に効き、サブソートは設計の在庫編集承認ID(history_source_id)ではなく承認一覧ID(a.id)。スマレジ連携中/失敗はステータス体系自体が無くソート条件にも含まれない。",
+      "note": ""
+    },
+    {
+      "rowId": 747,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Stock/approval_list.twig:515-523` は `{% if item.is_bulk_actionable %}` のときだけ `<a href=\"#\" class=\"js-open-single-approval-modal\" ...>` を出力し、それ以外は `<a href=\"{{ item.approval_target_link }}\" ...>` を出す構造のまま。`src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:90-92` の `$isBulkActionable = in_array($typeId, self::BULK_ACTIONABLE_HISTORY_SOURCE_TYPE_IDS, true) && ...APPROVAL_STATUS_UNAPPROVED && $ApprovalList->getRegisteredMember()->getId() !== $currentMemberId;` も変わっておらず、承認済・却下済や本人登録分の在庫編集系行は :63 の `$approvalTargetLink = '#'` のまま通常リンクとなりモーダルを開かない。",
+      "note": ""
+    },
+    {
+      "rowId": 748,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Stock/ApprovalListRowBuilder.php:102-115` の条件が `if ($typeId === ...STOCK_EDIT || ...STOCK_BULK_EDIT || ...STOCK_CHANGE_CSV_IMPORT || ...STOCK_SPLIT_EDIT || ...STOCK_JOIN_EDIT)` のままで、在庫分割・在庫結合でも合計在庫増減数・合計総原価増減数・在庫変動区分を表示している（else 側のみ '-'）。設計 sheet-45 の「それ以外は '-'」を満たしていない。",
+      "note": ""
+    },
+    {
+      "rowId": 749,
+      "status": "対応済み",
+      "evidence": "却下理由は `src/Eccube/Controller/Admin/Stock/StockApprovalListController.php:271` `$rejectedMemo = trim((string) $request->request->get('rejection_reason', ''));` で取得され（TODO は解消）、:288-294 で `new StockApprovalListUpdateInput(... rejectedMemo: $rejectedMemo !== '' ? $rejectedMemo : null, approvalListUrl: $this->generateUrl('admin_stock_approval_list', [], UrlGeneratorInterface::ABSOLUTE_URL))` に渡る。`src/Eccube/Service/Admin/Stock/ActionInput/StockApprovalListUpdateInput.php:28-34` も `public ?string $rejectedMemo = null, public string $approvalListUrl = ''` を保持する。`src/Eccube/Service/Admin/Stock/StockApprovalListUpdateAction.php:158-199` で commit 後に `notifyRegisteredMember()` を呼び、`$RegisteredMember = $StockApprovalList->getRegisteredMember();`（登録者のメールアドレス宛）、却下時のみ `$rejectionReason = $StockEditApproval->getRejectedMemo();` を渡して `$this->mailService->sendStockApprovalStatusChangeMail(...)` を実行。`src/Eccube/Service/MailService.php:1782-1810` の `sendStockApprovalStatusChangeMail()` が `eccube_stock_approval_status_change_mail_template_id` の専用テンプレートを引き、`'rejectionReason' => $rejectionReason` を渡す。テンプレート `src/Eccube/Resource/template/default/Mail/stock_approval_status_change.twig:8-11` `{% if rejectionReason is not empty %} ... 却下理由: {{ rejectionReason }}` で本文に差し込まれる。",
+      "note": ""
+    },
+    {
+      "rowId": 750,
+      "status": "未対応",
+      "evidence": "モーダル明細SQLを組む `src/Eccube/Repository/DtbStockApprovalListRepository.php:374-380` は `->where('sal.history_source_type_id IN (:stockEditTypes)')` に `MtbStockHistorySourceType::STOCK_CHANGE_CSV_IMPORT` を含めたままで、画面用 `createDbalQueryBuilderForStockEditLineItems()`(:296-315) と CSV用 `createDbalQueryBuilderForStockEditLineItemsCsv()`(:322-325) が同一のこのビルダーを使っている。`src/Eccube/Resource/template/admin/Stock/approval_list_line_items.twig:29-45` も `{% for item in Pagination %}` で取得明細をそのまま5-1〜5-14相当のテーブル行に出力。設計 sheet-45 6-5「CSV登録分はモーダルに表示せずCSVダウンロードでのみ参照」は未充足。",
+      "note": ""
+    },
+    {
+      "rowId": 751,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbStockApprovalListRepository.php:344-347,361` はモーダル明細を `dtb_stock_edit_approval_detail` から `sad.before_edit_quantity` / `sad.edit_quantity` / `sad.purchase_unit_price` / `sad.before_purchase_unit_price` で取得するのみで、在庫変動履歴・入庫承認待ち在庫テーブルへの切替は無い。`src/Eccube/Service/Admin/Stock/StockEditLineItemRowBuilder.php:49-59` も `$afterQty = $beforeQty + $editQty; $beforeTotal = bcmul($beforeUnit, (string) $beforeQty, 2); $movementCost = bcmul($purchaseUnit, (string) $editQty, 2); $afterTotal = bcadd(...)` と常に同一計算で値を返し、承認状態・親区分（入庫/廃棄）による出し分けや「-」表示の分岐は存在しない（設計 sheet-45 6-1-1〜6-1-3 未実装）。",
+      "note": ""
+    },
+    {
+      "rowId": 752,
+      "status": "部分対応",
+      "evidence": "第一ソートは一覧の並び順に合わせる修正が入った。内側 `src/Eccube/Repository/DtbStockApprovalListRepository.php:382-385` `->orderBy('sal.approved_date','DESC')->addOrderBy('sal.registered_date','ASC')->addOrderBy('sal.id','ASC')->addOrderBy('sad.id','DESC')`、外側 :309-312 `->orderBy('modal_line_items_limited.sort_approved_date','DESC')->addOrderBy('...sort_registered_date','ASC')->addOrderBy('...sort_sal_id','ASC')->addOrderBy('...sort_sad_id','DESC')` となり、監査時点の `sal.id ASC, sad.id ASC` 固定から承認日DESC/登録日ASC（＝一覧1-2相当）＋明細ID降順へ変わっている。ただし第二ソートのキーは設計 6-3-1 の在庫変動履歴ID／入庫承認待ち在庫IDではなく在庫編集承認明細ID(`sad.id`)のままで、設計期待値を完全には満たさない。",
+      "note": "第一ソートが従う一覧側の並び順自体が rowId 746 の指摘どおり設計と相違している点は未解消。"
+    }
+  ]
+}

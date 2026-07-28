@@ -1,0 +1,29 @@
+{
+  "packetId": "0408_03",
+  "results": [
+    {
+      "rowId": 270,
+      "status": "対応済み",
+      "evidence": "現 develop では会員宛送信が新規実装済み。`src/Eccube/Service/MailService.php:1136` `public function sendIdExpireNotificationMailToCustomer(DtbPlayer $Player): void`、同 1141-1152 で `$MailTemplate = $this->mailTemplateRepository->find(MailTemplate::ID_EXPIRE_NOTIFICATION);` / `$body = $this->twig->render($MailTemplate->getFileName(), []);` / `->subject($MailTemplate->getMailSubject())` / `->from(new Address($BaseInfo->getEmail01(), $BaseInfo->getShopName()))` / `->to($this->convertRFCViolatingEmail($Customer->getEmail()))`。テンプレートIDは `src/Eccube/Entity/MailTemplate.php:81` `public const ID_EXPIRE_NOTIFICATION = 46;` で、`app/DoctrineMigrations/Version20251204111453.php:1772-1778` の id=46 / `'mail_key' => 'eccube.mail.id_expire_notification'` / `'file_name' => 'Mail/Mall/id_expire_notification.twig'` / `'mail_subject' => '【晴れる屋】オンライン本人確認の更新手続きのお願い'` に対応。対象者ごとの送信は `src/Eccube/Service/Admin/Customer/IdExpireNotificationAction.php:55-67` の `foreach ($expiringPlayers as $Player) { ... $this->mailService->sendIdExpireNotificationMailToCustomer($Player); }` で行われ、バッチ入口は `src/Eccube/Command/IdExpireNotificationCommand.php:30` `#[AsCommand(name: 'eccube:customer:id-expire-notification', ...)]` → 同 45 `$this->idExpireNotificationAction->handle();`。送信元は共通の販売基本情報 Email01（info@hareruyamtg.com）から解決される。",
+      "note": "監査時点の「テンプレートとマスタのみで送信実装なし」は解消済み。"
+    },
+    {
+      "rowId": 271,
+      "status": "対応済み",
+      "evidence": "会員宛送信完了後の管理者通知が実装済み。`src/Eccube/Service/Admin/Customer/IdExpireNotificationAction.php:66-70` で会員向け送信ループ終了後に `// 管理者向け通知メール送信` `$this->mailService->sendIdExpireNotificationMailToAdmin($expiringPlayers);` を呼ぶ。一覧整形は `src/Eccube/Service/MailService.php:1172` `public function sendIdExpireNotificationMailToAdmin(array $Players): void` 内、同 1186-1197 の `foreach ($Players as $Player) { $Customer = $Player->getCustomer(); $lines[] = $Customer->getId().' '.$Customer; }` `$text = implode(\"\\n\", $lines);` `$body = <<<EOT\\n会員ID 氏名\\n{$text}\\nEOT;` で、会員IDと氏名をスペース区切り・1会員1行の形式になっている。",
+      "note": ""
+    },
+    {
+      "rowId": 272,
+      "status": "対応済み",
+      "evidence": "外部契約4要素すべてが `src/Eccube/Service/MailService.php:1172-1214` の `sendIdExpireNotificationMailToAdmin()` で実装済み。宛先: 1176-1178 `$this->mtbOptionRepository->findOneBy(['option_key' => MtbOption::CHECK_ID_EXPIRED_CUSTOMER_MAIL_ADDRESS])?->getOptionValue()`（`src/Eccube/Entity/Master/MtbOption.php:94` `CHECK_ID_EXPIRED_CUSTOMER_MAIL_ADDRESS = 'check_id_expired_mail_address'`、初期値 it_common@hareruyamtg.com は `app/DoctrineMigrations/Version20251125161057.php:282`）をカンマ分割して 1204 `->to(...$addresses)`。件名: 1205 `->subject('身分証の有効期限切れ会員の存在を通知するメール')`。送信元: 1206 `->from(new Address($BaseInfo->getEmail01(), $BaseInfo->getShopName()))`。本文: 1193-1197 の heredoc が `会員ID 氏名` 行から始まる該当者一覧。未設定時は 1180-1184 で送信せず終了。",
+      "note": ""
+    },
+    {
+      "rowId": 279,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/CustomerRepository.php:653`（`getBlankRequiredItemCustomers()` 内の CONCAT）は現 develop でも `':name02:', COALESCE(c.name02, 'null'), ':tel02:', COALESCE(c.tel01, 'null'), ':tel02:', COALESCE(c.tel02, 'null'), ':tel03:', COALESCE(c.tel03, 'null'),` のままで、tel01 のラベルが `:tel02:` になっており `:tel01:` は出力されない。リポジトリ全体を `:tel01:` で横断検索してもこのメール本文用の出力実装は存在せず（`grep -n \"tel02\" src/Eccube/Repository/CustomerRepository.php` のヒットは 222/653/669/670 のみ）、他クラスへの移管もない。",
+      "note": "監査時点と同一のラベル誤り。"
+    }
+  ]
+}

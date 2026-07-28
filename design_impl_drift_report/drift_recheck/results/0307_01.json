@@ -1,0 +1,65 @@
+{
+  "packetId": "0307_01",
+  "results": [
+    {
+      "rowId": 454,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Event/index.twig:348` `autoplay: true, autoplaySpeed: 4000,`、同 `:368` `dots: false, speed: 800, autoplay: true, autoplaySpeed: 4000,` と監査時点のまま4秒。develop 全体で `autoplaySpeed` を grep しても index.twig / index.en.twig の計4箇所すべてが 4000 で、5000 指定は0件（バンドル済 `html/template/default/assets/hareruya/js/hareruya-event.js` にも autoplaySpeed の記述なし）。",
+      "note": ""
+    },
+    {
+      "rowId": 455,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Event/index.twig:33-55` のパンくずは `url('homepage')`(position 1) → `url('event_top')`(position 2) → `<span itemprop=\"name\">{% if app.request.locale == 'en' %}{{ Shop.shopNameEng ?? Shop.shopName }}{% else %}{{ Shop.shopName }}{% endif %}</span>`(position 3, `--current`) の静的3段のままで、日別/月別セグメントの生成は無い。`html/template/default/assets/hareruya/js/hareruya-event.js` に `breadcrumb` トークンは 0 件（grep -o breadcrumb | wc -l → 0）。`src/Eccube/Controller/Front/EventTopController.php` も render 引数は Shop/OpenShops/Banners/SpecialBanners のみでパンくず用データを渡していない。",
+      "note": ""
+    },
+    {
+      "rowId": 456,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/EventTopController.php:54-59` は `$this->bannerRepository->findWhereUrlIsNotEmpty($shopId, $request->getLocale(), self::BANNER_LIMIT, [MtbBanner::SHOW_BOTH, MtbBanner::SHOW_ONLY_SLIDE])` のみ。`src/Eccube/Repository/Master/MtbBannerRepository.php:52-71` の抽出条件は `eq('s.id', ':baseInfoId')` / `eq('l.id', ':localeId')` / `in('b.dispType', ':dispTypes')` / `\"b.imageUrl <> ''\"` の4条件だけで、開催日・公開状態・イベント紐付けの絞り込みは無い。`src/Eccube/Entity/Master/MtbBanner.php:43-76` のカラムも id/imageUrl/link/dispType/BaseInfos/Languages/imageAlt のみでイベントFK・開催日・公開状態カラムは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 457,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/event_detailed_search_modal.twig:135` は `<button ... data-search-clear>{{ 'front.event.search.modal_clear'|trans }}</button>` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:6574` `front.event.search.modal_clear: クリア`（`modal_reset` 等のリセット用キーは未定義）。挙動も同 twig の inline script（`const clearButton = form.querySelector('[data-search-clear]');` 以降）で `form.querySelectorAll('input[type=\"checkbox\"]').forEach(function (cb) { cb.checked = false; });` と `input.value = '';` の全消去のみで、平日/休日をチェック済みへ戻す初期状態復帰処理は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 458,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Event/detail.twig:50` 店舗名クラム `<a class=\"p-hareruya-breadcrumb__link\" href=\"{{ url('event_search') }}\" itemprop=\"item\">`、同 `:60` フォーマットクラムも同じく `href=\"{{ url('event_search') }}\"` で絞り込みパラメータ無し。最終クラムは `:67-71` の `<span class=\"p-hareruya-breadcrumb__current\" aria-current=\"page\"><span itemprop=\"name\">{{ eventName }}</span></span>` で、イベント開催日付クラムは存在しない（`Detail.startDate` の使用は :102 の開催日時表示のみでパンくずには無い）。",
+      "note": ""
+    },
+    {
+      "rowId": 459,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Event/detail.twig:132-135` は `{% if Event.entryFee == 0 %}{{ 'front.event.detail.info.entry_fee_free'|trans }}{% else %}¥{{ Event.entryFee|number_format }}{% endif %}` のままで、非0円時は `¥` プレフィックス固定。末尾『円』表記への修正は入っていない。",
+      "note": ""
+    },
+    {
+      "rowId": 460,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Event/detail.twig:127` `|trans({'%count%': Event.capacity})`、同 `:132` `{% if Event.entryFee == 0 %}`、`:135` `¥{{ Event.entryFee|number_format }}` と、いずれもイベント本体値を直接参照したまま（同 twig 内の `Detail.` 参照は :21 prize / :23,102 startDate / :105-111 entry日程 / :162 のみで capacity・entryFee は無い）。`src/Eccube/Service/Front/Event/EventDetailButtonStateResolver.php:32` も `&& $activeEntryCount < $event->getCapacity()` のまま。`src/Eccube/Entity/DtbEventDetail.php:249-251` `getCapacity(): int { return $this->capacity ?? $this->Event->getCapacity(); }` / `:261-263` `getEntryFee()` は用意されているが未使用。",
+      "note": ""
+    },
+    {
+      "rowId": 461,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Event/_event_detail_actions.twig:60` `<a class=\"c-hareruya-btn c-hareruya-btn--lg c-hareruya-btn--full\" href=\"{{ url('event_top') }}\">{{ 'front.event.detail.actions.back'|trans }}</a>` と、イベントTOP固定リンクのまま。遷移元クエリ参照や history.back の上書きは同ファイル・JSともに追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 462,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Event/entry.twig:58` `<input class=\"c-hareruya-event-card__checkbox\" type=\"checkbox\" id=\"event-{{ Detail.id }}\" checked disabled>` が `others` の有無に関係なく無条件で `checked disabled`（`{% if others is not empty %}` 分岐は :75 の別日程リスト部にのみ存在し、主イベント側の disabled 切替は無い）。主イベントIDは同 `:53` `<input type=\"hidden\" name=\"detail\" value=\"{{ Detail.id }}\">` で常時送信され、`src/Eccube/Controller/Front/Event/EventEntryController.php:100` `$detailId = (int) $request->request->get('detail');`、`:118` `$allDetails = array_merge([$Detail], $additionalDetails);` で必ず主対象が先頭に含まれる。主未選択バリデーションは存在しない。（監査時点の 37/32 行は 58/53 行へ位置がずれただけで内容は同一）",
+      "note": "行番号は監査時点から下方シフトしているが、コード内容は同一。"
+    },
+    {
+      "rowId": 463,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Event/entry.twig:123-126` は `<input ... name=\"agree\" value=\"1\" data-js-payment-confirm-checkbox>` と label のみでエラー表示用ノードが無く、`:129` の送信ボタンも `data-js-payment-submit disabled` のまま。`html/template/default/assets/hareruya/js/hareruya-event.js` の該当部は `var p=function(e){if(f.disabled=!e,f.removeAttribute(\"tabindex\"),!e)return};p(h.checked),h.addEventListener(\"change\",...),f.addEventListener(\"click\",function(e){f.disabled&&e.preventDefault()})` で disabled 切替と click 抑止のみ（エラー文言の動的表示なし）。`front.event.entry.error.agree_required` は `src/Eccube/Resource/locale/messages.ja.yaml:6669` と en.yaml:4252 に定義されるだけで src/・html/ からの参照は 0 件。`src/Eccube/Controller/Front/Event/EventEntryController.php:106-108` も `if (!(bool) $request->request->get('agree')) { return $this->redirectToRoute('event_entry', ['detailId' => $detailId]); }` とリダイレクトのみ。",
+      "note": ""
+    }
+  ]
+}

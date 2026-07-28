@@ -1,0 +1,77 @@
+{
+  "packetId": "0203_02",
+  "results": [
+    {
+      "rowId": 766,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/CsvExportService.php:410-431` の `exportOrder()` は `$ExportCsvRow->setData($csvExportService->getData($Csv, $Order));` のみで非会員判定はなく、`src/Eccube/Service/CsvExportService.php:215-253` の `getData()` も `// スカラ値の場合はそのまま. return $data;` で終わり、Customer 不在時に「非会員」へ置換する分岐は存在しない。develop 全体でも `grep -n \"非会員\" src/Eccube/Service/CsvExportService.php` は 0 件で、`src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiOrderFactory.php:49` `private const GUEST_NAME01 = '非会員';` のスマレジ経路のみ。監査時点から変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 767,
+      "status": "部分対応",
+      "evidence": "新規マイグレーション `app/DoctrineMigrations/Version20260724120000.php:44-45` で `SELECT {$csvTypeId}, NULL, 'Eccube\\\\Entity\\\\Order', 'BaseInfo', 'shop_name', '店舗名', 4, true, NOW(), NOW()`（`app/DoctrineMigrations/Version20260724120000.php:37` の `foreach ([3, 4] as $csvTypeId)` により csv_type_id=4 も対象）が追加され、欠落していた識別ID:4「店舗名」の dtb_csv 定義自体は補完された。ただし `src/Eccube/Entity/Order.php` に `getBaseInfo()` が存在せず（`grep -in baseinfo src/Eccube/Entity/Order.php` は 0 件）、`src/Eccube/Service/CsvExportService.php:225-227` の `if (!$entity->offsetExists($Csv->getFieldName())) { return null; }` と `src/Eccube/Entity/AbstractEntity.php:35-44` の `offsetExists()`（`method_exists($this, \"get$method\")` 判定）により実出力値は常に null。項目としては選択可能になったが値が出力されないため部分対応。",
+      "note": "既存の「店舗ID」(app/DoctrineMigrations/Version20260226000001.php:33) も同じ field_name='BaseInfo' 方式で同様に値が空になる既知の作り。"
+    },
+    {
+      "rowId": 768,
+      "status": "未対応",
+      "evidence": "develop 全体で `git grep -n \"送料ID\" -- app/DoctrineMigrations src/Eccube/Resource/doctrine` は `app/DoctrineMigrations/Version20210831190000.php:34` の `// delete 送料ID` コメントのみで、csv_type_id=4 の「送料ID」定義は追加されていない。`app/DoctrineMigrations/Version20260226000001.php:95-96` は `UPDATE dtb_csv SET sort_no = 66 ... disp_name = 'お届け希望日'` と `UPDATE dtb_csv SET sort_no = 68 ... disp_name = '送料' AND field_name = 'shipping_delivery_fee'` のままで、sort_no=67 の送料ID列は不在。監査時点から変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 769,
+      "status": "未対応",
+      "evidence": "`app/DoctrineMigrations/Version20260226000001.php:31` は `UPDATE dtb_csv SET sort_no = 1 WHERE csv_type_id = 4 AND disp_name = '注文番号';` の既存行更新のみ。develop の全マイグレーションを `git grep -n \"注文番号\" -- app/DoctrineMigrations` で再検索しても csv_type_id=4 に対する注文番号の INSERT は存在せず（該当は `Version20260513140000.php:31-39` の field_name 変更と `Version20260224000000.php:31` のみ）、sort_no=88 の2つ目の注文番号列は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 770,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/CsvExportService.php:494-510` の `exportShipping()` は `$ExportCsvRow->setData($csvExportService->getData($Csv, $Order)); if ($ExportCsvRow->isDataNull()) { $ExportCsvRow->setData($csvExportService->getData($Csv, $Shipping)); }` のみで、Order.Customer の null 判定や「非会員」置換はない。`src/Eccube/Controller/Admin/CustomExportCsvController.php:89-100` の出力コールバックにも補正処理はなく、`grep -n \"非会員\" src/Eccube/Service/CsvExportService.php` は 0 件。監査時点から変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 771,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Order/OrderController.php:299` は依然 `'ShippingCsvExtensions' => $this->dtbCsvExtensionRepository->findBy(['CsvType' => CsvType::CSV_TYPE_SHIPPING]),` で deleted_at 条件なし。直接ダウンロードの `src/Eccube/Controller/Admin/CustomExportCsvController.php:77` も `if (!$CsvExtension = $this->dtbCsvExtensionRepository->find($csvExtensionId)) {` のみ。`src/Eccube/Repository/DtbCsvExtensionRepository.php:34,39` に `findActiveByCsvTypeId()` / `->andWhere('e.deleted_at IS NULL')` は存在するが、受注側から呼ばれていない状態は監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 772,
+      "status": "部分対応",
+      "evidence": "`app/DoctrineMigrations/Version20260724120000.php:37,44-45` の `foreach ([3, 4] as $csvTypeId)` + `INSERT ... '店舗名', 4, true` により、配送CSV種別(csv_type_id=4)の「店舗名」dtb_csv 定義が新規追加され、出力項目設定から選択可能になった（`app/DoctrineMigrations/Version20260724120000.php:25` に「設計書の識別ID:4「店舗名」が欠落していたため補完する」と明記）。ただし field_name='BaseInfo' に対して `src/Eccube/Entity/Order.php` / `src/Eccube/Entity/Shipping.php` とも getBaseInfo() を持たず、`src/Eccube/Service/CsvExportService.php:225-227` の `offsetExists()` チェックで null 返却となり、`src/Eccube/Service/CsvExportService.php:502-505` の Order→Shipping フォールバックでも値が取れない。本店・支店データ統合のための実値出力は未充足。",
+      "note": ""
+    },
+    {
+      "rowId": 773,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Order/manual_mail_all.twig:80` は `{{ form_row(form.subject) }}` のままで無効化条件がなく、`src/Eccube/Resource/template/admin/Order/manual_mail_all.twig:159` の `{% if not id %}disabled{% endif %}>` は確認ボタンのみ。`src/Eccube/Form/Type/Admin/OrderManualMailAllType.php:56` の `->add('subject', TextType::class, [` にも disabled/readonly/attr 指定はない。監査時点から変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 774,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Util/OrderUtil.php:37` は `$orderNumbers[$order->getid()] = $order->getOrderNumber();` のままで、`src/Eccube/Controller/Admin/Order/MailController.php:387` の `$orderNumbers = OrderUtil::getOrderNumbers($this->orderRepository, $orderIds);` が右カラムに渡される（同:505,468）。メール本文側も `src/Eccube/Controller/Admin/Order/MailController.php:557` `'orderNumber' => $Order->getOrderNumber(),` のままで、getOrderNo() は使われていない。監査時点から変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 775,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Order/MailController.php:477-491` の complete 分岐は `$this->mailService->sendManualMailForBulk($Order, $mail, $body, $request->request->all());` をループで呼んだ後に `$this->addSuccess('admin.order.mail_send_complete', 'admin');` を積むだけで、try/catch も addError もない。`src/Eccube/Service/MailService.php:2318-2332` の `sendManualMailForBulk()` も `$this->mailer->send($message);` を直接呼ぶだけで例外捕捉・失敗通知はない。送信失敗時のメッセージ表示は依然未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 776,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Order/MailController.php:557` の `createManualBody()` は `'orderNumber' => $Order->getOrderNumber(),` のままで、order_no 列を返す `Order#getOrderNo()` は使われていない（`git grep -n getOrderNo -- src/Eccube/Controller/Admin/Order/MailController.php` は 0 件）。監査時点から変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 777,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Util/OrderUtil.php:37` は `$orderNumbers[$order->getid()] = $order->getOrderNumber();` のままで、order_no 列を返す `getOrderNo()` へは変更されていない。呼び出し元 `src/Eccube/Controller/Admin/Order/MailController.php:387` も同一。監査時点から変化なし。",
+      "note": ""
+    }
+  ]
+}

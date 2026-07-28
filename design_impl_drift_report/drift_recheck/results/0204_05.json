@@ -1,0 +1,77 @@
+{
+  "packetId": "0204_05",
+  "results": [
+    {
+      "rowId": 517,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/StorageCodeCsv.php:98` `$rowId = isset($row['ID']) ? (int) $row['ID'] : null;`、同:119 `->setRank((int) $row['並び順']);` で整数キャストのみ。検証は `src/Eccube/Service/Csv/AbstractCsvService.php:288-301` の checkRequiredHeaders `if ((string) $value === '')` の空チェックのみで、is_numeric/ctype_digit は StorageCodeCsv/AbstractCsvService に存在しない（grep で AbstractCsvService.php:117-118 の cmc 用のみヒット）。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 518,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Product/section.twig:154-155` `<button class=\"btn btn-ec-conversion px-5\" type=\"submit\" form=\"form_section\">{{ 'admin.common.registration'|trans }}</button>` で id 判定なし。カード見出しのみ同:59 `{{ id is not null ? 'admin.common.edit'|trans : 'admin.common.registration__add'|trans }}` で切替。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 519,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Form/Type/Admin/ProductDepartmentType.php:51-67` の code フィールドに `new Assert\\Regex(['pattern' => '/^[0-9]+$/', 'message' => 'form_error.numeric_only'])`（同:60-63）が追加され、`new Assert\\NotBlank()`(同:56) と `new Assert\\Length(['max' => 128])`(同:57-59) と併せて設計の「数字・必須・最大値128」を充足。監査時点に無かった数字制約が新規追加されている。",
+      "note": ""
+    },
+    {
+      "rowId": 520,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Smaregi/Api/SmaregiSectionApiClient.php:76-83` の create payload は `'categoryCode' => $sectionCode, 'categoryName' => $sectionName, 'displayFlag' => '1', 'taxDivision' => '0', 'pointNotApplicable' => '0'` のみで軽減税率ID項目なし。`src/Eccube/Service/Smaregi/` 配下を reduced/Reduced/軽減税率/taxRate/tax_rate で grep しても該当0件。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 521,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:1150-1284` の csvDepartment は persist/flush→`$this->entityManager->getConnection()->commit();`(1268)→`$cacheUtil->clearDoctrineCache();`(1281) のみで、同ファイル全体を smaregi/Smaregi/スマレジ で grep しても0件。dispatchUpsert の呼び出し元は `src/Eccube/Service/Csv/Importer/Event/SectionMasterImportHandler.php:87` と `src/Eccube/Controller/Admin/Product/SectionController.php:142` のみで部門登録CSVフローからは到達しない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 522,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:1247-1253` `if (!isset($row[$headerByKey['tax_free_division']]) || StringUtil::isBlank(...)) { ... } else { $Section->setTaxFreeDivision(StringUtil::trimAll($row[$headerByKey['tax_free_division']])); }` で空チェックのみ。数値検証・0/1/2 の値域検証は追加されていない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 523,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:1255-1259` `$Section->setVisible(StringUtil::trimAll($row[$headerByKey['visible']]) == '1');` / else `$Section->setVisible(false);` のままで、'1' 以外は一律 false 化され値域エラーにならない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 524,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Product/shelf_number.twig:134-136` `<td class=\"align-middle\">{{ shelfNumber.sortNo }}</td>` のテキスト表示のみ。ID(同:129)・名称(同:132)・編集(同:138) は admin_product_shelf_number_edit へのリンクだが並び順セルにはリンク/クリック処理なし。同 twig 内に sortNo 関連 JS もなし。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 525,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/ShelfNumberMasterImportHandler.php:45-47` `$this->nameColumn = (new BaseCsvColumn('名称', '名称'))->setRequired(true)->addValidator(new RegexValidator('/^[A-Z][-][0-9]{3}$/'));` が現 develop でも残存し、CSV取込に画面同等の正規表現制約が適用されている。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 526,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/ShelfNumberMasterImportHandler.php:48-51` は `->setRequired(true)->addValidator(new NumericValidator())->setConverter(new IntConverter())` のみで上限なし。`src/Eccube/Service/Csv/Importer/Validator/NumericValidator.php:42-44` も `SqlUtil::isNumericParam($value)` のみ。CSVフォーマット表示 `src/Eccube/Controller/Admin/Product/ShelfNumberController.php:406` は `'並び順' => ''` で説明空、`src/Eccube/Entity/DtbShelfNumber.php:37` も `#[ORM\\Column(name: 'sort_no', type: Types::INTEGER, options: ['unsigned' => true, ...])]`。ShelfNumberController/ImportHandler/DtbShelfNumber/Twig を 32767 で grep して該当0件。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 527,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/ShelfNumberMasterImportHandler.php:45-47` の 名称列に `new RegexValidator('/^[A-Z][-][0-9]{3}$/')` が現 develop でも設定されたまま（`src/Eccube/Service/Csv/Importer/Validator/RegexValidator.php` の preg_match 検証を実行）。設計のCSV側は正規表現非適用だが実装は適用のまま。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 528,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/BuySalePriceHistoryController.php:255-264` `// ストリーム開始後はセッションが閉じられることがあるため、Query はコールバック外で組み立てる` / `$qb = $this->getQueryBuilderForExport($request);` / `$response->setCallback(function () use ($qb): void { ... $query = $qb->getQuery(); foreach ($query->toIterable() as $ph) {` で、getQuery() は依然コールバック内（同:263）。監査時点と同一。",
+      "note": ""
+    }
+  ]
+}

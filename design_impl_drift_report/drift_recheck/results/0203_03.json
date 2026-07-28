@@ -1,0 +1,77 @@
+{
+  "packetId": "0203_03",
+  "results": [
+    {
+      "rowId": 779,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Order/manual_mail_all.twig:80` は今も `{{ form_row(form.subject) }}` のみで無効化条件なし。確認ボタン `src/Eccube/Resource/template/admin/Order/manual_mail_all.twig:159` `{% if not id %}disabled{% endif %}` だけが無効化される。`src/Eccube/Form/Type/Admin/OrderManualMailAllType.php:56-63` の `->add('subject', TextType::class, ['label' => '件名', 'required' => true, 'mapped' => false, 'constraints' => [new Assert\\NotBlank()]])` に disabled/readonly 指定はない。同 twig の javascript ブロック(27-44行)も `#mail_template` change 時に location.href を切り替えるだけで subject の disable 処理はない。",
+      "note": ""
+    },
+    {
+      "rowId": 780,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Util/OrderUtil.php:37` `$orderNumbers[$order->getid()] = $order->getOrderNumber();` のままで getOrderNo() 化されていない。メール本文側も `src/Eccube/Controller/Admin/Order/MailController.php:557` `'orderNumber' => $Order->getOrderNumber(),`（createManualBody 内）で getOrderNumber() を渡している。右カラムは同 Controller:387 `$orderNumbers = OrderUtil::getOrderNumbers($this->orderRepository, $orderIds);` を 468/505 行で twig へ渡す構成が維持されている。",
+      "note": ""
+    },
+    {
+      "rowId": 781,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/MailService.php:2333` `$this->saveUserMailHistory($message, $template, $order);` と第4引数の creator を渡さない呼び出しのまま。`src/Eccube/Service/MailService.php:2341` `private function saveUserMailHistory(Email $message, ?MailTemplate $mailTemplate = null, Customer|Order|DtbBuyOrder|null $info = null, ?Member $creator = null): void` の既定 null が `src/Eccube/Service/MailService.php:2348` `->setCreator($creator);` にそのまま入り、一括送信経路では creator_id が null で保存される。",
+      "note": ""
+    },
+    {
+      "rowId": 782,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Order/manual_mail_all.twig:124` `{{ Order.customer.name01 }} {{ Order.customer.name02 }}`、確認画面も `src/Eccube/Resource/template/admin/Order/manual_mail_all_confirm.twig:131` `{{ Order.customer.name01 }} {{ Order.customer.name02 }}` のままで、受注保持の Order.name01/name02 への変更はない（両 twig を name01 で grep しても Customer 経由の2箇所のみ）。",
+      "note": "注文番号セルも twig:116 / confirm:123 の `{{ attribute(orderNumbers, Order.id) }}` のままで rowId 780 と同根。"
+    },
+    {
+      "rowId": 783,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Order/OrderController.php:993` `if (empty($Order['order_number'])) {` / `:994` `return $this->json(['message' => '注文番号が未採番の注文があります。'], 400, [` のままで、判定キーは `order_number`。設計表記の `order_no` との相違は監査時点と同じ状態（実装側・設計側とも変更なし）。",
+      "note": "監査時点でも「挙動は同一で実装側が正しい列名」と注記された細部相違。実装は現 develop でも未変更のため未対応に倒した。"
+    },
+    {
+      "rowId": 784,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Order/UpdateStackListAction.php:49` `$Order->setBrowserPrintFlg(true);`、`:52-53` `$Order->setOrderStatus($this->orderStatusRepository->find(OrderStatus::PICKING)); $Order->setConfirmDate(new \\DateTime());`、`:56` `$Order->setMember($Member);`、`:60-61` `$this->entityManager->flush(); $this->entityManager->commit();` と、UPDATE を行う実装は監査時点から変わっていない。",
+      "note": "設計『DB操作』節の「参照系のみ」記述と実装の不一致。設計内自己矛盾との注記付きだが、実装・設計とも未変更のため未対応。"
+    },
+    {
+      "rowId": 785,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbShippingStandbyRepository.php:281` `'o.order_number AS order_number',` のままで、表示側も `src/Eccube/Resource/template/admin/ShippingStandby/delivery_slips.ja.twig:42` `{{ 'admin.delivery_slips_ja.order_number'|trans }}:<span style=\"font-weight: normal;\">{{ (DeliverySlip.order_number) }}</span>` と order_number 由来。設計が挙げる order_no への変更はない。",
+      "note": "DB列名の細部相違。実装側は監査時点と同一。"
+    },
+    {
+      "rowId": 786,
+      "status": "対応済み",
+      "evidence": "支店で棚番ソートを抑止する分岐が新設されている。`src/Eccube/Repository/DtbShippingStandbyRepository.php:332-333` `// 品目のソート（支店は棚番ソートなし）` / `$this->sortProduct($qb2, [], true);` と第3引数 true を渡すようになり、`src/Eccube/Repository/DtbShippingStandbyRepository.php:314` `->leftJoin('o.baseInfo', 'bi')` で BaseInfo を alias bi で JOIN 済み。`src/Eccube/Repository/Traits/SortProductTrait.php:51` `private function sortProduct(QueryBuilder $qb, array $visibleKeys = [], bool $skipShelfNumberSortForBranch = false): void` に引数が追加され、`:59-62` `// 支店は棚番ソートなし（本店のみ sn.sortNo、支店は常に 0 で同順）` / `$shelfNumberExpr = $skipShelfNumberSortForBranch ? 'CASE WHEN bi.isMainShop = true THEN sn.sortNo ELSE 0 END' : 'sn.sortNo';` を `:76` `\"{$shelfNumberExpr} AS {$hiddenOrNot['shelfNumberSortNo']} shelfNumberSortNo\"` に適用。`:79` `->addOrderBy('shelfNumberSortNo', 'ASC')` は残るが、支店は式が定数0となり棚番による並び替えが実質無効化されるため、設計の「棚番昇順・支店は棚番ソートなし」を満たす。",
+      "note": "日本語納品書は src/Eccube/Controller/Admin/Order/OrderController.php:810 / ShippingStandbyController.php:497 / EditController.php:1507 いずれも generateDeliverySlips() 経由のため全経路で適用される。"
+    },
+    {
+      "rowId": 787,
+      "status": "対応済み",
+      "evidence": "英語納品書も同じ generateDeliverySlips() を通るため rowId 786 と同一の是正が効く。`src/Eccube/Controller/Admin/Order/OrderController.php:810` `$DeliverySlips = $this->dtbShippingStandbyRepository->generateDeliverySlips($lang !== 'ja', $ids);` と isAbroad フラグ違いのみで、`src/Eccube/Repository/DtbShippingStandbyRepository.php:333` `$this->sortProduct($qb2, [], true);` / `src/Eccube/Repository/Traits/SortProductTrait.php:60-62` `$shelfNumberExpr = $skipShelfNumberSortForBranch ? 'CASE WHEN bi.isMainShop = true THEN sn.sortNo ELSE 0 END' : 'sn.sortNo';` により支店は棚番ソートが無効化される。監査時点の「無条件 sn.sortNo ASC」は解消。",
+      "note": ""
+    },
+    {
+      "rowId": 788,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Order/EditController.php:558` `$flowResult = $this->orderPurchaseFlow->validate($TargetOrder, $purchaseContext);`、`:664-665` `$this->orderPurchaseFlow->prepare($TargetOrder, $purchaseContext); $this->orderPurchaseFlow->commit($TargetOrder, $purchaseContext);` が現 develop にも存在し、`:120` `protected PurchaseFlow $orderPurchaseFlow,` として注入されたまま。設計（PurchaseFlow を用いない pf-eccube3 挙動）との差は解消していない。",
+      "note": "行番号は監査時点(526/595/596)からずれているがコード内容は同一。"
+    },
+    {
+      "rowId": 789,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Order/EditController.php:701-702,715-716` `$isFirstCancellation = $statusChangedToCancel && $TargetOrder->getCancelDate() === null;` … `if ($isFirstCancellation) { $this->pointService->cancelOrderPoints($TargetOrder); }`（register 経路）と `:915` `$this->pointService->cancelOrderPoints($TargetOrder);`（status_change 経路）が残存。設計未記載のキャンセル時ポイント取消は監査時点と同じ。",
+      "note": "gainPoints は :763 / :910 に存在。"
+    },
+    {
+      "rowId": 790,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Order/EditController.php:701-704` `$isFirstCancellation = $statusChangedToCancel && $TargetOrder->getCancelDate() === null;` / `if ($isFirstCancellation) { $TargetOrder->setCancelDate(new \\DateTime()); }` が register 経路（$mode === 'register' ブロック内）に残存。設計が register フローで記す出荷完了時の副作用のみという記述との差は未解消。",
+      "note": "同ブロックには :706-707 setConfirmDate / :710-711 setOtcRsvDate も「status_change 経路と同等」のコメント付きで追加されており、register 経路の設計未記載副作用はむしろ増えている。"
+    }
+  ]
+}

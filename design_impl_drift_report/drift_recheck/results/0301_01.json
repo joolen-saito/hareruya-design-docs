@@ -1,0 +1,47 @@
+{
+  "packetId": "0301_01",
+  "results": [
+    {
+      "rowId": 303,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/search_items.twig` は現 develop でも全80行が静的ハードコード。`:22-25` `<div class=\"p-hareruya-feature-card__tags\"><a class=\"c-hareruya-tag\" aria-disabled=\"true\">すべて見る</a>...`、`:26,:30` sub-tags も同様、`:75` `<a class=\"c-hareruya-tag\" aria-disabled=\"true\">パック・ボックス</a>` と href 不在のまま（aria-disabled 11箇所 / href 0件、grep 実測）。include 側も `src/Eccube/Resource/template/default/shop_top.twig:45` `{% include 'Block/search_items.twig' %}`（同 shop_top.en.twig:45）でパラメータ無し。`src/Eccube/Service/Block/` 配下に SearchItems 系 PayloadBuilder は存在せず（BottomNav/CartCategoryList/Favorites/.../SearchProduct のみ）、PHP 側にも search_items へのデータ供給は無い（該当 grep は admin/search_items.twig と DoctrineMigrations のブロック登録のみ）。(5-5)(5-6) の商品一覧遷移は未配線。",
+      "note": ""
+    },
+    {
+      "rowId": 304,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/new_items.en.twig:9` `<a class=\"p-hareruya-heading--more-link ...\" href=\"{{ url('product_list_tag', { tagId: constant('Eccube\\\\Entity\\\\Tag::NEW_ITEMS_ID') }) }}\">` および同 `:21` の more スライド `href=\"{{ url('product_list_tag', { tagId: constant('Eccube\\\\Entity\\\\Tag::NEW_ITEMS_ID') }) }}\"` と、監査時点と同じく NEW_ITEMS_ID がハードコードされたまま（行番号のみ 23→21 にシフト）。一方 `src/Eccube/Service/Block/NewItemsBlockPayloadBuilder.php:56-66` は `$tagId = Tag::NEW_ITEMS_ID;` / `if ($locale === 'en') { $MtbOption = ...findOneBy(['option_key' => MtbOption::SLIDER_EN_ONLY_TAG_ID]); ... $tagId = (int) $MtbOption->getOptionValue(); }` で英語版のみ Trending Now タグから商品取得しており、表示商品と more 遷移先タグの不一致は解消されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 305,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/CustomerFavoriteProductRepository.php:100-136` の `findTopFavoriteProductClassesByCustomer()` は `->andWhere('p.Status = 1')` `->andWhere('pc.visible = true')` に加え `:120-126` で `->andWhere('EXISTS ( SELECT 1 FROM \\Eccube\\Entity\\ProductStock ps WHERE ps.ProductClass = pc AND ps.stock > 0 AND IDENTITY(ps.baseInfo) = :baseInfoId AND ps.stockLocationId = :eccubeStockLocationId )')` と在庫>0条件を保持（監査時点の `pc.stock > 0` から ProductStock の EXISTS 副問合せへリファクタされただけで在庫フィルタ自体は残存）。`src/Eccube/Service/Block/FavoritesBlockPayloadBuilder.php:64-69` も `$this->customerFavoriteProductRepository->findTopFavoriteProductClassesByCustomer($Customer, $mainRequest->getLocale(), self::MAX_DISPLAY_COUNT, $this->baseInfoService->getByRequestShop()->getId())` を緩和なしで直接利用。設計ブロック4の条件1~6に無い在庫条件が依然付加されている。",
+      "note": "監査時の行番号 :109 は現在 EXISTS 句 :120-126 に相当。条件の実質は不変。"
+    },
+    {
+      "rowId": 306,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/_product_card.twig:10` `{% set _show_customer_favorite = (showFavoriteButton is not defined or showFavoriteButton) and isMainShop and (...) %}`、`:73` `{% if _show_customer_favorite %}` の内側 `:79-83` に `{% if hasStock and form %}` `<button class=\"p-hareruya-product-card__btn-cart ... add-cart\" ...>` が置かれた構造のまま。呼び出し側 `src/Eccube/Resource/template/default/Block/shop_best_sellers.twig:23` と `src/Eccube/Resource/template/default/Block/shop_sale.twig:23` はいずれも `{% include 'Block/_product_card.twig' with { ..., showWeeklySales: false, showFavoriteButton: false } %}` で showFavoriteButton:false を渡す。さらに `src/Eccube/EventListener/TwigInitializeListener.php:69` `$this->twig->addGlobal('isMainShop', $shop->isMainShop());` により支店では isMainShop=false。よって支店ECTOP の両カルーセルでカート追加ボタンは描画されず、数量±のみ(:53-59)。app/ 配下に _product_card のオーバーライドも無し。",
+      "note": ""
+    },
+    {
+      "rowId": 307,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/search_items.twig` は3枚のダミーカードのまま（`:13` `dammy-feature01.webp` / `:44` `dammy-feature02.webp` / `:66` `dammy-feature03.webp`、固定タイトル `:20` `ファイナルファンタジー 通常版` 等）。カテゴリ/カードセット相当タグは `:22-25`, `:26,:30`, `:53-56`, `:75` の全て `<a class=\"c-hareruya-tag\" aria-disabled=\"true\">` で href 0件。`src/Eccube/Resource/template/default/shop_top.twig:45` `{% include 'Block/search_items.twig' %}` とデータ無し include のままで、ShopTopController 側にも search_items 用データ供給は無い（grep で PHP 側ヒットは DoctrineMigrations のブロック登録のみ）。(6-5)(6-6) の押下→商品一覧遷移は不在。",
+      "note": ""
+    },
+    {
+      "rowId": 308,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Block/shop_recommend.twig` は6枚の固定バナーのまま。`:18,:28,:38,:48,:58,:68` がいずれも `<a class=\"p-hareruya-branch-top__recommend-link\" href=\"#\">`、画像も `:20,:30,:40,:50,:60,:70` の `assets/hareruya/img/branch/top-category-banner01〜06.webp` 固定。`src/Eccube/Resource/template/default/shop_top.twig:47` `{% include 'Block/shop_recommend.twig' %}`（shop_top.en.twig:47 も同様）とパラメータ無し include で、shop_recommend を参照する PHP は存在しない（grep ヒットは上記2 twig のみ）。(8-1) の各画像設定URLへの遷移もブロック管理由来の編集可能コンテンツ連携も未実装。",
+      "note": "app/DoctrineMigrations/Version20260424110000.php:35 で登録される 'recommend'（おすすめ特集）は本店トップ用の別ブロックで、支店の shop_recommend.twig とは無関係。"
+    },
+    {
+      "rowId": 309,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:1270` `shop_top.order_method.public.prefix1: 'このサイトでは、晴れる屋%shop_name%での店頭受け取り注文を承っています。'` と、設計文言『承っております。』ではなく『承っています。』のまま（行番号のみ 1250→1270 にシフト）。表示側 `src/Eccube/Resource/template/default/Block/shop_order_method.twig:23` `{{ 'shop_top.order_method.public.prefix1'|trans({ '%shop_name%': Shop.shopName }) }}<br>{{ 'shop_top.order_method.public.prefix2'|trans }}<a ...>{{ 'shop_top.order_method.public.link_text'|trans }}</a>{{ 'shop_top.order_method.public.suffix'|trans }}` も結合表示のまま変更なし。",
+      "note": ""
+    }
+  ]
+}

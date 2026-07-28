@@ -1,0 +1,77 @@
+{
+  "packetId": "0208_02",
+  "results": [
+    {
+      "rowId": 1237,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/Master/MtbCardRepository.php:232-236` 現 develop でも `if ($this->isNotEmpty($searchData['color'] ?? null)) { $qb->innerJoin('c.Colors', 'color')->andWhere('color IN (:colors)')->setParameter('colors', $searchData['color']); }` のまま。管理画面一覧は `src/Eccube/Controller/Admin/Card/CardController.php:66-67` の `admin_card_list`/`admin_card_search` → `$this->search()` 経由でこの `getQueryBuilderBySearchData()` を使う。選択色ごとの別JOIN（AND）実装は追加されていない。",
+      "note": "同ファイル `findBySearchParams()` (`:503-506`) には `$condition = $params['color_condition'] ?? 'AND'` を使う native SQL 版があるが、これは `src/Eccube/Controller/App/DeckBuilder/CardController.php:86` のアプリ側APIで、M14-01管理一覧の経路ではない。"
+    },
+    {
+      "rowId": 1238,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Card/index.twig:422` `<td class=\"align-middle ps-3\">{{ card.id }}</td>`、同 `:424` `{{ card.getNameJpWithEn }}` は現 develop でもプレーンテキストのまま。`admin_card_edit` へのリンクは `:428` `<a class=\"btn btn-ec-actionIcon me-2\" href=\"{{ url('admin_card_edit', {id: card.id}) }}\">`（鉛筆アイコン）のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 1239,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Card/index.twig:432-434` は今も `data-bs-target=\"#DeleteModal\"` + `data-message=\"{{ 'admin.common.delete_modal__message'|trans({ \"%name%\" : card.getNameJpWithEn }) }}\"`。`src/Eccube/Resource/locale/messages.ja.yaml:1790` の訳値は `admin.common.delete_modal__message: \"この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？\"` のままで、設計文言「このカードを削除してもよろしいですか？」は src 配下に一切存在しない（`grep -rn 'このカードを削除' src/` 0件）。",
+      "note": ""
+    },
+    {
+      "rowId": 1240,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/CardController.php:205` `#[Route('/%eccube_admin_route%/card/new', name: 'admin_card_new', methods: ['GET', 'POST'])]`、`:217` `#[Route('/%eccube_admin_route%/card/{id}/edit', name: 'admin_card_edit', ... methods: ['GET','POST'])]`、`:308` `#[Route('/%eccube_admin_route%/card/{id}/delete', name: 'admin_card_delete', ... methods: ['DELETE'])]` と監査時点と同一。設計の POST /card、GET/POST /card/{id}、DELETE /card/{id}（admin_card_create / admin_card_update）は Controller にも `app/config`・`src/Eccube/Resource/config` のルート定義にも存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1241,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Card/edit.twig:5-6` は今も `{% block title %}{{ 'admin.product.card_detail'|trans }}{% endblock %}` / `{% block sub_title %}{{ 'admin.product.card_management'|trans }}{% endblock %}`。`src/Eccube/Resource/template/admin/default_frame.twig:196` `<h2 class=\"c-pageTitle__title\">{{ block('title') }}</h2><span class=\"c-pageTitle__subTitle\">{{ block('sub_title') }}</span>` により、見出し=カード詳細（`messages.ja.yaml:4250`）、副題=カード管理（`:4248`）で設計と逆のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1242,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Card/edit.twig:199-201` `<div class=\"card-body\"><button type=\"button\" id=\"add-detail\" class=\"btn btn-ec-regular\">詳細情報を追加</button></div>` と条件分岐なしで常時描画。`noDeletableCardDetailIds` は `:194` `'is_deletable': (detailForm.vars.value.id not in noDeletableCardDetailIds)` として行単位削除可否にのみ使われており、追加ボタンの表示条件には使われていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1243,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Card/edit.twig:62-76` のレギュレーション追加JSは `$('#add-format').on('click', function() { ... let newFormHtml = prototype.replace(/__name__/g, formatIndex); ... $formatContainer.append($newForm); });` のみで、既存選択フォーマットとの重複判定・alert・選択解除処理は存在しない。`grep -rn 'add-format' src/Eccube/Resource/template/` は edit.twig の `:62`(JS) と `:171`(ボタン) のみヒットし、外部JSへの移管もない。",
+      "note": ""
+    },
+    {
+      "rowId": 1244,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Card/edit.twig:219-220` は今も `data-message=\"{{ 'admin.common.delete_modal__message'|trans({ \"%name%\" : card.getNameJpWithEn }) }}\"` / `{{ 'admin.common.delete' | trans }}`。`src/Eccube/Resource/template/admin/Card/delete_modal.twig:21-23` の実行ボタンも `<a class=\"btn btn-ec-delete\" ... data-method=\"delete\">{{ 'admin.common.delete'|trans }}</a>` のまま。訳値は `src/Eccube/Resource/locale/messages.ja.yaml:1790` 「この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？」で設計文言・「実行」ラベルは未反映。",
+      "note": ""
+    },
+    {
+      "rowId": 1245,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/CardController.php:347` `$this->addSuccess('admin.common.delete_complete', 'admin');` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1597` `admin.common.delete_complete: 削除しました`。設計文言「削除が完了しました。」は使われていない（一覧へのリダイレクト `:349` `return $this->redirect($indexUrl);` は従来どおり実装済み）。",
+      "note": ""
+    },
+    {
+      "rowId": 1246,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/CardController.php:264-291` の保存処理は `persist/flush/commit` → `dispatch(EccubeEvents::ADMIN_CARD_NEW_COMPLETE|ADMIN_CARD_EDIT_COMPLETE)` → `addSuccess('admin.common.save_complete')` → `redirectToRoute('admin_card_edit')` のみ、`:329-347` の削除処理も `remove/flush` → `dispatch(ADMIN_CARD_DELETE_COMPLETE)` → `addSuccess` → redirect のみで、支店システムへのHTTP通知や失敗時ログ保存はない。同 Controller に HTTP クライアントの注入もない（`grep -n 'notify|branch|支店|Client'` は Symfony HttpFoundation の use 文のみヒット）。`ADMIN_CARD_*_COMPLETE` を購読するリスナも EccubeEvents 定義以外に src 配下に存在しない。",
+      "note": "src/Eccube/Service 配下に支店通知系サービスは無く、Smaregi ディレクトリはカード保存/削除処理から呼ばれていない。"
+    },
+    {
+      "rowId": 1247,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/CardCsvController.php:67` `#[Route(path: '/%eccube_admin_route%/card/csv_upload', name: 'admin_card_csv_upload', methods: ['GET'])]`、`:80` `#[Route(path: '/%eccube_admin_route%/card/import', name: 'admin_card_csv_import', methods: ['POST'])]` と監査時点のまま。成功・失敗時も `:93,:100,:106,:112,:121,:131,:136,:153` すべて `return $this->redirectToRoute('admin_card_csv_upload');`。設計の `admin_card_csv` / `m14-05_admin_card_card_csv_import` / `card/csvimport` は develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1248,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Card/csv_card.twig:7` `{% block title %}{{ 'admin.card.card_csv'|trans }}{% endblock %}`、`src/Eccube/Controller/Admin/Card/CardCsvController.php:211-212` `'csv_box_title' => 'admin.card.card_csv_upload_title', 'csv_format_title' => 'admin.card.card_csv_format_title'`、訳値は `src/Eccube/Resource/locale/messages.ja.yaml:4519-4521` `admin.card.card_csv: カードCSV登録` / `card_csv_upload_title: カードCSVアップロード` / `card_csv_format_title: カードCSVフォーマット`。アップロードボタンは `src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:74` `{{ 'admin.common.csv_upload'|trans }}` = `messages.ja.yaml:1744` 「CSVファイルをアップロード」。`admin.common.csv_file_select`（`messages.ja.yaml:1783` 「CSVファイル選択」）は csv_card.twig / base_csv_upload.twig から参照されておらず、設計の「CSVファイル選択」「カード登録CSVフォーマット」表記は未反映のまま。",
+      "note": ""
+    }
+  ]
+}

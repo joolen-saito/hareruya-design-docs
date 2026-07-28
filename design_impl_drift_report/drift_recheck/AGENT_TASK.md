@@ -51,10 +51,14 @@
 
 ## 作業ディレクトリ（重要）
 - 設計書リポジトリ: `/home/y-saito/Developments/hareruya-design-docs`
-- **実装リポジトリ: `/tmp/claude-1000/-home-y-saito-Developments/7c5b906e-af70-4e7e-ae1c-8f982216692e/scratchpad/ee_da9c2ba`**
+- **実装コード: `/tmp/claude-1000/-home-y-saito-Developments/7c5b906e-af70-4e7e-ae1c-8f982216692e/scratchpad/ee_develop_snapshot`**
 
-実装の確認は **必ず上記の worktree パス配下** で行うこと。これは develop (da9c2ba276) に固定した
-読み取り専用の作業ツリーである。
+実装の確認は **必ず上記のスナップショット配下** で行うこと。これは develop (da9c2ba276) を
+`git archive` で展開した固定ツリーである。`.git` を持たないため、他の作業の git 操作で
+消えたり内容が変わったりしない。
+
+`git` コマンドによる履歴確認は不要。このスナップショットの中身が develop そのものである。
+`git worktree` を新たに作らないこと（他のエージェントの作業ツリーを壊す）。
 
 `/home/y-saito/Developments/ec-cube-enterprise` は **参照しないこと**。
 そちらは利用者が作業中のチェックアウトで、develop とは別のブランチに切り替わっており、
@@ -62,7 +66,7 @@ src配下66ファイルが develop と相違する。ここを読むと develop 
 「対応済み」と誤判定する。
 
 パケットの `実装参照` や `探索範囲` に `/home/y-saito/Developments/ec-cube-enterprise/...` という
-絶対パスが書かれている場合は、先頭を上記 worktree のパスに読み替えて開くこと。
+絶対パスが書かれている場合は、先頭を上記スナップショットのパスに読み替えて開くこと。
 
 ### evidence に書くパス
-worktree の絶対パスではなく **リポジトリ相対パス**（`src/Eccube/...` の形）で記載すること。
+スナップショットの絶対パスではなく **リポジトリ相対パス**（`src/Eccube/...` の形）で記載すること。

@@ -1,0 +1,41 @@
+{
+  "packetId": "0404_04",
+  "results": [
+    {
+      "rowId": 193,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:35` `#[AsCommand(name: 'eccube:update-weekly-stock-history', description: '週間在庫履歴更新バッチ')]` のままで、設計の `product:batch exportWeeklyStockHistoryCsv` は存在しない。src/app/html/config 全体を `exportWeeklyStockHistoryCsv` / `product:batch` で再検索しても、ヒットは `src/Eccube/Command/InventoryReflectionCommand.php:29,32` の「3系 product:batch からの移管」を説明するコメントのみで、設計コマンド名の実装は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 194,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Product/BatchUpdateWeeklyStockHistoryAction.php:54-76` は今も `$this->weeklyStockHistoryTempRepository->truncate();` → `getStockData()`/`insertBatch()` → `$this->weeklyStockHistoryRepository->replaceFromTemp();` というDBテーブル洗い替え方式で、CSV出力処理は無い（`src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:167` `TRUNCATE TABLE dtb_weekly_stock_history_temp`、同:130-138 `INSERT INTO dtb_weekly_stock_history_temp`）。`weekly_stock_history.csv` / `HareruyaEc.const.weekly_stock_history.csv_path` を src・app・html・config 横断で再検索したがヒット0件。設計のCSV生成・DB非更新は未充足。",
+      "note": ""
+    },
+    {
+      "rowId": 195,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbWeeklyStockHistoryTempRepository.php:69-79` のSQLは依然として `FROM dtb_stock_history sh WHERE sh.product_stock_id BETWEEN :start AND :end GROUP BY sh.product_stock_id` で、dtb_product_stock を起点にしたLEFT JOINは無い。0埋めは同:99 `$values[] = $column === null ? 0 : (int) substr((string) $column, -$exp);` の週別NULL→0変換のみで、在庫履歴が1件も無い商品在庫は行自体が生成されない。`src/Eccube/Repository/DtbWeeklyStockHistoryRepository.php` にも ProductStock / dtb_product_stock 参照は無く（grep ヒット0件）、全商品規格IDを対象とする補完処理は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 196,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Product/UniSearchFeedCreateAction.php:29` は今も `return $this->exportService->exportAndUpload(false);` で、`src/Eccube/Service/UniSearch/UniSearchExportService.php:99-109` は `if (!$isManualExecution) { ... deleteRemoteByPrefixes(...) ... upload($gzipPath) ... upload($donePath) ... }` のため false ではSFTP送信が実行される。管理画面側も `src/Eccube/Resource/template/admin/Product/unisearch_feed.twig:21` 「フィードファイルを更新する」POST → `src/Eccube/Controller/Admin/Product/UniSearchFeedController.php:49` `$result = $this->feedCreateAction->handle();` のままで、作成のみ（SFTPスキップ）にする分岐は追加されていない。",
+      "note": "コマンド側 `src/Eccube/Command/SendUnisearchProductFeedCommand.php:43,52` は `--manual` オプションで true を渡せるが、管理画面経路は false 固定のまま。"
+    },
+    {
+      "rowId": 197,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/UniSearch/UniSearchSftpService.php:23` `use phpseclib3\\Net\\SFTP;`、同:66 `if (!$sftp->put($remotePath, $localPath, SFTP::SOURCE_LOCAL_FILE))` とSFTP実装のままで、`src/Eccube/Service/UniSearch/UniSearchExportService.php:90` `$gzipPath = $this->compressFile($tsvPath, self::COMPRESS_GZIP);`、同:103,106 `$this->sftpService->upload($gzipPath)` / `upload($donePath)` で .tsv.gz と doneファイルを送信している。`src/Eccube` と `html` 配下を `scp` で再検索してもヒット0件で、設計のSCP送信は実装されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 198,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/SendUnisearchProductFeedCommand.php:30` `name: 'unisearch:batch'` の手動実行可能なConsoleコマンドが存在するだけで、5分おき起動の定義は無い。`src/Eccube`・`html` 配下を `feed_upload` / `feed.log` / `ec2-user` / `Step Functions` / `stepfunctions` / `crontab` で再検索してもヒット0件、`schedule` のヒットはイベント日程CSV（EventBulkCsvImportHandler 等）の無関係なものだけ。リポジトリ全体で `unisearch:batch` を参照するのは上記コマンド定義1箇所のみで、スケジューラ定義から呼ばれていない。",
+      "note": ""
+    }
+  ]
+}

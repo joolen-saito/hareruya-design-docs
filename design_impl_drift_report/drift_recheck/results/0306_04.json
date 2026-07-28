@@ -1,0 +1,77 @@
+{
+  "packetId": "0306_04",
+  "results": [
+    {
+      "rowId": 417,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/event_history.twig:117-118` `{% elseif Entry is null %}` → `{{ 'front.mypage.event_history.status__not_applied'|trans }}` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:660` も `front.mypage.event_history.status__not_applied: 未申込`。設計の『未登録』文言にはなっていない（`deck__not_registered: 未登録` は同ファイル665行のデッキ欄用キーで、処理状態欄では未使用）。",
+      "note": "処理状態欄の該当分岐(Entry is null)自体は存在するが文言のみ相違、という監査時点と同じ状態。"
+    },
+    {
+      "rowId": 418,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:167-170` に大会情報エリアの行が新設されている。`<dt class=\"p-hareruya-deckentry-edit__event-label\">開催店舗：</dt>` / `<dd class=\"p-hareruya-deckentry-edit__event-value\">{{ EventDetail.event.baseInfo ? EventDetail.event.baseInfo.shopName : '' }}</dd>`。設計 No.5『大会情報エリアに開催店舗（店舗名）を表示』を満たす。Event/detail.twig と同じ shopName 経由の描画で、Controller 追加値なしに EventDetail から辿れる。",
+      "note": ""
+    },
+    {
+      "rowId": 419,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:165` `<h2 class=\"p-hareruya-deckentry-edit__event-title\">{{ EventDetail.event.nameJp }}</h2>` のままで、括弧内へのフォーマット併記処理は無い。`src/Eccube/Controller/Front/Mypage/DeckEntryController.php:85-92` の返却配列も `EventDetail/Player/Customer/Formats/deckByFormats/MyDecks` のみで併記文字列を渡していない。",
+      "note": "同画面の 開催店舗(No.5) は追加されたが、大会名のフォーマット併記(No.4)は未着手。"
+    },
+    {
+      "rowId": 420,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:390-420` マイデッキモーダルは `{% for MyDeck in MyDecks %}` で全件列挙するのみ。総数・表示件数ラベル、20件毎のページングUIは存在しない。`src/Eccube/Controller/Front/Mypage/DeckEntryController.php:80-83` `$MyDecks = $this->deckRepository->findBy([...], ['createDate' => 'DESC']);` と件数無制限のままでページング用データも渡していない。実装済みは `#select_format` によるフォーマット絞り込み（同twig:382-388, JS 139-148）のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 421,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:239-242` の `<ul class=\"p-hareruya-deckentry-edit__card-suggest-list\" data-deckentry-card-suggest-list>` は中身が空のまま。同twig JS 71-78 は `$('[data-deckentry-card-suggest]').attr('aria-hidden', ...)` の表示切替と選択時の値コピーのみで候補取得処理なし。`src/Eccube/Controller/Front/Mypage/DeckEntryController.php:85-92` にサジェスト用view変数なし。`html/template/default/assets/hareruya/js/hareruya-event.js` の fetch は `\"/assets/data/events.json\"` 1箇所のみでカード名取得APIは無く、`src/Eccube/Controller/` 配下にカード名サジェストのルート（*_suggest_api 等）も ProductController のユニサーチ用以外に存在しない。",
+      "note": "フォーマット別サジェストファイルの読込も見当たらず、UIの器のみで機能は空のまま。"
+    },
+    {
+      "rowId": 422,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/Mypage/DeckEntryController.php:137-153` は `new DeckEntryInput(... textMain: (string) $request->request->get('deckMain',''), textSide: ...)` をそのまま `$this->deckEntryAction->handle($input)` へ渡し、無条件に `return $this->redirectToRoute('mypage_deckentry_check', ...)`。書式検証・編集画面への差し戻しは無い。`src/Eccube/Service/Front/Mypage/DeckEntryAction.php:47-80` も `setTextMain($input->textMain)` 後 `persist/flush` で必ず保存する。`deck_entry_edit.twig:282,287` の `<span ... id=\"errorMain\" hidden>` `id=\"errorSide\" hidden>` は依然どこからも制御されないデッドコード。",
+      "note": "検証は確認画面側 DeckValidationService::getCheckData()（DeckEntryController.php:180）でのみ実施という構造も監査時点と同じ。"
+    },
+    {
+      "rowId": 423,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/deck_entry_edit.twig:315` `<a class=\"c-hareruya-btn c-hareruya-btn--lg p-hareruya-deckentry-edit__submit-btn\" href=\"{{ url('mypage') }}\">キャンセル</a>` のままで、イベント一覧(`/{_locale}/events`)への遷移になっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 424,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/deck_entry_check.twig:20-23` に `<dt class=\"p-hareruya-deckentry-check__event-label\">開催店舗：</dt>` / `<dd class=\"p-hareruya-deckentry-check__event-value\">{{ EventDetail.event.baseInfo ? EventDetail.event.baseInfo.shopName : '' }}</dd>` が追加されている。check() が渡す `EventDetail`（`src/Eccube/Controller/Front/Mypage/DeckEntryController.php:182-193`）から店舗名を辿るため追加view変数は不要。DCIナンバー非表示と対の『開催店舗の新規追加表示』要求を満たす。",
+      "note": ""
+    },
+    {
+      "rowId": 425,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/Mypage/DeckEntryController.php:99-153` の entry() はトークン検証・Player/EventDetail/Format 確定の後、`$Deck = $this->deckEntryAction->handle($input);` → メール送信 → `redirectToRoute('mypage_deckentry_check', ...)` のみで、カードリスト解析・書式エラーコード判定・セッション保存・edit へのリダイレクト・保存中止のいずれも無い。`src/Eccube/Service/Front/Mypage/DeckEntryAction.php:79-80` `$this->entityManager->persist($Deck); $this->entityManager->flush();` で必ず保存する。edit 側 `DeckEntryController.php:51-92` にもセッションからの入力/エラー復元処理は無く、返却は `EventDetail/Player/Customer/Formats/deckByFormats/MyDecks` のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 426,
+      "status": "部分対応",
+      "evidence": "完了画面 2-2 は是正済み：`src/Eccube/Resource/template/default/Mypage/change_complete.twig:48-49` `<a class=\"c-hareruya-btn c-hareruya-btn--lg u-hareruya-w-full\" href=\"{{ url('homepage') }}\">{{ 'common.back_to_home'|trans }}` とECTOPへ遷移する。一方 1-28 は未是正：`src/Eccube/Resource/template/default/Mypage/change.twig:700` `<a class=\"c-hareruya-btn c-hareruya-btn--lg\" href=\"{{ url('mypage') }}\">{{ 'common.back'|trans }}</a>` でマイページTOPのまま（同ファイル51行の homepage はパンくずリンク）。",
+      "note": "2要素のうち完了画面側のみ充足のため部分対応。"
+    },
+    {
+      "rowId": 427,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/Mypage/ChangeController.php:121-138` はブラックリスト該当時 `$this->addFlash('error', 'front.mypage.change.error.blacklisted');` の後 `return ['form' => $form->createView(), 'Player' => $Player];` で同一 change.twig を再描画するのみ。専用の会員情報更新エラー画面へのリダイレクト・ルート/テンプレートは同コントローラおよび Mypage テンプレート群に存在しない。",
+      "note": "設計の『専用エラー画面へ遷移』『フラッシュ・トースト非生成』の双方とも監査時点と同じ状態。"
+    },
+    {
+      "rowId": 428,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/Mypage/ChangeController.php:144-148` `$isAddressChanged = ($Customer->getCountry() !== $LoginCustomer->getCountry()) || $isZipChanged || ($Customer->getPref()?->getId() !== $LoginCustomer->getPref()?->getId()) || ($Customer->getAddr01() !== $LoginCustomer->getAddr01()) || ($Customer->getAddr02() !== $LoginCustomer->getAddr02());` と addr03 の比較は依然欠落。同ファイル169行 `->setAddr03($Customer->getAddr03())` で既定配送先へは反映される正規項目である点も監査時点と同じ。",
+      "note": "海外住所3のみ変更時に本人確認ステータスの未確認化(同ファイル157,161-163行)が発火しない状態が継続。"
+    }
+  ]
+}

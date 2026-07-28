@@ -1,0 +1,77 @@
+{
+  "packetId": "0204_03",
+  "results": [
+    {
+      "rowId": 493,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/ProductPriceCsv.php:55-64` の `$response->setCallback(function () use ($csvRows): void { ... $this->csvExportService->fclose(); });` の外側、`src/Eccube/Service/Csv/ProductPriceCsv.php:69` で `log_info('価格変更CSV出力ファイル名', [$filename]);` を実行し `:71` で `return $response;` している。監査時点と同一構造で、ストリーム送信完了前にログ記録される。当該ファイルは監査日(2026-07-06以降)にコミットが無い。",
+      "note": ""
+    },
+    {
+      "rowId": 494,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/ProductAllCsv.php:1938-1944` `private function getCsvHeaders(): array` は `foreach ($this->getSelectedColumns() as $column) { if (isset($column['label']) ...) { $headers[] = $column['label']; }` と AVAILABLE_COLUMNS の label をそのままヘッダに使う実装のまま。指摘された label も未変更（`:112` `'label' => '公開ステータス(ID)'`、`:182` `'label' => '購入グループ名称'`、`:187` `'label' => '割引率(ID)'`、`:197` `'label' => '略称タグ'`、`:233` `'label' => 'タグ(ID)'`、`:259` `'label' => 'カテゴリ名(日)'`、`:302` `'label' => '状態'`、`:447` `'label' => '1ヵ月間入庫数'`、`:472` `'label' => '発送日目安名称'`、`:518` `'label' => '色(日)'`、`:604` `'label' => 'プロモーション名(日)'`）。当該ファイルの最終コミットは 2026-05-11 で監査以降の修正なし。dtb_csv.disp_name を用いる経路も追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 495,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/Shop/CustomerCsvController.php:119-121` は `$this->csvCsvExtensionRepository->deleteByCsvExtensionId($CsvExtension->getId()); $this->entityManager->remove($CsvExtension); $this->entityManager->flush();` のままで、`setDeletedAt()` による論理削除は追加されていない（同ファイル内に deleted_at 設定なし）。",
+      "note": ""
+    },
+    {
+      "rowId": 496,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Setting/Shop/CustomerCsvUpdateAction.php:77-83` は `$csvIds = isset($requestData['csv_output']) ? $requestData['csv_output'] : []; $Csvs = $this->csvRepository->findBy(['id' => $csvIds]);` の後 `foreach ($Csvs as $key => $Csv) { ... $this->csvCsvExtensionEntityManager->save($CsvCsvExtension, $CsvExtension, $Csv, $key); }` と、orderBy 無しの findBy 取得順インデックスを rank に使う実装のまま。POST 配列順で並べ替える処理は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 497,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:2247` `admin.product.custom_csv_export: カスタムデータCSVダウンロード`（CSV 前後にスペースなし）のまま。`src/Eccube/Resource/template/admin/Product/index.twig:513` `<option value=\"\">{{ 'admin.product.custom_csv_export'|trans }}</option>` で先頭 option に直接表示している。行番号は 2056→2247 に移動しているが文言は未変更。",
+      "note": ""
+    },
+    {
+      "rowId": 498,
+      "status": "未対応",
+      "evidence": "フロント商品詳細取得 `src/Eccube/Repository/ProductRepository.php:132-138` `->andWhere('p.Status = :status')->andWhere('pc.visible = :visible')->andWhere('pc.price02 > :minPrice')` は商品本体 Status と `pc.visible` のみで、`pc.Status`（ProductClass の公開ステータス）を条件にしていない。`src/Eccube/Entity/Product.php:1356-1359` `foreach ($this->getProductClasses() as $ProductClass) { if (!$ProductClass->isVisible()) { continue; }` も visible のみ。`src/Eccube/Controller/Front/ProductController.php:1633-1653` `checkVisibility()` も `$Product->getStatus()->getId() !== ProductStatus::DISPLAY_SHOW` と商品本体のみ検査。`pc.Status != :abolishedStatus` を条件化しているのは管理画面向けの `src/Eccube/Repository/ProductRepository.php:1080-1085`（getQueryBuilderBySearchDataForAdmin）や `src/Eccube/Repository/ProductClassRepository.php:92-99`（getActiveProductClasses）のみで、フロント抽出経路には未適用。",
+      "note": ""
+    },
+    {
+      "rowId": 499,
+      "status": "対応済み",
+      "evidence": "2026-07-17 コミット「fix: スマレジ商品コードの読み取り専用制御・連携ON時の未入力エラー・自動採番を実装」で3要素とも充足。(1)読み取り専用: `src/Eccube/Form/Type/Admin/ProductClassType.php:283-286` `->add('smaregi_product_code', TextType::class, [ 'required' => false, // シングルカードは自動採番のため読み取り専用（disabled で送信値を無視） 'disabled' => (bool) $options['is_single_card'],` で、`src/Eccube/Controller/Admin/Product/ProductClassController.php:127,161,237,275` が `'is_single_card' => $Product->getCardDetail() !== null` を渡す（シングルカード以外は編集可能）。(2)連携ON時の未入力エラー: `src/Eccube/Service/Admin/Product/ProductClassStoreAction.php:117-136` `private function shouldAssignSmaregiProductCode(...)` が `if (!$ProductClass->getSmaregiAlignmentFlg()) { return false; }` の後、コード空かつ非シングルカードで `throw new SmaregiProductCodeRequiredException();`（`src/Eccube/Service/Admin/Product/ProductClassUpdateAction.php:140` も同じ）。Controller は `src/Eccube/Controller/Admin/Product/ProductClassController.php:199-208`／`:312-320` の `catch (\\Exception $e) { $this->addError($e->getMessage(), 'admin'); return [...]; }` でエラー表示して編集画面に戻す。(3)シングルカード自動採番: `src/Eccube/Service/Admin/Product/ProductClassStoreAction.php:131-133` `if ($Product->getCardDetail() !== null) { return true; }` を受け `:62-65` `if ($shouldAssignSmaregiProductCode) { $ProductClass->setSmaregiProductCode($this->productClassRepository->getNextSmaregiProductCode()); }`（UpdateAction:72-76 も同様）。",
+      "note": ""
+    },
+    {
+      "rowId": 500,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/ProductClassController.php` の Route は監査時点と同一: `:74` `'/%eccube_admin_route%/product/product/class/{id}'`、`:114` `.../class/{id}/new`、`:153` `.../class/{id}/store`、`:228` `.../class/{id}/edit/{productClassId}`、`:265` `.../class/{id}/update/{productClassId}`、`:352` `.../class/{id}/delete/{productClassId}`。設計の `product/{id}/class/...` 形式・create/update/delete 末尾には変更されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 501,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/ProductClassController.php:178` `$this->addError('admin.common.save_error', 'admin');`、`:220` および `:347` `$this->addSuccess('admin.common.save_complete', 'admin');`、`:222` および `:349` `return $this->redirectToRoute('admin_product_product_class', ['id' => $Product->getId()]);`（規格一覧へのリダイレクト）のまま。翻訳も `src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました` / `:1596` `admin.common.save_error: 保存に失敗しました` で、設計の「登録が完了しました。」「登録できませんでした。」および同一規格の編集画面への復帰は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 502,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Product/ProductClass/edit.twig:577-582` は `{% if ProductClass.id %}` のみで削除ボタンを描画し、削除可否（最後の1件か）の判定は無い。`src/Eccube/Controller/Admin/Product/ProductClassController.php:353-363` の `delete()` も `$this->isTokenValid(); try { $deleteAction->handle($ProductClass);` と件数検査・HTTP400 が無い。`src/Eccube/Service/Admin/Product/ProductClassDeleteAction.php:66-67` `$this->entityManager->remove($ProductClass); $this->entityManager->flush();` で物理削除のままで、論理削除（deleted_at 等）への変更はない。",
+      "note": ""
+    },
+    {
+      "rowId": 503,
+      "status": "未対応",
+      "evidence": "worktree 全体を `grep -rn \"sell_price_nm\\|buyprice_valid_bulk\" src/` してもヒット 0 件。買取価格の上限比較は `src/Eccube/Form/Type/Admin/BulkUpdateProductPriceType.php:103` `$context->buildViolation($this->translator->trans('admin.product.buy_price_exceeds_standard'))` のまま（対応する翻訳は `src/Eccube/Resource/locale/messages.ja.yaml:1969` `admin.product.buy_price_exceeds_standard: \"ID:%productId%（%language%）の買取価格は基準価格「%standardPrice%」以下を指定してください。\"`）で、販売価格（NM）隠しフィールドも admin.product_class.buyprice_valid_bulk も存在しない。BulkUpdateProductPriceType.php は監査日以降コミットなし。",
+      "note": ""
+    },
+    {
+      "rowId": 504,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Product/ProductBulkUpdateBuyPriceStoreAction.php:79-83` `$conditionStandardPrices = ['NM' => $standardPrice, 'SP' => (int) ($classData['standard_price_sp'] ?? $standardPrice), 'MP' => (int) ($classData['standard_price_mp'] ?? $standardPrice), 'HP' => (int) ($classData['standard_price_hp'] ?? $standardPrice)];` と SP/MP/HP の POST 値を採用したまま。`src/Eccube/Repository/ProductClassRepository.php:1936-1943` および `:1993-1999` の `standard_price = CASE WHEN pc1.id = :productClassIdNm::INT THEN :standardPriceNm::INT WHEN pc1.id = :productClassIdSp::INT THEN :standardPriceSp::INT ...`、`src/Eccube/Repository/DtbPriceHistoryRepository.php:243-249` の同様の CASE で状態別に異なる基準価格を永続化・履歴登録している。当該3ファイルとも監査日以降のコミットなし。",
+      "note": ""
+    }
+  ]
+}

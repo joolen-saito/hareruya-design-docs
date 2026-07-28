@@ -1,0 +1,77 @@
+{
+  "packetId": "0204_07",
+  "results": [
+    {
+      "rowId": 541,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/ProductTagCsvController.php:201` `'商品タグ(ID)' => '商品タグ登録IDを指定/カンマ区切りで複数指定可能',`（getCsvHeader）に是正済みで、画面フォーマット表・雛形ヘッダとも設計の項目名「商品タグ(ID)」と備考文言に一致する。取込ハンドラも `src/Eccube/Service/Csv/Importer/Event/ProductTagUpdateImportHandler.php:120` `$this->tagIdListColumn = ColumnDefinitions::productTagList($this->em, '商品タグ(ID)')->setRequired(false);` で「商品タグ(ID)」列を参照する。監査時点の「タグID」は develop 全体から消えており（grep で 0 件）、必須ヘッダも `ProductTagCsvController.php:209-212` `getRequiredCsvHeader()` が `'商品ID' => '商品ID'` のみで「タグID」を要求しない。",
+      "note": ""
+    },
+    {
+      "rowId": 542,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductRepository.php:1873` `private function insertProductTags(...)` の INSERT 文は `src/Eccube/Repository/ProductRepository.php:1882` `base_info_id,` を列に含み、`src/Eccube/Repository/ProductRepository.php:1904` `1, // TODO: 暫定的に設定しているが、base_info_idカラムは削除予定` で値1を固定投入したまま。`src/Eccube/Entity/ProductTag.php:30` `use TenantTrait;` と `src/Eccube/Entity/Traits/TenantTrait.php:25` `#[ORM\\JoinColumn(name: 'base_info_id', referencedColumnName: 'id', nullable: false)]` も監査時点と同一で、設計の列構成（base_info_id を持たない）と一致しない。",
+      "note": "TODO コメントは残るが削除は未実施。"
+    },
+    {
+      "rowId": 543,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Product/csv_product_standard_price.twig` は全5行で `{% extends '@admin/Product/base_csv_upload.twig' %}` と menus/sub_title の定義のみ。`src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php:109-122` も `'template_download_route' => 'admin_product_product_standard_price_csv_template'` など基準価格CSV用ルートだけを渡す。`src/Eccube`・`app/config`・`html` に対する `低価格帯 / low_price / simple_low / SimpleLow / LowPrice` の横断検索でヒットするのは `src/Eccube/Entity/DtbBuyOrder.php:743` 等のまとめて買取（低価格帯集計）関連のみで、低価格帯カード価格変更CSVのダウンロードボタン・フォーマット表・ルート・翻訳キーは develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 544,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php:175-180` は `$alignment = (int) ($pcRow['smaregiAlignmentFlg'] ?? 0);` と既存フラグを読み取って `deferIfEligible(...)` に渡すのみ。`src/Eccube/Service/Smaregi/SmaregiProductClassCsvImportUpsertCoordinator.php:49` `if ($smaregiAlignmentFlg !== Constant::ENABLED) { return; }` で既にONの規格しかキューに載せない。更新SQL `src/Eccube/Repository/ProductClassRepository.php:2730` `UPDATE dtb_product_class SET standard_price = ?, buy_price = ?, update_date = ? WHERE id = ?` および `:2742` `UPDATE dtb_product_class SET standard_price = ?, price02 = ?, buy_price = ?, update_date = ? WHERE id = ?` に smaregi_alignment_flg の更新は無く、条件判定でフラグをOFF→ONにする処理は develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 545,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/ProductStandardPriceCsvController.php:217-225` `getCsvHeader()` は `'商品ID' => '', '言語ID' => '', '基準価格' => '', '買取価格' => '',` の4列のみ。`src/Eccube/Service/Csv/Importer/Event/ProductStandardPriceImportHandler.php:210-213` の `initializeColumnDefinitions()` も `productId / languageId('言語ID') / standardPrice / buyPrice` の4列だけを定義し、`:193-196` の getColumns も同4列。更新SQL `src/Eccube/Repository/ProductClassRepository.php:2730,2742` は standard_price / price02 / buy_price のみで wholesale_price を更新しない。識別ID:5「原価単価」の列定義・検証・更新は develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 546,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/ProductPriceImportHandler.php:87-93` は `// インポート成功の場合、支店システムと連携` / `// TODO: BranchUpdateService の移植が必要` / `// $branchUpdate->noticeProductUpdate(array_unique($this->importedIds));` とコメントアウトのまま。`src/Eccube` 全域の `BranchUpdate|noticeProductUpdate` grep でも実体クラスは無く、ヒットは `ProductCardImportHandler.php:200-201` `ProductGoodsImportHandler.php:187-188` `InventoryReflectService.php:111` `OtcBuyController.php:595-596` のコメント行と `DtbBranchUpdateError` エンティティ/リポジトリのみ。取込成功時の支店通知は発生しない。",
+      "note": ""
+    },
+    {
+      "rowId": 547,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:188` `$this->addSuccess('admin.register.complete', 'admin');` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1970` `admin.register.complete: 登録が完了しました。` を表示する。設計指定キー `admin.product.csv_import.save.complete` は messages.ja.yaml に存在しない（grep 0 件）。",
+      "note": "行番号が監査時点の176から188へ移動しているのみで内容は不変。"
+    },
+    {
+      "rowId": 548,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/CsvImportType.php:48-56` の import_file 制約は `new Assert\\NotBlank(),` と `new Assert\\File(['maxSize' => $this->csvMaxSize.'M',]),` のみで `mimeTypes` 指定が無い。`src/Eccube` 内の mimeTypes ヒットは PluginLocalInstallType / StockJoinCsvUploadType / CategoryType 等の別フォームのみで CsvImportType は含まれない。翻訳キー `admin.csv.error.upload.mime` も messages.ja.yaml に不在（grep 0 件）。",
+      "note": ""
+    },
+    {
+      "rowId": 549,
+      "status": "未対応",
+      "evidence": "rowId 547 と同一箇所。`src/Eccube/Controller/Admin/Product/Csv/ProductPriceCsvController.php:188` `$this->addSuccess('admin.register.complete', 'admin');` が成功分岐に残り、`src/Eccube/Resource/locale/messages.ja.yaml:1970` `admin.register.complete: 登録が完了しました。` を表示。設計指定の `admin.product.csv_import.save.complete`／『商品登録CSVファイルをアップロードしました。』は locale に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 550,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductClassRepository.php:2208` `existsProductClassByProductCodeAndSaleFlg()` の SQL は `INNER JOIN dtb_product p ON p.id = pc.product_id WHERE pc.product_code = ? {$saleFlgCondition} AND pc.high_price_code IS NOT NULL AND pc.high_price_code <> ''` のみ。`:2258` `replaceStandardPriceOnly()` と `:2290` `replaceStandardPriceAndPrice02()` も `FROM dtb_product p WHERE dtb_product_class.product_id = p.id AND dtb_product_class.product_code = ? ... AND dtb_product_class.high_price_code <> ''` で、product_status_id / ProductStatus / visible 等の公開状態条件を一切含まない。`src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php` 側にも公開状態判定は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 551,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/Csv/ProductSimpleHighPriceCsvController.php:134` `foreach ($form->getErrors() as $error) {` が deep 引数なしのまま（`getErrors(true)` になっていない）。`src/Eccube/Form/Type/Admin/CsvImportType.php:48-56` で import_file 子フィールドに NotBlank / File(maxSize) が付くため、未選択時のエラーはルートフォームに現れず admin フラッシュへ積まれない。また NotBlank により isValid() が false になるため `:143-144` `if ($formFile === null) { $this->addError('admin.common.csv_invalid_no_data', 'admin');` の分岐にも到達しない。",
+      "note": ""
+    },
+    {
+      "rowId": 552,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/SimpleHighPriceImportHandler.php:132` `$this->productCodeColumn = ColumnDefinitions::productCode()->setRequired(true);` は必須化のみ。`src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:58-61` `public static function productCode(string $name = '商品コード'): BaseCsvColumn { return self::createStringColumn($name, '商品コード'); }` で、`:663-666` `createStringColumn()` は `return new BaseCsvColumn($name, $label);` を返すだけで最大文字数バリデータを付与しない。`SimpleHighPriceImportHandler::getRowValidators()`（:126-129）も `return [];` で追加検証が無く、11文字上限の検証は develop に存在しない。",
+      "note": ""
+    }
+  ]
+}

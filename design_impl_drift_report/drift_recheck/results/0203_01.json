@@ -1,0 +1,77 @@
+{
+  "packetId": "0203_01",
+  "results": [
+    {
+      "rowId": 754,
+      "status": "対応済み",
+      "evidence": "設計期待値の5要素すべてが現 develop(da9c2ba276)に実装済み。(1)デフォルト検索表示店舗の初期選択: `src/Eccube/Form/Type/Admin/SearchOrderType.php:304` `'data' => $this->getDefaultTenants(),` と `src/Eccube/Form/Type/Admin/SearchOrderType.php:612-619` `$BaseInfo = $this->getCurrentBaseInfo(); if ($BaseInfo === null || $BaseInfo->getId() === null || !$BaseInfo->getIsOpenShop()) { return []; } return [(string) $BaseInfo->getId()];`（`SearchOrderType.php:603` `return $user->getDefaultSearchBaseInfo();`）。(2)必須化: `src/Eccube/Form/Type/Admin/SearchOrderType.php:298` `'required' => true,`（監査時点の required=false から変更）。(3)全店選択肢: `src/Eccube/Form/Type/Admin/SearchOrderType.php:626-632` `$choices = [ trans('admin.order.tenants.all') => BaseInfo::ALL_STORE_KEY, ]; foreach ($this->baseInfoRepository->getOpenShops() as $BaseInfo) {...}`（`src/Eccube/Entity/BaseInfo.php:47` `public const ALL_STORE_KEY = 'all';`、`src/Eccube/Resource/locale/messages.ja.yaml:5901` `admin.order.tenants.all: 全店`）。(4)複数店舗OR条件: `src/Eccube/Repository/OrderRepository.php:262-264` `->andWhere($qb->expr()->in('s.baseInfo', ':BaseInfo'))->setParameter('BaseInfo', $tenants);`。(5)全店/全店＋店舗選択時は開店店舗すべて: `src/Eccube/Repository/OrderRepository.php:2339-2341` `if (in_array(BaseInfo::ALL_STORE_KEY, $tenants, true)) { return $baseInfoRepository->getOpenShops(); }`（`src/Eccube/Repository/BaseInfoRepository.php:190-195` `->andWhere('bi.isOpenShop = :isOpenShop')->setParameter('isOpenShop', true)`）。ChoiceType自体も `getOpenShops()` 由来の選択肢のみで構成される。",
+      "note": "ChoiceType の required=true は HTML5 の required 属性であり、サーバ側 NotBlank 制約は無い（select2 化: index.twig:91-98）。ただし初期値が常に投入されるため設計意図は満たされていると判断。"
+    },
+    {
+      "rowId": 755,
+      "status": "対応済み",
+      "evidence": "UI描画と検索条件適用の双方が追加済み。フォーム定義は複数選択チェックボックス（`src/Eccube/Form/Type/Admin/SearchOrderType.php:251-257` `->add('customer_group', EntityType::class, [ 'label' => 'admin.order.customer_group', 'placeholder' => false, 'class' => DtbCustomerGroup::class, 'expanded' => true, 'multiple' => true, ])`）でマスター DtbCustomerGroup を参照。監査時点で欠落していた Twig 描画は `src/Eccube/Resource/template/admin/Order/index.twig:446-448` `<label class=\"col-form-label\">{{ 'admin.common.customer_group'|trans }}</label>` / `{{ form_widget(searchForm.customer_group, { 'label_attr': { 'class': 'checkbox-inline'}}) }}` / `{{ form_errors(searchForm.customer_group) }}` として実装済み。検索条件も TBD コメントではなく実クエリになっており `src/Eccube/Repository/OrderRepository.php:335-345` `if (!empty($searchData['customer_group']) && count($searchData['customer_group']) > 0) { ... $qb->join('c.Player', 'pl')->andWhere($qb->expr()->in('pl.CustomerGroup', ':customerGroups'))->setParameter('customerGroups', $customerGroupIds); }`。",
+      "note": ""
+    },
+    {
+      "rowId": 756,
+      "status": "未対応",
+      "evidence": "受注検索の注文番号条件は現 develop でも自受注の order_number 部分一致のみで、旧注文番号→移行先受注の逆引き経路は無い。`src/Eccube/Repository/OrderRepository.php:269-272` `if (isset($searchData['order_number']) && StringUtil::isNotBlank($searchData['order_number'])) { $qb->andWhere('o.order_number LIKE :order_number')->setParameter('order_number', '%'.$searchData['order_number'].'%'); }`。さらに `src/Eccube/Repository/OrderRepository.php:579` `$qb->andWhere('o.nextOrderId IS NULL');`（コメント `src/Eccube/Repository/OrderRepository.php:577-578` 「店頭受取→スマレジ取引で統合された旧受注（next_order_id が設定されている行）は除外し、スマレジ取り込み側の受注を優先表示する」）により、引き渡し前の旧受注行自体が検索結果から常時除外される。引き渡し処理側で next_order_id を設定する実装（`src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/Pattern/EccubeOtcPatternHandler.php:121` `$existingOrder->setNextOrderId($newOrder->getId());`）は監査時点と同一。next_order_id の逆引きメソッド（`OrderRepository.php:2107 findOrderIdsReferencedAsNextOrder`、`2290 findOtcOrderNumbersByNextOrderIds`）は購入履歴（フロント）用途にのみ使われ、`getQueryBuilderBySearchDataForAdmin` からは呼ばれていない。",
+      "note": "next_order_id / nextOrder / order_number / 引き渡し で OrderRepository・SearchOrderType・OrderController・Smaregi Handler・Order エンティティを再検索したが、管理受注検索への接続は無し。"
+    },
+    {
+      "rowId": 757,
+      "status": "未対応",
+      "evidence": "現在適用中パターンだけリンク・件数「*」・個別リロードが無い構造が現 develop でも不変。`src/Eccube/Resource/template/admin/Order/index.twig:1048-1058` `{% if pattern_id is defined and SearchPattern.id == pattern_id %}` / `{{ SearchPattern.name }}` / `{% else %}` / `<a href=\"{{ url('admin_order_search_pattern', { 'pattern_id': SearchPattern.id }) }}\" id=\"search_pattern_{{ SearchPattern.id }}\">{{ SearchPattern.name }} (<span id=\"pattern_id_{{SearchPattern.id}}\">*</span>)</a>` / `<button type=\"button\" class=\"get_count_pattern ...\" data-pattern-id=\"{{ SearchPattern.id }}\">` — リンク・`*`span・リロードボタンはいずれも else 節（非選択パターン）側のみ。選択中パターンは `{{ SearchPattern.name }}` の素のテキスト出力のみ。",
+      "note": "一括リロード `#reload_all_pattern`（index.twig:1041-1043）は存在するが、設計が求める「保存した検索パターン個々」のリンク・件数・リロード対象から選択中パターンが外れる点は変わっていない。"
+    },
+    {
+      "rowId": 758,
+      "status": "対応済み",
+      "evidence": "翻訳値が設計どおりの4名称に更新済み。`src/Eccube/Resource/locale/messages.ja.yaml:5888-5893` `admin.order.order_csv.download: 受注一覧CSVダウンロード` / `admin.order.shipping_csv.download: 受注詳細CSVダウンロード` / `admin.order.custom_order_csv.download: 受注一覧カスタムCSVダウンロード` / `admin.order.custom_shipping_csv.download: 受注詳細カスタムCSVダウンロード`。Twig 側は同キーを参照して表示する: `src/Eccube/Resource/template/admin/Order/index.twig:1090` `{{ 'admin.order.order_csv.download'|trans }}`、`:1093` `{{ 'admin.order.shipping_csv.download'|trans }}`、`:1107` `<span>{{ 'admin.order.custom_order_csv.download'|trans }}</span>`、`:1124` `<span>{{ 'admin.order.custom_shipping_csv.download'|trans }}</span>`。監査時点の旧名称「受注CSVダウンロード」「出荷CSVダウンロード」「カスタム受注CSVダウンロード」「カスタム配送CSVダウンロード」は messages.ja.yaml から消えている。",
+      "note": "出力項目設定名も `messages.ja.yaml:5890-5891` `admin.order.order_csv.setting: 受注一覧CSV出力項目設定` / `admin.order.shipping_csv.setting: 受注詳細CSV出力項目設定` に追随済み。"
+    },
+    {
+      "rowId": 759,
+      "status": "部分対応",
+      "evidence": "受注一覧本体（admin_order）は300件デフォルトに是正済み: `app/config/eccube/packages/eccube.yaml:143` `eccube_order_list_page_count: 300` を `src/Eccube/Controller/Admin/Order/OrderController.php:163-166` `$page_count = (int) $this->session->get('eccube.admin.order.search.page_count', (int) $this->eccubeConfig->get('eccube_order_list_page_count'));` と `src/Eccube/Controller/Admin/Order/OrderController.php:233` `$page_count = (int) $this->eccubeConfig->get('eccube_order_list_page_count');`（初期表示時）で参照。プルダウン初期値も `src/Eccube/Resource/template/admin/Order/index.twig:1075` `<option {% if pageMax.name == page_count %} selected {% endif %}` により300が選択される（`src/Eccube/Resource/doctrine/import_csv/ja/mtb_page_max.csv:5` `\"300\",\"300\",\"4\"`）。一方、同一の受注一覧画面を描画する検索パターン適用経路は旧設定のままで、`src/Eccube/Controller/Admin/Order/SearchOrderController.php:102-103` `$pageCount = (int) $this->session->get('eccube.admin.order.search.page_count', (int) $this->eccubeConfig->get('eccube_default_page_count'));`、`app/config/eccube/packages/eccube.yaml:142` `eccube_default_page_count: 10`。OrderController の初期表示は `OrderController.php:239` `$this->session->remove('eccube.admin.order.search.page_count');` でセッションを消すため、初期表示直後に検索パターンを開くと10件になる。",
+      "note": "監査時点の指摘のうち OrderController 側は是正済み、SearchOrderController 側が未是正のため部分対応と判定。"
+    },
+    {
+      "rowId": 760,
+      "status": "対応済み",
+      "evidence": "メンバー管理のデフォルト検索表示店舗が検索条件の初期値として投入されるようになった。`src/Eccube/Form/Type/Admin/SearchOrderType.php:304` `'data' => $this->getDefaultTenants(),`、`src/Eccube/Form/Type/Admin/SearchOrderType.php:594-605` `private function getCurrentBaseInfo(): ?BaseInfo { $user = $this->security->getUser(); if (!$user instanceof Member) { return null; } try { return $user->getDefaultSearchBaseInfo(); } ... }`、`src/Eccube/Form/Type/Admin/SearchOrderType.php:610-619` `$BaseInfo = $this->getCurrentBaseInfo(); ... return [(string) $BaseInfo->getId()];`。参照元は `src/Eccube/Entity/Member.php:118-119` `#[ORM\\JoinColumn(name: 'default_search_base_info_id', ... 'comment' => 'デフォルト検索表示店舗'])] private ?BaseInfo $DefaultSearchBaseInfo = null;`。この初期値が検索実行時に `src/Eccube/Repository/OrderRepository.php:257-265` `if (!empty($searchData['tenants'])) { ... ->andWhere($qb->expr()->in('s.baseInfo', ':BaseInfo'))->setParameter('BaseInfo', $tenants); }` で絞り込みに適用され、`src/Eccube/Resource/template/admin/Order/index.twig:357` `{{ form_widget(searchForm.tenants) }}` で描画される。監査時点の「tenantsフォームにもメンバー店舗の初期値設定はない」状態は解消。",
+      "note": "デフォルト検索表示店舗が未設定または閉店店舗の場合は空配列（SearchOrderType.php:615-617）で絞り込み無しとなる。RLS 無効化（Version20260319061014）は変わらないが、絞り込みはフォーム初期値＋Repository条件で実現されている。"
+    },
+    {
+      "rowId": 761,
+      "status": "対応済み",
+      "evidence": "一覧取得クエリの Customer 結合が innerJoin から leftJoin に是正され、非会員（Customer=null）受注が検索結果に含まれるようになった。`src/Eccube/Repository/OrderRepository.php:249-254` `// 非会員(ゲスト)受注は Customer を持たないため leftJoin とする。 // スマレジの純店頭購入(非会員)受注を管理受注検索から欠落させないための対応。 // CustomerDeleteFilter の \\`c.del_flg = 0\\` は leftJoin の ON 句に付与されるため、 // ゲスト受注(c が null)は除外されない。 ... ->leftJoin('o.Customer', 'c');`。表示分岐は従来どおり `src/Eccube/Resource/template/admin/Order/index.twig:1218-1222` `{% if Order.Customer is null %}` / `非会員` / `{% else %}` / `{{ Order.name01 ~ Order.name02 }}` / `{% endif %}`。これによりお名前列で非会員表示が実際に成立する。",
+      "note": "customer_group 条件指定時のみ `c.Player` を join するため会員受注に絞られる旨がコメントで明示されており、意図的な仕様。"
+    },
+    {
+      "rowId": 762,
+      "status": "未対応",
+      "evidence": "画面のソートキーと Repository の許可キーの不一致が現 develop でも継続。Twig は `src/Eccube/Resource/template/admin/Order/index.twig:1181` `data-sortkey=\"order_date\"`、`:1182` `data-sortkey=\"order_number\"`、`:1186` `data-sortkey=\"order_commit_date\"` を送信するが、`src/Eccube/Repository/OrderRepository.php:65-67` `public const COLUMNS = [ 'order' => 'o.name01', 'orderer' => 'o.id', 'shipping_id' => 's.id', 'purchase_product' => 'oi.product_name', 'quantity' => 'oi.quantity', 'payment_method' => 'o.payment_method', 'order_status' => 'o.OrderStatus', 'purchase_price' => 'o.total', 'shipping_status' => 's.shipping_date', 'tracking_number' => 's.tracking_number', 'delivery' => 's.name01', ];` に order_date / order_number / order_commit_date は存在しない。参照箇所も未変更で `src/Eccube/Repository/OrderRepository.php:582-585` `if (isset($searchData['sortkey']) && !empty($searchData['sortkey'])) { ... $qb->orderBy(self::COLUMNS[$searchData['sortkey']], $sortOrder);`。JS 側（`html/template/admin/assets/js/function.js:313-318`）も data-sortkey をそのまま hidden へ入れるだけでキー変換は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 763,
+      "status": "対応済み",
+      "evidence": "受注一覧のドロップダウンリンク id=orderCsvDownload が参照する翻訳値が設計値に変更済み。`src/Eccube/Resource/locale/messages.ja.yaml:5888` `admin.order.order_csv.download: 受注一覧CSVダウンロード`、表示側は `src/Eccube/Resource/template/admin/Order/index.twig:1089-1091` `<a class=\"dropdown-item\" href=\"{{ url('admin_order_export_order') }}\" id=\"orderCsvDownload\">` / `{{ 'admin.order.order_csv.download'|trans }}`。監査時点の旧文言「受注CSVダウンロード」は messages.ja.yaml から消滅している。",
+      "note": ""
+    },
+    {
+      "rowId": 764,
+      "status": "対応済み",
+      "evidence": "受注一覧CSV（csv_type_id=3）へ識別ID4相当の「店舗名」列を追加するマイグレーションが新規追加された。`app/DoctrineMigrations/Version20260724120000.php:35-49` `foreach ([3, 4] as $csvTypeId) { $this->addSql( \"INSERT INTO dtb_csv ( csv_type_id, creator_id, entity_name, field_name, reference_field_name, disp_name, sort_no, enabled, create_date, update_date ) SELECT {$csvTypeId}, NULL, 'Eccube\\\\\\\\Entity\\\\\\\\Order', 'BaseInfo', 'shop_name', '店舗名', 4, true, NOW(), NOW() WHERE NOT EXISTS ( SELECT 1 FROM dtb_csv WHERE csv_type_id = {$csvTypeId} AND disp_name = '店舗名' )\" ); }`。ファイル冒頭コメント `app/DoctrineMigrations/Version20260724120000.php:22-25` にも「受注一覧CSV（csv_type_id = 3）・受注詳細CSV（csv_type_id = 4）に「店舗名」列を追加する. Version20260224000000 / Version20260226000001 で「店舗ID」(sort_no=3) のみ追加され、設計書の識別ID:4「店舗名」が欠落していたため補完する.」と本指摘そのものへの対応であることが明記されている。既存の識別ID3「店舗ID」は `app/DoctrineMigrations/Version20260224000000.php:33` `VALUES (3, NULL,'Eccube\\\\Entity\\\\Order', 'BaseInfo', 'id','店舗ID', 3, true, ...)` で、同じ entity_name/field_name 方式のため参照解決も整合。",
+      "note": "field_name 'BaseInfo' は Order が use する `src/Eccube/Entity/Traits/TenantTrait.php:25-33` の `public BaseInfo $baseInfo;` / `getBaseInfo()` に解決される。"
+    },
+    {
+      "rowId": 765,
+      "status": "対応済み",
+      "evidence": "受注一覧カスタムCSV出力項目設定の選択肢は dtb_csv を CsvType で絞って構築されるため、rowId 764 と同じマイグレーションで「店舗名」が受注一覧カスタムCSVの出力項目候補に加わった。項目供給元は `src/Eccube/Form/Type/Admin/CustomCsvType.php:76-78` `$criteria->andWhere($criteria->expr()->eq('CsvType', $CsvType)) ... $csvNotOutput = $this->csvRepository->matching($criteria);`（画面は `src/Eccube/Controller/Admin/Setting/Shop/CustomerCsvController.php:48-55` `#[Route(path: '/%eccube_admin_route%/setting/shop/custom_csv/{csvTypeId}/{csvExtensionId}', name: 'admin_setting_shop_csv_custom', ...)]` → `CustomCsvType::class, null, ['csvType' => $CsvType, 'csvExtension' => $CsvExtension]`）。受注一覧の CsvType は `src/Eccube/Entity/Master/CsvType.php:42` `public const CSV_TYPE_ORDER = 3;`。その csv_type_id=3 に対して `app/DoctrineMigrations/Version20260724120000.php:35-49` が `'店舗名', 4, true` を INSERT するため、識別ID:4「店舗名」がカスタムCSV出力項目として保持される。監査時点で欠落と指摘された sort_no=4 / disp_name='店舗名' の受注CSV行が現 develop には存在する。",
+      "note": ""
+    }
+  ]
+}

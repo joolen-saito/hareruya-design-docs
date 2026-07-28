@@ -1,0 +1,77 @@
+{
+  "packetId": "0306_03",
+  "results": [
+    {
+      "rowId": 402,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:826` `front.mypage.point_history.range_info: \"件数: %total%件\"` のままで %start%/%end% を出力しない。`src/Eccube/Resource/locale/messages.en.yaml:647` は `\"Showing %start%–%end% of %total%\"` で非対称も継続。`src/Eccube/Resource/template/default/Mypage/point_history.twig:52-56` は `{% set start = (pagination.currentPageNumber - 1) * pagination.itemNumberPerPage + 1 %}` / `{% set end = start + pagination.count - 1 %}` を算出し `'front.mypage.point_history.range_info'|trans({ '%start%': start, '%end%': end, '%total%': pagination.totalItemCount })` を渡すが、ja定義側が受け取らないため日本語で表示範囲が出ない。書式『（開始）~（終了）件 ／ （総件数）件あります』とも不一致。",
+      "note": ""
+    },
+    {
+      "rowId": 403,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/point_history.twig:102` `<a class=\"c-hareruya-link\" href=\"{{ url('mypage_shopping_history_detail', {'order_id': PointHistory.Order.id}) }}\">` と、リンク先ルートは mypage_history から mypage_shopping_history_detail に変わったものの `target=\"_blank\"` は依然無し。同ファイル全体（1-146行）に target/_blank/window.open のいずれも存在せず（javascriptブロック 19-30行はページ件数変更のみ）、同一タブ遷移のまま。",
+      "note": "リンク先ルート名のみ変更。別タブ化は未実施。"
+    },
+    {
+      "rowId": 404,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/Mypage/MypageController.php:406-411` `$pagination = $paginator->paginate($qb, max(1, (int) $request->get('pageno', 1)), $pageCount, ['wrap-queries' => true]);` と pageRange 未指定のまま。リポジトリ全体（app/src、vendor除く）を `page_range|pageRange` で検索しても knp_paginator の設定は無く、ヒットするのは `src/Eccube/Resource/template/default/Block/js/product_detail_same_name_js.twig:29` 等のJS別実装のみ。`src/Eccube/Resource/template/default/pager.twig:36` `{% for page in pages.pagesInRange %}` は Knp 既定 page_range=5（前後2件）で描画される。",
+      "note": ""
+    },
+    {
+      "rowId": 408,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Form/Type/Master/IdentificationType.php:36-39` が `->where('m.visible = :visible')->setParameter('visible', true)->orderBy('m.id', 'ASC')` に変更され、`src/Eccube/Entity/Master/MtbIdentification.php:56-57` に `#[ORM\\Column(name: 'visible', ...)] private bool $visible = true;` が追加。`app/DoctrineMigrations/Version20260721100000.php:34-41` で visible 列追加後 `UPDATE mtb_identification SET visible = false WHERE id = ?` に `MtbIdentification::BASIC_RESIDENT_REGISTER_CARD`（住民基本台帳カード id5）、`app/DoctrineMigrations/Version20260724100000.php:34-35` で同SQLに `MtbIdentification::HEALTH_INSURANCE_CARD_HOLDER`（健康保険被保険者証 id3）を適用。結果、選択肢は id1自動車運転免許証/id2パスポート/id4外国人登録証明書/id6学生証、会社員証/id7身体障害者手帳/id8マイナンバーカードの6種となり設計の6種類・住民基本台帳カード除外を満たす。",
+      "note": "id6のマスタ名は『学生証、会社員証』で設計表記『学生証・社員証』と字面が異なるが、本指摘（8種表示・id5/id3の選択可能）は解消済み。"
+    },
+    {
+      "rowId": 409,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/Mypage/IdentificationController.php:155-159` は依然 `return $this->redirectToRoute('mypage_identification_photograph', ['mypage_identification' => ['identification' => $identificationId], 'isError' => 1]);` の302リダイレクト。リダイレクト先 `:72` は `#[Route(path: '/mypage/identification/photograph', name: 'mypage_identification_photograph', methods: ['POST'])]` とPOST限定のまま、`:82-89` も `$request->request->all('identification_select')` / `$request->request->get('isError')` とPOSTボディ参照のままでクエリキー不整合も未解消。",
+      "note": ""
+    },
+    {
+      "rowId": 410,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/online_identification.twig:54` `{{ Customer.Player.IdentityConfirmStatus.nameJp }}` のまま。マスタ値も `app/DoctrineMigrations/Version20251125145047.php:63-82` の `'name_jp' => '未確認' / '確認中' / 'オンライン本人確認済み' / '簡易書留確認済み'` から変更されておらず（mtb_identity_confirm_status に触れる後続マイグレーションは Version20260108204509.php のみで name_jp のUPDATEなし）、設計文言「現在、確認中です」「オンラインで本人確認済み」「簡易書留で本人確認済み」と相違。",
+      "note": ""
+    },
+    {
+      "rowId": 411,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/event_history.twig:139-142` のデッキ登録状況ラベルは `<dd class=\"...\">{{ deckId is not null ? 'front.mypage.event_history.deck__registered'|trans : 'front.mypage.event_history.deck__not_registered'|trans }}</dd>` と非表示ガード無しで無条件描画のまま。ボタン側のみ `:145` `{% if not isFinished and detail.canBeRegisteredDeck() %}`（`src/Eccube/Entity/DtbEventDetail.php:508-511` `return $this->getDeckRegistFlg() && !$this->getDeadlineFlg() && $this->deckRegistDeadline >= new \\DateTime();`）でガードされている。",
+      "note": ""
+    },
+    {
+      "rowId": 412,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Entity/DtbEventDetail.php:554-556` `public function hasFinished(): bool { return $this->startDate < new \\DateTime(); }` のままで開催開始日時基準。呼び出し側 `src/Eccube/Resource/template/default/Mypage/event_history.twig:92` `{% set isFinished = detail.hasFinished() %}`、`:115` `{% if isFinished %}` も変更なし。開催日23:59:59やend_date基準の終了判定は同エンティティに存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 413,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/Mypage/EventHistoryController.php:99` `$pagination = $paginator->paginate($EventDetails, $pageNo, $dispNumber);` と options（page_range）未指定のまま。app/src 配下に knp_paginator の page_range 設定は無く、`src/Eccube/Resource/template/default/pager.twig:36` `{% for page in pages.pagesInRange %}` は Knp 既定 page_range=5（現在ページ±2）で描画される。設計の±4（9リンク）未充足。",
+      "note": ""
+    },
+    {
+      "rowId": 414,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/pager.twig:22-33` 先頭側は `{% if pages.firstPageInRange != 1 %}` の数字リンク `{{ pages.first }}` と `{% if pages.firstPageInRange > 2 %}` の `<span class=\"p-hareruya-pagination__ellipsis\">…</span>`、`:49-60` 末尾側も `{{ pages.last }}` の数字リンク＋『…』のままで、『＜最初』『最後＞』の文言リンクは存在しない（同ファイル内の文言リンクは `:17` common.prev と `:65` common.next のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 415,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/breadcrumb_nav.twig:126-128` `{% elseif route == 'mypage_event_history' %}` … `{{ hareruya_breadcrumb.current_li('front.mypage.event_history.breadcrumb_title'|trans, 3) }}` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:653` `front.mypage.event_history.breadcrumb_title: 大会デッキ登録`。設計の末尾クラム『マイイベント・デッキ登録』と不一致のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 416,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:664-665` `front.mypage.event_history.deck__registered: 登録済み` / `front.mypage.event_history.deck__not_registered: 未登録` のままで接頭『デッキ』無し。`src/Eccube/Resource/template/default/Mypage/event_history.twig:141` が両キーをそのまま出力しており、設計文言『デッキ登録済み』『デッキ未登録』と不一致。",
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "packetId": "0306_06",
+  "results": [
+    {
+      "rowId": 441,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/ContactController.php:224-233` は監査時点と同一。`public function detail(Request $request, DtbContact $Contact): array` の型付き引数リゾルバに加え `$contact = $this->dtbContactRepository->findOneBy(['id' => $Contact->getId(), 'Customer' => $user], ['id' => 'DESC']);`(:229) / `if ($contact === null) { throw $this->createNotFoundException(); }`(:231-233) がそのまま残存。`Contact/history_detail.twig` にも null 時の空表示フォールバックは無く、常に 404 エラーページを明示表示する。",
+      "note": ""
+    },
+    {
+      "rowId": 442,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Waiting/waiting_number.twig:48` に `{% if isMainShop %}` が追加され、`<section id=\"wifi\" class=\"p-hareruya-waiting-number__wifi\">`(:49) ～ `{% endif %}`(:58) が本店のみ描画される。`.wifiText`(:55 `<div class=\"p-hareruya-waiting-number__wifi-text wifiText\"></div>`) はこの if 内にしか存在しないため、支店では要素自体が出力されず `html/template/default/assets/js/waiting_monitor.js:24` `$(\".wifiText\").text(\"hareruya\" + month + day);` も書き込み対象なしとなる。:21 でも `class=\"p-hareruya-waiting-number__grid{% if not isMainShop %} p-hareruya-waiting-number__grid--no-wifi{% endif %}\"` とレイアウトを分岐。`isMainShop` は `src/Eccube/EventListener/TwigInitializeListener.php:69` `$this->twig->addGlobal('isMainShop', $shop->isMainShop());` で供給。監査時点の『本店のみWifi表示するようにする』TODO は twig・js 双方から削除済み(grep 0件)。",
+      "note": ""
+    },
+    {
+      "rowId": 443,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Front/WaitingNumberController.php:43-51` に `#[Route(path: '/waiting_number', name: 'waiting_number', methods: ['GET'])]` に加え `#[Route(path: '/waiting_number_1', name: 'waiting_number_1', methods: ['GET'])]` が新設され、本文で `if ($request->attributes->get('_route') === 'waiting_number' && $request->attributes->get('_shop', '') === '') { return $this->redirectToRoute('waiting_number_1', [], Response::HTTP_MOVED_PERMANENTLY); }` と本店(_shop='')を /ja/waiting_number_1 へ301。支店は _shop 付きで /ja/{支店名}/waiting_number のまま（設計一致）。`src/Eccube/Resource/template/admin/Order/edit.twig:891,893` も支店は `url('waiting_number', { _shop: '/' ~ Order.BaseInfo.html_class_name })`、本店は `url('waiting_number_1')` と使い分け済み。`waiting_number_2` は src/ html/ app/ の grep で 0 件（除去要件も充足）。",
+      "note": ""
+    },
+    {
+      "rowId": 444,
+      "status": "未対応",
+      "evidence": "`src/Eccube/EventListener/CustomerGroupAccessListener.php:74` は監査時点と同一で `if ($CustomerGroup->getShopFrontFlg() && $this->isShopFrontRestrictedRoute($route)) {` と 1～22 画面(`src/Eccube/Service/Front/CustomerGroupAccessRouteRegistry.php:28-109` SHOP_FRONT_RESTRICTED_ROUTES)の遮断を getShopFrontFlg() でゲート。支店に効くのは :82-84 `$CustomerGroup->getBranchShopFrontFlg() && $this->baseInfoService->getByRequestShop()->isMainShop() && $this->isBranchShopFrontMainShopRestrictedRoute($route)` のみで、対象は同 Registry :116-127 の BRANCH_SHOP_FRONT_MAIN_SHOP_RESTRICTED_ROUTES（shopping 系＝本店注文のみ）。支店店内アカウント(id=5)のフラグも `app/DoctrineMigrations/Version20260618000009.php:84` `['id' => 5, 'name' => '支店用店内アカウント', ..., 'shop_front_flg' => '0', 'branch_shop_front_flg' => '1', ...]` のまま（`app/DoctrineMigrations/Version20251128120606.php:107,111` も同値、他に shop_front_flg を更新するマイグレーションなし）。getBranchShopFrontFlg の全参照(`src/Eccube/Entity/Customer.php:1066`、`src/Eccube/Controller/Shop/ShopTopController.php:188`、shop_top/shop_promo/shop_order_method twig の表示分岐)を確認したが、支店を 1～22 画面で遮断する別 Listener/Service は develop にも不在。",
+      "note": ""
+    },
+    {
+      "rowId": 445,
+      "status": "対応済み",
+      "evidence": "F06-27 専用画面一式が新規実装済み。(1)専用遷移: `src/Eccube/Security/Http/Authentication/EccubeAuthenticationSuccessHandler.php:89-93` `$password = (string) ($request->request->get('login_pass') ?? ''); $isShort = ... mb_strlen($password) < $this->eccubeConfig['eccube_password_min_len']; $isPatternViolation = ... !preg_match($this->eccubeConfig['eccube_password_pattern'], $password); if ($isShort || $isPatternViolation) { $request->getSession()->set(PasswordPolicyListener::SESSION_KEY, true); }`。(2)専用画面: `src/Eccube/Controller/Front/Mypage/PasswordChangeController.php:51` `#[Route(path: '/mypage/password_change', name: 'mypage_password_change', methods: ['GET', 'POST'])]` + `src/Eccube/Resource/template/default/Mypage/password_change.twig`。(3)ログイン必須画面からの差し戻し: `src/Eccube/EventListener/PasswordPolicyListener.php:92-93` `if ($request->getSession()->get(self::SESSION_KEY)) { $event->setResponse(new RedirectResponse($this->router->generate('mypage_password_change'))); }`。(4)完了時セッション削除: 同 Controller:71 `$request->getSession()->remove(PasswordPolicyListener::SESSION_KEY);`。",
+      "note": ""
+    },
+    {
+      "rowId": 446,
+      "status": "対応済み",
+      "evidence": "監査時点の `src/Eccube/EventListener/LoginPasswordLengthCheckListener.php` は develop に存在しない（`src/Eccube/EventListener/` の Login 系は LoginHistoryListener.php のみ）。代わりに `src/Eccube/Security/Http/Authentication/EccubeAuthenticationSuccessHandler.php:93` `$request->getSession()->set(PasswordPolicyListener::SESSION_KEY, true);` で一旦ログインを成立させてフラグを立て、`src/Eccube/EventListener/PasswordPolicyListener.php:93` `$event->setResponse(new RedirectResponse($this->router->generate('mypage_password_change')));` で専用画面へ強制遷移する設計どおりの方式に変更済み。変更処理も `src/Eccube/Form/Type/Front/PasswordChangeType.php:35` `$builder->add('plain_password', RepeatedPasswordType::class, ...)` と会員情報変更と同じフォーム型を使用。",
+      "note": ""
+    },
+    {
+      "rowId": 447,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/EventListener/PasswordPolicyListener.php:33` `#[AsEventListener(event: KernelEvents::REQUEST, method: 'onKernelRequest', priority: 6)]` の kernel.request ガードが新設。:37 `public const string SESSION_KEY = 'eccube.customer.password_policy_non_compliant';` でポリシー違反セッションキーを定義し、:44-49 `private const array ROUTE_EXCLUDE = ['mypage_password_change', 'mypage_password_change_complete', 'mypage_login', 'mypage_logout'];` 以外のルートでは :88-93 `if (!$token->getUser() instanceof Customer) { return; } ... if ($request->getSession()->get(self::SESSION_KEY)) { $event->setResponse(new RedirectResponse($this->router->generate('mypage_password_change'))); }` により当画面へ差し戻す。",
+      "note": ""
+    },
+    {
+      "rowId": 448,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Front/Mypage/PasswordChangeController.php:66-73` `if ($form->isSubmitted() && $form->isValid()) { ... $this->entityManager->flush(); $request->getSession()->remove(PasswordPolicyListener::SESSION_KEY); return $this->redirectToRoute('mypage_password_change_complete'); }` でパスワード変更完了時にポリシー違反セッション情報を削除している（設定側は EccubeAuthenticationSuccessHandler.php:93）。",
+      "note": ""
+    },
+    {
+      "rowId": 449,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/password_change.twig:19` `<p class=\"c-hareruya-text\">{{ 'front.mypage.password_change.description'|trans }}</p>` を条件分岐なしで常時表示。文言は `src/Eccube/Resource/locale/messages.ja.yaml:807` `front.mypage.password_change.description: \"[リニューアル日]のサイトリニューアルに伴い、お客様の大切な個人情報を守る観点から、パスワードの再設定をお願いしております。大変お手数をお掛けいたしますが、以下の手順でパスワードの再設定をお願いいたします。\"` で、設計書 sheet-23 の図形テキスト C7 と完全一致。",
+      "note": ""
+    },
+    {
+      "rowId": 450,
+      "status": "対応済み",
+      "evidence": "必須: `src/Eccube/Form/Type/Front/PasswordChangeType.php:35-38` `['first_notblank_message' => 'form_error.password_first_required', 'second_notblank_message' => 'form_error.password_second_required']` → `src/Eccube/Form/Type/RepeatedPasswordType.php:75-99` の `new Assert\\NotBlank(...)` 付与。文字数・半角: 同 :49-56 `new Assert\\Length(['min' => $this->eccubeConfig['eccube_password_min_len'], 'max' => $this->eccubeConfig['eccube_password_max_len']])` / `new Assert\\Regex(['pattern' => $this->eccubeConfig['eccube_password_pattern'], 'message' => 'form_error.password_pattern_invalid'])` と `app/config/eccube/packages/eccube.yaml:195-196,210` の `eccube_password_min_len: 12` / `eccube_password_max_len: 50` / `eccube_password_pattern: '/\\A(?=.*?[a-z])(?=.*?\\d)[!-~]+\\z/i'`（半角のみ許容）で設計値と一致。動的必須エラー: `src/Eccube/Resource/template/default/Mypage/password_change.twig:38-41,66-71` の `'data-validation': 'required,minlength'` / `'data-error-required': 'front.entry.error.password_required'|trans` と :47,:77 の `<div class=\"c-hareruya-form-input__field-error\" aria-live=\"polite\" role=\"alert\"></div>` を、バンドル `html/template/default/assets/hareruya/js/hareruya-main.js`（data-validation / data-error-required / minlength を処理）が動的表示する。",
+      "note": ""
+    },
+    {
+      "rowId": 451,
+      "status": "対応済み",
+      "evidence": "一致チェックはサーバ側が `src/Eccube/Form/Type/RepeatedPasswordType.php:44,108` `'invalid_message' => 'form_error.same_password'` / `return RepeatedType::class;`、クライアント側が `src/Eccube/Resource/template/default/Mypage/password_change.twig:66-71` `'data-validation': 'required,minlength,match', 'data-match-target': '#' ~ form.plain_password.first.vars.id, 'data-error-match': 'front.entry.error.password_mismatch'|trans`。『変更する』ボタンは同 :83-86 `<button type=\"submit\" class=\"c-hareruya-btn c-hareruya-btn--primary c-hareruya-btn--lg\"><span>{{ 'common.change_do'|trans }}</span>` で、`src/Eccube/Controller/Front/Mypage/PasswordChangeController.php:73` `return $this->redirectToRoute('mypage_password_change_complete');` により専用完了画面（同 :85-86 `#[Route(path: '/mypage/password_change_complete', name: 'mypage_password_change_complete', methods: ['GET'])] #[Template(template: 'Mypage/password_change_complete.twig')]`）へ遷移する。",
+      "note": ""
+    },
+    {
+      "rowId": 452,
+      "status": "未対応",
+      "evidence": "設計書 sheet-23 識別ID5『TOPへ戻る（押下すると、TOP画面へ遷移する）』に対応するボタンが実装されていない。`src/Eccube/Resource/template/default/Mypage/password_change.twig:82-87` のアクション領域は `<button type=\"submit\" class=\"c-hareruya-btn c-hareruya-btn--primary c-hareruya-btn--lg\"><span>{{ 'common.change_do'|trans }}</span>...</button>` の1つのみで他ボタン無し。完了画面 `src/Eccube/Resource/template/default/Mypage/password_change_complete.twig:23` にあるのは `<a ... href=\"{{ url('mypage') }}\">{{ 'front.mypage.button.back_to_mypage'|trans }}</a>` の『マイページへ戻る』であり TOP 遷移ではない（`password_change_complete.en.twig` も同じく `url('mypage')`）。両テンプレートに homepage/TOP へのリンクは存在しない。",
+      "note": "F06-27 の専用画面自体は新規実装済みだが、識別ID5 の『TOPへ戻る』ボタンのみ未実装。"
+    }
+  ]
+}

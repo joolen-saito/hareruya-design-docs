@@ -1,0 +1,77 @@
+{
+ "packetId": "0204_06",
+ "results": [
+  {
+   "rowId": 529,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:319-328` は `'検索ワード' => ['id' => 'search_word', ...]` の次が `'規格画像' => ['id' => 'product_class_image', ...]` で、その後 `:329 '商品カテゴリ(ID)' => [`。商品削除フラグ列は存在しない（`getStructuredImportHeaders` 内の `'id' =>` は30件のまま）。`src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:255` の `public static function productDelFlg(string $name = '商品削除フラグ')` は依然汎用定義のみで、ProductCardImportHandler / ProductCardCsv からの参照はゼロ（`grep 商品削除フラグ|productDelFlg|product_del_flg` のヒットは ProductAllCsv / CsvImportController のみ）。",
+   "note": ""
+  },
+  {
+   "rowId": 530,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Product/Csv/CardCsvController.php:271` `'description' => '1:公開 2:非公開 3:廃止',`（商品公開ステータス列）で監査時点と同一。取込許可値も `src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:118-123` `public static function statusId(...)` → `[ProductStatus::DISPLAY_SHOW, ProductStatus::DISPLAY_HIDE, ProductStatus::DISPLAY_ABOLISHED]`、`src/Eccube/Entity/Master/ProductStatus.php:39,49,61` `DISPLAY_SHOW = 1 / DISPLAY_HIDE = 2 / DISPLAY_ABOLISHED = 3` のままで、設計の 0:非公開/1:公開/2:廃止 体系は未反映。",
+   "note": ""
+  },
+  {
+   "rowId": 531,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:689-692` `$currentSaleFlg = (bool) ($productCardCondition['saleFlg'] ?? false); // セールフラグが無効な場合は販売価格を基準価格で上書き if (!$currentSaleFlg) { $sellPrice = $newStandardPrice; }` で、代入されるのは `:676` `$newStandardPrice = $this->standardPriceCalculator->calculate($discountId, $cardConditionId, $standardPrice);` の算出値。`src/Eccube/Service/Csv/Importer/Event/Util/StandardPriceCalculator.php:47-71` も NM 以外かつ割引設定ありのとき `PriceUtil::discount($baseStandardPrice, $rate)` を返す実装のままで、CSV基準価格そのままの反映にはなっていない。",
+   "note": "同種の指摘のうちグッズ側(rowId 535/538)は是正されたが、カード側は未着手。"
+  },
+  {
+   "rowId": 532,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Csv/Importer/Validator/Repository/CategoryIdValidator.php:55-57` `$validator = function ($v) { return $this->categoryMap->contains((int) $v); };` のみ。`src/Eccube/Util/CategoryMap.php:53-56` `public function contains(int $categoryId): bool { return array_key_exists($categoryId, $this->categories); }` で、`:157-184 loadCategories()` は `SELECT c.id as category_id, c.parent_category_id FROM dtb_category c` の無条件 SELECT。`src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:613-622 persistProductCategory()` も `getAncestorAndSelfCategories()` で親を補完するのみ。src/Eccube 全体で「単体カード」「予約シングル」の文字列は ProductCsvController.php:356,389 の説明文だけ、Validator/Repository 配下に subtree 限定の Validator も追加されていない。",
+   "note": ""
+  },
+  {
+   "rowId": 533,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Csv/Importer/Event/ProductCardImportHandler.php:745-756`（`// 商品規格が未登録。 insert する` 分岐）は `'price02' => $sellPrice,`(:754) `'standardPrice' => $newStandardPrice,`(:756) のままで、`$sellPrice` は `:670` `$sellPrice = PriceUtil::discount($baseSellPrice, $productCardCondition['discountRate']);`（CSV『販売価格』列由来）。基準価格での price02 上書き `if (!$currentSaleFlg) { $sellPrice = $newStandardPrice; }` は `:691-692` の update 分岐にしか存在しない。",
+   "note": "グッズ側(rowId 535)は insert 分岐に同等の上書きが追加されたが、カード側 insert 分岐は未修正。"
+  },
+  {
+   "rowId": 534,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Resource/template/admin/Product/base_csv_upload.twig:29-31` `$('#upload-form').on('submit', function() { $.changeLoading(true); });` のみで、`:73` `<button id=\"upload-button\" type=\"submit\" class=\"btn btn-ec-conversion px-5\">` は素の submit。base_csv_upload.twig / csv_product_goods.twig / csv_import_history.twig を `modal|confirm|確認` で grep してもヒット0件。",
+   "note": ""
+  },
+  {
+   "rowId": 535,
+   "status": "対応済み",
+   "evidence": "`src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:645-648` に新規INSERT分岐のコメントと上書きが追加されている: `} else { // 商品規格が未登録の場合はinsertを行う // 新規登録時はセールフラグ無効として、基準価格を販売価格として登録する $sellPrice = $standardPrice;`。その値が `:657 'price02' => $sellPrice,` および `:661 'standardPrice' => $standardPrice,` として insertProductClass に渡るため、設計の「セール外＝CSV基準価格を販売価格と基準価格の両方へ反映」を新規登録経路でも満たす。",
+   "note": ""
+  },
+  {
+   "rowId": 536,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Product/Csv/GoodsCsvController.php:261-265` `'商品公開ステータス' => ['id' => 'status_id', 'description' => '1:公開 2:非公開 3:廃止', 'required' => true,]` のままで、`src/Eccube/Entity/Master/ProductStatus.php:39,49,61` も `DISPLAY_SHOW = 1 / DISPLAY_HIDE = 2 / DISPLAY_ABOLISHED = 3`。設計の 1:非公開 / 2:公開 の定義は実装側に存在しない。",
+   "note": ""
+  },
+  {
+   "rowId": 537,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Product/Csv/GoodsCsvController.php:376-380` `'原価単価' => ['id' => 'cost_unit_price', 'description' => '出力フォーマット互換用。入力しても更新されない', 'required' => false,]`。`src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:637-639` `public static function costUnitPrice(...) { return self::dummyColumn($name, '原価単価'); }`、`src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:114-115` `/** @var CsvColumnInterface 列: 原価単価（出力フォーマット互換用。インポート時は更新しない） */` のまま。persistProductClass の insert(:648-664) / update(:594-608) 引数にも costUnitPrice / wholesalePrice は無い。",
+   "note": ""
+  },
+  {
+   "rowId": 538,
+   "status": "対応済み",
+   "evidence": "`src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:586-592` に既存規格更新時のセール中分岐が追加されている: `if ($saleFlg === 0) { $sellPrice = $standardPrice; } else { // セールフラグが有効な場合、登録済みの販売価格(price02)を維持する $sellPrice = (int) ($productClass['price02'] ?? $sellPrice); }`。これにより `:599 'price02' => $sellPrice,` で updateProductClass に渡る値がセール中は既存 price02 と同値になり、CSV『販売価格』での上書きは行われない。既存値取得元も `:738 pc.price02,` `:741 pc.sale_flg` を SELECT する findProductClass。",
+   "note": ""
+  },
+  {
+   "rowId": 539,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Repository/ProductRepository.php:1876-1893` の `INSERT INTO dtb_product_tag ( product_id, tag_id, creator_id, base_info_id, create_date )` は監査時点と同一で、`:1904` `1, // TODO: 暫定的に設定しているが、base_info_idカラムは削除予定` と固定値を渡している。`src/Eccube/Entity/ProductTag.php:30` も `use TenantTrait;` のままで、`src/Eccube/Entity/Traits/TenantTrait.php` の base_info_id JoinColumn を継承している。",
+   "note": ""
+  },
+  {
+   "rowId": 540,
+   "status": "対応済み",
+   "evidence": "`src/Eccube/Service/Csv/Importer/Event/ProductTagUpdateImportHandler.php:30-31` に `/** @var array<int, true> 当該インポートで処理済みの商品ID（重複カウント防止） */ private array $processedProductIds = [];` が追加され、`:88-91` `$isFirstForProduct = !isset($this->processedProductIds[$productId]); $this->processedProductIds[$productId] = true; return $isFirstForProduct;` で同一商品IDの2行目以降は false を返す。`:43` `onBeforeImport()` と `:51` `onAfterImport()` で状態リセット。`src/Eccube/Service/Csv/Importer/CsvImporter.php:249-251` は `$isOk = $this->handler->onReadRow($event);` が true のときのみ `$importCount++;` するため、成功件数が商品IDのユニーク数になる（メソッドDocも `:69` 「成功件数は商品IDのユニーク数とする」に更新済み）。",
+   "note": ""
+  }
+ ]
+}

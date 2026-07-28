@@ -1,0 +1,23 @@
+{
+  "packetId": "0502_02",
+  "results": [
+    {
+      "rowId": 18,
+      "status": "未対応",
+      "evidence": "現 develop でも `src/Eccube/Repository/ProductRepository.php:2218` の SELECT は `sc.id AS storageCodeId,` のままで、`src/Eccube/Repository/ProductRepository.php:2257` の ResultSetMapping も `$rsm->addScalarResult('storagecodeid', 'storageCodeId', 'integer');` と `storageCodeId` に割り当てている。Controller `src/Eccube/Controller/App/ProductController.php:232-237` は `$results = $this->productRepository->findProductClassesByUpdateDate($fromDate, $toDate);` の結果を `return $this->json(['count' => count($results), 'result' => $results], Response::HTTP_OK);` とキー変換なしでそのまま返す。スナップショット全体を `grep -rn 'strageCodeId' src/` で検索しても 0 件で、設計書側の `strageCodeId`（5箇所）に合わせるキー変換層は存在しない。",
+      "note": "設計HTMLの表記 `strageCodeId` は typo の可能性があるが、判定は設計書原文基準のため未対応とした。"
+    },
+    {
+      "rowId": 19,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductRepository.php:2252-2253` は `$rsm->addScalarResult('stock', 'stock', 'integer');` `$rsm->addScalarResult('price02', 'price02', 'integer');` と監査時点同様 integer 型のままマッピングしている（SQL は `src/Eccube/Repository/ProductRepository.php:2204-2205` の `pstock.stock AS stock,` `pc.price02 AS price02,`）。`src/Eccube/Controller/App/ProductController.php:234-237` は `$this->json(['count' => count($results), 'result' => $results], ...)` で配列をそのままJSON化しており、string キャストやResponseBuilderは介在しない。設計書は `result[].stock string 在庫数。` `result[].price02 string 販売価格列の値。`、サンプルも `\"stock\": \"5\", \"price02\": \"300\"` と文字列。",
+      "note": ""
+    },
+    {
+      "rowId": 20,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductRepository.php:2223-2224` の SQL は `pc.update_date AS productClassUpdateDate,` `p.update_date AS productUpdateDate` とDB値を素で取得し、`src/Eccube/Repository/ProductRepository.php:2262-2263` の `$rsm->addScalarResult('productclassupdatedate', 'productClassUpdateDate', 'string');` `$rsm->addScalarResult('productupdatedate', 'productUpdateDate', 'string');` で文字列化するのみ。`src/Eccube/Repository/ProductRepository.php:2266-2267` の `format('c')` は入力パラメータ（fromDate/toDate）の整形であり応答日時の整形ではない。`src/Eccube/Controller/App/ProductController.php:206-237` の `getUpdatedProductClasses()` にも `DateTimeInterface::ATOM` / `format('c')` 等による出力整形はなく、設計書の `\"productClassUpdateDate\": \"2026-06-01T10:00:00+09:00\"`（プロパティはcamelCase、日時はISO8601）というISO8601保証は依然として無い。",
+      "note": ""
+    }
+  ]
+}

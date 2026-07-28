@@ -1,0 +1,77 @@
+{
+  "packetId": "0203_05",
+  "results": [
+    {
+      "rowId": 807,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/admin/Order/edit.twig:1177-1179` に `{% if subInfo.frameFlg == constant('Eccube\\\\Entity\\\\Master\\\\MtbCardDetail::FRAME_SPECIAL') %}<span class=\"badge frame-badge\">{{ 'admin.order.edit.special_frame'|trans }}</span>{% endif %}` が追加され、受注商品サブ情報（言語/状態/Foil の直後）に「特殊フレームの場合のみ」フレーム表示が行われる。データ源も `src/Eccube/Repository/ProductClassRepository.php:3075` `'cd.frameFlg AS frameFlg',` が getSubInfosByProductClassIds の SELECT に追加済み。履歴画面側も `src/Eccube/Controller/Admin/Order/HistoryController.php:104` `'productNameAndSubInfos' => $this->buildProductNameAndSubInfos($TargetOrder),` で同テンプレートへ供給しており、M05-11 受注情報履歴でも描画される。定数は `src/Eccube/Entity/Master/MtbCardDetail.php:42` `public const FRAME_SPECIAL = 1;`。",
+      "note": "監査時点の「Admin/Order 編集・履歴表示では描画されない」は解消済み。"
+    },
+    {
+      "rowId": 808,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/OrderRepository.php:1266` `->andWhere('o.order_number >= :order_id_from')` / `:1271` `->andWhere('o.order_number <= :order_id_to')`（行番号は監査時点1174/1179からシフトのみ）。現 develop でも getOrdersForStandby の注文番号レンジ条件は `o.order_no` ではなく `o.order_number` に掛かっており、条件列は変わっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 809,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/OrderRepository.php:1264-1272` `if (!empty($conditions['order_id_from'])) { ... ->andWhere('o.order_number >= :order_id_from')->setParameter('order_id_from', $conditions['order_id_from']); } if (!empty($conditions['order_id_to'])) { ... ->andWhere('o.order_number <= :order_id_to') ... }`。`order_no` を使う別経路は grep（order_id_from/order_id_to/order_no/order_number）でも見つからず、設計が指す `dtb_order.order_no` への変更はされていない。",
+      "note": ""
+    },
+    {
+      "rowId": 810,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/ShippingStandby/index.twig:21-31` `{% block javascript %}` 内に `$('#page_count_pulldown').on('change', function () { const targetUrl = $(this).val(); if (targetUrl) { window.location.href = targetUrl; } });` が現 develop でもそのまま存在し、選択だけで自動遷移する。",
+      "note": ""
+    },
+    {
+      "rowId": 811,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/ShippingStandby/index.twig:217` `value=\"{{ path('admin_shipping_standby_page', {'page_no': 1, 'page_count': pageMax.name}) }}\"`。設計の `/{admin_route}/standby/search?page_no=1&page_count=…` 形式（admin_shipping_standby ルート）ではなく、依然として別ルート名 admin_shipping_standby_page のパスパラメータ経路を出力している。",
+      "note": ""
+    },
+    {
+      "rowId": 812,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/ShippingStandby/index.twig:313-321` は `{% elseif has_errors %}` 分岐で `{{ 'admin.common.search_invalid_condition'|trans }}` + `{{ 'admin.common.search_try_change_condition'|trans }}`、`{% else %}` 分岐で `{{ 'admin.common.search_no_result'|trans }}` + `{{ 'admin.common.search_try_change_condition'|trans }}` の2行構成のまま。設計の固定文言「検索条件に該当するデータがありませんでした。」への単一化はされていない。",
+      "note": ""
+    },
+    {
+      "rowId": 813,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/ShippingStandby/index.twig:21-31`（block javascript）に `$('#page_count_pulldown').on('change', function () { const targetUrl = $(this).val(); if (targetUrl) { window.location.href = targetUrl; } });` が残存。設計が言う「block javascript は空・change ハンドラなし」との差異は未解消。",
+      "note": "rowId 810 と同一箇所の指摘。"
+    },
+    {
+      "rowId": 814,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Order/ShippingStandbyController.php:395-397` `$subInfos = $this->productClassRepository->getSubInfosByProductClassIds([$item['productClassId']]); // 詳細情報が紐づくかでサプライ品かどうかを判定 $hasSubInfo = count($subInfos) > 0 && isset($subInfos[$item['productClassId']]);`、`:400` `if ($hasSubInfo) {`、`:426-428` `} else { $c = 'goods'; }` のまま。`grep -n GOODS_ID` を ShippingStandbyController.php / DtbShippingStandbyRepository.php に掛けてもヒット0で、Category::GOODS_ID / RESERVED_GOODS_ID によるカテゴリ定数判定は導入されていない。`src/Eccube/Repository/DtbShippingStandbyRepository.php:168` `'MIN(ct.category_id) AS categoryId',` は依然 SELECT されるのみでループ内未使用。",
+      "note": ""
+    },
+    {
+      "rowId": 815,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbShippingStandbyRepository.php:143-150` `$option1 = $this->optionRepository->findOneBy(['option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_1, ...]); $option2 = $this->optionRepository->findOneBy(['option_key' => MtbOption::ORDER_LIST_THRESHOLD_PRICE_2, ...]);` と個別 findOneBy のままで、`:214-215` `->setParameter('price1', $thresholdPrice1) ->setParameter('price2', $thresholdPrice2)` に結んでいる。設計が記す findBy 一括取得＋返却順[0]/[1]方式にはなっていない。",
+      "note": "設計側が旧仕様を記述している性質の差異だが、実装側の変更は無いため未対応。"
+    },
+    {
+      "rowId": 816,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/OrderRepository.php:1478-1479` `'SUBSTRING(c.postal_code, 1, 3) AS customer_zip01', 'SUBSTRING(c.postal_code, 4, 4) AS customer_zip02',` および `:1519-1520` `'SUBSTRING(s.postal_code, 1, 3) AS shipping_zip01', 'SUBSTRING(s.postal_code, 4, 4) AS shipping_zip02',`。generateResultCsv（`:1465` `public function generateResultCsv(array $orderIdList): array`）内に `o.postal_code` の参照は無く（`o.postal_code` は別メソッドの `:2026` のみ）、監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 818,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/ShippingStandby/edit.twig:129-130` `<button type=\"button\" id=\"labelsExport\" ...>{{ 'admin.stock.move_instruction.csv_download_invoice'|trans }}` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:5305` `admin.stock.move_instruction.csv_download_invoice: 送り状CSVダウンロード`。受注一覧側は `src/Eccube/Resource/template/admin/Order/index.twig:1160` `{{ 'admin.order.output_labels_Export'|trans }}`（messages.ja.yaml:2501 `送り状出力`）で、文言不一致は未解消。",
+      "note": "yaml の行番号は 2303→2501 / 4993→5305 へ移動しているが値は同一。"
+    },
+    {
+      "rowId": 820,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Order/OrderCsvController.php:98-100` `'配送先_住所2' => '配送先_住所2', '配送先_住所3' => '配送先_住所3', '配送先_TEL1' => '配送先_TEL1',`（CSV_HEADER）、同 `:171-173` にも同順で存在（NOT_REQUIRED_CSV_HEADER）。`src/Eccube/Repository/OrderRepository.php:1525` `'s.addr03 AS shipping_addr03',` も残存し、設計の64列定義より1列多い状態は変わっていない。",
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "packetId": "0507_01",
+  "results": [
+    {
+      "rowId": 105,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OptionController.php:38-44` は現 develop でも `$Option = $this->mtbOptionRepository->findOneBy(['option_key' => MtbOption::BULK_PURCHASE_ID]);` → `$value = $Option?->getOptionValue() ?? '';` → `return new JsonResponse($value);` のままで、未設定時に例外を投げず HTTP 200 で空文字列を返す。`BulkPurchaseIdService` は同 Controller から使用されていない（use 文なし）。",
+      "note": ""
+    },
+    {
+      "rowId": 106,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:71-76` は現 develop でも `'netBuyOrderId' => (string) $buyOrder['id'],` / `'applyDate' => $buyOrder['orderDate']->format('Y/m/d H:i:s'),` / `'freeComment' => $buyOrder['memo'] ?? '',` / `'memberName' => $buyOrder['memberName'] ?? '',` / `'netOrderStatusId' => (string) $buyOrder['buyOrderStatusId'],` のままで、integer 化・ISO8601化・null保持のいずれも行われていない。",
+      "note": ""
+    },
+    {
+      "rowId": 107,
+      "status": "未対応",
+      "evidence": "`src/Eccube/EventListener/ExceptionListener.php:76,140-143` の isAppApi() 分岐は現 develop でも `$response = new JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode);` を無条件で返し、同ファイル102行 `Response::HTTP_UNAUTHORIZED => ['認証エラー'],` により 401 でも本文ありとなる。本文なし401へ分岐する実装は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 108,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateFreeCommentAction.php:41-45` は現 develop でも `catch (\\Exception $e) { $this->entityManager->rollback(); ... throw new \\RuntimeException('システムエラーが発生しました'); }` と固定文言のまま。`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:116-118` も `catch (\\Throwable $e) { throw new InternalException('システムエラーが発生しました', $e); }` で、`src/Eccube/Exception/App/InternalException.php:27-34` が `errors: [$message]` に固定文言を入れるため元例外メッセージは返らない。",
+      "note": ""
+    },
+    {
+      "rowId": 109,
+      "status": "未対応",
+      "evidence": "`src/Eccube/EventListener/ExceptionListener.php:76-143` の isAppApi() 分岐は現 develop でも常に `new JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode)` を返す。`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:131` の `throw new NotFoundException('買取情報が見つかりません');` および同148行 `throw new UnauthenticatedException('認証エラー');` も本文付きのままで、本文なし401/404への分岐は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 110,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateStatusAction.php:111-115` は現 develop でも `catch (\\Throwable $e) { $this->entityManager->rollback(); ... throw new InternalException('システムエラーが発生しました', $e); }` のままで、`src/Eccube/Exception/App/InternalException.php:29-34` の `errors: [$message]` により errors は固定文言。previous 例外の message を errors に戻す実装はない。",
+      "note": ""
+    },
+    {
+      "rowId": 111,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:171` は現 develop でも `public function updateBuyOrder(int $id, #[MapRequestPayload] UpdateBuyOrderDto $updateBuyOrderDto): JsonResponse` と validationFailedStatusCode 未指定（`grep -rn validationFailedStatusCode src/ app/` は0件）で、Symfony既定の HTTP 422 のまま。`src/Eccube/EventListener/ExceptionListener.php:90-101` も HttpException の statusCode をそのまま尊重する。",
+      "note": ""
+    },
+    {
+      "rowId": 112,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:183-186` は現 develop でも `$BuyOrderStatus = $this->buyOrderStatusRepository->find($updateBuyOrderDto->orderStatusId); if (!$BuyOrderStatus instanceof MtbBuyOrderStatus) { throw new InvalidParameterException('正しい買取ステータスIDを入力してください'); }` のままで、設計指定の「MtbBuyOrderStatusに（値）が見つかりません。」文言は返さない。",
+      "note": ""
+    },
+    {
+      "rowId": 113,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateBuyOrderAction.php:130-138` は現 develop でも `catch (\\Throwable $e) { $this->entityManager->rollback(); $this->logger->error('Failed to update buy order assessment', ...); throw new InternalException('システムエラーが発生しました', $e); }` のままで、`src/Eccube/Exception/App/InternalException.php:30` の `errors: [$message]` により元例外メッセージは外部応答に出ない。",
+      "note": ""
+    },
+    {
+      "rowId": 114,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderController.php:173-176` は現 develop でも `if (!$BuyOrder instanceof DtbBuyOrder) { throw new NotFoundException('買取情報が見つかりません'); }`、`src/Eccube/Exception/App/NotFoundException.php:29-33` が `errors: [$message], statusCode: Response::HTTP_NOT_FOUND` を持ち、`src/Eccube/EventListener/ExceptionListener.php:140-143` が `{code, errors}` のJSON本文を返す。本文なし404にはなっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 115,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateBuyOrderDetailDto.php:32` は現 develop でも `#[Assert\\Length(max: 65535, maxMessage: '商品名は、{{ limit }}文字以下で入力してください。')]` の一方、`src/Eccube/Entity/DtbBuyOrderIndivisualInputProduct.php:35` は `#[ORM\\Column(name: 'name', type: Types::STRING, length: 255)]` のままで、`src/Eccube/Service/App/MTGBuyer/V1/Admin/BuyOrder/UpdateBuyOrderAction.php:223` の `->setName($orderDetail->name)` が255超を保存できない状態は変わっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 116,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:74` は現 develop でも `'foilFlg' => $BuyMainCard->getFoilFlg(),` とエンティティ値を素通しし、`src/Eccube/Entity/DtbBuyMainCard.php:63-64` の `#[ORM\\Column(name: 'foil_flg', type: Types::SMALLINT, nullable: true, ...)] private ?int $foilFlg = null;` と同139行 `public function getFoilFlg(): ?int` により、JSONでは 0/1/2/null の数値のまま。boolean への変換処理は追加されていない。",
+      "note": ""
+    }
+  ]
+}

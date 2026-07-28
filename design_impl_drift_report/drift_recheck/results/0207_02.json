@@ -1,0 +1,77 @@
+{
+  "packetId": "0207_02",
+  "results": [
+    {
+      "rowId": 901,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/PlayerType.php:40-97` の buildForm は smaregiId / IdentityConfirmStatus / CustomerGroup / mailMagazineFlg / firstNameEn / lastNameEn / id_expiration_date のみを add しており、`identificationFlg` の項目は依然存在しない。`src/Eccube/Entity/DtbPlayer.php:79` `#[ORM\\Column(name: 'identification_flg', ...)]` のDB列と `src/Eccube/Controller/Admin/Customer/CustomerEditController.php:281` `$Player->getIdentificationFlg(),`（既存値の素通し保存）はあるが、`src/Eccube/Resource/template/admin/Customer/edit.twig` に本人確認フラグの form_widget はなく（`grep -n \"identification\" edit.twig` のヒットは online_identification モーダルと identification_image のみ）、必須ラジオ（未確認／確認）としての入力項目は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 902,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerEditController.php:211` `$this->addSuccess('admin.common.save_complete', 'admin');` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました`。「会員情報を保存しました。」に相当する翻訳キーは messages.ja.yaml に存在しない（grep で該当なし）。",
+      "note": ""
+    },
+    {
+      "rowId": 903,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:64` `#[Route('/%eccube_admin_route%/customer/point/{id}/{type}', name: 'admin_customer_point_update', requirements: ['id' => '\\d+', 'type' => 'granted|purchase'], methods: ['POST'])]` で、設計の `/update/{type}` セグメントは無い。`src/Eccube/Resource/template/admin/Customer/point_update.twig:18` も `action=\"{{ url('admin_customer_point_update', { id : Customer.id, type: type }) }}\"` で同ルートへ送信。",
+      "note": ""
+    },
+    {
+      "rowId": 904,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:43` `name: 'admin_customer_point_select'` のままで、`src/Eccube/Resource/template/admin/Customer/edit.twig:1038` も `href=\"{{ url('admin_customer_point_select', { 'id': Customer.id}) }}\"`。`grep -rn \"admin_customer_point_type_select\" src/` は 0 件（`point_type_select` のヒットは翻訳キー `admin.customer.point_type_select: ポイント管理・履歴一覧` のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 905,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:136-146` で `$type` は `pointTypeLabelKey` と `pointUpdateFlg` の算出にのみ使われ、履歴取得条件に未使用。`src/Eccube/Resource/template/admin/Customer/point_update.twig:123` `{% for PointHistory in Customer.PointHistories %}` と全件ループのままで、`src/Eccube/Entity/Customer.php:1330-1332` の関連は `#[ORM\\OrderBy(['id' => Criteria::DESC])]` のみ（point_type_id 条件も issueDate DESC 取得もなし）。",
+      "note": ""
+    },
+    {
+      "rowId": 906,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:107` `$Customer->getPlayer()->addPoint($PointHistory->getPointChange());` と null チェックなしの呼び出しが残り、`src/Eccube/Resource/template/admin/Customer/point_update.twig:105` も `ポイント残高: {{ Customer.Player.point }}pt` を直接参照。`src/Eccube/Entity/Customer.php:1145` `public function getPlayer(): ?DtbPlayer` は依然 nullable で、同 Controller に createNotFoundException / NotFoundHttpException は 1 件も無い。",
+      "note": ""
+    },
+    {
+      "rowId": 907,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/CustomerPointType.php:85-94` `->add('note', ChoiceType::class, ['label' => 'admin.customer.point.note', 'required' => true, 'choices' => $noteChoices, ... 'constraints' => [new NotBlank()]])` のままで必須。`src/Eccube/Resource/template/admin/Customer/point_update.twig:70` にも `{{ 'admin.common.required'|trans }}` バッジが表示されており、任意扱いへの変更はない。",
+      "note": ""
+    },
+    {
+      "rowId": 908,
+      "status": "未対応",
+      "evidence": "rowId 903 と同一箇所。`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:64` の POST ルートは `/%eccube_admin_route%/customer/point/{id}/{type}`、`src/Eccube/Resource/template/admin/Customer/point_update.twig:18` の form action も `url('admin_customer_point_update', { id : Customer.id, type: type })` で、`/update/{type}` を含むルート定義は develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 909,
+      "status": "未対応",
+      "evidence": "rowId 905 と同一箇所。`src/Eccube/Resource/template/admin/Customer/point_update.twig:123` `{% for PointHistory in Customer.PointHistories %}` で会員の全ポイント履歴をループし、`src/Eccube/Entity/Customer.php:1330-1332` の OneToMany は id DESC の並び替えのみ。`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:140-146` の返却配列にも種別で絞った履歴は無く、point_type_id によるフィルタは未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 910,
+      "status": "未対応",
+      "evidence": "rowId 906 と同一箇所。`src/Eccube/Controller/Admin/Customer/CustomerPointController.php:66` `public function pointHistory(Request $request, Customer $Customer, string $type)` に Player の存在確認はなく、同:107 `$Customer->getPlayer()->addPoint(...)`、`src/Eccube/Resource/template/admin/Customer/point_update.twig:105` `{{ Customer.Player.point }}` を無防備に参照。選手情報欠落を 404 にする分岐は develop にも無い。",
+      "note": ""
+    },
+    {
+      "rowId": 911,
+      "status": "対応済み",
+      "evidence": "監査時点の TODO コメント「ECCUBE_HARERUYA-112 …」は develop から削除済み（`grep -rn \"ECCUBE_HARERUYA-112\" src/` は 0 件）。現行 `src/Eccube/Controller/Admin/Customer/CustomerPointController.php:110-117` が `$job = $this->smaregiCustomerPointEventService->registerPointAddJob($PointHistory);` → `$this->entityManager->flush();` → `$this->smaregiCustomerPointEventService->dispatchPointAddMessage($job, $PointHistory);` を実行。`src/Eccube/Service/Smaregi/SmaregiCustomerPointEventService.php:45` `registerPointAddJob()` がポイント履歴と同一トランザクションで `MessengerJob`（`SmaregiCustomerPointAddMessage`）を persist し、同:70 `dispatchPointAddMessage()` が messageBus へ dispatch。`src/Eccube/MessageHandler/SmaregiCustomerPointAddMessageHandler.php:91` `$response = $this->smaregiCustomerService->postSmaregiPoint($smaregiId, $pointChange);` でスマレジ側会員ポイントへ実反映しており、設計要求「追加するポイント履歴はスマレジ側の会員情報に連携する」を満たす。",
+      "note": "アウトボックス方式の非同期連携（smaregi_id 未設定・増減0はスキップ）。"
+    },
+    {
+      "rowId": 912,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Customer/point_update.twig:82-83` `<button class=\"btn btn-ec-conversion px-5\" type=\"submit\">{{ 'admin.common.registration'|trans }}</button>` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1633` `admin.common.registration: 登録`。「保存」表示への変更はない。",
+      "note": ""
+    }
+  ]
+}

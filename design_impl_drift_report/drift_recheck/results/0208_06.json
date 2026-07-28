@@ -1,0 +1,35 @@
+{
+  "packetId": "0208_06",
+  "results": [
+    {
+      "rowId": 1285,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/FormatController.php:96` `$this->addSuccess('admin.common.save_complete', 'admin');`（new）、同 `:154` `$this->addSuccess('admin.common.save_complete', 'admin');`（edit）、同 `:203` `$this->addSuccess('admin.common.delete_complete', 'admin');`（delete）で、設計の admin.register.complete / admin.delete.complete は使われていない。フォーム不正時は `:101-104` `return ['form' => $form->createView(), 'Format' => $Format];` のみで admin.register.failed の addError は無い（edit も `:166-169` で同様）。監査時点から変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 1286,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/FormatController.php:184-198` で `if (!$Format->getEvents()->isEmpty()) { $this->addError('admin.product.format.error.delete.registered_event', 'admin'); return $this->redirectToRoute('admin_format_list'); }` 以下、Decks は `admin.product.format.error.delete.registered_deck`、Archetypes は `admin.product.format.error.delete.registered_archetype` を用い、いずれも `admin_format_list` へリダイレクト。設計の `admin.format.error.delete.event` および Referer リダイレクトは現 develop にも存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1287,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Card/FormatController.php:200-201` は `$this->entityManager->remove($Format); $this->entityManager->flush();` のみで dtb_card_format の事前削除処理は無い。`src/Eccube/Entity/Master/MtbFormat.php:405` `#[ORM\\OneToMany(targetEntity: DtbCardFormat::class, mappedBy: 'Format')]` に cascade 指定なし（同ファイル :483 の DtbFormatBoard は `cascade: ['remove']` 付きで対比可能）。`src/Eccube/Entity/DtbCardFormat.php:55` `#[ORM\\JoinColumn(name: 'format_id', referencedColumnName: 'id')]` に onDelete 指定なし。`src/Eccube/Service/Admin/Format/FormatSaveAction.php` 内の remove は :96 の `$this->entityManager->remove($CommandFormatBoard);` のみで CardFormat 削除は無い。監査時点と同状態。",
+      "note": ""
+    },
+    {
+      "rowId": 1288,
+      "status": "未対応",
+      "evidence": "`app/template/admin/Format/format_list.twig:65` `data-message=\"{{ 'admin.common.delete_modal__message'|trans({ \"%name%\" : Format.nameJp }) }}\"`、`app/template/admin/Format/edit.twig:289` も同一キーを使用。`src/Eccube/Resource/locale/messages.ja.yaml:1790` `admin.common.delete_modal__message: \"この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？\"` であり、設計指定の `admin.confirm.delete`（同 :1792 `\"%s を削除してもよろしいですか？\"`）は Format 画面から参照されていない。監査時点から変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 1289,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/Master/MtbFormatRepository.php:119-131` `getFormatsAssignedToEvents()` は `->innerJoin('f.Events', 'e')->andWhere('e.deletedAt IS NULL')` のみで `isShownInEvent` を条件にしていない。`grep -rn is_shown_in_event|isShownInEvent src app` の結果、参照は `src/Eccube/Entity/Master/MtbFormat.php:387-398`（列定義と getter/setter）、`src/Eccube/Form/Type/Admin/FormatType.php:264-268`（管理フォーム項目）、`app/template/admin/Format/edit.twig:186-187`、`app/DoctrineMigrations/Version20260423160000.php:39`(初期データ)のみで、フロントのイベント一覧・検索候補・検索条件に利用する箇所は皆無（唯一の利用側 `src/Eccube/Controller/Block/EventDetailedSearchModalController.php:53` も上記メソッドをそのまま呼ぶだけ）。監査時点と同状態。",
+      "note": ""
+    }
+  ]
+}

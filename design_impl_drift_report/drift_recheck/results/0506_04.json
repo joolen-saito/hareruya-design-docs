@@ -1,0 +1,41 @@
+{
+  "packetId": "0506_04",
+  "results": [
+    {
+      "rowId": 99,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:231` `#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/doubleCheckMember.json', name: 'api_admin_otc_buy_order_update_double_check_member', methods: ['PUT'])]`、同239行 `$raw = $request->request->get('double_check_member_id');` と監査時点のまま。リポジトリ全体を `doublecheck` で横断検索しても `/api/otcBuyOrder/{id}/doublecheck.json` を定義するルート／設定は存在せず（ヒットは UpdateDoubleCheckMember* 系クラスとテストのみ）、設計通りのパス・パラメータでは更新できない状態が継続。",
+      "note": ""
+    },
+    {
+      "rowId": 100,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateDoubleCheckMemberAction.php:47` `$this->otcBuyOrderApproverEntityManager->saveDoubleCheckApproval($input->OtcBuyOrder, $input->DoubleCheckMember, $input->Member);` で承認者テーブル方式のまま。`src/Eccube/Service/EntityManager/OtcBuyOrderApproverEntityManager.php:29-44` は `findOneBy(['OtcBuyOrder' => ..., 'role' => DtbOtcBuyOrderApprover::ROLE_DOUBLE_CHECK])` → 無ければ `new DtbOtcBuyOrderApprover()` を persist。`src/Eccube/Entity/DtbOtcBuyOrder.php` にはダブルチェック者用カラムの追加がなく（`#[ORM\\Table(name: 'dtb_otc_buy_order')]` 配下に double 系 Column なし）、保存先は監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 101,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:231` `#[Route('/%eccube_api_v1_route%/admin/otcBuyOrder/{id}/doubleCheckMember.json', ... methods: ['PUT'])]` のまま。`%eccube_api_v1_route%` は `app/config/eccube/packages/eccube.yaml:72` `eccube_api_v1_route: '%env(ECCUBE_API_V1_ROUTE)%'` で解決されるプレフィックスで、設計の `PUT /api/otcBuyOrder/{id}/doublecheck.json` を定義するルートはリポジトリ内に存在しない（`doublecheck` の全文検索ヒットは UpdateDoubleCheckMember 関連クラスとテストのみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 102,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:239-242` `$raw = $request->request->get('double_check_member_id'); if ($raw === null) { throw new MissingRequiredParameterException('ダブルチェック者を入力してください'); }` と監査時点と同一。同メソッド内に `member_id` を読む処理はなく（249行 `$doubleCheckMemberId = (int) $raw;`）、設計のパラメータ名 `member_id` は受け付けない。",
+      "note": ""
+    },
+    {
+      "rowId": 103,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/EntityManager/OtcBuyOrderApproverEntityManager.php:29-45` `saveDoubleCheckApproval()` が `DtbOtcBuyOrderApprover` を `role = ROLE_DOUBLE_CHECK` で検索／新規作成し `setApprover()` `setAssignedBy()` `setApprovedAt(new \\DateTime())` を persist。`src/Eccube/Entity/DtbOtcBuyOrderApprover.php:25` `name: 'dtb_otc_buy_order_approver'`、同37行 `public const ROLE_DOUBLE_CHECK = 'double_check';`、49/53/56行に `approver_id` / `assigned_by_id` / `role` カラム定義が残る。`dtb_otc_buy_order` 側への新規カラム追加は develop に存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 104,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php:267` `return new JsonResponse(['code' => Response::HTTP_OK], Response::HTTP_OK);` のまま。設計の「レスポンスデータなし」に対し JSON ボディ `{\"code\":200}` を返す点は監査時点から変更なし。",
+      "note": ""
+    }
+  ]
+}

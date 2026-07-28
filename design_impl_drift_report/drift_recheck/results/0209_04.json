@@ -1,0 +1,77 @@
+{
+  "packetId": "0209_04",
+  "results": [
+    {
+      "rowId": 1027,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/Shop/CsvController.php:160` は現 develop でも `$this->addSuccess('admin.common.save_complete', 'admin');` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました`。設計文言「CSV出力を設定しました。」は src 配下に一切存在せず（grep 0件）、`messages.ja.yaml:4207` の `admin.setting.shop.csv.save.complete: CSV出力項目を保存しました。` も CsvController から参照されていない（同ファイル内 addSuccess は160行の1箇所のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 1028,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/CustomCsvType.php:33-41` の `public const CSV_TYPES = [ CsvType::CSV_TYPE_PRODUCT, CsvType::CSV_TYPE_CUSTOMER, ... ]` に依然 `CSV_TYPE_CUSTOMER`（34行）が含まれ、`CustomCsvType.php:86-89` の csv_type の `query_builder` が `->where('c.id IN (:csvIds)')->setParameter('csvIds', self::CSV_TYPES)` でそのまま選択肢化している。会員CSVを除外する処理は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1029,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Setting/Shop/custom_csv.twig:5` `{% block title %}{{ 'admin.setting.shop.custom_csv'|trans }}{% endblock %}`（messages.ja.yaml:4204 = 「カスタムCSV」）、`custom_csv.twig:6` `{% block sub_title %}{{ 'admin.setting.basic_info'|trans }}`（messages.ja.yaml:2985 = 「基本情報設定」）。出力名 placeholder は `src/Eccube/Form/Type/Admin/CustomCsvType.php:111` `'placeholder' => 'カスタムCSV名称',`。中央ボタンは `custom_csv.twig:137,144,151,158` の `operation__output`/`operation__release`/`operation__all_output`/`operation__all_release`（messages.ja.yaml:3173-3174 = 「出力」「解除」）、送信ボタンは `custom_csv.twig:227` `{{ 'admin.common.registration'|trans }}`（messages.ja.yaml:1633 = 「登録」）。設計文言「カスタムCSV出力項目設定」の翻訳キー `admin.setting.shop.custom_csv_setting`（messages.ja.yaml:4206）は当テンプレートで未使用。",
+      "note": ""
+    },
+    {
+      "rowId": 1030,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Setting/Shop/CustomerCsvUpdateAction.php:77-83` は現 develop でも `$csvIds = isset($requestData['csv_output']) ? $requestData['csv_output'] : [];` / `$Csvs = $this->csvRepository->findBy(['id' => $csvIds]);` / `foreach ($Csvs as $key => $Csv) { ... $this->csvCsvExtensionEntityManager->save($CsvCsvExtension, $CsvExtension, $Csv, $key); }` のままで、POST配列順への並べ替え（FIELD()/array_flip/usort等）は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1031,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/CustomExportCsvController.php:32-53` の `public const FUNCTIONS` は `CSV_TYPE_PRODUCT`/`CSV_TYPE_ORDER`/`CSV_TYPE_SHIPPING`/`CSV_TYPE_STOCK` の4件のみで、在庫移動・振替／在庫分割結合の queryBuilder/exporter エントリは無い。`CSV_TYPE_STOCK_MOVE`/`CSV_TYPE_STOCK_SPLIT` の src 全体 grep でも定義元 `src/Eccube/Entity/Master/CsvType.php:82,87` と選択肢定数 `src/Eccube/Form/Type/Admin/CustomCsvType.php:39,40` の4箇所しかヒットせず、出力経路の実装は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1032,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Setting/Shop/custom_csv.twig`（全262行）は `form._token`(80行)、`form.csv_type`(97行)、`form.csv_extensions`(106行)、`form.name`(115行)、`form.csv_not_output`(127行)、`form.csv_output`(166行) を固定描画するのみ。同ファイルに対する `plg` / `form_rest` / `{% for ` の grep はいずれも0件で、プラグイン拡張フィールド反復描画枠は現 develop でも存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1033,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/Shop/ShopController.php:87` は現 develop でも `$this->addSuccess('admin.common.save_complete', 'admin');`（同89行 `return $this->redirectToRoute('admin_setting_shop');`）で、`src/Eccube/Resource/locale/messages.ja.yaml:1595` `admin.common.save_complete: 保存しました`。設計指定キー `admin.shop.save.complete` と文言「基本情報を保存しました。」は `src/Eccube/Resource/locale/*.yaml` の grep で0件。",
+      "note": ""
+    },
+    {
+      "rowId": 1034,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:3` `{% set menus = ['setting', 'basic_info', 'add_system_setting'] %}`、同`:6` `{% block sub_title %}{{ 'admin.setting.basic_info'|trans }}{% endblock %}`、同`:8` `{% form_theme form '@admin/Form/bootstrap_4_horizontal_layout.html.twig' %}` のままで、設計が要求する `menus = ['data_menu', 'config_list']`（データ管理配下）にはなっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1035,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Setting/Shop/AdditionalSystemController.php:43` `#[Route('/%eccube_admin_route%/setting/shop/additional_system', name: 'admin_setting_shop_additional_system', methods: ['GET'])]` と同`:76` `#[Route('/%eccube_admin_route%/setting/shop/additional_system/update', name: 'admin_setting_shop_additional_system_update', methods: ['POST'])]` にGET/POSTが分離したままで、`src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:13` の form も `action=\"{{ path('admin_setting_shop_additional_system_update') }}\"` を指す。",
+      "note": ""
+    },
+    {
+      "rowId": 1036,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Entity/Master/MtbOption.php:42` に `SMAREGI_CONTRACT_ID = 'smaregi_contract_id'` は存在するが、`src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php` を `smaregi` で grep してもフィールド追加は `:80 ->add(Option::SMAREGI_STORE_ID, TextType::class,...)` と `:99 ->add(Option::SMAREGI_CATEGORY_ID, ...)` のみで契約IDフィールドは無い（`SMAREGI_CONTRACT_ID` の src 全体 grep も MtbOption.php:42 の1件のみ）。画面は `additional_system.twig:74,77` で `'admin.setting.shop.add_system.smaregi_store_id'|trans`（`messages.ja.yaml:4220` = 「スマレジ契約ID」）ラベルのもと `form.smaregi_store_id` を描画し、`twig:101,104` で削除対象の `form.smaregi_category_id`（messages.ja.yaml:4223）も描画。設計表にない `weekly_stock_history_error_mail_address`(twig:202,205) と `unisearch_sftp_host`(twig:250,254) も残存。",
+      "note": ""
+    },
+    {
+      "rowId": 1037,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:72-75` は現 develop でも `->add(Option::OTCBUY_ORDER_RETURN_SECONDS, IntegerType::class, ['required' => false, 'data' => $options['settings'][Option::OTCBUY_ORDER_RETURN_SECONDS] ?? Option::OTCBUY_ORDER_RETURN_SECONDS_DEFAULT,])` のみで constraints 指定が無く、`GreaterThanOrEqual(0)`/`PositiveOrZero` は付いていない。初期値15は `src/Eccube/Entity/Master/MtbOption.php:59` `OTCBUY_ORDER_RETURN_SECONDS_DEFAULT = 15` で満たされるが、0以上の検証は未実装。",
+      "note": "設計期待値のうち「整数・任意・初期値15」は満たすが「0以上」が未充足。手順どおり判断に迷う点は未対応側に倒した。"
+    },
+    {
+      "rowId": 1038,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Setting/Shop/additional_system.twig:184-188` は `<span>{{ 'admin.setting.shop.add_system.alert_check_payment_error_mail_address'|trans }}</span>`（messages.ja.yaml:4233 =「イベント決済確認エラー通知メールアドレス」）というラベルに対して `{{ form_widget(form.shopping_error_mail_address) }}` / `{{ form_errors(form.shopping_error_mail_address) }}` を描画したままで、`form.check_payment_error_mail_address` の widget は同テンプレートに存在しない（twig 内 grep 0件）。フォーム側は `src/Eccube/Form/Type/Admin/AdditionalSystemFormType.php:167,174` で `ALERT_SHOPPING_ERROR_MAIL_ADDRESS`/`ALERT_CHECK_PAYMENT_ERROR_MAIL_ADDRESS`（`src/Eccube/Entity/Master/MtbOption.php:90,92`）の両方を定義しているが、購入処理エラー側のラベル `admin.setting.shop.add_system.alert_shopping_error_mail_address`（messages.ja.yaml:4232）は画面に出ておらず、2項目を別々に表示・編集できない。",
+      "note": ""
+    }
+  ]
+}

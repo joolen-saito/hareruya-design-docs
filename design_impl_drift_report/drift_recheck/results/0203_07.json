@@ -1,0 +1,29 @@
+{
+  "packetId": "0203_07",
+  "results": [
+    {
+      "rowId": 834,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Controller/Admin/Order/WaitingTagController.php:51` `$defaultBaseInfo = $this->resolveDefaultSearchBaseInfo();` → 同ファイル `:87-91` に `/** メンバーのデフォルト検索表示店舗を返す。未設定（全店）の場合は TC東京を返す。 */ private function resolveDefaultSearchBaseInfo(): BaseInfo { return $this->getMember()->getDefaultSearchBaseInfo() ?? $this->baseInfoRepository->getMallBaseInfo(); }` が新設され、`:53` `$WaitingTag->setBaseInfo($defaultBaseInfo);` で初期表示店舗に、`:75` `$BaseInfo = $WaitingTag->getBaseInfo() ?? $defaultBaseInfo;` → `:78` `'WaitingTags' => $this->waitingTagRepository->findBy(['BaseInfo' => $BaseInfo])` で一覧絞り込み基準にも使われている。フォールバック先の `src/Eccube/Repository/BaseInfoRepository.php:165-168` `return $this->find($this->eccubeConfig->get('eccube_root_base_info_id'));` は `app/config/eccube/packages/eccube.yaml:305` `eccube_root_base_info_id: '%env(BASE_INFO_ID)%'`（`docker-compose.yml:60` `BASE_INFO_ID: 1`）で base_info id=1 を指し、`app/DoctrineMigrations/Version20251127154224.php:209,224` `'id' => 1, ... 'shop_name' => 'トーナメントセンター 東京'` すなわち TC東京。デフォルト検索表示店舗（`src/Eccube/Form/Type/Admin/MemberType.php:150-158` の `defaultSearchBaseInfo` は `required=false`/placeholder 付きで未選択＝全店）が未設定の場合に TC東京へ倒す設計期待値を満たす。監査時点の `getBaseInfo()` 起点の実装は削除済み。",
+      "note": ""
+    },
+    {
+      "rowId": 835,
+      "status": "対応済み",
+      "evidence": "削除ボタン表示条件が `src/Eccube/Resource/template/admin/Order/waiting_tag.twig:118` `{% if WaitingTag.BaseInfo is not null and app.user.isEditableShop(WaitingTag.BaseInfo) %}` に、登録ボタンが `同:83` `{% if form.BaseInfo.vars.data is not null and app.user.isEditableShop(form.BaseInfo.vars.data) %}` に是正され、監査時点の `WaitingTag.BaseInfo.id == BaseInfo.id` / `form.BaseInfo.vars.value == BaseInfo.id` 比較は消えている。判定本体は `src/Eccube/Entity/Member.php:78-91` `public function isEditableShop(BaseInfo $TargetBaseInfo): bool { ... foreach ($this->getMemberBaseInfos() as $MemberBaseInfo) { $this->editableShopIds[] = ...; } return in_array($TargetBaseInfo->getId(), $this->editableShopIds, true); }`。さらにサーバ側でも `src/Eccube/Controller/Admin/Order/WaitingTagController.php:168` `if ($targetBaseInfo === null || !$this->getMember()->isEditableShop($targetBaseInfo)) { $this->addError('admin.order.waiting_tag.not_editable_store', 'admin'); return $this->redirectToRoute('admin_order_waiting_tag'); }`（DELETE）と `同:122`（登録）で編集権限を再検証しており、`src/Eccube/Resource/locale/messages.ja.yaml:5837` `admin.order.waiting_tag.not_editable_store: この店舗の店頭注文番号札を編集する権限がありません。` も追加済み。",
+      "note": "設計の「編集権限を保持している店舗」＝ Member の MemberBaseInfos（編集可能店舗）で判定される形になり、表示条件・サーバ側検証の双方を充足。"
+    },
+    {
+      "rowId": 836,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Order/waiting_tag.twig:121-124` は今も `data-bs-toggle=\"modal\" data-bs-target=\"#DeleteModal\"` の Bootstrap モーダルで、本文は `:123` `data-message=\"{{ 'admin.common.delete_modal__message'|trans({ \"%name%\" : WaitingTag.waiting_tag }) }}\"`（`src/Eccube/Resource/locale/messages.ja.yaml:1790` `admin.common.delete_modal__message: \"この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？\"`）。確定ボタンも `同twig:156-158` `<a class=\"btn btn-ec-delete\" ... data-method=\"delete\">{{ 'admin.common.delete'|trans }}</a>`（`messages.ja.yaml:1641` `admin.common.delete: 削除`）のままで、設計の「[店頭注文番号]を を削除してもよろしいですか？」「OK」には変わっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 889,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/ShippingStandby/index.twig:21-32` に `{% block javascript %}<script nonce=\"{{ csp_nonce }}\">$(function() { $('#page_count_pulldown').on('change',  function () { const targetUrl = $(this).val(); if (targetUrl) { window.location.href = targetUrl; } }); });</script>{% endblock %}` が現 develop でもそのまま存在し、表示件数プルダウンの change で自動遷移する。設計の「当 index.twig の javascript ブロックは空／プルダウンだけでは自動遷移しない」との差分は解消していない。",
+      "note": ""
+    }
+  ]
+}

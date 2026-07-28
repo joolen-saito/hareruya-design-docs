@@ -1,0 +1,77 @@
+{
+  "packetId": "0209_01",
+  "results": [
+    {
+      "rowId": 991,
+      "status": "未対応",
+      "evidence": "現 develop でも `src/Eccube/Form/Type/Admin/ShopMasterType.php:57-58` `->add('company_name', TextType::class, ['required' => true, 'constraints' => [new NotBlank(),` 、`:75-78` shop_name_eng も `'required' => true` + `new NotBlank()`、`:88-90` `->add('postal_code', PostalType::class, ['required' => true,])`、`:91-92` address `'required' => true`、`:110-112` `->add('phone_number', PhoneNumberType::class, ['required' => true,])` のまま。company_kana(`:301`)/shop_kana(`:317`)はサーバ側 `'required' => false` だが `src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:48-49` `{{ 'admin.common.company_name_kana'|trans }}` の直後に `<span class=\"badge bg-primary ms-1\">{{ 'admin.common.required'|trans }}</span>`、同 `:68-69` shop_kana、`:78-79` shop_name_en も同じ必須バッジ付きで変わらず。分割入力についても `src/Eccube/Form/Type/PostalType.php` は `getParent(): TelType::class` の単一入力型（`'attr' => ['class' => 'p-postal-code', 'placeholder' => 'admin.common.postal_code_sample']`）で前後2欄の子フィールドを持たず、`src/Eccube/Form/Type/PhoneNumberType.php` も同じく TelType 継承の単一入力で3分割ではない。twig 側も `shop_master.twig:96` `{{ form_widget(form.postal_code) }}`、`:132` `{{ form_widget(form.phone_number) }}` と単一 widget 描画のまま。監査時点と実質同一。",
+      "note": ""
+    },
+    {
+      "rowId": 992,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Entity/BaseInfo.php:1148-1149` `#[ORM\\Column(name: 'fax_number', type: Types::STRING, length: 14, nullable: true, options: ['comment' => 'FAX番号'])] private ?string $fax_number = null;` は現 develop にも存在するが、`ShopMasterType.php` 全体を grep しても `fax_number`/`FaxNumber` の add は0件、`src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig` にも `fax` を含む行は0件、`src/Eccube/Controller/Admin/Setting/Shop/ShopController.php` にも該当なし。locale は `src/Eccube/Resource/locale/messages.ja.yaml:1826` `admin.common.fax_number: FAX番号` の定義が残るのみで、M10-01画面から参照されていない。3分割任意入力・部分入力禁止検証の実装も不在。",
+      "note": ""
+    },
+    {
+      "rowId": 993,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/ShopMasterType.php:270-277` は依然 `->add('google_map_url', TextType::class, ['required' => false, 'constraints' => [new Length(['max' => $this->eccubeConfig['eccube_stext_len']]),],])` で、地図設定は Google Map 埋め込みURL1項目のまま。`src/Eccube/Resource/template/admin/Setting/Shop/shop_master.twig:403` `<span>{{ 'admin.setting.shop.shop.google_map_url'|trans }}</span>` / `:406` `{{ form_widget(form.google_map_url) }}`、`src/Eccube/Entity/BaseInfo.php:1578` `#[ORM\\Column(name: 'google_map_url', ... 'comment' => 'Google map埋め込みURL')]` も同じ。src/Eccube と app/config 配下を `latitude|longitude|緯度|経度` で横断検索してもヒット0件で、緯度・経度の個別入力・±90/±180・小数6桁検証は新規追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 994,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/ShopMasterType.php:157-164` `->add('good_traded', TextareaType::class, ['required' => false, 'constraints' => [new Length(['max' => $this->eccubeConfig['eccube_ltext_len']]),],])`、`:165-172` `message` も同じく `eccube_ltext_len` 参照のままで lltext_len 化されていない。`app/config/eccube/packages/eccube.yaml:113` `eccube_lltext_len: 99999` / `:114` `eccube_ltext_len: 3000` の値も監査時と同じ（lltext_len は当該2項目で未使用）。`src/Eccube/Entity/BaseInfo.php:102` `#[ORM\\Column(name: 'good_traded', type: Types::STRING, length: 4000, ...)]` / `:105` `message` も length 4000 のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 995,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/ShopMasterType.php:246-248` `->add('delivery_free_amount', PriceType::class, ['required' => false,])` で個別の Length(price_len)/整数 Regex は付いていない。`src/Eccube/Form/Type/PriceType.php:42` `$max = $this->eccubeConfig['eccube_price_max'];`、`:58` `$constraints[] = new Range(['min' => 0, 'max' => $max]);` と Range のみで、8桁 Length も整数 Regex もない。`app/config/eccube/packages/eccube.yaml:126` `eccube_price_len: 8` は当該項目で未使用、`:185` `eccube_price_max: 2147483647`。`src/Eccube/Entity/BaseInfo.php:108` `#[ORM\\Column(name: 'delivery_free_amount', type: Types::DECIMAL, precision: 12, scale: 2, ...)]` も変更なし。",
+      "note": ""
+    },
+    {
+      "rowId": 996,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/ShopMasterType.php:258-269` は `->add('option_product_delivery_fee', ToggleSwitchType::class)` `->add('option_multiple_shipping', ToggleSwitchType::class)` `->add('option_customer_activate', ToggleSwitchType::class)` `->add('option_mypage_order_status_display', ToggleSwitchType::class)` `->add('option_remember_me', ToggleSwitchType::class)` `->add('option_favorite_product', ToggleSwitchType::class)` `->add('option_nostock_hidden', ToggleSwitchType::class)` と7項目すべて ToggleSwitchType のまま。`src/Eccube/Form/Type/ToggleSwitchType.php` は `getParent(): string { return CheckboxType::class; }` でチェックボックス系トグルであり、expanded な ChoiceType(ラジオ)ではない。自動ログインの既定も `src/Eccube/Entity/BaseInfo.php:135-136` `#[ORM\\Column(name: 'option_remember_me', type: Types::BOOLEAN, options: ['default' => true])] private ?bool $option_remember_me = true;`、`app/DoctrineMigrations/Version20251127154224.php:238` `'option_remember_me' => '1',` と有効のままで、設計の既定0＝無効に是正されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 997,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Setting/Shop/tradelaw.twig:15` `{% block title %}{{ 'admin.setting.shop.tradelaw_setting'|trans }}{% endblock %}`、`:16` `{% block sub_title %}{{ 'admin.setting.basic_info'|trans }}{% endblock %}`、`:28` カードヘッダも `<span>{{ 'admin.setting.shop.tradelaw_setting'|trans }}</span>` のまま。翻訳値も `src/Eccube/Resource/locale/messages.ja.yaml:2988` `admin.setting.shop.tradelaw_setting: 特定商取引法設定` / `:2985` `admin.setting.basic_info: 基本情報設定` で、設計の「ショップ設定」「特定商取引法管理」「特定商取引法」いずれとも一致しない（行番号のみ監査時からシフト）。",
+      "note": "messages.ja.yaml の行番号は監査時 2780/2783 → 現 develop 2988/2985 にシフトしているが文言は同一。"
+    },
+    {
+      "rowId": 998,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Setting/Shop/tradelaw.twig:68-69` `<button class=\"btn btn-ec-conversion px-5\" type=\"submit\">{{ 'admin.common.save'|trans }}</button>` のままで、`src/Eccube/Resource/locale/messages.ja.yaml:1631` `admin.common.save: 保存`。設計要求の「登録」を表示する当画面専用の文言・翻訳キーは現 develop にも存在しない。",
+      "note": "messages.ja.yaml の行番号は監査時 1441 → 現 develop 1631 にシフトしているが値は「保存」で同一。"
+    },
+    {
+      "rowId": 999,
+      "status": "未対応",
+      "evidence": "管理画面は `src/Eccube/Controller/Admin/Setting/Shop/TradeLawController.php:53` `'entry_type' => TradeLawMallType::class,` を使用し、`src/Eccube/Form/Type/Admin/TradeLawMallType.php:39` `->add('name', TextType::class, ...)` / `:47` `->add('description', TextareaType::class, ...)` の2項目のみで sort_no・display_order_screen を入力対象にしていない。管理Twig `src/Eccube/Resource/template/admin/Setting/Shop/tradelaw.twig:44` `{{ form_widget(TradeLaw.name) }}` / `:49` `{{ form_widget(TradeLaw.description) }}` も2項目のみ。フロント `src/Eccube/Resource/template/default/Help/tradelaw.twig:21` `{% for tradelaw in tradelaws|filter(t => t.name and t.description) %}` は display_order_screen を参照しない。`display_order_screen` の横断検索でヒットするのは `src/Eccube/Entity/TradeLaw.php:44,47,113,120`、`src/Eccube/Service/Enterprise/Tenant/CreateProcessor/GenerateInitialTenantTradeLaw.php:62,83`、CSV定義のみ。`src/Eccube/Form/Type/Admin/TradeLawType.php:58` に `->add('displayOrderScreen', ToggleSwitchType::class, ...)` は存在するが、この FormType はどのコントローラからも参照されておらず（src 配下の grep で TradeLawType の使用箇所0件）、M10-02画面には接続されていない。",
+      "note": "TradeLawType.php は displayOrderScreen を持つが未使用クラスのため設計要求の充足には至らない。"
+    },
+    {
+      "rowId": 1000,
+      "status": "未対応",
+      "evidence": "`app/config/eccube/packages/eccube_nav.yaml:217-220` `shop_agreement: name: admin.setting.shop.agreement_setting / url: admin_content_page_edit / param: { id: !php/const Eccube\\Entity\\Page::AGREEMENT_PAGE_ID, return: agreement }`、`src/Eccube/Entity/Page.php:46` `public const AGREEMENT_PAGE_ID = 19;` と導線・対象ページIDは監査時のまま存在する一方、`src/Eccube/Resource/template/admin/Content/page_edit.twig:56-58` `{% if not is_user_data_page %} editor.setReadOnly(true); editor.container.style.opacity = '0.7';` が現 develop にも残っており、`src/Eccube/Controller/Admin/Content/PageController.php:113` `$isUserDataPage = !($id && $Page->getEditType() >= Page::EDIT_TYPE_DEFAULT);` により既定ページ help_agreement では false となるため本文エディタは読み取り専用のまま。利用者が本文を入力して登録する要求は依然未充足。",
+      "note": ""
+    },
+    {
+      "rowId": 1001,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Content/page_edit.twig:18-21` `{% elseif app.request.query.get('return') == 'agreement' %} {% set menus = ['setting', 'basic_info', 'shop_agreement'] %} {% set page_title = 'admin.setting.shop.agreement_setting'|trans %}` の分岐は現 develop も query 依存のまま。フォーム action は `page_edit.twig:94-95` `action=\"{%- if page_id is not null %}{{ url('admin_content_page_edit', {id: page_id}) }}{% else %}{{ url('admin_content_page_new') }}{% endif -%}?locale={{ locale }}\"` で `return=agreement` を保持せず、保存後リダイレクトも `src/Eccube/Controller/Admin/Content/PageController.php:315` `return $this->redirectToRoute('admin_content_page_edit', ['id' => $Page->getId(), 'locale' => $locale]);` で `return` を引き継がない。`return` を維持する別ルート・別リダイレクトは現 develop にも存在せず、POST後は content/page 側のメニュー・タイトル分岐へ落ちる。",
+      "note": ""
+    },
+    {
+      "rowId": 1002,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Setting/Shop/payment_edit.twig:196-197` `<span>{{ 'admin.setting.shop.payment.logo_image'|trans }}</span><i class=\"fa fa-question-circle fa-lg ms-1\"></i>` `<br>{{ 'admin.setting.shop.payment.logo_image_size'|trans }}` のままで、翻訳値は `src/Eccube/Resource/locale/messages.ja.yaml:3103` `admin.setting.shop.payment.logo_image: ロゴ画像` / `:3104` `admin.setting.shop.payment.logo_image_size: \"推奨サイズ : 500px × 100px\"`。設計の現行踏襲文言「620px以上推奨」への修正はなく、twig は当該翻訳キー1つのみを出力しており動的な620px表示経路も存在しない。",
+      "note": "messages.ja.yaml の行番号は監査時 3054/3055 → 現 develop 3103/3104 にシフトしているが文言は同一。"
+    }
+  ]
+}

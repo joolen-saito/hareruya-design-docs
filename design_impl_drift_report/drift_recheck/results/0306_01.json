@@ -1,0 +1,77 @@
+{
+  "packetId": "0306_01",
+  "results": [
+    {
+      "rowId": 373,
+      "status": "未対応",
+      "evidence": "現develop でも `src/Eccube/Resource/template/default/Entry/index.twig:284` `'data-validation': 'required,email,match'` / `:288` `'data-error-match': 'front.entry.error.email_mismatch'|trans` が残存し、`src/Eccube/Resource/locale/messages.ja.yaml:481` `front.entry.error.email_mismatch: メールアドレスが一致しません` のまま。設計要求の「同じメールアドレスを入力してください。」は `src/Eccube/Resource/locale/validators.ja.yaml:55` `form_error.same_email: 同じメールアドレスを入力してください。` にサーバ側のみ存在し、クライアント側初出文言は監査時点から変更なし。",
+      "note": ""
+    },
+    {
+      "rowId": 374,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Entry/index.twig:335` `'data-validation': 'required,minlength,match'` / `:340` `'data-error-match': 'front.entry.error.password_mismatch'|trans` が現develop でも残存し、`src/Eccube/Resource/locale/messages.ja.yaml:485` `front.entry.error.password_mismatch: パスワードが一致しません` のまま。設計文言「同じパスワードを入力してください。」は `src/Eccube/Resource/locale/validators.ja.yaml:54` `form_error.same_password:` のサーバ側のみで、クライアント側初出文言は監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 375,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/PlayerService.php:28-31` に TODO コメント `// ・カラム自体にユニーク制約はついていない` `// ・サービスクラスの中でユニークチェックを行っているが、実際にinsertが実行されるのは少し後のController内で行われるため、厳密には重複が発生する可能性がゼロではない` がそのまま残存。`:37-42` も `do { $deckUserId = StringUtil::random($deckUserIdLength); $existingPlayer = $this->playerRepository->findOneBy(['deckUserId' => $deckUserId]); } while ($existingPlayer);` のベストエフォート照合のまま。`src/Eccube/Entity/DtbPlayer.php:114` `#[ORM\\Column(name: 'deck_user_id', type: Types::STRING, length: 8, nullable: true, options: ['comment' => 'デッキユーザーID'])]` に `unique: true` は無く、クラスレベルの UniqueConstraint も無し。`app/DoctrineMigrations` 配下を `deck_user_id` で grep しても 0 件でユニークインデックス追加も無い。",
+      "note": ""
+    },
+    {
+      "rowId": 376,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/EntryController.php:297-304` で `$this->entityManager->getConnection()->executeQuery('UPDATE registration_view SET customer_status_id = :status_id WHERE secret_key = :secret_key', ['status_id' => CustomerStatus::REGULAR, ...])` を明示トランザクション外で先行実行し、`:306` `log_info('本会員登録完了');` の後で `:317` `$ActivatedCustomer = $this->linkSmaregiCustomer($secret_key);` を呼ぶ順序が監査時点と同じ。連携失敗時は `:399` `throw new EntryActivateFailedException('スマレジ会員連携に失敗しました');` を投げるのみで customer_status のロールバックは無く、`:408` のログも `'スマレジ会員連携処理で例外が発生しました(本会員化は完了済み)'`、`:425` も `'スマレジ会員連携に失敗しました(本会員化は完了済み)'` と本会員化確定済みを明記。確定タイミング・ロールバック挙動は是正されていない。",
+      "note": "linkSmaregiCustomer 内に悲観ロック(PESSIMISTIC_WRITE)による二重登録防止は追加されているが、これは並行実行対策であり、設計要求の『連携成功時のみ本会員化を確定』『失敗時は本会員化前のまま再試行可能』とは別論点。"
+    },
+    {
+      "rowId": 377,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/EntryController.php:363-367` に `// 既に連携済みなら何もしない (冪等).` `$smaregiId = $Player->getSmaregiId(); if ($smaregiId !== null && $smaregiId !== '') { return $Customer; }` が現develop でも残存し、そのまま `:319` `$this->mailService->sendCustomerCompleteMail($Customer);` / `:329` `$this->security->login($ActivatedCustomer, 'form_login', 'customer');` へ進み本登録完了画面を表示する。『完了済みです。／既に会員登録が完了されております。』を出す分岐は `:288-292` の `isAlreadyActivatedBySecretKey`→`EntryAlreadyActivatedException`（customer_status 判定）のみで、スマレジID保有による判定・画面出力は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 378,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:442-444` が `front.entry.complete_message__activated: |` / `  会員登録が完了いたしました。` のままで設計の『本登録が完了いたしました。』と相違。`src/Eccube/Resource/locale/messages.en.yaml:316` `front.entry.complete_title: Sign-up completed`（設計『Main registration complete』と不一致）、`:323-325` `front.entry.complete_message__activated: |` / `  Your registration is now complete.`（設計『Main registration is completed.』と不一致）も監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 379,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:451` `front.entry.activate_error.forbidden.message: このURLは無効です。`（設計『お探しのページはアクセスができない状況にあるか、移動もしくは削除された可能性があります。』と不一致）、`:455` `front.entry.activate_error.activate_failed.message: 時間を置いて再度お試しいただくか、お問い合わせください。`（設計『大変お手数ですが、サイト管理者までご連絡ください。』と不一致）がいずれも現develop で未修正。`:452-453` の already_activated は設計一致のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 380,
+      "status": "対応済み",
+      "evidence": "監査時点の `src/Eccube/EventListener/LoginPasswordLengthCheckListener.php` は現develop に存在せず（`src/Eccube/EventListener/` 配下に無し、`password_length_required` を参照する PHP は grep 0 件）、ログイン自体のブロックは撤去済み。代わりに (1) フラグ設定: `src/Eccube/Security/Http/Authentication/EccubeAuthenticationSuccessHandler.php:89-94` `$password = (string) ($request->request->get('login_pass') ?? ''); $isShort = ... mb_strlen($password) < $this->eccubeConfig['eccube_password_min_len']; $isPatternViolation = ... !preg_match($this->eccubeConfig['eccube_password_pattern'], $password); if ($isShort || $isPatternViolation) { $request->getSession()->set(PasswordPolicyListener::SESSION_KEY, true); }` によりログイン成功後にセッションフラグを立てる。(2) 強制遷移: `src/Eccube/EventListener/PasswordPolicyListener.php:33` `#[AsEventListener(event: KernelEvents::REQUEST, method: 'onKernelRequest', priority: 6)]` と `:91-94` `if ($request->getSession()->get(self::SESSION_KEY)) { $event->setResponse(new RedirectResponse($this->router->generate('mypage_password_change'))); }`、除外は `:43-48` `ROUTE_EXCLUDE = ['mypage_password_change', 'mypage_password_change_complete', 'mypage_login', 'mypage_logout']` のみで、その他のログイン必須ページは専用パスワード変更画面へ強制遷移する。(3) フラグ解除: `src/Eccube/Controller/Front/Mypage/PasswordChangeController.php:71-73` `$request->getSession()->remove(PasswordPolicyListener::SESSION_KEY); return $this->redirectToRoute('mypage_password_change_complete');`。専用画面自体も `:51` `#[Route(path: '/mypage/password_change', name: 'mypage_password_change', ...)]` + `Mypage/password_change.twig`、`:55-57` `if (!$request->getSession()->get(PasswordPolicyListener::SESSION_KEY)) { return $this->redirectToRoute('mypage'); }` で新設されており、設計の『ログイン成立→フラグ→専用変更画面へ強制遷移→変更で解除』を全て満たす。",
+      "note": "validators.ja.yaml:29 の error.customer_login.password_length_required は未使用の残存キー（参照する PHP は無し）。"
+    },
+    {
+      "rowId": 381,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/login.twig:49` `{{ form_widget(form.login_email, ...) }}`、`:61` `{{ form_widget(form.login_pass, ...) }}`、`:87` `<button type=\"submit\" ...>` が制限状態に関わらず常時描画され、制限中に入力欄を隠す `{% if %}` 分岐は存在しない。エラー表示は `:79` `<div class=\"p-hareruya-login__form-error\"{% if 'Too many failed login attempts' in error.messageKey %} data-error-code=\"too-many-login-attempts\"{% endif %}>` の追加ボックスのみ。`src/Eccube/Controller/Front/Mypage/MypageController.php:86-119` の `login()` も `return ['error' => $utils->getLastAuthenticationError(), 'form' => $form->createView()];` を返すだけで、制限日時を評価して入力欄を抑止する処理は無い。監査時点と実質同一。",
+      "note": ""
+    },
+    {
+      "rowId": 382,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/Mypage/login.twig` は `:31` `{{ 'front.mypage.login.member_section_title'|trans }}`（会員の方）と `:103` `{{ 'front.mypage.login.guest_section_title'|trans }}`（初めてご利用の方）の2セクションのみで、旧サイト会員向けパスワード再設定案内ブロックは無い。現develop の `src/` および `html/` 配下を `旧サイト` / `再設定のお願い` / `システムの移行` で grep しても 0 件であり、翻訳キー・文言とも新規追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 383,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/ForgotController.php:206-207` `$Customer = $this->registerCustomerViewRepository->getRegularCustomerByResetKey($reset_key, $form->get('login_email')->getData());` が現develop でも残存し、`src/Eccube/Repository/Views/RegisterCustomerViewRepository.php:143-155` の `getRegularCustomerByResetKey(string $resetKey, ?string $email = null)` は `if ($email) { $qb->andWhere('c.email = :email')->setParameter('email', $email); }` でメール完全一致を付加する。不一致時は `ForgotController.php:232` `$error = trans('front.forgot.reset_not_found');`（`messages.ja.yaml:508` `入力内容を確認してください。`）で更新されない。設計要求の『会員特定はリセットキー単独』には未対応。",
+      "note": ""
+    },
+    {
+      "rowId": 384,
+      "status": "部分対応",
+      "evidence": "専用の更新完了画面が新設され、`src/Eccube/Controller/Front/ForgotController.php:229` `return $this->redirectToRoute('forgot_resetcomplete');`（監査時点の `addFlash('password_reset_complete', ...)` + `redirectToRoute('mypage_login')` は削除済み）、`:144-145` `#[Route(path: '/forgot/resetcomplete', name: 'forgot_resetcomplete', methods: ['GET'])]` `#[Template(template: 'Forgot/reset_complete.twig')]` で `src/Eccube/Resource/template/default/Forgot/reset_complete.twig` を表示する。同 twig `:17` `<h1 class=\"c-hareruya-heading--lev1\">{{ 'front.forgot.reset_title'|trans }}</h1>` = `messages.ja.yaml:505` `front.forgot.reset_title: パスワード再設定`（設計見出し一致）、`:19` `{{ 'front.forgot.reset_complete'|trans }}` = `messages.ja.yaml:506` `front.forgot.reset_complete: パスワードを変更しました。`（設計本文一致）、`:22` `<a ... href=\"{{ url('homepage') }}\">{{ 'front.forgot.complete_button_top'|trans }}</a>` でECTOP遷移も一致。ただしボタン文言は `messages.ja.yaml:504` `front.forgot.complete_button_top: ホームへ戻る` で、設計書 sheet-6 の項番4-2『戻る』ボタン（表示要素節『更新完了画面は見出し「パスワード再設定」、「パスワードを変更しました。」、「戻る」。』）と文言が相違するため一部未充足。",
+      "note": "login.twig:73-75 の `app.session.flashbag.get('password_reset_complete')` 表示は残存するが、ForgotController 側で当該フラッシュを設定する箇所は無くなっており死コード。"
+    }
+  ]
+}

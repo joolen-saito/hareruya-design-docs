@@ -1,0 +1,29 @@
+{
+  "packetId": "0507_02",
+  "results": [
+    {
+      "rowId": 117,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyMainCardController.php:47-57` に監査時点と同一の `$buyOrderIds = array_filter(explode(',', $ids), static fn (string $id) => preg_match('/^\\d+$/', trim($id)) === 1);` と `if (empty($buyOrderIds)) { return new JsonResponse([]); }` が現 develop でもそのまま残存。設計の「形式・件数の検証は行わない」に反する数値フィルタは削除されていない。`DtbBuyMainCardRepository::findByBuyOrderIdsWithApplicationPrices` へ渡す前段でのフィルタも同じ位置のまま、別サービス・別パーサへの委譲も存在しない。",
+      "note": "同ファイル 42-45 行のコメント「旧システム互換目的：…空配列を返す」も監査時点から変更なし。"
+    },
+    {
+      "rowId": 118,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:37` は現 develop でも `#[Route(path: '/%eccube_api_v1_route%/admin/buyOrderIndivisualInputProduct.json', name: 'api_admin_buy_order_indivisual_input_product', methods: ['POST'])]` のまま。`app/config/eccube/packages/eccube.yaml:6` `env(ECCUBE_API_V1_ROUTE): 'api/v1'` および同 `:72` `eccube_api_v1_route: '%env(ECCUBE_API_V1_ROUTE)%'` により実効URLは `/api/v1/admin/buyOrderIndivisualInputProduct.json`。設計の `/api/admin/...` に一致する別ルート定義・エイリアスは src/app 配下の横断検索でも見つからない。",
+      "note": ""
+    },
+    {
+      "rowId": 119,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:40-45` に `$ids = $request->request->get('ids');` と `if ($ids === null || $ids === '') { return new JsonResponse([]); }` が現 develop でも存続し、同 `:54-57` で有効ID空時も `return new JsonResponse([]);`。必須チェック（400/バリデーション）は追加されておらず、42行のコメント「400エラーで返すとハンドリングできないため空配列を返す」も監査時点のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 120,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyOrderIndivisualInputProductController.php:26` の防御は `#[IsGranted('IS_AUTHENTICATED_FULLY')]` のみで、IP判定は現 develop でも当該ルートに存在しない。`app/config/eccube/packages/security.yaml:36` は `access_token:`（トークン認証）のみで IP 関連キーは 0 件。既存の IP 判定は `src/Eccube/EventListener/IpAddrListener.php:38-67`（`eccube_front_allow_hosts`/`eccube_admin_allow_hosts` による全体フィルタで API 個別の制限ではない、監査時点から変更なし）と `src/Eccube/Event/IpCheckSubscriber.php:39` の `SecurityEvents::INTERACTIVE_LOGIN`（Customer ログイン時のみ、API リクエストでは発火しない）のみ。",
+      "note": "IpAddrListener は EC-CUBE 標準のグローバル allow/deny リストであり、本 API 入口向けに新規追加された IP 制限ではない。判断に迷う点は手順どおり未対応に倒した。"
+    }
+  ]
+}

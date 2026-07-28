@@ -1,0 +1,77 @@
+{
+  "packetId": "0214_04",
+  "results": [
+    {
+      "rowId": 1166,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchEntryType.php:63-169` のフィールドは event_name / base_info / entry_status / payment / payment_no / player_name / start_date_from / start_date_to / is_deck_registered / event_detail_id / searchMode のみで DCIナンバー欄は無い。`src/Eccube/Resource/template/admin/Event/Entry/index.twig:272-281` も payment_no・player_name のみ描画。src/ 全体で `dci_no` の該当は `src/Eccube/Entity/DtbDeck.php:48` `#[ORM\\Column(name: 'dci_no', ...)]`、`src/Eccube/Entity/DtbPlayer.php:48`、`src/Eccube/Service/App/Article/ArticleResponseBuilder.php:370` `'dci_no' => $Deck->getDciNo(),`、`src/Eccube/Repository/DtbDeckRepository.php:88` の除去コメントのみで検索条件への接続は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 1167,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchEntryType.php:141-151` にあるのは `->add('is_deck_registered', ChoiceType::class, ...)` のみで『確認済』選択欄は無い。src/ 全体の `confirm_flg`/`confirmFlg` の出現は `src/Eccube/Entity/DtbEntryPlayer.php:47-70`（カラム定義とアクセサ）、`src/Eccube/Service/EntityManager/EntryPlayerEntityManager.php:34,41`、`src/Eccube/Service/Admin/Event/EntryRegistrationStoreAction.php:67`、`src/Eccube/Service/Front/Event/EventEntryRegisterAction.php:87` のみで、`DtbEventEntryRepository.php`・`DtbDeckRepository.php` の検索クエリには一切現れない。",
+      "note": ""
+    },
+    {
+      "rowId": 1168,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryController.php:161-163` `$order = strtoupper(...); if ($order !== 'ASC' && $order !== 'DESC') { $order = 'DESC'; }`、同`:225-227` にも同一処理があり、監査時点と同じく不正値を DESC に丸めるのみ。`admin.error.sort` は `src/Eccube/Controller/Admin/Event/` 配下に一切出現せず（grep 0件）、フラッシュ表示も初期表示戻しも実装されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1169,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchEntryType.php:98-105` は `->add('payment_no', TextType::class, ['label' => 'admin.event.payment_no', 'required' => false,])` / `->add('player_name', TextType::class, ['label' => 'admin.event.player_name', 'required' => false,])` で Length 制約も `attr.maxlength` も無い。`src/Eccube/Resource/template/admin/Event/Entry/index.twig:273,280` も `{{ form_widget(searchForm.payment_no) }}` / `{{ form_widget(searchForm.player_name) }}` のままで maxlength 付与なし（twig 内に maxlength の記述は 0 件）。",
+      "note": "設計要求の maxlength 64/255 は未実装のまま。"
+    },
+    {
+      "rowId": 1170,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchEntryType.php:152-158` は `'constraints' => [new Length(['max' => $this->eccubeConfig['eccube_event_detail_id_max_len']])]` のみで Regex による数字限定検証は無い。非数字はフォームエラーにならず `src/Eccube/Repository/DtbEventEntryRepository.php:125` `if (ctype_digit($eventDetailIdTrimmed)) {`（および `src/Eccube/Repository/DtbDeckRepository.php:785` の同型判定）が黙って条件から除外する挙動のままで、監査時点から変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 1171,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryController.php:341` `#[Route(path: '/%eccube_admin_route%/event/entry/bulk_update', name: 'admin_event_entry_bulk_update', methods: ['POST'])]` のままで、設計の `/{admin_route}/entry/bulkupdate` は存在しない（src/ 全体で `entry/bulkupdate`・`admin_entry_bulk_update` は 0 件）。event セグメントと bulk_update 表記の差異が残存。",
+      "note": ""
+    },
+    {
+      "rowId": 1172,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryController.php:342-355` の `bulkUpdateEntryStatus(Request $request): JsonResponse` は `$form->handleRequest($request);` 後に `if (!$form->isSubmitted() || !$form->isValid())` を見るのみで、非同期判定が無い。EntryController 全体で `isXmlHttpRequest` / `X-Requested-With` は grep 0 件のため、通常 POST でも `:357` 以降の ID 取得・更新処理へ進む。",
+      "note": ""
+    },
+    {
+      "rowId": 1173,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryController.php:348` `trans('admin.common.error_invalid_request')`、`:359` `trans('admin.event.entry.bulk_update.nothing_selected')`、`:383` `trans('admin.event.entry.bulk_update.success', ['%count%' => count($ids)])` を返しており、設計指定の `admin.register.failed` / `admin.register.complete` は `src/Eccube/Controller/Admin/Event/` 配下に 0 件（grep）で使用されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1174,
+      "status": "未対応",
+      "evidence": "一括更新は `src/Eccube/Service/Admin/Entry/EntryStatusBulkUpdateAction.php:63` `$this->entryHistoryRepository->createEntryHistory($entry, $member->getId());` を各申込で呼ぶが、`src/Eccube/Repository/DtbEntryHistoryRepository.php:43-46` が `$history = $this->findOneBy(['EventEntry' => $eventEntry], ['id' => 'DESC']); if ($history !== null && $history->getEntryStatus()->getId() === $eventEntry->getEntryStatus()->getId()) { continue; }` で同一ステータス時に履歴作成をスキップする実装のまま。無条件に履歴を作る別経路は src/ 内の createEntryHistory 呼び出し 5 箇所を確認しても存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 1175,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryController.php:578` `#[Route(path: '/%eccube_admin_route%/event/entry/decklist', name: 'admin_event_entry_decklist', methods: ['GET'])]`、`src/Eccube/Resource/template/admin/Event/Entry/index.twig:382` `data-url=\"{{ path('admin_event_entry_decklist', { sort: sort_key, order: order_key }) }}\"` のままで、設計の `/entry/deckList` / `admin_entry_decklist` は src/ 全体で 0 件。",
+      "note": ""
+    },
+    {
+      "rowId": 1176,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Event/EntryController.php:580-606` の `deckList()` は `$defaultBaseInfo = $this->getMember()->getDefaultSearchBaseInfo();` を初期値にするだけで、セッション値 `$viewData` をそのまま submit しており保持店舗との照合が無い。`src/Eccube/Repository/DtbDeckRepository.php:756-761` も `$baseInfos = array_values(array_filter((array) ($searchData['base_info'] ?? []))); ... $qb->andWhere('IDENTITY(e.BaseInfo) IN (:baseInfoIds)')` と検索条件の店舗で絞るのみ（同ファイル内に isEditableShop / getMemberBaseInfos は 0 件）。`SearchEntryType.php:77-78` の choices も `$er->createQueryBuilder('b')->orderBy('b.id', 'ASC')` で BaseInfo 全件のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1177,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Event/EntryDeckListDisplayBuilder.php:338-357` の `resolvePlayerDisplayName()` は先頭で `$customer = $deck->getPlayer()?->getCustomer(); ... $kana = trim(...Kana01... .' '. ...Kana02...); if ($kana !== '') { return $kana; }` と会員カナを最優先で返し、次にプレイヤー姓名、最後に `return trim((string) $deck->getPlayerName());` の順のまま。設計の『deck.player_name 優先・空時のみ会員カナ』とは優先順位が逆転したまま。",
+      "note": ""
+    }
+  ]
+}

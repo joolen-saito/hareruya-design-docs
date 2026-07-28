@@ -1,0 +1,29 @@
+{
+  "packetId": "0601_01",
+  "results": [
+    {
+      "rowId": 842,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/MTGBuyer/V1/Admin/OtcBuyOrderController.php` の route は 69行 `otcBuyOrders.json` (GET), 129行 `otcBuyOrder/{id}.json` (PUT), 156行 `freeComment.json`, 190行 `status.json`, 231行 `doubleCheckMember.json`, 273行 `identification.json` の6本のみで、店頭買取情報一部キャンセル情報連携に相当する route/action が存在しない。`src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/` 配下も UpdateOtcBuyOrderAction / UpdateFreeCommentAction / UpdateStatusAction / UpdateDoubleCheckMemberAction / UpdateIdentificationAction / Rebuild* のみで cancel 系 Service は無し。`src/Eccube/Controller/App/MTGBuyer`, `src/Eccube/Service/App/MTGBuyer`, `src/Eccube/Dto/App/MTGBuyer` 全体を `cancel|キャンセル` で grep してもヒット0件（`一部キャンセル` の実装は `src/Eccube/Controller/Admin/Order/EditController.php:489` 等の通常受注編集側のみで、店頭買取査定の明細キャンセル連携ではない）。既存の `src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateOtcBuyOrderAction.php:63-65` は `rebuildOtcBuyOrderDetail->rebuild(...)` による明細全置換のままで、監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 843,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDto.php:42-45` は `#[SerializedName('smaregi_transaction_id')] #[Assert\\PositiveOrZero(message: '端末取引IDは、整数で入力してください。')] #[Assert\\Type('int')] public ?int $smaregiTransactionId,` のままで、`NotNull` も order_status=買取成立時の条件付き必須制約も無い（同DTOで `NotNull` が付くのは 33行 `$orderStatusId` と 48行 `$orderDetails` のみ）。`src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateOtcBuyOrderAction.php:73` も `$input->UpdateOtcBuyOrderDto->smaregiTransactionId,` を `otcBuyOrderEntityManager->update()` へそのまま渡すだけで、88行 `if ($OtcBuyOrderStatus->isComplete())` の買取成立分岐でも端末取引ID/出金コードの未入力チェックは行っていない。MTGBuyer 配下を `smaregi` で横断検索してもヒットはこの2ファイル3箇所のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 844,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Entity/DtbOtcBuyOrder.php` の ORM\\Column 一覧（40〜148行）に印刷済みを保持する項目は無く、フラグ系は `call_flg`(98行), `playing_flg`(101行), `adult_flg`(104行), `qualified_invoice_issuer_flg`(142行), `qualified_invoice_issuer_confirmation_flg`(145行), `restocked_flg`(148行) のみ。`src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDto.php:27-51` のコンストラクタ引数も `orderStatusId` / `qualifiedInvoiceIssuerConfirmationFlg` / `smaregiTransactionId` / `orderDetails` の4つだけで印刷済み受け渡しが無い。`src/Eccube/Service/App/MTGBuyer/V1/Admin/OtcBuyOrder/UpdateOtcBuyOrderAction.php:88` `if ($OtcBuyOrderStatus->isComplete())` および 99行 `if ($OtcBuyOrderStatus->isAccountingPaymentPending())` の前後にも印刷済み検証は無い。MTGBuyer/OtcBuyOrder 配下を `印刷|printed|print_flg|査定表|assessment_print` で grep してヒット0件（`Controller/Admin/OtcBuyOrder/OtcBuyOrderController.php:735 printRestockList()` は棚戻しリストPDF出力で査定表印刷済み判定ではない）。",
+      "note": ""
+    },
+    {
+      "rowId": 845,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Dto/App/MTGBuyer/V1/Admin/UpdateOtcBuyOrderDetailDto.php:43-46` は `#[SerializedName('sell_price')] #[Assert\\PositiveOrZero(message: '販売価格は、整数で入力してください。')] #[Assert\\Type('int')] public ?int $sellPrice,` のままで、監査時点の旧文言「販売価格」が残存（行番号は97→44へズレただけで内容同一）。リポジトリ全体を `基準価格` で検索しても MTGBuyer 配下の該当は無し。あわせて `src/Eccube/Entity/DtbOtcBuyOrderDetail.php:43` の `'comment' => '販売価格'`、`src/Eccube/Entity/DtbOtcBuyOrderIndivisualInputProduct.php:50` の `'comment' => '販売価格'` も旧文言のまま。",
+      "note": ""
+    }
+  ]
+}

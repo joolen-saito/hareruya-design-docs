@@ -1,0 +1,77 @@
+{
+  "packetId": "0408_01",
+  "results": [
+    {
+      "rowId": 246,
+      "status": "未対応",
+      "evidence": "現 develop の `src/Eccube/Command/` 配下（全53ファイル）に B08-01 相当の Command は存在しない。会員系は `src/Eccube/Command/CheckBlankRequiredItemCustomerCommand.php`、`src/Eccube/Command/LostPointsCommand.php:25` `#[AsCommand(name: 'eccube:customer:lost-points', ...)]` 等のみ。`src/` `html/` `app/` 全体を `sendAccountMigration` / `customer:batch` / `CustomerMigration` / `AccountMigration` で横断検索した結果、ヒットは `src/Eccube/Entity/MailTemplate.php:71` `public const CUSTOMER_MIGRATION_JP = 36;` と `app/DoctrineMigrations/Version20251204111453.php:1493` `'mail_key' => 'eccube.mail.customer_migration',` のみで、バッチ入口・基準日引数・未指定時メッセージのいずれの実装も存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 247,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/CustomerRepository.php:277-288` は管理画面検索用の汎用 update_date 条件（`->andWhere('c.update_date >= :update_date_start')`）のままで、`reset_key IS NOT NULL` との AND 抽出メソッドは追加されていない。`src/Eccube/Repository/CustomerRepository.php:501` `public function getUniqueResetKey(): string` も監査時点と同一。移行通知メールを会員ごとにループ送信する処理は `src/Eccube/Service/MailService.php` にも `src/Eccube/Command/` にも存在せず、`移行通知` / `リニューアル` の横断検索でもヒットは `src/Eccube/Entity/ProductClass.php:223` のコメントのみ。送信元 info@hareruyamtg.com を固定する送信処理も不在。",
+      "note": ""
+    },
+    {
+      "rowId": 248,
+      "status": "未対応",
+      "evidence": "テンプレート `src/Eccube/Resource/template/default/Mail/customer_migration.twig` / `customer_migration.en.twig` と `src/Eccube/Entity/MailTemplate.php:71-72` `public const CUSTOMER_MIGRATION_JP = 36; public const CUSTOMER_MIGRATION_EN = 37;` は存在するが、`CUSTOMER_MIGRATION` の参照箇所は当該定数定義行のみで、これを言語判定で切り替えて送信する MailService メソッド・Command は `src/` 全体に存在しない。比較対象として B08-03 では `src/Eccube/Service/MailService.php:1100` `$templateId = $isAbroad ? MailTemplate::POINT_EXPIRE_NOTIFICATION_EN : MailTemplate::POINT_EXPIRE_NOTIFICATION_JP;` という言語切替実装があるが、customer_migration には対応する実装がない。",
+      "note": "監査時点から唯一の差分として、`app/DoctrineMigrations/Version20251204111453.php:1493-1528` に `'mail_key' => 'eccube.mail.customer_migration'` / `'file_name' => 'Mail/customer_migration.twig'`（および _en）の dtb_mail_template 初期データ投入が入っている。ただし件名・本文データの投入のみで、言語切替・送信経路は未実装のため設計期待値は満たさない。"
+    },
+    {
+      "rowId": 249,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Entity/DtbUserMailHistory.php:21,24-25` は `#[ORM\\Table(name: 'dtb_user_mail_history')]` / `/* @deprecated dtb_mail_historyに統合されたため、使用しない */` のままで、`src/Eccube` 内に `DtbUserMailHistory` を new / persist する箇所は皆無（参照は同ファイル内の setter 定義のみ）。共通履歴保存は `src/Eccube/Service/EntityManager/MailHistoryEntityManager.php:39` `$MailHistory = new MailHistory();` で、保存先は `src/Eccube/Entity/MailHistory.php:25` `#[ORM\\Table(name: 'dtb_mail_history')]`。B08-01 自体の送信処理が不在のため履歴保存呼び出しも存在せず、テンプレートファイル名の保存も未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 250,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Entity/Customer.php:129` `#[ORM\\Column(name: 'reset_key', ...)]`、`src/Eccube/Repository/CustomerRepository.php:501-509` `getUniqueResetKey()`（`StringUtil::random(32)` を重複が無くなるまでループ）、`src/Eccube/Doctrine/EventSubscriber/SaveEventSubscriber.php:66-67` `if (method_exists($entity, 'setUpdateDate')) { $entity->setUpdateDate(new \\DateTime()); }` はいずれも監査時点と同一。`getUniqueResetKey` / `setResetKey` の呼び出し元は `src/Eccube/Controller/Front/ForgotController.php:73` の利用者操作フローのみで、インポート後の全会員へ reset_key を一括登録する Command / Service / Importer は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 251,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/LostPointsCommand.php:25` `#[AsCommand(name: 'eccube:customer:lost-points', description: 'ポイント失効バッチ')]` と監査時点から不変。`customer:batch` / `lostPoint` の全リポジトリ横断検索でヒット0件で、alias・setName による別名登録もない。",
+      "note": ""
+    },
+    {
+      "rowId": 252,
+      "status": "部分対応",
+      "evidence": "スマレジ送信側は是正済み。`src/Eccube/Service/Admin/Customer/LostPointsAction.php:83` `$job = $this->smaregiCustomerPointEventService->registerPointAddJob($LostPointHistory);` → `:114` `$this->smaregiCustomerPointEventService->dispatchPointAddMessage($job, $LostPointHistory);` で、`src/Eccube/MessageHandler/SmaregiCustomerPointAddMessageHandler.php:91` `$response = $this->smaregiCustomerService->postSmaregiPoint($smaregiId, $pointChange);` として smaregiId と失効ポイント（`LostPointsAction.php:55` `$losePoint = $remainingPoint - $Player->getPoint();` のマイナス値）が渡される。`src/Eccube/Service/Smaregi/SmaregiCustomerService.php:404-410` `$response = $this->customerApiClient->addPoint($this->smaregiApiUrl, ..., $smaregiCustomerId, $delta);` と実APIコールに置き換わり、監査時点の TODO 固定成功レスポンスは解消。一方で設計の「連携が成功しない場合は当該会員をスキップする（設計書 sheet-4:106,114 『スマレジ連携が成功した会員のみ保有ポイントを更新し履歴を記録する』）」は未充足。`LostPointsAction.php:68-86` で `$Player->setPoint($remainingPoint);` とポイント履歴保存を先に `commit()` し、その後に非同期メッセージを dispatch するアウトボックス方式のため、スマレジ連携失敗時（`SmaregiCustomerPointAddMessageHandler.php:105` `$this->failJob($Job, 'スマレジ会員ポイント更新が不確定な状態で失敗しました...')`）でも EC 側のポイント失効は確定済みでロールバック・スキップされない。",
+      "note": "同期スキップから非同期アウトボックスへの設計変更。API送信自体は実装されたが「連携成功時のみ更新」の条件は満たさないため部分対応とした。"
+    },
+    {
+      "rowId": 253,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/LostPointsCommand.php:38` `$io->text('ポイント失効バッチ開始');`、`:51` `$io->success('ポイント失効処理が完了しました。');` と監査時点から不変で、日時の付与はない。同ファイル内に `\\DateTime` / `date(` / `format(` の使用は皆無。",
+      "note": ""
+    },
+    {
+      "rowId": 254,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Customer/LostPointsAction.php:52` `foreach ($lostPointPlayers as $lostPointPlayer) {` から `:116` のループ終端まで sleep/usleep 等の待機処理はなく、`src/Eccube/Service/Admin/Customer/` および `src/Eccube/Command/LostPointsCommand.php`、`src/Eccube/MessageHandler/SmaregiCustomerPointAddMessageHandler.php` を `usleep` / `sleep(` で検索してもヒット0件。`app/config/eccube/packages/messenger.yaml` にもスマレジ会員ポイント transport への rate_limiter 指定はない。",
+      "note": ""
+    },
+    {
+      "rowId": 255,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/PointExpireNotificationCommand.php:25` `#[AsCommand(name: 'eccube:customer:point-expire-notification', description: 'ポイント有効期限通知バッチ')]` と監査時点から不変。`customer:batch` / `pointExpireNotification` の横断検索で該当する別名登録は0件。",
+      "note": ""
+    },
+    {
+      "rowId": 256,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/MailService.php:1119-1125` `try { $this->mailer->send($message); } catch (TransportExceptionInterface $e) { log_critical($e->getMessage()); return; }` と監査時点から不変で、例外は再throwされない。呼び出し元 `src/Eccube/Service/Admin/Customer/PointExpireNotificationAction.php:52` `$this->mailService->sendPointExpireNotificationMail($player, $lostPoint, $expireDate);` も戻り値 void で成否を扱わないため、`src/Eccube/Command/PointExpireNotificationCommand.php:43` の `$io->error([...])` には送信エラーが到達しない。",
+      "note": ""
+    },
+    {
+      "rowId": 257,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/PointExpireNotificationCommand.php:38` `$io->text('ポイント有効期限通知バッチ開始');`、`:51` `$io->success('ポイント有効期限通知処理が完了しました。');` と監査時点から不変で、日時を含む出力はない。`src/Eccube/Service/Admin/Customer/PointExpireNotificationAction.php:56` も `$this->logger->info('ポイント有効期限通知処理完了');` のみでコンソール出力・日時付与はない。",
+      "note": ""
+    }
+  ]
+}

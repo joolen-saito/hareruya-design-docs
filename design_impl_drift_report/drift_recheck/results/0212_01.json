@@ -1,0 +1,77 @@
+{
+  "packetId": "0212_01",
+  "results": [
+    {
+      "rowId": 1290,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/index.twig:230` `{{ form_start(searchForm, { 'action': url('admin_deck_list'), 'method': 'POST', ... }) }}` で検索POST先は今も admin_deck_list。`src/Eccube/Controller/Admin/Deck/DeckController.php:77` `#[Route('/%eccube_admin_route%/deck/search/{page_no}', name: 'admin_deck_search', requirements: ['page_no' => '\\d+'], methods: ['GET','POST'])]` でルート名は admin_deck_search、page_no 制約は `\\d+` のまま（`m15-01_admin_deck_deck_search` / `^[1-9][0-9]*$` は不在）。",
+      "note": ""
+    },
+    {
+      "rowId": 1291,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/SearchDeckType.php:206-211` `configureOptions()` の `$resolver->setDefaults(['csrf_protection' => true, 'allow_extra_fields' => true]);` のとおり、検索フォームの CSRF は現 develop でも有効のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1292,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckController.php:124` `$this->session->set('eccube.admin.'.$this->sessionKey.'.search.page_count', 100);` が初期GET分岐に残存。`app/config/eccube/packages/eccube.yaml:142` `eccube_default_page_count: 10` であり、デッキ一覧のみ 100 固定の上書きが継続している。",
+      "note": ""
+    },
+    {
+      "rowId": 1293,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/index.twig:52-64` は `select2.min.js` 読み込みと `$('.select2-select').each(function() { initSelect2($(this)); });` のみで、`formats`/`color` の change による archetypes フィルタは存在しない。同ファイル 244/257 行 `{{ form_widget(searchForm.formats) }}` `{{ form_widget(searchForm.archetypes) }}` は素の widget 出力で、`src/Eccube/Form/Type/Admin/SearchDeckType.php:84-91` の archetypes も `DtbArchetype` 全件を返す EntityType のままフォーマットID・色クラスでの絞り込みや option 無効化処理はない。",
+      "note": "index.twig 全体・SearchDeckType を archetype/format/color/change/disabled で横断検索したが連動フィルタ実装なし。"
+    },
+    {
+      "rowId": 1294,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/index.twig:353-355` はカード名欄が `{{ form_widget(searchForm.card) }}` `{{ form_errors(searchForm.card) }}` のみで、`ul.cardNameList`・`deck_card.js`・`data-list` 属性はいずれも存在しない。`cardNameList` を持つのはフロント側の `src/Eccube/Resource/template/default/Block/deck_detailed_search_modal.twig:98-99`（`data-list-card=\"/user_data/list/cardNameList.json\"` と `<ul class=\"cardNameList\"></ul>`）だけで、管理デッキ検索画面には未移植。",
+      "note": ""
+    },
+    {
+      "rowId": 1295,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/index.twig:404` `<button type=\"submit\" id=\"csv_export\" ... formaction=\"{{ url('admin_deck_csv_export') }}\">` に未選択チェックの JavaScript alert は無く（同ファイル 204-213 の submit ハンドラも CSRF トークン差し替えのみ）、`src/Eccube/Controller/Admin/Deck/DeckController.php:812-815` `if ($deckIds === []) { $this->addError('admin.deck.csv_export_no_selection', 'admin'); return $this->redirectToRoute('admin_deck_search', ...); }` とサーバ側処理のままである。",
+      "note": ""
+    },
+    {
+      "rowId": 1296,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/index.twig:404-405` にある操作は `admin.deck.csv_export`（CSV出力）と `admin.deck.bulk_delete`（一括削除）、同 517 行の `admin.deck.bulk_edit_execute`（一括編集）のみ。旧サイトCSV相当のボタン・ルートは `src/Eccube/Controller/Admin/Deck/` に無く、`src/Eccube/Resource/locale/messages.ja.yaml` にも `admin.deck.csv_import: CSV登録` / `admin.deck.csv_export: CSV出力`（4383-4384行）しか存在しない（旧サイト/legacy/old_csv の該当キーなし）。",
+      "note": ""
+    },
+    {
+      "rowId": 1297,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Deck/index.twig:226` `<a href=\"{{ url('admin_deck_csv_import') }}\" ...>{{ 'admin.deck.csv_import'|trans }}</a>`（訳は「CSV登録」）でTSV導線なし。`src/Eccube/Resource/template/admin/Deck/csv_import.twig:94` `{{ form_widget(form.import_file, {'attr': {'accept': 'text/csv,.csv', 'class': 'd-none'}}) }}`、`src/Eccube/Controller/Admin/Deck/DeckCsvController.php:100-102` `$extension = strtolower($formFile->getClientOriginalExtension()); if ($extension !== 'csv') { return $this->renderWithErrors(...); }` とCSV専用のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1298,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckController.php:149` `#[Route('/%eccube_admin_route%/deck/bulk_delete', name: 'admin_deck_bulk_delete', methods: ['POST'])]` でURL/ルート名は設計（`/deck/delete`・`m15-03_admin_deck_deck_bulk_delete`）と不一致。`src/Eccube/Resource/template/admin/Deck/index.twig:397` `<form id=\"bulk_form\" method=\"post\" action=\"{{ url('admin_deck_bulk_delete') }}\">` とデフォルト action は依然一括削除で、同 405 行の削除ボタンに formaction は無く（formaction を持つのは 404 行のCSV出力と 517 行の一括編集）、設計の form 構造と逆のまま。",
+      "note": ""
+    },
+    {
+      "rowId": 1299,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckController.php:153-156` `if (!$this->isCsrfTokenValid('admin_deck_bulk_delete', $token)) { $this->addError('admin.common.csrf_invalid', 'admin'); return $this->redirectToRoute('admin_deck_list'); }` で HTTP403 ではない。記事使用中等の `\\RuntimeException` は同 176-179 行で `return $this->redirectToRoute('admin_deck_search', ['page_no' => $pageNo]);` と Referer 戻しではない。成功時は同 190 行 `$this->addSuccess('admin.common.delete_complete', 'admin');` で `admin.delete.complete` ではない。",
+      "note": ""
+    },
+    {
+      "rowId": 1300,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckController.php:76-77` `#[Route('/%eccube_admin_route%/deck', name: 'admin_deck_list', methods: ['GET', 'POST'])]` / `#[Route('/%eccube_admin_route%/deck/search/{page_no}', name: 'admin_deck_search', requirements: ['page_no' => '\\d+'], methods: ['GET', 'POST'])]` のまま。admin_deck_list は依然 POST も受け、検索フォームは `src/Eccube/Resource/template/admin/Deck/index.twig:230` で admin_deck_list へ POST。page_no 制約 `\\d+` は 0 を許容し `^[1-9][0-9]*$` になっていない。",
+      "note": ""
+    },
+    {
+      "rowId": 1301,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Deck/DeckController.php:120-124` 初期GET分岐は `$viewData = FormUtil::getViewData($searchForm); $this->session->set($this->sessionKey, $viewData); $this->session->set($this->sessionKey.'.page_no', 1); $this->session->set('eccube.admin.'.$this->sessionKey.'.search.page_count', 100);` であり、`admin.deck.search` / `.page_no` / `.page_count` の remove は一切行われず、page_count は削除ではなく 100 で上書きされたままである。",
+      "note": ""
+    }
+  ]
+}

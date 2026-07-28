@@ -1,0 +1,77 @@
+{
+  "packetId": "0204_04",
+  "results": [
+    {
+      "rowId": 505,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:2157` `admin.product.category_front_search_hide: フロント非表フラグ` のまま（「非表示」になっていない）。`src/Eccube/Form/Type/Admin/CategoryType.php:64-66` `->add('front_search_hide_flg', CheckboxType::class, ['label' => 'admin.product.category_front_search_hide',` が同キーを使用し、`src/Eccube/Resource/template/admin/Product/category.twig:353` `{{ form_label(form.front_search_hide_flg, null, ...) }}` で表示する経路も監査時点と同一。",
+      "note": "行番号は 2108→2157 にズレているが内容は不変。"
+    },
+    {
+      "rowId": 506,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/locale/messages.ja.yaml:2164` `admin.product.category_search_parameters: 検索パラメーター` のままで長音符が残る。`src/Eccube/Form/Type/Admin/CategoryType.php:151-152` `->add('search_parameters', TextType::class, ['label' => 'admin.product.category_search_parameters',` / `src/Eccube/Resource/template/admin/Product/category.twig:401` `{{ form_row(form.search_parameters) }}` も監査時点と同一。",
+      "note": "行番号は 2115→2164、CategoryType 131→151 にズレているが内容は不変。"
+    },
+    {
+      "rowId": 507,
+      "status": "未対応",
+      "evidence": "編集GET `src/Eccube/Controller/Admin/Product/CategoryController.php:101` および編集POST `:168` が今も `$this->createCategoryForm(` を呼び、`:684-692` の `private function createCategoryForm(` は `'allow_banner_image_upload' => true,` `'allow_icon_image_upload' => true,` を無条件に渡す。Twig も `src/Eccube/Resource/template/admin/Product/category.twig:129` `{% if Parent is not null or isCategoryEdit|default(false) %}` の下で FilePond を生成し、`:372` `{{ form_widget(form.banner_image_file, ...) }}` `:390` `{{ form_widget(form.icon_image_file, ...) }}` を編集時も描画。保存側も `:194 completeCategorySave()` が update 経路（`:183`）から画像の move/delete を実行する。編集画面の読み取り専用化は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 508,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/CategoryController.php:210` `$this->entityManager->wrapInTransaction(function () use ($form, $TargetCategory, $clone, &$objectKeysToDelete): void {` 内で `:239` `$fileAdapter->move($bannerTempFile, $bannerDir, $addBanner, []);` / `:271` `$fileAdapter->move($iconTempFile, $iconDir, $addIcon, []);` を実行した後 `:277` `$this->categoryRepository->save($TargetCategory);` を呼ぶが、try/catch も移動済み新規画像リストも存在しない。保存後の `:281-286` `foreach (array_unique($objectKeysToDelete) as $objectKey) { if ($fileAdapter->exists($objectKey, [])) { $fileAdapter->delete($objectKey, []); } }` は既存画像の削除専用で、失敗時のロールバック削除ではない。",
+      "note": ""
+    },
+    {
+      "rowId": 509,
+      "status": "未対応",
+      "evidence": "表示側は `src/Eccube/Service/TopCategoryListBuilder.php:96` `if ($Category->getFrontSearchHideFlg()) {` `:99` `if ($isBranch && $Category->getBranchHideFlg()) {` で除外するのみ。検索側の `src/Eccube/Repository/ProductRepository.php:763-775` のカテゴリ条件は `$Categories = $searchData['category']->getSelfAndDescendants();` … `->andWhere($qb->expr()->in('pct.Category', ':Categories'))` だけで非表示フラグ条件を持たない。`front_search_hide_flg|branch_hide_flg|FrontSearchHide|BranchHide` を src/Eccube 全体で再検索しても ProductRepository / SearchProductType / SearchProductBlockType / Front SearchType / Front ProductController には出現せず、監査時点と同状態。",
+      "note": "実装が存在するのは Entity/Category.php・Admin/CategoryType.php・TopCategoryListBuilder・CategoryTreeResponseBuilder・App/CategoryController・CategoryCsvImportHandler・Seeder のみ。"
+    },
+    {
+      "rowId": 510,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/CategoryController.php:850-851` `$Parent = $Category->getParent();` / `$row[] = $Parent !== null ? (string) $Parent->getId() : '0';` が残っており、Parent 列は `:853` `$cell = $this->csvExportService->getData($Csv, $Category);` の一般列経路を通らず、親なしで文字列 '0' を出力する。定数 `:50` `private const CATEGORY_CSV_FIELD_PARENT = 'Parent';` も健在。",
+      "note": "行番号は 557→850 にズレているが分岐内容は同一。"
+    },
+    {
+      "rowId": 511,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/TagType.php:70-77` `->add('nameEn', TextType::class, ['label' => '名称(英)', 'required' => true, 'constraints' => [new Length(['max' => $lengthSettings['name']]), new NotBlank(),],])` のままで、半角制約の Regex / pattern / 正規化は追加されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 512,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Front/ProductController.php:1296-1313` `protected function getPageTitle(?array $searchData): string` は `trans('front.product.search_result')` / カテゴリパス連結 / `trans('front.product.all_products')` のみを返し、`:428` `'subtitle' => $this->getPageTitle($searchData),` で渡される。`title_jp|title_en|getTitleJp|getTitleEn` を src/Eccube の php/twig 全体で再検索しても `src/Eccube/Entity/Tag.php:266-292`（カラム定義とゲッタ/セッタ）以外にヒットがなく、商品検索ページタイトルへの反映は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 513,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/default/meta.twig:62-64` の product_list 系分岐は `{% if Category is defined and Category %}` `{% set meta_description = 'front.seo.product_list.meta_description'|trans({'%category%': Category.name}) %}` のみで、タグの説明を参照しない。`description_jp|description_en|getDescriptionJp|getDescriptionEn` を src/Eccube の php/twig 全体で再検索しても `src/Eccube/Entity/Tag.php:296-322` のカラム定義・ゲッタ以外はヒットせず（他の一致は ProductAllCsv 等の商品説明列で別物）、meta description への反映は未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 514,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Product/storage_code.twig:114` `{% for count in [10, 50, 100, 300, 500, 1000] %}` のままで 2000/10000/12000 が存在しない。同系の `src/Eccube/Resource/template/admin/Product/tag.twig:150` は `{% for count in [10, 50, 100, 300, 500, 1000, 2000, 10000, 12000] %}` であり、略称タグ登録のみ設計の選択肢と不一致。",
+      "note": ""
+    },
+    {
+      "rowId": 515,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Product/StorageCodeController.php:284` `#[Route(path: '/%eccube_admin_route%/product/storage_code/csv', name: 'admin_product_storage_code_csv', methods: ['GET'])]` と `:305` `#[Route(path: '/%eccube_admin_route%/product/storage_code/import', name: 'admin_product_storage_code_import', methods: ['POST'])]` に分離されたまま。一覧の CSV 入力リンクも `src/Eccube/Resource/template/admin/Product/storage_code.twig:64` `<a href=\"{{ path('admin_product_storage_code_csv') }}\" class=\"btn btn-primary btn-csv\">` を指し、GET /product/storage_code/import のルートは存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 516,
+      "status": "未対応",
+      "evidence": "rowId 515 と同一箇所。`src/Eccube/Controller/Admin/Product/StorageCodeController.php:305` の import ルートは `methods: ['POST']` のみで GET 表示を持たず、取込フォーム表示は `:284` の `admin_product_storage_code_csv`（GET /product/storage_code/csv）に分離されたまま。`src/Eccube/Resource/template/admin/Product/storage_code.twig:64` の CSV 入力リンクも `path('admin_product_storage_code_csv')` を参照する。",
+      "note": ""
+    }
+  ]
+}

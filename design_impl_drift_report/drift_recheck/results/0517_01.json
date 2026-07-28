@@ -1,0 +1,77 @@
+{
+  "packetId": "0517_01",
+  "results": [
+    {
+      "rowId": 132,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ArticleController.php:58` は現 develop でも `$Article = $this->dtbArticleRepository->findOneBy(['wpPostId' => (int) $wpPostIdParam]);` のままで deletedAt 条件がない。`src/Eccube/Repository/DtbArticleRepository.php` には単記事取得メソッド自体が無く（`getRelatedArticles()` のみ）、`src/Eccube/Entity/DtbArticle.php:50` の `#[ORM\\Column(name: 'deleted_at', ...)] private ?\\DateTime $deletedAt = null;` には Gedmo の `#[Gedmo\\SoftDeleteable]` 属性が付与されていないため、`app/config/eccube/packages/doctrine.yaml:86-88` の `soft_deleteable: enabled: true` フィルタも DtbArticle には適用されない。",
+      "note": "論理削除除外の実装証跡は監査時点と同じく不在。"
+    },
+    {
+      "rowId": 133,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/Article/ArticleResponseBuilder.php:36-47` は現 develop でも `'article_id' => $Article->getId(), 'wp_post_id' => ..., 'wp_type_id' => ..., 'update_date' => ..., 'create_date' => ..., 'event_details' => $this->buildEventDetails(...)` と snake_case キーを生成している。ネスト側も `card_details`(:164)、`event_detail_id`(:434)、`deck_cards`(:392) など snake_case のまま。src/Eccube 配下を `'articleId'` で検索しても camelCase 応答生成は 0 件。",
+      "note": "日時は :57 `format('Y-m-d\\TH:i:sP')` で ISO8601 だが、プロパティ名の外部契約は設計と不一致のまま。"
+    },
+    {
+      "rowId": 134,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ArticleController.php:60` `throw new NotFoundException('記事が見つかりません');` を :66-69 の catch が `return $this->json(['code' => $e->getStatusCode(), 'errors' => $e->getErrors()], $e->getStatusCode());` で受けており、本文は `{code, errors}` かつ日本語メッセージのまま。`message` キー / \"Not Found\" を返す実装は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 135,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbArticleRepository.php:75-79` の raw SQL は `FROM dtb_article a1 INNER JOIN dtb_article a2 ON a1.wp_type_id = a2.wp_type_id WHERE a1.wp_post_id = :wpPostId AND a2.wp_post_id <> a1.wp_post_id AND a2.wp_post_id <> 0` のままで、`a1.deleted_at IS NULL` / `a2.deleted_at IS NULL` の条件は追加されていない（SQL 全体 :44-117 に deleted_at の出現なし）。`src/Eccube/Controller/App/ArticleController.php:98` も取得結果をそのまま `new JsonResponse($relatedArticles, 200)`(:104) で返すのみ。",
+      "note": ""
+    },
+    {
+      "rowId": 136,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbArticleRepository.php:110-115` は現 develop でも `ORDER BY has_same_deck DESC, has_same_archetype DESC, has_same_card DESC, has_same_event_detail DESC, a2.wp_post_id ASC` の固定優先順位であり、共有フラグ合計スコアによる降順ソートは実装されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 137,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Smaregi/SmaregiApiService.php:39-45` は現 develop でも `// TODO: スマレジAPIを実行する実装を追加 / // 未実装のため仮の固定レスポンスを返却 / return ['result' => ['status' => 'success']];` のままで、スマレジ取引APIへのHTTP中継が無い。`src/Eccube/Controller/App/PointGranterController.php:86-91` が同メソッドを呼ぶ唯一の呼出元で、src 配下の `postRegisterTransaction` の定義・参照はこの2箇所のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 138,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/PointGranterController.php:75` `if ($contractId === '' || $accessToken === '' || $procName === '' || $params === '')` の分岐は :83 で `return $this->jsonResponse([], Response::HTTP_BAD_REQUEST);` を返しており、HTTP 400 のまま（404 化されていない）。",
+      "note": "設計内不整合（シート本文404 / 埋め込み詳細400）は監査時点と同じ。"
+    },
+    {
+      "rowId": 139,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/PointGranter/PointGranterAction.php:52` `$Player = $this->playerRepository->findOneBy(['smaregiId' => (string) $customerId]);`、:66 `$Player->setPoint($Player->getPoint() + $newPoint);` と、現 develop でも dtb_player.point を加算している。Customer::point を加算する処理は同クラス内に存在しない（:70 で `$Player->getCustomer()` を履歴登録に渡すのみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 140,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/App/PointGranter/PointGranterAction.php:68-77` の `$this->pointHistoryEntityManager->save(... pointChange: $newPoint, note: $memo ?? '', issueDate: $issueDate, transactionId: null,)` の通り、:76 で `transactionId: null` が固定で渡されており、スマレジ取引IDは保存されない。",
+      "note": ""
+    },
+    {
+      "rowId": 141,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductRepository.php:301` は現 develop でも `LEFT JOIN mtb_language lang ON pc.language_id = lang.id AND lang.code = :languageCode` の結合条件のみで、:320-322 の `WHERE p.id = :productId AND pc.id IS NOT NULL` に言語の絞り込みが無い。:267 の `COALESCE(lang.code, :languageCode) AS languageCode` も監査時点のまま。`src/Eccube/Controller/App/ProductController.php:54-59` は `$languageCode = $request->query->get('lang', 'JP');` を `findProductById($productId, $languageCode)` に渡すのみ。",
+      "note": ""
+    },
+    {
+      "rowId": 142,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/App/ProductController.php:64` `throw new NotFoundException('Not Found');` を、`src/Eccube/EventListener/ExceptionListener.php:140-143` の `$response = new JsonResponse(['code' => $statusCode, 'errors' => $errors], $statusCode);`（:74 コメントも「JSON形式で必ず(code, errors)を返す」）が処理するため、本文キーは現 develop でも `errors` のまま。`message` キーへ変換する個別処理は無い。",
+      "note": ""
+    },
+    {
+      "rowId": 143,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/ProductRepository.php:292` は現 develop でも `STRING_AGG(DISTINCT fmt.name_en, ',') AS formats` でカンマ区切り文字列を取得し、`src/Eccube/Service/App/ProductDetail/ProductDetailResponseBuilder.php:139` は `'formats' => $detail['formats'] ?? '',` と文字列のまま `card_detail.formats` に設定している（配列化する explode/array_values 等の処理なし）。",
+      "note": ""
+    }
+  ]
+}

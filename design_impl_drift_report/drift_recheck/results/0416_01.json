@@ -1,0 +1,77 @@
+{
+  "packetId": "0416_01",
+  "results": [
+    {
+      "rowId": 280,
+      "status": "未対応",
+      "evidence": "現 develop の `src/Eccube/Command/` 53ファイルの `#[AsCommand(...)]` を全列挙したが WAF 関連バッチは無し（最も近いS3系は `src/Eccube/Command/TestS3UploadDemoCommand.php:22` `#[AsCommand(name: 'eccube:demo:s3-upload', description: 'Upload a file to S3')]` で、同ファイル38-42行は `'Bucket' => 'dev-eccube-enterprise-s3', 'Key' => 'test/1/hello.txt', 'Body' => 'Hello, world!'` の固定putObjectデモのまま）。`src/Eccube/Service/S3AccessService.php:24` `class S3AccessService` も `putFile()`(49行)/`getFiles()`(100行) の汎用S3アクセスのままで、WAFLogs取得・日次統合・gzip・IP集計・Slack通知は無い。監査時点から実質不変。",
+      "note": ""
+    },
+    {
+      "rowId": 281,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/*.php` の AsCommand 名を全走査した結果は `eccube:analysis:aggregate-daily-summary`(`src/Eccube/Command/DailySummaryAggregateCommand.php:35`)、`eccube:analysis:aggregate-monthly-summary`(`src/Eccube/Command/MonthlySummaryAggregateCommand.php:26`)、`eccube:demo:s3-upload`(`src/Eccube/Command/TestS3UploadDemoCommand.php:22`) 等のみで、WAF不正アクセスログ集計 / Step Functions 起動に相当するコマンド入口は存在しない。`grep -ri 'waf'` の src/html ヒットは `html/template/admin/assets/css/app.css` 等のCSS由来のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 282,
+      "status": "未対応",
+      "evidence": "スナップショット全体で `IP_Block_List` / `aws-waf-logs-prod-hareruyaec` / `ELB-EC-Prod` / `ECFront` / `641007440821` の一致は0件（src, html, app, bin, dev, infra 対象）。唯一のWAF定義は CDK 側 `infra/lib/constructs/network.ts:167` `const acl = new CfnWebACL(this.alb, \"ACL\", { name: `${prefix}-alb-acl` ... })` で、AWSManagedRules 4種を付与するだけであり、WAF名 IP_Block_List もログ保存先バケット指定も無い。集計対象ログを選別する定数・設定は不在のまま。",
+      "note": "CDKのWebACLはWAF本体の構築であり、設計が要求する集計対象ログ選別処理ではない。"
+    },
+    {
+      "rowId": 283,
+      "status": "未対応",
+      "evidence": "`Article_IP_Block` / `API-Prod` / `stg-all-search-blocker` / `STG-Branch-Admin-ELB` はスナップショット内に一致0件。`infra/lib/constructs/network.ts:167` の `CfnWebACL` にも対象外サーバの除外条件は無く、集計対象/対象外を切り分ける定義は現 develop に存在しない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 284,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/S3AccessService.php:49` `public function putFile(array $fileInfo, string $suffix = ''): string` / 同100行 `public function getFiles(string $dir, ?string $key = null): array` は汎用S3アクセスのままで、`AWSLogs/641007440821/WAFLogs/ap-northeast-1/IP_Block_List/[YYYY]/[MM]/[DD]` のパス生成や前日日付算出、HH/MMディレクトリ全走査、ローカル一時保存を行う呼び出し元は存在しない（`WAFLogs`・`AWSLogs` とも一致0件）。",
+      "note": ""
+    },
+    {
+      "rowId": 285,
+      "status": "未対応",
+      "evidence": "`YYMMDD_result` / `result.gz` は一致0件。gzip系APIの利用箇所は `src/Eccube/Service/UniSearch/UniSearchExportService.php:511` `$fpOut = gzopen($destPath, 'wb9');` / 522行 `gzwrite($fpOut, fread($fpIn, 8192));`（UniSearch用TSV出力）とプラグイン/テンプレート系のみで、WAFログの日次統合・gzip圧縮・S3保存処理は現 develop にも無い。",
+      "note": ""
+    },
+    {
+      "rowId": 286,
+      "status": "未対応",
+      "evidence": "`terminatingRule` / `clientIp` / `httpRequest` などWAFログJSONのフィールドを扱う実装は一致0件。`src/Eccube/Service/` 直下の一覧（`S3AccessService.php`, `CloudLogs/AWS/CloudWatchJsonConfigurator.php`, `CloudServices/CDN/AWS/CloudFront.php` 等）にもWAFログ解析・ブロックIP出現回数集計を行うクラスは存在せず、監査時点から変化なし。",
+      "note": ""
+    },
+    {
+      "rowId": 287,
+      "status": "未対応",
+      "evidence": "`YYMMDD_attach` / `_attach` の一致は0件。S3への書き込み口は `src/Eccube/Service/S3AccessService.php:49` `putFile()` と 72行 `putFileData()`、および `src/Eccube/Command/TestS3UploadDemoCommand.php:38-42` の固定キー `'test/1/hello.txt'` putObject のみで、WAF集計結果ファイルを `YYMMDD_attach` へ保存する処理は現 develop にも無い。",
+      "note": ""
+    },
+    {
+      "rowId": 288,
+      "status": "未対応",
+      "evidence": "`slack` の src 配下ヒットは `src/Eccube/Service/Csv/Importer/Event/ProductGoodsImportHandler.php:622` および 686 の `// TODO:スマレジ連携状態の確認後、更新するか決める（https://joolen.slack.com/archives/...）` というコメントURLのみで、通知実装ではない。`src/Eccube/Service/MailService.php` にもWAF集計結果／Slack通知用メールサービス宛の送信メソッド・テンプレートは無く、監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 289,
+      "status": "未対応",
+      "evidence": "`inventorycheck` / `stock_YYYYMMDD` / `txt.zip` はスナップショット内で一致0件。`src/Eccube/Command/` の AsCommand 一覧にも月次商品情報スナップショットの入口は無く、`src/Eccube/Command/MonthlySummaryAggregateCommand.php:26` `#[AsCommand(name: 'eccube:analysis:aggregate-monthly-summary', description: '月次集計テーブル更新バッチ')]` は集計テーブル更新、`src/Eccube/Command/UpdateWeeklyStockHistoryCommand.php:35` は週間在庫履歴更新で別用途。S3アップロードは `src/Eccube/Service/S3AccessService.php:49` `public function putFile(...)` の汎用単一ファイルput のみ。ZIP生成・ファイル名生成・s3://inventorycheck/ 連結処理は不在。",
+      "note": "監査時点に記載の `src/Eccube/Service/S3/FileUploadService.php` は現 develop には存在せず（`src/Eccube/Service/S3/` 配下は `S3BucketConfig.php` のみ）、S3汎用putは S3AccessService に集約されている。ただし本要求の充足には無関係。"
+    },
+    {
+      "rowId": 290,
+      "status": "未対応",
+      "evidence": "現 develop でも月次スナップショット専用の抽出SQL/Repository/Service は不在。在庫CSVは `src/Eccube/Service/Csv/Exporter/StockListCsvExportService.php:33` `public const CSV_HEADER = [ 'product_id' => '商品ID', 'product_name' => '商品名', ... 'ninety_day_sales' => '90日間販売数' ]` と20列の管理画面CSVのままで設計の6項目契約と不一致。並び順も `src/Eccube/Repository/ProductStockRepository.php:314` `$qb->orderBy('pc.id', 'DESC')->addOrderBy('ps.stockLocationId', 'ASC');` で店舗ID昇順ではない（管理画面一覧用の 52行 `getQueryBuilderForAdminStockList()` も同様に ProductClass.id 基準）。`閉店` / `closed` を条件に使う実装はEntity配下に一致0件、`src/Eccube/Entity/BaseInfo.php:1518` に `#[ORM\\Column(name: 'test_store_flg', ...)]` があるのみ。",
+      "note": ""
+    },
+    {
+      "rowId": 291,
+      "status": "未対応",
+      "evidence": "`redash` はスナップショット全体（vendor/node_modules 除く、infra 含む）で一致0件。`src/Eccube/Command/*.php` の AsCommand 一覧にもRedash用DB作成コマンドは無い。CDK側 `infra/lib/constructs/datastore.ts:61` `this.primary = new DatabaseCluster(this, 'Primary', {...})` は稼働DBクラスタ1本の定義と 83-85行の `new BackupPlanRule({ scheduleExpression: Schedule.cron({...}) })` によるバックアップのみで、スナップショットから分析用の別DBを作成する処理は存在しない。監査時点と同一。",
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+ "packetId": "0505_03",
+ "results": [
+  {
+   "rowId": 47,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:52-65` `if (!$this->authenticationService->verify($request)) { ... return new JsonResponse(['status' => 'error', 'message' => 'Authentication failed'], Response::HTTP_UNAUTHORIZED); }` および `:67-78` `$smaregiEventId = $request->headers->get('smaregi-event-id'); if ($smaregiEventId === null) { ... return new JsonResponse([...], Response::HTTP_BAD_REQUEST); }` が現 develop でもそのまま存在。401/400 分岐は削除されておらず監査時点と同一（行番号も一致）。",
+   "note": ""
+  },
+  {
+   "rowId": 48,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:107-109` `return new JsonResponse(['status' => 'ok'], Response::HTTP_OK);`、`:85-88` `return new JsonResponse(['status' => 'ok', 'message' => 'Event is duplicate'], Response::HTTP_OK);` のまま。`result` / `TransactionHead` を返すコードは Controller・Service/Smaregi/Webhook 配下に存在せず（grep で `TransactionHead` の一致は `extractTransactionHeadIds`・`disposeServerTransactionHeadId` のみ）、更新件数の集計・返却は未実装。",
+   "note": ""
+  },
+  {
+   "rowId": 49,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:91-109` `$Event = $this->eventService->createEventFromRequest($request); $this->entityManager->persist($Event); ... $this->messageBus->dispatch(new SmaregiWebhookEventMessage($Event->getId())); ... return new JsonResponse(['status' => 'ok'], Response::HTTP_OK);` と、監査時点と同一の非同期dispatch即時200方式のまま。`app/config/eccube/packages/messenger.yaml:16` `Eccube\\Message\\SmaregiWebhookEventMessage: async` も維持されており、同期実行＋更新件数応答への変更はない。",
+   "note": ""
+  },
+  {
+   "rowId": 50,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:67` `$smaregiEventId = $request->headers->get('smaregi-event-id');`、`src/Eccube/Service/Smaregi/Webhook/EventService.php:31` `$body = json_decode($request->getContent(), true);` / `:40` `$Event->setContractId($body['contractId'] ?? '');` のまま。`params` フォーム値・`proc_name`・`X_contract_id`/`X_access_token` を参照するコードは develop の Smaregi 配下に存在しない（grep で `X_contract_id`/`X_access_token` 一致なし）。",
+   "note": ""
+  },
+  {
+   "rowId": 51,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Smaregi/Webhook/Transaction/SmaregiPointAdjustmentReverter.php:96-110` `// 残高を差し戻し、相殺用の逆仕訳履歴 (元履歴は保持) を残す。` `$player->setPoint($player->getPoint() - $net);` `$this->pointHistoryEntityManager->save(null, $customer, null, $pointType, -$net, self::REVERT_NOTE, new \\DateTime(), $transactionId);` のまま。クラスDocコメント `:34-36` にも「元の付与/減算履歴は監査用に残し、相殺用の逆仕訳履歴 (符号反転) を追加して残高を戻す」と明記され、設計が求める取引IDキーの DELETE は実装されていない。",
+   "note": ""
+  },
+  {
+   "rowId": 52,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Smaregi/Webhook/Transaction/` 配下（TransactionEventDispatcher.php / SmaregiTransactionProcessDispatcher.php / Handler/CreatedHandler.php 等）に支店転送処理は無く、src/Eccube 全体を `支店転送|支店システム|branch.?transfer|transferToBranch|X_contract_id|X_access_token` で grep しても Smaregi Webhook 経路の一致はゼロ（一致は `Service/Csv/Importer/Event/ProductGoodsImportHandler.php:184` 等の商品連携コメントのみ）。設計の支店転送・件数合算は依然未実装。",
+   "note": ""
+  },
+  {
+   "rowId": 53,
+   "status": "未対応",
+   "evidence": "src/Eccube 配下を `dtb_order_sub|OrderSub|order_sub` で grep しても一致ゼロで、注文サブ相当のエンティティ／テーブルは現 develop にも存在しない。created 処理は `src/Eccube/Service/Smaregi/Webhook/Transaction/Handler/CreatedHandler.php:45` `public function handle(SmaregiWebhookEvent $event, array $transactionHeadIds, ?int $parentJobId = null): void` から `PurchasePatternResolver` 経由でパターン判定する監査時点と同じ構成のまま。",
+   "note": "設計側も『ec-cube-enterprise 実装で要確認』と留保付きの記述。"
+  },
+  {
+   "rowId": 54,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:110-121` `} catch (\\Throwable $e) { log_error('Error processing webhook', [...]); return new JsonResponse(['status' => 'error', 'message' => 'Error processing webhook'], Response::HTTP_INTERNAL_SERVER_ERROR); }` が現 develop でもそのまま存在（行番号も監査時点と一致）。明示的 try-catch の撤去はされていない。",
+   "note": ""
+  },
+  {
+   "rowId": 55,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:80-88` `if ($this->eventService->isDuplicate($smaregiEventId)) { log_warning('Smaregi webhook event is duplicate', ...); return new JsonResponse(['status' => 'ok', 'message' => 'Event is duplicate'], Response::HTTP_OK); }` のまま。`src/Eccube/Service/Smaregi/Webhook/EventService.php:52` `public function isDuplicate(string $smaregiEventId): bool` も残存し、設計に無い受信段階の重複排除層はそのまま。",
+   "note": ""
+  },
+  {
+   "rowId": 56,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:107-109` は `return new JsonResponse(['status' => 'ok'], Response::HTTP_OK);` のみで、Content-Type 明示・キャッシュ抑止・CORS ヘッダの付与は無い。グローバル付与も無いことを確認済み（`src/Eccube/EventListener/`・`src/Eccube/Event/`・`app/config/` を `Access-Control-Allow-Origin|Cache-Control|nocache|must-revalidate` で grep して一致ゼロ。EventListener 配下に存在するのは `CSPHeaderListener.php` のみで CORS/キャッシュ制御ではない）。",
+   "note": "監査時点で『網羅確認できず』とされた点を今回確認し、レスポンスリスナでの付与も無いことを確定。"
+  },
+  {
+   "rowId": 60,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Smaregi/Webhook/AuthenticationService.php:33-46` `public function verify(Request $request): bool { $headers = $request->headers->all(); $headerKey = strtolower($this->secretHeader); if (isset($headers[$headerKey])) { $receivedSecret = $headers[$headerKey][0]; if (hash_equals($this->secret, $receivedSecret)) { return true; } } return false; }` とヘッダ共有シークレット認証のまま（`app/config/eccube/services.yaml:26-27` `smaregi_webhook_secret` / `smaregi_webhook_secret_header`）。`app/config/eccube/packages/security.yaml:67-69` の smaregi ファイアウォールは `security: false` のみで IP 制限なし。`src/Eccube/EventListener/IpAddrListener.php` は `eccube_front_allow_hosts`/`eccube_admin_allow_hosts` による全体制御で、スマレジ Webhook 専用の許可IP判定は存在しない。",
+   "note": ""
+  },
+  {
+   "rowId": 61,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Smaregi/WebhookController.php:74-77` `return new JsonResponse(['status' => 'error', 'message' => 'Smaregi-Event-Id header is required'], Response::HTTP_BAD_REQUEST);`、`:85-88` `JsonResponse(['status' => 'ok', 'message' => 'Event is duplicate'], Response::HTTP_OK)`、`:107-109` `JsonResponse(['status' => 'ok'], Response::HTTP_OK)` がいずれも監査時点と同一行・同一内容で残存。設計が要求する「200かつ空レスポンス」への変更はなく、Smaregi-Event-Id 必須の400分岐も維持されている。",
+   "note": ""
+  }
+ ]
+}

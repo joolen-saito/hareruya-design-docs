@@ -1,0 +1,41 @@
+{
+  "packetId": "0514_01",
+  "results": [
+    {
+      "rowId": 121,
+      "status": "未対応",
+      "evidence": "現 develop でも `/cards/{id}` ルートは不在。`src/Eccube/Controller/App/` 配下の全 `#[Route(...)]` を列挙しても該当なく、近似は監査時点と同じ `src/Eccube/Controller/App/CardController.php:41-42` `#[Route(path: '/card', name: 'card_by_params', methods: ['GET'])]` / `#[Route(path: '/card.json', name: 'card_by_params_json', methods: ['GET'])]` と `src/Eccube/Controller/App/DeckBuilder/CardController.php:142` `#[Route('/api/cards/{id}', name: 'api_deck_builder_card', methods: ['GET', 'OPTIONS'], requirements: ['id' => '\\d+'])]` のみ。src/ app/ 全体を `cards/{id}` `/cardDetails` で横断検索しても他に定義はなく、`config/` の routes yaml も存在しない（ルートは属性定義のみ）。設計の公開入口 `GET /cards/{id}` は依然未実装。",
+      "note": ""
+    },
+    {
+      "rowId": 122,
+      "status": "未対応",
+      "evidence": "近似ID取得APIは現 develop でも汎用正規化のまま。`src/Eccube/Controller/App/DeckBuilder/CardController.php:157` `return $this->createCorsResponse(new JsonResponse($Card->toNormalizedArray(), Response::HTTP_OK));`。`src/Eccube/Entity/AbstractEntity.php:167-188` の `toNormalizedArray()` は `$value instanceof AbstractEntity` を `getEntityIdentifierAsArray($value)`（ID配列）へ、Collection も ID 配列へ畳み込み、DateTime は `$value->setTimezone(new \\DateTimeZone('UTC')); $value = $value->format('Y-m-d\\TH:i:s\\Z');` と変換するため、cardtypes.product_search_flg / color_identities / card_details 配下 / card_images.create_date 等のネスト展開は行われない。`src/Eccube/Entity/Master/MtbCardDetail.php:278-279` `private ?int $foil_flg = 0;` および `:293-294` `private bool $promotion_flg = false;` は不変で、`foil` へ改名する公開レスポンス組み立ては存在しない（`toNormalizedArray` 利用箇所は同 CardController.php:157 のみ）。A14-01 用の応答 DTO/Builder は `src/Eccube/Service/App/` 配下にも新設されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 123,
+      "status": "未対応",
+      "evidence": "現 develop でも `GET /cardDetails/{id}` ルートは不在。src/ app/ 全体を `/cardDetails` `cardDetails/` で検索してヒットするルート定義はゼロで、カード詳細ID関連の近似は監査時点と同じ `src/Eccube/Controller/Admin/Product/ProductController.php:1012` `#[Route(path: '/%eccube_admin_route%/product/detail/search/id', name: 'admin_product_search_card_detail_by_id', methods: ['GET', 'POST'])]`（同:1017 `if (!$request->isXmlHttpRequest() || ...)` で XHR 限定の管理画面用）と `src/Eccube/Controller/App/MTGBuyer/V1/Admin/BuyingController.php:46` `#[Route('/%eccube_api_v1_route%/buying/{cardDetailId}.json', name: 'api_buying', methods: ['GET'])]` のみ。",
+      "note": ""
+    },
+    {
+      "rowId": 124,
+      "status": "未対応",
+      "evidence": "A14-02 レスポンスを組み立てる入口は現 develop にも不在。管理画面AJAXは `src/Eccube/Controller/Admin/Product/ProductController.php:1046-1053` で `$cardDetail = ['name' =>..., 'nameEn' =>..., 'productNameJp' =>..., 'productNameEn' =>..., 'cardLabelJp' =>..., 'detailId' => $cardDetailId, 'images' => []];` と部分項目のみを返し、cardId/backCardDetailId/rarity/cardset/illustrator/promotion 等を含まない。設計項目に近い配列は `src/Eccube/Service/App/Article/ArticleResponseBuilder.php:257-281`（`'card_id' => $CardDetail->getCard()?->getId(), ... 'card_images' => $cardImages,`）に private メソッドとして残るのみで、同ファイル:119-121・164 の通り記事レスポンスの `'card_details' => $cardDetails` 用途であり、`GET /cardDetails/{id}` へ接続されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 125,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Entity/Master/MtbCardDetail.php:278-279` `#[ORM\\Column(name: 'foil_flg', ...)] private ?int $foil_flg = 0;`、`:293-294` `private bool $promotion_flg = false;`、`:308-309` `#[ORM\\Column(name: 'frame_flg', ...)] private ?int $frameFlg = 0;` はいずれも監査時点と同一で、DB項目のまま。レスポンス変換側も `src/Eccube/Service/App/Article/ArticleResponseBuilder.php:270-271` が `'foil_flg' => $CardDetail->getFoilFlg(), 'promotion_flg' => $CardDetail->isPromotionFlg(),` を出力し frame を含まないまま。src/ app/ を `foil` で検索しても `foil` キーで返す変換や frame を返す実装は新設されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 126,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/Master/MtbCardDetailRepository.php:96` `public function get(int $id = 1): ?MtbCardDetail` と `:113` `public function findByIdNative(int $cardDetailId): array` は現 develop にも存在するが、A14-02 の API 入口は依然存在せず（rowId 123 の通り `/cardDetails/{id}` ルート不在）、camelCase/ISO8601 整形を行う Controller/Service も未新設。唯一の近似 `src/Eccube/Controller/Admin/Product/ProductController.php:1012-1068` は `$this->json($cardDetail)` で name/nameEn/productNameJp/productNameEn/cardLabelJp/detailId/images のみを返し、updateDate/createDate 等の日時項目自体を返していない。",
+      "note": ""
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "packetId": "0207_07",
+  "results": [
+    {
+      "rowId": 961,
+      "status": "未対応",
+      "evidence": "`app/template/admin/Customer/customer_address_csv.twig:96-110` は現 develop でも `<table class=\"table table-striped table-bordered\">` 内で `{% for header in headers %}` を回し `<th>{{ header.name }}` と `{% if header.required %}<span class=\"badge bg-primary ms-1\">{{ 'admin.common.required'|trans }}</span>` を出すのみで、2列目は `<td class=\"align-middle\"></td>` と空のまま。データ供給元 `src/Eccube/Service/Csv/Importer/Event/CustomerAddressCsvImportHandler.php:220-242` の `getColumnDefs()` も `['name' => 'メールアドレス', 'required' => true]` 形式で name/required のみを返し、識別ID・主キー・書式制限・最大文字数/最大値・入力例・備考の各列は存在しない。`src/Eccube/Controller/Admin/Customer/CustomerAddressCsvController.php:83,98` も `'headers' => CustomerAddressCsvImportHandler::getColumnDefs()` を渡すだけで、別クラス・別サービスへの実装移管も無し（`grep -rn getColumnDefs src app` の該当は上記3箇所のみ）。",
+      "note": "設計8列（識別ID/項目名/主キー/書式・制限/必須/最大文字数または最大値/入力例/備考）のうち画面表示は項目名・必須の2要素のみ。"
+    },
+    {
+      "rowId": 962,
+      "status": "未対応",
+      "evidence": "`app/template/admin/Customer/customer_address_csv.twig:95-111` は `<div class=\"card-body\">` の直下に `<table class=\"table table-striped table-bordered\">` を置くのみで、`table-responsive` などのスクロール用ラッパーや overflow 指定は無い。develop の当該テンプレートは全体で117行、`grep -rln table-responsive app/template src/Eccube/Resource/template` に customer_address_csv.twig は含まれない。`find . -name 'customer_address_csv*'` の結果も当該1ファイルのみで、スクロール対応を持つ別テンプレートへの差し替えも行われていない。",
+      "note": ""
+    },
+    {
+      "rowId": 963,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/CustomerAddressCsvImportHandler.php:296-298` は現 develop でも `$this->abroadPostalCodeColumn = (new BaseCsvColumn('海外郵便番号', '海外郵便番号'))->setRequired(false)->addValidator(new NumericValidator(), new NumericMaxLengthValidator(10));` のままで、最大桁数は 10 のまま変更されていない（設計の最大値100に未追従）。`grep -rn '海外郵便番号\\|overseas'` でも同ハンドラ内のヒットは `:235` の getColumnDefs 定義と `:296` の列定義のみで、別バリデータへの移管は無い。",
+      "note": ""
+    }
+  ]
+}

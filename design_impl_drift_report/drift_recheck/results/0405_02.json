@@ -1,0 +1,77 @@
+{
+  "packetId": "0405_02",
+  "results": [
+    {
+      "rowId": 211,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/TruncateWaitingNumberCommand.php:25` `#[AsCommand(name: 'eccube:order:truncate-waiting-number', description: '店舗注文番号初期化')]` のままで、設計の `order:batch truncateWaitingNumber` は存在しない。`src/Eccube/Command` 全 AsCommand 定義を再走査したが `aliases:` を持つのは `src/Eccube/Command/UpdateSchemaDoctrineCommand.php:38` `#[AsCommand(name: 'eccube:schema:update', aliases: ['doctrine:schema:update'])]` のみで、`order:batch` の文字列は src/Eccube・app・html のいずれにも不在。",
+      "note": ""
+    },
+    {
+      "rowId": 212,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Admin/Order/TruncateWaitingNumberAction.php:36-53` で `$this->entityManager->beginTransaction();` → `truncateWaitingNumber()` / `truncateWaitingNumberCounter()` → カウンタ再登録 `persist()` → `$this->entityManager->flush(); $this->entityManager->commit();` と、削除とカウンタ初期化を依然1トランザクションにまとめている。`src/Eccube/Service/Admin/Order/TruncateWaitingNumberAction.php:54-57` の `catch (\\Throwable $e) { $this->entityManager->rollback(); throw $e; }` も監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 213,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/TruncateWaitingNumberCommand.php:40-49` は `try { $this->truncateWaitingNumberAction->handle(); } catch (\\Throwable $e) { $io->error([...]); return Command::FAILURE; }` のままで、Command 層が Throwable を捕捉して終了コードへ変換している。設計の「例外を捕捉せずコンソールへ伝播」への是正は入っていない。",
+      "note": ""
+    },
+    {
+      "rowId": 214,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/TruncateWaitingNumberCommand.php:38` `$io->text('店舗注文番号初期化バッチ開始');` は日時を含まず、`src/Eccube/Command/TruncateWaitingNumberCommand.php:51` `$io->success('店舗注文番号初期化処理が完了しました。');` の完了ログも残存。同ファイルに `date(` / `\\DateTime` / `format(` による日時付与は存在しない。",
+      "note": ""
+    },
+    {
+      "rowId": 215,
+      "status": "未対応",
+      "evidence": "設計入口 `order:batch resendSmaregiProduct` は develop に不在（src/Eccube・app・html で `order:batch` / `resendSmaregiProduct` がヒットしない）。設計条件に近い `src/Eccube/Repository/OrderRepository.php:844` `public function getResendSmaregiProduct(): mixed`（`smaregi_product_flg` OR `smaregi_stock_flg` の orX）は依然どこからも呼ばれていない。実行可能な関連コマンドは `src/Eccube/Command/OtcOrderSmaregiPostCommand.php:25` `#[AsCommand(name: 'eccube:order:otc-smaregi-post', ...)]` のみで、その抽出は `src/Eccube/Repository/OrderRepository.php:1917-1918` `->andWhere('o.smaregi_product_flg = false')->andWhere('o.smaregi_stock_flg = false')` の AND 条件のままで設計の「未連携区分のみ再連携」と一致しない。",
+      "note": ""
+    },
+    {
+      "rowId": 216,
+      "status": "未対応",
+      "evidence": "スマレジ連携失敗時の管理者メール通知は develop に不在。`src/Eccube/Service/Smaregi/Otc/SmaregiOtcOrderSyncService.php:253-258` は `$this->logger->error($message, [...]);` と `$Order->setSmaregiErrorFlg(true);` に留まる。`src/Eccube/Service/Smaregi`・`src/Eccube/MessageHandler`・`src/Eccube/Command` を `MailService|mailer` で再走査したがヒットは `src/Eccube/Command/InstallerCommand.php` のみ。メールアドレス定数 `src/Eccube/Entity/Master/MtbOption.php:36` `SMAREGI_ERROR_MAIL_ADDRESS = 'smaregi_error_mail_address'` / 同 `:45` `SMAREGI_ERROR_SEND_MAILADDRESS` は定義されるだけで失敗時通知経路から参照されていない。",
+      "note": ""
+    },
+    {
+      "rowId": 217,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/SmaregiOtcDeleteCommand.php:39` `#[AsCommand(name: 'eccube:smaregi:otc:delete', description: '店頭受取注文スマレジ商品削除バッチ (MessengerJob を enqueue する)')]` のままで、設計の `order:batch deleteSmaregiProduct` に相当する name も aliases も付与されていない（src/Eccube/Command 全 AsCommand 走査で `order:batch` / `deleteSmaregiProduct` のヒットなし）。",
+      "note": ""
+    },
+    {
+      "rowId": 218,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Smaregi/Otc/SmaregiOtcDeleteService.php:70` `$this->logger->error('Smaregi product lookup failed', [...]);` / 同 `:76` `return SmaregiOtcDeleteResult::DELETE_FAILED;` / 同 `:94` `$this->logger->error('Smaregi product delete failed', [...]);` と、失敗時はログ出力とジョブ失敗状態の返却のみ。`src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php` に `MailService` / `mailer` の参照はなく（grep ヒット 0）、スマレジ通信エラーメール送信は依然不在。",
+      "note": ""
+    },
+    {
+      "rowId": 219,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/SmaregiOtcDeleteCommand.php:59-113` の `execute()` に開始出力は存在せず、出力は `:81` `$io->success('対象受注はありません。');`、`:92` `$io->writeln(sprintf('  - orderId=%d jobId=%d enqueued', ...));`、`:103` `$message = sprintf('OTC delete enqueue completed: enqueued=%d failed=%d', $enqueued, $failed);` → `:111` `$io->success($message);` のみで、いずれも日時を含まない。",
+      "note": ""
+    },
+    {
+      "rowId": 220,
+      "status": "未対応",
+      "evidence": "`src/Eccube/MessageHandler/SmaregiOtcDeleteMessageHandler.php:45` `private SmaregiMessengerJobProcessingLock $smaregiMessengerJobProcessingLock,` の注入と `同:73` `if (!$this->smaregiMessengerJobProcessingLock->tryBeginProcessingJob($Job)) {` による重複実行抑止ロックが削除処理の本線に残存（`同:28` `use Eccube\\Service\\Smaregi\\SmaregiMessengerJobProcessingLock;`、`同:35` のクラス docblock にも「同一ジョブの重複実行を ... で抑止し」と明記）。設計の「ロック対象を持たない」への是正はない。",
+      "note": ""
+    },
+    {
+      "rowId": 221,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Command/CheckDuplicatePointCommand.php:34` `#[AsCommand(name: 'eccube:check-duplicate-point', description: 'ポイント二重登録チェックバッチ')]` のままで、同ファイル `:32` の使い方コメントも `bin/console eccube:check-duplicate-point`。`order:batch checkDuplicatePoint` の定義・エイリアスは src/Eccube・app・html に不在。",
+      "note": ""
+    },
+    {
+      "rowId": 222,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Repository/DtbPointHistoryRepository.php:226-238` の `findDuplicatePoint()` は `->select('o.id AS orderId')->join('ph.Order', 'o')->andWhere('ph.pointChange < 0')->andWhere('ph.issueDate >= :fromDate')->andWhere('ph.issueDate < :toDate')->groupBy('o.id')->addGroupBy('ph.pointChange')->having('COUNT(DISTINCT ph.id) > 1')` のままで、`ph.Customer`（会員）も `ph.PointType` / `point_type_id`（ポイント履歴区分）も検知キーに含まれていない。",
+      "note": ""
+    }
+  ]
+}

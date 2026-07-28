@@ -1,0 +1,77 @@
+{
+  "packetId": "0210_01",
+  "results": [
+    {
+      "rowId": 964,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Content/page.twig:21-23` に `$('#search-page').on('input', function() { searchWord($(this).val(), $('table.table tbody tr')); });` が残存。`html/template/admin/assets/js/function.js:286-292` の searchWord は `targetText = $(this).text();` で tr 行全体の可視テキストを対象に `indexOf` 判定しており、列限定はされていない。行テキストにはレイアウト名列 `page.twig:89` `<span>{{ Layout.name }}</span>` も含まれる。`src/Eccube/Controller/Admin/Content/PageController.php:63-65` の index は `$Pages = $this->pageRepository->getPageList();` を無条件に呼ぶだけでサーバ側の列限定検索は無い。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 965,
+      "status": "部分対応",
+      "evidence": "`src/Eccube/Controller/Admin/Content/PageController.php:99-100` に `// 日本語は.jaなし（例: foo.twig）、英語は.en付き（例: foo.en.twig）` / `$localeSuffix = $locale === 'ja' ? '' : '.'.$locale;` が残存し、保存パスも `PageController.php:200-201` `$localeFileName = $Page->getFileName().$localeSuffix; $filePath = $templatePath.'/'.$localeFileName.'.twig';` のままで日本語は `.ja.twig` にならない。一方、新規登録時の日英2ファイル作成は `PageController.php:232-239` `if ($PrevPage->getId() === null) { $otherLocale = $locale === 'ja' ? 'en' : 'ja'; ... $fs->dumpFile($otherFilePath, $pageData); $fileAdapter->upload($otherFilePath, $s3_path, $otherLocaleFileName, $contentBucketOptions); }` で充足している。画面表示側は `src/Eccube/Resource/template/admin/Content/page_edit.twig:188` `<div class=\"col-2 ps-0\">.{{ locale }}.twig</div>` および `page_edit.twig:191` `{{ template_path }}/{{ page_file_name }}.{{ locale }}.twig` で `.ja.twig` を表示しており、保存ファイル名との不整合は解消していない。なお同一リポジトリの `src/Eccube/Controller/Admin/Content/BlockController.php:97` は `// 日本語は.ja付き（例: foo.ja.twig）` と対照的で、ページ側のみ未是正。",
+      "note": "設計期待値のうち「新規登録時に日英2ファイル作成」は現 develop で充足。「日本語を .ja.twig とする」は完全に未充足のため部分対応と判定した。"
+    },
+    {
+      "rowId": 966,
+      "status": "対応済み",
+      "evidence": "`src/Eccube/Resource/template/default/default_frame.twig:17` `{% set shopNameSuffix = 'front.seo.title_suffix'|trans %}`、同 `:25` `{% if noShopName is not defined or noShopName is empty %}`、`:28` `{% set t = t ~ ' | ' ~ shopNameSuffix %}`、`:34` `<title>{{ t }}</title>` により、ページ側コードで `{% set noShopName = true %}` を設定した場合はサフィックスの連結ブロックがスキップされる。サフィックス実文言は `src/Eccube/Resource/locale/messages.ja.yaml:6700` `front.seo.title_suffix: '日本最大級 MTG通販サイト「晴れる屋」'` で設計記載の文言と一致。設定側は `src/Eccube/Resource/template/default/Purchase/index.twig:2` および `app/template/user_data/*.twig:2` の `{% set noShopName = true %}` が実際に参照されるようになった。",
+      "note": ""
+    },
+    {
+      "rowId": 967,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Content/PageController.php:63-65` `public function index(Request $request, RouterInterface $router): array { $Pages = $this->pageRepository->getPageList();` のままで request query を一切読まず、部分一致条件の組み立ても無い。画面側も `src/Eccube/Resource/template/admin/Content/page.twig:21-23` のクライアント側 `searchWord` DOM フィルタのみで、`page.twig:44` `<input id=\"search-page\" class=\"form-control\" type=\"search\" aria-label=\"Search\">` は form 要素に含まれず GET 送信されない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 968,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Content/page.twig:64` `<a href=\"{{ url('admin_content_page_edit', {id : Page.id } ) }}\">{{ Page.name }}</a>` でページ名直リンクのまま。操作列 `page.twig:93-124` は `{% if Page.edit_type == constant('Eccube\\\\Entity\\\\Page::EDIT_TYPE_USER') %}` 内の削除アイコン `page.twig:97-99` と削除モーダルのみ。`grep -n \"dropdown\\|admin_content_layout\" src/Eccube/Resource/template/admin/Content/page.twig` は 0 件で、操作ドロップダウンもレイアウト編集リンクも存在しない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 969,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Content/page.twig:63-65` はファイル名の有無に関係なく `<a href=\"{{ url('admin_content_page_edit', {id : Page.id } ) }}\">{{ Page.name }}</a>` を出力し、`Page.file_name` の条件分岐は `page.twig:77` `{% if Page.file_name %}{{ Page.file_name }}.twig{% endif %}`（ファイル名列の表示のみ）に限られる。リンク無効化の分岐は追加されていない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 970,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Content/page_edit.twig:45-49` に `ace.require('ace/ext/language_tools'); var editor = ace.edit('editor'); editor.session.setMode('ace/mode/twig');` が残存し、`page_edit.twig:207-208` は `<div id=\"editor\" style=\"height: 480px\" class=\"form-control...\"></div>` と `<div style=\"display: none\">{{ form_widget(form.tpl_data) }}</div>` で Symfony の textarea を非表示にしている。rows=15 の通常 textarea 表示への変更は無い。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 971,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Resource/template/admin/Content/page.twig:112` `<p class=\"text-start\">{{ 'admin.common.delete_modal__message'|trans({ '%name%' : Page.name }) }}</p>` のままで、実文言は `src/Eccube/Resource/locale/messages.ja.yaml:1790` `admin.common.delete_modal__message: \"この操作はあとから取り消すことができません。「%name%」を削除してよろしいですか？\"`。設計の「このページを削除してもよろしいですか？」に相当するページ管理専用キーは messages.ja.yaml に存在しない（`admin.customer.delete_modal__message` のような個別キーは他機能のみ）。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 972,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Content/PageController.php:355-359` `if (!$Page) { $this->deleteMessage(); return $this->redirectToRoute('admin_content_page'); }` のままで、`src/Eccube/Controller/AbstractController.php:174-178` の `public function deleteMessage(): void { $this->clearMessage(); $this->addWarning('admin.common.delete_error_already_deleted', 'admin'); }` が `src/Eccube/Resource/locale/messages.ja.yaml:1600` `admin.common.delete_error_already_deleted: 既に削除されています` を表示する。削除失敗メッセージへの差し替えは無い。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 973,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Content/PageController.php:365` `if ($Page->getEditType() == Page::EDIT_TYPE_USER) {` の else 分岐 `PageController.php:394-400` に `} else { if ($adapter->exists($this::DEFAULT_PAGE_PATH.$Page->getFileName().'.twig', $contentBucketOptions)) { $adapter->delete($this::DEFAULT_PAGE_PATH.$Page->getFileName().'.twig', $contentBucketOptions); } ... }` が残存し、初期投入ページに対して DELETE ルートを直接叩くと S3 ファイル削除が実行される。サーバ側で初期ページの削除を拒否する（403/例外/エラーメッセージ）処理は追加されていない。監査時点と同一。",
+      "note": ""
+    },
+    {
+      "rowId": 974,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/MainEditType.php:212` `$form['url']->addError(new FormError(trans('admin.content.page_url_exists')));` のままで、実文言は `src/Eccube/Resource/locale/messages.ja.yaml:2924` `admin.content.page_url_exists: 既にURLが存在しています。`。設計の「※ 同じURLのデータが存在しています。別のURLを入力してください。」への文言変更は無い。監査時点と同一（messages.ja.yaml の行番号のみ 2719→2924 に移動）。",
+      "note": ""
+    },
+    {
+      "rowId": 975,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/MainEditType.php:127-131` `->add('meta_tags', TextareaType::class, [ ... new Assert\\Length([ 'max' => $this->eccubeConfig['eccube_ltext_len'],` のままで lltext_len に変更されていない。`app/config/eccube/packages/eccube.yaml:113-114` `eccube_lltext_len: 99999` / `eccube_ltext_len: 3000`、`src/Eccube/Entity/Page.php:102` `#[ORM\\Column(name: 'meta_tags', type: Types::STRING, length: 4000, nullable: true)]` も監査時点と同じで、フォーム上限は設計の 99999 より短い 3000 のまま。",
+      "note": ""
+    }
+  ]
+}

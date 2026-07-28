@@ -1,0 +1,71 @@
+{
+  "packetId": "0304_02",
+  "results": [
+    {
+      "rowId": 353,
+      "status": "部分対応",
+      "evidence": "見出しキーが差し替わり、日本語は設計文言に一致。`src/Eccube/Resource/template/default/Shopping/shipping_edit.twig:66` `<h1 class=\"c-hareruya-heading--lev1\">{{ 'front.shopping.shipping_edit_title_management'|trans }}</h1>`（パンくずも :58 で同キー）。`src/Eccube/Resource/locale/messages.ja.yaml:1557` `front.shopping.shipping_edit_title_management: 配送先の新規登録・変更` で設計期待値の和文と完全一致し、監査時点の `shipping_edit_header_customer='お届け先の追加'` 系は当テンプレートから除去済み（残存は shipping_multiple_edit.twig:22 のみ）。ただし英語は `src/Eccube/Resource/locale/messages.en.yaml:1403` `front.shopping.shipping_edit_title_management: Register / Change Delivery Address` で、設計指定の『Register New/Change Address』とは文言が異なる。設計文言と同一の `src/Eccube/Resource/locale/messages.en.yaml:1330` `front.shopping.shipping_edit_title_en: Register New/Change Address` は定義されているが src 全域で未参照（grep 結果は当該定義行のみ）。en 版 `Shopping/shipping_edit.en.twig:26,66` も `shipping_edit_title_management` を使用。",
+      "note": "設計書 sheet-5 の要素表『見出し / 配送先の新規登録・変更 / Register New/Change Address』のうち和文は充足、英文は未充足。"
+    },
+    {
+      "rowId": 354,
+      "status": "未対応",
+      "evidence": "国・都道府県の整合バリデーションは現 develop にも存在しない。`src/Eccube/Form/Type/Front/CustomerAddressType.php` の POST_SUBMIT は監査時点と同一で `if ($CustomerAddress->getCountry()->isJapan()) { ...postalCode01/02 の必須チェック... } else { ...abroadPostalCode 必須チェック...; $CustomerAddress->setPref($this->prefRepository->find(Pref::PREF_ABROAD)); }` の片方向是正のみ（国=日本かつ都道府県=国外 の逆方向検出なし、国項目への addError なし）。`src/Eccube/Form/Type/Master/PrefType.php:31-34` は `$resolver->setDefaults(['class' => Pref::class, 'placeholder' => 'common.select__pref'])` のみでフィルタ無し（query_builder 等の絞り込み無し）、国外 id48 も選択肢に残る。翻訳キー `form.country.error.invalid` および文言『The combination of country and region is incorrect.』は `grep -rn \"country.error.invalid|combination of country\" src/ app/` で 0 件。`src/Eccube/Form/Type/Shopping/ShippingType.php` の POST_SUBMIT(:262) にも country 参照・addError は無い（`grep -n \"POST_SUBMIT|addError|country\"` の一致は :262 のみ）。",
+      "note": ""
+    },
+    {
+      "rowId": 355,
+      "status": "対応済み",
+      "evidence": "店内アカウント限定の自動遷移が新規実装済み。`src/Eccube/Controller/Front/ShoppingController.php:674-689` で `$isOtcGroup = $Customer instanceof Customer && $Customer->getPlayer()?->getCustomerGroup()?->isOtcGroup() === true;` と判定し、真のときのみ `$shopTopUrl = $this->generateUrl('shop_top', ['_shop' => '/'.$Order->getBaseInfo()->getHtmlClassName()]);`（＝注文した店舗のTOP）と `$second`（MtbOption::OTC_SHOPPING_ORDER_RETURN_SECONDS、未設定時は `src/Eccube/Entity/Master/MtbOption.php:62` の `OTC_SHOPPING_ORDER_RETURN_SECONDS_DEFAULT = 60`＝1分）を算出し、:697-699 で `'isOtcGroup'`/`'shopTopUrl'`/`'second'` をテンプレートへ渡す。`src/Eccube/Resource/template/default/Shopping/complete.twig:15-19` が `{% block meta_tags %}{% if isOtcGroup and shopTopUrl and second %}<meta http-equiv=\"Refresh\" content=\"{{ second }};URL={{ shopTopUrl }}\">{% endif %}{% endblock %}` で、店内アカウントのときだけ 60 秒後に注文店舗TOPへユーザー操作なしで自動遷移する。",
+      "note": "秒数は管理画面（AdditionalSystemFormType.php:76-78）で変更可能、既定値 60 秒。"
+    },
+    {
+      "rowId": 356,
+      "status": "対応済み",
+      "evidence": "60秒タイマー相当の自動遷移と、識別ID5 ボタンの遷移先が両方是正済み。自動遷移は `src/Eccube/Resource/template/default/Shopping/complete.twig:16-18` の `{% if isOtcGroup and shopTopUrl and second %}<meta http-equiv=\"Refresh\" content=\"{{ second }};URL={{ shopTopUrl }}\">` （`second` 既定 60＝`src/Eccube/Entity/Master/MtbOption.php:62`）。識別ID5 の TOPページへ戻るボタンは `src/Eccube/Resource/template/default/Shopping/complete.twig:132-134` で `<a class=\"c-hareruya-btn c-hareruya-btn--lg u-hareruya-w-full\" href=\"{{ isOtcGroup and shopTopUrl ? shopTopUrl : url('homepage') }}\">` となり、店内アカウント時は注文店舗TOP（`shop_top` ルート）へ遷移する。フラグ・URL・秒数の受け渡しは `src/Eccube/Controller/Front/ShoppingController.php:674-699`（監査時点は Order/hasNextCart/products/waitingNumber のみだった）。",
+      "note": ""
+    },
+    {
+      "rowId": 357,
+      "status": "部分対応",
+      "evidence": "ヘルプページ誘導文は追加されたが、設計が『文言変更』とする本文（お問い合わせ誘導）が残存し併記状態。追加分は `src/Eccube/Resource/locale/messages.ja.yaml:1547-1548` `front.shopping.complete_message__help: 届かない場合はお手数ですが当店の%link%をご覧ください。` / `front.shopping.complete_message__help_link: ヘルプページ` で、`src/Eccube/Resource/template/default/Shopping/complete.twig:118-121` が `{{ 'front.shopping.complete_message__body'|trans|nl2br }}<br>{{ 'front.shopping.complete_message__help'|trans({'%link%': helpGuideLink})|raw }}` と両方を出力する。一方 `src/Eccube/Resource/locale/messages.ja.yaml:1544-1546` の `front.shopping.complete_message__body` は監査時点のまま `ただいま、ご注文の確認メールをお送りさせていただきました。` `万一、ご確認メールが届かない場合は、トラブルの可能性もありますので大変お手数ではございますがお問い合わせくださいますようお願いいたします。` で、設計 sheet-7 の『注文完了メールをお送りしました。届かない場合はお手数ですが当店のヘルプページを御覧ください。』への差し替えは未実施。結果として画面には『お問い合わせください』と『ヘルプページをご覧ください』が同時表示される。",
+      "note": "誘導先の追加という核心部分は是正済みだが、旧文言の削除・置換が未完のため部分対応。"
+    },
+    {
+      "rowId": 358,
+      "status": "対応済み",
+      "evidence": "識別ID3『ヘルプページ リンク（ヘルプ画面へ遷移する）』が新規に描画されている。`src/Eccube/Resource/template/default/Shopping/complete.twig:115-121` `{% set helpGuideLink %}<a href=\"{{ url('help_guide') }}\">{{ 'front.shopping.complete_message__help_link'|trans }}</a>{% endset %}` … `{{ 'front.shopping.complete_message__help'|trans({'%link%': helpGuideLink})|raw }}` で、`help_guide` ルート（ヘルプ画面）へのリンクをアンカーとして出力する。リンクラベルは `src/Eccube/Resource/locale/messages.ja.yaml:1548` `front.shopping.complete_message__help_link: ヘルプページ`（en は messages.en.yaml:1387 `help page`）。監査時点は twig 内に help 参照ゼロだった。",
+      "note": "設計 sheet-7 の BA16 注記どおり、ヘルプリンクは本文中のリンクとして実装されている。店内アカウント（waitingNumber あり）分岐は設計の『ご注文番号表示下にある文言も変更』に対応する別文言を表示する。"
+    },
+    {
+      "rowId": 391,
+      "status": "未対応",
+      "evidence": "処理状態は現 develop でも文字列ラベルのまま。`src/Eccube/Resource/template/default/Mypage/shopping_history.twig:196-199` `<dt>{{ 'front.mypage.shopping_history.col.status'|trans }}</dt><dd><span class=\"c-hareruya-label--status c-hareruya-label--status-{{ statusCssModifier }}\">{{ Order.OrderStatus.name }}</span></dd>`（statusCssModifier は :84-95 で completed/cancelled/pending を決定）。CSS も背景色のみで画像指定なし: `html/template/default/assets/hareruya/css/common.css` の `.c-hareruya-label--status{color:#fff;display:inline-block;font-size:10px;font-weight:700;line-height:1;padding:5px}` `.c-hareruya-label--status-pending{background-color:#e67b00}` `.c-hareruya-label--status-completed{background-color:#1f1f1f}` `.c-hareruya-label--status-cancelled{background-color:#767675}`。img/background-image による状態別画像の紐付けは無い。",
+      "note": ""
+    },
+    {
+      "rowId": 392,
+      "status": "未対応",
+      "evidence": "当該2行は現 develop でも無条件出力のまま。`src/Eccube/Resource/template/default/Mypage/shopping_history.twig:156` `<dt>{{ 'front.mypage.shopping_history.col.items'|trans }}</dt>`、同 :170 `<dt>{{ 'front.mypage.shopping_history.col.total'|trans }}</dt>` で、いずれも `Order.isSmaregiTransactionOrder` 等の分岐に囲まれていない（購入日 :102-113、支払方法 :175-191 はスマレジ分岐を持つのに対し当該2列のみ欠落）。ロケール側も `src/Eccube/Resource/locale/messages.ja.yaml:984-985` が `col.items: 注文内容` / `col.total: 注文金額合計` のみで、『購入内容』『支払金額合計』は `grep -rn \"購入内容|支払金額合計\" src/Eccube/Resource/` で 0 件。en 版 `shopping_history.en.twig:156,170` も同様に無条件。",
+      "note": ""
+    },
+    {
+      "rowId": 393,
+      "status": "未対応",
+      "evidence": "下部ツールバーは現 develop でもページャのみ。`src/Eccube/Resource/template/default/Mypage/shopping_history.twig:212-216` `<div class=\"p-hareruya-history-list__pagination-wrap--bottom\"><div class=\"p-hareruya-pagination\">{% include \"pager.twig\" with {'pages': pagination.paginationData} %}</div></div>` のみで、件数ラベル（`front.mypage.history_count` / `history_count_suffix`）と `form.disp_number` プルダウンの出力は無い。両者は上部ツールバー :60-80（件数 :62、disp_number :75）にのみ存在する。",
+      "note": ""
+    },
+    {
+      "rowId": 394,
+      "status": "未対応",
+      "evidence": "注記は現 develop でも購入履歴詳細に出力されていない。`grep -n \"notice|有効になります|出荷時\" src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig` は 0 件。獲得ポイントは `src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig:224-227` `<span class=\"...-label\">{{ 'front.mypage.shopping_history.col.point_generated'|trans }}</span><span class=\"...-value\">{{ Order.gained_points }}{{ 'front.block.point.unit'|trans }}</span>` で表示されるのみで注記なし。翻訳キー `front.shopping.notice.point`（`src/Eccube/Resource/locale/messages.ja.yaml:1438` `※獲得ポイントは商品出荷時に有効になります。` / messages.en.yaml:1251）は依然 `src/Eccube/Resource/template/default/Shopping/index.twig:834` でのみ使用され、Mypage 配下および Controller での参照は 0 件。",
+      "note": ""
+    },
+    {
+      "rowId": 395,
+      "status": "対応済み",
+      "evidence": "『TODO: スマレジ連携後』のハードコードが撤去され、Order の実データ出力に置換済み。`src/Eccube/Resource/template/default/Mypage/shopping_history_detail.twig:192-205` で `{% if Order.isSmaregiTransactionOrder or Order.isOtcSmaregiLinkedOrder %}` 配下の値スパンが :195 `{{ Order.subtotal_discount_division|default('-') }}`（クーポン名）、:199 `{{ Order.coupon_discount|price }}`（クーポン値引き）、:203 `{{ Order.tax_free|price }}`（免税額）となっている。対応するゲッターは `src/Eccube/Entity/Order.php:2238 getSubtotalDiscountDivision()` / `:2220 getCouponDiscount()` / `:2202 getTaxFree()` に存在。当テンプレート内の `TODO` 残存は :112 のステータス補足メッセージのみで、スマレジ3項目のプレースホルダは消滅している。",
+      "note": ""
+    }
+  ]
+}

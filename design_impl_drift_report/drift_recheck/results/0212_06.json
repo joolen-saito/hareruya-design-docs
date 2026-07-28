@@ -1,0 +1,77 @@
+{
+ "packetId": "0212_06",
+ "results": [
+  {
+   "rowId": 1350,
+   "status": "未対応",
+   "evidence": "現 develop も監査時点と同じルート定義。`src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:66` `#[Route('/%eccube_admin_route%/archetype', name: 'admin_archetype_list', methods: ['GET', 'POST'])]`、`:147` `#[Route('/%eccube_admin_route%/archetype/new', name: 'admin_archetype_new', methods: ['GET', 'POST'])]`、`:175` `#[Route('/%eccube_admin_route%/archetype/{id}/edit', name: 'admin_archetype_edit', ... methods: ['GET', 'POST'])]`、`:189` `#[Route('/%eccube_admin_route%/archetype/{id}/delete', name: 'admin_archetype_delete', ... methods: ['POST'])]`。src/ app/ 全体を `admin_archetype_create` / `admin_archetype_update` で横断検索したがヒット無し。削除フォームも `src/Eccube/Resource/template/admin/Archetype/edit.twig:337` `<form id=\"delete_form\" method=\"post\" action=\"{{ url('admin_archetype_delete', {id: Archetype.id}) }}\">` のまま（DELETEメソッド/_method 併用なし）。",
+   "note": ""
+  },
+  {
+   "rowId": 1351,
+   "status": "未対応",
+   "evidence": "代表カード検索は依然として単一JSON APIのまま。`src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:296` `#[Route('/%eccube_admin_route%/archetype/search_card_image', name: 'admin_archetype_search_card_image', methods: ['POST'])]`、`:367` `return new JsonResponse(['items' => $data, 'totalCount' => $totalCount, 'page' => $page, 'totalPages' => $totalPages]);`。テンプレート側も `src/Eccube/Resource/template/admin/Archetype/edit.twig:125` `$.post('{{ url(\"admin_archetype_search_card_image\") }}', {...})` のインラインJSでページング（同 :153 `.card-image-page` クリックで searchCardImage(page)）と選択反映（同 :165-168 `$('#admin_archetype_cardImageId').val(...)`）を行う。src/ app/ を `search/main_card`, `admin_archetype_main_card_html`, `admin_archetype_search_main_card_by_id`, `admin.archetype.main_card` で横断検索したがアーキタイプ関連のヒットは皆無（DeckUpdateImportHandler 等の `mainCards` 変数のみ）。セッション `admin.archetype.main_card.search/.page_no` への保存処理も不在。",
+   "note": ""
+  },
+  {
+   "rowId": 1352,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:251` `if ($form->isSubmitted() && $form->isValid()) {` の内側でのみ `:255` `$cardImageRaw = $form->get('cardImageId')->getData();` → `:258` `new ArchetypeStoreInput($Archetype, $cardImageId, $Member)` と解決しており、検証失敗時は `:286` `return ['form' => $form->createView(), 'Archetype' => $Archetype, 'isNew' => $isNew];` を返すのみで cardImageId を MtbCardImage へ解決してテンプレートへ渡す分岐は無い。テンプレートのプレビューも `src/Eccube/Resource/template/admin/Archetype/edit.twig:229-234` `src=\"{% if Archetype.CardImage is not null %}{{ image_path(Archetype.CardImage.url) }}{% endif %}\"` と `Archetype.CardImage` のみ参照。",
+   "note": ""
+  },
+  {
+   "rowId": 1353,
+   "status": "未対応",
+   "evidence": "保存成功時のフラッシュは新規・更新共通で `src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:275` `$this->addSuccess('admin.common.save_complete', 'admin');`、続く `:277` `return $this->redirectToRoute('admin_archetype_edit', ['id' => $Saved->getId()]);` のまま。設計指定キーは `src/Eccube/Resource/locale/messages.ja.yaml:1970` `admin.register.complete: 登録が完了しました。` として定義されているが、Archetype 保存処理からは参照されていない（src/ 内 `admin.register.complete` 使用箇所に ArchetypeController は無い）。",
+   "note": ""
+  },
+  {
+   "rowId": 1354,
+   "status": "未対応",
+   "evidence": "一覧: `src/Eccube/Resource/template/admin/Archetype/index.twig:193` `<form method=\"post\" action=\"{{ url('admin_archetype_delete', {id: Archetype.id}) }}\" onsubmit=\"return confirm('{{ 'admin.archetype.delete_confirm'|trans|e('js') }}');\">`。詳細: `src/Eccube/Resource/template/admin/Archetype/edit.twig:63-64` `$('#btn_delete').on('click', function() { if (confirm('{{ 'admin.archetype.delete_confirm'|trans|e('js') }}')) {`。両者とも同一キーで、`data-message` 属性は Archetype テンプレート内に存在せず、`admin.confirm.archetype_delete` も messages.ja.yaml に不在（定義は `src/Eccube/Resource/locale/messages.ja.yaml:4472` `admin.archetype.delete_confirm` のみ）。",
+   "note": ""
+  },
+  {
+   "rowId": 1355,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Archetype/ArchetypeController.php:192-195` `if (!$this->isCsrfTokenValid('admin_archetype_delete', ...)) { $this->addError('admin.common.csrf_invalid', 'admin'); return $this->redirectToRoute('admin_archetype_list'); }`（403ではない）、`:200-203` `catch (\\RuntimeException $e) { $this->addError($e->getMessage(), 'admin'); return $this->redirectToRoute('admin_archetype_edit', ['id' => $Archetype->getId()]); }`、`:211` `$this->addSuccess('admin.common.delete_complete', 'admin');`、`:221` `return $this->redirectToRoute('admin_archetype_list');`（検索ページ復帰なし）。関連デッキ存在時のメッセージも `src/Eccube/Service/Admin/Archetype/ArchetypeDeleteAction.php:45` `throw new \\RuntimeException('admin.archetype.delete_error_deck_exists');` のままで、設計の `admin.archetype.delete.failed` / `admin.delete.complete` / `admin_archetype_search` 1ページ目復帰は未実装。",
+   "note": ""
+  },
+  {
+   "rowId": 1356,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/EntityManager/ArchetypeEntityManager.php:88` `$this->entityManager->remove($Archetype);`（`:82` `public function delete(?DtbArchetype $Archetype): void`）が現 develop でも物理削除経路のまま。`src/Eccube/Entity/DtbArchetype.php:29-32` のクラス属性は `#[ORM\\Table(name: 'dtb_archetype')] #[ORM\\HasLifecycleCallbacks] #[ORM\\Entity(repositoryClass: DtbArchetypeRepository::class)]` のみで Gedmo SoftDeleteable 指定は無く、`:87` `#[ORM\\Column(name: 'deleted_at', ...)]` の列があるだけ。`SoftDeleteable` の該当は `app/config/eccube/packages/doctrine.yaml` のフィルタ登録と `app/config/eccube/services.yaml:621` のリスナー登録のみで、DtbArchetype への適用は不在。",
+   "note": ""
+  },
+  {
+   "rowId": 1357,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php:47` `#[Route('/%eccube_admin_route%/archetype/csv_import', name: 'admin_archetype_csv_import', methods: ['GET', 'POST'])]` のままで、設計の `/archetype/csvimport`（GET `admin_archetype_csv` / POST `m15-10_admin_deck_archetype_csv_import`）は不在。src/ app/ を `csvimport` で横断検索してもヒット無し。テンプレートも `src/Eccube/Resource/template/admin/Archetype/index.twig:68` `{{ url('admin_archetype_csv_import') }}`、`src/Eccube/Resource/template/admin/Archetype/csv_import.twig:79` `action=\"{{ url('admin_archetype_csv_import') }}\"` と実装側ルート名を参照。",
+   "note": ""
+  },
+  {
+   "rowId": 1358,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Form/Type/Admin/CsvImportType.php:52-57` の制約は `'constraints' => [ new Assert\\NotBlank(), new Assert\\File(['maxSize' => $this->csvMaxSize.'M']) ]` のみで、CsvMimeType 相当や TSV 拡張子拒否は無い（src/ 全体を `CsvMimeType` で検索してヒット0件）。取込側も `src/Eccube/Service/Csv/Importer/CsvImporter.php:172-173` `$fileExtension = $file->getClientOriginalExtension(); $delimiter = ($fileExtension === 'tsv') ? \"\\t\" : $this->eccubeConfig['eccube_csv_import_delimiter'];` と .tsv をタブ区切りで受け入れる分岐が残存。",
+   "note": ""
+  },
+  {
+   "rowId": 1359,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Service/Csv/Importer/Model/CsvRow.php:68-70` `$this->headers = array_flip(array_values($headers));` でヘッダ名→列位置を引く方式のまま。検証も `src/Eccube/Service/Csv/Importer/Event/BaseCsvImportHandler.php:71-77` `if (count($row) !== count($columns)) { ... addInvalidColumnCountError ... }` の列数一致と、`:85-88` `if (!$row->exists($name)) { $messageStore->addColumnNotExistsError($row->getRowNumber(), $name); ... }` の列名存在確認のみで、ヘッダ並び順の完全一致検査は無い。",
+   "note": ""
+  },
+  {
+   "rowId": 1360,
+   "status": "未対応",
+   "evidence": "`src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php:61` `return $this->renderWithErrors($form, $headers, []);`（フォーム不正）、`:67` ファイル無し、`:71` 行数上限、`:97` 例外時、`:103` 取込結果エラーがいずれも `renderWithErrors(...)`（`:131-137` `return ['form' => ..., 'headers' => ..., 'errors' => $errors];`）でテンプレート配列を返しており、302リダイレクト＋フラッシュではない。成功時のみ `:108` `return $this->redirectToRoute('admin_archetype_csv_import');`。",
+   "note": ""
+  },
+  {
+   "rowId": 1361,
+   "status": "未対応",
+   "evidence": "ログは `src/Eccube/Controller/Admin/Archetype/ArchetypeCsvController.php:95` `log_error('archetype csv import error', ['message' => $e->getMessage()]);` の例外時のみで、'アーキタイプCSV登録開始' / 'アーキタイプCSV登録完了' の log_info はメソッド内（:49-109）に存在しない。成功フラッシュも `:106` `$this->addSuccess('admin.common.csv_upload_complete', 'admin');` のままで、設計指定の `admin.register.complete`（`src/Eccube/Resource/locale/messages.ja.yaml:1970` に定義あり）は使われていない。",
+   "note": ""
+  }
+ ]
+}
