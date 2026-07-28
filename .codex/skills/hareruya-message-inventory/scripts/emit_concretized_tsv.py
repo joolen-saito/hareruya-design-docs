@@ -146,6 +146,7 @@ def parse_seed_map(dtext: str) -> dict:
             code, desc = row.group(1), row.group(2)
             # 内容の先頭句（最初の「・」「。」まで・括弧のidは残す）を短ラベルに
             short = re.split(r"[・。]", desc)[0].strip().strip("`")
+            short = re.sub(r"\s*[（(][^）)]*$", "", short).strip()  # 末尾の閉じ括弧が無い開き括弧以降を除去（分割で括弧内が切れた場合）
             m[code] = short or code
     # 汎用（内部注記の付いた§2記述より優先）
     m["SEED-M01-ADMIN"] = "管理者でログイン済み"
