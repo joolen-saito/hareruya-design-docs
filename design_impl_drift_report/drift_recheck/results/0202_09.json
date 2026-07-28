@@ -1,0 +1,77 @@
+{
+  "packetId": "0202_09",
+  "results": [
+    {
+      "rowId": 681,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:68-71` は現在も `public static function stockMoveQuantity(string $name = '移動点数'): BaseCsvColumn { return self::createUnsignedNumericColumn($name, '移動点数'); }` で第3引数 $maxLength を渡していない。`ColumnDefinitions.php:716-728` の `createUnsignedNumericColumn(string $name, string $label, ?int $maxLength = null)` は `->addValidator(new NumericValidator())` のみ付与し、`if (is_int($maxLength)) { $column->addValidator(new NumericMaxLengthValidator($maxLength)); }` は $maxLength=null のため発火しない。行検証も `src/Eccube/Service/Csv/Importer/Event/StockMoveCsvImportHandler.php:284` `if ((int) $moveQuantity <= 0) {` のままで、コメント `src/Eccube/Service/Csv/Importer/Event/StockMoveCsvImportHandler.php:291` も「移動点数が半角数字の正の整数（1以上）であることを検証する。」。999999999 の上限比較は在庫移動CSV経路に存在しない。",
+      "note": "設計の下限0に対し実装が1以上を要求する点も監査時点と同じ。"
+    },
+    {
+      "rowId": 682,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/StockTransferCsvImportType.php:105-115` の import_file は現在も `new Assert\\NotBlank(),` (111行) と `new Assert\\File(['maxSize' => $this->csvMaxSize.'M',])` (112-114行) のみで mimeTypes/extensions 制約がない。`grep -rn \"mimeTypes|getClientOriginalExtension|extensions\" src/Eccube/Form/Type/Admin/ src/Eccube/Controller/Admin/Stock/ src/Eccube/Service/Csv/Importer/` の結果に StockTransferCsvImportType は含まれない。`src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:950` は依然 `{{ form_widget(stockTransferCsvImportForm.import_file, { attr: { class: 'd-none', accept: 'text/csv,.csv,text/plain' } }) }}` のクライアント属性のみ。`src/Eccube/Service/Csv/Importer/CsvImporter.php:172-173` も `$fileExtension = $file->getClientOriginalExtension(); $delimiter = ($fileExtension === 'tsv') ? \"\\t\" : ...` と区切り文字判定に使うだけで非CSVを拒否しない。",
+      "note": ""
+    },
+    {
+      "rowId": 683,
+      "status": "未対応",
+      "evidence": "在庫振替CSV取込は `src/Eccube/Controller/Admin/Stock/StockMoveTransferController.php:380` で `if ($this->countCsvRows($formFile) >= static::ADMIN_CSV_IMPORT_MAX_ROWS) {` を使い、StockMoveTransferController に個別の定数上書きはない（grep で MAX_ROWS のヒットは 273行と380行の参照のみ）。実値は `src/Eccube/Controller/AbstractController.php:364` `protected const ADMIN_CSV_IMPORT_MAX_ROWS = 5010;` のまま。画面ヒントも `src/Eccube/Resource/template/admin/Stock/MoveTransfer/index.twig:945` `{{ 'admin.stock.move_transfer.csv_move_modal.file_row_limit_hint'|trans }}` で移動CSV用キーを流用し、`src/Eccube/Resource/locale/messages.ja.yaml:5488` `admin.stock.move_transfer.csv_move_modal.file_row_limit_hint: （1ファイルの登録上限は 10,000 件です）`。設計の2,000件上限は未実装。",
+      "note": "行番号は 352→380 にずれているが判定ロジックは同一。"
+    },
+    {
+      "rowId": 684,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php:153-169` の `onValidateRow()` は現在も `if (!$this->validateProductExists($event)) { $event->breakAll(); }` と `if (!$this->validateTransferQuantity($event)) { $event->breakAll(); }` の2つのみ。`src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php:292-295` の `protected function getRowValidators(): array { return []; }` も空配列のまま。同ファイルの関数一覧（grep 'function '）にも重複ペア検出用のメソッドは存在せず、duplicate/重複 のヒットもゼロ。",
+      "note": ""
+    },
+    {
+      "rowId": 685,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Model/ColumnDefinitions.php:98-101` は `public static function stockTransferQuantity(string $name = '振替点数'): BaseCsvColumn { return self::createUnsignedNumericColumn($name, '振替点数'); }` で最大桁数引数なし（`ColumnDefinitions.php:716` の $maxLength は null のため NumericMaxLengthValidator が付かない）。`src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php:299` `$this->transferQuantityColumn = ColumnDefinitions::stockTransferQuantity()->setRequired(true);` で必須化のみ。`src/Eccube/Service/Csv/Importer/Event/StockTransferCsvImportHandler.php:356` `if ((int) $transferQuantity <= 0) {` と 0以下判定のみで、999999999 超過の判定は同ファイルに存在しない（grep 999999999 のヒットなし）。",
+      "note": ""
+    },
+    {
+      "rowId": 686,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:292-298` は現在も `$storeId = isset($csvBag['store']) ? (int) $csvBag['store'] : 0;` / `$BaseInfo = $storeId > 0 ? $this->baseInfoRepository->find($storeId) : $this->baseInfoRepository->get();` で、store 未指定時は既定 BaseInfo にフォールバックし必須検証しない。取得した $BaseInfo に対する `isEditableShop()` 検証もなく、同ファイル内の `isEditableShop` 使用箇所は `StockSplitJoinController.php:490` の approvalMembers JSON エンドポイント（`if ($LoginMember instanceof Member && !$LoginMember->isEditableShop($BaseInfo)) { return $this->json([...], 403); }`）だけ。フォーム側 `src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:61-66` の store は `'required' => true` と `'choices' => $this->getStoreChoices($allBaseInfos)` で選択肢は絞るが NotBlank 制約はなく、取込 POST はフォーム検証自体を通さない。",
+      "note": ""
+    },
+    {
+      "rowId": 687,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:56-58` `$approvalConstraints = $options['approval_notification_required'] ? [new NotBlank([...])] : [];` と `StockSplitCsvUploadType.php:121` `'approval_notification_required' => false,`（configureOptions の既定値）は変更なし。取込ルート `src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:275-363` は `$csvBag = $request->request->all('admin_stock_split_csv_upload');` を直接読むだけで createForm/handleRequest/isValid を一切呼ばない。メール送信も `StockSplitJoinController.php:353-355` `if ($handler->getFlashSuccesses() !== []) { $this->sendApprovalNotificationMails($csvBag['approval_notification_target_members'] ?? []); }` で、`StockSplitJoinController.php:464-467` の `sendApprovalNotificationMails()` は `if (!\\is_array($rawIds) || $rawIds === []) { return; }` と空なら黙って return するため、承認通知先が空でも取込は成功完了する。",
+      "note": ""
+    },
+    {
+      "rowId": 688,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:78-83` の approval_department は現在も `'choices' => $this->getDepartmentChoices($allBaseInfos[0]),`（82行）で、`$allBaseInfos = $editableBaseInfos !== [] ? $editableBaseInfos : [$BaseInfo];`（54行）の先頭要素に固定される。店舗変更時の `src/Eccube/Resource/template/admin/Stock/stock_split_join_index.twig:466-497` `reloadApprovalMembers(storeId)` は `const nativeSelect = document.getElementById('admin_stock_split_csv_upload_approval_notification_target_members');`（474行）とチップUIのマトリクスのみ差し替えており、approval_department セレクトを更新する処理は同スクリプト内に存在しない（twig の approval_department 参照はゼロ）。",
+      "note": ""
+    },
+    {
+      "rowId": 689,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:284-290` は `$splitFiles = $request->files->get('admin_stock_split_csv_upload'); $file = \\is_array($splitFiles) ? ($splitFiles['import_file'] ?? null) : null; if (!$file instanceof UploadedFile || !$file->isValid()) {` と UploadedFile::isValid() のみで、その後 `StockSplitJoinController.php:334` `$result = $importer->import($file);` に直接渡す。フォーム型の `src/Eccube/Form/Type/Admin/StockSplitCsvUploadType.php:105-108` の `'mimeTypes' => ['text/csv', 'text/plain', 'application/csv']` 制約は取込 POST がフォーム検証を通さないため効かない。`src/Eccube/Service/Csv/Importer/CsvImporter.php:172-173` も `$fileExtension = $file->getClientOriginalExtension(); $delimiter = ($fileExtension === 'tsv') ? \"\\t\" : $this->eccubeConfig['eccube_csv_import_delimiter'];` と区切り分岐のみで csv 拡張子/MIME を必須検証しない。",
+      "note": ""
+    },
+    {
+      "rowId": 690,
+      "status": "未対応",
+      "evidence": "`src/Eccube/Service/Csv/Importer/Event/StockSplitListCsvImportHandler.php:149-150` は分割数について `if (!ctype_digit($splitQtyRaw) || (int) $splitQtyRaw <= 0) { $rowErrors[] = \"{$lineNum}行目: 分割数が不正です。\"; }`、`StockSplitListCsvImportHandler.php:162-164` は分割先在庫数について `if ($destQtyRaw === '' || !ctype_digit($destQtyRaw) || (int) $destQtyRaw < 1) { $rowErrors[] = \"{$lineNum}行目: 分割先在庫数が不正です。\"; }` のままで、999999999 の上限比較は同ファイルに存在しない（grep 999999999 ヒットなし）。",
+      "note": ""
+    },
+    {
+      "rowId": 691,
+      "status": "未対応",
+      "evidence": "分割CSV取込ルート `src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:275-363` はエラー時（282/290/298/306/313/342行）も成功時（363行）も一律 `return $this->redirectToRoute('admin_stock_split_join_list');` で resume パラメータを付けない。`src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:132-133` の `} elseif ($request->query->getBoolean('resume')) { $viewData = $session->get(StockSplitJoinIndexAction::SESSION_KEY_SEARCH, []);` により、resume 指定のない通常 GET は 134行以降の else 分岐に落ち、`StockSplitJoinController.php:151` `'stockSplitJoinSearchPerformed' => false,` の空一覧を返す。監査時点と同じ。",
+      "note": ""
+    },
+    {
+      "rowId": 692,
+      "status": "未対応",
+      "evidence": "結合CSV取込ルート `src/Eccube/Controller/Admin/Stock/StockSplitJoinController.php:407-414` は `new StockJoinListCsvImportHandler($this->productStockRepository, $this->stockJoinRegisterAction, $this->stockJoinMoveToShortageEntryAction, ...)` を組み立てており、承認申請アクションを注入していない。ハンドラ側も `src/Eccube/Service/Csv/Importer/Event/StockJoinListCsvImportHandler.php:78` `private readonly StockJoinMoveToShortageEntryAction $stockJoinMoveToShortageEntryAction,` / `StockJoinListCsvImportHandler.php:423` `$this->stockJoinMoveToShortageEntryAction->handle(` までで、成功文言は `StockJoinListCsvImportHandler.php:260` `trans('admin.stock.split_join.list_csv_join_import_done', ...)` = `src/Eccube/Resource/locale/messages.ja.yaml:4899` `'%count% 件の結合を登録し、欠品入力まで進めました。'`。`grep -rn StockJoinApplyApprovalAction src/Eccube/` の該当は `src/Eccube/Service/Admin/Stock/StockJoinApplyApprovalAction.php` 本体と `src/Eccube/Controller/Admin/Stock/StockJoinController.php:41,78` のみで、CSV取込経路からの呼び出しは存在しない。",
+      "note": ""
+    }
+  ]
+}
