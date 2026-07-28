@@ -133,17 +133,32 @@ def parse_section8(dtext: str):
             d, body = m.group(1), m.group(2)
             for nnn in _expand_nums(body):
                 disp.setdefault(nnn, (d, "", body[:80]))
-    # 2) per-row対応表: | NNN | 要旨 | 会計(bold可) | C-ref |
+    # 2) per-row対応表: 列順ゆらぎに頑健(3列 NNN|判定|要旨cref / 4列 NNN|要旨|判定|C-ref 両対応)
     for line in dtext.splitlines():
-        m = re.match(r"^\|\s*(\d{3})\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*$", line)
-        if not m:
+        if not re.match(r"^\|\s*\d{3}\s*\|", line):
             continue
-        nnn, yoshi, dcell, cref = m.group(1), m.group(2), _norm_cell(m.group(3)), m.group(4)
-        dm = re.match(r"(bound|TBD|excluded|DELEG|要ソース確認)", dcell)
+        cells = [c.strip() for c in re.split(r"(?<!\\)\|", line.strip())]
+        cells = [c for c in cells if c != ""]  # 先頭/末尾の空セル除去
+        if not cells or not re.fullmatch(r"\d{3}", cells[0]):
+            continue
+        nnn = cells[0]
+        dm = None
+        dcell = None
+        for c in cells[1:]:  # 判定キーワードを持つセルを探す
+            mm = re.match(r"(bound|TBD|excluded|DELEG|要ソース確認)", _norm_cell(c))
+            if mm:
+                dm, dcell = mm, c
+                break
         if not dm:
             continue
-        cm = re.search(r"C-(\d{3}[A-Z]?)", cref)
-        disp[nnn] = (dm.group(1), cm.group(1) if cm else "", yoshi)  # per-row優先
+        cref = ""
+        for c in cells[1:]:  # C-ref を持つセル
+            cm = re.search(r"C-(\d{3}[A-Z]?)", c)
+            if cm:
+                cref = cm.group(1)
+                break
+        yoshi = next((c for c in cells[1:] if c is not dcell and not re.match(r"(bound|TBD|excluded|DELEG|要ソース確認)", _norm_cell(c))), "")
+        disp[nnn] = (dm.group(1), cref, yoshi)  # per-row優先
     return disp
 
 
