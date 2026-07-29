@@ -224,7 +224,7 @@ def humanize(text: str, seed: dict) -> str:
     t = re.sub(r"SEED-[A-Z0-9\-]+", "所定の前提データ", t)  # 未定義SEEDの保険
     # URL/技術トークンの緩和
     t = t.replace("%eccube_admin_route%", "管理画面ルート").replace("/%eccube_admin_route%", "/管理画面ルート")
-    t = re.sub(r"GET\s+", "", t)  # 「GET …/edit を開く」→「…/edit を開く」
+    t = re.sub(r"GET\s+(?=/)", "", t)  # 「GET /admin/…/edit を開く」→「/admin/…/edit を開く」。末尾動詞(例「URLを直接GET」)は保護
     t = t.replace("…/", "管理画面の /").replace("…", "")  # 省略記号を可読化
     # 内部ジャーゴンの平易化（設計内部の言い回しを人間向けに）
     # 「§6.1契約: …」「§6.1契約で…」等の節-契約参照を除去(コロン/助詞の双方)
@@ -264,9 +264,16 @@ def strip_parens(text: str) -> str:
     t = re.sub(r"([「『])\s*[（(]\s*([^（）()]*?)\s*[)）]\s*([」』])", r"\1\2\3", t)
     # データ括弧を非括弧化: (id=990001)/（商品ID=990001） → ID990001
     t = re.sub(r"[（(]\s*(?:商品)?id\s*[=＝:：]?\s*(\d+)\s*[)）]", r" ID\1", t, flags=re.I)
-    # 残りの括弧書き（説明・メタ注記・URL等）は除去。ネスト括弧に備え不動点まで反復。
+    # 残りの括弧書き（説明・メタ注記・URL等）は除去。ただし意味ある短ラベルは保護(消すと別項目が同一化・逐語破壊)。
+    _keep = {"日", "英", "和", "洋", "NM", "SP", "MP", "HP", "ハイフン", "名称", "日本語", "英語", "カナ", "税込", "税抜", "半角", "全角"}
+
+    def _keep_paren(inner: str) -> bool:
+        s = inner.strip()
+        return s in _keep or "/" in inner or "=" in inner  # 短ラベル・URL/パス・データ(key=値)は保護
+        # 注: 母集合/bound/L1-ref等の内部ガバナンス注記が括弧に混じる場合はアサーションと同居しうるため
+        #     emitterでは機械除去せず、著者側でB13(可読性)として草案から除去する
     while True:
-        nt = re.sub(r"[（(][^（）()]*[)）]", "", t)
+        nt = re.sub(r"[（(]([^（）()]*)[)）]", lambda m: m.group(0) if _keep_paren(m.group(1)) else "", t)
         if nt == t:
             break
         t = nt
@@ -380,14 +387,16 @@ def main() -> int:
     seedmap = parse_seed_map(dtext)
     vp_corr = parse_viewpoint_corrections(dtext)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    n_bound = n_tbd = n_excl = n_raw = n_needlive = n_dup = 0
+    n_bound = n_tbd = n_excl = n_raw = n_needlive = n_dup = n_tbd_dup = 0
     emitted_cref = set()   # 候補ケース単位の重複排除(Gate B12): 同一候補は代表1件のみ出力
+    emitted_tbd_sig = set()  # TBD完全重複(前提/入力/操作/期待一致)の重複排除(Gate B12)
     all_rows = []       # 全数(母集合1:1)
     exec_rows = []      # bound(実行可能)のみ
     for nnn in sorted(pop):
         row = list(pop[nnn])  # 11列(母集合原本)
         if nnn in vp_corr:    # 母集合の観点ラベル誤りを派生ビューで是正（母集合自体は不変）
-            row[3] = vp_corr[nnn]
+            row[3] = vp_corr[nnn]  # テスト観点
+            row[5] = vp_corr[nnn]  # テスト項目名も同時是正（B12/TBD代表行の母集合ラベル残存を防ぐ・codexがMajor化）
         d = disp.get(nnn)
         is_exec = False
         is_tbd = False
@@ -430,7 +439,13 @@ def main() -> int:
                 row[7] = "—"
                 row[8] = "自動判定はできない。下記の理由に従い、人が仕様確認または実機確認で期待値を確定する。"
                 row[9] = f"【要確認】期待する挙動: {yoshi_h}。／ 人の対応: {tbd_reason(yoshi)}"
-                row[10] = "手動"; n_tbd += 1; is_tbd = True  # TBDは手動(要仕様/実機確認)＝自動bound(Playwright)と区別
+                row[10] = "手動"; n_tbd += 1  # TBDは手動(要仕様/実機確認)＝自動bound(Playwright)と区別
+                sig = row[9]  # TBDは前提/入力/操作が定型のため期待(row[9])が一致すれば完全重複
+                if sig in emitted_tbd_sig:
+                    n_tbd_dup += 1  # 完全重複TBD(前提/入力/操作/期待一致)は代表1件のみ出力(Gate B12)
+                else:
+                    emitted_tbd_sig.add(sig)
+                    is_tbd = True
             elif dstat in ("excluded", "DELEG"):
                 if dstat == "DELEG":
                     tag, act = "対象外（別導線に委譲）", "実際の処理・DB更新は別機能の担当。当機能では画面側の表示のみ扱う。"
@@ -452,8 +467,8 @@ def main() -> int:
         print("NG 会計不整合: 母集合", N, "に対し bound", n_bound, "+TBD", n_tbd,
               "+excluded", n_excl, "+未分類", n_raw, "＝", n_bound + n_tbd + n_excl + n_raw)
         return 1
-    if len(exec_rows) != n_bound - n_needlive - n_dup + n_tbd:
-        print("NG 出力行数不一致:", len(exec_rows), "vs bound", n_bound, "-要実機", n_needlive, "-重複", n_dup, "+TBD", n_tbd)
+    if len(exec_rows) != n_bound - n_needlive - n_dup + n_tbd - n_tbd_dup:
+        print("NG 出力行数不一致:", len(exec_rows), "vs bound", n_bound, "-要実機", n_needlive, "-重複", n_dup, "+TBD", n_tbd, "-TBD重複", n_tbd_dup)
         return 1
 
     full = OUT_DIR / f"{slug}_concretized.tsv"
@@ -466,9 +481,10 @@ def main() -> int:
     if old.exists():
         old.unlink()
     n_bound_out = n_bound - n_needlive - n_dup
-    print(f"出力: {full.relative_to(ROOT)}  {len(exec_rows)}行（自動bound{n_bound_out}＋手動TBD{n_tbd}）")
-    print(f"  会計: 母集合{N} = bound{n_bound}(内 要実機非出力{n_needlive}・完全重複非出力{n_dup}) / TBD{n_tbd} / excluded・DELEG{n_excl}")
-    print(f"  実行方法: bound={n_bound_out}行=自動(Playwright) ／ TBD={n_tbd}行=手動(要仕様/実機確認) ／ excluded{n_excl}・要実機{n_needlive}・重複{n_dup}は非出力")
+    n_tbd_out = n_tbd - n_tbd_dup
+    print(f"出力: {full.relative_to(ROOT)}  {len(exec_rows)}行（自動bound{n_bound_out}＋手動TBD{n_tbd_out}）")
+    print(f"  会計: 母集合{N} = bound{n_bound}(内 要実機非出力{n_needlive}・完全重複非出力{n_dup}) / TBD{n_tbd}(内 完全重複非出力{n_tbd_dup}) / excluded・DELEG{n_excl}")
+    print(f"  実行方法: bound={n_bound_out}行=自動(Playwright) ／ TBD={n_tbd_out}行=手動(要仕様/実機確認) ／ excluded{n_excl}・要実機{n_needlive}・重複{n_dup + n_tbd_dup}は非出力")
     print("  会計完全性: PASS（取りこぼし0）")
     aggregate_all()  # 全機能集約ビューを更新(人が全体チェック用)
     return 0

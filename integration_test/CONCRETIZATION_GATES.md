@@ -42,6 +42,12 @@ M03-01が codex 8周を要した反省から、**codexレビューを最小回�
   **【ユーザー決定2026-07-27】参照系(読み取り専用)機能では『更新内容/登録内容/削除』観点は『DB非更新の安全確認(変更されないこと)』も含め問答無用で全excluded**（読み取り安全性の確認は不要）。ただし期待の実内容が更新系でない別観点(認証・画面表示・メッセージ等)を母集合が誤ってこのラベルにしている行は Gate B8 で観点是正しboundを保つ（更新系か否かは母集合の観点ラベルでなく期待テキストの実内容で判定）。
 - **B6【M03-01追加】期待の観測可能性分離**: §4の期待は『画面で目視できる結果』を主に書き、目視できない内部状態(session/page_count/DB列/正確なリダイレクトURL/302/dtb_等)は同一セル末尾に『／ 自動検証(内部): <内部事実>』の形で付す（emitが2列＝期待結果(画面)｜自動検証(内部)へ分割）。純粋に画面観測のみなら内部マーカー不要。事実は不変(捏造ゼロ)。Playwrightは画面(DOM)＋内部(db.ts/session/URL)の両方を検証。
 - **B4 en逐語**: en文言はen一次資料(yaml/xlf/.en.twig)の逐語のみ。無ければ（英訳なし）/TBD。
+  - **★en-grep必須（反復盲点・M03-16/20/21/22/24/27で6度Major化）**: 「英訳なし／LS=0」と断定する前に、**必ず該当メッセージキー（MSG系・画面タイトル・ボタン・確認モーダル・バリデーション・CSVリンク等）を ee の英語資源で grep 確認する**。ヒットすれば **LS≠0** で en 逐語を §5(ee源) に記載。ヒット0件を確認できたキーのみ（英訳なし）と書く。翻訳キー描画（例 `admin.common.csv_download`・`admin.common.csv_upload`・`admin.common.delete_modal__message`）を「日本語固定」と誤認しないこと。grep結果を草案の根拠に残す。
+  - **★一次資料の実ソースパス（リポジトリ外の兄弟ディレクトリ・en盲点の真因）**: 著者はリポジトリ内`functions/ec-cube-enterprise`(md設計書のみ)を実装ソースと誤認してen未存在と断じがち。**実装/en資源は以下の絶対パスにある**:
+    - ee(EC-CUBE Enterprise・現行ee実装): `/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/` — en=`Resource/locale/messages.en.yaml`・`Resource/locale/validators.en.yaml`、twig=`Resource/template/admin/`、Controller=`Controller/Admin/`
+    - pf(pf-eccube3・現行pf実装/回帰オラクル源): `/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/`（Controller/template/Resource等）
+    - Symfony vendor validators: ee配下 `vendor/symfony/validator/Resources/translations/validators.en.xlf`
+    - grep例: `grep -inE "csv_upload|csv_skeleton|<key>" /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/locale/messages.en.yaml`
 - **B5 会計整合**: bound+TBD+excluded=N、excluded/TBDは母集合test_id実引きで根拠（偽陰性禁止）。oracle同期。
 （B1-B5を「自己監査済み」と草案§に明記してからGate Aを回す。）
 
