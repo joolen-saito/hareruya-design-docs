@@ -1,0 +1,252 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "M03-21 棚番号登録/編集の候補グレードL1オラクル。母集合89行をbound39/TBD10/excluded40で全数会計（codexレビューR1〜R7是正後）。区分=カスタマイズ現行踏襲＝**挙動オラクルの正典は現行pf(pf-eccube3 の HareruyaEc プラグイン)実装のfile:line**（ShelfNumberController.php／ShelfNumberType.php／shelf_number.twig／message.ja.yml／validator.ja.yml／DtbShelfNumber.dcm.yml）。Excel基本設計(sheet-36)は画面部品定義(識別ID)の一次資料。source_classはexcel/pf-fallbackのみ。R5是正の要点: (1)一覧の分割/表示件数/ページ送りは現行pf未実装(findByで全件表示)＝母集合002/076/085/004/005/078/079はTBD(pf/Excelで動的挙動を裏付けられずeeのみ)。C-001は全件sortNo昇順表示のみboundし分割を主張しない。sortNo昇順はCSV全件出力C-013で検証。(2)名称一意はエンティティの UniqueEntity フォームバリデーション(dcm.yml)＝既存名称の再送信はform->isValid()偽でフォーム項目下エラー再描画・非保存としてC-008 bound(母集合017)。flush時のUniqueConstraintViolation＋admin.error.non_unique＋一覧リダイレクトは並行競合時のみの経路で母集合086のTBD側。(3)検証失敗時は登録失敗のトップフラッシュを積まず同テンプレを再描画しフォーム項目下エラーを出すのみ＝C-004/005/015/016は『フィールド下エラー＋再描画＋非保存』に限定(トップフラッシュ・HTTPステータス不使用)。(4)削除メッセージは実pf逐語＝確認 admin.confirm.delete「%s を削除してもよろしいですか？」(message.ja.yml:1036)・削除成功 admin.delete.complete「削除が完了しました。」(:85)・削除拒否 admin.shelf_number.delete.failed(参照判定は dtb_product_sub_class)。登録成功「登録が完了しました。」・名称正規表現メッセージ・NotBlank「入力されていません。」も実pfで一致確認しbound。(5)excel claim(L1-005)はExcel逐語(件数選択肢9値)のみで実装事実を混ぜない。en(B4): 現行pfが本機能で使うキーのうちen一次資料が在る MSG-003(Registration completed.)/MSG-011(No value found.)/MSG-012(Please enter an integer.)の3件のみLS=ja/en。pf側キーにenが無い MSG-002/MSG-004/MSG-005(admin.delete.complete)/MSG-009(admin.confirm.delete)は英訳なし。並び順の整数バリデーション(072/074)は数値入力欄で非整数を純UI送信できずTBD。089規格側の自動再割当なしはB9④でC-017 bound(DB内部検証)。CSV出力(C-013)はboundだがCSV取込リンクの遷移(着地先別画面M03-40)と取込処理本体はexcluded。fixture_versionは全て@TBD-D5。O5/O6/聖域/承認は未主張。期待値の正はL1オラクルID。DB関連の正典は ec-cube-enterprise。TBD10。 R6是正: (a)B2スコープ＝削除POSTハンドラ ShelfNumberController::delete は本機能と同一コントローラ内で母集合に削除ケースが実在し別の棚番号削除機能が無い(it-target-functionsはM03-21とM03-40のみ)ため削除はM03-21自身の機能でbound維持(C-010/011/012・§10根拠)。CSV取込リンクの着地先は別機能M03-40のCSV取込画面のためC-014をexcluded(DELEG)へ移し母集合067/070/082をexcluded。CSV出力(C-013)は本コントローラのexportハンドラで別画面着地なくbound維持。 (b)C-008はUniqueEntityフォームバリデーション検証失敗(フィールド下エラー・再描画・非保存)の決定的経路をbound＝非定言表現(『…され得る』)を除去し挙動を確定(検証失敗→フィールドエラー→再描画→非保存。UniqueEntityエラーの表示文言リテラルは要実機)。MSG-002+DB例外+一覧リダイレクトは並行競合時のみの経路(母集合086 TBD)で逐次再送信では到達しない＝§8/§10/観点補正を統一。 (c)C-003はpfが保存後idをパラメータに付けリダイレクトしid付きGETが編集モードで当該行をロードする実挙動(Controller:77)に是正(新規状態に戻らない)。C-014は着地先別画面のためexcluded。 (d)メッセージfile:lineをplugin/core別に明記＝admin.register.complete/admin.delete.completeはpf core src/Eccube/Resource/locale/message.ja.yml:83/85、admin.error.non_unique(:1190)/admin.confirm.delete(:1036)/admin.shelf_number.delete.failed(:1353)はplugin app/Plugin/HareruyaEc/Resource/locale/message.ja.yml、NotBlankはpf core validator.ja.yml:1。 (e)会計 bound39/TBD10/excluded40=89を§8宣言まで同期。 R7是正: (1)C-014のルートを実sourceで確定＝shelf_number.twig:16のadmin_product_shelf_number_csvはProductServiceProvider.php:371でGET /product/shelf_number/importにバインドされ本機能自身のShelfNumberController::csv(:153)がCSVアップロード画面を描画する(M03-40は別URL/product/product_shelf_number_csv_import→ProductCsvController::csvShelfNumber:190の別機能)。R6のM03-40 DELEGは誤りでありC-014をboundへ復帰し母集合067/070/082をboundへ戻した＝会計bound36→39/excluded43→40。 (2)C-008のUniqueEntityエラー表示文言は一次資料で確定できず(pf和訳を特定不能)ため英語既定文言の断定を撤回し要実機扱い。bound判定は検証失敗→フィールドエラー→再描画→非保存の挙動のみ(文言リテラルはbound期待に含めない)。 (3)file:line訂正＝L1-017のreturn form->isValid()はFormValidHelper.php:22、L1-027のCSRF検証(isTokenValid/throw)はFormValidHelper.php:39,44,45(いずれもフルパスapp/Plugin/HareruyaEc/Controller/FormValidHelper.php)。 (4)会計bound39/TBD10/excluded40=89を§4/§8/§9/冒頭で同期(候補15)。",
+    "source": "integration_test/e2e/exec/_drafts/m03-21_admin_product_product_shelf_number_register_edit_executable_draft.md §1（本jsonはmd §1から導出・手編集禁止）",
+    "baseline": {
+      "excel_html": "excel_to_html/output/0204_基本設計仕様書(商品管理).html sheet-36=棚番登録 編集（機能No M03-21＝0204:8983／機能名 棚番 登録／編集＝0204:8984／画面項目一覧 識別ID1-12＝0204:9029-9040／名称Regex X-099=識別ID3=0204:9031／削除ボタン=識別ID11=0204:9039／件数選択肢=識別ID6=0204:9034）",
+      "ee_shared_infra": "ec-cube-enterprise src/Eccube/Resource/locale/messages.{ja,en}.yaml・validators.en.yaml・vendor/symfony/form/Resources/translations/validators.en.xlf（メッセージ逐語・鍵特定はpf md表ja文言との一致検索。en一次資料の逐語はB4に従い該当claimのenへ復旧＝出典を§5/各claim source注記に明記）",
+      "all_it_cases": "integration_test/all_it_cases.tsv の IT-M03-21-* 全89行",
+      "fid": "m03-21 / M03-21 棚番号登録/編集 / 更新系登録・編集",
+      "pf_impl": "/home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/（挙動オラクルの正典・ShelfNumberController.php/ShelfNumberType.php/shelf_number.twig/message.ja.yml/validator.ja.yml/DtbShelfNumber.dcm.yml）"
+    }
+  },
+  "L1-M0321-001": {
+    "claim_type": "screen_display",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "GET admin_product_shelf_number は上部に新規用フォーム(名称・並び順)と下部に棚番号一覧(各行 ID・名称・並び順・編集ボタン・削除ボタン)を表示する(pf HareruyaEcプラグイン実装＝一覧はページ分割せず全件を表示)",
+    "source": "pf-eccube3:ShelfNumberController.php:37,shelf_number.twig:78"
+  },
+  "L1-M0321-002": {
+    "claim_type": "screen_display",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "ブロックタイトルは「商品管理」・メニューは menus=['product','shelf_number']・サブタイトルは「棚番号新規登録」(新規時)/「棚番号編集」(編集時)・フォームは名称と並び順の2欄",
+    "source": "pf-eccube3:shelf_number.twig:4,5,7"
+  },
+  "L1-M0321-003": {
+    "claim_type": "list_order",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "一覧は棚番号マスタ全件を sortNo 昇順(findBy sortNo ASC)で取得して表示する(pf実装は全件表示でページ分割・並べ替えUIなし)",
+    "source": "pf-eccube3:ShelfNumberController.php:37,60,120"
+  },
+  "L1-M0321-005": {
+    "claim_type": "excel_delta",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "識別ID6「件数」の表示件数セレクトの選択肢は 10/50/100/300/500/1000/2000/10000/12000 の9値である(Excel基本設計の画面部品定義)",
+    "source": "0204.html:9034"
+  },
+  "L1-M0321-006": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "名称は必須(Assert\\NotBlank)かつ正規表現^[A-Z][-][0-9]{3}$一致要(Assert\\Regex)・並び順(sort_no)は必須の整数(IntegerType＋NotBlank・上下限検証なし)(pf ShelfNumberType)",
+    "source": "pf-eccube3:ShelfNumberType.php:27,28,34"
+  },
+  "L1-M0321-007": {
+    "claim_type": "excel_delta",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "識別ID5「登録」ボタンは入力内容をDBへ登録・更新する",
+    "source": "0204.html:9033"
+  },
+  "L1-M0321-008": {
+    "claim_type": "save_success",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "検証成功時はpersist/flushで保存しadmin.register.completeを積み admin_product_shelf_number(保存後idをパラメータに付与)へリダイレクトする(pf実装)",
+    "source": "pf-eccube3:ShelfNumberController.php:67,68,75,77"
+  },
+  "L1-M0321-009": {
+    "claim_type": "message",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "MSG-003 登録完了 admin.register.complete ja「登録が完了しました。」(pf core src/Eccube/Resource/locale/message.ja.yml:83)/en「Registration completed.」(ee messages.en.yaml:1676)表示位置=管理画面上部",
+    "source": "pf-eccube3:src/Eccube/Resource/locale/message.ja.yml:83"
+  },
+  "L1-M0321-010": {
+    "claim_type": "validation_fail",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "検証失敗時(!isFormValid)はフラッシュを積まず同テンプレートshelf_number.twigを再描画するのみ(pf実装＝admin.register.failedのトップフラッシュは出さない)・フォーム項目下に form_errors のフィールドエラーが表示され保存(persist/flush)には進まない",
+    "source": "pf-eccube3:ShelfNumberController.php:58,59,60,61,62,63,64"
+  },
+  "L1-M0321-012": {
+    "claim_type": "message",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "MSG-011 未入力 NotBlank訳(pf core validator.ja.ymlがThis value should not be blank.を上書き)ja「入力されていません。」/en「No value found.」(ee validators.en.yaml:17)表示位置=フォーム項目下・名称/並び順の未入力時にフォーム項目下へ表示",
+    "source": "pf-eccube3:src/Eccube/Resource/locale/validator.ja.yml:1"
+  },
+  "L1-M0321-013": {
+    "claim_type": "regex_validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "名称は Assert\\Regex(pattern=/^[A-Z][-][0-9]{3}$/)で検証され、不一致(6文字以上・小文字・桁違い等)だと検証失敗経路(フラッシュなし・shelf_number.twig再描画)へ入りフォーム項目下にMSG-010が表示される",
+    "source": "pf-eccube3:ShelfNumberType.php:28,29,30,31"
+  },
+  "L1-M0321-014": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "MSG-010 名称形式 pf ShelfNumberType の Regex message にハードコードのリテラル(翻訳キーでない) ja「※名称は大文字アルファベットと-(ハイフン)と3桁の数値の形式のみ登録可能です。」/en（英訳なし＝翻訳キーでなくen一次資料が存在しない）表示位置=フォーム項目下",
+    "source": "pf-eccube3:ShelfNumberType.php:30"
+  },
+  "L1-M0321-015": {
+    "claim_type": "integer_validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "並び順(IntegerType)に整数以外を入力するとフォーム項目下にMSG-012(整数エラー)を表示し検証失敗経路(フォーム再描画・非保存)へ入る",
+    "source": "pf-eccube3:ShelfNumberType.php:34"
+  },
+  "L1-M0321-016": {
+    "claim_type": "message",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "MSG-012 整数入力 IntegerType既定 invalid_message ja「整数で入力してください。」(symfony form validators.ja.xlf)/en「Please enter an integer.」(vendor/symfony/form/Resources/translations/validators.en.xlf:66)表示位置=フォーム項目下",
+    "source": "pf-eccube3:ShelfNumberType.php:34"
+  },
+  "L1-M0321-017": {
+    "claim_type": "unique_validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "名称はエンティティのUniqueEntity制約(dcm.yml)によりフォーム検証される。既存名称を再送信すると form->isValid() が偽となり検証失敗経路(フォーム項目下に一意エラー・再描画・非保存)へ入る＝単一実行で決定的。flush時のUniqueConstraintViolation捕捉＋admin.error.non_unique(L1-018)は事前検証を両者通過する並行競合時のみの経路",
+    "source": "pf-eccube3:app/Plugin/HareruyaEc/Resource/doctrine/Plugin.HareruyaEc.Entity.DtbShelfNumber.dcm.yml:6,app/Plugin/HareruyaEc/Controller/FormValidHelper.php:22"
+  },
+  "L1-M0321-018": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "MSG-002 値重複 admin.error.non_unique ja「値が重複しています。」(pf plugin HareruyaEc message.ja.yml:1190)/en（英訳なし）。※これはUniqueConstraintViolation捕捉時=並行競合の経路(母集合086 TBD側)で出るトップメッセージ。決定的な再送信(C-008)はUniqueEntity検証失敗のフィールドエラー経路のため本メッセージはbound期待に使わない",
+    "source": "pf-eccube3:app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1190"
+  },
+  "L1-M0321-019": {
+    "claim_type": "edit_display",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "一覧のID/名称/並び順/編集ボタン(いずれも admin_product_shelf_number に id を付けたリンク)を押すと当該行の現行値(名称・並び順)が上部フォームに載る(pf twig)",
+    "source": "pf-eccube3:shelf_number.twig:84,88,92,96"
+  },
+  "L1-M0321-020": {
+    "claim_type": "screen_transition",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "編集時はサブタイトルに「(admin.btn.new)はこちら」ボタンが出て、押下で admin_product_shelf_number(新規モード)へ戻る(保存はしない)(pf twig)",
+    "source": "pf-eccube3:shelf_number.twig:8,9,10,11"
+  },
+  "L1-M0321-021": {
+    "claim_type": "delete_confirm",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "一覧の削除ボタンは data-method=\"delete\" と data-message(admin.confirm.delete を棚番号名でformat)を持つアンカーで、押下時に管理画面共通JSが確認ダイアログを表示・キャンセルで非送信で留まり承認でdeleteを送信する(pf twig)",
+    "source": "pf-eccube3:shelf_number.twig:98"
+  },
+  "L1-M0321-022": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "MSG-009 削除確認 admin.confirm.delete ja「%s を削除してもよろしいですか？」(pf plugin HareruyaEc message.ja.yml:1036・%sは棚番号名でformat＝例「A-001 を削除してもよろしいですか？」)/en（英訳なし＝pf側キーのen一次資料なし)表示位置=確認ダイアログ。pf twig の削除アンカー data-message で管理画面共通JSが表示",
+    "source": "pf-eccube3:app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1036"
+  },
+  "L1-M0321-023": {
+    "claim_type": "delete_reject",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "削除実行時に当該棚番号を参照する商品規格サブ(dtb_product_sub_class)が存在すれば admin.shelf_number.delete.failed(棚番号名でsprintf)を積み admin_product_shelf_number へリダイレクトし削除しない(pf実装＝参照判定は dtb_product_sub_class。DB正典eeでは dtb_product_class に相当)",
+    "source": "pf-eccube3:ShelfNumberController.php:95,97,98,99,100"
+  },
+  "L1-M0321-024": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "MSG-004 削除拒否 admin.shelf_number.delete.failed ja「商品で使用されているため、「%s」の棚番号は削除することができません。」(pf plugin HareruyaEc message.ja.yml:1353・%sは棚番号名でsprintf)/en（英訳なし＝ee messages.en.yamlに当キーのen値なし）表示位置=管理画面上部",
+    "source": "pf-eccube3:app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1353"
+  },
+  "L1-M0321-025": {
+    "claim_type": "delete_success",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "参照が無ければ remove/flush で物理削除し admin.delete.complete を積み admin_product_shelf_number へリダイレクトする・一覧から当該行が消える(pf実装。成功フラッシュキーは admin.delete.complete)",
+    "source": "pf-eccube3:ShelfNumberController.php:103,104,105"
+  },
+  "L1-M0321-026": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "MSG-005 削除完了 pf は admin.delete.complete を使用 ja「削除が完了しました。」(pf core src/Eccube/Resource/locale/message.ja.yml:85。eeのadmin.common.delete_complete「削除しました」とは別キー・別文言)/en（英訳なし＝pf側キーのen一次資料を確認できず）表示位置=管理画面上部",
+    "source": "pf-eccube3:src/Eccube/Resource/locale/message.ja.yml:85"
+  },
+  "L1-M0321-027": {
+    "claim_type": "csrf",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "登録・削除は FormValidHelper::checkCsrfValid で共通CSRFトークンを検証し、isTokenValid が偽なら AccessDeniedHttpException で拒否する(pf)",
+    "source": "pf-eccube3:app/Plugin/HareruyaEc/Controller/FormValidHelper.php:39,44,45"
+  },
+  "L1-M0321-028": {
+    "claim_type": "csv_export",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "「CSV出力」ボタンで棚番号マスタ全件をsortNo昇順・ヘッダー['ID','名称','並び順']のCSVで出力しダウンロード・ファイル名は shelf_number_ + YmdHis + .csv(pf実装)",
+    "source": "pf-eccube3:ShelfNumberController.php:19,139"
+  },
+  "L1-M0321-029": {
+    "claim_type": "csv_nav",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "サブタイトルの「CSV入力」リンク admin_product_shelf_number_csv（GET /{admin_route}/product/shelf_number/import）は本機能自身の ShelfNumberController::csv が棚番号CSVアップロード画面を描画する＝別機能でなくM03-21同一コントローラの画面遷移(bound可)。取込POST本体は同コントローラのimportアクション",
+    "source": "pf-eccube3:app/Plugin/HareruyaEc/Resource/template/admin/Product/shelf_number.twig:16,app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:371,app/Plugin/HareruyaEc/Controller/Admin/Product/ShelfNumberController.php:153"
+  },
+  "L1-M0321-030": {
+    "claim_type": "db_effect",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "登録/更新はdtb_shelf_numberを直接persist/flushで保存し不要な削除を含まない(pf)",
+    "source": "pf-eccube3:ShelfNumberController.php:67,68"
+  },
+  "L1-M0321-031": {
+    "claim_type": "no_feature",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "本機能に検索機能・検索条件入力は無く、一覧は棚番号マスタ全件をsortNo昇順で表示するのみ(検索・絞り込みUIなし)",
+    "source": "pf-eccube3:ShelfNumberController.php:37,shelf_number.twig:78"
+  },
+  "L1-M0321-032": {
+    "claim_type": "no_feature",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "バリデーションは単項目制約のみ(名称=NotBlank+Regex+UniqueEntity、並び順=NotBlank+Integer)で項目間相関ルールは無い(pf ShelfNumberType/エンティティ制約)",
+    "source": "pf-eccube3:ShelfNumberType.php:27,28"
+  },
+  "L1-M0321-033": {
+    "claim_type": "no_feature",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "マスタCSV取込は別のCSVアップロード画面(admin_product_shelf_number_csv)のPOST処理であり、本register/edit画面(登録/更新/削除)の対象外(pf twigはCSV入力リンクで遷移するのみ)",
+    "source": "pf-eccube3:shelf_number.twig:16"
+  },
+  "L1-M0321-034": {
+    "claim_type": "auth",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "認可は管理画面共通の認証・認可に従い、本コントローラに機能固有の権限アノテーションは無い(pf ShelfNumberController)。未認証は管理画面共通のログイン誘導に従う",
+    "source": "pf-eccube3:ShelfNumberController.php:1"
+  },
+  "L1-M0321-035": {
+    "claim_type": "excel_delta",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "識別ID11「削除」ボタンは画面上に存在し押下で確認ダイアログを表示する(削除ボタン可視・UI操作可能)",
+    "source": "0204.html:9039"
+  },
+  "L1-M0321-036": {
+    "claim_type": "data_integrity",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "棚番号の更新は dtb_shelf_number を persist/flush するのみで、参照する商品規格サブ(dtb_product_sub_class)側の付け替え・行追加削除は行わない(pf実装は棚番号エンティティのみ保存)・規格側はM03-09別機能で本画面に現れない",
+    "source": "pf-eccube3:ShelfNumberController.php:67,68"
+  }
+}
