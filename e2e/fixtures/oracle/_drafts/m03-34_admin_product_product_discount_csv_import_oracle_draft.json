@@ -1,0 +1,161 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "候補（D6前・O5未確定・source_class=pf-fallback）。CONCRETIZATION_GATES.md（2026-07-27）Gate B(B1-B15)自己監査済み。codex Gate C R1(Major6)+R2(Major2)是正反映版（2026-07-29・ee/pf実ソース照合）。正式解決器はこの_drafts/を読んではならない（隔離）。期待値の正はL1オラクルID（三段参照・SEEDを期待値の正にしない）。fixture_versionは@TBD-D5。本機能は割引率変更CSV登録（2列=商品ID/割引率(ID)の専用取込画面）。【R2裁定＝whole-feature ee未実装】専用の取込画面・POSTルート product_discount_csv_upload・ハンドラ ProductDiscountImportHandler・雛形type=discount は pf(HareruyaEcプラグイン)にのみ実在し、ee(SUT=ec-cube-enterprise)には専用エントリポイントが無い(下記ee_absence参照・type=discountは404)。M03-26カードCSVへの統合/DELEGも一次資料不足で断定不可。→ **pf実装挙動を期待オラクル(pf-fallback)として本L1に維持しつつ、SUT未実装でboundできる根拠が無いため母集合の全固有挙動行(18件)をTBDへ移送**。pf-md区分宣言どおり現行踏襲＝オラクルは pf現行(HareruyaEc実装)＝全claim source_class=pf-fallback(pf plugin実source file:lineで確定)。Excel基本設計シートは本機能に存在しない＝excel源0。ee比較情報(未実装・保存先列統合・type-ID流用)は_metaと草案§0/§10メタに分離し個別claimへ混在させない(1claim1source)。en: 成功キー admin.product.csv_import.save.complete・取込系エラーキー admin.csv.error.* は pf en・ee en いずれも0件、画面文言はpf plugin twigのハードコード日本語＝全message claim LS=0(英訳なし)。母集合会計(before→after): 初版bound16/TBD7 → R1後bound18/TBD5 → R2後bound0/TBD23/excluded63 → **R3後 bound0 / TBD31 / excluded55**(=86・欠番0)。R2是正: (1)whole-feature ee未実装でbound不能＝18件(-019/-081含む)を全TBD化・M03-36/M03-44と同カテゴリ・ee実装後に本L1(pf-fallback)を根拠に再具体化・オーナーSUT方針確定待ち。(2)列数検査は列名検査に先行(BaseCsvImportHandler:57→70)＝1列fixtureはformat.body・列名逐語エラーは2列で第2ヘッダ誤名が必要(L1-011に反映)。R3是正: (1)pf一次資料に具体挙動がある-008/-009/-011/-070/-071/-072/-077/-079の8件をexcluded→TBDへ(1データ行=1商品ID/価格列非更新/列順不同許容/一時ファイル保存/履歴再読込/同一画面再描画・L1-014/011/020/015/005)。(2)L1-001/016のclaim本文からee事実(404)を除去しpf期待だけに戻す(1claim1source・ee比較は_meta/§0/§10へ隔離)。boundは0のため候補ケース/観点補正は無し。",
+    "source": "integration_test/e2e/exec/_drafts/m03-34_admin_product_product_discount_csv_import_executable_draft.md §1（本jsonはmd §1から導出・手編集禁止）",
+    "baseline": {
+      "sut_oracle": "pf-eccube3 HareruyaEcプラグイン(現行踏襲・pf-md区分宣言:9)。挙動オラクル=pf現行実source。",
+      "ee_absence": "ee(ec-cube-enterprise)に割引率変更CSV(2列専用)の実装なし: (a)専用POST/GETルート product_discount_csv_upload は ee src/app に0件、(b)twig csv_product_discount 不在、(c)ProductDiscountImportHandler 不在(Event/にPrice/Section/ShelfNumber/StandardPrice/Status/Tag等のみ)、(d)const PRODUCT_DISCOUNT_IMPORT_CSV_ID=10(Entity/Master/MtbCsvImportType.php:37)は ee php で使用0件、(e)ColumnDefinitions::discountId(Service/Csv/Importer/Model/ColumnDefinitions.php:531)は ProductCardImportHandler.php:369(カード多列CSV)からのみ呼ばれ専用ハンドラ無し、(f)汎用雛形 csvTemplate(CsvImportController.php:1293-1316)はtype∈{product,category,class_name,class_category,stock_change,department}のみ受理しelse NotFoundHttpException＝type=discountは404。→ eeをSUTとする場合は本機能は実装乖離(ee未実装)。SUT方針は要コーディネータ確定。本草案はpf-oracleで具体化。",
+      "pf_md": "functions/pf-eccube3/m03-34_admin_product_product_discount_csv_import.md（git hash-object 06db86c616163ae8455504631a12fdfad656ea84）",
+      "pf_controller": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php（csvProductDiscountUpload:1277-1321・render:1857-1868・getProductDiscountCsvHeader:2215-2221・const CSV_IMPORT_MAX:391=5010・const CSV_IMPORT_HISTORY_LIMIT:392=100）",
+      "pf_handler": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductDiscountImportHandler.php（2列定義:48-49,108-114・商品存在検証breakAll:132-150・onReadRow updateProductSub:96-101,184-211・onAfterImport支店通知:53-67）",
+      "pf_importer": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/CsvImporter.php（importRows: 各行 onValidateRow→breakAllならonReadRow前にbreak:243-247／onReadRow更新:253-256／isSuccessful=count()===0||!hasBreak:272・commit/rollback:273-277）・BaseCsvImportHandler.php（列検証失敗は全てbreakAll:52-93）",
+      "pf_locale": "pf-eccube3 メッセージ逐語源: 成功キー admin.product.csv_import.save.complete=商品登録CSVファイルをアップロードしました。(pf core src/Eccube/Resource/locale/message.ja.yml:133)／取込系エラー(pf plugin app/Plugin/HareruyaEc/Resource/locale/message.ja.yml: upload.maxrecord:1097 [%d]・data.require:1113・data.not_registered:1115・product.not_exists:1144・product.over_zero:1146・data.empty:1112)",
+      "pf_twig": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/csv_product_discount.twig（base_csv_upload.twig継承:1-8）・base_csv_upload.twig（JS spin.min.js/card-csvimport.js:8-11・accept=text/csv,text/tsv:26・errors .text-danger:29-31・アップロードボタン:36・雛形link:47）",
+      "excel_html": "該当なし（0204_基本設計仕様書(商品管理).html に割引率変更CSV登録シートは存在しない＝excel源0）",
+      "repo_head": "27ce6d0676e86679af74c1716cfd60d3fc927445（docs feat/front-e2e-coverage 2026-07-29）／pf 4bc76955971df324965d623a4e042094e53cb285",
+      "fid_kubun": "M03-34=現行踏襲 pf-fallback（excel源なし・ee専用実装なし）。確定はD6",
+      "all_it_cases_sha1": "06536deb2a0c72f811c45f3c431f20ff0c78c141"
+    }
+  },
+  "L1-M0334-001": {
+    "claim_type": "http_entry",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "商品管理メニューの「CSVダウンロード・アップロード」系配下「割引率変更CSV登録」から GET /{admin_route}/product/product_discount_csv_upload を開くと、同一リソースのGET応答(HTML)としてアップロードフォーム・雛形ダウンロードリンク・列説明フォーマット表・当該CSV種別(ID 10)のインポート履歴が表示される",
+    "source": "pf-md:30,50-56,241;controller csvProductDiscountUpload;render:1857-1867"
+  },
+  "L1-M0334-002": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "csv_product_discount.twig は base_csv_upload.twig を継承し、サブタイトル「割引率変更CSVアップロード」・ボックス見出し「割引率変更CSV」を表示する。カード内にラベル「CSVファイル選択」のファイル入力(accept=text/csv,text/tsv)と「CSVファイルのアップロード」ボタン、フォーマットカード「割引率変更CSVファイルフォーマット」に列見出し「商品ID」「割引率(ID)」(各セルに改行区切りで「必須」)、右上に「雛形ファイルダウンロード」リンク、下部にインポート履歴ブロック(ファイル名・アップロード日時・作業者)を表示する",
+    "source": "csv_product_discount.twig:1-8;base_csv_upload.twig:16-75;getProductDiscountCsvHeader:2215-2221"
+  },
+  "L1-M0334-003": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "アップロード画面は spin.min.js と admin/assets/js/card-csvimport.js を読み込む。送信時のスピナー等の汎用CSVアップロード挙動に従い、割引率専用の入力検証は画面側では行わない",
+    "source": "base_csv_upload.twig:8-11;pf-md:42"
+  },
+  "L1-M0334-004": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込前の確認ダイアログ(確認モーダル)はない。base_csv_upload.twig・csv_product_discount.twig ともに送信前確認モーダルの部品を持たず、ファイル選択後「CSVファイルのアップロード」押下で確認を挟まず送信する",
+    "source": "pf-md:44;base_csv_upload.twig(全76行に確認モーダル部品なし)"
+  },
+  "L1-M0334-005": {
+    "claim_type": "http_flow",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "POSTアップロード送信は成功・失敗のどちらでも同一URL /{admin_route}/product/product_discount_csv_upload のPOST応答としてHTMLを再描画する(リダイレクトしない＝PRGパターンではない)。フォーム不正・行数超過・取込結果のいずれの結末でも render(productDiscountTwig,...) で同画面を返し、成功時は成功フラッシュ、フォーム不正/行数超過時はエラーフラッシュ、取込エラー時は errors 配列を画面内に表示する",
+    "source": "controller:1288-1320;pf-md:69,242"
+  },
+  "L1-M0334-006": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込結果にエラーが無いとき($result->hasError()が偽)、成功フラッシュ(キー admin.product.csv_import.save.complete=「商品登録CSVファイルをアップロードしました。」)を積み、インポート履歴(dtb_csv_import_history)へ種別ID 10・クライアント側ファイル名・ログイン管理者を追記し、情報ログ「割引率変更CSV登録完了」と件数を出す",
+    "source": "controller:1311-1318;pf core message.ja.yml:133;pf-md:68,188"
+  },
+  "L1-M0334-007": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "アップロードファイルの概算行数(引用符内を除いた改行カウント・ヘッダ行含む)が定数 CSV_IMPORT_MAX(=5010)以上のとき、sprintf($app->trans('admin.csv.error.upload.maxrecord'), 5010) によりエラーフラッシュ「5010 行を超えるCSVファイルは登録できません。」を積み、取込を実行せず同画面を再描画する。documentation-only(母集合に行数上限を固有一意判定する要求行が無い)",
+    "source": "controller:1299-1304;const CSV_IMPORT_MAX:391;pf plugin message.ja.yml:1097"
+  },
+  "L1-M0334-008": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "データ行の商品IDが dtb_product に存在しない(del_flg無効の行が無い)とき、addProductNotExistsError で errors 配列に admin.csv.error.product.not_exists=「%d 行目の %s ではデータを取得できません。」(具体化例: 「2 行目の 商品ID ではデータを取得できません。」)を積み breakAll で全行処理を打ち切る。documentation-only(母集合に商品不存在を固有一意判定する要求行が無い)",
+    "source": "handler validateProductExists:132-150,isProductExists:156-177;MessageStore:204-208;pf plugin message.ja.yml:1144"
+  },
+  "L1-M0334-009": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "データ行の割引率(ID)が mtb_discount に存在しないID(DiscountIdValidator が事前読込したマスタにキー不在)のとき、addMasterNotExistsError で errors 配列に admin.csv.error.data.not_registered=「%s : %s がマスターから取得できません。 %d 行目のデータを確認してください。」(具体化例: 「割引率(ID) : 999 がマスターから取得できません。 3 行目のデータを確認してください。」)を積み breakAll で打ち切る",
+    "source": "DiscountIdValidator:37-63;ColumnDefinitions::discountId:297-301;MessageStore:191-195;pf plugin message.ja.yml:1115"
+  },
+  "L1-M0334-010": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "商品ID・割引率(ID)はいずれも必須(onBeforeImportで setRequired(true))かつ符号なし数値。必須列が空のとき addRequireError=admin.csv.error.data.require「%s は必須項目です。 %d 行目のデータを確認してください。」(具体化例: 「割引率(ID) は必須項目です。 2 行目のデータを確認してください。」)、符号なし数値でないとき addNumericError=admin.csv.error.product.over_zero「%d 行目の %s は0以上の数値を設定してください。」を errors 配列へ積み breakAll で打ち切る",
+    "source": "handler onBeforeImport:48-49;ColumnDefinitions::productId:61,discountId:297;MessageStore:124-126,177-179;pf plugin message.ja.yml:1113,1146"
+  },
+  "L1-M0334-011": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "各データ行につき (1)列数一致検査→(2)ヘッダ名の列存在検査→(3)列バリデータ の順で評価する(BaseCsvImportHandler:57→70)。列数が2でない行は先に addInvalidColumnCountError=admin.csv.error.format.body「CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。」で落ちる。列数が2で必須列名「商品ID」「割引率(ID)」が欠ける行は addColumnNotExistsError=admin.csv.error.product.not_exists「%d 行目の %s ではデータを取得できません。」。先頭行をヘッダとみなせないとき format.header、データ行が無いとき data.empty=「CSVデータが存在しません。」。列名逐語エラーを出すには2列維持で第2ヘッダのみ誤名+データ行2セルが必要(1列fixtureはformat.bodyになる=R2 Major2)。いずれも errors 配列へ積み打ち切る",
+    "source": "pf-md:132,160;BaseCsvImportHandler:57,70;MessageStore addColumnNotExistsError:111-113,addInvalidColumnCountError:87-89,addHeaderFormatError:75-77,addNoDataError:98-100;pf plugin message.ja.yml:1101,1112,1144"
+  },
+  "L1-M0334-012": {
+    "claim_type": "rollback",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込のコミット可否は CsvImporter の $isSuccessful = $messageStore->count()===0 || !$hasBreak。割引率変更ハンドラの検証失敗は全て breakAll(skipRow経路なし・行バリデータ空)。importRowsループは各行 onValidateRow→breakAllなら onReadRow前に break、正常なら onReadRow で更新を適用する。先頭データ行が不正なCSVは onReadRow到達前に breakAll するため更新は一切適用されない(ロールバック対象なし)。正常行の後に不正行が続くCSVでは、正常行の onReadRow 更新が適用された後に不正行で breakAll→isSuccessful偽→rollback され、正常行の更新(discount_id)も取り消される。いずれのエラーでも成功用フラッシュを積まず、errors を base_csv_upload.twig の .text-danger div(id=upload_file_box__upload_error--N)で画面内表示し、履歴INSERT・支店通知・完了ログは行わない",
+    "source": "CsvImporter importRows:236-277;BaseCsvImportHandler onValidateRow:52-93;handler onAfterImport:58;base_csv_upload.twig:29-31;pf-md:162,170,189"
+  },
+  "L1-M0334-013": {
+    "claim_type": "data_write",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "onReadRow は updateProductSub で当該 product_id の既存 dtb_product_sub 行を取得し、全カラム相当値を配列へ複写して discount_id だけをCSVの割引率(ID)値へ差し替え、buy_discount_id・nameEn・sellGroupId・size・weight・storageCodeId・regionRestrictionId など他列は既存値のまま ネイティブUPDATE dtb_product_sub で書き戻す。CSVの割引率(ID)が既存 discount_id と異なる正常取込では対象商品の discount_id が新値へ更新され、他サブ列は不変となる",
+    "source": "handler updateProductSub:184-211;pf-md:107-110,144"
+  },
+  "L1-M0334-014": {
+    "claim_type": "data_write",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "更新単位はCSVの1データ行が1商品IDに対応し規格単位の分割はない。同一ファイル内で同じ商品IDが複数回出た場合はトランザクション内で順に上書きされ最終行の値が残る。支店通知のID一覧は array_unique で重複除去される。本ハンドラは価格列を更新しない。documentation-only(母集合の期待は更新単位・価格非更新の内部注記で固有一意判定行でない)",
+    "source": "pf-md:143,145,146;handler:210,61"
+  },
+  "L1-M0334-015": {
+    "claim_type": "history",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "インポート履歴(dtb_csv_import_history)は取込結果にエラーが無い(成功)と判断したときだけ種別ID 10(PRODUCT_DISCOUNT_IMPORT_CSV_ID)・クライアント側ファイル名・ログイン管理者で1件INSERTされる。エラーを含む取込では履歴は増えない。画面は当該種別ID(10)の履歴を作成日時降順で最大100件(CSV_IMPORT_HISTORY_LIMIT)読み直す",
+    "source": "controller:1316-1317;render:1859-1860;pf-md:171,188-189;MtbCsvImportType PRODUCT_DISCOUNT_IMPORT_CSV_ID:21"
+  },
+  "L1-M0334-016": {
+    "claim_type": "file_download",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "GET /{admin_route}/product/product_csv_template/discount (type=discount)は、割引率変更用ヘッダーのキー名のみ(「商品ID」「割引率(ID)」)を1行として区切り文字(設定csv_export_separator)で出力し先頭にUTF-8のBOMを書いたCSVを、Content-Type=application/octet-stream・Content-Disposition=product_discount.csv 添付指定のダウンロード応答として返す(画面遷移はしない)",
+    "source": "pf-md:32-33,71-75,243,323;base_csv_upload.twig:47;getProductDiscountCsvHeader:2215-2221"
+  },
+  "L1-M0334-017": {
+    "claim_type": "exclusion",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "商品IDは存在するが対応する dtb_product_sub 行が無い場合、updateProductSub が既存サブ行に依存し getCardDetailId() 等を null に対して呼ぶため実行時例外になりうる。TBD理由: 母集合の期待が「実行時例外になりうる」(推量表現)であり、かつサブ行欠落状態を冪等に再現するSEEDと例外の一意観測手段が現行ハーネスで未整備＝一意判定不可(要実機)",
+    "source": "handler updateProductSub:190-193;pf-md:135,161"
+  },
+  "L1-M0334-018": {
+    "claim_type": "log",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "POST取込で情報ログ「割引率変更CSV登録開始」を出し、取込結果にエラーがあれば「割引率変更CSV登録 異常終了」、無ければ「割引率変更CSV登録完了」と件数を出す。TBD理由: 情報ログは実在するがログ観測手段が現行ハーネスで未整備＝画面/履歴で検知できず一意固定不能(要実機)",
+    "source": "controller:1306,1312,1315;pf-md:65,67,274-276"
+  },
+  "L1-M0334-019": {
+    "claim_type": "data_integrity",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込が成功した場合のみ onAfterImport 内で em.commit() 後に BranchUpdateService::noticeProductUpdate(array_unique(importedIds)) で支店システムへ商品更新通知を送る。取込が失敗しロールバックされた場合この通知は走らない。TBD理由: 支店連携は外部システムへの内部呼び出しで現行ハーネスから観測手段が無く一意判定不可(外部連携)",
+    "source": "handler onAfterImport:53-67;pf-md:114-115,172,179"
+  },
+  "L1-M0334-020": {
+    "claim_type": "file_handling",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "アップロードファイルはサーバ一時ディレクトリ(設定csv_temp_realdir)へ保存したうえで読み捨て解析され、永続パスは画面へ返さない。CSV内容や大きな配列はセッションへ格納しない。documentation-only(母集合の期待はファイル処理の内部注記)",
+    "source": "pf-md:81,154,290-294"
+  }
+}
