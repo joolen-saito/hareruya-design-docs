@@ -1,0 +1,100 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "候補（D6前・O5未確定）。codex Gate C R1 Major4件＋R2 Major1件是正版（2026-07-29）。R2是正: -023(前提M03-41-MSG-001=CSV形式不正)はロールバック事象でないためC-006(rollback)にbindしない。C-006(rollback)は母集合-076(トランザクション/エラー時renderWithErrorロールバック)へbind、-023/-089(失敗時も同一URL再描画・登録されない)は新C-008へbind。L1-006を『失敗時の同一URL再描画(非リダイレクト)』へ、rollbackは新L1-012へ分離。会計 bound13/TBD6/excluded75 → bound14(8候補)/TBD6/excluded74。本機能fid=m03-41（ee route admin_product_category_csv_import / CsvImportController::csvCategory / @admin/Product/csv_category.twig）は旧カテゴリCSV登録（4列: カテゴリID/カテゴリ名/親カテゴリID/カテゴリ削除フラグ）で、母集合とpf-mdはこの旧csvCategoryを指す。重大所見: Excel設計 0204 のシート「カテゴリ登録CSVアップロード」(機能No=M03-41)は刷新後の別コントローラ CategoryCsvController（bulk・route admin_product_category_bulk_import・@admin/Product/csv_category_bulk.twig・12列）を規定しており、本fidが指す旧csvCategoryの挙動をExcelは規定しない。よってpf/ee食い違い且つExcel規定なしの claim はTBD。boundは pf source と ee source が同挙動(バイト一致・構造一致・外部結果一致)且つ画面観測可能な claim に限る。R1是正: (1)L1-006ロールバックは検証通過後の複数行取込途中失敗で先行行が残らないことに変更(カテゴリ名空1行は検証段階で終了しrollback検証不可)。(2)-048はboundへ(FK参照残の削除不成立=pf/ee外部結果一致・L1-010)、-049/-051はexcludedへ(前提と削除期待の対応未定義/自己矛盾)。(3)L1-011を取込開始/完了ログのみ(pf==ee)に忠実化、削除ログはee固有として除外(-074はpf-fallback一致にしない)。(4)L1-001から必須バッジ(ee固有)を、L1-002からファイル名ラベル反映(ee固有change handler)を除き、pf/ee共通の画面構造・ボタン無効化・spinnerのみをboundに残す。source_class は excel/pf-fallback のみ(eeはSUTでオラクルにしない)。母集合94行=bound14(8候補ケース)/TBD6/excluded74。期待値の正はL1オラクルID(三段参照・SEEDを期待値の正にしない)。fixture_versionは@TBD-D5。boundはB12共有(前提・入力・期待まで同一実行)のみ。正式解決器はこの_drafts/を読んではならない(隔離)。",
+    "source": "integration_test/e2e/exec/_drafts/m03-41_admin_product_product_category_csv_import_executable_draft.md §1（本jsonはmd §1から導出・手編集禁止）",
+    "baseline": {
+      "excel_html": "excel_to_html/output/0204_基本設計仕様書(商品管理).html シート「カテゴリ登録CSVアップロード」(機能No=M03-41・git hash-object 06fc0cba464df7609d93ea0f9b1feb79092c5bfa)。ただし当シートは刷新後bulkコントローラ(CategoryCsvController)を記述し本fidの旧csvCategoryは規定しない",
+      "pf_md": "functions/pf-eccube3/m03-41_admin_product_product_category_csv_import.md（git hash-object cafe9df9811a606c1b45d420b798fe78df3b88c3。pf-md本文はee挙動を記述しているため実オラクルはpf実source照合）",
+      "pf_src": "pf-eccube3/src/Eccube/Controller/Admin/Product/CsvImportController.php::csvCategory(:410)・pf-eccube3/src/Eccube/Resource/template/admin/Product/csv_category.twig",
+      "ee_src": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php::csvCategory(:693)・ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_category.twig（SUT・source_class不使用）",
+      "repo_head": "650626d865b77eb0ed2f44dd01663bed577b6ca4（feat/front-e2e-coverage 2026-07-29）",
+      "fid_kubun": "M03-41=カスタマイズ。確定はD6",
+      "all_it_cases_sha1": "06536deb2a0c72f811c45f3c431f20ff0c78c141"
+    }
+  },
+  "L1-M0341-001": {
+    "claim_type": "http_entry",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "GET /{admin_route}/product/category_csv_upload を開くとカテゴリCSV登録画面が表示され、ファイル選択操作部・送信ボタン・CSVファイルフォーマットの説明表（カテゴリ名等の列見出しと説明）・雛形ダウンロードリンクが表示される。取込履歴テーブルはこの画面には無い。※フォーマット表の必須表現はpf=セル内テキスト・ee=バッジで異なるためbound主張に含めない",
+    "source": "pf-eccube3/src/Eccube/Resource/template/admin/Product/csv_category.twig:69,89,100,106; ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_category.twig:63,105"
+  },
+  "L1-M0341-002": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "アップロードフォーム(#upload-form)のsubmit時にjQueryで送信ボタン(#upload-button)と雛形ダウンロードボタン(#download-button)を無効化しspin.jsのスピナー(#spinner)を表示する。※ファイル選択でラベルにファイル名を反映する挙動はee固有のchange handlerでありpf現行に無いためbound主張に含めない",
+    "source": "pf-eccube3/src/Eccube/Resource/template/admin/Product/csv_category.twig:57,58,59,60; ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_category.twig:45,46,47,48"
+  },
+  "L1-M0341-003": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "送信前の確認ダイアログ（モーダル）は無く、送信ボタン押下でそのままPOSTされる",
+    "source": "pf-eccube3/src/Eccube/Resource/template/admin/Product/csv_category.twig:57; ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_category.twig:45; functions/pf-eccube3/m03-41_admin_product_product_category_csv_import.md:47"
+  },
+  "L1-M0341-004": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "アップロードファイルはフォーム項目キー import_file の必須(NotBlank)＋サイズ上限で検証され、ファイル未選択やサイズ超過で送信するとSymfonyのフォームフィールドエラーが入力欄直下に表示され、取込処理には進まない",
+    "source": "pf-eccube3/src/Eccube/Controller/Admin/Product/CsvImportController.php:418; ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:711,861; ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_category.twig:81"
+  },
+  "L1-M0341-005": {
+    "claim_type": "http_flow",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "route admin_product_category_csv_import はGETとPOSTを同一URLで受け、取込が正常に完了したときはリダイレクトせず同一URLのカテゴリCSV登録画面を再描画し、画面上部に成功アラート（成功フラッシュ）を表示する",
+    "source": "pf-eccube3/src/Eccube/Controller/Admin/Product/CsvImportController.php:560,564,569; ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:841,846,861"
+  },
+  "L1-M0341-006": {
+    "claim_type": "http_flow",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込がCSVフォーマットエラー（必須ヘッダ欠落・パース不能等）や行単位エラーで失敗したときも、リダイレクトせず同一URLのカテゴリCSV登録画面を再描画してエラー文言をフォーム付近に表示する（GETとPOSTは同一URLで受け、POST後もリダイレクトしない）。対象カテゴリは登録されない。※CSVフォーマットエラーのメッセージ文言はpf(「CSVのフォーマットが一致しません。」句点あり)とee(admin.common.csv_invalid_format「CSVのフォーマットが一致しません」句点なし)で異なるため、boundは文言でなく『同一URL再描画・登録されない』外部挙動に限定",
+    "source": "pf-eccube3/src/Eccube/Controller/Admin/Product/CsvImportController.php:426,428,439,569; ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:717,719,729,731,861"
+  },
+  "L1-M0341-007": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "行単位の業務バリデーションはエラー行で取込を打ち切りロールバックする。pf現行とeeでバイト一致するエラー文言は「（行番号）行目のカテゴリIDが存在しません。」（カテゴリID非数字）・「（行番号）行目のカテゴリIDと親カテゴリIDが同じです。」・「（行番号）行目のカテゴリ名が設定されていません。」・「（行番号）行目の親カテゴリIDが存在しません。」（親ID非数字/親不存在/親未指定で階層が1以外）・「（行番号）行目のカテゴリが最大レベルを超えているため設定できません。」。母集合に各文言を固有一意に判定する具体期待の行が無く documentation-only",
+    "source": "pf-eccube3/src/Eccube/Controller/Admin/Product/CsvImportController.php:460,471,478,488,520; ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:748,759,786,796,829"
+  },
+  "L1-M0341-008": {
+    "claim_type": "message",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "取込成功時の成功フラッシュ文言はpf現行とeeで食い違う（pf: キー admin.category.csv_import.save.complete「カテゴリ登録CSVファイルをアップロードしました。」／ee(SUT): キー admin.common.csv_upload_complete「CSVファイルをアップロードしました」・en「CSV file uploaded」）。Excelのシート「カテゴリ登録CSVアップロード」は刷新後の別コントローラ(bulk)を規定し本旧csvCategoryの成功文言を規定しないため、期待文言を確定できずTBD",
+    "source": "pf-eccube3/src/Eccube/Controller/Admin/Product/CsvImportController.php:564; ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:843; ec-cube-enterprise/src/Eccube/Resource/locale/messages.en.yaml:1684"
+  },
+  "L1-M0341-009": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "母集合期待「削除フラグが1でIDが無い行は削除ブロックに入ったあとcontinueするのみで無処理行となる」はee(SUT)の挙動（削除フラグをカテゴリ名より前に評価し、既存IDが無ければ削除せずcontinue）である。pf現行はカテゴリ名必須チェックを先に行い削除フラグを後段のswitchで処理するため同挙動でない。pf/ee食い違い且つExcel(bulk)にカテゴリ削除フラグ列が無くExcel規定なしのためTBD",
+    "source": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:765,781; pf-eccube3/src/Eccube/Controller/Admin/Product/CsvImportController.php:477,526"
+  },
+  "L1-M0341-010": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "カテゴリ削除フラグ=1で、子カテゴリまたは商品が紐づく（外部キー参照が残る）既存カテゴリを削除しようとすると、pf現行・eeとも削除は成立せず対象カテゴリは削除されずカテゴリツリーに残り（外部結果が一致）、エラーが表示され取込は打ち切られる。削除の内部方式と文言はpf/eeで異なる（pf: 削除失敗をfalseで返し「（行番号）行目のカテゴリが、子カテゴリまたは商品が紐付いているため削除できません。」／ee: ForeignKeyConstraintViolationを捕捉し admin.common.delete_error_foreign_key で打ち切り）が、「削除されない」という外部結果は一致するためboundは削除されない事実に限定する",
+    "source": "pf-eccube3/src/Eccube/Controller/Admin/Product/CsvImportController.php:534,544,545; ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:767,770,772,777"
+  },
+  "L1-M0341-011": {
+    "claim_type": "log",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "POST取込でpf現行とeeともに情報ログ「カテゴリCSV登録開始」（取込開始時）と「カテゴリCSV登録完了」（コミット後）を出力する（pf==ee）が、現行ハーネスにログ観測手段が無く画面・履歴で一意固定できないためTBD。※カテゴリ削除時にカテゴリIDを添える削除ログはee固有でありpf現行csvCategoryには無いため本claimに含めない（ee固有事実は§10へ記録）",
+    "source": "pf-eccube3/src/Eccube/Controller/Admin/Product/CsvImportController.php:422,562; ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:714,842"
+  },
+  "L1-M0341-012": {
+    "claim_type": "rollback",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "検証を通過した複数データ行の取込途中でエラー行に達すると直ちに打ち切り、取込前に開始したDBトランザクションがロールバックされるため、同一CSVの先行行で保存された新規カテゴリも取り込まれずカテゴリツリーに残らない（各行はループ内でsaveされるが後続行のエラーで全体がロールバックされる・renderWithErrorがロールバックする）",
+    "source": "pf-eccube3/src/Eccube/Controller/Admin/Product/CsvImportController.php:452,478,480,557,569; ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/CsvImportController.php:741,786,837,838,1342,1344"
+  }
+}
