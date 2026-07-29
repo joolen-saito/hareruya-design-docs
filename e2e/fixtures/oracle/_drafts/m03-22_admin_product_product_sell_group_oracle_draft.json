@@ -1,0 +1,199 @@
+{
+  "_meta": {
+    "fid": "m03-22 / M03-22 購入グループ管理 / 更新系登録・編集・削除",
+    "grade": "candidate",
+    "revision": "R2（codex Gate C R5・Major2件是正。会計 bound37/TBD3/excluded47 → bound32/TBD8/excluded47＝87不変）: (M1・source_class純度) 旧draftのpf-fallback claimが実質EE(ec-cube-enterprise=SUT)挙動でpf現行(回帰オラクル)と食い違っていた。区分=現行踏襲(fid_kubun.tsv:189)＝pf-eccube3 HareruyaEcプラグイン実装を挙動オラクルの正とし、各claimをpf実コード(SellGroupController/ServiceProvider/sell_group.twig/SellGroupType/MtbSellGroup)のfile:lineで再同定。主な是正: (a)pf create/updateは同一update()処理で成功時フラッシュ admin.register.complete『登録が完了しました。』を積み【編集画面(admin_sell_group_edit)へリダイレクト】(一覧でなく)。(b)pf削除成功は【フラッシュなし】でdeleted_at設定→一覧へ。(c)pf削除拒否は admin.sellgroup.delete.failed『この購入グループは商品で使用されているため、 %s は削除することができません。』。(d)pf検証失敗は admin.register.failed『登録できませんでした。』→同一テンプレ再表示。(e)pf削除確認は共通アンカー方式(data-method=delete＋csrf_token_for_anchor＋data-message=admin.confirm.delete)でありEEのBootstrapモーダルdata-urlコピーではない。(f)pf member_idは無条件設定(運用アカウント種別条件はEE)。(g)pf予約商品フラグはtwig/formに不在(Excel設計の★カスタマイズ追加のみ)＝§10隔離。pfに無くExcelも規定なしのEEのみ挙動(edit_not_found・成功→一覧の一律遷移・配送選択肢の表示フラグ/降順)は TBD。(M2・B6) 正確な遷移URL・HTTPステータスは自動検証(内部)へ移し画面期待は目視可能な画面(フラッシュ/一覧/編集フォーム)に限定。廃番候補: C-002(毎GET),C-003(非削除フィルタ),C-015(edit_not_found),C-020(配送選択肢),C-021/C-024(一律遷移)。",
+    "baseline": {
+      "pf_impl": "pf-eccube3 HareruyaEc プラグイン実コード（挙動オラクルの正）: pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SellGroupController.php・ServiceProvider/Admin/SellGroupServiceProvider.php・Resource/template/admin/SellGroup/sell_group.twig・Form/Type/Admin/SellGroup/SellGroupType.php・Entity/MtbSellGroup.php・Repository/MtbSellGroupRepository.php・Controller/FormValidHelper.php・Repository/PaymentRepository.php・Resource/locale/message.ja.yml・config.yml。区分=現行踏襲（fid_kubun.tsv:189）。※旧参照 functions/pf-eccube3/m03-22_admin_product_product_sell_group.md は EE挙動を記述しており挙動オラクルには使用しない。",
+      "excel_html": "excel_to_html/output/0204_基本設計仕様書(商品管理).html sheet-38=購入グループ管理（機能No M03-22・画面項目一覧 識別ID1〜14=0204:9431-9444）。入力項目の必須/最大値/初期値・予約商品フラグ★カスタマイズ追加はExcelを正とする。",
+      "ee_note": "ec-cube-enterprise は system-under-test（SUT）。EE挙動をオラクル(pf-fallback)に使用しない。フラッシュ英訳等の共有インフラ逐語のみ§5で照合。",
+      "all_it_cases": "integration_test/all_it_cases.tsv の IT-M03-22-* 全87行（IT-M03-22-ADMIN-PRODUCT-PRODUCT-SELL-GROUP-001..087・欠番0・重複0）"
+    },
+    "note": "M03-22 購入グループ管理（現行踏襲・更新系）の候補グレードL1オラクル。挙動の正はpf HareruyaEc実装（file:line）、入力項目値はExcel。pfに無くExcelも規定なしのEEのみ挙動はTBD（B15）。実装/実走なし。O5未確定。fixture_versionは全て@TBD-D5。著者はレビューしない。出力隔離: 本json＝_drafts/。削除拒否の動的%s（グループ名）はSEED既知名の実値で確定。",
+    "source": "integration_test/e2e/exec/_drafts/m03-22_admin_product_product_sell_group_executable_draft.md §1（本jsonはmd §1から導出・手編集禁止）"
+  },
+  "L1-M0322-001": {
+    "claim_type": "screen_display",
+    "expected": "GET /{admin_route}/sell_group（admin_sell_group_list）は上部に新規登録フォーム（名称(日)・名称(英)・メモ・支払方法・配送方法の入力欄と『登録』ボタン）、下部に購入グループ一覧表（名称(日)リンク・名称(英)・メモ・支払方法・配送方法・削除ボタンの6列）を表示する。一覧に行が無ければ表はヘッダのみで描画される（Twig の for ループ）。",
+    "quote": "index(): findAll() を sellGroups として sell_group.twig を render／ twig: 上部 form（form.name/name_en/memo/payments/deliveries＋<button>登録</button>）、下部 <table> 見出し 名称(日)/名称(英)/メモ/支払方法/配送方法/削除、{% for sellGroup in sellGroups %} 行、空なら tbody 空",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SellGroupController.php:21-35 ／ pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/SellGroup/sell_group.twig:14-88",
+    "source_class": "pf-fallback",
+    "ls": 0
+  },
+  "L1-M0322-002": {
+    "claim_type": "screen_display",
+    "expected": "ページタイトルは『購入グループ管理』、サブタイトルは『購入グループ編集』（常時固定）でサブタイトル右に一覧ルートへの『新規登録』リンクを出す。ナビは商品管理グループ(product)と購入グループ(sell_group_list)をハイライトする。",
+    "quote": "{% set menus = ['product', 'sell_group_list'] %}／ {% block title %}購入グループ管理{% endblock %}／ {% block sub_title %}購入グループ編集<div ...><a href=\"{{ url('admin_sell_group_list') }}\" ...>新規登録</a></div>{% endblock %}",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/SellGroup/sell_group.twig:3,5,6",
+    "source_class": "pf-fallback",
+    "ls": 0
+  },
+  "L1-M0322-003": {
+    "claim_type": "persist_success",
+    "expected": "新規登録（POST /{admin_route}/sell_group＝admin_sell_group_new→update()）が妥当なら update_date と member_id を設定し persist+flush し、フラッシュ admin.register.complete（ja『登録が完了しました。』）を積み、当該 id の編集画面（admin_sell_group_edit＝GET /sell_group/{id}）へリダイレクトする（一覧ではなく編集画面）。",
+    "quote": "if (!isFormValid) {...} setUpdateDate(new DateTime())->setMemberId(...); persist; flush; addSuccess('admin.register.complete','admin'); $id = $sellGroup->getId(); return redirect(url('admin_sell_group_edit', ['id'=>$id]));／ admin.register.complete: 登録が完了しました。",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SellGroupController.php:44,64-75 ／ pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:83 ／ pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/SellGroupServiceProvider.php:20",
+    "source_class": "pf-fallback",
+    "ls": 1,
+    "en": "Registration completed.",
+    "en_source": "ec-cube-enterprise src/Eccube/Resource/locale/messages.en.yaml:1676 (admin.register.complete)"
+  },
+  "L1-M0322-004": {
+    "claim_type": "persist_success",
+    "expected": "編集（POST /{admin_route}/sell_group/{id}＝admin_sell_group_update）は新規と同一の update() 処理で、当該 id の行に対し update_date のみ現在時刻・member_id を設定して flush し、admin.register.complete『登録が完了しました。』を積み編集画面へリダイレクトする（作成日時は更新しない）。",
+    "quote": "同一 update() ハンドラ（create/update 共通）。id ありなら findOneBy(['id'=>$id])。setUpdateDate(new DateTime())（createDate は触らない）。redirect(admin_sell_group_edit)",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SellGroupController.php:44,46,64-75 ／ pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/SellGroupServiceProvider.php:23",
+    "source_class": "pf-fallback",
+    "ls": 1,
+    "en": "Registration completed.",
+    "en_source": "ec-cube-enterprise src/Eccube/Resource/locale/messages.en.yaml:1676 (admin.register.complete)"
+  },
+  "L1-M0322-005": {
+    "claim_type": "validation",
+    "expected": "フォームが不正（名称(日)/名称(英) 未入力の NotBlank 違反等）なら、フラッシュ admin.register.failed（ja『登録できませんでした。』）を積み、リダイレクトせず同一テンプレート（一覧付き）を再表示する（画面に留まる）。各未入力項目直下には Symfony NotBlank のフィールドエラー『入力されていません。』が出る。",
+    "quote": "if (!isFormValid($app,$form)) { addError('admin.register.failed','admin'); return render(...sell_group.twig...); }／ admin.register.failed: 登録できませんでした。／ SellGroupType: name/name_en は NotBlank",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SellGroupController.php:54-61 ／ pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:84 ／ pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/SellGroup/SellGroupType.php:34,47",
+    "source_class": "pf-fallback",
+    "ls": 1,
+    "en": "Registration failed.",
+    "en_source": "ec-cube-enterprise src/Eccube/Resource/locale/messages.en.yaml:1677 (admin.register.failed)"
+  },
+  "L1-M0322-006": {
+    "claim_type": "validation",
+    "expected": "名称(日)/名称(英) が最大長 255 を超えると Symfony Length 制約に失敗し、admin.register.failed『登録できませんでした。』を積み同一テンプレを再表示（保存しない）。フィールド直下に Length のエラー（『長すぎます。この値は{{ limit }}文字以下で入力してください。』相当）が出る。",
+    "quote": "SellGroupType: name/name_en constraints [Length(max=255), NotBlank]（config sellgroup.length.name=255）。isFormValid=false → addError('admin.register.failed') → 同一テンプレ再表示",
+    "en": "This value is too long. It should have {{ limit }} characters or less.",
+    "en_source": "symfony validator vendor validators.en.xlf（Length制約・framework共通）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/SellGroup/SellGroupType.php:33,45 ／ pf-eccube3/app/Plugin/HareruyaEc/config.yml:252 ／ pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SellGroupController.php:54-61",
+    "source_class": "pf-fallback",
+    "ls": 1
+  },
+  "L1-M0322-007": {
+    "claim_type": "input_field",
+    "expected": "名称（日）は必須で最大 255 文字（Excel 識別ID1）。",
+    "quote": "名称（日）｜（必須）◯｜（最大値）255文字（識別ID1・0204:購入グループ管理!E59/T59/V59）",
+    "source": "excel_to_html/output/0204_基本設計仕様書(商品管理).html 0204:9431",
+    "source_class": "excel",
+    "ls": 0
+  },
+  "L1-M0322-008": {
+    "claim_type": "input_field",
+    "expected": "名称（英）は必須で最大 255 文字（Excel 識別ID2）。",
+    "quote": "名称（英）｜（必須）◯｜（最大値）255文字（識別ID2・0204:購入グループ管理!E60/T60/V60）",
+    "source": "excel_to_html/output/0204_基本設計仕様書(商品管理).html 0204:9432",
+    "source_class": "excel",
+    "ls": 0
+  },
+  "L1-M0322-010": {
+    "claim_type": "input_field",
+    "expected": "メモは任意で最大 1024 文字（Excel 識別ID4）。",
+    "quote": "メモ｜（必須）-｜（最大値）1024文字（識別ID4・0204:購入グループ管理!E62/T62/V62）",
+    "source": "excel_to_html/output/0204_基本設計仕様書(商品管理).html 0204:9434",
+    "source_class": "excel",
+    "ls": 0
+  },
+  "L1-M0322-011": {
+    "claim_type": "input_field",
+    "expected": "支払方法（識別ID7）は任意で、支払方法設定画面で定めたマスタを参照して表示する。",
+    "quote": "支払方法｜支払方法設定画面で定めたものをマスターとして参照して表示（識別ID7・0204:購入グループ管理!E65/AG65）",
+    "source": "excel_to_html/output/0204_基本設計仕様書(商品管理).html 0204:9437",
+    "source_class": "excel",
+    "ls": 0
+  },
+  "L1-M0322-012": {
+    "claim_type": "input_field",
+    "expected": "配送方法（識別ID8）は任意で、配送方法設定画面で定めたマスタを参照して表示する。",
+    "quote": "配送方法｜配送方法設定画面で定めたものをマスターとして参照して表示（識別ID8・0204:購入グループ管理!E66/AG66）",
+    "source": "excel_to_html/output/0204_基本設計仕様書(商品管理).html 0204:9438",
+    "source_class": "excel",
+    "ls": 0
+  },
+  "L1-M0322-014": {
+    "claim_type": "input_field",
+    "expected": "名称（日）（識別ID9）を押下すると、名称(日)・名称(英)・予約商品フラグ・メモ・支払方法・配送方法にその行のデータがロードされて編集可能になる。",
+    "quote": "名称（日）｜押下で(1)~(5)に選択行の内容を反映（識別ID9・0204:購入グループ管理!E67/AG67）／ 名称(日)(9)を押すと、名称(日)(1),名称(英)(2),予約商品フラグ(3),メモ(4),支払方法(7),配送方法(8)にその行のデータがロードされてデータ編集可能になる",
+    "source": "excel_to_html/output/0204_基本設計仕様書(商品管理).html 0204:9439,9423",
+    "source_class": "excel",
+    "ls": 0
+  },
+  "L1-M0322-015": {
+    "claim_type": "screen_display",
+    "expected": "新規登録ボタン（識別ID5）は、押下で入力内容をクリアし初期表示に戻る。",
+    "quote": "新規登録ボタン｜入力内容をクリアし初期表示に戻る（識別ID5・0204:購入グループ管理!E63/AG63）",
+    "source": "excel_to_html/output/0204_基本設計仕様書(商品管理).html 0204:9435",
+    "source_class": "excel",
+    "ls": 0
+  },
+  "L1-M0322-016": {
+    "claim_type": "delete",
+    "expected": "商品に紐づかない購入グループの削除（DELETE /{admin_route}/sell_group/{id}/delete）は、deleted_at を現在時刻に設定して flush（論理削除）し、フラッシュメッセージは積まずに一覧（admin_sell_group_list）へリダイレクトする。",
+    "quote": "delete(): getProductSubs()==0 の場合 setDeletedAt(new DateTime()); flush(); return redirect(url('admin_sell_group_list'));（成功フラッシュ addSuccess は無い）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SellGroupController.php:85,103-107",
+    "source_class": "pf-fallback",
+    "ls": 0
+  },
+  "L1-M0322-017": {
+    "claim_type": "delete",
+    "expected": "削除対象の購入グループが商品に使用されている（getProductSubs() が0件超）場合、削除せず、フラッシュ admin.sellgroup.delete.failed（ja『この購入グループは商品で使用されているため、 %s は削除することができません。』・%s=購入グループ名）を積んで一覧へリダイレクトする。",
+    "quote": "if (count($sellGroup->getProductSubs()) > 0) { addError(sprintf(trans('admin.sellgroup.delete.failed'), $sellGroup->getName()),'admin'); return redirect(url('admin_sell_group_list')); }／ admin: sellgroup: delete.failed: この購入グループは商品で使用されているため、 %s は削除することができません。",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SellGroupController.php:97-101 ／ pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1256-1257",
+    "source_class": "pf-fallback",
+    "ls": 0
+  },
+  "L1-M0322-019": {
+    "claim_type": "csrf",
+    "expected": "削除要求（DELETE /sell_group/{id}/delete）は先頭で共通CSRFトークン検証を行い、トークンが無効なら AccessDeniedHttpException を投げてアクセス拒否（HTTP 403）となる（削除は実行されない）。",
+    "quote": "delete(): $this->checkCsrfValid($app);／ checkCsrfValid(): if (!isTokenValid(...)) throw new AccessDeniedHttpException('CSRF token is invalid.');",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SellGroupController.php:87 ／ pf-eccube3/app/Plugin/HareruyaEc/Controller/FormValidHelper.php:39-45",
+    "source_class": "pf-fallback",
+    "ls": 0
+  },
+  "L1-M0322-020": {
+    "claim_type": "js",
+    "expected": "一覧各行の削除ボタンは、EC-CUBE3 共通の削除アンカー方式（<a> に csrf_token_for_anchor()・data-method=\"delete\"・data-message=admin.confirm.delete をグループ名で整形した文言）で実装され、押下すると共通スクリプトが確認ダイアログを表示し疑似 DELETE 送信＋CSRF 付与を行う（本テンプレート専用の Bootstrap モーダルや data-url コピー処理は無い）。",
+    "quote": "twig: <a class=\"btn ...\" href=\"{{ url('admin_sell_group_delete', {'id': sellGroup.id}) }}\" {{ csrf_token_for_anchor() }} data-method=\"delete\" data-message=\"{{ trans('admin.confirm.delete')|format(sellGroup.name) }}\">{{ trans('admin.btn.delete') }}</a>",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/SellGroup/sell_group.twig:77-79",
+    "source_class": "pf-fallback",
+    "ls": 0
+  },
+  "L1-M0322-021": {
+    "claim_type": "persist_mapping",
+    "expected": "支払方法・配送方法は entity 型の複数選択（expanded multiple）でフォーム送信の選択集合が MtbSellGroup の関連（中間表 dtb_sell_group_payment／dtb_sell_group_delivery）へ差し替え反映される（persist+flush でカスケード）。未選択許容。",
+    "quote": "SellGroupType: payments/deliveries entity expanded=true multiple=true required=false; controller persist($sellGroup)+flush() で関連を保存",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/SellGroup/SellGroupType.php:60-79 ／ pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SellGroupController.php:68-69",
+    "source_class": "pf-fallback",
+    "ls": 0
+  },
+  "L1-M0322-023": {
+    "claim_type": "timestamp",
+    "expected": "新規作成時はエンティティ構築時に create_date が現在時刻で初期化され、保存時に controller が update_date を現在時刻に設定する（新規は create_date≒update_date≒現在時刻）。更新時は既存 create_date を変更せず update_date のみ現在時刻に更新する。",
+    "quote": "MtbSellGroup::__construct(): $this->createDate = date('Y-m-d H:i:s');／ controller update(): $sellGroup->setUpdateDate(new DateTime())（createDate は触らない）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Entity/MtbSellGroup.php:80-85 ／ pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SellGroupController.php:64-65",
+    "source_class": "pf-fallback",
+    "ls": 0
+  },
+  "L1-M0322-025": {
+    "claim_type": "validation",
+    "expected": "支払方法・配送方法は entity 型（表示対象マスタから取得した選択肢に限定）であり、選択肢一覧外の id を送信すると Symfony が許容リスト外として拒否し、フォーム不正として admin.register.failed で同一テンプレを再表示する（許容外 id は保存されない）。",
+    "quote": "SellGroupType: payments entity class Payment query_builder=loadEcPaymentQueryBuilder()（del_flg=0・rank DESC の選択肢）、deliveries entity class Delivery。entity 型は許容リスト外を拒否（Symfony 標準）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Form/Type/Admin/SellGroup/SellGroupType.php:60-79 ／ pf-eccube3/app/Plugin/HareruyaEc/Repository/PaymentRepository.php:24-31",
+    "source_class": "pf-fallback",
+    "ls": 0
+  },
+  "L1-M0322-026": {
+    "claim_type": "persist_mapping",
+    "expected": "保存（新規/更新）時、member_id にログイン中の管理者（security トークンのユーザ）の id を無条件に設定して flush する。",
+    "quote": "$sellGroup->setUpdateDate(new DateTime())->setMemberId($app['security']->getToken()->getUser()->getId());（条件分岐なし＝無条件）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/SellGroupController.php:64-66",
+    "source_class": "pf-fallback",
+    "ls": 0
+  },
+  "L1-M0322-027": {
+    "claim_type": "delete",
+    "expected": "一覧の削除ボタンからの通常削除要求は、EC-CUBE3 共通の疑似 DELETE 送信（data-method=\"delete\"）と csrf_token_for_anchor() による共通CSRFトークン付与を伴って admin_sell_group_delete（DELETE /sell_group/{id}/delete）へ送信される。",
+    "quote": "twig: <a href=\"{{ url('admin_sell_group_delete', {'id': sellGroup.id}) }}\" {{ csrf_token_for_anchor() }} data-method=\"delete\" ...>／ ServiceProvider: $app->delete('/sell_group/{id}/delete', ...delete)->bind('admin_sell_group_delete')",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/SellGroup/sell_group.twig:77 ／ pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/SellGroupServiceProvider.php:27-29",
+    "source_class": "pf-fallback",
+    "ls": 0
+  }
+}
