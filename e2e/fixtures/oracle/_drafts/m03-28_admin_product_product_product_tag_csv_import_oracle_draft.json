@@ -1,0 +1,161 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "候補（D6前・O5未確定）。codex Gate C R3 Major2/3是正版（Major1=TBD脱落はemitter側修正済・再emitで確認）（2026-07-29）。実ソース: pf=/home/y-saito/Developments/pf-eccube3/（+pf core src/Eccube/）、ee=/home/y-saito/Developments/ec-cube-enterprise/src/Eccube/。**R3 Major2（拒否経路の実メッセージ）**: ヘッダ行が読めない場合のみ format.header『CSVのフォーマットが一致しません。』(CsvImporter:195-196)、列数不一致は format.body『CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。』(BaseCsvImportHandler:58-60→addInvalidColumnCountError)、ヘッダ名が定義列に無い場合は product.not_exists(addColumnNotExistsError:72-73)、商品ID未入力は data.require『%s は必須項目です。 %d 行目…』、商品ID不存在は product.not_exists『%d 行目の %s ではデータを取得できません。』。C-004をヘッダ行読めない(format.header)・C-005を列数不一致(format.body)へ実装一致で是正。**R3 Major3（L1原子被覆/G7）**: L1-005系を経路ごとに原子化。旧L1-006(商品ID必須+数値+タグ任意)を商品ID必須(L1-007)へ原子化し、数値形式(L1-021)・タグ任意(L1-020)を別claim(documentation-only)へ分離。一時ファイルの根拠をCsvImporter.php:76-95,114-122,131-164へ訂正。全sourceフルパス:lineでG7解決。**1 claim 1 source(R2 Major1継続)**: EEのDBスキーマ差はオラクルclaimに混ぜず§3/§9.2 documentation-only。成功メッセージは実PF値『商品登録CSVファイルをアップロードしました。』(pf core message.ja.yml:133)でbound。maxrow文言は不確定でTBD。LS=0全件(pf coreにmessage.en.yml不在・キー別確認)。母集合105=bound13(10候補)/TBD13/excluded79。",
+    "source": "integration_test/e2e/exec/_drafts/m03-28_admin_product_product_product_tag_csv_import_executable_draft.md §1（本jsonはmd §1から導出・手編集禁止）",
+    "baseline": {
+      "pf_impl": "pf-eccube3/app/Plugin/HareruyaEc: Controller/Admin/Product/ProductCsvController.php(GET:585-591/POST:602-646/render:1857-1866/maxrow:625-628/成功addSuccess:639/履歴INSERT:642)・Service/Csv/Importer/CsvImporter.php(import+一時ファイル:76-95/deleteTempFile:114-122/createCsvImportService file->move:131-164/validateBeforeImport:190-213〔header:195-196,empty:205-206〕)・Service/Csv/Importer/Event/BaseCsvImportHandler.php(onValidateRow:52-84〔列数不一致:58-60,列名不在:72-73,列validate:79〕)・Service/Csv/Importer/Event/ProductTagUpdateImportHandler.php(setRequired:49-50/onValidateRow:75-89/validateProductExists:133-151/isProductExists:157-178/updateProductTag:185-197/insert:229-263/支店連携:54-68)・Service/Csv/Importer/Model/ColumnDefinitions.php(productId:61-63/productTagList:122-126/createUnsignedNumericColumn:837-841)・Service/Csv/Importer/MessageStore.php(header:75-78/invalidColumnCount:87-90/columnNotExists:111-114/require:124-127/productNotExists:204-207)・Resource/template/admin/Product/base_csv_upload.twig+csv_product_tag_update.twig:1・Resource/locale/message.ja.yml(maxrecord:1097/format.header:1100/format.body:1101/data.empty:1112/data.require:1113/product.not_exists:1144)／pf core src/Eccube/Resource/locale/message.ja.yml:133(admin.product.csv_import.save.complete=商品登録CSVファイルをアップロードしました。)（実観測2026-07-29）",
+      "ee_impl_crosscheck": "ec-cube-enterprise/src/Eccube: Repository/ProductRepository.php:1833-1912(replaceProductTags tag_id/base_info_id=1)・Entity/ProductTag.php:30(TenantTrait)・Entity/Product.php:945-960(getTags sort_no)（cross検証・DB検証実装詳細のみ）",
+      "excel_html": "excel_to_html/output/0204_基本設計仕様書(商品管理).html sheet-15（識別ID2 商品タグ(ID) 必須欄空=任意）",
+      "repo_head": "452471de5f859e152fe123baa9ea5572441ca76d（feat/front-e2e-coverage 2026-07-29）",
+      "all_it_cases_sha1": "06536deb2a0c72f811c45f3c431f20ff0c78c141"
+    }
+  },
+  "L1-M0328-001": {
+    "claim_type": "http_entry",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "GET /{admin_route}/product/product_tag_update_csv_upload（bind admin_product_tag_update_csv_import）を開くとアップロード画面が render され、CSVファイル選択・「CSVファイルのアップロード」ボタン・フォーマット説明表（商品ID〔必須〕・タグ(ID)〔カンマ区切りで複数指定可能〕）・雛形ダウンロードリンク・取込履歴テーブルを表示する。取込履歴は createDate 降順の最新 CSV_IMPORT_HISTORY_LIMIT=100件のみで101件目以降は表示されない",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:97 / pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:585-591,1857-1866"
+  },
+  "L1-M0328-002": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "csv_product_tag_update.twig は共通テンプレート Product/base_csv_upload.twig を継承し、CSVファイル選択（file入力 accept text/csv,text/tsv）・「CSVファイルのアップロード」submitボタン・_token（CSRF）・フォーマット説明表（項目名/説明・商品IDは必須表記）・雛形ダウンロード・下部に取込履歴（ファイル名・日時 Y-m-d H:i・作業者）を表示する",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/csv_product_tag_update.twig:1 / pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/base_csv_upload.twig:16-75"
+  },
+  "L1-M0328-003": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "アップロードボタン押下でそのまま POST 送信し、送信前の確認ダイアログ（モーダル）を表示しない（twigにconfirm記述なし・JSはspinnerのみ）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/base_csv_upload.twig:8-11"
+  },
+  "L1-M0328-004": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "改行数（countCsvRows）が定数 CSV_IMPORT_MAX（5010）以上のとき翻訳キー admin.csv.error.upload.maxrecord を sprintf(…,5010) してエラー表示し取込を中止する（DB書込みなし・render再描画）。ただし当該キーの解決文言は pf plugin locale が %d 表記（%d 行を超えるCSVファイルは登録できません。）であり、画面表示の実文言は実機確認まで確定不能（TBD）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:625-628 / pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1097"
+  },
+  "L1-M0328-005": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "CsvImporter.validateBeforeImport で1行目のヘッダ行が読み取れない（setHeaderRowNumber(0) が false）とき addHeaderFormatError で admin.csv.error.format.header＝「CSVのフォーマットが一致しません。」をエラー配列で返し取込を中止する（DB書込みなし・render再描画）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/CsvImporter.php:190-199 / pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/MessageStore.php:75-78 / pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1100"
+  },
+  "L1-M0328-006": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "BaseCsvImportHandler.onValidateRow でデータ行の列数が列定義数（2）と一致しないとき addInvalidColumnCountError で admin.csv.error.format.body＝「CSVのフォーマットが一致しません。 %d 行目のデータを確認してください。」（%d＝該当行番号）を積み breakAll で取込を中止する（DB書込みなし）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/BaseCsvImportHandler.php:57-64 / pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/MessageStore.php:87-90 / pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1101"
+  },
+  "L1-M0328-007": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "onBeforeImport で商品ID列を setRequired(true) で生成する。列検証で商品IDが未入力（空）の行は addRequireError で admin.csv.error.data.require＝「商品ID は必須項目です。 %d 行目のデータを確認してください。」を積み breakAll（全体中断）しコミットされない（documentation-only＝商品ID必須を一意判定する固有母集合行が無い。母集合の必須系-010はタグID未入力を対象とし〔前提/操作ともタグID〕、Excel:4344・ColumnDefinitions.php:122でタグは任意のため実装と矛盾＝excluded。商品IDへのrelabelはしない）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductTagUpdateImportHandler.php:49 / pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/BaseCsvImportHandler.php:79 / pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/MessageStore.php:124-127 / pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1113"
+  },
+  "L1-M0328-008": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "onValidateRow の追加処理 validateProductExists がネイティブSQL（SELECT p.product_id FROM dtb_product p WHERE p.product_id=:productId AND p.del_flg=:delFlg〔DISABLED〕）で商品の実在を確認し、存在しない（del_flg論理削除済み含む）とき addProductNotExistsError で admin.csv.error.product.not_exists＝「%d 行目の 商品ID ではデータを取得できません。」を積み breakAll で以降行を処理しない",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductTagUpdateImportHandler.php:75-89,133-151,157-178 / pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/MessageStore.php:204-207 / pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1144"
+  },
+  "L1-M0328-009": {
+    "claim_type": "data_behavior",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "onReadRow が updateProductTag を呼び、deleteAllProductTags（DELETE FROM dtb_product_tag WHERE product_id=?）で当該商品の既存タグを全削除後、insertProductTags が CSV列挙タグIDを foreach で1件ずつ INSERT（列 product_id, tag, creator_id, create_date）する。差分でなく全削除後の再挿入で当該商品のタグを CSV 内容へ置換する",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductTagUpdateImportHandler.php:97-100,185-197,204-220,229-263"
+  },
+  "L1-M0328-010": {
+    "claim_type": "history",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込結果にエラーが無いとき（else経路）だけ insertCsvImportHistory で dtb_csv_import_history へ種別（PRODUCT_TAG_IMPORT_CSV_ID）・クライアント側オリジナルファイル名・利用者IDを INSERT する。エラーがあれば（hasError）履歴INSERTせず異常終了ログのみで履歴行は増えない",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:636-642"
+  },
+  "L1-M0328-011": {
+    "claim_type": "rollback",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "フォーム不正・ファイル未選択（null）・行数超過はインポータ実行前に画面へエラー表示のみでDBを変更しない。インポータ内で結果にエラーがあれば成功フラッシュ・履歴INSERTを行わずタグ置換もコミットされない。対象商品のタグ集合は不変・更新対象外商品も不変・履歴行数不変となる",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:613-618,625-628,636-645 / pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductTagUpdateImportHandler.php:75-89"
+  },
+  "L1-M0328-012": {
+    "claim_type": "data_integrity",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "フォーマット説明表は render 時に渡す静的 headers 配列であり取込実行後に自動再読込せず CSV のプレビューも保持しない。取込結果の反映確認は別画面（商品編集）へ委ねる",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/base_csv_upload.twig:44-72"
+  },
+  "L1-M0328-013": {
+    "claim_type": "http_flow",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "PF現行は POST（アップロード送信）後、成功・失敗いずれも render(...) で HTTP200 の同一アップロード画面を再描画する（redirectしない）。母集合が期待する『常にGET…へリダイレクト』はPF現行と一致せず、刷新後にどちらの遷移方式を採るかは確定していない（TBD）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:602-646"
+  },
+  "L1-M0328-014": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込結果にエラーが無いとき addSuccess('admin.product.csv_import.save.complete') で成功フラッシュを表示する。当該キーは pf core message.ja.yml:133 で「商品登録CSVファイルをアップロードしました。」に解決される（PF現行の確定文言・ja固定でLS=0）。あわせて件数付きの完了ログを出力し取込履歴を INSERT する",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:639-642 / pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:133"
+  },
+  "L1-M0328-015": {
+    "claim_type": "session",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "PF現行の取込履歴は render 内で createDate 降順の最新100件を findBy するのみで、表示件数（page_count）やページ番号（page_no）をセッションへ保存する仕組みを持たない。母集合が期待する『件数を許容リストのときだけセッション保存・ページ番号もセッション保存』はPF現行に存在せず刷新後の件数切替UIは確定していない（TBD）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:1857-1866,392"
+  },
+  "L1-M0328-016": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "PF現行の base_csv_upload.twig はファイル入力を素の form_widget（accept 指定のみ）＋spinner で表示し、選択ファイル名をカスタムラベルへ表示する装飾やロード表示切替を持たない。母集合が期待する『ファイル選択でカスタムラベルへファイル名表示』はPF現行に存在せず刷新後のファイル選択UIは確定していない（TBD）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Resource/template/admin/Product/base_csv_upload.twig:16-30"
+  },
+  "L1-M0328-017": {
+    "claim_type": "file_handling",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "CsvImporter.import はアップロードファイルを createTempFileName で命名し createCsvImportService 内で csv_temp_realdir へ move（退避）して読み込み、finally の deleteTempFile で一時ファイルを削除試行する。ファイル保存先・削除タイミングを直接観測する手段が未整備で外部インターフェース（画面/履歴）では検知できず一意判定不能（TBD・要実機）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/CsvImporter.php:76-95,114-122,131-164"
+  },
+  "L1-M0328-018": {
+    "claim_type": "log",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込直後に「商品タグ更新CSV登録開始」、成功時に件数付き「商品タグ更新」、結果にエラーが残ったとき「商品タグ更新 異常終了」を情報ログに出力する。ログを直接観測する手段が未整備で外部インターフェースでは一意固定できない（TBD・要実機）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php:631,637,640"
+  },
+  "L1-M0328-019": {
+    "claim_type": "edge",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "同一行で同一タグIDを重複記載した場合、foreach で1件ずつ INSERT するため dtb_product_tag に複数行が並び得る（アプリ側で重複除去しない）。母集合に一意判定できる固有要求行が無い（documentation-only）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductTagUpdateImportHandler.php:251-262"
+  },
+  "L1-M0328-020": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "タグ(ID)列は onBeforeImport で setRequired されず任意である。createMultipleUnsignedNumericColumn により NumericValidator（各カンマ区切りトークンが0以上整数）と TagIdValidator（dtb_tag 実在）を持つ。タグ列が空でも必須違反にならず取込が成立する（documentation-only＝タグ空の任意性を一意判定する固有母集合行が無い）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductTagUpdateImportHandler.php:50 / pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Model/ColumnDefinitions.php:122-126,879-884"
+  },
+  "L1-M0328-021": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "商品ID列は createUnsignedNumericColumn により NumericValidator を持ち、符号なし整数以外（非数値・負値）の行は addNumericError（admin.csv.error.product.over_zero＝「%d 行目の 商品ID は0以上の数値を設定してください。」）等で breakAll する（documentation-only＝数値形式違反を一意判定する固有母集合行が無い）",
+    "source": "pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Model/ColumnDefinitions.php:61-63,837-841 / pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/MessageStore.php:177-179 / pf-eccube3/app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1146"
+  }
+}
