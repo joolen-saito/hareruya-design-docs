@@ -1,0 +1,127 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "候補（D6前・O5未確定・source_class暫定=pf-fallback（検索・一覧・表示・フィルタ挙動=pf現行回帰）+excel（刷新後の追加/カスタマイズ=基準価格の検索項目・一覧列追加/公開状態から限定公開除去/状態にその他追加+NM初期チェック/Foil選択肢追加））。CONCRETIZATION_GATES.md（2026-07-27）Gate B(B1-B15)自己監査済み＋Gate C R1 Major6件是正版（2026-07-29）。正式解決器はこの_drafts/を読んではならない（隔離）。期待値の正はL1オラクルID（三段参照・SEEDを期待値の正にしない）。fixture_versionは@TBD-D5。boundは母集合行固有の具体挙動が一次資料にfile:lineで実在し1回で一意判定でき候補ケースの前提・入力・期待が母集合行と一致する場合のみ。B12共有は前提・入力・期待まで同一実行の完全重複のみ。本機能は参照系（読み取り専用の検索・一覧・CSV出力・DB非更新 pf md:186,294）でありB7により更新系・登録系・削除・ファイル操作系・DB非更新確認・別機能挙動はexcluded。CSV出力の固有挙動は committed M03-24 で被覆済のため本機能では冗長excluded。本機能はセッション保存の検索ビューデータ（キー eccube.admin.product.buy_sale_price_history.search）で dtb_price_history を検索し、create_date降順・id降順で固定ソートしページ分割して一覧表示する。R1是正: 検索フィルタ（公開状態/エキスパンション/レアリティ/言語/カード状態/Foil）は実在する検索挙動でSEEDで一覧包含/除外を画面観測できるため excluded→bound（C-011〜C-016・母集合-009/012/049/053/087〜092）。母集合103行=bound25/TBD2/excluded76（16候補ケース・全16claim）。bound被覆=L1-002/003/004/005/006/007/008/009/010/011/015/016。L1-001(auth・管理画面共通)/L1-013(同時更新スナップショット=非リアルタイム自明→TBD-098)/L1-014(excel追加/カスタマイズ列)はdocumentation-only。L1-012(プロモ配列長1のときだけ条件付与・pf mdは「近い」と緩め表現)は母集合-093がhedgedで一意固定困難→TBD。ee実ソースはオラクル基盤に不使用（standard-src付与ゼロ・source欄のee参照はクロス検証の所在明示のみ）。",
+    "source": "integration_test/e2e/exec/_drafts/m03-23_admin_product_product_buy_sale_price_history_executable_draft.md §1（本jsonはmd §1から導出・手編集禁止）",
+    "baseline": {
+      "excel_html": "excel_to_html/output/0204_基本設計仕様書(商品管理).html sheet-39「買取・販売価格履歴検索」（機能No M03-23・本jsonでは 0204.html:<行> と略記）",
+      "pf_md": "functions/pf-eccube3/m03-23_admin_product_product_buy_sale_price_history.md（git hash-object 77cc1cd949c1763bded0f94c968f226b8008b5f8）",
+      "repo_head": "5e7e9a33426a52b863c2cb0ab8d2544ce57e5f57（feat/front-e2e-coverage 2026-07-29）",
+      "excel_html_sha1": "06fc0cba464df7609d93ea0f9b1feb79092c5bfa",
+      "fid_kubun": "M03-23=現行踏襲（カスタマイズ）。pf-fallback（検索・一覧・表示・ソート・ページング・フィルタ挙動）+excel（基準価格の検索項目/一覧列追加・公開状態から限定公開除去・状態にその他追加+NM初期チェック・Foil選択肢追加）。確定はD6",
+      "all_it_cases_sha1": "06536deb2a0c72f811c45f3c431f20ff0c78c141"
+    }
+  },
+  "L1-M0323-001": {
+    "claim_type": "auth_rule",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "買取/販売価格履歴の検索・一覧・CSVは管理画面ログイン済み（/{admin_route}/ 配下の管理ルート共通のセキュリティ境界内）から利用でき、本パスに個別ロールアノテーションは置かれていない。認証は管理画面共通の認証・認可に従い、メニュー表示可否はナビ構成と共通ロールの組合せによる",
+    "source": "pf-md:60,208／ee BuySalePriceHistoryController.php:105-107"
+  },
+  "L1-M0323-002": {
+    "claim_type": "http_entry",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "初期URL GET /{admin_route}/product/buy_sale_price_history（page_no=0・GET）は空入力の検索フォームと詳細検索ブロックのみを返し、pagination は null で渡る。結果コンテナには行が無いため固定文言「検索条件に該当するデータがありません。」（翻訳キー admin.product.buy_sale_price_history.no_data）が表示される。検索して0件でも同じ文言が同画面に表示され正常応答として留まる",
+    "source": "pf-md:38,39,246／ee BuySalePriceHistoryController.php:206-226／twig buy_sale_price_history.twig:296／messages.ja.yaml:1952"
+  },
+  "L1-M0323-003": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "検索結果が1件以上のとき、結果ヘッダに該当件数テキスト「検索結果　%count%件が該当しました」（翻訳キー admin.product.buy_sale_price_history.search_result_count）を表示し、%count% はページングコンポーネントの総件数（pagination.totalItemCount＝クエリに一致した履歴の総数）である",
+    "source": "pf-md:88／ee twig buy_sale_price_history.twig:220-222／messages.ja.yaml:1944"
+  },
+  "L1-M0323-004": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "ページリンクまたは表示件数変更で GET/POST /{admin_route}/product/buy_sale_price_history/search/{page_no}（?page_count=…）へ遷移すると、送信が無いときはセッションに保存済みの検索ビューデータをフォームへ復元し、指定ページ番号および表示件数で同一検索条件の結果を再表示する。表示ページが総件数境界で行が無くなったときは1つ前のページへ再ページングする。復元は後続画面の絞り込み・件数が直前検索と同一であることで画面観測でき、セッション直接照会は不要",
+    "source": "pf-md:40,70,226／ee SearchControllerTrait.php:165-206"
+  },
+  "L1-M0323-005": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "画面の親タイトルは「商品管理」（翻訳キー admin.product.product_management・en \"Products\"）、サブタイトルは「買取/販売価格履歴」（翻訳キー admin.product.purchase_sale_price_history・en訳なし）で、メニューアクティブキーは menus=['product','purchase_sale_price_history']。親タイトルはロケール変異する: ja「商品管理」/ en \"Products\"",
+    "source": "pf-md:49／ee twig buy_sale_price_history.twig:9-12／messages.ja.yaml:1920,4003／messages.en.yaml:1930"
+  },
+  "L1-M0323-006": {
+    "claim_type": "data_rule",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "日付レンジ検索は、日付from を dtb_price_history.create_date 以上（create_date >= date_from）、日付to を翌日未満（date_to を modify('+1 days') した値未満：create_date < date_to+1日）として適用する。したがって date_to 当日中に登録された履歴も結果に含まれる。いずれの境界も入力が空でないときのみ有効",
+    "source": "pf-md:119／ee Util/SqlUtil.php:346-357"
+  },
+  "L1-M0323-007": {
+    "claim_type": "data_rule",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "表示件数の候補はコントローラ内配列で 10,50,100,300,500,1000,2000,10000,12000、既定は設定 eccube_default_page_count（配布既定10）。リクエストの page_count は既知リストに含まれる値のときだけ採用しセッションへ保存する。既知リストに無い値は無視され、直前にセッションへ保存済みの有効な表示件数がそのまま維持される（未知値でセッションを上書きしない）。セッションの保持値が既知リストに無い場合に限り、既定値（既知リストにあれば既定・無ければリスト先頭値）へ正規化する",
+    "source": "pf-md:61,142,200／ee SearchControllerTrait.php:145-163"
+  },
+  "L1-M0323-008": {
+    "claim_type": "data_rule",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "一覧および CSV の並びは、クエリ側で dtb_price_history.create_date 降順を第一キー、id 降順を第二キー（同一 create_date のタイブレーク）として固定される（getQueryBuilderBySearchData の $sortKeys=['ph.createDate','ph.id'] を SqlUtil が addOrderBy(..., 'desc') で順に適用）。利用者やトレイトが URL に持ち込む sort/order のクエリ値は本機能のクエリ組み関数では読まれず、セッション保持に留まるだけで並びを変えない",
+    "source": "pf-md:91,93／ee Repository/DtbPriceHistoryRepository.php:392／Util/SqlUtil.php:369-371"
+  },
+  "L1-M0323-009": {
+    "claim_type": "status_transition",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "並び順パラメータ order が正規表現 ^(ASC|DESC|asc|desc)$ に合致しないとき、共通検索トレイトは管理向けフラッシュにキー admin.error.sort を積み、index を再呼び出しして初期フォーム画面へ戻す（一覧結果は表示されず対象の一覧処理は完了しない）。エラーフラッシュ表示＋一覧非表示は画面で観測でき、キー admin.error.sort は ee messages.ja/en.yaml に翻訳エントリが無く描画テキストはキー文字列そのものになり得る（表示テキストの逐語は要実機確認）",
+    "source": "pf-md:141,235／ee SearchControllerTrait.php:139-143"
+  },
+  "L1-M0323-010": {
+    "claim_type": "side_effect",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "「検索」送信時、入力は検索ビューデータとしてセッションキー eccube.admin.product.buy_sale_price_history.search（接頭辞 eccube.admin.product.buy_sale_price_history。以降サフィックスとして検索本体配列・page_no・page_count・並び項目名・並び昇降）へ保存される。保存の観測は、後続のページ遷移・表示件数変更で同一検索条件の結果が画面に再現されることによる（セッション直接照会はしない）",
+    "source": "pf-md:39,273／ee SearchControllerTrait.php:100-118,197-201"
+  },
+  "L1-M0323-011": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "一覧表の列見出しは 商品コード・商品名・言語・状態・変更前基準価格・変更後基準価格・変更前販売価格・変更後販売価格・変更前買取価格・変更後買取価格・登録日・登録者 の順で表示される。列見出しのうち英語ロケールで訳が実在するのは 商品コード（admin.product.product_code・en \"SKU\"）・商品名（admin.product.name・en \"Product Name\"）・登録日（admin.common.create_date・en \"Registration Date\"）で、言語（admin.product.language）・状態（admin.product.card_condition）・登録者（admin.stock.move.registered_member）・変更前後の各価格見出し（admin.product.buy_sale_price_history.*）は英訳なし。ロケール変異する見出し: 商品コード ja「商品コード」/ en \"SKU\"、商品名 ja「商品名」/ en \"Product Name\"、登録日 ja「登録日」/ en \"Registration Date\"",
+    "source": "pf-md:49／ee twig buy_sale_price_history.twig:255-268／messages.ja.yaml:2087,2061,1837／messages.en.yaml:1988,1971,1866"
+  },
+  "L1-M0323-012": {
+    "claim_type": "data_rule",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "プロモ検索は、共通関数が promotion 配列の要素数ちょうど1のときだけ promotion_flg 条件をクエリへ付与する。0個または2個以上のチェック状態では条件を付与しない（pf md は複数チェック状態を「条件付与無しの挙動に近い」と緩め表現）。母集合-093はhedged表現で結果集合を一意固定しづらく TBD",
+    "source": "pf-md:102,127／ee Util/SqlUtil.php:329-347"
+  },
+  "L1-M0323-013": {
+    "claim_type": "data_rule",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "一覧は読取時点のスナップショットであり、検索中に他利用者が価格を変更しても画面は自動更新しない（本機能に WebSocket 等のリアルタイム更新は無い）。非リアルタイム画面で自明・並行更新の一意観測は実機タイミング依存のため TBD",
+    "source": "pf-md:152"
+  },
+  "L1-M0323-014": {
+    "claim_type": "excel_delta",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "Excel基本設計（買取・販売価格履歴検索・機能No M03-23）が★カスタマイズを宣言する: 基準価格の検索項目と検索結果一覧に「変更前基準価格」「変更後基準価格」の項目を追加、公開状態の選択肢から「限定公開」を除去、状態の選択肢に「その他」を追加し NM に初期チェックを入れる、Foil の選択肢を追加（Foil・ノーマル・特殊）する",
+    "source": "0204.html:9684,9701,9705,9706"
+  },
+  "L1-M0323-015": {
+    "claim_type": "data_rule",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "一覧行の各列値は、商品コード=規格の code、商品名=商品の名称、言語=規格の言語マスタがあればその日本語名・無ければ空、状態=規格 memo が非空なら memo 文字列・空ならカード状態マスタがあればその code 文字列・いずれも無ければ空、変更前後の各価格（基準/販売/買取）=履歴の該当値で NULL は空セル、登録日=履歴 create_date を Y/m/d H:i 形式、登録者=履歴に紐づく会員がいればその会員名・無ければ空、で描画される",
+    "source": "pf-md:151,182／ee twig buy_sale_price_history.twig:273-284"
+  },
+  "L1-M0323-016": {
+    "claim_type": "data_rule",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "商品属性フィルタは、選択値に一致する規格を持つ履歴のみへ一覧を絞り込み非該当を除外する（複数値は IN・未選択の属性は絞り込まない・各属性は AND 結合）。写像は 公開状態→dtb_product.Status IN、エキスパンション→CardDetail.Cardset IN、レアリティ→CardDetail.Rarity IN、言語→規格 Language IN（「その他」は定数言語IDへ NOT IN）、状態→規格 CardCondition IN、Foil→CardDetail.foil_flg IN。CardDetail 由来の絞り込み（エキスパンション/レアリティ/Foil）は CardDetail を持たない規格の履歴を結果から除外し得る",
+    "source": "pf-md:121-126／ee Util/SqlUtil.php:260-330"
+  }
+}
