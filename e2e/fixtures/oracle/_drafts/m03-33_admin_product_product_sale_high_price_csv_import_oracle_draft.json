@@ -1,0 +1,161 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "候補（D6前・O5未確定・source_class暫定=excel（刷新後カスタマイズ=セールフラグ4分岐販売価格挙動・買取価格更新・スマレジ列）+pf-fallback（共通インフラ=画面/JS/行数上限/フォーム不正/存在breakAll/成功時履歴INSERT・pf実ソース回帰）/カスタマイズ区分）。CONCRETIZATION_GATES.md（2026-07-27）Gate B(B1-B15)自己監査済み。pf/ee実ソース照合版（2026-07-29）。正式解決器はこの_drafts/を読んではならない（隔離）。期待値の正はL1オラクルID（三段参照・SEEDを期待値の正にしない）。fixture_versionは@TBD-D5。boundは母集合行固有の具体挙動が一次資料にfile:lineで実在し1回で一意判定でき候補ケースの前提・入力・期待が母集合行と一致する場合のみ。B12共有は前提・入力・期待まで同一実行の完全重複のみ。本機能は更新系（CSVアップロード取込・DB更新あり）。★pf/ee食い違いが核心（M03-32より深い）: pf現行（HareruyaEc HighPriceImportHandler）は6列(商品コード/販売価格/買取価格/セールフラグ/帯URL/タグ)でprice02をCSV販売価格で直接上書き・セールフラグ分岐なし・買取価格をdtb_product_sub_classへ更新・支店連携・POST後inline render、eeは5列(商品コード/販売価格/セールフラグ/帯URL/タグ・買取列なし)でセールフラグ4分岐(現OFF/CSV ON・現ON/CSV ON→販売価格=CSV値セールフラグON／現ON/CSV OFF→販売価格=基準価格CSV販売無視警告／現OFF/CSV OFF→販売価格維持警告)・POST後redirect。Excelはセールフラグ4分岐(E85-G114)を規定しeeが整合。判定: セールフラグ販売価格挙動=excel源(L1-006/007/008)/共通インフラ(行数上限5010同一キー・フォーム不正のルートエラー・存在breakAll・成功時履歴INSERT)=pf-fallback/ee-only挙動(重複breakAll・page_countセッション)=TBD/Excel規定だがSUTに無い挙動(買取価格更新L1-013・スマレジ列L1-020)=documentation-only。UI挙動・ボタン文言・成功文言はee(SUT)を正(ボタン=admin.common.csv_upload=CSVファイルをアップロード/成功=admin.register.complete=登録が完了しました。)でpf UIをbindしない。POST後応答はpf inline render/ee redirectで食い違うため期待は『アップロード画面にフラッシュ表示』観測レベルでHTTP302/renderの別は主張しない。★codex Gate C R1 Major4件是正(2026-07-29): (1)フォーム不正のサイズ超過は子フィールドimport_fileのFile(maxSize)制約でgetErrors(deep=false)非フラッシュ=bound不成立→C-009はCSRFルートエラー限定・サイズ超過TBD。(2)ee/pf検索(findHighPriceProductClassForSaleCsv ee-repo:2233/pf-handler:190)は商品コード+high_price_codeのみで公開状態非検査=「非公開」捏造除去・母集合-010(公開規格不存在前提)はbound不能→TBD・C-007廃止・L1-009 documentation-only。(3)セールフラグcase1(現OFF/CSV ON ee-handler:122)とcase2(現ON/CSV ON ee-handler:125)は別分岐→C-004を2アップロードで両分岐判定・SEED-M0333-SALEON-CSVON追加。(4)取込種別ID8は履歴画面非表示(csv_import_history.twig:32-34はファイル名/日時/作業者のみ)→C-010の種別ID8検証を自動検証(内部・DB)へ分離。母集合会計(R1後): bound15(9候補ケース C-001〜C-006/C-008〜C-010)/TBD8(-010 存在breakAll公開規格前提食い違い・-011 重複breakAll ee-only・-088/-102/-104 page_countセッション ee-only・-094 MSG-002純UI到達不能・-099/-100 ログ観測未整備)/excluded83。en=ee messages.en.yaml実在。register.complete=Registration completed.:1676・csv_invalid_format=Unmatched CSV format:1810・csv_upload=Upload a CSV file:1804・product_management=Products:1930/product_csv_management=Product CSV Management:1938 はen逐語ありLS=1、sale_high_price_csv系キー・maxrecord・alert_off_sale_buy_only・alert_end_sale_sell_from_standard はen.yamlに不在=英訳なしLS=0（en-grepヒット0件確認）。en源=ee src/Eccube/Resource/locale/messages.en.yaml（source_classには不使用・EE-source 0）。",
+    "source": "integration_test/e2e/exec/_drafts/m03-33_admin_product_product_sale_high_price_csv_import_executable_draft.md §1（本jsonはmd §1から導出・手編集禁止）",
+    "baseline": {
+      "excel_html": "excel_to_html/output/0204_基本設計仕様書(商品管理).html sheet「セール用高額商品価格変更CSVアップロード」（git hash-object 06fc0cba464df7609d93ea0f9b1feb79092c5bfa・本jsonでは 0204:セール用高額商品価格変更CSVアップロード!<セル> と表記）",
+      "pf_md": "functions/pf-eccube3/m03-33_admin_product_product_sale_high_price_csv_import.md（git hash-object 95507c780621ef949cfdc3e678ebce77c6913a6b・冒頭でEE挙動記述宣言ありのため実ソース照合）",
+      "pf_source": "pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php（csvHighPriceUpload:1041・CSV_IMPORT_MAX=5010:391・CSV_IMPORT_HISTORY_LIMIT=100:392・getHighPriceCsvHeader:2131）／.../Service/Csv/Importer/Event/HighPriceImportHandler.php（pf現行6列ハンドラ・セールフラグ分岐なし・存在チェックbreakAll・買取価格更新・支店連携）。source_class=pf-fallbackの根拠実装（repo HEAD 4bc76955971df324965d623a4e042094e53cb285・branch feature/e2e）",
+      "ee_source": "ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductSaleHighPriceCsvController.php（csv:78・import:117・getCsvHeader:199・getRequiredCsvHeader:213）／.../Service/Csv/Importer/Event/SaleHighPriceImportHandler.php（ee現行5列ハンドラ・セールフラグ4分岐・isProductCodeUnique重複breakAll・買取列なし）／Entity/Master/MtbCsvImportType.php(HIGH_PRICE_IMPORT_CSV_ID=8:35)。システムオブテスト・UI/ボタン文言/成功文言のSUT正・照合のみ・source_classには不使用（repo HEAD da9c2ba276ac317041cf5596c3ec6d6d4ab5c581・branch develop）",
+      "ee_en_yaml": "ec-cube-enterprise/src/Eccube/Resource/locale/messages.en.yaml（enロケール源・§5で file:line 紐付け・source_classには不使用）",
+      "repo_head": "918739abb9f38aeaa15889a05b1090c844deaa72（docs feat/front-e2e-coverage 2026-07-29）",
+      "fid_kubun": "M03-33=カスタマイズ excel-primary+pf-fallback。確定はD6",
+      "all_it_cases_sha1": "06536deb2a0c72f811c45f3c431f20ff0c78c141"
+    }
+  },
+  "L1-M0333-001": {
+    "claim_type": "http_entry",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "ナビ「商品管理」→「商品CSV管理」→「セール用高額商品価格変更CSVアップロード」から GET /{admin_route}/product/sale_high_price/csv_upload を開くと、アップロード画面・フォーマット表・取込履歴・雛形リンクが表示される",
+    "en": "ナビlabel admin.product.product_management=Products／admin.product.product_csv_management=Product CSV Management（画面タイトル/ナビラベルはenロケールで英語表示）",
+    "source": "pf-md:30"
+  },
+  "L1-M0333-002": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "csv_product_sale_high_price.twig は共通テンプレート base_csv_upload.twig を継承し、サブタイトル「セール用高額商品価格変更CSVアップロード」・カード内にファイル入力とアップロードボタン（SUT(ee)のボタン文言は admin.common.csv_upload=「CSVファイルをアップロード」）・フォーマット説明表（必須列にバッジ admin.common.required）・雛形ダウンロードボタン（admin.common.csv_skeleton_download）・下部に取込履歴テーブル（ファイル名・アップロード日時・作業者）を表示する。ファイル入力の accept は .csv, text/csv, .tsv, text/tsv",
+    "en": "admin.common.csv_upload=Upload a CSV file（en:1804）／admin.common.csv_format=CSV file format（en:1806）／admin.common.csv_skeleton_download=Download a template（en:1805）／admin.common.required=Required（en:1785）。admin.product.sale_high_price_csv（サブタイトル）は英訳なし（ja:2010）",
+    "source": "pf-md:43／ee-ctrl:97"
+  },
+  "L1-M0333-003": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込CSVの列定義は pf現行が6列（商品コード・販売価格・買取価格・セールフラグ・帯URL・タグ(ID)）、ee(SUT)が5列（商品コード・販売価格・セールフラグ・帯URL・タグ(ID)）で、買取価格列は pf現行のみ存在しee(SUT)は持たない＝pf/ee食い違い（documentation-only）。ee(SUT)の必須列は商品コード・販売価格・セールフラグの3列",
+    "source": "pf-ctrl:2133／ee-ctrl:199,213"
+  },
+  "L1-M0333-004": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "ファイル選択で custom-file-input 変更時にラベルにファイル名を表示する。フォーム送信で $.changeLoading(true) を呼ぶ。履歴件数プルダウン変更で window.location.href を差し替える",
+    "source": "pf-md:44"
+  },
+  "L1-M0333-005": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "「CSVファイルをアップロード」ボタン押下時に送信前の確認ダイアログ/モーダルは表示されない",
+    "source": "pf-md:46"
+  },
+  "L1-M0333-006": {
+    "claim_type": "data_write",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "CSVの商品コードから当該（高額＝high_price_code設定・非空）商品規格を検索し、現在登録済のセールフラグとCSVのセールフラグを突き合わせて処理を切り替える。これは相異なる2分岐で、(case1)現在セールフラグが無効(0)でCSVが有効(1)のとき（通常→セール切替）と、(case2)現在セールフラグが有効(1)でCSVが有効(1)のとき（セール中のまま更新）は、いずれも販売価格をCSVに設定された販売価格に更新しセールフラグを有効(1)にする。基準価格は更新しない（ee-handler:122がcase1・:125がcase2の別分岐）",
+    "source": "0204:セール用高額商品価格変更CSVアップロード!G87,G89,G96,G98"
+  },
+  "L1-M0333-007": {
+    "claim_type": "data_write",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "現在登録済のセールフラグが有効(1)でCSVが無効(0)のとき（セール→通常切替）、セールフラグを無効(0)に切り替え、販売価格を現在登録済の基準価格からコピーし、CSVに設定された販売価格は無視する。CSVに販売価格・買取価格が設定されている場合はCSVの価格は反映されていない旨のアラート（警告フラッシュ）を画面上に表示する",
+    "source": "0204:セール用高額商品価格変更CSVアップロード!G101,G102,G103,G105,G106"
+  },
+  "L1-M0333-008": {
+    "claim_type": "data_write",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "現在登録済のセールフラグが無効(0)でCSVが無効(0)のとき（通常商品のまま）、販売価格は更新せず現在登録済の販売価格のままとし、セールフラグは無効(0)のまま、基準価格も更新しない。通常商品の販売価格は変更できない旨のアラート（警告フラッシュ）を画面上に表示する",
+    "source": "0204:セール用高額商品価格変更CSVアップロード!G110,G111,G113,G114"
+  },
+  "L1-M0333-009": {
+    "claim_type": "rollback",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "CSVの商品コードに該当する高額規格（商品コード一致かつ high_price_code が非NULL の規格）が存在しないとき、当該行で breakAll となりトランザクション全体がロールバックされ、DBへは何も書き込まれずエラーフラッシュが表示される。成功フラッシュと取込履歴INSERTは行われない。「商品コード一致かつ high_price_code 非NULL の規格が不存在→breakAll」が pf・ee 共通の条件である。R1/R2 Major是正: pf・eeとも公開状態を検査しないため対象条件に「非公開」を含めない。枝は完全同一ではなく、ee は加えて high_price_code <> ''（空文字も不存在扱い）を課し ProductClass 起点（v4統合）で検索、pf は空文字を検査せず商品・規格の del_flg を条件に含み dtb_product_sub_class 起点（v3）で検索する（共通条件を超える部分はオラクル化しない）。母集合-010は前提「規格が公開のまま→不存在扱い」がpf・ee実装と食い違い一意判定できず documentation-only（-010 TBD）",
+    "source": "ee-repo:2233／pf-handler:190"
+  },
+  "L1-M0333-010": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "アップロードCSVの改行ベース概算行数（二重引用符に囲まれた改行を除く）が定数（pf CSV_IMPORT_MAX=5010／ee ADMIN_CSV_IMPORT_MAX_ROWS=5010）以上のとき、キー admin.csv.error.upload.maxrecord「%maxRecord% 行を超えるCSVファイルは登録できません。」（%maxRecord%=5010）をエラーフラッシュに載せ、取込を実行せずアップロード画面を再表示する。本キーは messages.en.yaml に不在＝英訳なし",
+    "source": "pf-md:65／pf-ctrl:1064,391／ee-ctrl:141"
+  },
+  "L1-M0333-011": {
+    "claim_type": "http_flow",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "フォーム送信がSymfonyフォーム検証で妥当でないとき、コントローラはルートフォームのエラー（CSRFトークン不正等）を admin エラーフラッシュに積み、取込は実行せずアップロード画面が再表示される。ee(SUT)は getErrors() を再帰なし（deep=false 既定・ee-ctrl:126）で取得するためフラッシュされるのはルートフォームのエラーに限られる。pf現行は同一リクエストで render・eeは redirect と食い違うため観測は「アップロード画面にルートフォームのエラーフラッシュが表示される」レベルに留めHTTP302/renderの別は主張しない（子フィールド制約エラーの扱いは§0-A(b')・§9.2）",
+    "source": "pf-ctrl:1052／ee-ctrl:125,126"
+  },
+  "L1-M0333-012": {
+    "claim_type": "message",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "取込結果にエラーが無いとき、成功フラッシュを表示し取込履歴（dtb_csv_import_history）へ1行INSERT（種別ID HIGH_PRICE_IMPORT_CSV_ID=8・クライアント側ファイル名・作業者ID）と完了ログを行う。成功フラッシュの表示文言はSUT(ee)実装を正とし admin.register.complete「登録が完了しました。」／en「Registration completed.」を観測する（pf現行は admin.product.csv_import.save.complete「商品登録CSVファイルをアップロードしました。」で文言食い違い＝pf成功文言はbindしない）",
+    "en": "admin.register.complete=Registration completed.（ee messages.en.yaml:1676・ja:1970）",
+    "source": "pf-md:69／pf-ctrl:1078／ee-ctrl:175,178"
+  },
+  "L1-M0333-013": {
+    "claim_type": "data_write",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "買取価格は、Excel設計では全ケースでCSVに設定された買取価格に更新すると規定され、pf現行は dtb_product_sub_class.buy_price を更新するが、ee(SUT)は買取価格列を取込CSVに持たず買取価格を更新しない＝Excel/pf vs ee食い違い（documentation-only・母集合に買取価格を固有一意判定する要求行が無い）",
+    "source": "0204:セール用高額商品価格変更CSVアップロード!G91,G97,G104,G112"
+  },
+  "L1-M0333-014": {
+    "claim_type": "data_write",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込では規格の帯URL（空のときnull）を更新し、商品に紐付くタグ(ID)をCSVの「タグ(ID)」で置換する（pf・eeとも共通挙動・documentation-only＝母集合に帯URL/タグを固有一意判定する要求行が無い）",
+    "source": "pf-md:92,94／pf-handler:263／ee-handler:101,116"
+  },
+  "L1-M0333-015": {
+    "claim_type": "data_write",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "変更前後で販売価格（および買取価格）に変化があるときだけ価格履歴（dtb_price_history）を1行追加する。本取込は基準価格を更新しないため履歴に渡す新基準は常に変更前基準と同値である（pf・eeとも変化時のみ追加・documentation-only＝母集合に価格履歴増分を固有一意判定する要求行が無い）",
+    "source": "pf-md:152／pf-handler:453／ee-handler:148"
+  },
+  "L1-M0333-016": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "ee(SUT)は同一商品コードに該当する商品規格が複数（2件以上）あるとき isProductCodeUnique で breakAll（重複エラー）する。pf現行ハンドラには明示的な商品コード重複チェックが無い＝重複breakAllはee-onlyでpf/ee食い違い（TBD）",
+    "source": "pf-md:85／ee-handler:190"
+  },
+  "L1-M0333-017": {
+    "claim_type": "session",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "ee(SUT)は履歴の表示件数をクエリ page_count またはセッションキー admin.product.sale_high_price_csv.page_count から解決するが、pf現行は本画面の履歴を固定件数 findBy（CSV_IMPORT_HISTORY_LIMIT=100）で描画し page_count セッションを持たない＝page_countセッション保存挙動はee-onlyでpf/ee食い違い（TBD）",
+    "source": "pf-md:56／pf-ctrl:1085／ee-ctrl:83"
+  },
+  "L1-M0333-018": {
+    "claim_type": "message",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "フォームが妥当でも import_file が null のとき、キー admin.common.csv_invalid_format「CSVのフォーマットが一致しません」／en「Unmatched CSV format」をエラーフラッシュに載せ取込せず終える設計だが、import_file は NotBlank＋サイズ制約のためファイル未選択送信は先行するフォーム不正分岐で終了し当分岐へ到達しない＝純UIでの到達経路は実装のフォーム検証と食い違う（documentation-only・MSG-002）",
+    "en": "admin.common.csv_invalid_format=Unmatched CSV format（ee messages.en.yaml:1810・ja:1758）",
+    "source": "pf-md:64／ee-ctrl:135"
+  },
+  "L1-M0333-019": {
+    "claim_type": "log",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "POST取込で情報ログ「セール用高額商品価格変更CSV登録開始」を出し、結果がエラーのとき「セール用高額商品価格変更CSV登録 異常終了」、成功のとき「セール用高額商品価格変更CSV登録完了」と件数を出す（documentation-only＝ログ観測手段が現行ハーネスで未整備・TBD）",
+    "source": "pf-md:66,68／pf-ctrl:1070,1076,1079／ee-ctrl:147,170,176"
+  },
+  "L1-M0333-020": {
+    "claim_type": "data_write",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "スマレジ連携フラグ列は Excel識別ID:3 で追加を規定するが、pf現行ハンドラ（6列）にもee(SUT)ハンドラ（5列）にもスマレジ連携フラグの取込列は存在せず、取込では反映されない＝設計と実装の食い違い（documentation-only）",
+    "source": "0204:セール用高額商品価格変更CSVアップロード!E79"
+  }
+}
