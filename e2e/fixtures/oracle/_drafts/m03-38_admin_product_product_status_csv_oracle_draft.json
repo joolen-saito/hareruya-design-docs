@@ -1,0 +1,157 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "候補（D6前・O5未確定・source_class=excel/pf-fallback）。CONCRETIZATION_GATES.md（2026-07-27）Gate B(B1-B15)自己監査済み。著者=sonnet（著者≠レビュアー・承認主張しない）。**codex Gate C R1（Major7件）是正反映版（2026-07-29・ee/pf実ソース＋Excel照合）**。期待値の正はL1オラクルID（三段参照・SEEDを期待値の正にしない）。fixture_versionは@TBD-D5。本機能は商品公開CSV登録（商品ID＋商品公開ステータス＋支店の商品公開ステータスの3列で既存商品の公開ステータスを一括更新する取込画面）。【ee実装有無＝実装済】ee(SUT)に専用Controller ProductStatusCsvController.php・専用handler ProductStatusUpdateImportHandler.php・専用twig csv_product_status.twig・定数 MtbCsvImportType::PRODUCT_STATUS_IMPORT_CSV_ID=14 が実在（M03-34/36のようなee未実装ではない）。【source_class帰属】excel/pf-fallbackのみ（eeはSUTでオラクルにしない）。pf(HareruyaEcプラグイン)も商品公開CSVを実装（ProductCsvController::csvProductStatus/Upload・ProductStatusImportHandler）。**pf現行は実sourceでfile:line確認**（pf-md本文はEE挙動記述を含むため鵜呑みにしない）。【R1 Major是正要旨】M1: Excel『押下後、確認モーダルを表示』(0204:商品公開CSV登録!AG92・HTML:5157)はee/pf未実装＝真の設計/実装乖離。C-003『確認ダイアログは出ない』boundを撤回し、確認モーダルは L1-005(excel設計規定)＋母集合-006/-105をTBD(実装乖離・要仕様確定)。M2: import_fileのNotBlankは子フィールドエラーで、専用Controllerの getErrors()(deep=false・ProductStatusCsvController.php:135)はこれを取得せず管理画面上部フラッシュに載らない＝ファイル未選択の画面エラー表示はboundできない→L1-016をdocumentation-only化し母集合-019/-085をTBD。M3: 母集合-049/-082は公開列更新・履歴INSERT・情報ログを一体要求だがログ観測未整備＝一体boundできず両行TBD。取込成功boundは情報ログを含まない-083(取込エラーなく完了時のみINSERT)へ再アンカー(C-011)。M4: pf-fallback純度回復＝ee固有(accept値/カスタムファイル名ラベルJS/ページング/session)はpf現行が実際にやる挙動でない→L1-002からaccept値と名前ラベルJSを除去、ファイル名ラベル(母集合-005/-104)はee固有UIでexcel/pf正本なし→excluded、ページングはExcel設計追加(D60,D78-81)なので L1-006 を excel源(session keyのee実装事実は claim から除去)。M5: 共通テンプレ全描画キーをee messages.en.yamlでgrep完了(§5)＝search_no_result英訳実在(Sorry, no data matches...)を追加、browse/csv_import_error/csv_item_name/csv_description/csv_import_history_title/_filename/_upload_date/_operator/product_status_csv系は英訳なしを明記。M6: 廃止行はエラーを積まずfalseを返すため取込全体は成功扱いで成功メッセージ・履歴INSERTが発生する→C-008を成功扱い＋履歴累積前提に是正しSEED-M0338-ABOLISHEDに後始末(追加履歴削除)を付与、画面で廃止維持確認後の同一DB列再確認(B9トートロジー)を削除。M7: C-010は1入力(データ行なし)で1分岐(データ無しエラー)のみ判定に是正(ヘッダなし分岐は同時主張しない)。en: 画面共通ラベルと上位ナビ(product_management=Products・product_csv_management=Product CSV Management)はee英語あり＝L1-001/002 LS=1。成功キー admin.register.complete=Registration completed.はSUT語のため§5に載せず§10へ記録。母集合会計(before→after): R0 bound25/TBD1/excluded79 → R1 bound17/TBD7/excluded81 → **R2 bound12 / TBD14 / excluded79**（=105・欠番0）。bound12母集合行→B12共有で候補ケース8本。【R2 Major是正要旨】M1(MSG誤同定): 実装のMSG割当は MSG-001=フォーム不正/MSG-002=ファイルnull(csv_invalid_format:144)/MSG-003=行数上限(:150)/MSG-004=取込エラー(:168)/MSG-005=成功(register.complete:174)。誤割当(MSG-002=行数上限/003=成功/004・005=phantom)を全訂正。-093(MSG-003=行数上限)をC-009へ再アンカー、-092(MSG-002=ファイルnull・純UI到達不能)TBD、-094(MSG-004・要ソース確認placeholder)excluded、-095(MSG-005=成功→画面遷移)C-013共有。M2(en未完): ページャ admin.common.first/prev/next/last(en:Go to First/Previous/Next/Go to Last)と成功 admin.register.complete=Registration completed.(en:1676)を§5に追加。M3(session): -003/-102(許容値のときだけセッション保存)・-099(page_no/page_count更新)はee固有session実装(AbstractController getCsvImportHistoryPaginationParams:392 in_array gate)でexcel/pf正本なし→3行TBD。C-004は表示件数プルダウン表示のみの-088へアンカー。M4(純度): L1-009はExcel逐語「廃止変更不可」のみ・ee false返却/成功扱いはpf(UPDATE)と食い違い→-009 TBD。L1-014から廃止mixin除去。M5(B12過共有): -089(フォーム/ファイルnull/行数超過の複数分岐でフラッシュのみ)はC-013と別実行→TBD分離。M6(-008/-041): 支店列は0/1反映＋許容外拒否をC-012で被覆(L1-013にchoice検証追記)。M7(-090): ヘッダ不備/データ無し/行検証/商品不存在の4分岐要求はC-007の商品不存在1分岐では満たせず→-090 TBD、C-007撤回・L1-008はdocumentation-only。【R3 Major是正要旨】M1(en全キー未完): MSG-002 admin.common.csv_invalid_format=Unmatched CSV format(en:1810)とMSG-001フォームエラー(NotBlank『This value should not be blank.』ee override『No value found.』validators.en.yaml:17／File too large symfony xlf)を§5に追加しen逐語を全確定。M2(L1-016純度): getErrors deep=falseはee固有で、pfは逆にgetErrors(true)(deep=true・pf:1576)で子エラーまで取得しフラッシュ表示する＝pf/ee食い違い。L1-016をpf現行の実挙動(getErrors(true)で子NotBlankをフラッシュ表示・LS=1)へ是正し、ee deep=false非取得によるファイル未選択フラッシュ不成立は§9.1/§10の-019/-085 TBD理由へ分離（source_class純度回復・pf-fallback12不変で内訳はpf実挙動に一致）。【R4 Major是正要旨】M1(en逐語不正確): L1-016のNotBlank en逐語をSymfony既定『This value should not be blank.』でなく実sourceの値へ是正＝pf文言は明示指定『ファイルを選択してください。』(pf CsvImportType:54)・ee英語実訳は override『No value found.』(validators.en.yaml:17)。§5/§0も訂正。M2(-083排他条件片側bound): C-011を成功時=履歴+1／エラー時=履歴増えないの両側で排他判定するよう是正(正常CSVと商品不存在CSVの2実行で履歴INSERTの排他条件L1-014を一意判定)。M3(-083観点補正漏れ): 正準観点補正表に-083『表示順→取込履歴の登録条件』を追加(21→22件)。会計は不変 bound12/TBD14/excluded79。",
+    "source": "integration_test/e2e/exec/_drafts/m03-38_admin_product_product_status_csv_executable_draft.md §1（本jsonはmd §1から導出・手編集禁止）",
+    "baseline": {
+      "sut_oracle": "SUT=ec-cube-enterprise。ee実装（ProductStatusCsvController / ProductStatusUpdateImportHandler / csv_product_status.twig / MtbCsvImportType::PRODUCT_STATUS_IMPORT_CSV_ID=14）の実挙動を試験対象とする。オラクル(期待値)の帰属はexcel(設計正本)/pf-fallback(pf現行回帰)のみ。ee固有UI(accept値/ファイル名ラベルJS/ページング/session key)はpf現行と異なりexcel/pf正本が無い場合はboundにしない(M4)。",
+      "ee_impl_present": "ee専用実装あり: Controller /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Controller/Admin/Product/Csv/ProductStatusCsvController.php（csv:82 GET upload / import:126 POST・form->getErrors()deep=false:135 / csvTemplate:55 GET）・handler /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/Event/ProductStatusUpdateImportHandler.php（3列:119-128・廃止スキップ(false・エラー積まず):83-85・商品不存在breakAll:137-153）・importer /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Service/Csv/Importer/CsvImporter.php（validateBeforeImport:185-208・isSuccessful:270-275・成功時import後Controllerが履歴INSERT）・form /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Form/Type/Admin/CsvImportType.php（import_file 子フィールド required+NotBlank:48-56）・twig /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Resource/template/admin/Product/csv_product_status.twig＋base_csv_upload.twig（accept:20・ファイル名ラベルJS:24-28・確認モーダル部品なし）＋csv_import_history.twig（ページング）・定数 /home/y-saito/Developments/ec-cube-enterprise/src/Eccube/Entity/Master/MtbCsvImportType.php:41 PRODUCT_STATUS_IMPORT_CSV_ID=14。",
+      "pf_source": "pf現行(現行踏襲の回帰先): /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php（csvProductStatus:1547・csvProductStatusUpload:1564・render:1857=2列 商品ID/公開ステータス(ID)・const CSV_IMPORT_MAX=5010・const CSV_IMPORT_HISTORY_LIMIT=100=固定100件・ページングなし）・handler /home/y-saito/Developments/pf-eccube3/app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductStatusImportHandler.php（商品不存在breakAll:61-80・updateProductStatus生SQL:142-164）・twig base_csv_upload.twig（accept=text/csv,text/tsv:26・行エラーは画面内.text-danger:29-31・確認モーダル部品なし・ファイル名ラベルJSなし）・ColumnDefinitions::statusId:150（choice[DISPLAY_SHOW=1,DISPLAY_HIDE=2]）。pf成功キー admin.product.csv_import.save.complete=商品登録CSVファイルをアップロードしました。(/home/y-saito/Developments/pf-eccube3/src/Eccube/Resource/locale/message.ja.yml:133)。",
+      "pf_md": "functions/pf-eccube3/m03-38_admin_product_product_status_csv.md（git hash-object 625a2f7ff654af2cf470936b735482ee22055392・※pf-md本文はEE挙動記述を含むため回帰オラクルはpf実sourceで確定した）",
+      "excel_html": "excel_to_html/output/0204_基本設計仕様書(商品管理).html シート「商品公開CSV登録」（機能No M03-38・概要『商品の公開ステータスをCSVで一括更新できる』・確認モーダル『押下後、確認モーダルを表示』HTML:5157）＋シート「商品公開CSVフォーマット」（3列定義）。実座標は 0204:商品公開CSV登録!<セル> / 0204:商品公開CSVフォーマット!<セル> で表記。",
+      "repo_head": "docs feat/front-e2e-coverage 2026-07-29",
+      "fid_kubun": "M03-38＝カスタマイズ（現行踏襲＋Excel規定のカスタマイズ）。source_class=excel優先＋pf-fallback回帰。確定はD6。",
+      "all_it_cases_sha1": "06536deb2a0c72f811c45f3c431f20ff0c78c141"
+    }
+  },
+  "L1-M0338-001": {
+    "claim_type": "http_entry",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "ナビ「商品管理」→「商品CSV管理」→「商品公開CSV登録」から商品公開CSV登録画面（アップロードフォーム・CSVファイルフォーマット説明表・雛形ファイルダウンロード・下部の取込履歴）が開く。上位ナビは admin.product.product_management（en: Products）・admin.product.product_csv_management（en: Product CSV Management）で表示される",
+    "source": "pf ProductCsvController::csvProductStatus:1547;ee ProductStatusCsvController.php:82;messages.en.yaml:1930,1938"
+  },
+  "L1-M0338-002": {
+    "claim_type": "display_field",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "商品公開CSV登録画面は共通のCSVアップロードテンプレートを継承し、ファイル入力と「CSVファイルのアップロード」ボタン（admin.common.csv_upload / en: Upload a CSV file）、CSVファイルフォーマットの項目名・説明表（必須列に必須表示・admin.common.required / en: Required）、雛形ダウンロード（admin.common.csv_skeleton_download / en: Download a template）、下部に取込履歴（ファイル名・アップロード日時・作業者）を表示する",
+    "source": "ee base_csv_upload.twig:53-113;pf base_csv_upload.twig:13-76;messages.en.yaml:1785,1804,1805"
+  },
+  "L1-M0338-003": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "商品公開CSVフォーマットは3列で、識別ID1『商品ID』（主キー・数値(整数)・必須・入力例176808）、識別ID2『商品公開ステータス』（数値(整数)・必須・選択項目は「非公開」「公開」の2種類・公開ステータス(ID)からの名称変更）、識別ID3『支店の商品公開ステータス』（数値(整数)・必須・選択項目は「公開」「非公開」・新規追加項目）である",
+    "source": "0204:商品公開CSVフォーマット!B8,E8,U8,E9,U9,AG9,E10,U10,AG10;0204:商品公開CSV登録!D73,D75"
+  },
+  "L1-M0338-005": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "Excel設計では『CSVファイルのアップロード』ボタンは押下後に確認モーダルを表示する。この確認モーダルは設計正本の画面部品として規定される",
+    "source": "0204:商品公開CSV登録!AG92"
+  },
+  "L1-M0338-006": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "取込履歴はページング化されており（設計で追加したページ表示高速化のためのカスタマイズ）、件数プルダウンの選択肢は 10件 50件 100件 300件 500件 1000件 2000件 10000件 12000件で、選択後は指定レコード数へ自動的に切り替わり、ページ遷移リンクで他ページへ移動できる。※どの page_count 値をセッションに保存するか等の内部セッション挙動はee固有実装でありExcel/pfの正本が無い（本claimは表示件数プルダウンとページ遷移の画面挙動のみを規定）",
+    "source": "0204:商品公開CSV登録!AG96,AG98,D60,D78,D80,D81"
+  },
+  "L1-M0338-007": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "識別ID1『商品ID』は必須項目であり、商品IDが空のデータ行はバリデーションエラーとなり取込が中断され、公開ステータスは更新されない",
+    "source": "0204:商品公開CSVフォーマット!U8;ee ProductStatusUpdateImportHandler.php:121;pf ProductStatusImportHandler.php:110"
+  },
+  "L1-M0338-008": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "データ行の商品IDが商品として存在しない（isProductExists が偽）とき、商品不存在エラーを積み breakAll で以降の行を処理せず取込を中断する。取込エラーメッセージが表示され取込履歴は増えず、対象商品の公開ステータスは更新されない",
+    "source": "pf ProductStatusImportHandler.php:61-80;ee ProductStatusUpdateImportHandler.php:137-153"
+  },
+  "L1-M0338-009": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "当機能は商品公開ステータス区分の『2-廃止』の変更はできない（設計規定）。※廃止行を実際どう処理するかの挙動はpf/eeで食い違う（ee=onReadRowでfalseを返し更新せず成功扱い／pf=del_flg=0の生SQLでUPDATEを実行）ため、廃止行の実挙動はexcel/pfの単一正本で確定できずTBD扱いとする（本claimはExcel逐語の変更不可規定のみを記録・documentation-only）",
+    "source": "0204:商品公開CSV登録!E74;0204:商品公開CSVフォーマット!E27"
+  },
+  "L1-M0338-010": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "アップロードCSVの概算レコード数が上限（5010件）以上のとき、取込を実行せずエラーメッセージを表示する（レコード数上限チェック・5010件以上はエラー）",
+    "source": "0204:商品公開CSV登録!D84;pf ProductCsvController.php:1587;ee ProductStatusCsvController.php:150"
+  },
+  "L1-M0338-011": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込前の基本検査として、2行目以降のデータ行が無いCSV（ヘッダ行はあるがデータ行が無いケース）はデータ無しエラーとなり、取込を実行せずエラーメッセージを表示する",
+    "source": "ee CsvImporter.php:196-204;pf ProductCsvController.php(CsvService checkDataSize同等)"
+  },
+  "L1-M0338-012": {
+    "claim_type": "data_write",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "商品IDで商品情報の商品公開ステータスを更新する。当機能は既存商品の更新のみで新規登録時の処理はしない。正常取込では対象商品の商品公開ステータスがCSV指定値へ更新され、商品編集画面の再表示で反映を確認できる",
+    "source": "0204:商品公開CSV登録!D85,D57"
+  },
+  "L1-M0338-013": {
+    "claim_type": "data_write",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "識別ID3『支店の商品公開ステータス』（新規追加列・数値(整数)・必須・選択項目は「公開」「非公開」の2種類＝0:非公開 1:公開）を商品情報の支店向け公開フラグへ反映する。値0を指定すると非公開、値1を指定すると公開として更新され、選択項目外の値（例:2）を持つ行は選択検証エラーとなり取込が中断される。正常取込では対象商品の支店の商品公開ステータスがCSV指定値へ更新され、商品編集画面の再表示で反映を確認できる",
+    "source": "0204:商品公開CSV登録!D75;0204:商品公開CSVフォーマット!E10,AG10,U10"
+  },
+  "L1-M0338-014": {
+    "claim_type": "history",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込結果にエラーが無い（成功）と判断したときだけ、取込履歴（dtb_csv_import_history）へ種別ID14（PRODUCT_STATUS_IMPORT_CSV_ID）・クライアント側ファイル名・作業者で1件INSERTする。エラー（breakAll）を含む取込では履歴は増えない。取込履歴一覧は作成日時降順で取得されるため、正常取込では当該取込ファイル名が履歴一覧の先頭行に現れ、エラー取込では先頭行に現れない",
+    "source": "pf ProductCsvController.php:1598-1605;ee ProductStatusCsvController.php:168-180;ee DtbCsvImportHistoryRepository.php:71"
+  },
+  "L1-M0338-015": {
+    "claim_type": "http_flow",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "POSTアップロード送信は、フォーム不正・上限超過・取込成功・取込エラーのいずれの結末でも同じアップロード画面（商品公開CSV登録画面）へ戻り、メッセージで成否が示される",
+    "source": "pf ProductCsvController.php:1564-1607;ee ProductStatusCsvController.php:126-192"
+  },
+  "L1-M0338-016": {
+    "claim_type": "validation",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "pf現行ではアップロードフォームの import_file は必須（NotBlank・HareruyaEcプラグインの admin_csv_import フォームでメッセージキー admin.csv.error.upload.require＝『ファイルを選択してください。』を指定）であり、フォーム不正時に getErrors(true)（deep=true）で子フィールドのエラーまで取得して管理画面上部にフラッシュ表示する。※SUT=ee は getErrors()（deep=false・ProductStatusCsvController.php:135）で子フィールドエラーを取得しないため、ファイル未選択時のNotBlankメッセージはee管理画面上部フラッシュに載らない＝pf/ee食い違い（該当母集合-019/-085はTBD・§9.1）。en: NotBlankキーのee英語実訳は『No value found.』（validators.en.yaml:17がSymfony既定『This value should not be blank.』をee override）",
+    "source": "pf ProductCsvController.php:1575-1576;pf app/Plugin/HareruyaEc/Form/Type/Admin/CsvImportType.php:33;pf app/Plugin/HareruyaEc/Resource/locale/message.ja.yml:1094;ee validators.en.yaml:17"
+  },
+  "L1-M0338-017": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込結果にエラーが無いとき、成功を示すメッセージが管理画面上部に表示される（成功メッセージが1件表示される）。成功文言はpf『商品登録CSVファイルをアップロードしました。』/ee『登録が完了しました。』で相違するため、本claimは表示される成功メッセージの存在のみを主張し文言はpinしない",
+    "source": "pf ProductCsvController.php:1601;ee ProductStatusCsvController.php:174"
+  },
+  "L1-M0338-018": {
+    "claim_type": "rollback",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "取込のコミット可否は isSuccessful = messageStore->count()===0 || !hasBreak で判定し、breakAll が発生した取込はロールバックされ何も書き込まれない。breakAll が発生しなければコミットされる",
+    "source": "ee CsvImporter.php:270-275;pf CsvImporter(importRows isSuccessful同等)"
+  },
+  "L1-M0338-019": {
+    "claim_type": "log",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "POST取込で情報ログ「商品公開CSV登録開始」を出し、取込結果にエラーがあれば「商品公開CSV登録 異常終了」、無ければ「商品公開CSV登録完了」と件数を出す（documentation-only＝ログ観測手段が現行ハーネスで未整備＝画面/履歴で検知できず一意固定不能・要実機）",
+    "source": "pf ProductCsvController.php:1593,1599,1602;ee ProductStatusCsvController.php:156,169,175"
+  },
+  "L1-M0338-020": {
+    "claim_type": "file_handling",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "アップロードされたCSVはサーバの一時ディレクトリ（設定 eccube_csv_temp_realdir）へ退避されてからインポータが読み込み、処理終了時に一時ファイルの削除を試行する（documentation-only＝固有一意判定行が無く観測手段も未整備）",
+    "source": "ee CsvImporter.php:136-154,164-176;pf CsvImporter(一時ディレクトリ退避同等)"
+  },
+  "L1-M0338-021": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "商品公開ステータス列は選択肢（公開/非公開の2種類）に限定された選択検証を持ち、許容集合外の値を持つ行はエラーとなる（documentation-only＝母集合に選択検証を固有一意判定する要求行が無い）",
+    "source": "pf ColumnDefinitions.php:150-158;ee ProductStatusUpdateImportHandler.php:122-124"
+  }
+}
