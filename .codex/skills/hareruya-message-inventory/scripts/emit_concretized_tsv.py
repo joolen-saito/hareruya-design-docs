@@ -440,9 +440,9 @@ def main() -> int:
                 row[8] = "自動判定はできない。下記の理由に従い、人が仕様確認または実機確認で期待値を確定する。"
                 row[9] = f"【要確認】期待する挙動: {yoshi_h}。／ 人の対応: {tbd_reason(yoshi)}"
                 row[10] = "手動"; n_tbd += 1  # TBDは手動(要仕様/実機確認)＝自動bound(Playwright)と区別
-                sig = row[9]  # TBDは前提/入力/操作が定型のため期待(row[9])が一致すれば完全重複
+                sig = (row[3], row[5], row[9])  # 観点+項目名+期待が一致してはじめて完全重複(母集合要件の異なる汎用TBD文言の誤集約を防ぐ)
                 if sig in emitted_tbd_sig:
-                    n_tbd_dup += 1  # 完全重複TBD(前提/入力/操作/期待一致)は代表1件のみ出力(Gate B12)
+                    n_tbd_dup += 1  # 完全重複TBD(観点/項目名/前提/入力/操作/期待すべて一致)は代表1件のみ出力(Gate B12)
                 else:
                     emitted_tbd_sig.add(sig)
                     is_tbd = True
