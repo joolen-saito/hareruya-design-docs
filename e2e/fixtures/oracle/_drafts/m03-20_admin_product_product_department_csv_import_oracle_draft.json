@@ -1,0 +1,187 @@
+{
+  "_meta": {
+    "grade": "candidate",
+    "note": "候補（D6前・O5未確定・source_class=pf-fallback（挙動=pf現行HareruyaEc回帰・DB/一部画面=ee移行先クロス検証）+excel（刷新後カスタマイズ=免税区分0/1/2登録）/カスタマイズ区分）。CONCRETIZATION_GATES.md（2026-07-27）Gate B自己監査済み。codex Gate C R4 是正版（2026-07-29・R3残Major1件=breakAll失敗表示を是正・R2/R3既是正維持）。正式解決器はこの_drafts/を読んではならない（隔離）。期待値の正はL1オラクルID（三段参照）。fixture_versionは@TBD-D5。本機能は部門まわりCSV投入の2系統（部門更新CSV＝pf HareruyaEc ProductCsvController::csvProductSectionUpdate〔URL /product/product_section_update_csv_upload・POST後同一画面再描画200・成功flash admin.product.csv_import.save.complete・行数上限5010・取込履歴は種別ID11で作成日時降順最大100件単純取得〕／部門CSV登録＝ee CsvImportController::importDepartment〔URL /product/department_csv_upload・mtb_section新規INSERT/既存UPDATE・POST後200同一URL・成功flash admin.common.csv_upload_complete・行数上限なし・履歴なし〕）を扱う更新系。母集合86行=bound31（26候補ケース）/TBD4(-018 免税区分の期待が実装と不一致・-069 NotBlank+File maxSize両成分でmaxSizeは要実機・-073 履歴セッション保持はpf現行に無くee固有・-078 情報ログ観測手段未整備)/excluded51(-003 未認証はB14で共通認証へDELEG含む)。R3是正: (M1)L1-019/C-017を是正=pfは履歴を最大100件単純取得のみでpage_count/page_no/session無し・-073セッション引継ぎはee固有でTBD。(M2)-069のmaxSizeを会計内TBDへ戻しNotBlank逐語を実pf「ファイルを選択してください。」(admin.csv.error.upload.require)へ是正。(M3)B12過共有を解消=-072→C-022(200同URL)・-009→C-023(タイトル)・-071→C-024(route)・-081→C-025(種別ID11)・-023→C-026(成功フラッシュ)を各独立候補へ分離。(M4)-075の部門コード不存在breakAll分岐をC-027で被覆(C-014は商品不存在)。(M5)-003未認証をC-010から外しB14でDELEG(excluded)。LS=1=4件(L1-001/004/008/012)。source_class=excel1(L1-009)/pf-fallback20。ee/pf実ソースはクロス検証にのみ使用しstandard-src付与ゼロ。R4是正: 部門更新CSV取込(breakAll等)失敗はaddError/フラッシュせずresultのエラー配列をrenderへ渡し画面内.text-danger表示(ProductCsvController.php:858,1857-1866・base_csv_upload.twig:29-30)＝L1-014/016及びC-012B/C-014/C-027の期待をフラッシュから画面内エラー表示に是正(フォーム妥当性NotBlank・行数上限maxrecordはaddError=フラッシュのまま)。",
+    "source": "integration_test/e2e/exec/_drafts/m03-20_admin_product_product_department_csv_import_executable_draft.md §1（本jsonはmd §1から導出・手編集禁止）",
+    "baseline": {
+      "excel_html": "excel_to_html/output/0204_基本設計仕様書(商品管理).html sheet-34「部門登録CSVアップロード」（機能No=M03-20・git hash-object 06fc0cba464df7609d93ea0f9b1feb79092c5bfa・本jsonでは 0204:部門登録CSVアップロード!<セル> と表記）",
+      "pf_md": "functions/pf-eccube3/m03-20_admin_product_product_department_csv_import.md（git hash-object 9850117a73381b33a69bf8c7f02687981ab1d97a）",
+      "pf_impl": "/home/y-saito/Developments/pf-eccube3（挙動正・部門更新CSV）: app/Plugin/HareruyaEc/Controller/Admin/Product/ProductCsvController.php（csvProductSectionUpdate 798-858・CSV_IMPORT_MAX=5010 391）・app/Plugin/HareruyaEc/ServiceProvider/Admin/ProductServiceProvider.php:116-121（route product_section_update_csv_upload）・app/Plugin/HareruyaEc/Service/Csv/Importer/Event/ProductSectionUpdateImportHandler.php・src/Eccube/Resource/locale/message.ja.yml:133（csv_import.save.complete）・app/Plugin/HareruyaEc/Resource/template/admin/Product/base_csv_upload.twig（旧twig=商品管理ハードコード）",
+      "ee_crosscheck": "/home/y-saito/Developments/ec-cube-enterprise/src/Eccube（部門CSV登録=ee・DB正典）: Controller/Admin/Product/Csv/CsvImportController.php:1160-1300（importDepartment）・Entity/Master/MtbSection.php:55-56,140（tax_free_division int）・Entity/Master/MtbCsvImportType.php:38（PRODUCT_SECTION_IMPORT_CSV_ID=11）・Form/Type/Admin/CsvImportType.php:48-56（NotBlank/File）・Resource/locale/messages.en.yaml・validators.en.yaml・Resource/template/admin/Product/csv_department.twig:5-6（title=department_csv_upload・sub_title=product_management）・base_csv_upload.twig:3（title=product_management）",
+      "repo_head": "452471de5f859e152fe123baa9ea5572441ca76d（feat/front-e2e-coverage 2026-07-29）",
+      "fid_kubun": "M03-20=カスタマイズ excel-primary+pf-fallback。確定はD6",
+      "all_it_cases_sha1": "06536deb2a0c72f811c45f3c431f20ff0c78c141"
+    }
+  },
+  "L1-M0320-001": {
+    "claim_type": "http_entry",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "部門CSV登録画面 GET /{admin_route}/product/department_csv_upload を開くと、隠しファイル入力とファイル名表示・一括登録の送信ボタン（admin.common.bulk_registration）・フォーマット表（headersのループ・必須列に必須バッジ admin.common.required）・雛形リンク（admin.common.csv_skeleton_download）が表示される。画面タイトルは admin.product.department_csv_upload、サブタイトルは admin.product.product_management である",
+    "expected_ja_button": "一括登録を実行",
+    "expected_en_button": "Register All",
+    "expected_ja_required": "必須",
+    "expected_en_required": "Required",
+    "expected_ja_skeleton": "雛形ファイルダウンロード",
+    "expected_en_skeleton": "Download a template",
+    "expected_ja_subtitle": "商品管理",
+    "expected_en_subtitle": "Products",
+    "source": "pf-md:44,65,342 / csv_department.twig:5-6 / messages.en.yaml:1711,1785,1805,1930"
+  },
+  "L1-M0320-002": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門CSV登録画面はフォーム送信時にアップロードボタンと雛形ボタンを無効化し、スピナー（spin.js）を表示する",
+    "source": "pf-md:66 / csv_department.twig:10-11"
+  },
+  "L1-M0320-003": {
+    "claim_type": "file_handling",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門CSV登録の雛形ダウンロード GET /{admin_route}/product/csv_template/department を実行すると department.csv が得られる（ファイル名は固定でロケール変異なし）",
+    "source": "pf-md:46,343"
+  },
+  "L1-M0320-004": {
+    "claim_type": "message",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "部門CSV登録の全データ行が成功するとコミットし、情報ログ「部門CSV登録完了」を出し、成功フラッシュ admin.common.csv_upload_complete を積み、Doctrineキャッシュをクリアして 200 で同一URLの部門CSV登録画面を再表示する。mtb_section は新規INSERTまたは既存UPDATEで確定する",
+    "expected_ja": "CSVファイルをアップロードしました",
+    "expected_en": "CSV file uploaded",
+    "source": "pf-md:115,209,256 / CsvImportController.php:1278-1283 / messages.ja.yaml:1606 / messages.en.yaml:1684"
+  },
+  "L1-M0320-005": {
+    "claim_type": "data_integrity",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門CSV登録は部門ID列が空なら新規 MtbSection を INSERT し、非空で該当IDの既存 mtb_section が取れればその行を UPDATE する（部門IDの有無で新規登録か既存更新かが分岐する）",
+    "source": "pf-md:110,156,220 / CsvImportController.php:1216-1227"
+  },
+  "L1-M0320-006": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門CSV登録のデータ行で部門名が空なら「◯行目部門名が設定されていません。」、部門コードが空なら「◯行目部門コードが設定されていません。」、免税区分が空なら「◯行目免税区分が設定されていません。」の行番号付きエラー（ハードコード日本語・翻訳キーでない）で打ち切り、renderWithError がロールバックして取込は完了しない",
+    "source": "pf-md:111,112,116,145 / CsvImportController.php:1230-1253"
+  },
+  "L1-M0320-007": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門CSV登録の部門ID列に非空値があり数字のみでないときは「◯行目の部門IDが存在しません。」で打ち切る。数字でも該当IDの mtb_section が無ければ別分岐で「◯行目の更新対象の部門IDが存在しません。新規登録の場合は、部門IDの値を空で登録してください。」で打ち切る（いずれもハードコード日本語・翻訳キーでない・別メッセージ）",
+    "source": "pf-md:110,144 / CsvImportController.php:1216-1227"
+  },
+  "L1-M0320-008": {
+    "claim_type": "message",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "部門CSV登録でファイル未選択のとき、およびデータ行が0のときは admin.common.csv_invalid_no_data を積んで同画面に留まる。getImportData でのCSV読込失敗、または必須ヘッダ（部門名・部門コード・免税区分。部門ID・表示フラグは任意列）欠如のときは admin.common.csv_invalid_format を積んで同画面に留まる",
+    "expected_ja_no_data": "CSVデータが存在しません",
+    "expected_en_no_data": "No CSV data found",
+    "expected_ja_invalid_format": "CSVのフォーマットが一致しません",
+    "expected_en_invalid_format": "Unmatched CSV format",
+    "source": "pf-md:106,108 / CsvImportController.php:1176-1210 / messages.ja.yaml:1758,1759 / messages.en.yaml:1810,1811"
+  },
+  "L1-M0320-009": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "excel",
+    "expected": "刷新後カスタマイズ（Excel最優先）として免税区分を登録可能とし、スマレジの登録に合わせて 0 対象外・1 一般品・2 消耗品を登録できる",
+    "source": "0204:部門登録CSVアップロード!D55"
+  },
+  "L1-M0320-010": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門CSV登録の免税区分は空チェック後に MtbSection::setTaxFreeDivision(int) へ渡される。数値文字列（例 '0'/'1'/'2'/'3'）は整数化されて通過し 0/1/2 以外の値範囲検証は無い。非数値文字列は int 型引数のため TypeError（型例外）となる。免税区分の保存先は移行先の mtb_section.tax_free_division である",
+    "source": "pf-md:29,157,183 / CsvImportController.php:1247,1252 / MtbSection.php:55-56,140"
+  },
+  "L1-M0320-011": {
+    "claim_type": "rollback",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門CSV登録はエラー時に renderWithError がロールバックしテンプレートへエラー一覧（画面内errorsリスト）を渡す。行途中失敗ではトランザクションがロールバックされ当該リクエストの更新はコミットされない",
+    "source": "pf-md:116,194,210 / CsvImportController.php:1219,1226,1283"
+  },
+  "L1-M0320-012": {
+    "claim_type": "http_entry",
+    "ls": 1,
+    "source_class": "pf-fallback",
+    "expected": "部門更新CSV画面 GET /{admin_route}/product/product_section_update_csv_upload を開くと画面が開き、下部に取込履歴テーブル（ファイル名・アップロード日時・作業者）が付く。刷新後twig（base_csv_upload）の画面タイトルは翻訳キー admin.product.product_management で描画される（pf現行HareruyaEc旧twigは同位置を商品管理でハードコードする＝表示のpf/ee食い違い）",
+    "expected_ja": "商品管理",
+    "expected_en": "Products",
+    "source": "pf-md:41,56 / ProductServiceProvider.php:116-118 / base_csv_upload.twig:3 / messages.en.yaml:1930"
+  },
+  "L1-M0320-013": {
+    "claim_type": "file_handling",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門更新CSVの雛形ダウンロードを実行すると product_section_update.csv が得られる（ファイル名は固定でロケール変異なし）",
+    "source": "pf-md:42 / ProductCsvController.php:461"
+  },
+  "L1-M0320-014": {
+    "claim_type": "http_flow",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門更新CSVの正常POST /{admin_route}/product/product_section_update_csv_upload は、検証・取込がエラー無しで完了したとき 302 リダイレクトせず同一の部門更新CSVアップロード画面（productSectionUpdateTwig）を再描画（render・200）し、成功フラッシュ admin.product.csv_import.save.complete（=「商品登録CSVファイルをアップロードしました。」）を addSuccess する（本claimは成功フローのみ・失敗フローはL1-022）",
+    "source": "pf-md:43 / ProductCsvController.php:815,852,858,1857-1866 / message.ja.yml:133"
+  },
+  "L1-M0320-015": {
+    "claim_type": "message",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門更新CSVのPOSTで CSV 行数（wc -l / countCsvRows）が定数 CSV_IMPORT_MAX=5010 以上のとき admin.csv.error.upload.maxrecord（%maxRecord% 行を超えるCSVファイルは登録できません。）を積んで同一アップロード画面を再描画し取込は行われない。この行数上限は部門更新CSV系のPOSTで使用され、部門CSV登録（ee importDepartment）には行数上限チェックが無い",
+    "source": "pf-md:184 / ProductCsvController.php:391,838-841 / CsvImportController.php:1160-1210"
+  },
+  "L1-M0320-016": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門更新CSVは各行で商品コードを existsByProductCode で検証し（見つからなければbreakAll）、次に部門コードが非空なら mtb_section.code で部門存在を検証する（見つからなければ別分岐でbreakAll）。先頭データ行が不正なら breakAll により後続行は処理されずトランザクションはロールバックされる（取込エラーの画面表示方法は L1-022）",
+    "source": "pf-md:91,92,181 / ProductSectionUpdateImportHandler.php:131,188-208 / ProductCsvController.php:850-858"
+  },
+  "L1-M0320-017": {
+    "claim_type": "data_integrity",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門更新CSVで検証を通過した行は、dtb_product_class の product_code が一致する全行の section_id を、部門コードが非空なら該当部門のID、空なら null にネイティブUPDATE（replaceSection）で更新し継続する。取込成功後は商品規格一覧・詳細を再表示すると section_id の変更が見える",
+    "source": "pf-md:93,155,192,219 / ProductSectionUpdateImportHandler.php:191-197"
+  },
+  "L1-M0320-018": {
+    "claim_type": "history",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門更新CSVは成功時（エラー無し）のみ dtb_csv_import_history に取込履歴を1件INSERTする（種別ID＝PRODUCT_SECTION_IMPORT_CSV_ID=11・ファイル名＝クライアントオリジナル名）。部門CSV登録は履歴テーブルへ書かない",
+    "source": "pf-md:95,193,221 / ProductCsvController.php:852-857 / MtbCsvImportType.php:38"
+  },
+  "L1-M0320-019": {
+    "claim_type": "display_field",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門更新CSV画面（pf HareruyaEc render）は取込履歴を種別ID11で作成日時降順に最大 CSV_IMPORT_HISTORY_LIMIT=100 件だけ単純取得して表示する。page_count/page_no・表示件数プルダウン・セッション保持は pf現行HareruyaEc には無い（それらは ee 側の別URL importDepartment 系にのみ存在＝pf/ee食い違い。母集合-073 のセッション引継ぎ期待は pf に無いためTBD）",
+    "source": "pf-md:56 / ProductCsvController.php:392,1857-1860"
+  },
+  "L1-M0320-020": {
+    "claim_type": "validation",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門更新CSVのフォーム（pf HareruyaEc admin_csv_import）の import_file は required で NotBlank（message=admin.csv.error.upload.require=「ファイルを選択してください。」）と File（maxSize=設定 csv_size メガバイト・maxSizeMessage=admin.csv.error.upload.maxsize）の制約を持つ。ファイル未選択のとき NotBlank エラー、ファイルサイズ超過のとき File maxSize エラーになり、フォーム妥当性失敗時は各エラーをフラッシュして同一アップロード画面を再描画する。母集合-069 は NotBlank と File maxSize の両成分を要求するが maxSize 超過は大容量ファイルを要し純UIで一意判定困難のためTBD",
+    "expected_ja_notblank": "ファイルを選択してください。",
+    "source": "pf-md:237 / HareruyaEc/CsvImportType.php:28-40 / ProductCsvController.php:828-833 / messages.ja.yaml:1624"
+  },
+  "L1-M0320-021": {
+    "claim_type": "log",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門更新CSVのPOST開始時に情報ログ「部門更新CSV登録開始」・成功時「部門更新 正常終了」と件数・失敗時「部門更新 異常終了」を出す（documentation-only＝アプリログの観測手段が未整備で画面/DBでは一意固定できずTBD）",
+    "source": "pf-md:89 / ProductCsvController.php:846,851,855"
+  },
+  "L1-M0320-022": {
+    "claim_type": "http_flow",
+    "ls": 0,
+    "source_class": "pf-fallback",
+    "expected": "部門更新CSVの取込（CsvImporter）がエラーを持って終了したとき、pf現行は addSuccess も addError も呼ばず（フォーム妥当性エラー・行数上限エラーとは別経路）、result のエラー配列を render の errors へ渡し 302 リダイレクトせず同一の部門更新CSVアップロード画面を再描画（render・200）し、テンプレートが画面内の .text-danger（div class=text-danger）としてエラーメッセージを表示する（フラッシュではない）。成功フラッシュは出ない（本claimは取込失敗フローのみ・成功フローはL1-014）",
+    "source": "pf-md:43 / ProductCsvController.php:846,858,1857-1866 / base_csv_upload.twig:29-30"
+  }
+}
