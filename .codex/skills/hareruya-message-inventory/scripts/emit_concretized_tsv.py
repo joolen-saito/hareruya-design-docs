@@ -394,6 +394,7 @@ def main() -> int:
     exec_rows = []      # bound(実行可能)のみ
     for nnn in sorted(pop):
         row = list(pop[nnn])  # 11列(母集合原本)
+        orig_expect = pop[nnn][9]  # 母集合の期待(TBD文言で上書きされる前)。TBD重複排除の識別に使う
         if nnn in vp_corr:    # 母集合の観点ラベル誤りを派生ビューで是正（母集合自体は不変）
             row[3] = vp_corr[nnn]  # テスト観点
             row[5] = vp_corr[nnn]  # テスト項目名も同時是正（B12/TBD代表行の母集合ラベル残存を防ぐ・codexがMajor化）
@@ -440,7 +441,7 @@ def main() -> int:
                 row[8] = "自動判定はできない。下記の理由に従い、人が仕様確認または実機確認で期待値を確定する。"
                 row[9] = f"【要確認】期待する挙動: {yoshi_h}。／ 人の対応: {tbd_reason(yoshi)}"
                 row[10] = "手動"; n_tbd += 1  # TBDは手動(要仕様/実機確認)＝自動bound(Playwright)と区別
-                sig = (row[3], row[5], row[9])  # 観点+項目名+期待が一致してはじめて完全重複(母集合要件の異なる汎用TBD文言の誤集約を防ぐ)
+                sig = (row[3], row[5], orig_expect)  # 観点+項目名+母集合の元期待が一致してはじめて完全重複(異なる母集合要件が汎用TBD文言で誤集約されるのを防ぐ)
                 if sig in emitted_tbd_sig:
                     n_tbd_dup += 1  # 完全重複TBD(観点/項目名/前提/入力/操作/期待すべて一致)は代表1件のみ出力(Gate B12)
                 else:
