@@ -18,23 +18,17 @@
 
 エントリーの表示で、入力データを空で初期化する。申込フォームの送信は、未ログインのときは会員登録フォームへ、ログイン中のときは確認へ向かう。会員登録フォームでは、申込フォームの入力内容と適格請求書発行事業者の入力内容を保持したうえで表示する。
 
-申込フォームと会員登録フォームは入力時間の残りを 10 分で表示する。
+申込フォーム・会員登録フォームのキャンセルは、エントリーへ戻る。会員登録フォームは会員登録をスキップして確認へ進む導線も持つ。
 
 ### 入力の初期値と検証
 
 | 項目 | 扱い |
 | --- | --- |
-| 国 | 未送信のときは日本で初期化する |
 | 氏名・氏名カナ・郵便番号・住所・生年月日・電話番号・職業 | ログイン中のときは会員の登録情報を反映する |
 | 適格請求書発行事業者の登録番号 | 設問が「はい」のときだけ入力欄を扱う。ログイン中で登録済みの番号があるときは反映する |
-| 言語 | 日本語と英語で、氏名と氏名カナの必須と形式の検証が変わる |
-| 返却希望サプライ | スリーブとストレージボックスの複数選択と自由記述 |
-| 電話連絡・大会参加状況・適格請求書発行事業者 | いずれかを選ぶ二択 |
-| 個人情報の取り扱い・利用規約 | 同意の確認を伴う |
-| 郵便番号 | 郵便番号から住所を自動で入力できる。自動入力を使わないときは都道府県・住所1・住所2を直接入力する |
-| 氏名カナ | 氏名の入力に応じて自動で補う |
-| 会員登録の入力 | メールアドレスと確認用、パスワードと確認用、同意の確認を入力する。会員登録をスキップしたときは入力を求めない |
-| 表示言語 | 日本語と英語のいずれかを選ぶ。選んだ言語で申込フォームの文言を切り替える |
+| 返却希望サプライ | 選択肢はスリーブとストレージボックスの2つ（英語表示では Sleeves と Storage Box） |
+| 氏名・氏名カナ | 空白文字を含む入力は受け付けない |
+| 会員登録の入力 | 会員登録をスキップするときは入力を求めない |
 
 ### 他機能との境界
 
@@ -68,13 +62,33 @@
 | F08-02-MSG-001 | 画面中央(ダイアログ) | front.otcbuy.error.assessment_only | 会員登録フォームに入力した状態で、会員登録なしの申込を選択したとき | 申込は中止され、入力画面に留まる |
 | F08-02-MSG-002 | 画面中央(ダイアログ) | front.otcbuy.error.membership_assessment | 会員登録ありの申込を選択し、会員登録フォームの必須入力が不足しているとき | 申込は中止され、入力画面に留まる |
 | — | エントリー・申込フォームの見出し | 査定申込み | エントリーまたは申込フォームを表示したとき | 当該画面を表示する |
+| — | エントリー・申込フォームの見出し（英語表示時） | Selling Request（エントリー）／Assessment Form（申込フォーム） | エントリーまたは申込フォームを表示したとき | 当該画面を表示する |
 | — | エントリー画面 | アカウントをお持ちでない方はこちら | エントリー画面を表示したとき | ゲスト向けの導線を示す |
+| — | エントリー画面（英語表示時） | If you don't have an account. | エントリー画面を表示したとき | ゲスト向けの導線を示す |
 | — | 申込フォーム・会員登録フォーム上部 | 入力時間：残り | 申込フォームまたは会員登録フォームを表示したとき | 残り時間を表示する |
+| — | 申込フォーム・会員登録フォーム上部（英語表示時） | Remaining time to input: | 申込フォームまたは会員登録フォームを表示したとき | 残り時間を表示する |
 | — | 会員登録フォーム | 初めてご利用のお客様は、こちらから会員登録をお願いいたします。次回以降の査定申込みが簡単になるほか、通販で便利にお買い物ができるようになります。 | 会員登録フォームを表示したとき | 会員登録の入力を促す |
+| — | 会員登録フォーム（英語表示時） | If you are a first-time customer, please register for membership here. Registering for membership will make it easier to apply for future assessments and to shop conveniently at the Hareruya web store. | 会員登録フォームを表示したとき | 会員登録の入力を促す |
 | — | 申込フォームの住所欄 | ※町名・番地の入力漏れはご注意ください。 | 日本語の申込フォームを表示したとき。英語の申込フォームはこの注意文を持たない | 住所の入力を促す |
-| — | 会員登録フォームのパスワード欄 | （半角英数字記号 8文字以上,32文字以内で入力してください。IDと同様のパスワードは入力できません。） | 会員登録フォームを表示したとき | パスワードの入力を促す |
 | — | ログインフォーム直下 | ログイン失敗の文言 | エントリーのログインに失敗したとき | 認証の最終エラーを表示する。文言は会員ログインを正とする |
 | — | 登録番号欄 | 登録番号を入力してください | 適格請求書発行事業者ありで登録番号が未入力のとき | 申込を確定せず入力画面に留まる |
+| — | 登録番号欄（英語表示時） | Please enter your registration number | 適格請求書発行事業者ありで登録番号が未入力のとき | 申込を確定せず入力画面に留まる |
 | — | 登録番号欄 | 登録番号に全角を含むことは出来ません | 登録番号に全角が含まれるとき | 申込を確定せず入力画面に留まる |
+| — | 登録番号欄（英語表示時） | Registration number cannot include full-width characters | 登録番号に全角が含まれるとき | 申込を確定せず入力画面に留まる |
 
 各入力欄の必須と形式のエラーは、当該入力欄の直下に表示する。
+
+## 出典
+
+| 小見出し | 重要度 | 出典 |
+| --- | --- | --- |
+| 店舗の特定 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/OtcBuyController.php:42 |
+| 画面の進み方 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/OtcBuyController.php:87 |
+| 画面の進み方 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/OtcBuy/index.twig:223 |
+| 画面の進み方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/OtcBuy/index.twig:234 |
+| 画面の進み方 | P2 | pf-eccube3:app/Plugin/HareruyaEc/Resource/template/default/OtcBuy/register_customer.twig:117 |
+| 入力の初期値と検証 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Controller/OtcBuyController.php:96 |
+| 入力の初期値と検証 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Front/OtcBuy/OtcBuyOrderType.php:175 |
+| 入力の初期値と検証 | P1 | pf-eccube3:app/Plugin/HareruyaEc/Form/Type/Front/OtcBuy/OtcBuyOrderType.php:265 |
+| 他機能との境界 | P3 | pf-eccube3:app/Plugin/HareruyaEc/Controller/OtcBuyController.php:172 |
+| エラー時の扱い | P2 | pf-eccube3:app/Plugin/HareruyaEc/Controller/OtcBuyController.php:44 |
