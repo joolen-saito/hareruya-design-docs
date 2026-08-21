@@ -8,6 +8,7 @@ import html
 import importlib.util
 import os
 import re
+from functools import lru_cache
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
@@ -297,7 +298,7 @@ def main() -> int:
     skipped_empty: list[TodoRow] = []
     for row, sheet in assignments:
         key = block_key(row)
-        block = render_block(converter, row, key)
+        block = render_block(converter, row, key, sheet=sheet)
         if not block:  # 出す本文が無い機能はブロックを作らない
             skipped_empty.append(row)
             continue
@@ -308,7 +309,7 @@ def main() -> int:
             f"※ この機能には専用の画面シートが無いため、親機能シート「{sheet.heading}」の末尾に"
             f"統合した現行仕様です。"
         )
-        block = render_block(converter, row, key, note=note)
+        block = render_block(converter, row, key, note=note, sheet=sheet)
         if not block:
             skipped_empty.append(row)
             continue
@@ -648,11 +649,36 @@ def csv_format_only_sources() -> set[str]:
 EMBED_EXCLUDED_KINDS = ("新規実装", "標準")
 
 
-def render_block(converter, row: TodoRow, key: str, note: str | None = None) -> str:
+@lru_cache(maxsize=1)
+def embed_excluded_sheets() -> set[tuple[str, str]]:
+    """現行仕様を埋め込まないシート（書番, シートID）。functions/embed-exclusion.tsv が正本。
+
+    同一機能Noの2枚目以降と、フェーズ2で対応する機能のシート。
+    どちらも Excel が定めた仕様と二重定義になるため出さない（2026-08-21 利用者決定）。
+    """
+    path = ROOT / "functions" / "embed-exclusion.tsv"
+    out: set[tuple[str, str]] = set()
+    if not path.is_file():
+        return out
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("#") or line.startswith("書番") or not line.strip():
+            continue
+        cells = line.split("\t")
+        if len(cells) >= 2:
+            out.add((cells[0].strip(), cells[1].strip()))
+    return out
+
+
+def render_block(converter, row: TodoRow, key: str, note: str | None = None,
+                 sheet: "SheetRef | None" = None) -> str:
     if row.source.relative_to(ROOT).as_posix() in csv_format_only_sources():
         return ""  # CSV項目定義しか無いシートには現行仕様を出さない
     if converter.customization_kind(source=row.source) in EMBED_EXCLUDED_KINDS:
         return ""  # 新規実装・標準は正本HTMLへ埋め込まない
+    if sheet is not None:
+        book = re.match(r"(\d{4})", sheet.html_path.name)
+        if book and (book.group(1), sheet.section_id) in embed_excluded_sheets():
+            return ""  # 同一機能Noの2枚目以降・フェーズ2のシートには出さない
 
     markdown = converter.build_combined_markdown(row.source, [])
     title, body_markdown = converter.extract_title_and_body(markdown, row.source.stem)

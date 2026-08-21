@@ -5,10 +5,16 @@
 実体が無かった（2026-08-21 判明）。そのため登録が4件で止まり、
 0206「買取商品一覧CSV出力項目」のようなCSV項目だけのシートに現行仕様が埋め込まれていた。
 
-判定（台帳ヘッダの規準をそのまま機械にする）:
-  1. そのシートに機能仕様系の見出し（機能仕様／処理概要／カスタマイズ説明／レイアウト図／
-     機能について／要件説明）が無い。
-  2. 本文行の9割以上が表の行（タブを含む行）である。
+判定（2026-08-21 改訂）:
+  見出しの有無では決まらない。0203「受注一覧CSV出力」は機能について・処理概要・カスタマイズ説明を
+  持つが、中身は84行中65行が項目表で、説明文は★項目追加のリスト14行だけだった。
+  そこで**説明文の量**で判定する。
+  1. 説明文（表でもなく節見出しでもない行）が MAX_NARRATIVE 行以下。
+  2. 表の行が本文の TABLE_RATIO 以上。
+  較正（2026-08-21 実測）:
+    CSV項目のみ  0203 sheet-5/6/7/8 = 説明文 14〜15行 / 表率 76〜82%
+                 0202 sheet-9       = 説明文  5行     / 表率 95%
+    本物の仕様   0202 sheet-4/6/14, 0203 sheet-3, 0205 sheet-3 = 説明文 45〜518行 / 表率 15〜41%
 埋め込み済みの現行仕様ブロックは判定材料から外す（埋め込みの有無で結果が変わらないようにする）。
 
   python3 detect_csv_format_only.py               # 候補一覧
@@ -27,8 +33,6 @@ ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT / "design_impl_drift_report"))
 import lib_design_doc as L  # noqa: E402
 
-SPEC_HEADINGS = ("機能仕様", "処理概要", "カスタマイズ説明", "レイアウト図",
-                 "機能について", "要件説明")
 # どのシートにも必ず付く表題ブロック。ラベルと値が1行ずつ並ぶためタブを含まず、
 # 小さなCSV項目シートでは本文の7割を占めて表内率を潰す（実測: 0206 sheet-7 は 31% になっていた）。
 # 表内率を測る前に必ず落とす。
@@ -40,7 +44,11 @@ EMBED_START = re.compile(r"^Source:$")
 # CSV/TSVの項目定義であることの signal を要求する。
 CSV_TITLE_RE = re.compile(r"CSV|TSV|フォーマット")
 CSV_HEADER_RE = re.compile(r"識別ID\t|項目名|出力項目|入力項目")
-TABLE_RATIO = 0.90
+# 節見出しの行。説明文の量を数えるときに除く。
+SECTION_HEADS = ("機能について", "処理概要", "カスタマイズ説明", "機能仕様",
+                 "要件説明", "レイアウト図", "識別ID")
+MAX_NARRATIVE = 25
+TABLE_RATIO = 0.60
 MIN_LINES = 8
 
 
@@ -79,13 +87,13 @@ def looks_csv_only(lines: list[str], title: str = "") -> tuple[bool, int, float]
     body = [l for l in strip_meta_header(lines, title) if l.strip()]
     if len(body) < MIN_LINES:
         return False, len(body), 0.0
-    if any(any(l.strip().startswith(h) for h in SPEC_HEADINGS) for l in body):
-        return False, len(body), 0.0
-    if not (CSV_TITLE_RE.search(title) or CSV_HEADER_RE.search("\n".join(body[:3]))):
+    if not (CSV_TITLE_RE.search(title) or CSV_HEADER_RE.search("\n".join(body[:4]))):
         return False, len(body), 0.0
     table = sum(1 for l in body if "\t" in l)
+    narrative = sum(1 for l in body
+                    if "\t" not in l and not any(l.strip().startswith(h) for h in SECTION_HEADS))
     ratio = table / len(body)
-    return ratio >= TABLE_RATIO, len(body), ratio
+    return (narrative <= MAX_NARRATIVE and ratio >= TABLE_RATIO), len(body), ratio
 
 
 def registered() -> set[str]:

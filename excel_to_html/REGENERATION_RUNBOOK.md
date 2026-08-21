@@ -140,8 +140,16 @@ python3 .cursor/skills/function-spec-html-render/scripts/detect_phase2_specs.py
 | 台帳 | 意味 | 出力への効き方 |
 | --- | --- | --- |
 | `functions/csv-format-only.tsv` | CSV/TSVの項目定義しか無いシート | 現行仕様を埋め込まない |
+| `functions/embed-exclusion.tsv` | 同一機能Noの2枚目以降／機能まるごとPh2のシート | 現行仕様を埋め込まない |
 | `functions/superseded_specs.json` | 刷新後は実装不要 | 「刷新後は実装不要」バナー |
 | `functions/phase2_specs.json` | フェーズ2対応 | 「フェーズ1では実装不要」バナー |
+
+**Ph2台帳の `scope` を必ず見ること。** `FUNCTION_SCOPE`（機能まるごとPh2）だけが埋め込み除外の対象で、
+`ITEM_SCOPE`（項目だけPh2）は現行仕様を出す。2026-08-21、これを混同して 0302 のナビゲーション5件を
+誤って除外しかけた。当該シートは正本に「本機能はフェーズ1対象」と明記されている。
+
+**除外が効いたかの検算は埋め込みマーカー `Source:` で行う。** シート本文に「現行仕様」という語が
+あるかで見ると、Excel本文にその語を含むだけのシート（0210 sheet-4）を誤検出する。
 
 **候補は機械が出し、登録は人が確認して行う。** 未登録の候補が残っている状態で次へ進まない
 （`--unregistered` は未登録があれば終了コード1）。
