@@ -63,6 +63,15 @@ REPOS = {
     "ec-cube-enterprise": WORKSPACE / "ec-cube-enterprise",
 }
 SRC_RE = re.compile(r"^(?P<repo>[a-z0-9\-]+):(?P<path>[^\s:]+?)(?::(?P<line>\d+)(?:-(?P<end>\d+))?)?$")
+
+# 現行システムはプラグインでコア実装を差し替えている。差し替えられた画面では
+# コア側のクラスは実行されないため、コアを出典にすると「実際には動かないコード」を
+# 根拠にしてしまう（2026-08-21 実測: 受注検索の出典が core の OrderController を指しており、
+# 実体は app/Plugin/HareruyaEc/Controller/Admin/Order/OrderController.php だった。
+# しかもコア側は検証NGで検索を止めるため、本文の記述と矛盾する出典になっていた）。
+# **現行仕様の出典はプラグイン側の実体を見る。**
+PLUGIN_DIRS = ("app/Plugin",)
+CORE_DIRS = ("src/Eccube/", "data/class/")
 SHEET_RE = re.compile(r"^(?P<book>\d{4}):(?P<sheet>sheet-\d+)$")
 
 
@@ -127,6 +136,57 @@ def resolve(ref: str) -> str | None:
         last = int(m.group("end") or m.group("line"))
         if last > total:
             return f"行数超過 {last} > 実{total}行"
+    override = plugin_override(repo, m.group("path"),
+                               int(m.group("line")) if m.group("line") else None)
+    if override:
+        return (f"コア実装を指している。この機能はプラグインで差し替えられており、"
+                f"実行されるのは {override}。プラグイン側の実体を出典にすること")
+    return None
+
+
+_FUNC_RE = re.compile(r"^\s*(?:public|protected|private|static|final|abstract|\s)*function\s+(\w+)",
+                      re.M)
+
+
+def _enclosing_function(path: Path, line_no: int) -> str | None:
+    """指定行を含むメソッド名。行指定が無い・特定できないときは None。"""
+    name = None
+    for i, text in enumerate(path.open(encoding="utf-8", errors="ignore"), start=1):
+        if i > line_no:
+            break
+        m = _FUNC_RE.match(text)
+        if m:
+            name = m.group(1)
+    return name
+
+
+def plugin_override(repo: Path, rel: str, line_no: int | None) -> str | None:
+    """コアを指す出典が、実際にはプラグインで差し替えられているなら差し替え先を返す。
+
+    プラグインのクラスはコアを継承していることが多い。**同名クラスがあるだけでは足りず、
+    その行のメソッドがプラグイン側で上書きされているか**まで見る。
+    上書きされていなければコア側が実行されるので、コアを出典にしてよい
+    （2026-08-21: クラス名だけで判定して誤検出しかけた）。
+    """
+    if not any(rel.startswith(d) for d in CORE_DIRS):
+        return None
+    name = Path(rel).name
+    for plugin_root in PLUGIN_DIRS:
+        base = repo / plugin_root
+        if not base.is_dir():
+            continue
+        for hit in base.glob(f"*/**/{name}"):
+            if line_no is None:
+                return hit.relative_to(repo).as_posix() + "（行指定が無いため要確認）"
+            method = _enclosing_function(repo / rel, line_no)
+            if method is None:
+                return None
+            body = hit.read_text(encoding="utf-8", errors="ignore")
+            m = re.search(rf"function\s+{re.escape(method)}\s*\(", body)
+            if m:
+                ln = body[: m.start()].count("\n") + 1
+                return f"{hit.relative_to(repo).as_posix()}:{ln}（{method} を上書き）"
+            return None
     return None
 
 

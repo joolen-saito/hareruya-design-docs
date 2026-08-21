@@ -27,6 +27,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
 ALLOWED_H2 = {"業務ロジック", "入出力", "表示メッセージ"}
+# `## 出典` は設計書の本文ではなく、正典の裏取りを書き手が申告する付録である
+# （[[REGENERATION_RUNBOOK]] の「出典」。h2 が3種以外なので HTML には出力されない）。
+# 本文の様式検査（3分類・実装用語）を出典節に掛けると、出典のファイルパスが
+# 実装用語として引っ掛かり、規約どおり書いた文書が落ちる。検査前に切り離す。
+CITATION_H2 = "出典"
 MSG_ID_RE = re.compile(r"[A-Z]\d{2}-\d{2}-MSG-\d+")
 IMPL_PATTERNS = [
     (re.compile(r"`[A-Za-z][A-Za-z0-9_]*::[A-Za-z0-9_]+`"), "メソッド参照"),
@@ -109,17 +114,30 @@ def message_texts(text: str) -> set[str]:
     return out
 
 
-def check(path: Path, rev: str = "HEAD") -> list[str]:
-    text = path.read_text(encoding="utf-8")
-    problems: list[str] = []
+def strip_citation_section(text: str) -> str:
+    """`## 出典` 節を取り除いた本文を返す（次の h2 の手前まで）。"""
+    out, skipping = [], False
+    for line in text.split("\n"):
+        m = re.match(r"^## (.+)$", line)
+        if m:
+            skipping = m.group(1).strip().startswith(CITATION_H2)
+        if not skipping:
+            out.append(line)
+    return "\n".join(out)
 
-    h2 = {m.strip() for m in re.findall(r"^## (.+)$", text, flags=re.M)}
+
+def check(path: Path, rev: str = "HEAD") -> list[str]:
+    text = strip_citation_section(path.read_text(encoding="utf-8"))
+    problems: list[str] = []
+    body = strip_citation_section(text)
+
+    h2 = {m.strip() for m in re.findall(r"^## (.+)$", body, flags=re.M)}
     extra = h2 - ALLOWED_H2
     if extra:
         problems.append(f"3分類の外の節: {sorted(extra)}")
 
     for pattern, label in IMPL_PATTERNS:
-        hits = pattern.findall(text)
+        hits = pattern.findall(body)
         if hits:
             problems.append(f"{label}が残っている: {sorted(set(hits))[:4]}")
 
@@ -132,6 +150,7 @@ def check(path: Path, rev: str = "HEAD") -> list[str]:
 
     base = baseline_text(path, rev)
     if base:
+        base = strip_citation_section(base)
         lost_ids = set(MSG_ID_RE.findall(base)) - set(MSG_ID_RE.findall(text))
         if lost_ids:
             problems.append(f"メッセージIDが減った: {sorted(lost_ids)}")
