@@ -7,6 +7,9 @@ description: 機能仕様書Markdownを、内容を変更せずHTML閲覧版へ�
 
 ## 目的
 
+再生成を一巡させる手順とゲートは `excel_to_html/REGENERATION_RUNBOOK.md` を正とする。
+本スキルはそのうち「Markdown→HTML変換」の規約を定める。
+
 `functions/**/*.md` の機能仕様書を、人がブラウザで読みやすいHTML閲覧版へ変換する。HTMLは派生成果物であり、仕様の正本はMarkdownとする。単体プレビューを生成する場合と、Excel由来HTMLの該当画面シート末尾へMarkdown本文を追記統合する場合の両方で使用する。
 
 ## 原則
@@ -16,6 +19,11 @@ description: 機能仕様書Markdownを、内容を変更せずHTML閲覧版へ�
 - Markdown正本とExcel基本設計仕様書に同一機能・同一仕様の内容が重複して書かれている場合、Excel基本設計仕様書を正とする。統合HTML上のMarkdown由来ブロックはExcel由来本文を上書きしない。食い違いを見つけた場合はHTMLだけで調整せず、Markdown正本をExcelに合わせて更新するか、差分を移行後の扱い・実装確認値として分離してから再変換する。
 - Excel基本設計が廃止を宣言した項目・画面・機能は、`functions/superseded_specs.json`（台帳）に基づき、埋め込み節と単体プレビューの冒頭へ「刷新後は実装不要」バナーを描画する。バナーは `render_block()` / `render_document()` が台帳を読んで**描画の一部として**出す（後段注入にしてはならない。`strip_existing_embeds()` が埋め込みブロックを毎回作り直すため、ブロック内部への注入は integrate 単独実行でも消える）。台帳・定型句・検証は [[superseded-spec]] を正とする。
 - HTML側だけに要約、補足、推測、仕様説明を追加しない。
+- 節の並び替えは「表示メッセージ」だけに掛ける。**表示メッセージは現行仕様ではなくリニューアル後の仕様**なので、描画時に本文の末尾へ回し、その手前に「リニューアル後の仕様」の見出し（`renewal-spec-banner`）を出す（2026-08-19 ユーザー決定。規約の正本は [[output-exclusion-policy]] 2.5、実装は `split_renewal_sections()` / `render_renewal_heading()`）。Markdown正本の文言・節の中身は変えず、Markdown側に現行／リニューアルの区別も書かない。
+- 出力除外規約: 一部の節・列はHTML設計書へ出力しない（全機能共通の12節と、区分限定の「API/バッチ結果」「フロント挙動」「画面上の文言(英語)」列）。**対象一覧・区分判定・節の範囲・表記ゆれの扱い・検証条件は [[output-exclusion-policy]] が正本**。ここでは実装上の要点だけを示す。
+  - 除外は `markdown_to_html()` の入口＝全経路の単一関門（`strip_excluded_sections()` / `drop_excluded_columns()`）で行う。単体プレビュー・Excel HTMLへの埋め込み・orphanグループHTMLのいずれにも同じく効き、目次（TOC）からも消える。
+  - 定義箇所は `EXCLUDED_SECTION_TITLES` / `SCREEN_ONLY_EXCLUDED_SECTION_TITLES` / `NON_FRONT_EXCLUDED_SECTION_TITLES` / `ADMIN_ONLY_EXCLUDED_TABLE_COLUMNS` と、それを合成する `excluded_section_titles(kind)` / `excluded_table_columns(kind)`。区分は `function_kind()` が `admin`/`front`/`api`/`batch`/`other`/`None` で返す。増減はここだけを直す（`excel_to_html/verify.py` は同じ定義を import する）。
+  - 除外はHTML表示だけの措置で、Markdown正本は一切変更しない。内容が必要な場合は正本Markdownを読む（テストケースが「利用者視点の入口」を根拠として引用する際の参照先も正本Markdown）。
 - 機能仕様書内に混在する画面項目定義TSVは、同じ位置にHTML表として表示する。
 - 外部の画面項目定義Markdownが存在する場合は、`--screen-source` で指定し、機能仕様書HTMLの末尾に同一ファイル内セクションとして統合する。
 - 画面項目定義が存在しない場合は、`--screen-source` を付けずに機能仕様書単独HTMLを生成する。
@@ -71,7 +79,7 @@ rg -c "<!-- function-design-embed:start" excel_to_html/output/*.html
 cd excel_to_html && uv run python verify.py
 ```
 
-未統合が残る場合は、Excel出力側に対応シートがない、または機能No・機能名だけでは安全に一意判定できないものとしてレポートに残す。無理に近いシートへ入れず、`todo-list.md`、Markdownファイル名、Excel側の機能No/機能名のどれを直すべきか確認してから再実行する。
+Excel出力側に対応シートがない機能は、**リニューアルで廃止された機能**とみなしてHTMLへ出力せず、レポートの「非出力: Excel基本設計に対応シートが無い機能（リニューアルで廃止）」へ全件残す（2026-08-14 ユーザー決定。実装は `EMBED_PARENT_SHEET_FALLBACK=False`。旧実装は親機能シートの末尾へ追記していたが、別画面の仕様と読み違えるため廃止した）。廃止の裁定は [[superseded-spec]] の台帳で確定させる。機能No・機能名だけでは安全に一意判定できないものも同じ一覧に残し、無理に近いシートへ入れない。`todo-list.md`、Markdownファイル名、Excel側の機能No/機能名のどれを直すべきか確認してから再実行する。
 
 ## 画面項目定義TSVの扱い
 
@@ -85,7 +93,8 @@ cd excel_to_html && uv run python verify.py
 ## 確認
 
 - 変換前後でMarkdown正本に差分がないこと。
-- HTMLに主要見出し、通常Markdown表、TSV画面項目表、コードブロックが反映されていること。
+- HTMLに主要見出し、通常Markdown表、TSV画面項目表、コードブロックが反映されていること（出力除外規約の対象節を除く）。
+- [[output-exclusion-policy]] の除外対象（共通13節・区分限定の節・管理画面の除外列）がHTML・目次のどちらにも出ておらず、逆に残すべきもの（API・バッチ機能の「API/バッチ結果」、フロント機能の「フロント挙動」）は残っていること。`cd excel_to_html && uv run python verify.py` の「出力除外セクション見出し: 0件」で機械確認できる。
 - TSV画面項目表が段落に潰れていないこと。
 - 目次リンクが対象見出しへ遷移すること。
 - 長い表が横スクロールできること。

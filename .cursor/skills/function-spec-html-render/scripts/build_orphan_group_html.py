@@ -77,7 +77,14 @@ def build_group_html(converter, title: str, members: list[tuple[str, str, Path]]
         doc_title, body_md = converter.extract_title_and_body(markdown, md_path.stem)
         slug = re.sub(r"[^0-9a-zA-Z]+", "-", feature_no.lower()).strip("-")
         headings: list[tuple[int, str, str]] = []
-        body_html = converter.markdown_to_html(body_md, headings, slug_prefix=f"{slug}-")
+        body_html = converter.markdown_to_html(
+            body_md,
+            headings,
+            slug_prefix=f"{slug}-",
+            kind=converter.function_kind(source=md_path, feature_no=feature_no),
+            customization=converter.customization_kind(source=md_path),
+            common_titles=converter.common_spec_titles(md_path),
+        )
         source_rel = md_path.relative_to(ROOT).as_posix()
         label = f"{html.escape(feature_no)} {html.escape(feature_name)}"
         sidebar_links.append(f'<a class="lv1" href="#{slug}">{label}</a>')
@@ -118,7 +125,7 @@ def build_group_html(converter, title: str, members: list[tuple[str, str, Path]]
     <main class="doc-content">
       <header class="page-header">
         <h1>{html.escape(title, quote=False)} 基本設計仕様書（詳細設計）</h1>
-        <p class="crumb">専用の基本設計（Excel）シートが無い機能群の詳細設計書をまとめたページです。各機能の正本は Markdown です。</p>
+        <p class="crumb">専用の基本設計（Excel）シートが無い機能群の現行仕様をまとめたページです。各機能の正本は Markdown です。</p>
       </header>
       {body}
       <footer>このページは機能仕様書Markdownから自動生成されています。編集は元のMarkdownに対して行ってください。</footer>

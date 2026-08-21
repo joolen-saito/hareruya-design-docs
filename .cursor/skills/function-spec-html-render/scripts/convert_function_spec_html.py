@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import csv
 import html
+import json
 import io
 import re
 import sys
@@ -44,6 +45,151 @@ SCREEN_ITEM_HEADER_TERMS = (
     "初期値",
     "画面部品の説明",
 )
+
+# 詳細設計の5分類（2026-08-13 ユーザー決定）: 機能設計書の節はこの5つだけとする。
+# Excel基本設計に無い仕様（処理の順序・分岐、DB副作用、メッセージ文言、エラー時の挙動）は
+# 現行ソースからしか決まらないため、そこに記述を集中させる。
+# 判定は**節レベルの見出しだけ**に掛ける（配下の小見出しは親の扱いに従う）。
+# 3分類（2026-08-19 ユーザー決定・0203 の出力を正とする）。
+# 旧5分類のうち「処理フロー」「エラー処理」はHTML設計書へ出力しない。0203 の現行仕様が
+# 業務ロジックと入出力だけで構成されており、そこへ揃える決定。SECTION_ALIASES が
+# これらへ寄せていた旧節も同じく非出力になる。Markdown正本は変更しない（表示だけの措置）。
+ALLOWED_SECTION_TITLES = (
+    "入出力",
+    "業務ロジック",
+    "表示メッセージ",
+)
+# 旧5分類の名残。写像先としては受け付けるが本文へは出さない。
+RETIRED_SECTION_TITLES = (
+    "処理フロー",
+    "エラー処理",
+)
+# 5分類のうち「表示メッセージ」だけは現行仕様ではなくリニューアル後の仕様（2026-08-19
+# ユーザー決定）。Markdown正本には現行仕様／リニューアル後の区別を書かせず、HTML描画の
+# ときだけ本文の末尾へ回し、境目に RENEWAL_SECTION_LABEL の見出しを出す。
+RENEWAL_SECTION_TITLES = ("表示メッセージ",)
+RENEWAL_SECTION_LABEL = "リニューアル後の仕様"
+# 旧節 → 5分類の写像。Markdown正本の節統合（sync_markdown_exclusions.py map）と
+# HTML側の許可判定が同じ定義を使う。ここに無い節は本文から外し、退避先へ移す。
+SECTION_ALIASES = {
+    # 処理フロー: 入口（URL・HTTPメソッド・導線）、判定順序、画面の動的挙動
+    "利用者視点の入口": "処理フロー",
+    "利用者視点の入口（エンドポイント）": "処理フロー",
+    "フロント挙動": "処理フロー",
+    "ページネーション": "処理フロー",
+    # 入出力: 入力・出力・DB副作用・外部連携・実行結果・記録
+    "副作用": "入出力",
+    "出力列とデータの対応": "入出力",
+    "API/バッチ結果": "入出力",
+    "API・バッチ結果": "入出力",
+    "API／バッチ結果": "入出力",
+    "API／バッチ": "入出力",
+    "ログ・監査": "入出力",
+    "通知": "入出力",
+    "出力ファイル": "入出力",
+    # 業務ロジック: 業務ルール・計算・整合性・機能固有の認証/権限ロジック
+    "業務ルール・計算": "業務ロジック",
+    "データ整合性": "業務ロジック",
+    "集計・判定・計算": "業務ロジック",
+    "認証・認可": "業務ロジック",
+    # 表示メッセージ
+    "フラッシュメッセージ": "表示メッセージ",
+    "出力: 表示メッセージ": "表示メッセージ",
+    # エラー処理
+    "エッジケース": "エラー処理",
+}
+# 「…時の判定順序」のような可変見出しは処理フローへ寄せる。
+SECTION_ALIAS_PATTERNS = ((re.compile(r"判定順序"), "処理フロー"),)
+# 節レベル。機能設計書はH1がタイトル、H2が節、H3以下が節内の小見出し。
+SECTION_HEADING_LEVEL = 2
+# 共通仕様（[[common-spec]]）へ集約済みで、共通内容と一致する機能では本文から外す節。
+# 機能固有の内容を持つ機能（common_spec の例外）では「業務ロジック」へ寄せて残す。
+COMMON_SPEC_SECTION_TITLES = (
+    "権限・認可",
+    "セッション",
+    "Cookie",
+    "排他制御・トランザクション",
+    "試行制限",
+    "ログに出してはいけないもの",
+)
+# 共通仕様・粒度規約で「機能設計書に書かない」と決めた定型節。**見出しレベルを問わず**
+# 本文ごと非出力にする（2026-08-19 ユーザー決定。0203 の記述方法を正とする）。
+# 旧世代のMarkdownはこれらをH3/H4の小見出しとして持ち、H2限定の判定をすり抜けていた。
+# 内容は [[common-spec]] 側にあり、ログ出力・セッション/Cookie は
+# reverse-design/GRANULARITY.md 3.7 / 3.7b で「設計書に書かない」と決まっている。
+# 除外はHTML表示だけの措置で、Markdown正本は一切変更しない。
+BOILERPLATE_SUBSECTION_TITLES = (
+    "ログ・監査",
+    "ログに出してはいけないもの",
+    "権限・認可",
+    "セッション",
+    "本機能におけるセッション",
+    "セッションへ保存しない情報",
+    "Cookie",
+    "排他制御・トランザクション",
+    "試行制限",
+)
+
+# Excel基本設計仕様書が正の節と、仕様ではない補助節。5分類へ写像せず本文から外す
+# （退避先へ移すので内容は失われない）。
+ARCHIVED_SECTION_TITLES = (
+    "概要",
+    "リニューアル移行時の扱い",
+    "集計条件",
+    "DBカラム",
+    "バリデーション",
+    "調査補助",
+    "画面遷移",
+    "文書情報",
+    "改訂履歴",
+    "機能の目的と役割",
+    "本書で扱うこと",
+    "本書で扱わないこと",
+    "用語",
+    "参考",
+    "TODO",
+    "実装要確認",
+)
+# 区分限定の扱いは5分類化で不要になった（旧「API/バッチ結果」「フロント挙動」は
+# SECTION_ALIASES で 入出力／処理フロー へ寄せる）。区分そのものは表の列除外と
+# レポートで使い続けるため、判定関数は残す。
+SCREEN_KINDS = ("admin", "front")
+# 管理画面のみ、表から落とす列（2026-08-12 ユーザー決定）。「表示メッセージ」節の
+# メッセージ一覧表にある英語文言の列で、管理画面の設計書では不要。フロント・APIの
+# 設計書では残す。列見出しの正規化一致で判定し、行側のセルも同じ位置で落とす。
+ADMIN_ONLY_EXCLUDED_TABLE_COLUMNS = ("画面上の文言(英語)",)
+# カスタマイズ区分（todo-list.md の「カスタマイズ区分」列）で出力可否が変わる節
+# （2026-08-12 ユーザー決定）。ここに載る節は、値が許可リストに入っている機能でだけ
+# 出力し、それ以外の区分では落とす。区分が引けない機能は落とさない（安全側）。
+CUSTOMIZATION_SCOPED_SECTIONS = {
+    "ログ・監査": ("現行踏襲", "カスタマイズ"),
+}
+# 共通仕様（[[common-spec]]）へ集約した節。共通内容と一致すると判定された機能だけ、
+# その節をHTMLから落とす（機能固有の内容を持つ例外機能では残す）。判定結果の台帳は
+# common_spec/common_spec_data.json で、生成は build_common_spec.py が行う。
+COMMON_SPEC_DATA = Path(__file__).resolve().parents[4] / "common_spec" / "common_spec_data.json"
+_COMMON_SPEC_MEMBERS: dict[str, set[str]] | None = None
+TODO_LIST = Path(__file__).resolve().parents[4] / "functions" / "todo-list.md"
+TODO_MD_LINK_RE = re.compile(r"\[md\]\(([^)]+)\)")
+_CUSTOMIZATION_BY_DOC: dict[str, str] | None = None
+# 機能区分の判定材料。todo-list.md の区分が最優先で、無い場合はファイル名の種別
+# （`m04-01_admin_...` / `f06-05_front_...` / `a06-14_api_...` / `b01-02_batch_...`、
+# 機能No接頭辞を持たない `admin_...` 形式も可）、それも読めない場合は機能Noの接頭辞を使う。
+# どれでも判定できなければ None＝区分不明として、区分限定の除外は適用しない（安全側）。
+DIVISION_KINDS = {
+    "管理画面": "admin",
+    "フロント": "front",
+    "API": "api",
+    "バッチ": "batch",
+    "その他": "other",
+}
+FILE_KINDS = {"admin", "front", "api", "batch", "other"}
+FEATURE_PREFIX_KINDS = {"M": "admin", "F": "front", "A": "api", "B": "batch", "O": "other"}
+FUNCTION_FILE_RE = re.compile(r"^([a-zA-Z])\d{2}-\d{2}[a-zA-Z]?_([a-z]+)_")
+FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
+HEADING_NUMBER_RE = re.compile(r"^\d+(?:[.\-]\d+)*[.、．)）]?\s*")
+HEADING_SUBTITLE_RE = re.compile(r"[（(][^）)]*[）)]\s*$")
+HEADING_SEPARATOR_RE = re.compile(r"[／・]")
 
 
 CSS = """
@@ -123,6 +269,16 @@ h2 {
 }
 h3 { margin: 26px 0 10px; font-size: 17px; color: var(--olive); }
 h4 { margin: 20px 0 8px; font-size: 15px; color: var(--muted); }
+.renewal-spec-banner {
+  margin: 40px 0 0;
+  padding-top: 18px;
+  border-top: 2px solid var(--clay);
+}
+.renewal-spec-banner h3 {
+  margin: 0;
+  color: var(--clay);
+  font-size: 20px;
+}
 p { margin: 9px 0; }
 a { color: var(--clay); }
 code {
@@ -320,7 +476,21 @@ def render_document(markdown: str, source: Path, screen_sources: list[Path] | No
     title, body_markdown = extract_title_and_body(markdown, source.stem)
 
     headings: list[tuple[int, str, str]] = []
-    body_html = markdown_to_html(body_markdown, headings)
+    renewal_only = is_renewal_only_document(source=source)
+    body_html = markdown_to_html(
+        body_markdown,
+        headings,
+        kind=function_kind(source),
+        customization=customization_kind(source),
+        common_titles=common_spec_titles(source),
+        renewal_only=renewal_only,
+    )
+    if renewal_only:
+        # 新規実装の機能は文書全体がリニューアル後の仕様。単体プレビューでも冒頭で明示する。
+        body_html = (
+            f'<div class="renewal-spec-banner"><h3>{html.escape(RENEWAL_SECTION_LABEL, quote=False)}</h3></div>\n'
+            + body_html
+        )
     toc = render_toc(headings)
     source_paths = [source] + screen_sources
     source_label = "<br>".join(html.escape(str(path), quote=False) for path in source_paths)
@@ -391,12 +561,401 @@ def render_toc(headings: Iterable[tuple[int, str, str]]) -> str:
     return '<nav class="toc">' + "\n".join(links) + "</nav>" if links else ""
 
 
-def markdown_to_html(
-    md_text: str, headings: list[tuple[int, str, str]], slug_prefix: str = ""
+def normalize_heading_title(text: str) -> str:
+    """Reduce a heading to a comparable title (numbering / decoration / subtitle removed)."""
+    title = re.sub(r"[`*_]", "", text).strip()
+    title = HEADING_NUMBER_RE.sub("", title)
+    title = HEADING_SUBTITLE_RE.sub("", title)  # 「利用者視点の入口（エンドポイント）」の副題
+    title = title.replace(" ", "").replace("　", "").strip()
+    # 「API/バッチ結果」「API・バッチ結果」「API／バッチ結果」を同一視する。
+    title = HEADING_SEPARATOR_RE.sub("/", title)
+    return title.replace("入り口", "入口")
+
+
+def function_kind(
+    source: Path | str | None = None,
+    division: str | None = None,
+    feature_no: str | None = None,
+) -> str | None:
+    """Return the function's 区分 as 'admin'/'front'/'api'/'batch'/'other', or None.
+
+    Decided from todo-list.md の区分 → ファイル名の種別 → 機能No接頭辞 の順。判定材料が
+    無い・読めない場合は None を返し、呼び出し側は区分限定の除外を適用しない。
+    """
+    if division:
+        kind = DIVISION_KINDS.get(division.strip())
+        if kind:
+            return kind
+    if source is not None:
+        stem = Path(source).name
+        match = FUNCTION_FILE_RE.match(stem)
+        if match:
+            if match.group(2) in FILE_KINDS:
+                return match.group(2)
+            feature_no = feature_no or match.group(1)
+        else:
+            # 機能No接頭辞を持たない設計書（例: `admin_customer_point.md`）は先頭の種別トークン。
+            token = stem.split("_", 1)[0].lower()
+            if token in FILE_KINDS:
+                return token
+    if feature_no:
+        return FEATURE_PREFIX_KINDS.get(feature_no.strip()[:1].upper())
+    return None
+
+
+def is_screen_function(
+    source: Path | str | None = None,
+    division: str | None = None,
+    feature_no: str | None = None,
+) -> bool:
+    """True for 管理画面／フロント（画面系）機能の設計書."""
+    return function_kind(source, division, feature_no) in SCREEN_KINDS
+
+
+def customization_by_doc() -> dict[str, str]:
+    """Map `<区分ディレクトリ>/<ファイル名>.md` -> カスタマイズ区分 from todo-list.md."""
+    global _CUSTOMIZATION_BY_DOC
+    if _CUSTOMIZATION_BY_DOC is None:
+        mapping: dict[str, str] = {}
+        if TODO_LIST.exists():
+            for line in TODO_LIST.read_text(encoding="utf-8").split("\n"):
+                if not line.startswith("|"):
+                    continue
+                cells = [c.strip() for c in line.strip().strip("|").split("|")]
+                if len(cells) < 8:
+                    continue
+                link = TODO_MD_LINK_RE.search(cells[7])
+                if not link:
+                    continue
+                mapping[link.group(1).strip()] = cells[5]
+        _CUSTOMIZATION_BY_DOC = mapping
+    return _CUSTOMIZATION_BY_DOC
+
+
+def customization_kind(
+    source: Path | str | None = None, customization: str | None = None
+) -> str | None:
+    """Return the doc's カスタマイズ区分（標準／現行踏襲／カスタマイズ／新規実装）or None.
+
+    渡された値が最優先。無ければ todo-list.md の `[md](…)` リンクで引く。台帳に無い・
+    空欄の文書は None（＝カスタマイズ区分による除外を適用しない安全側）。
+    """
+    if customization and customization.strip():
+        return customization.strip()
+    if source is None:
+        return None
+    path = Path(source)
+    key = "/".join(path.parts[-2:]) if len(path.parts) >= 2 else path.name
+    value = customization_by_doc().get(key) or customization_by_doc().get(path.name)
+    return value.strip() if value and value.strip() else None
+
+
+def common_spec_members() -> dict[str, set[str]]:
+    """Map `<区分>/<ファイル名>.md` -> 共通仕様へ集約済みの節名の集合."""
+    global _COMMON_SPEC_MEMBERS
+    if _COMMON_SPEC_MEMBERS is None:
+        members: dict[str, set[str]] = {}
+        if COMMON_SPEC_DATA.exists():
+            data = json.loads(COMMON_SPEC_DATA.read_text(encoding="utf-8"))
+            for title, section in data.items():
+                for doc in section.get("members", []):
+                    key = "/".join(Path(doc).parts[-2:])
+                    members.setdefault(key, set()).add(title)
+        _COMMON_SPEC_MEMBERS = members
+    return _COMMON_SPEC_MEMBERS
+
+
+def common_spec_titles(source: Path | str | None) -> tuple[str, ...]:
+    """共通仕様へ集約済みで、この文書からは落としてよい節名."""
+    if source is None:
+        return ()
+    path = Path(source)
+    key = "/".join(path.parts[-2:]) if len(path.parts) >= 2 else path.name
+    return tuple(sorted(common_spec_members().get(key, ())))
+
+
+def canonical_section_title(text: str, common_titles: tuple[str, ...] = ()) -> str | None:
+    """節見出しを5分類のどれへ寄せるかを返す。寄せ先が無ければ None（本文から外す）。
+
+    共通仕様へ集約済みの節は、その文書が共通内容と一致すると判定されている場合だけ
+    None（＝退避）にし、機能固有の内容を持つ例外機能では「業務ロジック」へ寄せて残す。
+    """
+    title = normalize_heading_title(text)
+    retired = {normalize_heading_title(t) for t in RETIRED_SECTION_TITLES}
+    if title in retired:
+        return None
+    allowed = {normalize_heading_title(t): t for t in ALLOWED_SECTION_TITLES}
+    if title in allowed:
+        return allowed[title]
+    aliases = {normalize_heading_title(k): v for k, v in SECTION_ALIASES.items()}
+    if title in aliases:
+        target = aliases[title]
+        return None if target in RETIRED_SECTION_TITLES else target
+    archived = {normalize_heading_title(t) for t in ARCHIVED_SECTION_TITLES}
+    if title in archived:
+        return None
+    common = {normalize_heading_title(t) for t in COMMON_SPEC_SECTION_TITLES}
+    if title in common:
+        aggregated = {normalize_heading_title(t) for t in common_titles}
+        return None if title in aggregated else "業務ロジック"
+    for pattern, target in SECTION_ALIAS_PATTERNS:
+        if pattern.search(title):
+            return None if target in RETIRED_SECTION_TITLES else target
+    return None
+
+
+def is_allowed_section_heading(text: str, common_titles: tuple[str, ...] = ()) -> bool:
+    """その節見出しをHTMLへ出すか（＝5分類のどれかに属するか）。"""
+    return canonical_section_title(text, common_titles) is not None
+
+
+def is_boilerplate_subsection(text: str) -> bool:
+    """階層を問わず非出力にする定型小見出しか（BOILERPLATE_SUBSECTION_TITLES）。"""
+    title = normalize_heading_title(text)
+    return title in {normalize_heading_title(t) for t in BOILERPLATE_SUBSECTION_TITLES}
+
+
+def excluded_section_titles(
+    kind: str | None = None,
+    customization: str | None = None,
+    common_titles: tuple[str, ...] = (),
+) -> tuple[str, ...]:
+    """後方互換: 5分類化で「許可リスト以外は全部除外」になったため、許可集合を返す側を使う。
+
+    旧APIを参照している呼び出し元のために、共通仕様へ集約済みで退避対象になる節名だけを
+    返す（列除外・レポート用途）。節の取捨は `canonical_section_title()` が唯一の判定。
+    """
+    return tuple(t for t in COMMON_SPEC_SECTION_TITLES if t in common_titles)
+
+
+def is_excluded_section_heading(
+    text: str,
+    kind: str | None = None,
+    customization: str | None = None,
+    common_titles: tuple[str, ...] = (),
+    level: int | None = None,
+) -> bool:
+    """節レベルの見出しが5分類の外なら True（＝HTMLに出ていてはいけない）。
+
+    小見出し（`###` 以下）は親の節に属するので判定しない。`level` を渡さない
+    呼び出しでは節レベルとみなす（従来の呼び出し互換）。
+    """
+    if level is not None and level != SECTION_HEADING_LEVEL:
+        return False
+    return not is_allowed_section_heading(text, common_titles)
+
+
+def excluded_table_columns(kind: str | None = None) -> tuple[str, ...]:
+    """Table column headers excluded for a function of this 区分."""
+    return ADMIN_ONLY_EXCLUDED_TABLE_COLUMNS if kind == "admin" else ()
+
+
+def normalize_column_title(text: str) -> str:
+    """Normalize a table header for comparison.
+
+    見出し用の `normalize_heading_title()` と違い、末尾の括弧は落とさない。列名は
+    「画面上の文言(英語)」と「画面上の文言」が別物なので、括弧を落とすと日本語列まで
+    巻き添えになる。全角括弧は半角に寄せて表記ゆれだけ吸収する。
+    """
+    title = re.sub(r"[`*_]", "", text).strip()
+    title = title.replace(" ", "").replace("　", "")
+    return title.replace("（", "(").replace("）", ")")
+
+
+def is_excluded_table_column(header: str, kind: str | None = None) -> bool:
+    return normalize_column_title(header) in excluded_table_columns(kind)
+
+
+def drop_excluded_columns(
+    header: list[str], rows: list[list[str]], kind: str | None = None
+) -> tuple[list[str], list[list[str]]]:
+    """Remove excluded columns from a parsed Markdown table (header + rows).
+
+    列の対応はヘッダの位置で決まる。行のセル数がヘッダと違う（区切りが崩れている）
+    表は列位置を信用できないので、何も落とさずそのまま返す。
+    """
+    if not excluded_table_columns(kind):
+        return header, rows
+    drop = {i for i, cell in enumerate(header) if is_excluded_table_column(cell, kind)}
+    if not drop or len(drop) == len(header):
+        return header, rows
+    if any(len(row) != len(header) for row in rows):
+        return header, rows
+    keep = [i for i in range(len(header)) if i not in drop]
+    return [header[i] for i in keep], [[row[i] for i in keep] for row in rows]
+
+
+def strip_excluded_sections(
+    md_text: str,
+    kind: str | None = None,
+    customization: str | None = None,
+    common_titles: tuple[str, ...] = (),
 ) -> str:
+    """5分類の外にある節を、見出しごと落とす。
+
+    5分類の判定は節レベル（H2）の見出しだけに掛ける。小見出しは親の節に従うので、
+    「処理フロー」配下の `### 通常一覧を表示する（…）` などは落ちない。
+    例外は BOILERPLATE_SUBSECTION_TITLES で、これは**見出しレベルを問わず**本文ごと落とす。
+    許可・写像・退避の唯一の判定は `canonical_section_title()`。
+
+    Fenced code blocks are tracked so a `#` comment inside a fence is never
+    mistaken for a heading, and a fence opened inside an excluded section does
+    not leak the fence state into the kept text.
+    """
+    lines = md_text.split("\n")
+    kept: list[str] = []
+    fence: str | None = None
+    skip_level = 0
+    for line in lines:
+        fence_match = FENCE_RE.match(line)
+        if fence_match:
+            marker = fence_match.group(1)[0]
+            if fence is None:
+                fence = marker
+            elif fence == marker:
+                fence = None
+        elif fence is None:
+            heading = HEADING_RE.match(line)
+            if heading:
+                level = len(heading.group(1))
+                if skip_level and level <= skip_level:
+                    skip_level = 0
+                if (
+                    not skip_level
+                    and level == SECTION_HEADING_LEVEL
+                    and not is_allowed_section_heading(heading.group(2), common_titles)
+                ):
+                    skip_level = level
+                    continue
+                # 定型小見出しは階層を問わず本文ごと落とす（H2限定の判定では
+                # 旧世代Markdownの ### ログ・監査 / ### 権限・認可 等が素通りする）。
+                if not skip_level and is_boilerplate_subsection(heading.group(2)):
+                    skip_level = level
+                    continue
+        if skip_level:
+            continue
+        kept.append(line)
+    return "\n".join(kept)
+
+
+def markdown_to_html(
+    md_text: str,
+    headings: list[tuple[int, str, str]],
+    slug_prefix: str = "",
+    kind: str | None = None,
+    customization: str | None = None,
+    common_titles: tuple[str, ...] = (),
+    renewal_only: bool = False,
+) -> str:
+    # 出力除外規約: 除外節はHTML化の入口で落とす。ここが単一の関門なので、
+    # 単体プレビュー・Excel HTMLへの埋め込み・orphanグループの全経路に効く。
+    # kind（機能区分）で画面系限定・管理画面限定の除外も合わせて適用する。
+    cleaned = strip_excluded_sections(md_text, kind, customization, common_titles)
+    # リニューアル後の仕様として出すのは「表示メッセージ」だけ（2026-08-19 ユーザー決定。
+    # 0203 の出力を正とする）。新規実装＝文書全体がリニューアル後の仕様の機能でも、
+    # 表示メッセージ以外の節はHTML設計書へ出さない。表示メッセージが無ければ何も出さない。
+    if renewal_only:
+        _, renewal_only_md = split_renewal_sections(cleaned, common_titles)
+        if not renewal_only_md.strip():
+            return ""
+        return "\n".join(
+            render_markdown_blocks(renewal_only_md, headings, set(), slug_prefix, kind)
+        )
+    # 表示メッセージだけはリニューアル後の仕様なので、末尾へ回して見出しで括る。
+    current_md, renewal_md = split_renewal_sections(cleaned, common_titles)
+    used_slugs: set[str] = set()
+    out = render_markdown_blocks(current_md, headings, used_slugs, slug_prefix, kind)
+    if renewal_md.strip():
+        out.append(render_renewal_heading(headings, used_slugs, slug_prefix))
+        out.extend(render_markdown_blocks(renewal_md, headings, used_slugs, slug_prefix, kind))
+    return "\n".join(out)
+
+
+def split_renewal_sections(
+    md_text: str, common_titles: tuple[str, ...] = ()
+) -> tuple[str, str]:
+    """節を「現行仕様」と「リニューアル後の仕様」に分ける。
+
+    判定は節レベル（H2）の見出しだけに掛け、寄せ先（`canonical_section_title()`）が
+    `RENEWAL_SECTION_TITLES` に入る節だけを後者へ回す。節の中身と並びは変えない。
+    """
+    current: list[str] = []
+    renewal: list[str] = []
+    target = current
+    fence: str | None = None
+    for line in md_text.split("\n"):
+        fence_match = FENCE_RE.match(line)
+        if fence_match:
+            marker = fence_match.group(1)[0]
+            if fence is None:
+                fence = marker
+            elif fence == marker:
+                fence = None
+        elif fence is None:
+            heading = HEADING_RE.match(line)
+            if heading:
+                level = len(heading.group(1))
+                if level < SECTION_HEADING_LEVEL:
+                    target = current
+                elif level == SECTION_HEADING_LEVEL:
+                    canonical = canonical_section_title(heading.group(2), common_titles)
+                    target = renewal if canonical in RENEWAL_SECTION_TITLES else current
+        target.append(line)
+    return "\n".join(current), "\n".join(renewal)
+
+
+# 新規実装の機能は現行ソースに実装が無い。設計書の正本は Excel基本設計であり、
+# 内容は現行仕様ではなくリニューアル後の仕様である（2026-08-19 ユーザー指摘）。
+RENEWAL_ONLY_CUSTOMIZATIONS = ("新規実装",)
+
+
+def is_renewal_only_document(
+    source: Path | str | None = None, customization: str | None = None
+) -> bool:
+    """文書全体がリニューアル後の仕様か（＝新規実装の機能か）。"""
+    value = customization_kind(source=source, customization=customization)
+    return bool(value) and value in RENEWAL_ONLY_CUSTOMIZATIONS
+
+
+def has_current_spec_sections(
+    md_text: str,
+    kind: str | None = None,
+    customization: str | None = None,
+    common_titles: tuple[str, ...] = (),
+) -> bool:
+    """除外後に「現行仕様」側の節が残るか。表示メッセージしか無い文書は False。"""
+    cleaned = strip_excluded_sections(md_text, kind, customization, common_titles)
+    current, _ = split_renewal_sections(cleaned, common_titles)
+    return bool(current.strip())
+
+
+def render_renewal_heading(
+    headings: list[tuple[int, str, str]],
+    used_slugs: set[str],
+    slug_prefix: str = "",
+) -> str:
+    """現行仕様とリニューアル後の仕様の境目。Markdown正本ではなくここで作る見出し。"""
+    slug = slugify(RENEWAL_SECTION_LABEL, used_slugs)
+    if slug_prefix:
+        slug = f"{slug_prefix}{slug}"
+    headings.append((SECTION_HEADING_LEVEL, RENEWAL_SECTION_LABEL, slug))
+    label = html.escape(RENEWAL_SECTION_LABEL, quote=False)
+    return (
+        '<div class="renewal-spec-banner">'
+        f'<h3 id="{html.escape(slug, quote=True)}">{label}</h3>'
+        "</div>"
+    )
+
+
+def render_markdown_blocks(
+    md_text: str,
+    headings: list[tuple[int, str, str]],
+    used_slugs: set[str],
+    slug_prefix: str = "",
+    kind: str | None = None,
+) -> list[str]:
     lines = md_text.split("\n")
     out: list[str] = []
-    used_slugs: set[str] = set()
     i = 0
     while i < len(lines):
         line = lines[i]
@@ -434,7 +993,7 @@ def markdown_to_html(
             continue
 
         if "|" in line and i + 1 < len(lines) and TABLE_SEP_RE.match(lines[i + 1]):
-            block, i = parse_markdown_table(lines, i)
+            block, i = parse_markdown_table(lines, i, kind)
             out.append(block)
             continue
 
@@ -464,7 +1023,7 @@ def markdown_to_html(
         text = " ".join(part.strip() for part in paragraph)
         out.append(f"<p>{render_inline(text)}</p>")
 
-    return "\n".join(out)
+    return out
 
 
 def is_special_start(lines: list[str], i: int) -> bool:
@@ -501,13 +1060,17 @@ def parse_code_block(lines: list[str], i: int) -> tuple[str, int]:
     return f"<pre><code{lang_attr}>{code}</code></pre>", i
 
 
-def parse_markdown_table(lines: list[str], i: int) -> tuple[str, int]:
+def parse_markdown_table(
+    lines: list[str], i: int, kind: str | None = None
+) -> tuple[str, int]:
     header = split_md_row(lines[i])
     i += 2
     rows = []
     while i < len(lines) and "|" in lines[i] and lines[i].strip():
         rows.append(split_md_row(lines[i]))
         i += 1
+    # 出力除外規約（区分限定の列）: 管理画面の「画面上の文言(英語)」など。
+    header, rows = drop_excluded_columns(header, rows, kind)
     return render_table(header, rows), i
 
 

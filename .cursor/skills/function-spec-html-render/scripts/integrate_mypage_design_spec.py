@@ -164,6 +164,9 @@ def main() -> int:
         body_markdown,
         headings,
         slug_prefix="mypage-design-",
+        kind=converter.function_kind(source=SOURCE),
+        customization=converter.customization_kind(source=SOURCE),
+        common_titles=converter.common_spec_titles(SOURCE),
     )
     block = render_embed_block(converter, title, body_html)
 

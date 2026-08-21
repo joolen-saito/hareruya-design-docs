@@ -24,6 +24,12 @@ PREVIEW_ROOT = ROOT / "function_spec_html_preview"
 CONVERTER_PATH = Path(__file__).with_name("convert_function_spec_html.py")
 REPORT = ROOT / "functions" / "function-doc-excel-integration-report.md"
 
+# Excel基本設計に専用の画面シートが無い機能をどう扱うか（2026-08-14 ユーザー決定）。
+# False = HTMLへ出さない。理由: 専用シートが無いのは、その機能がリニューアルで廃止された
+# ことを意味する。別画面の親シート末尾へ寄せると、その画面の仕様と読み違える。
+# True へ戻すと従来どおり親機能シートの末尾へ追記する（`assign_parent_sheets`）。
+EMBED_PARENT_SHEET_FALLBACK = False
+
 CSS_BEGIN = "/* function-design-embed:start */"
 CSS_END = "/* function-design-embed:end */"
 BLOCK_BEGIN_PREFIX = "<!-- function-design-embed:start"
@@ -99,6 +105,20 @@ EMBED_CSS = f"""
       margin: 18px 0 8px;
       color: var(--muted);
       font-size: 14px;
+    }}
+
+    .function-design-body .renewal-spec-banner {{
+      margin: 34px 0 0;
+      padding-top: 20px;
+      border-top: 2px solid var(--clay);
+    }}
+
+    .function-design-body .renewal-spec-banner h3 {{
+      margin: 0;
+      padding: 0;
+      border: 0;
+      color: var(--clay);
+      font-size: 20px;
     }}
 
     .function-design-body p {{
@@ -187,6 +207,49 @@ class TodoRow:
     source: Path
 
 
+# Excel の機能No欄・機能名欄の誤記を、正本を変えずに台帳側で上書きする（2026-08-19 ユーザー決定）。
+# 0203 の出荷指示グループは機能No欄・機能名欄が 1 シートずつずれており、そのままでは
+# 「出荷指示リスト検索」シートが M08-02（会員管理 — メール一括送信）へ割り当たる。
+# キーは (ブック番号, シートID)、値は (正しい機能No, 正しい機能名)。
+# 上書きの根拠は reverse_design_audit/granularity_0203/carryover.md。
+SHEET_FEATURE_OVERRIDES = {
+    ("0203", "sheet-18"): ("M05-19", "出荷指示リスト検索"),
+    ("0203", "sheet-19"): ("M05-20", "出荷指示リスト詳細編集/削除"),
+    ("0203", "sheet-22"): ("M05-23", "出荷指示：納品書印刷（英語）"),
+}
+
+
+# 【新規】画面のシートには機能設計書（現行仕様）を埋め込まない（2026-08-19 ユーザー決定）。
+# 【新規】は現行ソースに実装が無い画面で、そこへ現行仕様のブロックを貼ると別画面の仕様を
+# その画面の仕様と読み違える。既存機能と機能No欄を共有している次の2枚が対象。
+# 他の【新規】シート（M06-10〜13・M07-08/10/11・A06-14/16・B06-01・F06-27・M08-11 など）は
+# そのシートしか持たない機能で、除外すると設計書が1枚も出なくなるため裁定待ち。
+SHEET_EMBED_EXCLUSIONS = {
+    ("0203", "sheet-10"),  # 【新規】手動メール通知(確認画面)。現行の一括手動メールに確認画面は無い
+    ("0203", "sheet-16"),  # 【新規】受注情報履歴。現行ソースに受注更新履歴の実装が無い
+    ("0206", "sheet-13"),  # 【新規】手動メール通知(確認画面)。現行のネット買取手動メールに確認画面は無い
+    ("0207", "sheet-16"),  # 【新規】手動メール通知(確認画面)。現行の会員手動メールに確認画面は無い
+}
+
+
+def is_embed_excluded_sheet(html_path, section_id: str) -> bool:
+    """そのシートへ機能設計書を埋め込まないか（【新規】画面）。"""
+    return (html_path.name.split("_")[0], section_id) in SHEET_EMBED_EXCLUSIONS
+
+
+def apply_sheet_override(html_path, section_id: str, feature_no: str, feature_name: str):
+    """Excel の機能No欄・機能名欄の誤記を上書きした値を返す。対象外はそのまま返す。"""
+    book = html_path.name.split("_")[0]
+    override = SHEET_FEATURE_OVERRIDES.get((book, section_id))
+    return override if override else (feature_no, feature_name)
+
+
+def _sheet_order(sheet: "SheetRef") -> int:
+    """Excel上のシート順（`sheet-<N>` の N）。同一Markdownの重複割当で先頭を選ぶために使う。"""
+    match = re.search(r"(\d+)$", sheet.section_id or "")
+    return int(match.group(1)) if match else 0
+
+
 @dataclass(frozen=True)
 class SheetRef:
     html_path: Path
@@ -204,19 +267,52 @@ def main() -> int:
     sheet_index, sheets = build_sheet_index()
 
     assignments, missing = assign_sheets(rows, sheets)
-    parent_assignments, unplaceable = assign_parent_sheets(missing, sheets)
+    if EMBED_PARENT_SHEET_FALLBACK:
+        parent_assignments, unplaceable = assign_parent_sheets(missing, sheets)
+    else:
+        # Excel基本設計に専用シートが無い機能は、リニューアルで廃止された機能である
+        # （2026-08-14 ユーザー決定）。別画面のシートへ寄せると、その画面の仕様と
+        # 読み違えるため、HTMLへは出さずレポートにだけ残す。
+        parent_assignments = []
+        unplaceable = list(missing)
+
+    # 同じMarkdownが同一書番の複数シートへ割り当たる場合（例: 権限管理と権限制御、
+    # 検索入力と検索結果、CSV登録とCSVフォーマット）は、ほぼ同じ現行仕様が二重に出る。
+    # Excel上の並びで最初のシートにだけ出す（2026-08-19 ユーザー決定）。
+    primary: set[tuple[Path, Path]] = set()
+    duplicates: list[tuple[TodoRow, SheetRef]] = []
+    deduped: list[tuple[TodoRow, SheetRef]] = []
+    for row, sheet in sorted(
+        assignments, key=lambda item: (item[1].html_path.name, _sheet_order(item[1]))
+    ):
+        dedup_key = (sheet.html_path, row.source)
+        if dedup_key in primary:
+            duplicates.append((row, sheet))
+            continue
+        primary.add(dedup_key)
+        deduped.append((row, sheet))
+    assignments = deduped
 
     matched: list[tuple[TodoRow, SheetRef, str]] = []
+    skipped_empty: list[TodoRow] = []
     for row, sheet in assignments:
         key = block_key(row)
-        matched.append((row, sheet, render_block(converter, row, key)))
+        block = render_block(converter, row, key)
+        if not block:  # 出す本文が無い機能はブロックを作らない
+            skipped_empty.append(row)
+            continue
+        matched.append((row, sheet, block))
     for row, sheet in parent_assignments:
         key = block_key(row)
         note = (
             f"※ この機能には専用の画面シートが無いため、親機能シート「{sheet.heading}」の末尾に"
-            f"統合した詳細設計書です。"
+            f"統合した現行仕様です。"
         )
-        matched.append((row, sheet, render_block(converter, row, key, note=note)))
+        block = render_block(converter, row, key, note=note)
+        if not block:
+            skipped_empty.append(row)
+            continue
+        matched.append((row, sheet, block))
 
     grouped: dict[Path, list[tuple[TodoRow, SheetRef, str]]] = defaultdict(list)
     for item in matched:
@@ -225,9 +321,13 @@ def main() -> int:
     for html_path, items in sorted(grouped.items()):
         integrate_html(html_path, items)
 
+    if duplicates:
+        print(f"重複シートのため非出力: {len(duplicates)}")
+    if skipped_empty:
+        print(f"本文が空のため非出力: {len(skipped_empty)}")
     write_report(matched, unplaceable, parent_assignments)
     print(f"embedded: {len(matched)} (direct {len(assignments)}, parent-appended {len(parent_assignments)})")
-    print(f"unplaceable (no prefix sheet in any HTML): {len(unplaceable)}")
+    print(f"非出力（対応シート無し＝リニューアルで廃止）: {len(unplaceable)}")
     print(f"updated html files: {len(grouped)}")
     print(f"report: {REPORT}")
     return 0 if matched else 1
@@ -286,7 +386,12 @@ def build_sheet_index() -> tuple[dict[str, list[SheetRef]], list[SheetRef]]:
             feature_no = extract_named_kv("機能No", section)
             if not feature_no:
                 continue
+            if is_embed_excluded_sheet(html_path, match.group("id")):
+                continue
             feature_name = extract_named_kv("機能名", section)
+            feature_no, feature_name = apply_sheet_override(
+                html_path, match.group("id"), feature_no, feature_name
+            )
             sheet = SheetRef(
                 html_path=html_path,
                 section_id=match.group("id"),
@@ -516,11 +621,76 @@ def assign_parent_sheets(
     return parent_matched, unplaceable
 
 
+# Excel設計書の内容がCSV/TSVの項目定義しか無いシートは、現行仕様（機能設計書の埋め込み）を
+# 出力しない（2026-08-19 ユーザー決定）。台帳は functions/csv-format-only.tsv。
+CSV_FORMAT_ONLY_LEDGER = ROOT / "functions" / "csv-format-only.tsv"
+
+
+def csv_format_only_sources() -> set[str]:
+    """埋め込みを出さないMarkdown正本のパス集合（リポジトリ相対）。"""
+    if not CSV_FORMAT_ONLY_LEDGER.exists():
+        return set()
+    out: set[str] = set()
+    for line in CSV_FORMAT_ONLY_LEDGER.read_text(encoding="utf-8").splitlines():
+        if not line.strip() or line.startswith("#"):
+            continue
+        head = line.split("\t")[0].strip()
+        if head.startswith("functions/"):
+            out.add(head)
+    return out
+
+
 def render_block(converter, row: TodoRow, key: str, note: str | None = None) -> str:
+    if row.source.relative_to(ROOT).as_posix() in csv_format_only_sources():
+        return ""  # CSV項目定義しか無いシートには現行仕様を出さない
+
     markdown = converter.build_combined_markdown(row.source, [])
     title, body_markdown = converter.extract_title_and_body(markdown, row.source.stem)
     headings: list[tuple[int, str, str]] = []
-    body_html = converter.markdown_to_html(body_markdown, headings, slug_prefix=f"function-design-{key}-")
+    # 機能区分（管理画面／フロント／API／バッチ）は todo-list.md の区分を正とし、
+    # ファイル名・機能Noで補う。区分限定の出力除外（API/バッチ結果・フロント挙動）に効く。
+    kind = converter.function_kind(
+        source=row.source, division=row.division, feature_no=row.feature_no
+    )
+    # 新規実装の機能は現行ソースに実装が無く、設計書の内容はリニューアル後の仕様である。
+    # 「現行仕様」の見出しを付けると、これから作る仕様を現行の挙動と読み違える。
+    renewal_only = converter.is_renewal_only_document(source=row.source)
+    body_html = converter.markdown_to_html(
+        body_markdown,
+        headings,
+        slug_prefix=f"function-design-{key}-",
+        kind=kind,
+        customization=converter.customization_kind(source=row.source),
+        common_titles=converter.common_spec_titles(row.source),
+        renewal_only=renewal_only,
+    )
+    if renewal_only:
+        current_label = f"\n          <h3>{converter.RENEWAL_SECTION_LABEL}</h3>"
+    elif converter.has_current_spec_sections(
+        body_markdown,
+        kind,
+        converter.customization_kind(source=row.source),
+        converter.common_spec_titles(row.source),
+    ):
+        # 表示メッセージしか無い機能は本文が丸ごとリニューアル後の仕様なので、「現行仕様」の
+        # 見出しは出さない（本文側が境目の見出しを出す）。
+        current_label = "\n          <h3>現行仕様</h3>"
+    else:
+        current_label = ""
+
+    # 本文が空になった機能はブロックごと出さない（2026-08-19 ユーザー決定。リニューアル後の
+    # 仕様として出すのは表示メッセージだけなので、それが無い機能は見出しだけの空ブロックに
+    # なる）。廃止・フェーズ2の明示が要る機能は notices を持つのでその場合は残す。
+    has_notice = bool(
+        phase2_specs.render_notice(
+            row.source.relative_to(ROOT).as_posix(), superseded_specs.HREF_FROM_EXCEL_OUTPUT
+        )
+        or superseded_specs.render_notice(
+            row.source.relative_to(ROOT).as_posix(), superseded_specs.HREF_FROM_EXCEL_OUTPUT
+        )
+    )
+    if not body_html.strip() and not has_notice:
+        return ""
 
     preview = PREVIEW_ROOT / row.source.parent.name / row.source.with_suffix(".html").name
     preview.parent.mkdir(parents=True, exist_ok=True)
@@ -546,8 +716,7 @@ def render_block(converter, row: TodoRow, key: str, note: str | None = None) -> 
     return f"""      {BLOCK_BEGIN_PREFIX} {key} -->
       <section class="function-design-embed" id="function-design-{html.escape(key, quote=True)}" data-source="{html.escape(source_rel, quote=True)}">
         <header class="function-design-header">
-          <p class="function-design-source">Source:<br>{source_label}</p>
-          <h3>詳細設計書</h3>
+          <p class="function-design-source">Source:<br>{source_label}</p>{current_label}
           <h4>{html.escape(row.feature_no, quote=False)} {html.escape(row.feature_name, quote=False)} / {title_html}</h4>{note_html}
         </header>{superseded_html}
         <div class="function-design-body">
@@ -610,7 +779,12 @@ def build_sheet_index_for_document(html_path: Path, document: str) -> dict[str, 
         feature_no = extract_named_kv("機能No", section)
         if not feature_no:
             continue
+        if is_embed_excluded_sheet(html_path, match.group("id")):
+            continue
         feature_name = extract_named_kv("機能名", section)
+        feature_no, feature_name = apply_sheet_override(
+            html_path, match.group("id"), feature_no, feature_name
+        )
         index[normalize_feature_no(feature_no)].append(
             SheetRef(
                 html_path=html_path,
@@ -698,12 +872,22 @@ def write_report(
         lines.append("- None")
     lines.append("")
 
-    lines.extend(["## Unplaceable (対応する接頭辞のシートがどのHTMLにも無い)", ""])
+    lines.extend(
+        [
+            "## 非出力: Excel基本設計に対応シートが無い機能（リニューアルで廃止）",
+            "",
+            "Excel基本設計仕様書に専用の画面シートが無い機能は、リニューアルで廃止された機能",
+            "として扱い、HTML設計書へ出力しない（2026-08-14 ユーザー決定）。別画面のシートへ",
+            "寄せると、その画面の仕様と読み違えるため。廃止の裁定は [[superseded-spec]] の台帳",
+            "（`functions/superseded_specs.json`）で確定させる。",
+            "",
+        ]
+    )
     if missing:
-        for row in missing:
+        for row in sorted(missing, key=lambda item: item.feature_no):
             lines.append(
-                f"- line {row.line_no}: {row.feature_no} {row.division} / {row.category} / "
-                f"{row.feature_name} from `{row.source.relative_to(ROOT)}`"
+                f"- {row.feature_no} {row.division} / {row.category} / "
+                f"{row.feature_name} from `{row.source.relative_to(ROOT)}`（todo-list.md line {row.line_no}）"
             )
     else:
         lines.append("- None")
