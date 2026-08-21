@@ -306,15 +306,35 @@ def main() -> int:
 
     output_dir.mkdir(parents=True, exist_ok=True)
     shape_residual_rows: list[dict[str, Any]] = []
+    pin_ledger_rows: list[dict[str, Any]] = []
+    connector_ledger_rows: list[dict[str, Any]] = []
     for workbook_path in workbooks:
         output_path = output_dir / f"{workbook_path.stem}.html"
-        shape_residual_rows.extend(convert_workbook(workbook_path, output_path))
+        shape_rows, pin_rows, connector_rows = convert_workbook(workbook_path, output_path)
+        shape_residual_rows.extend(shape_rows)
+        pin_ledger_rows.extend(pin_rows)
+        connector_ledger_rows.extend(connector_rows)
         print(f"Converted: {workbook_path.name} -> {output_path}")
     shape_residual_path = output_dir / "shape_textbox_sheets.csv"
     write_shape_textbox_residuals(shape_residual_path, shape_residual_rows)
+    label = "excluded" if not RENDER_SHAPE_TEXT_SECTION else "remaining"
     print(
-        "Created shape textbox residual list: "
-        f"{shape_residual_path} ({len(shape_residual_rows)} remaining)"
+        "Created shape textbox ledger: "
+        f"{shape_residual_path} ({len(shape_residual_rows)} {label})"
+    )
+    pin_ledger_path = output_dir / "pin_ledger_sheets.csv"
+    write_pin_ledger_rows(pin_ledger_path, pin_ledger_rows)
+    pin_label = "excluded" if not RENDER_PIN_LEDGER_SECTION else "rendered"
+    print(
+        "Created pin ledger: "
+        f"{pin_ledger_path} ({len(pin_ledger_rows)} {pin_label})"
+    )
+    connector_ledger_path = output_dir / "connector_ledger_sheets.csv"
+    write_connector_ledger_rows(connector_ledger_path, connector_ledger_rows)
+    connector_label = "excluded" if not RENDER_CONNECTOR_LEDGER_SECTION else "rendered"
+    print(
+        "Created connector ledger: "
+        f"{connector_ledger_path} ({len(connector_ledger_rows)} {connector_label})"
     )
     index_path = output_dir / "index.html"
     index_path.write_text(render_index_document(workbooks), encoding="utf-8")
@@ -329,7 +349,10 @@ def workbook_number(stem: str) -> str:
     return match.group(1) if match else stem[:4]
 
 
-def convert_workbook(workbook_path: Path, output_path: Path) -> list[dict[str, Any]]:
+def convert_workbook(
+    workbook_path: Path, output_path: Path
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    """Convert one workbook and return (shape ledger, pin ledger, connector ledger) rows."""
     # data_only=False keeps formula bodies as the source spec; a second
     # data_only=True load supplies cached display values for formula cells.
     workbook = load_workbook(workbook_path, data_only=False, rich_text=True)
@@ -353,6 +376,8 @@ def convert_workbook(workbook_path: Path, output_path: Path) -> list[dict[str, A
     cell_models = collect_cell_style_models(workbook_path, sheet_titles=visible_titles)
 
     rendered_shape_keys: dict[str, set[tuple[int, str]]] = {}
+    pin_ledger_rows: list[dict[str, Any]] = []
+    connector_ledger_rows: list[dict[str, Any]] = []
     for index, worksheet in enumerate(visible_sheets):
         sheet_id = f"sheet-{index + 1}"
         shapes = shapes_by_title.get(worksheet.title, [])
@@ -378,6 +403,44 @@ def convert_workbook(workbook_path: Path, output_path: Path) -> list[dict[str, A
         sheets_html.append(sheet_result["html"])
         warnings.extend(sheet_result["warnings"])
         rendered_shape_keys[worksheet.title] = sheet_result.get("rendered_shapes", set())
+        for entry in sheet_result.get("connector_ledger_rows", []):
+            connector_ledger_rows.append(
+                {
+                    "file_name": workbook_path.name,
+                    "sheet_name": worksheet.title,
+                    "sheet_id": sheet_id,
+                    "connector_id": entry["connector_id"],
+                    "cellref": entry["cellref"],
+                    "reason": entry["reason"],
+                    "state": entry["state"],
+                    "exclusion": (
+                        CONNECTOR_LEDGER_EXCLUSION_REASON
+                        if not RENDER_CONNECTOR_LEDGER_SECTION
+                        else "HTMLへ出力"
+                    ),
+                }
+            )
+        for entry in sheet_result.get("pin_ledger_rows", []):
+            pin_ledger_rows.append(
+                {
+                    "file_name": workbook_path.name,
+                    "sheet_name": worksheet.title,
+                    "sheet_id": sheet_id,
+                    "pin": entry["pin"],
+                    "pin_no": entry["pin_no"],
+                    "cellref": entry["anchor_ref"],
+                    "image_assignment": entry["image_assignment"],
+                    "status": entry["status"],
+                    "item_candidates": entry["item_candidates"],
+                    "item_candidate_count": entry["item_candidate_count"],
+                    "duplicates": entry["duplicates"],
+                    "reason": (
+                        PIN_LEDGER_EXCLUSION_REASON
+                        if not RENDER_PIN_LEDGER_SECTION
+                        else "HTMLへ出力"
+                    ),
+                }
+            )
 
     document = render_document(
         title=workbook_path.stem,
@@ -386,8 +449,12 @@ def convert_workbook(workbook_path: Path, output_path: Path) -> list[dict[str, A
         warnings=warnings,
     )
     output_path.write_text(document, encoding="utf-8")
-    return shape_textbox_residual_rows(
-        workbook_path.name, visible_sheets, shapes_by_title, rendered_shape_keys
+    return (
+        shape_textbox_residual_rows(
+            workbook_path.name, visible_sheets, shapes_by_title, rendered_shape_keys
+        ),
+        pin_ledger_rows,
+        connector_ledger_rows,
     )
 
 
@@ -397,13 +464,15 @@ def shape_textbox_residual_rows(
     shapes_by_title: dict[str, list[dict[str, Any]]],
     rendered_shape_keys: dict[str, set[tuple[int, str]]] | None = None,
 ) -> list[dict[str, Any]]:
-    """Return DrawingML shape/textbox entries not converted to HTML.
+    """Return DrawingML shape/textbox entries not emitted into a shape section.
 
-    Actually diffs the collected DrawingML shapes against the shapes the
-    renderer emitted into each sheet's shape-block (tracked by 1-based order +
-    cell ref). A successful conversion renders every shape, so the CSV is left
-    with only the header row; any un-rendered shape is enumerated here so the
-    residual worklist reflects the real state instead of a hardcoded empty list.
+    Diffs the collected DrawingML shapes against the shapes the renderer emitted
+    into each sheet's shape-block (tracked by 1-based order + cell ref). Under
+    the output-exclusion policy (RENDER_SHAPE_TEXT_SECTION=False) no shape is
+    emitted, so this is the full ledger of shapes deliberately kept out of the
+    HTML — every extracted shape stays visible here instead of vanishing
+    silently. With the section switched back on it returns to being a residual
+    worklist (header row only when conversion is complete).
     """
     rendered_shape_keys = rendered_shape_keys or {}
     rows: list[dict[str, Any]] = []
@@ -415,14 +484,22 @@ def shape_textbox_residual_rows(
             cellref = str(shape.get("cellref", ""))
             if (index, cellref) in rendered:
                 continue
+            reason = (
+                SHAPE_TEXT_EXCLUSION_REASON
+                if not RENDER_SHAPE_TEXT_SECTION
+                else "shape-blockへ未出力"
+            )
+            if shape.get("struck"):
+                reason += "／取り消し線の文章を除去"
             rows.append(
                 {
                     "file_name": file_name,
                     "sheet_name": title,
                     "shape_index": index,
+                    # 原本のまま（取り消し線を含む）記録する。出力用テキストではない。
+                    "text": str(shape.get("text_source") or shape.get("text", "")),
                     "cellref": cellref,
-                    "text": str(shape.get("text", "")),
-                    "reason": "shape-blockへ未出力",
+                    "reason": reason,
                 }
             )
     return rows
@@ -441,6 +518,50 @@ def write_shape_textbox_residuals(path: Path, rows: list[dict[str, Any]]) -> Non
                 "reason",
             ],
         )
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+PIN_LEDGER_FIELDS = [
+    "file_name",
+    "sheet_name",
+    "sheet_id",
+    "pin",
+    "pin_no",
+    "cellref",
+    "image_assignment",
+    "status",
+    "item_candidates",
+    "item_candidate_count",
+    "duplicates",
+    "reason",
+]
+
+
+CONNECTOR_LEDGER_FIELDS = [
+    "file_name",
+    "sheet_name",
+    "sheet_id",
+    "connector_id",
+    "cellref",
+    "reason",
+    "state",
+    "exclusion",
+]
+
+
+def write_connector_ledger_rows(path: Path, rows: list[dict[str, Any]]) -> None:
+    """Write the connector ledger the HTML no longer carries (output-exclusion policy)."""
+    with path.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=CONNECTOR_LEDGER_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def write_pin_ledger_rows(path: Path, rows: list[dict[str, Any]]) -> None:
+    """Write the pin ledger the HTML no longer carries (output-exclusion policy)."""
+    with path.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=PIN_LEDGER_FIELDS)
         writer.writeheader()
         writer.writerows(rows)
 
@@ -1057,15 +1178,21 @@ def _parse_drawing_shapes(data: bytes) -> list[dict[str, Any]]:
         for anchor in root.iter(f"{{{NS_XDR}}}{tag}"):
             row, col = _anchor_from_position(anchor)
             for shape in anchor.iter(f"{{{NS_XDR}}}sp"):
-                text = _shape_text(shape)
-                if not text:
+                source_text = _shape_text(shape, include_struck=True)
+                if not source_text:
                     continue
+                # text=出力に使う文字列（取り消し線除去後）/ text_source=原本のまま。
+                # 取り消し線で空になった図形も台帳へは残し、抽出漏れと区別できるようにする。
+                text = _shape_text(shape)
                 shapes.append(
                     {
                         "row": row,
                         "col": col,
                         "cellref": f"{get_column_letter(col)}{row}",
                         "text": text,
+                        "text_source": source_text,
+                        "struck_text": _shape_struck_text(shape),
+                        "struck": text != source_text,
                     }
                 )
     shapes.sort(key=lambda item: (item["row"], item["col"]))
@@ -1084,13 +1211,50 @@ def _anchor_from_position(anchor: Any) -> tuple[int, int]:
     return row, col
 
 
-def _shape_text(shape: Any) -> str:
-    """Concatenate a shape's paragraphs, one line per <a:p>."""
+def _shape_text(shape: Any, include_struck: bool | None = None) -> str:
+    """Concatenate a shape's paragraphs, one line per <a:p>.
+
+    Runs struck through in DrawingML (`a:rPr/@strike` = sngStrike/dblStrike) are
+    dropped under the strike-exclusion policy, mirroring the cell-level rule; a
+    fully struck shape therefore yields an empty string and stops being a pin or
+    a diagram node label (its geometry is still kept as a background object).
+    Pass ``include_struck=True`` for the unfiltered source text (ledgers/audits).
+    """
+    if include_struck is None:
+        include_struck = RENDER_STRUCK_TEXT
     paragraphs: list[str] = []
     for paragraph in shape.iter(f"{{{NS_A}}}p"):
-        runs = [run.text or "" for run in paragraph.iter(f"{{{NS_A}}}t")]
-        paragraphs.append("".join(runs))
+        # ElementTree has no parent pointers: map each <a:t> back to the <a:r> /
+        # <a:fld> that carries its run properties.
+        holders = {child: parent for parent in paragraph.iter() for child in parent}
+        texts: list[str] = []
+        for run in paragraph.iter(f"{{{NS_A}}}t"):
+            if not include_struck and _drawingml_run_struck(holders.get(run)):
+                continue
+            texts.append(run.text or "")
+        paragraphs.append("".join(texts))
     return "\n".join(paragraphs).strip()
+
+
+def _shape_struck_text(shape: Any) -> str:
+    """Return only the struck-through text of a shape (removed by the policy)."""
+    parts: list[str] = []
+    for paragraph in shape.iter(f"{{{NS_A}}}p"):
+        holders = {child: parent for parent in paragraph.iter() for child in parent}
+        for run in paragraph.iter(f"{{{NS_A}}}t"):
+            if _drawingml_run_struck(holders.get(run)):
+                parts.append(run.text or "")
+    return "".join(parts).strip()
+
+
+def _drawingml_run_struck(holder: Any) -> bool:
+    """True when the <a:r>/<a:fld> holding a text node is struck through."""
+    if holder is None:
+        return False
+    rpr = holder.find(f"{{{NS_A}}}rPr")
+    if rpr is None:
+        return False
+    return (rpr.get("strike") or "") in STRUCK_DRAWINGML_VALUES
 
 
 def _shape_object_info(shape: Any, nv_tag: str) -> tuple[str | None, str]:
@@ -1194,6 +1358,36 @@ def _connector_arrows(sp_pr: Any) -> dict[str, bool]:
 #     image, then cross-link them to the item-definition table No. column. ---
 
 PIN_MATCH_RATIO = 0.6  # min share of pins that must match table No. to overlay
+
+# 出力除外規約（2026-08-12 ユーザー決定）: 「図形・テキストボックス内テキスト」全件表は
+# HTML設計書へ出力しない。DrawingMLからの抽出自体は従来どおり続け、番号pinの画像復元・
+# 画面遷移図の再構成・番号pin対応台帳では引き続き使う。非出力にした図形は
+# output/shape_textbox_sheets.csv へ全件記録し、黙って落ちないようにする
+# （Markdown由来の除外節は function-spec-html-render 側の convert_function_spec_html.py が担当）。
+RENDER_SHAPE_TEXT_SECTION = False
+SHAPE_TEXT_EXCLUSION_REASON = "出力除外規約（図形・テキストボックス内テキスト非出力）"
+
+# 出力除外規約（2026-08-19 ユーザー決定）: 「番号pin対応台帳」はHTML設計書へ出力しない。
+# 抽出・画像への番号pin復元・項目定義No.との相互リンクは従来どおり行い、pinごとの対応状況
+# （matched / ambiguous / missing_item / unassigned・画像割当・重複）は
+# output/pin_ledger_sheets.csv へ全件記録して、黙って落ちたのか除外したのかを機械で区別できる
+# 状態に保つ。True へ戻すと従来どおり各シート末尾へ台帳テーブルを出力する。
+RENDER_PIN_LEDGER_SECTION = False
+PIN_LEDGER_EXCLUSION_REASON = "出力除外規約（番号pin対応台帳非出力）"
+
+# 出力除外規約（2026-08-20 ユーザー決定）: 「コネクタ解決台帳」はHTML設計書へ出力しない。
+# 連結不能コネクタの抽出・hard/soft の判定・検証は従来どおり行い、記録は
+# output/connector_ledger_sheets.csv が受け持つ。True へ戻すと従来どおり各シートへ出力する。
+RENDER_CONNECTOR_LEDGER_SECTION = False
+CONNECTOR_LEDGER_EXCLUSION_REASON = "出力除外規約（コネクタ解決台帳非出力）"
+
+# 出力除外規約（2026-08-12 ユーザー決定）: 正本Excelで取り消し線が引かれた文章はHTML設計書へ
+# 出力しない。セル（run単位・セル継承）でも、DrawingMLの図形・テキストボックス内テキスト
+# （a:rPr@strike=sngStrike/dblStrike）でも同じ扱いにする。取り消し線部分を除いた残りは
+# そのまま出力し、除去の結果テキストが空になったセル・図形は出力対象から外れる。
+# True へ戻すと従来どおり `cell-strike` 付きで表示する。
+RENDER_STRUCK_TEXT = False
+STRUCK_DRAWINGML_VALUES = {"sngStrike", "dblStrike"}
 
 # 幾何推定で端点を埋めたコネクタ（明示 stCxn/endCxn が片方欠落し、最近傍ノードで補完
 # したもの）の扱い。既定 False では geometry_inferred を soft 台帳記録＋遷移一覧に「推定」
@@ -1486,7 +1680,9 @@ def render_sheet(
                     value_override = formula
                 else:
                     value_override = cached_value
-            runs = cell_text_runs(cell, xml_cell, value_override)
+            # 取り消し線の文章はここで落とす。セル値・表・番号No.・メタ情報の全てが
+            # このrunsから作られるので、除去はこの1箇所で全経路に効く。
+            runs = apply_strike_exclusion(cell_text_runs(cell, xml_cell, value_override))
             text = "".join(run["text"] for run in runs)
             if not text.strip():
                 continue
@@ -1593,10 +1789,19 @@ def render_sheet(
             img["overlay"] = []
     image_render_rows = build_image_render_rows(image_rows)
 
-    # Every callout whose No. matches the item table is cross-linked, whether it
-    # is overlaid on an image or only listed in the fallback shape table, so no
-    # numbered callout is left without a link to its identifier row.
+    # Every callout whose No. matches the item table gets its identifier row id,
+    # so `#item-<sheet>-<no>` citations stay stable regardless of where the
+    # callout is drawn.
     callout_nos = {normalize_pin_id(p["text"]) for p in number_pins} & valid_nos
+    # 出力除外規約で図形テキスト全件表を出さないため、`pin-<sheet>-<no>` を実際に持つのは
+    # 画像上に復元された番号pinだけになる。項目表からの逆リンクはその範囲に限定して、
+    # 存在しないpinへのデッドリンクを作らない。
+    pin_link_nos = {
+        overlay["no"]
+        for img in flat_images
+        for overlay in img.get("overlay", [])
+        if overlay.get("linked")
+    }
     used_item_ids: set[str] = set()
     used_pin_ids: set[str] = set()
 
@@ -1616,12 +1821,9 @@ def render_sheet(
     if meta_pairs:
         parts.append(render_info_card(meta_pairs))
 
-    # Render a complete per-shape inventory. Shapes that are also overlaid on an
-    # image or rendered inside a diagram intentionally still appear here so the
-    # recovered DrawingML text can be audited one by one.
+    # 図形テキストは抽出のみ行い、全件表としてはHTMLへ出さない（出力除外規約）。
     all_shapes = list(shapes or [])
-    shape_anchor = f"{sheet_id}-shapes" if all_shapes else None
-    jump_bar = render_jump_bar(spec_nav, shape_anchor, len(all_shapes))
+    jump_bar = render_jump_bar(spec_nav)
     if jump_bar:
         parts.append(jump_bar)
 
@@ -1644,6 +1846,7 @@ def render_sheet(
                     sheet_id,
                     callout_nos,
                     used_item_ids,
+                    pin_link_nos,
                 )
             )
             table_buf.clear()
@@ -1691,8 +1894,12 @@ def render_sheet(
     flush_doc()
     flush_table()
 
+    # 出力除外規約により全件表は出さないので、HTMLへ出た図形は無い（＝全件が
+    # shape_textbox_sheets.csv の非出力記録へ回る）。RENDER_SHAPE_TEXT_SECTION を
+    # True へ戻せば従来の全件表出力に復帰できる。
     rendered_shapes: set[tuple[int, str]] = set()
-    if all_shapes and shape_anchor is not None:
+    if RENDER_SHAPE_TEXT_SECTION and all_shapes:
+        shape_anchor = f"{sheet_id}-shapes"
         parts.append(
             render_shape_section(
                 all_shapes,
@@ -1708,24 +1915,31 @@ def render_sheet(
         rendered_shapes = {
             (index, str(shape.get("cellref", "")))
             for index, shape in enumerate(all_shapes, start=1)
+            if str(shape.get("text", "")).strip()
         }
 
     # 番号pin対応台帳: 60%閾値は可読表示の判定に留め、未一致・未割当を含む全pinを
-    # ここへ記録する（未対応を黙ってinventory外へ落とさない）。
-    pin_ledger = render_pin_ledger(
-        number_pins, no_to_item_refs, no_to_name, sheet_id, book_no, sheet_title
+    # ここへ記録する（未対応を黙ってinventory外へ落とさない）。出力除外規約により既定では
+    # HTMLへ出さず、記録は output/pin_ledger_sheets.csv が受け持つ。
+    pin_ledger_rows = pin_ledger_entries(
+        number_pins, no_to_item_refs, no_to_name, book_no, sheet_title
     )
-    if pin_ledger:
-        parts.append(pin_ledger)
+    if RENDER_PIN_LEDGER_SECTION:
+        pin_ledger = render_pin_ledger(pin_ledger_rows)
+        if pin_ledger:
+            parts.append(pin_ledger)
 
-    # コネクタ解決台帳: 図の表示可否と分離し、connectorが1本でもあれば必ず出力する
-    # （画像シートで diagram_should_render=False でも握り潰さない）。
+    # コネクタ解決台帳: 図の表示可否と分離し、connectorが1本でもあれば必ず記録する
+    # （画像シートで diagram_should_render=False でも握り潰さない）。出力除外規約により
+    # 既定ではHTMLへ出さず、記録は output/connector_ledger_sheets.csv が受け持つ。
+    connector_ledger_rows: list[dict[str, Any]] = []
     if diagram and diagram.get("connectors"):
-        connector_ledger = render_connector_ledger(
-            build_transition_graph(diagram)["unresolved"], book_no, sheet_title
-        )
-        if connector_ledger:
-            parts.append(connector_ledger)
+        unresolved = build_transition_graph(diagram)["unresolved"]
+        connector_ledger_rows = connector_ledger_entries(unresolved, book_no, sheet_title)
+        if RENDER_CONNECTOR_LEDGER_SECTION:
+            connector_ledger = render_connector_ledger(unresolved, book_no, sheet_title)
+            if connector_ledger:
+                parts.append(connector_ledger)
 
     if not parts:
         parts.append('<p class="doc-empty">（内容のある行はありません）</p>')
@@ -1743,31 +1957,35 @@ def render_sheet(
 </section>""",
         "warnings": warnings,
         "rendered_shapes": rendered_shapes,
+        "pin_ledger_rows": pin_ledger_rows,
+        "connector_ledger_rows": connector_ledger_rows,
     }
 
 
-def render_pin_ledger(
+def pin_ledger_entries(
     number_pins: list[dict[str, Any]],
     no_to_item_refs: dict[str, list[str]],
     no_to_name: dict[str, str],
-    sheet_id: str,
     book_no: str,
     sheet_title: str,
-) -> str:
-    """List every numbered callout with its anchor, image assignment and item status.
+) -> list[dict[str, Any]]:
+    """Record every numbered callout with its anchor, image assignment and status.
 
     The PIN_MATCH_RATIO threshold only gates the readable overlay; here every pin
     (matched / ambiguous / missing_item / unassigned) is recorded so no callout is
     silently dropped from the inventory. `ambiguous` is decided by the number of
     *item-definition candidates* for the No. (not by duplicate pins); duplicate
-    pins sharing one No. are reported separately in their own column.
+    pins sharing one No. are reported separately in their own field.
+
+    出力除外規約で台帳テーブルをHTMLへ出さないため、この戻り値が pin の対応状況を追える
+    唯一の記録になる（output/pin_ledger_sheets.csv へ全件書き出す）。
     """
     if not number_pins:
-        return ""
+        return []
     pin_counts: Counter[str] = Counter()
     for pin in number_pins:
         pin_counts[normalize_pin_id(pin["text"])] += 1
-    rows: list[str] = []
+    entries: list[dict[str, Any]] = []
     for pin in number_pins:
         no = normalize_pin_id(pin["text"])
         source = pin.get("from") or (1, 1)
@@ -1800,21 +2018,45 @@ def render_pin_ledger(
         else:
             item_cell = ""
         dup = pin_counts[no]
+        entries.append(
+            {
+                "pin": str(pin["text"]),
+                "pin_no": no,
+                "anchor_ref": anchor_ref,
+                "image_assignment": image_cell,
+                "status": status,
+                "item_candidates": item_cell,
+                "item_candidate_count": len(candidates),
+                "duplicates": dup,
+            }
+        )
+    return entries
+
+
+def render_pin_ledger(entries: list[dict[str, Any]]) -> str:
+    """Render the pin ledger table (only when RENDER_PIN_LEDGER_SECTION is True)."""
+    if not entries:
+        return ""
+    rows: list[str] = []
+    for entry in entries:
+        dup = int(entry["duplicates"])
         dup_cell = f"×{dup}" if dup > 1 else ""
         rows.append(
-            f'<tr data-excel-ref="{escape_attr(anchor_ref)}" data-pin-no="{escape_attr(no)}" '
-            f'data-pin-status="{escape_attr(status)}" '
-            f'data-item-candidates="{len(candidates)}" data-pin-duplicates="{dup}">'
-            f"<td>{escape_text(pin['text'])}</td>"
-            f"<td>{escape_text(anchor_ref)}</td>"
-            f"<td>{escape_text(image_cell)}</td>"
-            f"<td>{escape_text(status)}</td>"
-            f"<td>{escape_text(item_cell)}</td>"
+            f'<tr data-excel-ref="{escape_attr(entry["anchor_ref"])}" '
+            f'data-pin-no="{escape_attr(entry["pin_no"])}" '
+            f'data-pin-status="{escape_attr(entry["status"])}" '
+            f'data-item-candidates="{entry["item_candidate_count"]}" '
+            f'data-pin-duplicates="{dup}">'
+            f"<td>{escape_text(entry['pin'])}</td>"
+            f"<td>{escape_text(entry['anchor_ref'])}</td>"
+            f"<td>{escape_text(entry['image_assignment'])}</td>"
+            f"<td>{escape_text(entry['status'])}</td>"
+            f"<td>{escape_text(entry['item_candidates'])}</td>"
             f"<td>{escape_text(dup_cell)}</td></tr>"
         )
     body = "\n".join(rows)
-    return f"""<details class="pin-ledger" data-pin-count="{len(number_pins)}">
-  <summary>番号pin対応台帳（{len(number_pins)}件）</summary>
+    return f"""<details class="pin-ledger" data-pin-count="{len(entries)}">
+  <summary>番号pin対応台帳（{len(entries)}件）</summary>
   <div class="item-table-wrap">
     <table class="item-table">
       <thead><tr><th>pin</th><th>アンカー</th><th>画像割当</th><th>対応状態</th><th>項目定義候補</th><th>pin重複</th></tr></thead>
@@ -2186,10 +2428,14 @@ def render_table(
     sheet_id: str | None = None,
     link_nos: set[str] | None = None,
     used_item_ids: set[str] | None = None,
+    pin_link_nos: set[str] | None = None,
 ) -> str:
     cols = sorted(cols)
     link_nos = link_nos or set()
     used_item_ids = used_item_ids if used_item_ids is not None else set()
+    # 逆リンクを張ってよいNo.（実際に `pin-<sheet>-<no>` が出力されるもの）。
+    # 未指定なら link_nos と同じ＝従来動作。
+    pin_link_nos = link_nos if pin_link_nos is None else pin_link_nos
 
     def distribute(cells: list[dict[str, Any]]) -> list[str]:
         return distribute_row(cells, cols)
@@ -2231,10 +2477,13 @@ def render_table(
                 used_item_ids.add(item_id)
                 row_id = f' id="{escape_attr(item_id)}"'
             head = values_html[0]
-            first_cell = (
-                f'<td><a class="item-no" href="#pin-{escape_attr(sheet_id)}-'
-                f'{escape_attr(no)}">{head}</a></td>'
-            )
+            if no in pin_link_nos:
+                first_cell = (
+                    f'<td><a class="item-no" href="#pin-{escape_attr(sheet_id)}-'
+                    f'{escape_attr(no)}">{head}</a></td>'
+                )
+            else:
+                first_cell = f"<td>{head}</td>"
         else:
             first_cell = f"<td>{values_html[0] if values_html else ''}</td>"
         rest = "".join(f"<td>{cell_html}</td>" for cell_html in values_html[1:])
@@ -2255,9 +2504,15 @@ def render_table(
 
 
 def render_jump_bar(
-    spec_nav: list[tuple[str, str]], shape_anchor: str | None, shape_count: int
+    spec_nav: list[tuple[str, str]],
+    shape_anchor: str | None = None,
+    shape_count: int = 0,
 ) -> str:
-    """A small in-sheet nav to the functional-spec sections and shape text."""
+    """A small in-sheet nav to the functional-spec sections (and shape text when kept).
+
+    `shape_anchor` stays None under the output-exclusion policy, so no link to a
+    shape section that is not rendered is emitted.
+    """
     links: list[str] = []
     for anchor, text in spec_nav:
         links.append(f'<a href="#{escape_attr(anchor)}">{escape_text(text)}</a>')
@@ -2322,11 +2577,15 @@ def render_shape_section(
             return f"<tr {row_attrs}{id_attr}>{ref}{text_cell}</tr>"
         return f"<tr {row_attrs}>{ref}<td>{escape_multiline(shape['text'])}</td></tr>"
 
-    body_rows = "\n".join(
-        render_row(index, shape) for index, shape in enumerate(shapes, start=1)
-    )
+    # 取り消し線で出力テキストが空になった図形は行にしない（原本は台帳側に残る）。
+    rendered = [
+        (index, shape)
+        for index, shape in enumerate(shapes, start=1)
+        if str(shape.get("text", "")).strip()
+    ]
+    body_rows = "\n".join(render_row(index, shape) for index, shape in rendered)
     return f"""<section class="shape-block" id="{escape_attr(anchor)}">
-  <h3 class="shape-title">図形・テキストボックス内テキスト（{len(shapes)}件）</h3>
+  <h3 class="shape-title">図形・テキストボックス内テキスト（{len(rendered)}件）</h3>
   <p class="shape-note">画面遷移図・フロー図・画面イメージ上の注釈など、図形内の文字を読み順（位置）で抽出したものです。</p>
   <div class="item-table-wrap">
     <table class="item-table shape-table">
@@ -2850,6 +3109,28 @@ def render_diagram_figure(
 def hard_unresolved_count(unresolved: list[dict[str, Any]]) -> int:
     """Number of genuinely unresolvable (dangling) connectors (verification exit 1)."""
     return sum(1 for item in unresolved if item.get("state") == "hard")
+
+
+def connector_ledger_entries(
+    unresolved: list[dict[str, Any]],
+    book_no: str = "",
+    sheet_title: str = "",
+) -> list[dict[str, Any]]:
+    """Return one record per unresolved connector (the ledger the HTML no longer shows)."""
+    rows: list[dict[str, Any]] = []
+    for item in unresolved:
+        ref = _connector_excel_ref(item, book_no, sheet_title)
+        if not ref:
+            ref = f"{book_no}:{sheet_title}!{item.get('anchor') or '?'}"
+        rows.append(
+            {
+                "connector_id": str(item.get("id") or "?"),
+                "cellref": ref,
+                "reason": str(item.get("reason") or ""),
+                "state": str(item.get("state") or ""),
+            }
+        )
+    return rows
 
 
 def render_connector_ledger(
@@ -4114,6 +4395,28 @@ def cell_text_runs(
         text = format_cell_value(value, number_format)
         runs.append({"text": text, "strike": cell_strike, "bold": cell_bold})
     return trim_text_runs(runs)
+
+
+def apply_strike_exclusion(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Drop struck runs from a cell's text (出力除外規約).
+
+    Partially struck cells keep their surviving runs (re-trimmed so the removal
+    does not leave stray leading/trailing whitespace); a fully struck cell
+    collapses to no runs, and the caller then drops the cell as empty. Detection
+    itself is untouched — `cell_text_runs` still reports the strike flags, which
+    is what verify.py compares against.
+    """
+    if RENDER_STRUCK_TEXT:
+        return runs
+    kept = [run for run in runs if not run.get("strike")]
+    if len(kept) == len(runs):
+        return runs
+    return trim_text_runs(kept)
+
+
+def struck_run_texts(runs: list[dict[str, Any]]) -> list[str]:
+    """Texts removed by the strike-exclusion policy (for ledgers/diagnostics)."""
+    return [run["text"] for run in runs if run.get("strike") and run.get("text")]
 
 
 def trim_text_runs(runs: list[dict[str, Any]]) -> list[dict[str, Any]]:
