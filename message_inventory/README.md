@@ -89,6 +89,35 @@ codex+fable5 による未解決確定・機能割当・列補完・欠落追記�
 Workflow({ scriptPath: ".codex/message_inventory.js", args: { fids: ["m04-31", "m11-01", ...] } })
 ```
 
+## 論理名規約の適用（2026-08-19）
+
+`MESSAGE_LIST.tsv` / `.md` に出力される**説明文の列**（`種別` / `どこに`(表示位置) /
+`トリガー（条件）`(表示条件) / `後続処理`）は、翻訳キー・フラッシュキー・ルート名・
+エンティティ名・DB物理名・フォーム項目名・定数名・画面変数名を書かず、論理名で表現する。
+規約の正本は [[logical-naming]]（`.cursor/skills/logical-naming/SKILL.md`）、
+対応表は `e2e/config/logical-names.tsv`。
+
+対象外（ユーザー決定 2026-08-19）:
+
+| 対象外 | 理由 |
+|--------|------|
+| `メッセージ内容` / `メッセージ内容(英語)` | 画面に出る表示文字列そのもの。逐語＝捏造ゼロ規約が優先する。ロケール未定義でキー文字列が画面に出る46件も、その事実の記録として逐語のまま残す |
+| `根拠(file:line)` | 出典。実ソース追跡と `validate_messages.py` の再実行性を担保する |
+| `画面` / `要素` / `要素(表示)` | MESSAGE_LIST に出力されない正本内部の作業列 |
+| `EE-*` 行 | 機能未割当の退避バケット。MESSAGE_LIST に出力されない |
+| HTTPパス・APIレスポンスの契約フィールド名・HTMLセレクタ・ブラウザ標準API名・ホスト名・言語キーワード | 規約の「対象外」。論理名を持たず位置情報・実行値としてしか使えない |
+
+```bash
+S=.codex/skills/hareruya-message-inventory/scripts
+python3 $S/apply_logical_names_msglist.py --dry-run   # 置換表の適用（冪等）
+python3 $S/apply_logical_names_msglist.py
+python3 $S/generate_message_list.py                   # MESSAGE_LIST 再生成
+python3 $S/check_logical_naming_msglist.py            # 再混入ゲート
+```
+
+> 設計書 `functions/**/*.md` の『表示メッセージ』表は今回同期していない。
+> 一覧側だけが論理名、設計書側は物理名のまま食い違っている（ユーザー決定 2026-08-19）。
+
 ## メッセージID体系
 
 ```
